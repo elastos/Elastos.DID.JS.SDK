@@ -4,7 +4,6 @@ const {core} = require('../core')
 
 const generateNew = async (password) =>{
     let mnemonic = core.generateMnemonic(password);
-    console.log(mnemonic)
     password = "";
     return await loadFromMnemonic(mnemonic, password);
 }
