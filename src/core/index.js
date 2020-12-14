@@ -9,6 +9,7 @@ const { has } = require("lodash")
 const { BN, Hash, Point } = crypto
 const { Base58, Base58Check } = encoding
 const { BigInteger, Base64x, KEYUTIL } = require("jsrsasign")
+const js = require("bitcore-lib-curve/lib/util/js")
 var EC = require('elliptic').ec;
 
 Point.setCurve('p256')
@@ -142,13 +143,23 @@ const addReadOnlyPropertyToObject = (obj, prop, value) => {
 
 }
 
+const getPublicKey = (publicKeyHex) => {
+    let pubKeyObj = PublicKey.fromString(publicKeyHex)
+    let json = pubKeyObj.toJSON()
+    return json
+}
+
 const signData = (bufferData, privateKey) => {
     let ec = new rs.KJUR.crypto.ECDSA({curve: "secp256r1"})
     ec.setPrivateKeyHex(privateKey)
+
+    
     
     let dataSigner = new rs.KJUR.crypto.Signature({ alg: "SHA256withECDSA" })
     dataSigner.init(ec)
     dataSigner.updateHex(bufferData)
+
+
 
     let signed = dataSigner.sign()
     
@@ -169,6 +180,7 @@ const signData = (bufferData, privateKey) => {
 
 const verifyData = (data, signature, publicKey) => {
     let pubKeyObj = PublicKey.fromString(publicKey)
+    
     let signer = new rs.KJUR.crypto.Signature({ alg: 'SHA256withECDSA' })
 
     signer.init({ xy: uncompress(pubKeyObj).toString('hex'), curve: 'secp256r1' })
@@ -231,5 +243,7 @@ module.exports.core = {
     addReadOnlyPropertyToObject,
     signData,
     verifyData,
-    setToJSON
+    setToJSON,
+
+    getPublicKey
 }

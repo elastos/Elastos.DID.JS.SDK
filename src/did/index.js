@@ -2,13 +2,12 @@ const {constants} = require('../constants')
 const {core} = require('../core')
 
 
-const generateNew = async (password) =>{
+const generateNew = async (password = "") =>{
     let mnemonic = core.generateMnemonic(password);
-    password = "";
     return await loadFromMnemonic(mnemonic, password);
 }
 
-const loadFromMnemonic = async (mnemonic, password, index = 0) =>{
+const loadFromMnemonic = async (mnemonic, password = "", index = 0) =>{
     
     let seed = await core.getSeedFromMnemonic(mnemonic, password);
     let privateKey = core.generateSubPrivateKey(buf2hex(seed), constants.coinTypes.ELA, constants.changeChain.EXTERNAL, index).toString('hex');
