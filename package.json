@@ -1,5 +1,5 @@
 {
-  "name": "@tuum-tech/elastos-js-sdk",
+  "name": "@elastos/elastos-js-sdk",
   "version": "1.0.0",
   "description": "Elastos JS SDK",
   "main": "index.js",
@@ -10,16 +10,19 @@
     "buffer": "^5.6.0",
     "crypto-js": "^4.0.0",
     "ecdh-crypto": "^1.0.5",
+    "jose": "^3.2.0",
     "jsonwebtoken": "^8.5.1",
     "jsrsasign": "^9.1.9",
     "lodash": "^4.17.20",
     "randombytes": "^2.1.0",
     "secp256r1": "0.0.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/node": "^14.14.10"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tuum-tech/Elastos.DID.JS.SDK.git"
+    "url": "git+https://github.com/elastos/Elastos.DID.JS.SDK.git"
   },
   "files": [
     "src"
@@ -27,7 +30,7 @@
   "author": "Tuum Tech",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tuum-tech/Elastos.DID.JS.SDK/issues"
+    "url": "https://github.com/elastos/Elastos.DID.JS.SDK/issues"
   },
-  "homepage": "https://github.com/tuum-tech/Elastos.DID.JS.SDK#readme"
+  "homepage": "https://github.com/elastos/Elastos.DID.JS.SDK#readme"
 }

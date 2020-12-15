@@ -1,20 +1,16 @@
 const { ElastosClient } = require("../src");
 
 let run = async () => {
-    let mnemonic = "open improve window define excess party alone faint poem wedding item small";
-    let didelement = await ElastosClient.did.loadFromMnemonic(mnemonic)
+    let mnemonic = "drink time ritual foam program sadness such inhale hurry supreme test forest";
+    let didelement = await ElastosClient.did.loadFromMnemonic(mnemonic);
+    let document = ElastosClient.didDocuments.newDIDDocument(didelement);
 
-    console.log("didelement", didelement)
+    ElastosClient.didDocuments.sealDocument(didelement, document)
 
-    let document = ElastosClient.tx.loadDIDDocumentFromDID(didelement.did)
+    console.log(JSON.stringify(document))
+    console.log("Is Valid", ElastosClient.didDocuments.isValid(document, didelement))
 
-    if (!document) {
-        document = ElastosClient.didDocuments.newDIDDocument(didelement)
-        document.id = "asdasdasd"
-        console.log("document before seal", document)
-        ElastosClient.didDocuments.sealDocument(didelement, document)
-        console.log("document sealed", JSON.stringify(document))
-    }
+    
     
 }
 
