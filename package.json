@@ -1,5 +1,5 @@
 {
-  "name": "@elastos/elastos-js-sdk",
+  "name": "@elastosfoundation/elastos-js-sdk",
   "version": "1.0.0",
   "description": "Elastos JS SDK",
   "main": "index.js",
