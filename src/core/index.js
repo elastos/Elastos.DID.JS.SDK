@@ -231,6 +231,10 @@ const setToJSON = obj => {
     });
 }
 
+const getTimestamp = () => {
+    return Math.floor(Date.now() / 1000)
+}
+
 module.exports.core = {
     generateMnemonic,
     getSeedFromMnemonic,
@@ -244,6 +248,6 @@ module.exports.core = {
     signData,
     verifyData,
     setToJSON,
-
+    getTimestamp,
     getPublicKey
 }
