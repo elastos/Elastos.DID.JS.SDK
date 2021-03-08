@@ -1,3 +1,5 @@
+const bip39 = require('bip39')
+
 const {constants} = require('../constants')
 const {core} = require('../core')
 
@@ -8,7 +10,9 @@ const generateNew = async (password = "") =>{
 }
 
 const loadFromMnemonic = async (mnemonic, password = "", index = 0) =>{
-    
+    if (!bip39.validateMnemonic(mnemonic)) {
+        return null;
+    }
     let seed = await core.getSeedFromMnemonic(mnemonic, password);
     let privateKey = core.generateSubPrivateKey(buf2hex(seed), constants.coinTypes.ELA, constants.changeChain.EXTERNAL, index).toString('hex');
     let masterPublicKey = core.getMasterPublicKey(seed, constants.coinTypes.ELA);
@@ -33,6 +37,6 @@ function buf2hex(buffer) {
 
 module.exports.did = {
     generateNew,
-    loadFromMnemonic
+    loadFromMnemonic,
 }
 
