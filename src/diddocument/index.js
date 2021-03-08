@@ -11,6 +11,7 @@ const newDIDDocument = (didElement) =>{
     core.addReadOnlyPropertyToObject(document, "authentication", [`${didElement.did}#primary`])
     document.verifiableCredential = [];
     document.verifiablePresentation = [];
+    document.service = [];
     core.addReadOnlyPropertyToObject(document, "expires", getExpiration().toISOString().split('.')[0]+"Z")
 
     return document
@@ -46,6 +47,19 @@ const addVerfiablePresentationToDIDDocument = (document, vp) =>{
 
 }
 
+const addServiceToDIDDocument = (document, service) =>{
+    if (document.hasOwnProperty('proof'))
+    {
+        console.error("You can't modify this document because is already sealed")
+        return
+    }
+    if (!document.service) document.service = []
+    document.service.push(service);
+
+
+}
+
+
 const createVerifiableCredential = (didElement, issuer, subjectName, subjectTypes, subjectValue) => {
     let vc = {}
     core.setToJSON(vc)
@@ -69,6 +83,19 @@ const createVerifiableCredential = (didElement, issuer, subjectName, subjectType
     sign(didElement, vc)
     
     return vc
+}
+
+const createService = (didElement, did, type, endpoint) => {
+    let service = {}
+    core.setToJSON(service)
+
+    core.addReadOnlyPropertyToObject(service, "id", `${did}#${type}`);
+    core.addReadOnlyPropertyToObject(service, "type", type);
+    core.addReadOnlyPropertyToObject(service, "serviceEndpoint", endpoint);
+
+    sign(didElement, service)
+    
+    return service
 }
 
 
@@ -127,6 +154,7 @@ const sealDocument = (didElement, document) =>{
     
     if (document.verifiableCredential && document.verifiableCredential.length === 0)  delete document.verifiableCredential;
     if (document.verifiablePresentation && document.verifiablePresentation.length === 0) delete document.verifiablePresentation;
+    if (document.service && document.service.length === 0) delete document.service;
 
     
 
@@ -343,8 +371,10 @@ module.exports.didDocuments = {
     createVerifiableCredential,
     createVerifiableCredentialVP,
     createVerifiablePresentation,
+    createService,
     addVerfiableCredentialToDIDDocument,
     addVerfiablePresentationToDIDDocument,
+    addServiceToDIDDocument,
     sealDocument,
     isValid,
     getMostRecentDIDDocument
