@@ -1,3 +1,5 @@
+const bip39 = require('bip39')
+
 const {constants} = require('../constants')
 const {core} = require('../core')
 
@@ -5,6 +7,10 @@ const {core} = require('../core')
 const generateNew = async (password = "") =>{
     let mnemonic = core.generateMnemonic(password);
     return await loadFromMnemonic(mnemonic, password);
+}
+
+const isMnemonicValid = (mnemonic) => {
+    return bip39.validateMnemonic(mnemonic);
 }
 
 const loadFromMnemonic = async (mnemonic, password = "", index = 0) =>{
@@ -33,6 +39,7 @@ function buf2hex(buffer) {
 
 module.exports.did = {
     generateNew,
-    loadFromMnemonic
+    loadFromMnemonic,
+    isMnemonicValid
 }
 
