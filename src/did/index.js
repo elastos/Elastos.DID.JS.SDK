@@ -9,12 +9,10 @@ const generateNew = async (password = "") =>{
     return await loadFromMnemonic(mnemonic, password);
 }
 
-const isMnemonicValid = (mnemonic) => {
-    return bip39.validateMnemonic(mnemonic);
-}
-
 const loadFromMnemonic = async (mnemonic, password = "", index = 0) =>{
-    
+    if (!bip39.validateMnemonic(mnemonic)) {
+        return null;
+    }
     let seed = await core.getSeedFromMnemonic(mnemonic, password);
     let privateKey = core.generateSubPrivateKey(buf2hex(seed), constants.coinTypes.ELA, constants.changeChain.EXTERNAL, index).toString('hex');
     let masterPublicKey = core.getMasterPublicKey(seed, constants.coinTypes.ELA);
@@ -40,6 +38,5 @@ function buf2hex(buffer) {
 module.exports.did = {
     generateNew,
     loadFromMnemonic,
-    isMnemonicValid
 }
 
