@@ -1,7 +1,8 @@
 const {core} = require('../core')
+const {constants} = require('../constants')
 const rs = require('jsrsasign')
 
-const generateRequestInternal = (diddocument, didelement, operation) =>{
+const generateRequestInternal = (diddocument, didelement, operation, previousTxId ) =>{
     let tx = {};
     core.setToJSON(tx)
 
@@ -11,7 +12,7 @@ const generateRequestInternal = (diddocument, didelement, operation) =>{
     core.addReadOnlyPropertyToObject(header, "operation", operation);
 
     if (operation == "update"){
-        core.addReadOnlyPropertyToObject(header, "previousTxid", getPreviousTxId(didelement.did));
+        core.addReadOnlyPropertyToObject(header, "previousTxid", previousTxId );
     }
 
     core.addReadOnlyPropertyToObject(tx, "header", header);
@@ -26,7 +27,7 @@ const generateRequestInternal = (diddocument, didelement, operation) =>{
 }
 
 const getPreviousTxId = async (did) =>{
-    let elastosRPCHost = constants.elastosRPCAddress.mainchain;
+    let elastosRPCHost = "http://api.elastos.io:20606";
     let responseJson = await core.rpcResolveDID(did, elastosRPCHost)
     
 
@@ -70,8 +71,10 @@ const generateCreateRequest = (diddocument, didelement) =>{
     return generateRequestInternal(diddocument, didelement, "create"); 
 }
 
-const generateRequest = (diddocument, didelement, operation) =>{
-    return generateRequestInternal(diddocument, didelement, operation); 
+const generateRequest = async (diddocument, didelement, operation) =>{
+    let previousTxId = await getPreviousTxId(didelement.did)
+    console.log("previousTxId", previousTxId)
+    return generateRequestInternal(diddocument, didelement, operation, previousTxId); 
 }
 
 const isValid = (request, didElement) => {

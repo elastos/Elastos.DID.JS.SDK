@@ -235,7 +235,7 @@ const getTimestamp = () => {
     return Math.floor(Date.now() / 1000)
 }
 
-const rpcResolveDID = (did, rpcHost) =>{
+const rpcResolveDID = async (did, rpcHost) =>{
     let didKey = did.replace("did:elastos:", "")
 
     let body = {
