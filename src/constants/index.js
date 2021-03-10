@@ -3,6 +3,10 @@ const coinTypes = {
     IDCHAIN: 1
 }
 
+const elastosRPCAddress = {
+    mainchain: "http://api.elastos.io:20606"
+}
+
 const changeChain = {
     EXTERNAL: 0,
     INTERNAL: 1
@@ -31,5 +35,6 @@ module.exports.constants = {
     coinTypes,
     changeChain,
     signTypes,
-    signTypeMap
+    signTypeMap,
+    elastosRPCAddress
 }
