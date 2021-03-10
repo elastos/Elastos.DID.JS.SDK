@@ -53,6 +53,10 @@ const generateCreateRequest = (diddocument, didelement) =>{
     return generateRequest(diddocument, didelement, "create"); 
 }
 
+const generateRequest = (diddocument, didelement, operation) =>{
+    return generateRequest(diddocument, didelement, operation); 
+}
+
 const isValid = (request, didElement) => {
     let payload = JSON.parse(atob(request["payload"]))
     let hash = generateHash(request, payload);
@@ -62,5 +66,6 @@ const isValid = (request, didElement) => {
 
 module.exports.idChainRequest = {
     generateCreateRequest,
+    generateRequest,
     isValid,
 }
