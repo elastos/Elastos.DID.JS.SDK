@@ -1,7 +1,7 @@
 const {core} = require('../core')
 const rs = require('jsrsasign')
 
-const generateRequest = (diddocument, didelement, operation, previousTxId = "") =>{
+const generateRequestInternal = (diddocument, didelement, operation, previousTxId = "") =>{
     let tx = {};
     core.setToJSON(tx)
 
@@ -50,11 +50,11 @@ const sign = (didElement, tx, diddocument) =>{
 }
 
 const generateCreateRequest = (diddocument, didelement) =>{
-    return generateRequest(diddocument, didelement, "create"); 
+    return generateRequestInternal(diddocument, didelement, "create"); 
 }
 
 const generateRequest = (diddocument, didelement, operation) =>{
-    return generateRequest(diddocument, didelement, operation); 
+    return generateRequestInternal(diddocument, didelement, operation); 
 }
 
 const isValid = (request, didElement) => {
