@@ -1,6 +1,6 @@
 {
   "name": "@elastosfoundation/elastos-js-sdk",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Elastos JS SDK",
   "main": "index.js",
   "dependencies": {
