@@ -1,3 +1,4 @@
+const { constants } = require('../constants');
 const {core} = require('../core')
 
 const newDIDDocument = (didElement) =>{
@@ -240,16 +241,13 @@ const isValid = (diddocument, didElement, propertyName = "signatureValue") => {
 
 
 const getMostRecentDIDDocument = async (did, options = {}) =>{
-    let elastosRPCHost = "http://api.elastos.io:20606"
+    let elastosRPCHost = constants.elastosRPCAddress.mainchain;
     let useCache =  true
 
-    console.log("Enter on getMostRecentDIDDocument", did, options)
 
     if (options && "elastosRPCHost" in options) elastosRPCHost = options["elastosRPCHost"]
     if (options && "useCache" in options) useCache = options["useCache"]
     
-    console.log("Parameter elastos host", elastosRPCHost)
-    console.log("Parameter use cache   ", useCache)
 
     if (!did) throw new Error("Invalid DID")
 
@@ -302,60 +300,29 @@ const clearExpiredCacheItems = (cache) =>{
 }
 
 const searchDIDDocumentOnBlockchain = async (did, rpcHost) =>{
-    console.log("Enter on searchDIDDocumentOnBlockchain", did, rpcHost)
-    let body = {
-        "jsonrpc": '2.0',
-        "id": "1",
-        "method": "resolvedid",
-        "params": {
-            "did": did,
-            "all": true
-        }
-    }
-
-    let rpcResponse = await fetch(rpcHost, {
-        "method": "POST",
-        "header": {
-            'Accept': 'application/json, text/plain, */*',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        "body": JSON.stringify(body)
-    })
-
-    console.log("RPC Response", rpcResponse)
-
-    if (!rpcResponse.ok) throw new Error(`Error on Elastos RPC Call - ${rpcResponse.status} : ${rpcResponse.statusText}`)
-
-    let responseJson = await rpcResponse.json()
+   
+    let responseJson = await core.rpcResolveDID(did, rpcHost)
     
-    console.log("RPC JSON", responseJson)
 
     if (!responseJson ||
         !responseJson["result"] ||
         !responseJson["result"]["transaction"]) return undefined
 
     let lastTransaction = responseJson["result"]["transaction"][0]
-    console.log("Last Transaction", lastTransaction)
     let payload = atob(lastTransaction["operation"]["payload"])
-    console.log("Payload", lastTransaction)
     return JSON.parse(payload)
 }
 
 const searchDIDDocumentOnCache = (did) =>{
-    console.log("Enter on searchDIDDocumentOnCache", did)
     let storage = window.localStorage //?? localStorage
     let cache = storage.getItem("elastos_cache")
-    console.log("Cache", cache)
     if (!cache) return undefined
     let jsonCache = JSON.parse(cache)
     let cacheItem = jsonCache[did]
-    console.log("Cache Item", cacheItem)
     if (!cacheItem) return undefined
 
     let timestamp = core.getTimestamp()
 
-    console.log("Expiration ", timestamp, cacheItem["expiration"])
 
     if (timestamp > cacheItem["expiration"]) return undefined
 

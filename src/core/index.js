@@ -235,6 +235,35 @@ const getTimestamp = () => {
     return Math.floor(Date.now() / 1000)
 }
 
+const rpcResolveDID = (did, rpcHost) =>{
+    let didKey = did.replace("did:elastos:", "")
+
+    let body = {
+        "jsonrpc": '2.0',
+        "id": "1",
+        "method": "resolvedid",
+        "params": {
+            "did": didKey,
+            "all": true
+        }
+    }
+
+    let rpcResponse = await fetch(rpcHost, {
+        "method": "POST",
+        "header": {
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        "body": JSON.stringify(body)
+    })
+
+
+    if (!rpcResponse.ok) throw new Error(`Error on Elastos RPC Call - ${rpcResponse.status} : ${rpcResponse.statusText}`)
+
+    return await rpcResponse.json()
+}
+
 module.exports.core = {
     generateMnemonic,
     getSeedFromMnemonic,
@@ -249,5 +278,6 @@ module.exports.core = {
     verifyData,
     setToJSON,
     getTimestamp,
-    getPublicKey
+    getPublicKey,
+    rpcResolveDID
 }

@@ -1,7 +1,7 @@
 const {core} = require('../core')
 const rs = require('jsrsasign')
 
-const generateRequestInternal = (diddocument, didelement, operation, previousTxId = "") =>{
+const generateRequestInternal = (diddocument, didelement, operation) =>{
     let tx = {};
     core.setToJSON(tx)
 
@@ -9,6 +9,11 @@ const generateRequestInternal = (diddocument, didelement, operation, previousTxI
     core.setToJSON(header)
     core.addReadOnlyPropertyToObject(header, "specification", "elastos/did/1.0");
     core.addReadOnlyPropertyToObject(header, "operation", operation);
+
+    if (operation == "update"){
+        core.addReadOnlyPropertyToObject(header, "previousTxid", getPreviousTxId(didelement.did));
+    }
+
     core.addReadOnlyPropertyToObject(tx, "header", header);
 
     let bSts = rs.BAtos(Buffer.from(JSON.stringify(diddocument, null, ""), "utf8"))
@@ -18,6 +23,18 @@ const generateRequestInternal = (diddocument, didelement, operation, previousTxI
 
     sign(didelement, tx, diddocument)
     return tx
+}
+
+const getPreviousTxId = async (did) =>{
+    let elastosRPCHost = constants.elastosRPCAddress.mainchain;
+    let responseJson = await core.rpcResolveDID(did, elastosRPCHost)
+    
+
+    if (!responseJson ||
+        !responseJson["result"] ||
+        !responseJson["result"]["transaction"]) return undefined
+
+    return responseJson["result"]["transaction"][0]["txid"]
 }
 
 const generateHash = (tx) =>{
