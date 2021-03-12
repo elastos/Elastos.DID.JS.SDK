@@ -113,8 +113,6 @@ const createService = (didElement, did, type, endpoint) => {
   core.addReadOnlyPropertyToObject(service, "type", type);
   core.addReadOnlyPropertyToObject(service, "serviceEndpoint", endpoint);
 
-  sign(didElement, service);
-
   return service;
 };
 
