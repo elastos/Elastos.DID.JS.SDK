@@ -4,7 +4,7 @@ const coinTypes = {
 };
 
 const elastosRPCAddress = {
-  mainchain: "https://elastos-did.noderators.org",
+  mainchain: "http://api.elastos.io:20606",
 };
 
 const changeChain = {

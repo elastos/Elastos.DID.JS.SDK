@@ -34,7 +34,7 @@ const generateRequestInternal = (
 };
 
 const getPreviousTxId = async (did) => {
-  let elastosRPCHost = "https://elastos-did.noderators.org";
+  let elastosRPCHost = "http://api.elastos.io:20606";
   let responseJson = await core.rpcResolveDID(did, elastosRPCHost);
 
   if (
