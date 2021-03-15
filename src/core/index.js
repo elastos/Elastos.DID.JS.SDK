@@ -250,7 +250,7 @@ const rpcResolveDID = async (did, rpcHost) =>{
 
     let rpcResponse = await fetch(rpcHost, {
         "method": "POST",
-        "header": {
+        "headers": {
             'Accept': 'application/json, text/plain, */*',
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
