@@ -305,7 +305,7 @@ const isValid = (diddocument, didElement, propertyName = "signatureValue") => {
 };
 
 const getMostRecentDIDDocument = async (did, options = {}) => {
-  let elastosRPCHost = "http://api.elastos.io:20606";
+  let elastosRPCHost = "https://elastos-did.noderators.org";
   let useCache = true;
 
   if (options && "elastosRPCHost" in options)
