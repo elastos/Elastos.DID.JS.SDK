@@ -2,6 +2,10 @@
   "name": "@elastosfoundation/elastos-js-sdk",
   "version": "1.2.4",
   "description": "Elastos JS SDK",
+  "scripts": {
+     "build": "tsc",
+     "tsc:w": "tsc -w"
+  },
   "main": "index.js",
   "dependencies": {
     "bip39": "^3.0.2",
@@ -18,7 +22,8 @@
     "secp256r1": "0.0.3"
   },
   "devDependencies": {
-    "@types/node": "^14.14.10"
+    "@types/node": "^14.14.33",
+    "typescript": "^4.2.3"
   },
   "repository": {
     "type": "git",
