@@ -79,13 +79,8 @@ export class DidDocument {
     }
 
     public createService (didElement, did: Did, type, endpoint) {
-        let service = new Service(`${did}#${type}`, type, endpoint);
-
-        this.sign(didElement, service);
-
-        return service;
+        return new Service(`${did}#${type}`, type, endpoint);
     }
-
 
     public createVerifiableCredentialVP (appDid, userDid, appName) {
         let issuanceDate = new Date();

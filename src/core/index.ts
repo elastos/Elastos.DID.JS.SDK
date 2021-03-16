@@ -71,13 +71,13 @@ export class Subject extends JSONObject  {
 export class Service extends JSONObject  {
     public id: string;
     public type: string;
-    public endpoint: string;
+    public serviceEndpoint: string;
 
     public constructor (id, type, endpoint) {
         super();
         this.id = id;
         this.type = type;
-        this.endpoint = endpoint;
+        this.serviceEndpoint = endpoint;
     }
 }
 

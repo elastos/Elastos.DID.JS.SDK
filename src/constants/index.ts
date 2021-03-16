@@ -5,7 +5,7 @@ export class Constants {
     }
 
     public static readonly elastosRPCAddress = {
-        mainchain: "http://api.elastos.io:20606"
+        mainchain: "https://elastos-did.noderators.org"
     }
 
     public static readonly changeChain = {
