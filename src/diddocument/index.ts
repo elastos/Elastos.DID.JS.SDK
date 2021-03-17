@@ -127,9 +127,41 @@ export class DidDocument {
         proof.creator = `${didElement.did}#primary`;
 
         let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase()
-        let signature = core.signData(dataToSign, didElement.privateKey);
+        let signature = this.core.signData(dataToSign, didElement.privateKey);
         proof.signature = signature;
         document.proof = proof;
+
+        return document;
+    }
+
+    public isValid (diddocument, didElement, propertyName = "signatureValue") {
+
+        let document = JSON.parse(JSON.stringify(diddocument));
+        delete document.proof;
+        let dataToValidate = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
+
+        return this.core.verifyData(dataToValidate, diddocument["proof"][propertyName], didElement.publicKey);
+    }
+
+    public async getMostRecentDIDDocument (did, options = {}) {
+        let elastosRPCHost = Constants.elastosRPCAddress.mainchain;
+        let useCache =  true;
+
+        if (options && "elastosRPCHost" in options) elastosRPCHost = options["elastosRPCHost"];
+        if (options && "useCache" in options) useCache = options["useCache"];
+        if (!did) throw new Error("Invalid DID");
+
+        let searchDid = did.replace("did:elastos:", "");
+
+        if (useCache){
+            let found = this.searchDIDDocumentOnCache(searchDid);
+            if (found) return found;
+        }
+
+
+        let document = await this.searchDIDDocumentOnBlockchain(searchDid, elastosRPCHost);
+        if (!document) return undefined;
+        if (useCache) this.setDIDDocumentOnCache(searchDid, document);
 
         return document;
     }
@@ -139,7 +171,7 @@ export class DidDocument {
         proof.verificationMethod = `${didElement.did}#primary`;
 
         let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase()
-        let signature = core.signData(dataToSign, didElement.privateKey);
+        let signature = this.core.signData(dataToSign, didElement.privateKey);
         proof.signature = signature;
         document.proof = proof;
     }
@@ -171,39 +203,6 @@ export class DidDocument {
             didElement.publicKeyBase58)];
     }
 
-    public isValid (diddocument, didElement, propertyName = "signatureValue") {
-
-        let document = JSON.parse(JSON.stringify(diddocument));
-        delete document.proof;
-        let dataToValidate = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
-
-        return core.verifyData(dataToValidate, diddocument["proof"][propertyName], didElement.publicKey);
-    }
-
-
-    public async getMostRecentDIDDocument (did, options = {}) {
-        let elastosRPCHost = Constants.elastosRPCAddress.mainchain;
-        let useCache =  true;
-
-        if (options && "elastosRPCHost" in options) elastosRPCHost = options["elastosRPCHost"];
-        if (options && "useCache" in options) useCache = options["useCache"];
-        if (!did) throw new Error("Invalid DID");
-
-        let searchDid = did.replace("did:elastos:", "");
-
-        if (useCache){
-            let found = this.searchDIDDocumentOnCache(searchDid);
-            if (found) return found;
-        }
-
-
-        let document = await this.searchDIDDocumentOnBlockchain(searchDid, elastosRPCHost);
-        if (!document) return undefined;
-        if (useCache) this.setDIDDocumentOnCache(searchDid, document);
-
-        return document;
-    }
-
     private setDIDDocumentOnCache (did, diddocument) {
         console.log("Enter on setDIDDocumentOnCache", did, diddocument);
         let storage = window.localStorage; //?? localStorage
@@ -215,7 +214,7 @@ export class DidDocument {
         this.clearExpiredCacheItems(cache);
 
         cache[did] = {
-            "expiration": core.getTimestamp() + (5 * 60),  //Five minutes cache
+            "expiration": this.core.getTimestamp() + (5 * 60),  //Five minutes cache
             "document": diddocument
         }
 
@@ -225,7 +224,7 @@ export class DidDocument {
 
     private clearExpiredCacheItems (cache) {
         var keys = Object.keys(cache);
-        let timestamp = core.getTimestamp();
+        let timestamp = this.core.getTimestamp();
         for (var i = 0; i < keys.length; i++) {
             if (timestamp > keys[i]["expiration"]) delete keys[i];
         }
@@ -233,7 +232,7 @@ export class DidDocument {
 
     private async searchDIDDocumentOnBlockchain (did, rpcHost) {
 
-        let responseJson = await core.rpcResolveDID(did, rpcHost);
+        let responseJson = await this.core.rpcResolveDID(did, rpcHost);
 
         if (!responseJson ||
             !responseJson["result"] ||
@@ -252,7 +251,7 @@ export class DidDocument {
         let cacheItem = jsonCache[did];
         if (!cacheItem) return undefined;
 
-        let timestamp = core.getTimestamp();
+        let timestamp = this.core.getTimestamp();
 
         if (timestamp > cacheItem["expiration"]) return undefined;
 

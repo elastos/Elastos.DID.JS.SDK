@@ -1,12 +1,14 @@
-const { core } = require('../core');
+import { Core } from  "../core"
 
+export class Hive {
 
+	private core: Core;
 
-const getPublicKey = (pubKeyHex) => {
-    return core.getPublicKey(pubKeyHex);
+	public constructor (core: Core) {
+		this.core = core;
+	}
+
+	public getPublicKey (pubKeyHex) {
+	    return this.core.getPublicKey(pubKeyHex);
+	}
 }
-
-
-module.exports.hive = {
-    getPublicKey
-};

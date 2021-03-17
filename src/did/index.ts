@@ -1,12 +1,13 @@
 import { Constants } from "../constants"
 import { Core } from "../core"
+
 const bip39 = require('bip39')
 
 export class Did {
 
     private core: Core
 
-    public constructor (code: Core) {
+    public constructor (core: Core) {
         this.core = core;
     }
 
