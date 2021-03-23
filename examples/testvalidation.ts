@@ -1,4 +1,4 @@
-const { ElastosClient } = require("../src");
+const { ElastosClient } = require("../dist");
 
 let run = async () => {
 

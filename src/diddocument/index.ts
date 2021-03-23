@@ -128,7 +128,7 @@ export class DidDocument {
 
         let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase()
         let signature = this.core.signData(dataToSign, didElement.privateKey);
-        proof.signature = signature;
+        proof.signatureValue = signature;
         document.proof = proof;
 
         return document;

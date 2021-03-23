@@ -1,4 +1,4 @@
-const { ElastosClient } = require("../src");
+const { ElastosClient } = require("../dist");
 
 let run = async () => {
     let mnemonic = "drink time ritual foam program sadness such inhale hurry supreme test forest";
@@ -9,9 +9,6 @@ let run = async () => {
 
     console.log(JSON.stringify(document))
     console.log("Is Valid", ElastosClient.didDocuments.isValid(document, didelement))
-
-    
-    
 }
 
 run()

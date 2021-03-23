@@ -17,8 +17,9 @@ var EC = require('elliptic').ec;
 Point.setCurve('p256');
 
 export abstract class JSONObject {
-    public toJSON () {
-        JSON.stringify(this);
+
+    public serialize () {
+        return JSON.stringify(this);
     }
 }
 
