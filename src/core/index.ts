@@ -117,13 +117,13 @@ export class Document  extends JSONObject {
     public verifiableCredential: VerifiableCredential[];
     public verifiablePresentation: VerifiablePresentation[];
     public service: Service[];
-    public readonly proof: Proof;
+    public proof?: Proof;
     public readonly id: any;
     public readonly publicKey: DocumentPublicKey;
     public readonly authentication: any;
     public readonly expires: string;
 
-    public constructor(id, publicKey, authentication, expires, proof) {
+    public constructor(id, publicKey, authentication, expires) {
         super();
         this.verifiableCredential = [];
         this.verifiablePresentation = [];
@@ -132,7 +132,6 @@ export class Document  extends JSONObject {
         this.publicKey = publicKey;
         this.authentication = authentication;
         this.expires = expires;
-        this.proof = proof;
     }
 
     public clone(): Document {
@@ -140,9 +139,12 @@ export class Document  extends JSONObject {
             this.id,
             this.publicKey,
             this.authentication,
-            this.expires,
-            this.proof
+            this.expires
         );
+
+        if (this.hasProof()) {
+            clonedDocument.proof = this.proof;
+        }
 
         clonedDocument.verifiableCredential = this.verifiableCredential;
         clonedDocument.verifiablePresentation = this.verifiablePresentation;

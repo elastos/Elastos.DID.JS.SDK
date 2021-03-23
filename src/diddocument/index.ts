@@ -15,8 +15,7 @@ export class DidDocument {
             didElement.did,
             this.getPublicKeyProperty(didElement),
             [`${didElement.did}#primary`],
-            this.getExpiration().toISOString().split('.')[0]+"Z",
-            null
+            this.getExpiration().toISOString().split('.')[0]+"Z"
         );
     }
 
