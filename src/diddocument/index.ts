@@ -35,16 +35,6 @@ export class DidDocument {
 
     }
 
-    public addVerfiablePresentationToDIDDocument (document: Document, vp: VerifiablePresentation) {
-        if (document.hasProof())
-        {
-            console.error("You can't modify this document because is already sealed");
-            return;
-        }
-        if (!document.verifiablePresentation) document.verifiablePresentation = [];
-        document.verifiablePresentation.push(vp);
-    }
-
     public addServiceToDIDDocument (document: Document, service: Service) {
         if (document.hasProof())
         {
@@ -52,7 +42,21 @@ export class DidDocument {
             return;
         }
         if (!document.service) document.service = [];
-        document.service.push(service);
+
+        let serviceIndex = -1;
+        document.service.forEach((element, index) => {
+            if (element.id.toLowerCase() === service.id.toLowerCase())
+            {
+              serviceIndex = index
+            }
+        });
+
+        if (serviceIndex >= 0){
+            document.service[serviceIndex] = service
+        }
+        else {
+            document.service.push(service);
+        }
     }
 
 
@@ -113,24 +117,29 @@ export class DidDocument {
     public sealDocument (didElement, document) {
         if (document.hasProof())
         {
-            console.error("You can't modify this document because is already sealed")
-            return
+            console.error("You can't modify this document because is already sealed");
+            return;
         }
 
-        if (document.verifiableCredential && document.verifiableCredential.length === 0)  delete document.verifiableCredential;
-        if (document.verifiablePresentation && document.verifiablePresentation.length === 0) delete document.verifiablePresentation;
-        if (document.service && document.service.length === 0) delete document.service;
+        let newDocument = new Document(document["id"], document["publicKey"], document["authentication"], document["expires"]);
+
+        if (document.verifiableCredential && document.verifiableCredential.length > 0) {
+            newDocument.verifiableCredential = document["verifiableCredential"];
+        }
+        if (document.service && document.service.length > 0) {
+            newDocument.service = document["service"];
+        }
 
         let proof = new Proof("ECDSAsecp256r1");
         proof.created = new Date().toISOString().split('.')[0]+"Z";
         proof.creator = `${didElement.did}#primary`;
 
-        let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase()
+        let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
         let signature = this.core.signData(dataToSign, didElement.privateKey);
         proof.signatureValue = signature;
-        document.proof = proof;
+        newDocument.proof = proof;
 
-        return document;
+        return newDocument;
     }
 
     public isValid (diddocument, didElement, propertyName = "signatureValue") {
