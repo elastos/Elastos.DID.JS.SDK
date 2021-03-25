@@ -1,6 +1,4 @@
 
-  const { connected } = require("process");
-  const { constants } = require("../constants");
   const { core } = require("../core");
   
   const newDIDDocument = (didElement) => {
@@ -115,7 +113,7 @@
       let service = {};
       core.setToJSON(service);
   
-      core.addReadOnlyPropertyToObject(service, "id", `${did}#${type}`.toLowerCase());
+      core.addReadOnlyPropertyToObject(service, "id", `${did}#${type.toLowerCase()}`);
       core.addReadOnlyPropertyToObject(service, "type", type);
       core.addReadOnlyPropertyToObject(service, "serviceEndpoint", endpoint);
   
