@@ -5,10 +5,10 @@ let run = async () => {
     let didelement = await ElastosClient.did.loadFromMnemonic(mnemonic);
     let document = ElastosClient.didDocuments.newDIDDocument(didelement);
 
-    ElastosClient.didDocuments.sealDocument(didelement, document)
+    let newDocument = ElastosClient.didDocuments.sealDocument(didelement, document);
 
-    console.log(JSON.stringify(document))
-    console.log("Is Valid", ElastosClient.didDocuments.isValid(document, didelement))
-}
+    console.log(JSON.stringify(newDocument));
+    console.log("Is Valid", ElastosClient.didDocuments.isValid(newDocument, didelement));
+};
 
-run()
+run();
