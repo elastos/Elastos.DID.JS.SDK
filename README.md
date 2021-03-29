@@ -1,1 +1,1 @@
-Elastos JS SDK
+# Elastos DID JS SDK
