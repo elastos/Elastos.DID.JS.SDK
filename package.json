@@ -3,10 +3,14 @@
   "version": "2.0.0",
   "description": "Elastos JS SDK",
   "scripts": {
-    "build": "tsc",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rm -rf dist/ dist.esm/",
+    "tsc:build": "rollup -c",
     "tsc:w": "tsc -w"
   },
-  "main": "index.js",
+  "main": "dist/index.js",
+  "module": "dist.esm/index.js",
   "dependencies": {
     "bip39": "^3.0.2",
     "bitcore-lib-curve": "^0.16.0",
@@ -22,7 +26,16 @@
     "secp256r1": "0.0.3"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^17.1.0",
+    "@rollup/plugin-node-resolve": "^11.2.0",
+    "@rollup/plugin-typescript": "^8.2.0",
     "@types/node": "^14.14.33",
+    "rollup": "^2.42.3",
+    "rollup-plugin-analyzer": "^4.0.0",
+    "rollup-plugin-copy-assets": "^2.0.3",
+    "rollup-plugin-css-only": "^3.1.0",
+    "rollup-plugin-postcss": "^4.0.0",
+    "rollup-plugin-terser": "^7.0.2",
     "typescript": "^4.2.3"
   },
   "repository": {
@@ -30,8 +43,8 @@
     "url": "git+https://github.com/elastos/Elastos.DID.JS.SDK.git"
   },
   "files": [
-    "src",
-    "dist"
+    "dist",
+    "dist.esm"
   ],
   "author": "Tuum Tech",
   "license": "MIT",

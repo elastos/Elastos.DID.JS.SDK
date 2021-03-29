@@ -1,10 +1,9 @@
 {
-  "include": ["src"],
-  "exclude": ["node_modules", "tests", "dist"],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "tests", "dist", "dist.esm"],
   "compilerOptions": {
     "target": "es6",
     "lib": ["es2017", "es7", "es6", "dom"],
-    "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "dist",
     "declaration": true,
@@ -16,6 +15,8 @@
     "skipLibCheck": true,
     "noImplicitAny": false,
     "removeComments": true,
+    "isolatedModules": true,
+    "preserveConstEnums": true,
     "rootDirs": ["src/"],
     "typeRoots": ["node_modules/@types", "typings"]
   }
