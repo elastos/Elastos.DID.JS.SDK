@@ -1,4 +1,4 @@
-import { Constants } from "../constants"
+import { StaticConfiguration } from "../constants/staticconfiguration"
 import { Document, Service, Subject, Proof, DocumentPublicKey, VerifiableCredential, VerifiablePresentation, Core, Cache} from "../core"
 import { Did } from "../did"
 
@@ -82,7 +82,7 @@ export class DidDocument {
     }
 
     public createService (didElement, did: Did, type, endpoint) {
-        return new Service(`${did}#${type}`, type, endpoint);
+        return new Service(`${did}#${type.toLowerCase()}`, type, endpoint);
     }
 
     public createVerifiableCredentialVP (appDid, userDid, appName) {
@@ -142,17 +142,17 @@ export class DidDocument {
         return newDocument;
     }
 
-    public isValid (diddocument, didElement, propertyName = "signatureValue") {
+    public isValid (diddocument, didElement) {
 
         let document = JSON.parse(JSON.stringify(diddocument));
         delete document.proof;
         let dataToValidate = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
 
-        return this.core.verifyData(dataToValidate, diddocument["proof"][propertyName], didElement.publicKey);
+        return this.core.verifyData(dataToValidate, diddocument["proof"]["signatureValue"], didElement.publicKey);
     }
 
-    public async getMostRecentDIDDocument (did, options = {}) {
-        let elastosRPCHost = Constants.elastosRPCAddress.mainchain;
+    public async getMostRecentDIDDocument (did, options: Map<string, any> = new Map()) {
+        let elastosRPCHost = StaticConfiguration.ELASTOS_RPC_ADDRESS.mainchain;
         let useCache =  true;
 
         if (options && "elastosRPCHost" in options) elastosRPCHost = options["elastosRPCHost"];
@@ -198,9 +198,11 @@ export class DidDocument {
         document.proof = proof;
     }
 
-    private getExpiration (date = new Date(), yearsToAdd = 5) {
-        date.setFullYear(date.getFullYear() + yearsToAdd)
-        return date
+    private getExpiration (date: Date = new Date(), yearsToAdd: number = 5) {
+        let newDate: Date = new Date(date.getTime());
+        newDate.setFullYear(date.getFullYear() + yearsToAdd)
+
+        return newDate;
     }
 
     private getPublicKeyProperty (didElement) {

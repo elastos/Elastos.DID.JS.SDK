@@ -1,4 +1,4 @@
-import { Constants } from "../constants"
+import { CoinType, ChangeChain, SignType, SignTypeMap } from "../constants"
 import { Did } from "../did"
 
 const rs = require('jsrsasign');
@@ -16,178 +16,27 @@ var EC = require('elliptic').ec;
 
 Point.setCurve('p256');
 
-export abstract class JSONObject {
-
-    public serialize () {
-        return JSON.stringify(this);
-    }
-}
-
-export class VerifiableCredential extends JSONObject {
-    public readonly id: string;
-    public readonly type: string[];
-    public readonly issuer: Did;
-    public readonly issuanceDate: string;
-    public readonly expirationDate: string;
-    public readonly credentialSubject: Subject;
-
-    public constructor(id, type, issuer, issuanceDate, expirationDate, credentialSubject) {
-        super();
-        this.id = id;
-        this.type = type;
-        this.issuer = issuer;
-        this.issuanceDate = issuanceDate;
-        this.expirationDate = expirationDate;
-        this.credentialSubject = credentialSubject;
-    }
-}
-
-export class VerifiablePresentation extends JSONObject  {
-    public readonly type: string;
-    public readonly created: string;
-    public readonly verifiableCredential: VerifiableCredential[];
-
-    public constructor (type, created, verifiableCredential) {
-        super();
-        this.type = type;
-        this.created = created;
-        this.verifiableCredential = verifiableCredential;
-    }
-}
-
-export class Subject extends JSONObject  {
-    public readonly id: Did;
-    public appDid?: string;
-    public appInstanceDid?: Did;
-    public name?: string;
-    public value?: any;
-
-    public constructor (id) {
-        super();
-        this.id = id;
-    }
-}
-
-export class Service extends JSONObject  {
-    public readonly id: string;
-    public readonly type: string;
-    public readonly serviceEndpoint: string;
-
-    public constructor (id, type, endpoint) {
-        super();
-        this.id = id;
-        this.type = type;
-        this.serviceEndpoint = endpoint;
-    }
-}
-
-export class DocumentPublicKey extends JSONObject  {
-    public readonly id: string;
-    public readonly type: String
-    public readonly controller: Did;
-    public readonly publicKeyBase58: string;
-
-    public constructor (id, type, controller, publicKeyBase58) {
-        super();
-        this.id = id;
-        this.type = type;
-        this.controller = controller;
-        this.publicKeyBase58 = publicKeyBase58;
-    }
-}
-
-export class Proof extends JSONObject  {
-    public readonly type: string;
-    public created?: string;
-    public creator?: string;
-    public signature?: string;
-    public signatureValue?: string;
-    public verificationMethod?: string;
-    public realm?: any;
-    public nonce?: any;
-
-    public constructor (type) {
-        super();
-        this.type = type;
-    }
-}
-
-export class Document  extends JSONObject {
-
-    public verifiableCredential: VerifiableCredential[];
-    public verifiablePresentation: VerifiablePresentation[];
-    public service: Service[];
-    public proof?: Proof;
-    public readonly id: any;
-    public readonly publicKey: DocumentPublicKey;
-    public readonly authentication: any;
-    public readonly expires: string;
-
-    public constructor(id, publicKey, authentication, expires) {
-        super();
-        this.verifiableCredential = [];
-        this.verifiablePresentation = [];
-        this.service = [];
-        this.id = id;
-        this.publicKey = publicKey;
-        this.authentication = authentication;
-        this.expires = expires;
-    }
-
-    public clone(): Document {
-        let clonedDocument = new Document(
-            this.id,
-            this.publicKey,
-            this.authentication,
-            this.expires
-        );
-
-        if (this.hasProof()) {
-            clonedDocument.proof = this.proof;
-        }
-
-        clonedDocument.verifiableCredential = this.verifiableCredential;
-        clonedDocument.verifiablePresentation = this.verifiablePresentation;
-        clonedDocument.service = this.service;
-
-        return clonedDocument;
-    }
-
-    public hasProof(): boolean {
-        return (this.proof ? true : false);
-    }
-}
-
-export class Cache {
-    public readonly expiration: Number;
-    public document?: any;
-
-    public constructor(expiration) {
-        this.expiration = expiration;
-    }
-}
-
 export class Core {
 
-    public generateMnemonic(lang = 'en', wordlist = []) {
-        let wordListMap = {
-            en: bip39.wordlists.english,
-            cn: bip39.wordlists.chinese_simplified,
-            fr: bip39.wordlists.french,
-            it: bip39.wordlists.italian,
-            jp: bip39.wordlists.japanese,
-            sp: bip39.wordlists.spanish,
-        };
-
-        return bip39.generateMnemonic(128, randombytes, wordlist.length > 0 ? wordlist : wordListMap[lang]);
+    public static readonly WORDLIST = {
+        EN: bip39.wordlists.english,
+        CN: bip39.wordlists.chinese_simplified,
+        FR: bip39.wordlists.french,
+        IT: bip39.wordlists.italian,
+        JP: bip39.wordlists.japanese,
+        SP: bip39.wordlists.spanish
     }
 
-    public async getSeedFromMnemonic (mnemonic, password:string|undefined) {
+    public generateMnemonic(lang: string = 'en', wordlist: string[] = []): string {
+        return bip39.generateMnemonic(128, randombytes, wordlist.length > 0 ? wordlist : Core.WORDLIST[lang.toUpperCase()]);
+    }
+
+    public async getSeedFromMnemonic (mnemonic: string, password:string|undefined): Promise<Buffer> {
         return await bip39.mnemonicToSeed(mnemonic, password);
     }
 
 
-    public generateSubPrivateKey (seed, coinType = Constants.coinTypes.ELA, changeChain = Constants.changeChain.EXTERNAL, index = 0) {
+    public generateSubPrivateKey (seed: Buffer, coinType: CoinType = CoinType.ELA, changeChain: ChangeChain = ChangeChain.EXTERNAL, index: number = 0): string {
         const prvKey = HDPrivateKey.fromSeed(seed);
         const parent = new HDPrivateKey(prvKey.xprivkey);
         const privateKey = parent
@@ -197,10 +46,9 @@ export class Core {
             .deriveChild(changeChain, false)
             .deriveChild(index, false);
         return privateKey.privateKey;
-
     }
 
-    public getMasterPublicKey (seed, coinType = Constants.coinTypes.ELA) {
+    public getMasterPublicKey (seed: Buffer, coinType: CoinType = CoinType.ELA): string {
         const prvKey = HDPrivateKey.fromSeed(seed);
         const parent = new HDPrivateKey(prvKey.xprivkey);
         const multiWallet = parent
@@ -210,7 +58,7 @@ export class Core {
         return multiWallet.xpubkey;
     }
 
-    public generateSubPublicKey (masterPublicKey, changeChain = Constants.changeChain.EXTERNAL, index = 0) {
+    public generateSubPublicKey (masterPublicKey: string, changeChain: ChangeChain = ChangeChain.EXTERNAL, index: number = 0): string {
         const parent = new HDPublicKey(masterPublicKey);
         const multiWallet = parent
             .deriveChild(changeChain)
@@ -219,16 +67,17 @@ export class Core {
         return multiWallet.publicKey;
     }
 
-    public getAddressBase (pubKey, signType) {
+    public getAddressBase (pubKey: string, signType: SignType): string {
         const pubKeyBuf = Buffer.from(pubKey, 'hex');
-        const code = Buffer.concat([Buffer.from([0x21]), pubKeyBuf, Buffer.from([Constants.signTypeMap[signType].type])]);
+        const signTypeMap = SignTypeMap[signType];
+        const code = Buffer.concat([Buffer.from([0x21]), pubKeyBuf, Buffer.from([SignTypeMap[signType].type])]);
         const hashBuf = Hash.sha256ripemd160(code);
-        const programHashBuf = Buffer.concat([Buffer.from([Constants.signTypeMap[signType].address]), hashBuf]);
+        const programHashBuf = Buffer.concat([Buffer.from([SignTypeMap[signType].address]), hashBuf]);
 
         return Base58Check.encode(programHashBuf);
     }
 
-    public getpublicKeyBase58 (masterPublicKey, changeChain = Constants.changeChain.EXTERNAL, index = 0) {
+    public getpublicKeyBase58 (masterPublicKey: string, changeChain: ChangeChain = ChangeChain.EXTERNAL, index: number = 0): string {
 
         const parent = new HDPublicKey(masterPublicKey);
         const multiWallet = parent
@@ -238,24 +87,17 @@ export class Core {
         return Base58.encode(Buffer.from(multiWallet._buffers.publicKey));
     }
 
-    public getBase58 (pubKey) {
+    public getBase58 (pubKey: string): string {
         return Base58.encode(Buffer.from(pubKey));
     }
 
-    public addReadOnlyPropertyToObject (obj, prop, value) {
-        Object.defineProperty(obj, prop, {
-            value: value,
-            writable: false
-        });
-    }
-
-    public getPublicKey (publicKeyHex) {
+    public getPublicKey (publicKeyHex: string): string {
         let pubKeyObj = PublicKey.fromString(publicKeyHex);
         let json = pubKeyObj.toJSON();
         return json;
     }
 
-    public signData (bufferData, privateKey) {
+    public signData (bufferData: string, privateKey: string): string {
         let ec = new rs.KJUR.crypto.ECDSA({curve: "secp256r1"});
         ec.setPrivateKeyHex(privateKey);
         let dataSigner = new rs.KJUR.crypto.Signature({ alg: "SHA256withECDSA" });
@@ -278,7 +120,7 @@ export class Core {
         return signedData;
     }
 
-    public verifyData (data, signature, publicKey) {
+    public verifyData (data: string, signature: string, publicKey: string): boolean {
         let pubKeyObj = PublicKey.fromString(publicKey);
         let signer = new rs.KJUR.crypto.Signature({ alg: 'SHA256withECDSA' });
 
@@ -293,11 +135,11 @@ export class Core {
         return signer.verify(asn1);
     }
 
-    public getTimestamp () {
+    public getTimestamp (): number {
         return Math.floor(Date.now() / 1000);
     }
 
-    public async rpcResolveDID (did, rpcHost) {
+    public async rpcResolveDID (did: string, rpcHost: string): Promise<any> {
         let didKey = did.replace("did:elastos:", "");
 
         let body = {
@@ -326,9 +168,9 @@ export class Core {
         return await rpcResponse.json();
     }
 
-    private uncompress (key)  {
+    private uncompress (key): string  {
         if (!key.compressed) {
-            throw new Error('Publick key is not compressed.');
+            throw new Error('Public key is not compressed.');
         }
 
         const x = key.point.getX();
@@ -345,16 +187,16 @@ export class Core {
         return Buffer.concat([Buffer.from([0x04]), xbuf, ybuf]);
     }
 
-    private getPublicFromPrivateKey (privateKey) {
+    private getPublicFromPrivateKey (privateKey: string): string {
         return PrivateKey.fromBuffer(privateKey).publicKey;
     }
 
-    private arrayCopy(src, srcIndex, dest, destIndex, length) {
+    private arrayCopy(src: Uint8Array, srcIndex: number, dest: Uint8Array, destIndex: number, length: number): void {
         let values = [...src.slice(srcIndex, srcIndex + length)];
         dest.set(values, destIndex);
     }
 
-    private generateDIDFromPublicKey (pubKey) {
+    private generateDIDFromPublicKey (pubKey: string): string {
 
         //GET REDEEM SCRIPT
         let pk = Buffer.from(pubKey).slice(0, 33);

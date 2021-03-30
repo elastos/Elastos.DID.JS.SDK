@@ -1,4 +1,4 @@
-import { Constants } from "../constants"
+import { CoinType, ChangeChain, SignType } from '../constants'
 import { Core } from "../core"
 
 const bip39 = require('bip39')
@@ -21,10 +21,10 @@ export class Did {
             return null;
         }
         let seed = await this.core.getSeedFromMnemonic(mnemonic, password);
-        let privateKey = this.core.generateSubPrivateKey(this.buf2hex(seed), Constants.coinTypes.ELA, Constants.changeChain.EXTERNAL, index).toString('hex');
-        let masterPublicKey = this.core.getMasterPublicKey(seed, Constants.coinTypes.ELA);
-        let publicKey = this.core.generateSubPublicKey(masterPublicKey, Constants.changeChain.EXTERNAL, index).toString('hex')
-        let did = this.core.getAddressBase(publicKey, Constants.signTypes.ELA_IDCHAIN).toString()
+        let privateKey = this.core.generateSubPrivateKey(this.buf2hex(seed), CoinType.ELA, ChangeChain.EXTERNAL, index).toString('hex');
+        let masterPublicKey = this.core.getMasterPublicKey(seed, CoinType.ELA);
+        let publicKey = this.core.generateSubPublicKey(masterPublicKey, ChangeChain.EXTERNAL, index).toString('hex')
+        let did = this.core.getAddressBase(publicKey, SignType.ELA_IDCHAIN).toString()
         let publicBase58 = this.core.getpublicKeyBase58(masterPublicKey)
 
         return {
@@ -38,7 +38,7 @@ export class Did {
 
     }
 
-    private buf2hex(buffer) {
+    private buf2hex(buffer): string {
         return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
     }
 }
