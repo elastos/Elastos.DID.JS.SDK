@@ -1,50 +1,72 @@
-import { StaticConfiguration } from "../constants/staticconfiguration"
-import { Document, Service, Subject, Proof, DocumentPublicKey, VerifiableCredential, VerifiablePresentation, Core, Cache} from "../core"
-import { Did } from "../did"
+import { StaticConfiguration } from "./staticconfiguration";
+import { Util, Signer, DIDUtil, Cache } from "./core";
+import { DIDElement, JSONObject, Service, Subject, Proof, DocumentPublicKey, VerifiableCredential, VerifiablePresentation } from "./domain";
+import { DID } from "./did"
 
-export class DidDocument {
+export class DIDDocument extends JSONObject {
 
-    private core: Core
+    public verifiableCredential: VerifiableCredential[];
+    public verifiablePresentation: VerifiablePresentation[];
+    public service: Service[];
+    public proof?: Proof;
+    public readonly id: any;
+    public readonly publicKey: DocumentPublicKey[];
+    public readonly authentication: any;
+    public readonly expires: string;
+    private didElement: DIDElement;
 
-    public constructor (core: Core) {
-        this.core = core;
+    public constructor (didElement: DIDElement) {
+        super();
+        this.id = didElement.did;
+        this.publicKey = this.getPublicKeyProperty(didElement);
+        this.authentication = [`${didElement.did}#primary`];
+        this.expires = this.getExpiration().toISOString().split('.')[0]+"Z";
+        this.verifiableCredential = [];
+        this.verifiablePresentation = [];
+        this.service = [];
     }
 
-    public newDIDDocument (didElement): Document {
-        return new Document(
-            didElement.did,
-            this.getPublicKeyProperty(didElement),
-            [`${didElement.did}#primary`],
-            this.getExpiration().toISOString().split('.')[0]+"Z"
-        );
+    public clone(): DIDDocument {
+        let clonedDocument = new DIDDocument(this.didElement);
+
+        if (this.proof) {
+            clonedDocument.proof = this.proof;
+        }
+        if (this.verifiableCredential) {
+            clonedDocument.verifiableCredential = this.verifiableCredential;
+        }
+        if (this.verifiablePresentation) {
+            clonedDocument.verifiablePresentation = this.verifiablePresentation;
+        }
+        if (this.service) {
+            clonedDocument.service = this.service;
+        }
+        return clonedDocument;
     }
 
-    public clone(document: Document) {
-        return document.clone();
-    }
 
-    public addVerfiableCredentialToDIDDocument (document: Document, vc: VerifiableCredential) {
-        if (document.hasProof())
+
+    public addVerfiableCredential (vc: VerifiableCredential) {
+        if (this.proof)
         {
             console.error("You can't modify this document because is already sealed");
             return;
         }
 
-        if (!document.verifiableCredential) document.verifiableCredential = [];
-        document.verifiableCredential.push(vc);
-
+        if (!this.verifiableCredential) this.verifiableCredential = [];
+        this.verifiableCredential.push(vc);
     }
 
-    public addServiceToDIDDocument (document: Document, service: Service) {
-        if (document.hasProof())
+    public addService (service: Service) {
+        if (this.proof)
         {
             console.error("You can't modify this document because is already sealed");
             return;
         }
-        if (!document.service) document.service = [];
+        if (!this.service) this.service = [];
 
         let serviceIndex = -1;
-        document.service.forEach((element, index) => {
+        this.service.forEach((element, index) => {
             if (element.id.toLowerCase() === service.id.toLowerCase())
             {
               serviceIndex = index
@@ -52,15 +74,15 @@ export class DidDocument {
         });
 
         if (serviceIndex >= 0){
-            document.service[serviceIndex] = service
+            this.service[serviceIndex] = service
         }
         else {
-            document.service.push(service);
+            this.service.push(service);
         }
     }
 
 
-    public createVerifiableCredential (didElement, issuer: Did, subjectName: string, subjectTypes: string[], subjectValue) {
+    public createVerifiableCredential (didElement: DIDElement, issuer: DID, subjectName: string, subjectTypes: string[], subjectValue: any) {
         let issuanceDate = new Date();
         let vcTypes = subjectTypes
         vcTypes.push(issuer === didElement.did ? "SelfProclaimedCredential" : "VerifiableCredential")
@@ -81,11 +103,11 @@ export class DidDocument {
         return vc;
     }
 
-    public createService (didElement, did: Did, type, endpoint) {
+    public createService (didElement, did: DID, type, endpoint) {
         return new Service(`${did}#${type.toLowerCase()}`, type, endpoint);
     }
 
-    public createVerifiableCredentialVP (appDid, userDid, appName) {
+    public createVerifiableCredentialVP (appDid: DID, userDid: DID, appName: string) {
         let issuanceDate = new Date();
         let vcTypes = ["AppIdCredential"];
         let subject = new Subject(appDid.did);
@@ -105,7 +127,7 @@ export class DidDocument {
         return vc
     }
 
-    public createVerifiablePresentation (didElement, type, verifiableCredential, realm, nonce) {
+    public createVerifiablePresentation (didElement: DIDElement, type: String, verifiableCredential: VerifiableCredential, realm: string, nonce: string) {
         let createDate = new Date();
         let vp = new VerifiablePresentation(type, createDate.toISOString().split('.')[0]+"Z", [verifiableCredential]);
 
@@ -114,20 +136,11 @@ export class DidDocument {
         return vp;
     }
 
-    public sealDocument (didElement, document) {
-        if (document.hasProof())
+    public sealDocument (didElement: DIDElement) {
+        if (this.proof)
         {
             console.error("You can't modify this document because is already sealed");
             return;
-        }
-
-        let newDocument = new Document(document["id"], document["publicKey"], document["authentication"], document["expires"]);
-
-        if (document.verifiableCredential && document.verifiableCredential.length > 0) {
-            newDocument.verifiableCredential = document["verifiableCredential"];
-        }
-        if (document.service && document.service.length > 0) {
-            newDocument.service = document["service"];
         }
 
         let proof = new Proof("ECDSAsecp256r1");
@@ -135,11 +148,9 @@ export class DidDocument {
         proof.creator = `${didElement.did}#primary`;
 
         let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
-        let signature = this.core.signData(dataToSign, didElement.privateKey);
+        let signature = Signer.signData(dataToSign, didElement.privateKey);
         proof.signatureValue = signature;
-        newDocument.proof = proof;
-
-        return newDocument;
+        this.proof = proof;
     }
 
     public isValid (diddocument, didElement) {
@@ -148,7 +159,7 @@ export class DidDocument {
         delete document.proof;
         let dataToValidate = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
 
-        return this.core.verifyData(dataToValidate, diddocument["proof"]["signatureValue"], didElement.publicKey);
+        return Signer.verifyData(dataToValidate, diddocument["proof"]["signatureValue"], didElement.publicKey);
     }
 
     public async getMostRecentDIDDocument (did, options: Map<string, any> = new Map()) {
@@ -179,7 +190,7 @@ export class DidDocument {
         proof.verificationMethod = `${didElement.did}#primary`;
 
         let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase()
-        let signature = this.core.signData(dataToSign, didElement.privateKey);
+        let signature = Signer.signData(dataToSign, didElement.privateKey);
         proof.signature = signature;
         document.proof = proof;
     }
@@ -193,7 +204,7 @@ export class DidDocument {
         let json = JSON.stringify(document, null, "");
 
         let dataToSign = Buffer.from(json + realm + nonce, "utf8").toString("hex").toUpperCase()
-        let signature = this.core.signData(dataToSign, didElement.privateKey);
+        let signature = Signer.signData(dataToSign, didElement.privateKey);
         proof.signature = signature;
         document.proof = proof;
     }
@@ -224,7 +235,7 @@ export class DidDocument {
         this.clearExpiredCacheItems(cache);
 
         cache[did] = {
-            "expiration": this.core.getTimestamp() + (5 * 60),  //Five minutes cache
+            "expiration": Util.getTimestamp() + (5 * 60),  //Five minutes cache
             "document": diddocument
         }
 
@@ -234,7 +245,7 @@ export class DidDocument {
 
     private clearExpiredCacheItems (cache) {
         var keys = Object.keys(cache);
-        let timestamp = this.core.getTimestamp();
+        let timestamp = Util.getTimestamp();
         for (var i = 0; i < keys.length; i++) {
             if (timestamp > keys[i]["expiration"]) delete keys[i];
         }
@@ -242,7 +253,7 @@ export class DidDocument {
 
     private async searchDIDDocumentOnBlockchain (did, rpcHost) {
 
-        let responseJson = await this.core.rpcResolveDID(did, rpcHost);
+        let responseJson = await DIDUtil.rpcResolveDID(did, rpcHost);
 
         if (!responseJson ||
             !responseJson["result"] ||
@@ -261,7 +272,7 @@ export class DidDocument {
         let cacheItem = jsonCache[did];
         if (!cacheItem) return undefined;
 
-        let timestamp = this.core.getTimestamp();
+        let timestamp = Util.getTimestamp();
 
         if (timestamp > cacheItem["expiration"]) return undefined;
 

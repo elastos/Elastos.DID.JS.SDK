@@ -1,5 +1,6 @@
-import { Constants } from "../constants"
-import { Core, JSONObject, Proof } from "../core"
+import { DIDDocument } from "./diddocument"
+import { JSONObject, Proof } from "./domain"
+import { Signer, DIDUtil } from "./core"
 
 const rs = require('jsrsasign')
 
@@ -9,7 +10,7 @@ export class RequestHeader extends JSONObject {
     public readonly operation: string;
     public readonly previousTxid: string;
 
-    public constructor (specification, operation, previousTxid?) {
+    public constructor (specification: string, operation: string, previousTxid?: string) {
         super();
         this.specification = specification;
         this.operation = operation;
@@ -31,13 +32,7 @@ export class RequestInternal extends JSONObject {
 
 export class IdChainRequest {
 
-    private core: Core;
-
-    public constructor (core: Core) {
-        this.core = core;
-    }
-
-    public generateCreateRequest (diddocument, didelement) {
+    public generateCreateRequest (diddocument: DIDDocument, didelement) {
         return this.generateRequestInternal(diddocument, didelement, "create");
     }
 
@@ -52,10 +47,10 @@ export class IdChainRequest {
         let payload = JSON.parse(atob(request["payload"]));
         let hash = this.generateHash(request);
 
-        return this.core.verifyData(hash, request["proof"]["signature"], didElement.publicKey);
+        return Signer.verifyData(hash, request["proof"]["signature"], didElement.publicKey);
     }
 
-    private generateRequestInternal (diddocument, didelement, operation, previousTxId? ) {
+    private generateRequestInternal (diddocument: DIDDocument, didelement, operation, previousTxId? ) {
         let header;
         if (operation == "update") {
             header = new RequestHeader("elastos/did/1.0", operation, previousTxId);
@@ -72,7 +67,7 @@ export class IdChainRequest {
 
     private async getPreviousTxId (did) {
         let elastosRPCHost = "http://api.elastos.io:20606";
-        let responseJson = await this.core.rpcResolveDID(did, elastosRPCHost);
+        let responseJson = await DIDUtil.rpcResolveDID(did, elastosRPCHost);
 
         if (!responseJson ||
             !responseJson["result"] ||
@@ -94,7 +89,7 @@ export class IdChainRequest {
     private sign (didElement, request: RequestInternal, diddocument) {
         let proof = new Proof("ECDSAsecp256r1");
         let dataToSign = this.generateHash(request);
-        let signature = this.core.signData(dataToSign, didElement.privateKey);
+        let signature = Signer.signData(dataToSign, didElement.privateKey);
 
         proof.verificationMethod = `${didElement.did}#primary`;
         proof.signature = signature;
