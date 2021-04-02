@@ -25,14 +25,21 @@ import { AbstractMetadata } from "./abstractmetadata";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDEntity } from "./didentity";
+import { DIDMetadata } from "./didmetadata";
+import { DIDStorage } from "./didstorage";
 import { DIDURL } from "./didurl";
-import { IllegalArgumentException, WrongPasswordException } from "./exceptions/exceptions";
+import { VerifiableCredential } from "./domain";
+import { DIDStoreException, IllegalArgumentException, WrongPasswordException } from "./exceptions/exceptions";
+import { Logger } from "./logger";
+import { RootIdentity } from "./rootidentity";
 import { checkArgument } from "./utils";
 
 /**
  * DIDStore is local store for all DIDs.
  */
-export class DIDStore {
+ const log = new Logger("DIDStore");
+
+ export class DIDStore {
 	static DID_STORE_TYPE: string = "did:elastos:store";
 	/* protected */ static DID_STORE_VERSION = 3;
 
@@ -46,24 +53,22 @@ export class DIDStore {
 	private cache: Cache<Key, Object>;
 
 	private storage: DIDStorage;
-	private metadata: Metadata;
+	private metadata: DIDStore.Metadata;
 
 	/* protected static final ConflictHandle defaultConflictHandle = (c, l) -> {
 		l.getMetadata().setPublished(c.getMetadata().getPublished());
 		l.getMetadata().setSignature(c.getMetadata().getSignature());
 		return l;
-	};
+	};*/
 
-	private static final Logger log = LoggerFactory.getLogger(DIDStore.class); */
-
-	private DIDStore(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage) /* throws DIDStoreException */ {
+	private constructor(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage) {
 		if (initialCacheCapacity < 0)
 			initialCacheCapacity = 0;
 
 		if (maxCacheCapacity < 0)
 			maxCacheCapacity = 0;
 
-		cache = CacheBuilder.newBuilder()
+		this.cache = CacheBuilder.newBuilder()
 			.initialCapacity(initialCacheCapacity)
 			.maximumSize(maxCacheCapacity)
 			.softValues()
@@ -127,10 +132,10 @@ export class DIDStore {
 
 		public close() {
 			// log.verbose("Cache statistics: {}", cache.stats().toString());
-			cache.invalidateAll();
-			cache = null;
-			metadata = null;
-			storage = null;
+			this.cache.invalidateAll();
+			this.cache = null;
+			this.metadata = null;
+			this.storage = null;
 		}
 
 		private static calcFingerprint(password: string): string /* throws DIDStoreException */ {
@@ -179,22 +184,22 @@ export class DIDStore {
 		 * @return the original data before encrpting
 		 * @throws DIDStoreException Decrypt private key error.
 		 */
-		private static byte[] decryptFromBase64(input: string, passwd: string) {
-			try {
+		private static decryptFromBase64(input: string, passwd: string): byte[] {
+			/* try {
 				byte[] cipher = Base64.decode(input,
 					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
 
 				return Aes256cbc.decrypt(cipher, passwd);
 			} catch (CryptoException e) {
 				throw new WrongPasswordException("Decrypt private key error.", e);
-			}
+			} */
 		}
 
-		private static String reEncrypt(secret: string, oldpass: string, newpass: string) {
-			byte[] plain = decryptFromBase64(secret, oldpass);
+		private static reEncrypt(secret: string, oldpass: string, newpass: string): string {
+			/* byte[] plain = decryptFromBase64(secret, oldpass);
 			String newSecret = encryptToBase64(plain, newpass);
 			Arrays.fill(plain, (byte)0);
-			return newSecret;
+			return newSecret; */
 		}
 
 		private encrypt(input: byte[], passwd: string): string {
@@ -224,42 +229,41 @@ export class DIDStore {
 			return result;
 		}
 
-		protected storeRootIdentity(RootIdentity identity, String storepass) {
+		protected storeRootIdentity(identity: RootIdentity, storepass: string) {
 			checkArgument(identity != null, "Invalid identity");
-			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 			let encryptedMnemonic = null;
 			if (identity.getMnemonic() != null)
-				encryptedMnemonic = encrypt(identity.getMnemonic().getBytes(), storepass);
+				encryptedMnemonic = this.encrypt(identity.getMnemonic().getBytes(), storepass);
 
-			String encryptedPrivateKey = encrypt(identity.getRootPrivateKey().serialize(), storepass);
+			let encryptedPrivateKey = this.encrypt(identity.getRootPrivateKey().serialize(), storepass);
 
-			String publicKey = identity.getPreDerivedPublicKey().serializePublicKeyBase58();
+			let publicKey = identity.getPreDerivedPublicKey().serializePublicKeyBase58();
 
-			storage.storeRootIdentity(identity.getId(), encryptedMnemonic,
+			this.storage.storeRootIdentity(identity.getId(), encryptedMnemonic,
 				encryptedPrivateKey, publicKey, identity.getIndex());
 
-			if (metadata.getDefaultRootIdentity() == null)
-				metadata.setDefaultRootIdentity(identity.getId());
+			if (this.metadata.getDefaultRootIdentity() == null)
+			this.metadata.setDefaultRootIdentity(identity.getId());
 
-			cache.invalidate(Key.forRootIdentity(identity.getId()));
-			cache.invalidate(Key.forRootIdentityPrivateKey(identity.getId()));
+			this.cache.invalidate(Key.forRootIdentity(identity.getId()));
+			this.cache.invalidate(Key.forRootIdentityPrivateKey(identity.getId()));
 		}
 
-		protected void storeRootIdentity(RootIdentity identity)
-throws DIDStoreException {
-	checkArgument(identity != null, "Invalid identity");
-	storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
-}
+		protected storeRootIdentity(identity: RootIdentity) {
+			checkArgument(identity != null, "Invalid identity");
+			this.storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
+		}
 
-		protected void setDefaultRootIdentity(RootIdentity identity) throws DIDStoreException {
-	checkArgument(identity != null, "Invalid identity");
+		protected setDefaultRootIdentity(identity: RootIdentity) {
+			checkArgument(identity != null, "Invalid identity");
 
-	if (!containsRootIdentity(identity.getId()))
-		throw new IllegalArgumentException("Invalid identity, not exists in the store");
+			if (!this.containsRootIdentity(identity.getId()))
+				throw new IllegalArgumentException("Invalid identity, not exists in the store");
 
-	metadata.setDefaultRootIdentity(identity.getId());
-}
+			this.metadata.setDefaultRootIdentity(identity.getId());
+		}
 
 		/**
 		 * Load private identity from DIDStore.
@@ -268,44 +272,43 @@ throws DIDStoreException {
 		 * @return the HDKey object(private identity)
 		 * @throws DIDStoreException there is invalid private identity in DIDStore.
 		 */
-		public RootIdentity loadRootIdentity(String id) throws DIDStoreException {
-	checkArgument(id != null && !id.isEmpty(), "Invalid id");
+		public RootIdentity loadRootIdentity(id: string) {
+			checkArgument(id != null && !id.isEmpty(), "Invalid id");
 
-	try {
-		Object value = cache.get(Key.forRootIdentity(id), new Callable<Object>() {
-					@Override
-		public Object call() throws DIDStoreException {
-			RootIdentity identity = storage.loadRootIdentity(id);
-			if (identity != null) {
-				identity.setMetadata(loadRootIdentityMetadata(id));
-				return identity;
-			} else {
-				return NULL;
+			try {
+				let value = this.cache.get(Key.forRootIdentity(id), new Callable<Object>() {
+					public Object call()  {
+						let identity = this.storage.loadRootIdentity(id);
+						if (identity != null) {
+							identity.setMetadata(loadRootIdentityMetadata(id));
+							return identity;
+						} else {
+							return DIDStore.NULL;
+						}
+					}
+				});
+
+				return value == DIDStore.NULL ? null : (RootIdentity)value;
+			} catch (ExecutionException e) {
+				throw new DIDStoreException("Load root identity failed: " + id, e);
 			}
 		}
-	});
 
-	return value == NULL ? null : (RootIdentity)value;
-} catch (ExecutionException e) {
-	throw new DIDStoreException("Load root identity failed: " + id, e);
-}
+		public loadRootIdentity(): RootIdentity | null {
+			let id = this.metadata.getDefaultRootIdentity();
+			if (id == null || id === "") {
+				let ids = this.storage.listRootIdentities();
+				if (ids.length != 1) {
+					return null;
+				} else {
+					let identity = ids[0];
+					this.metadata.setDefaultRootIdentity(identity.getId());
+					return identity;
+				}
+			}
+
+			return this.loadRootIdentity(id);
 		}
-
-		public RootIdentity loadRootIdentity() throws DIDStoreException {
-	String id = metadata.getDefaultRootIdentity();
-	if (id == null || id.isEmpty()) {
-		List < RootIdentity > ids = storage.listRootIdentities();
-		if (ids.size() != 1) {
-			return null;
-		} else {
-			RootIdentity identity = ids.get(0);
-			metadata.setDefaultRootIdentity(identity.getId());
-			return identity;
-		}
-	}
-
-	return loadRootIdentity(id);
-}
 
 		/**
 		 * Judge whether private identity exists in DIDStore.
@@ -314,8 +317,8 @@ throws DIDStoreException {
 		 *         the returned value if false if private identity doesnot exist.
 		 * @throws DIDStoreException Unsupport the specified store type.
 		 */
-		public boolean containsRootIdentity(String id) {
-			return storage.loadRootIdentity(id) != null;
+		public containsRootIdentity(id: string): boolean {
+			return this.storage.loadRootIdentity(id) != null;
 		}
 
 		/**
@@ -325,21 +328,21 @@ throws DIDStoreException {
 		 * @return the mnemonic string
 		 * @throws DIDStoreException there is no mnemonic in DID Store.
 		 */
-		protected String exportRootIdentityMnemonic(String id, String storepass) {
-			checkArgument(id != null && !id.isEmpty(), "Invalid id");
-			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		protected exportRootIdentityMnemonic(id: string, storepass: string): string | null {
+			checkArgument(id != null && id !== "", "Invalid id");
+			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-			String encryptedMnemonic = storage.loadRootIdentityMnemonic(id);
+			let encryptedMnemonic = this.storage.loadRootIdentityMnemonic(id);
 			if (encryptedMnemonic != null)
-				return new String(decrypt(encryptedMnemonic, storepass));
+				return new String(this.decrypt(encryptedMnemonic, storepass));
 			else
 				return null;
 		}
 
-		protected boolean containsRootIdentityMnemonic(String id) {
-			checkArgument(id != null && !id.isEmpty(), "Invalid id");
+		protected containsRootIdentityMnemonic(id: string): boolean {
+			checkArgument(id != null && id !== "", "Invalid id");
 
-			String encryptedMnemonic = storage.loadRootIdentityMnemonic(id);
+			let encryptedMnemonic = this.storage.loadRootIdentityMnemonic(id);
 			return encryptedMnemonic != null;
 		}
 
@@ -351,73 +354,71 @@ throws DIDStoreException {
 		 * @throws DIDStoreException there is invalid private identity in DIDStore.
 		 */
 		private HDKey loadRootIdentityPrivateKey(String id, String storepass) {
-	try {
-		Object value = cache.get(Key.forRootIdentityPrivateKey(id), new Callable<Object>() {
-					@Override
-		public Object call() throws DIDStorageException {
-			String encryptedKey = storage.loadRootIdentityPrivateKey(id);
-			return encryptedKey != null ? encryptedKey : NULL;
-		}
-	});
+			/* try {
+				Object value = cache.get(Key.forRootIdentityPrivateKey(id), new Callable<Object>() {
+					public Object call() throws DIDStorageException {
+						String encryptedKey = storage.loadRootIdentityPrivateKey(id);
+						return encryptedKey != null ? encryptedKey : NULL;
+					}
+				});
 
-	if (value != NULL) {
-		byte[] keyData = decrypt((String)value, storepass);
-		return HDKey.deserialize(keyData);
-	} else {
-		return null;
-	}
-} catch (ExecutionException e) {
-	throw new DIDStoreException("Load root identity private key failed: " + id, e);
-}
+				if (value != NULL) {
+					byte[] keyData = decrypt((String)value, storepass);
+					return HDKey.deserialize(keyData);
+				} else {
+					return null;
+				}
+			} catch (ExecutionException e) {
+				throw new DIDStoreException("Load root identity private key failed: " + id, e);
+			} */
 		}
 
 		protected HDKey derive(String id, String path, String storepass) {
-	checkArgument(id != null && !id.isEmpty(), "Invalid identity");
-	checkArgument(path != null && !path.isEmpty(), "Invalid path");
-	checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+			checkArgument(id != null && !id.isEmpty(), "Invalid identity");
+			checkArgument(path != null && !path.isEmpty(), "Invalid path");
+			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-	HDKey rootPrivateKey = loadRootIdentityPrivateKey(id, storepass);
-	HDKey key = rootPrivateKey.derive(path);
-	rootPrivateKey.wipe();
+			HDKey rootPrivateKey = loadRootIdentityPrivateKey(id, storepass);
+			HDKey key = rootPrivateKey.derive(path);
+			rootPrivateKey.wipe();
 
-	return key;
-}
+			return key;
+		}
 
-		public boolean deleteRootIdentity(String id) {
-	checkArgument(id != null && !id.isEmpty(), "Invalid id");
+		public deleteRootIdentity(id: string): boolean {
+			checkArgument(id != null && id !== "", "Invalid id");
 
-	boolean success = storage.deleteRootIdentity(id);
-	if (success) {
-		if (metadata.getDefaultRootIdentity() != null &&
-			metadata.getDefaultRootIdentity().equals(id))
-			metadata.setDefaultRootIdentity(null);
+			let success = this.storage.deleteRootIdentity(id);
+			if (success) {
+				if (this.metadata.getDefaultRootIdentity() != null && this.metadata.getDefaultRootIdentity().equals(id))
+					this.metadata.setDefaultRootIdentity(null);
 
-		cache.invalidate(Key.forRootIdentity(id));
-		cache.invalidate(Key.forRootIdentityPrivateKey(id));
-	}
+					this.cache.invalidate(Key.forRootIdentity(id));
+					this.cache.invalidate(Key.forRootIdentityPrivateKey(id));
+			}
 
-	return success;
-}
+			return success;
+		}
 
 		public List < RootIdentity > listRootIdentities() {
-	return Collections.unmodifiableList(storage.listRootIdentities());
-}
+			return Collections.unmodifiableList(storage.listRootIdentities());
+		}
 
-		public boolean containsRootIdentities() {
-	return storage.containsRootIdenities();
-}
+		public containsRootIdentities(): boolean {
+			return this.storage.containsRootIdenities();
+		}
 
-		protected void storeRootIdentityMetadata(String id, RootIdentity.Metadata metadata) {
-	checkArgument(id != null && !id.isEmpty(), "Invalid id");
-	checkArgument(metadata != null, "Invalid metadata");
+		protected storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata ) {
+			checkArgument(id != null && id !== "", "Invalid id");
+			checkArgument(metadata != null, "Invalid metadata");
 
-	storage.storeRootIdentityMetadata(id, metadata);
-}
+			this.storage.storeRootIdentityMetadata(id, metadata);
+		}
 
 		protected loadRootIdentityMetadata(id: string): RootIdentity.Metadata {
-			checkArgument(id != null && !id.isEmpty(), "Invalid id");
+			checkArgument(id != null && id !== "", "Invalid id");
 
-			RootIdentity.Metadata metadata = storage.loadRootIdentityMetadata(id);
+			let metadata = this.storage.loadRootIdentityMetadata(id);
 			if (metadata != null) {
 				metadata.setId(id);
 				metadata.attachStore(this);
@@ -434,22 +435,22 @@ throws DIDStoreException {
 		 * @param doc the DIDDocument object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public void storeDid(DIDDocument doc) throws DIDStoreException {
+		public storeDid(doc: DIDDocument) {
 			checkArgument(doc != null, "Invalid doc");
 
-			storage.storeDid(doc);
+			this.storage.storeDid(doc);
 			if (doc.getStore() != this) {
-				DIDMetadata metadata = loadDidMetadata(doc.getSubject());
+				let metadata = this.loadDidMetadata(doc.getSubject());
 				doc.getMetadata().merge(metadata);
-				storeDidMetadata(doc.getSubject(), doc.getMetadata());
+				this.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
 				doc.getMetadata().attachStore(this);
 			}
 
-			for (VerifiableCredential vc : doc.getCredentials())
-			storeCredential(vc);
+			for (let vc of doc.getCredentials())
+				this.storeCredential(vc);
 
-			cache.put(Key.forDidDocument(doc.getSubject()), doc);
+			this.cache.put(Key.forDidDocument(doc.getSubject()), doc);
 		}
 
 		/**
@@ -459,27 +460,26 @@ throws DIDStoreException {
 		 * @return the DIDDocument object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public DIDDocument loadDid(DID did) throws DIDStoreException {
-			checkArgument(did != null, "Invalid did");
+		public loadDid(did: DID): DIDDocument {
+			/* checkArgument(did != null, "Invalid did");
 
 			try {
-				Object value = cache.get(Key.forDidDocument(did), new Callable<Object>() {
-							@Override
-				public Object call() throws DIDStoreException {
-					DIDDocument doc = storage.loadDid(did);
-					if (doc != null) {
-						doc.setMetadata(loadDidMetadata(did));
-						return doc;
-					} else {
-						return NULL;
+				let value = cache.get(Key.forDidDocument(did), new Callable<Object>() {
+					public Object call() throws DIDStoreException {
+						DIDDocument doc = storage.loadDid(did);
+						if (doc != null) {
+							doc.setMetadata(loadDidMetadata(did));
+							return doc;
+						} else {
+							return NULL;
+						}
 					}
-				}
-			});
+				});
 
-			return value == NULL ? null : (DIDDocument)value;
-		} catch (ExecutionException e) {
-			throw new DIDStoreException("Load did document failed: " + did, e);
-		}
+				return value == NULL ? null : (DIDDocument)value;
+			} catch (ExecutionException e) {
+				throw new DIDStoreException("Load did document failed: " + did, e);
+			} */
 		}
 
 		/**
@@ -489,9 +489,9 @@ throws DIDStoreException {
 		 * @return the DIDDocument object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public DIDDocument loadDid(String did) throws DIDStoreException {
-	return loadDid(DID.valueOf(did));
-}
+		public loadDid(did: string): DIDDocument {
+			return this.loadDid(DID.valueOf(did));
+		}
 
 		/**
 		 * Judge whether containing the specified DID or not.
@@ -501,10 +501,10 @@ throws DIDStoreException {
 		 *         the returned value is false if the specified DID is not in the DIDStore.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public boolean containsDid(DID did) throws DIDStoreException {
-	checkArgument(did != null, "Invalid did");
-	return loadDid(did) != null;
-}
+		public containsDid(did: DID): boolean {
+			checkArgument(did != null, "Invalid did");
+			return this.loadDid(did) != null;
+		}
 
 		/**
 		 * Judge whether containing the specified DID or not.
@@ -514,9 +514,9 @@ throws DIDStoreException {
 		 *         the returned value is false if the specified DID is not in the DIDStore.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public boolean containsDid(String did) throws DIDStoreException {
-	return containsDid(DID.valueOf(did));
-}
+		public containsDid(did: string): boolean {
+			return this.containsDid(DID.valueOf(did));
+		}
 
 		/**
 		 * Store DID Metadata.
@@ -2023,7 +2023,6 @@ throws MalformedExportDataException, DIDStoreException, IOException {
 
 	importStore(new File(zipFile), password, storepass);
 } */
-	}
 }
 
 export namespace DIDStore {
@@ -2091,7 +2090,7 @@ export namespace DIDStore {
 	}
 	*/
 
-	export class Metadata extends AbstractMetadata {
+	export class Metadata extends AbstractMetadata<Metadata> {
 		private static TYPE = "type";
 		private static VERSION = "version";
 		private static FINGERPRINT = "fingerprint";
@@ -2099,8 +2098,8 @@ export namespace DIDStore {
 
 		protected constructor(store: DIDStore | null = null) {
 			super(store);
-			this.put(Metadata.TYPE, DID_STORE_TYPE);
-			this.put(Metadata.VERSION, DID_STORE_VERSION);
+			this.put(Metadata.TYPE, DIDStore.DID_STORE_TYPE);
+			this.put(Metadata.VERSION, DIDStore.DID_STORE_VERSION);
 		}
 
 		protected getType(): string {
@@ -2135,7 +2134,7 @@ export namespace DIDStore {
 					this.getStore().storage.storeMetadata(this);
 				} catch (ignore) {
 					if (ignore instanceof DIDStoreException)
-					log.error("INTERNAL - error store metadata for DIDStore");
+					DIDStore.log.error("INTERNAL - error store metadata for DIDStore");
 				}
 			}
 		}
@@ -2226,7 +2225,7 @@ export namespace DIDStore {
 				if (this.credentials == null)
 					return [];
 
-				let vcs = new ArrayList<VerifiableCredential>();
+				let vcs: VerifiableCredential[] = [];
 				for (let cred of credentials)
 					vcs.add(cred.content);
 
