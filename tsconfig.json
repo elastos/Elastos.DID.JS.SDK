@@ -17,6 +17,7 @@
     "removeComments": true,
     "isolatedModules": true,
     "preserveConstEnums": true,
+    "experimentalDecorators": true,
     "rootDirs": ["src/"],
     "typeRoots": ["node_modules/@types", "typings"]
   }
