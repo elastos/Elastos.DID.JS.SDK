@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+import { Cloneable } from "./cloneable";
+import { DIDEntity } from "./didentity";
 import { DIDStore } from "./DIDStore";
 import { checkArgument } from "./utils";
 
@@ -39,8 +41,8 @@ import com.fasterxml.jackson.annotation.JsonAnySetter; */
  * The class defines the base interface of Meta data.
  *
  */
-export abstract class AbstractMetadata /* extends DIDEntity<AbstractMetadata> */
-		/* implements Cloneable */ {
+export abstract class AbstractMetadata<T> extends DIDEntity<T>
+		 implements Cloneable<T> {
 	private static ALIAS = "alias";
 
 	protected static USER_EXTRA_PREFIX = "UX-";
@@ -219,14 +221,13 @@ export abstract class AbstractMetadata /* extends DIDEntity<AbstractMetadata> */
      *
      * @return a shallow copy of this object
      */
-	//@Override
-	/* protected clone(): any throws CloneNotSupportedException  {
-		let result = (AbstractMetadata)super.clone();
-        result.store = store;
-        result.props = (TreeMap<String, String>) props.clone();
+	protected clone(): T {
+		let result = super.clone();
+        result.store = this.store;
+        result.props = this.props.clone();
 
         return result;
-    } */
+    }
 
 	protected abstract save();
 }

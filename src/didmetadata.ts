@@ -21,6 +21,7 @@
  */
 
 import { AbstractMetadata } from "./abstractmetadata";
+import { Cloneable } from "./cloneable";
 import { DID } from "./did";
 import { DIDStore } from "./DIDStore";
 import { DIDStoreException } from "./exceptions/exceptions";
@@ -28,7 +29,7 @@ import { DIDStoreException } from "./exceptions/exceptions";
 /**
  * The class defines the implement of DID Metadata.
  */
-export class DIDMetadata extends AbstractMetadata implements Cloneable {
+export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetadata> {
 	private static ROOT_IDENTITY = "rootIdentity";
 	private static INDEX = "index";
 	private static TXID = "txid";
@@ -112,7 +113,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 *
 	 * @param signature the signature string
 	 */
-	protected setSignature(String signature) {
+	protected setSignature(signature: string) {
 		this.put(DIDMetadata.SIGNATURE, signature);
 	}
 
@@ -121,7 +122,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 *
 	 * @return the signature string
 	 */
-	public String getSignature() {
+	public getSignature(): string {
 		return this.get(DIDMetadata.SIGNATURE);
 	}
 
@@ -130,7 +131,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 *
 	 * @param timestamp the time published
 	 */
-	protected void setPublished(Date timestamp) {
+	protected setPublished(timestamp: Date) {
 		this.put(DIDMetadata.PUBLISHED, timestamp);
 	}
 
@@ -139,10 +140,10 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 *
 	 * @return the published time
 	 */
-	public Date getPublished() {
+	public getPublished(): Date | null {
 		try {
 			return this.getDate(DIDMetadata.PUBLISHED);
-		} catch (ParseException e) {
+		} catch (e) {
 			return null;
 		}
 	}
@@ -152,7 +153,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable {
 	 *
 	 * @param deactivated the deactivate status
 	 */
-	protected setDeactivated(boolean deactivated) {
+	protected setDeactivated(deactivated: boolean) {
 		this.put(DIDMetadata.DEACTIVATED, deactivated);
 	}
 

@@ -29,387 +29,6 @@ import { DIDURL } from "./didurl";
 import { IllegalArgumentException, WrongPasswordException } from "./exceptions/exceptions";
 import { checkArgument } from "./utils";
 
-export namespace DIDStore {
-	/* class Key {
-	private static final int TYPE_ROOT_IDENTITY = 0x00;
-	private static final int TYPE_ROOT_IDENTITY_PRIVATEKEY = 0x01;
-	private static final int TYPE_DID_DOCUMENT = 0x10;
-	private static final int TYPE_DID_METADATA = 0x11;
-	private static final int TYPE_DID_PRIVATEKEY = 0x12;
-	private static final int TYPE_CREDENTIAL = 0x20;
-	private static final int TYPE_CREDENTIAL_METADATA = 0x21;
-
-	private int type;
-	private Object id;
-
-	private Key(int type, Object id) {
-		this.type = type;
-		this.id = id;
-	}
-
-	@Override
-	public int hashCode() {
-		return type + id.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-
-		if (obj instanceof Key) {
-			Key key = (Key)obj;
-			return type == key.type ? id.equals(key.id) : false;
-		}
-
-		return false;
-	}
-
-	public static Key forRootIdentity(String id) {
-		return new Key(TYPE_ROOT_IDENTITY, id);
-	}
-
-	public static Key forRootIdentityPrivateKey(String id) {
-		return new Key(TYPE_ROOT_IDENTITY_PRIVATEKEY, id);
-	}
-
-	public static Key forDidDocument(DID did) {
-		return new Key(TYPE_DID_DOCUMENT, did);
-	}
-
-	public static Key forDidMetadata(DID did) {
-		return new Key(TYPE_DID_METADATA, did);
-	}
-
-	private static Key forDidPrivateKey(DIDURL id) {
-		return new Key(TYPE_DID_PRIVATEKEY, id);
-	}
-
-	private static Key forCredential(DIDURL id) {
-		return new Key(TYPE_CREDENTIAL, id);
-	}
-
-	private static Key forCredentialMetadata(DIDURL id) {
-		return new Key(TYPE_CREDENTIAL_METADATA, id);
-	}
-	*/
-
-	export class Metadata extends AbstractMetadata {
-		private static TYPE = "type";
-		private static VERSION = "version";
-		private static FINGERPRINT = "fingerprint";
-		private static DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
-
-		protected constructor(store: DIDStore | null = null) {
-			super(store);
-			this.put(Metadata.TYPE, DID_STORE_TYPE);
-			this.put(Metadata.VERSION, DID_STORE_VERSION);
-		}
-
-		protected getType(): string {
-			return this.get(Metadata.TYPE);
-		}
-
-		public getVersion(): number {
-			return this.getInteger(Metadata.VERSION);
-		}
-
-		private setFingerprint(fingerprint: string) {
-			checkArgument(fingerprint != null && fingerprint != "", "Invalid fingerprint");
-
-			this.put(Metadata.FINGERPRINT, fingerprint);
-		}
-
-		public getFingerprint(): string {
-			return this.get(Metadata.FINGERPRINT);
-		}
-
-		protected setDefaultRootIdentity(id: string) {
-			this.put(Metadata.DEFAULT_ROOT_IDENTITY, id);
-		}
-
-		public getDefaultRootIdentity(): string {
-			return this.get(Metadata.DEFAULT_ROOT_IDENTITY);
-		}
-
-		protected save() {
-			if (this.attachedStore()) {
-				try {
-					this.getStore().storage.storeMetadata(this);
-				} catch (ignore) {
-					if (ignore instanceof DIDStoreException)
-					log.error("INTERNAL - error store metadata for DIDStore");
-				}
-			}
-		}
-	}
-
-	/**
-	 * The interface for ConflictHandle to indicate how to resolve the conflict,
-	 * if the local document is different with the one resolved from chain.
-	 */
-	 interface ConflictHandle {
-		/**
-		 * The method to merge two did document.
-		 *
-		 * @param chainCopy the document from chain
-		 * @param localCopy the document from local device
-		 * @return the merged DIDDocument object
-		 */
-		merge(chainCopy: DIDDocument, localCopy: DIDDocument): DIDDocument;
-	}
-
-	interface DIDFilter {
-		select(did: DID): boolean;
-	}
-
-	interface CredentialFilter {
-		select(id: DIDURL): boolean;
-	}
-
-	namespace DIDExport {
-		//@JsonPropertyOrder({ "content", "metadata" })
-		class Document {
-			//@JsonProperty("content")
-			private content: DIDDocument;
-			//@JsonProperty("metadata")
-			private metadata: DIDMetadata;
-
-			//@JsonCreator
-			protected constructor(/* @JsonProperty(value = "content", required = true) */ content: DIDDocument,
-					/* @JsonProperty(value = "metadata") */ metadata: DIDMetadata) {
-				this.content = content;
-				this.metadata = metadata;
-			}
-		}
-
-		//@JsonPropertyOrder({ "type", "id", "document", "credential", "privatekey",
-		//						 "created", "fingerprint" })
-		//	@JsonInclude(Include.NON_NULL)
-		class DIDExport extends DIDEntity<DIDExport> {
-			//@JsonProperty("type")
-			private type: string;
-			//@JsonProperty("id")
-			private id: DID;
-			//@JsonProperty("document")
-			private document: Document | null = null;
-			//@JsonProperty("credential")
-			private credentials: Credential[] = [];
-			//@JsonProperty("privatekey")
-			private privatekeys: PrivateKey[] = [];
-			//@JsonProperty("created")
-			private created: Date | null = null;
-			//@JsonProperty("fingerprint")
-			private fingerprint: String | null = null;
-
-			//@JsonCreator
-			protected constructor(/* @JsonProperty(value = "type", required = true) */ type: string,
-						/* @JsonProperty(value = "id", required = true) */ id: DID) {
-							super();
-				if (type == null)
-					throw new IllegalArgumentException("Invalid export type");
-
-				this.type = type;
-				this.id = id;
-			}
-
-			public getId(): DID {
-				return this.id;
-			}
-
-			public getDocument(): DIDDocument {
-				return document.content;
-			}
-
-			public setDocument(doc: DIDDocument) {
-				this.document = new Document(doc, doc.getMetadata().isEmpty() ? null : doc.getMetadata());
-			}
-
-			public getCredentials(): VerifiableCredential[] {
-				if (this.credentials == null)
-					return [];
-
-				let vcs = new ArrayList<VerifiableCredential>();
-				for (let cred of credentials)
-					vcs.add(cred.content);
-
-				return vcs;
-			}
-
-			public addCredential(credential: VerifiableCredential) {
-				if (this.credentials == null)
-					this.credentials = [];
-
-				this.credentials.add(new Credential(credential,
-					credential.getMetadata().isEmpty() ? null : credential.getMetadata()));
-			}
-
-			public getPrivateKeys(): PrivateKey[] {
-				return this.privatekeys != null ? this.privatekeys : [];
-			}
-
-			public addPrivatekey(id: DIDURL, privatekey: String, storepass: String, exportpass: String) /* throws DIDStoreException */ {
-				if (this.privatekeys == null)
-					this.privatekeys = new ArrayList<PrivateKey>();
-
-				let sk = new PrivateKey(id);
-				sk.setKey(privatekey, storepass, exportpass);
-				this.privatekeys.add(sk);
-			}
-
-			/* private calculateFingerprint(exportpass: string): string {
-				SHA256Digest sha256 = new SHA256Digest();
-				byte[] bytes = exportpass.getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				bytes = type.getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				bytes = id.toString().getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				bytes = document.content.toString(true).getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				if (document.metadata != null) {
-					bytes = document.metadata.toString(true).getBytes();
-					sha256.update(bytes, 0, bytes.length);
-				}
-
-				if (credentials != null && credentials.size() > 0) {
-					for (Credential cred : credentials) {
-						bytes = cred.content.toString(true).getBytes();
-						sha256.update(bytes, 0, bytes.length);
-
-						if (cred.metadata != null) {
-							bytes = cred.metadata.toString(true).getBytes();
-							sha256.update(bytes, 0, bytes.length);
-						}
-					}
-				}
-
-				if (privatekeys != null && privatekeys.size() > 0) {
-					for (PrivateKey sk : privatekeys) {
-						bytes = sk.id.toString().getBytes();
-						sha256.update(bytes, 0, bytes.length);
-
-						bytes = sk.key.getBytes();
-						sha256.update(bytes, 0, bytes.length);
-					}
-				}
-
-				bytes = dateFormat.format(created).getBytes();
-				sha256.update(bytes, 0, bytes.length);
-
-				byte digest[] = new byte[32];
-				sha256.doFinal(digest, 0);
-				return Base64.encodeToString(digest,
-					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-			} */
-
-			/* public seal(exportpass: string): DIDExport {
-				Calendar now = Calendar.getInstance();
-				now.set(Calendar.MILLISECOND, 0);
-				this.created = now.getTime();
-				fingerprint = calculateFingerprint(exportpass);
-				return this;
-			}
-
-			public void verify(String exportpass) throws MalformedExportDataException {
-				if (!fingerprint.equals(calculateFingerprint(exportpass)))
-					throw new MalformedExportDataException(
-						"Invalid export data, fingerprint mismatch.");
-			}
-
-			@Override
-			protected void sanitize() throws MalformedExportDataException {
-				if (type == null || !type.equals(DID_EXPORT))
-					throw new MalformedExportDataException(
-						"Invalid export data, unknown type.");
-
-				if (created == null)
-					throw new MalformedExportDataException(
-						"Invalid export data, missing created time.");
-
-				if (id == null)
-					throw new MalformedExportDataException(
-						"Invalid export data, missing id.");
-
-				if (document == null || document.content == null)
-					throw new MalformedExportDataException(
-						"Invalid export data, missing document.");
-				document.content.setMetadata(document.metadata);
-
-				if (credentials != null) {
-					for (Credential cred : credentials) {
-						if (cred == null || cred.content == null)
-							throw new MalformedExportDataException(
-								"Invalid export data, invalid credential.");
-
-						cred.content.setMetadata(cred.metadata);
-					}
-				}
-
-				if (privatekeys != null) {
-					for (PrivateKey sk : privatekeys) {
-						if (sk == null || sk.id == null || sk.key == null || sk.key.isEmpty())
-							throw new MalformedExportDataException(
-								"Invalid export data, invalid privatekey.");
-					}
-				}
-
-				if (fingerprint == null || fingerprint.isEmpty())
-					throw new MalformedExportDataException(
-						"Invalid export data, missing fingerprint.");
-			} */
-		}
-
-		//@JsonPropertyOrder({ "content", "metadata" })
-		class Credential {
-			@JsonProperty("content")
-			private content: VerifiableCredential;
-			@JsonProperty("metadata")
-			private metadata: CredentialMetadata;
-
-			@JsonCreator
-			protected Credential(@JsonProperty(value = "content", required = true) content: VerifiableCredential,
-				@JsonProperty(value = "metadata") metadata: CredentialMetadata) {
-				this.content = content;
-				this.metadata = metadata;
-			}
-		}
-
-		//@JsonPropertyOrder({ "id", "key" })
-		class PrivateKey {
-			@JsonProperty({value: "id"}) @JsonClassType({type: () => [DIDURL]})
-			private id: DIDURL;
-			@JsonProperty({value: "key"}) @JsonClassType({type: () => [String]})
-			private key: string;
-
-			@JsonCreator
-			protected constructor(@JsonProperty({value = "id", required = true}) id: DIDURL) {
-				this.id = id;
-			}
-
-			public getId(): DIDURL {
-				return this.id;
-			}
-
-			public setId(id: DIDURL) {
-				this.id = id;
-			}
-
-			public getKey(exportpass: string, storepass: string): string {
-				return reEncrypt(key, exportpass, storepass);
-			}
-
-			public setKey(key: string, storepass: string, exportpass: string) {
-				this.key = reEncrypt(key, storepass, exportpass);
-			}
-		}
-	}
-}
-
 /**
  * DIDStore is local store for all DIDs.
  */
@@ -2404,5 +2023,386 @@ throws MalformedExportDataException, DIDStoreException, IOException {
 
 	importStore(new File(zipFile), password, storepass);
 } */
+	}
+}
+
+export namespace DIDStore {
+	/* class Key {
+	private static final int TYPE_ROOT_IDENTITY = 0x00;
+	private static final int TYPE_ROOT_IDENTITY_PRIVATEKEY = 0x01;
+	private static final int TYPE_DID_DOCUMENT = 0x10;
+	private static final int TYPE_DID_METADATA = 0x11;
+	private static final int TYPE_DID_PRIVATEKEY = 0x12;
+	private static final int TYPE_CREDENTIAL = 0x20;
+	private static final int TYPE_CREDENTIAL_METADATA = 0x21;
+
+	private int type;
+	private Object id;
+
+	private Key(int type, Object id) {
+		this.type = type;
+		this.id = id;
+	}
+
+	@Override
+	public int hashCode() {
+		return type + id.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+
+		if (obj instanceof Key) {
+			Key key = (Key)obj;
+			return type == key.type ? id.equals(key.id) : false;
+		}
+
+		return false;
+	}
+
+	public static Key forRootIdentity(String id) {
+		return new Key(TYPE_ROOT_IDENTITY, id);
+	}
+
+	public static Key forRootIdentityPrivateKey(String id) {
+		return new Key(TYPE_ROOT_IDENTITY_PRIVATEKEY, id);
+	}
+
+	public static Key forDidDocument(DID did) {
+		return new Key(TYPE_DID_DOCUMENT, did);
+	}
+
+	public static Key forDidMetadata(DID did) {
+		return new Key(TYPE_DID_METADATA, did);
+	}
+
+	private static Key forDidPrivateKey(DIDURL id) {
+		return new Key(TYPE_DID_PRIVATEKEY, id);
+	}
+
+	private static Key forCredential(DIDURL id) {
+		return new Key(TYPE_CREDENTIAL, id);
+	}
+
+	private static Key forCredentialMetadata(DIDURL id) {
+		return new Key(TYPE_CREDENTIAL_METADATA, id);
+	}
+	*/
+
+	export class Metadata extends AbstractMetadata {
+		private static TYPE = "type";
+		private static VERSION = "version";
+		private static FINGERPRINT = "fingerprint";
+		private static DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
+
+		protected constructor(store: DIDStore | null = null) {
+			super(store);
+			this.put(Metadata.TYPE, DID_STORE_TYPE);
+			this.put(Metadata.VERSION, DID_STORE_VERSION);
+		}
+
+		protected getType(): string {
+			return this.get(Metadata.TYPE);
+		}
+
+		public getVersion(): number {
+			return this.getInteger(Metadata.VERSION);
+		}
+
+		private setFingerprint(fingerprint: string) {
+			checkArgument(fingerprint != null && fingerprint != "", "Invalid fingerprint");
+
+			this.put(Metadata.FINGERPRINT, fingerprint);
+		}
+
+		public getFingerprint(): string {
+			return this.get(Metadata.FINGERPRINT);
+		}
+
+		protected setDefaultRootIdentity(id: string) {
+			this.put(Metadata.DEFAULT_ROOT_IDENTITY, id);
+		}
+
+		public getDefaultRootIdentity(): string {
+			return this.get(Metadata.DEFAULT_ROOT_IDENTITY);
+		}
+
+		protected save() {
+			if (this.attachedStore()) {
+				try {
+					this.getStore().storage.storeMetadata(this);
+				} catch (ignore) {
+					if (ignore instanceof DIDStoreException)
+					log.error("INTERNAL - error store metadata for DIDStore");
+				}
+			}
+		}
+	}
+
+	/**
+	 * The interface for ConflictHandle to indicate how to resolve the conflict,
+	 * if the local document is different with the one resolved from chain.
+	 */
+	 interface ConflictHandle {
+		/**
+		 * The method to merge two did document.
+		 *
+		 * @param chainCopy the document from chain
+		 * @param localCopy the document from local device
+		 * @return the merged DIDDocument object
+		 */
+		merge(chainCopy: DIDDocument, localCopy: DIDDocument): DIDDocument;
+	}
+
+	interface DIDFilter {
+		select(did: DID): boolean;
+	}
+
+	interface CredentialFilter {
+		select(id: DIDURL): boolean;
+	}
+
+	namespace DIDExport {
+		//@JsonPropertyOrder({ "content", "metadata" })
+		class Document {
+			//@JsonProperty("content")
+			private content: DIDDocument;
+			//@JsonProperty("metadata")
+			private metadata: DIDMetadata;
+
+			//@JsonCreator
+			protected constructor(/* @JsonProperty(value = "content", required = true) */ content: DIDDocument,
+					/* @JsonProperty(value = "metadata") */ metadata: DIDMetadata) {
+				this.content = content;
+				this.metadata = metadata;
+			}
+		}
+
+		//@JsonPropertyOrder({ "type", "id", "document", "credential", "privatekey",
+		//						 "created", "fingerprint" })
+		//	@JsonInclude(Include.NON_NULL)
+		class DIDExport extends DIDEntity<DIDExport> {
+			//@JsonProperty("type")
+			private type: string;
+			//@JsonProperty("id")
+			private id: DID;
+			//@JsonProperty("document")
+			private document: Document | null = null;
+			//@JsonProperty("credential")
+			private credentials: Credential[] = [];
+			//@JsonProperty("privatekey")
+			private privatekeys: PrivateKey[] = [];
+			//@JsonProperty("created")
+			private created: Date | null = null;
+			//@JsonProperty("fingerprint")
+			private fingerprint: String | null = null;
+
+			//@JsonCreator
+			protected constructor(/* @JsonProperty(value = "type", required = true) */ type: string,
+						/* @JsonProperty(value = "id", required = true) */ id: DID) {
+							super();
+				if (type == null)
+					throw new IllegalArgumentException("Invalid export type");
+
+				this.type = type;
+				this.id = id;
+			}
+
+			public getId(): DID {
+				return this.id;
+			}
+
+			public getDocument(): DIDDocument {
+				return document.content;
+			}
+
+			public setDocument(doc: DIDDocument) {
+				this.document = new Document(doc, doc.getMetadata().isEmpty() ? null : doc.getMetadata());
+			}
+
+			public getCredentials(): VerifiableCredential[] {
+				if (this.credentials == null)
+					return [];
+
+				let vcs = new ArrayList<VerifiableCredential>();
+				for (let cred of credentials)
+					vcs.add(cred.content);
+
+				return vcs;
+			}
+
+			public addCredential(credential: VerifiableCredential) {
+				if (this.credentials == null)
+					this.credentials = [];
+
+				this.credentials.add(new Credential(credential,
+					credential.getMetadata().isEmpty() ? null : credential.getMetadata()));
+			}
+
+			public getPrivateKeys(): PrivateKey[] {
+				return this.privatekeys != null ? this.privatekeys : [];
+			}
+
+			public addPrivatekey(id: DIDURL, privatekey: String, storepass: String, exportpass: String) /* throws DIDStoreException */ {
+				if (this.privatekeys == null)
+					this.privatekeys = new ArrayList<PrivateKey>();
+
+				let sk = new PrivateKey(id);
+				sk.setKey(privatekey, storepass, exportpass);
+				this.privatekeys.add(sk);
+			}
+
+			/* private calculateFingerprint(exportpass: string): string {
+				SHA256Digest sha256 = new SHA256Digest();
+				byte[] bytes = exportpass.getBytes();
+				sha256.update(bytes, 0, bytes.length);
+
+				bytes = type.getBytes();
+				sha256.update(bytes, 0, bytes.length);
+
+				bytes = id.toString().getBytes();
+				sha256.update(bytes, 0, bytes.length);
+
+				bytes = document.content.toString(true).getBytes();
+				sha256.update(bytes, 0, bytes.length);
+
+				if (document.metadata != null) {
+					bytes = document.metadata.toString(true).getBytes();
+					sha256.update(bytes, 0, bytes.length);
+				}
+
+				if (credentials != null && credentials.size() > 0) {
+					for (Credential cred : credentials) {
+						bytes = cred.content.toString(true).getBytes();
+						sha256.update(bytes, 0, bytes.length);
+
+						if (cred.metadata != null) {
+							bytes = cred.metadata.toString(true).getBytes();
+							sha256.update(bytes, 0, bytes.length);
+						}
+					}
+				}
+
+				if (privatekeys != null && privatekeys.size() > 0) {
+					for (PrivateKey sk : privatekeys) {
+						bytes = sk.id.toString().getBytes();
+						sha256.update(bytes, 0, bytes.length);
+
+						bytes = sk.key.getBytes();
+						sha256.update(bytes, 0, bytes.length);
+					}
+				}
+
+				bytes = dateFormat.format(created).getBytes();
+				sha256.update(bytes, 0, bytes.length);
+
+				byte digest[] = new byte[32];
+				sha256.doFinal(digest, 0);
+				return Base64.encodeToString(digest,
+					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+			} */
+
+			/* public seal(exportpass: string): DIDExport {
+				Calendar now = Calendar.getInstance();
+				now.set(Calendar.MILLISECOND, 0);
+				this.created = now.getTime();
+				fingerprint = calculateFingerprint(exportpass);
+				return this;
+			}
+
+			public void verify(String exportpass) throws MalformedExportDataException {
+				if (!fingerprint.equals(calculateFingerprint(exportpass)))
+					throw new MalformedExportDataException(
+						"Invalid export data, fingerprint mismatch.");
+			}
+
+			@Override
+			protected void sanitize() throws MalformedExportDataException {
+				if (type == null || !type.equals(DID_EXPORT))
+					throw new MalformedExportDataException(
+						"Invalid export data, unknown type.");
+
+				if (created == null)
+					throw new MalformedExportDataException(
+						"Invalid export data, missing created time.");
+
+				if (id == null)
+					throw new MalformedExportDataException(
+						"Invalid export data, missing id.");
+
+				if (document == null || document.content == null)
+					throw new MalformedExportDataException(
+						"Invalid export data, missing document.");
+				document.content.setMetadata(document.metadata);
+
+				if (credentials != null) {
+					for (Credential cred : credentials) {
+						if (cred == null || cred.content == null)
+							throw new MalformedExportDataException(
+								"Invalid export data, invalid credential.");
+
+						cred.content.setMetadata(cred.metadata);
+					}
+				}
+
+				if (privatekeys != null) {
+					for (PrivateKey sk : privatekeys) {
+						if (sk == null || sk.id == null || sk.key == null || sk.key.isEmpty())
+							throw new MalformedExportDataException(
+								"Invalid export data, invalid privatekey.");
+					}
+				}
+
+				if (fingerprint == null || fingerprint.isEmpty())
+					throw new MalformedExportDataException(
+						"Invalid export data, missing fingerprint.");
+			} */
+		}
+
+		//@JsonPropertyOrder({ "content", "metadata" })
+		class Credential {
+			@JsonProperty("content")
+			private content: VerifiableCredential;
+			@JsonProperty("metadata")
+			private metadata: CredentialMetadata;
+
+			@JsonCreator
+			protected Credential(@JsonProperty(value = "content", required = true) content: VerifiableCredential,
+				@JsonProperty(value = "metadata") metadata: CredentialMetadata) {
+				this.content = content;
+				this.metadata = metadata;
+			}
+		}
+
+		//@JsonPropertyOrder({ "id", "key" })
+		class PrivateKey {
+			@JsonProperty({value: "id"}) @JsonClassType({type: () => [DIDURL]})
+			private id: DIDURL;
+			@JsonProperty({value: "key"}) @JsonClassType({type: () => [String]})
+			private key: string;
+
+			@JsonCreator
+			protected constructor(@JsonProperty({value = "id", required = true}) id: DIDURL) {
+				this.id = id;
+			}
+
+			public getId(): DIDURL {
+				return this.id;
+			}
+
+			public setId(id: DIDURL) {
+				this.id = id;
+			}
+
+			public getKey(exportpass: string, storepass: string): string {
+				return reEncrypt(key, exportpass, storepass);
+			}
+
+			public setKey(key: string, storepass: string, exportpass: string) {
+				this.key = reEncrypt(key, storepass, exportpass);
+			}
+		}
 	}
 }
