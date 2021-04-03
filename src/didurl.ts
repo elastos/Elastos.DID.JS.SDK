@@ -502,33 +502,35 @@ class Listener extends DIDURLBaseListener {
 }
 
 class Builder {
-	private DIDURL url;
+	private url: DIDURL;
 
-	public Builder(String url) {
-		this(new DIDURL(url));
+	public constructor(didOrDidUrl: DIDURL | DID | string) {
+		let didUrl: DIDURL;
+		if (didOrDidUrl instanceof DID) {
+			didUrl = new DIDURL(didOrDidUrl);
+		}
+		else if (didOrDidUrl instanceof DID) {
+			didUrl = new DIDURL(didOrDidUrl);
+		}
+		else {
+			didUrl = didOrDidUrl as DIDURL;
+		}
+
+		this.url = new DIDURL(didUrl.getDid());
+		this.url.parameters = new LinkedHashMap<String, String>(didUrl.parameters);
+		this.url.path = didUrl.path;
+		this.url.query = new LinkedHashMap<String, String>(didUrl.query);
+		this.url.fragment = didUrl.fragment;
 	}
 
-	public Builder(DIDURL url) {
-		this.url = new DIDURL(url.getDid());
-		this.url.parameters = new LinkedHashMap<String, String>(url.parameters);
-		this.url.path = url.path;
-		this.url.query = new LinkedHashMap<String, String>(url.query);
-		this.url.fragment = url.fragment;
-	}
+	public setDid(didOrString: DID | string): Builder {
+		checkArgument(didOrString != null, "Invalid did");
 
-	public Builder(DID did) {
-		this(new DIDURL(did));
-	}
-
-	public setDid(did: DID): Builder {
-		checkArgument(did != null, "Invalid did");
-
-		this.url.setDid(did);
+		if (didOrString instanceof DID)
+			this.url.setDid(didOrString);
+		else
+			this.url.setDid(DID.valueOf(didOrString));
 		return this;
-	}
-
-	public setDid(did: string): Builder {
-		return this.setDid(DID.valueOf(did));
 	}
 
 	public clearDid(): Builder {
@@ -552,68 +554,68 @@ class Builder {
 		return this;
 	}
 
-	public Builder removeParameter(String name) {
-		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
+	public removeParameter(name: string): Builder {
+		checkArgument(name != null && name !== "", "Invalid parameter name");
 
-		url.parameters.remove(name);
-
-		return this;
-	}
-
-	public Builder clearParameters() {
-		url.parameters.clear();
-		return this;
-	}
-
-	public Builder setPath(String path) {
-		url.path = path == null || path.isEmpty() ? null : path;
-		return this;
-	}
-
-	public Builder clearPath() {
-		url.path = null;
-		return this;
-	}
-
-	public Builder setQueryParameter(String name, String value) {
-		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
-
-		url.query.put(name, value);
-		return this;
-	}
-
-	public Builder setQueryParameters(Map<String, String> params) {
-		url.query.clear();
-
-		if (params != null && params.size() > 0)
-			url.query.putAll(params);
+		this.url.parameters.remove(name);
 
 		return this;
 	}
 
-	public Builder removeQueryParameter(String name) {
-		checkArgument(name != null && !name.isEmpty(), "Invalid parameter name");
-
-		url.query.remove(name);
+	public clearParameters(): Builder {
+		this.url.parameters.clear();
 		return this;
 	}
 
-	public Builder clearQueryParameters() {
-		url.query.clear();
+	public setPath(path: string): Builder {
+		this.url.path = path == null || path === "" ? null : path;
 		return this;
 	}
 
-	public Builder setFragment(String fragment) {
-		url.fragment = fragment == null || fragment.isEmpty() ? null : fragment;
+	public clearPath(): Builder {
+		this.url.path = null;
 		return this;
 	}
 
-	public Builder clearFragment() {
-		url.fragment = null;
+	public setQueryParameter(name: string, value: string): Builder {
+		checkArgument(name != null && name !== "", "Invalid parameter name");
+
+		this.url.query.put(name, value);
 		return this;
 	}
 
-	public DIDURL build() {
-		return new DIDURL(url);
+	public setQueryParameters(params: Map<string, string>): Builder {
+		this.url.query.clear();
+
+		if (params != null && params.size > 0)
+			this.url.query.putAll(params);
+
+		return this;
+	}
+
+	public removeQueryParameter(name: string): Builder {
+		checkArgument(name != null && name !== "", "Invalid parameter name");
+
+		this.url.query.remove(name);
+		return this;
+	}
+
+	public clearQueryParameters(): Builder {
+		this.url.query.clear();
+		return this;
+	}
+
+	public setFragment(fragment: string): Builder {
+		this.url.fragment = fragment == null || fragment === "" ? null : fragment;
+		return this;
+	}
+
+	public clearFragment(): Builder {
+		this.url.fragment = null;
+		return this;
+	}
+
+	public build(): DIDURL {
+		return new DIDURL(this.url);
 	}
 }

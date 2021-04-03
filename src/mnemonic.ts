@@ -1,0 +1,219 @@
+/*
+ * Copyright (c) 2021 Elastos Foundation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/**
+ * The class represents the mnemonic content.
+ */
+export class Mnemonic {
+	/**
+	 * The default language is English.
+	 */
+	public static DEFAULT: string | null = null;
+
+	/**
+	 * language: "chinese_simplified"
+	 */
+	public static CHINESE_SIMPLIFIED = "chinese_simplified";
+
+	/**
+	 * language: "chinese_traditional"
+	 */
+	public static CHINESE_TRADITIONAL = "chinese_traditional";
+
+	/**
+	 * language: "czech"
+	 */
+	public static CZECH = "czech";
+
+	/**
+	 * language: "english"
+	 */
+	public static final String ENGLISH = "english";
+
+	/**
+	 * language: "french"
+	 */
+	public static final String FRENCH = "french";
+
+	/**
+	 * language: "italian"
+	 */
+	public static final String ITALIAN = "italian";
+
+	/**
+	 * language: "japanese"
+	 */
+	public static final String JAPANESE = "japanese";
+
+	/**
+	 * language: "korean"
+	 */
+	public static final String KOREAN = "korean";
+
+	/**
+	 * language: "spanish"
+	 */
+	public static final String SPANISH = "spanish";
+
+	private static final int TWELVE_WORDS_ENTROPY = 16;
+
+	private MnemonicCode mc;
+
+	private static HashMap<String, Mnemonic> mcTable = new HashMap<String, Mnemonic>(4);
+
+	private Mnemonic(MnemonicCode mc) {
+		this.mc = mc;
+	}
+
+	/**
+	 * Get empty Mnemonic's instance.
+	 *
+	 * @return the Mnemonic object
+	 */
+	public static Mnemonic getInstance() throws MnemonicException {
+		return getInstance(null);
+	}
+
+	/**
+	 * Get the Mnemonic's instance with the given language.
+	 *
+	 * @param language the language string
+	 * @return the Mnemonic object
+	 * @throws DIDException generate Mnemonic into table failed.
+	 */
+	public static synchronized Mnemonic getInstance(String language)
+			throws MnemonicException {
+		if (language == null)
+			language = ENGLISH;
+
+		if (mcTable.containsKey(language))
+			return mcTable.get(language);
+
+		try {
+			MnemonicCode mc =  MnemonicCode.INSTANCE;
+			if (!language.isEmpty()) {
+				InputStream is = MnemonicCode.openDefaultWords(language);
+				mc = new MnemonicCode(is, null);
+			}
+
+			Mnemonic m = new Mnemonic(mc);
+			mcTable.put(language, m);
+			return m;
+		} catch (IOException | IllegalArgumentException e) {
+			throw new MnemonicException(e);
+		}
+	}
+
+	/**
+	 * Generate mnemonic.
+	 *
+	 * @return the mnemonic string
+	 * @throws DIDException generate Mnemonic into table failed.
+	 */
+	public String generate() throws MnemonicException {
+		try {
+			byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
+			new SecureRandom().nextBytes(entropy);
+			List<String> words = mc.toMnemonic(entropy);
+
+			StringJoiner joiner = new StringJoiner(" ");
+	        for (String word: words)
+	            joiner.add(word);
+
+	        return joiner.toString();
+		} catch (org.bitcoinj.crypto.MnemonicException e) {
+			throw new MnemonicException(e);
+		}
+	}
+
+	/**
+	 * Check that mnemonic string is valid or not.
+	 *
+	 * @param mnemonic the mnemonic string
+	 * @return the returned value is true if mnemonic is valid;
+	 *         the returned value is false if mnemonic is not valid.
+	 */
+	public boolean isValid(String mnemonic) {
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+
+    	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		List<String> words = Arrays.asList(mnemonic.split(" "));
+
+    	try {
+	    	mc.check(words);
+		    return true;
+		} catch (org.bitcoinj.crypto.MnemonicException e) {
+			return false;
+		}
+	}
+
+
+	public static String getLanguage(String mnemonic) throws MnemonicException {
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+
+    	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		List<String> words = Arrays.asList(mnemonic.split(" "));
+
+		String[] langs = { ENGLISH, SPANISH, FRENCH, CZECH, ITALIAN,
+				CHINESE_SIMPLIFIED, CHINESE_TRADITIONAL, JAPANESE, KOREAN };
+
+		for (String lang : langs) {
+			Mnemonic m = getInstance(lang);
+	    	try {
+				m.mc.check(words);
+				return lang;
+	    	} catch (org.bitcoinj.crypto.MnemonicException e) {
+				continue;
+			}
+		}
+
+		return null;
+	}
+
+	public static boolean checkIsValid(String mnemonic) throws MnemonicException {
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+
+		String lang = getLanguage(mnemonic);
+		return lang != null;
+	}
+
+	/**
+	 * Get seed from mnemonic and password.
+	 *
+	 * @param mnemonic the mnemonic string
+	 * @param passphrase the password combine with mnemonic
+	 * @return the original seed
+	 */
+	public static byte[] toSeed(String mnemonic, String passphrase) {
+		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+
+		if (passphrase == null)
+			passphrase = "";
+
+		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+    	passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
+
+		List<String> words = Arrays.asList(mnemonic.split(" "));
+
+    	return MnemonicCode.toSeed(words, passphrase);
+	}
+}

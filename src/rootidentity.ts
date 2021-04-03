@@ -1,14 +1,19 @@
 import { AbstractMetadata } from "./abstractmetadata";
 import { DID } from "./did";
 import { DIDStore } from "./DIDStore";
+import { DIDStoreException, IllegalArgumentException } from "./exceptions/exceptions";
+import { Logger } from "./logger";
+import { checkArgument } from "./utils";
+
+const log = new Logger("RootIdentity");
 
 export namespace RootIdentity {
-	export class Metadata extends AbstractMetadata {
+	export class Metadata extends AbstractMetadata<Metadata> {
 		public static DEFAULT_DID = "defaultDid";
 
-		private id: string | null = null;
+		private id: string;
 
-		protected constructor(id: string | null = null, store: DIDStore | null = null) {
+		protected constructor(id: string, store: DIDStore | null = null) {
 			super(store);
 			this.id = id;
 		}
@@ -35,13 +40,13 @@ export namespace RootIdentity {
 			return DID.valueOf(this.get(Metadata.DEFAULT_DID));
 		}
 
-		@Override
-		protected void save() {
-			if (attachedStore()) {
+		protected save() {
+			if (this.attachedStore()) {
 				try {
-					getStore().storeRootIdentityMetadata(id, this);
-				} catch (DIDStoreException ignore) {
-					log.error("INTERNAL - error store metadata for credential {}", id);
+					this.getStore()?.storeRootIdentityMetadata(this.id, this);
+				} catch (e) {
+					if (e instanceof DIDStoreException)
+						log.error("INTERNAL - error store metadata for credential {}", this.id);
 				}
 			}
 		}
@@ -49,17 +54,13 @@ export namespace RootIdentity {
 }
 
 export class RootIdentity {
-	private String mnemonic;
-	private HDKey rootPrivateKey;
-	private HDKey preDerivedPublicKey;
-	private AtomicInteger index;
+	private mnemonic: string;
+	private rootPrivateKey: HDKey;
+	private preDerivedPublicKey: HDKey;
+	private index: AtomicInteger;
 
-	private String id;
-	private Metadata metadata;
-
-	private static final Logger log = LoggerFactory.getLogger(RootIdentity.class);
-
-
+	private id: string;
+	private metadata: Metadata;
 
 	private RootIdentity(String mnemonic, String passphrase) {
 		this.mnemonic = mnemonic;
@@ -93,27 +94,27 @@ export class RootIdentity {
 	 *              force = false, must not create new private identity if there is private identity.
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static RootIdentity create(String mnemonic, String passphrase,
-			boolean overwrite, DIDStore store, String storepass) throws DIDStoreException {
-		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid mnemonic");
+	public static create(mnemonic: string, passphrase: string,
+			overwrite: boolean, store: DIDStore, storepass: string): RootIdentity {
+		checkArgument(mnemonic != null && mnemonic !== "", "Invalid mnemonic");
 		checkArgument(store != null, "Invalid DID store");
-		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 		try {
 			checkArgument(Mnemonic.checkIsValid(mnemonic), "Invalid mnemonic.");
-		} catch (MnemonicException e) {
+		} catch (e) { // MnemonicException
 			throw new IllegalArgumentException(e);
 		}
 
 		if (passphrase == null)
 			passphrase = "";
 
-		RootIdentity identity = new RootIdentity(mnemonic, passphrase);
+		let identity = new RootIdentity(mnemonic, passphrase);
 
 		if (store.containsRootIdentity(identity.getId()) && !overwrite)
 			throw new RootIdentityAlreadyExistException(identity.getId());
 
-		identity.setMetadata(new Metadata(identity.getId(), store));
+		identity.setMetadata(new RootIdentity.Metadata(identity.getId(), store));
 		store.storeRootIdentity(identity, storepass);
 		identity.wipe();
 
