@@ -33,6 +33,6 @@ export class DID {
     }
 
     private buf2hex(buffer: Buffer): Buffer {
-        return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+        return Buffer.from(Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join(''));
     }
 }

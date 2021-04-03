@@ -23,13 +23,13 @@
 import { AbstractMetadata } from "./abstractmetadata";
 import { Cloneable } from "./cloneable";
 import { DID } from "./did";
-import { DIDStore } from "./DIDStore";
+import { DIDStore } from "./didstore";
 import { DIDStoreException } from "./exceptions/exceptions";
 
 /**
  * The class defines the implement of DID Metadata.
  */
-export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetadata> {
+export class DIDMetadata extends AbstractMetadata<DIDMetadata> implements Cloneable<DIDMetadata> {
 	private static ROOT_IDENTITY = "rootIdentity";
 	private static INDEX = "index";
 	private static TXID = "txid";
@@ -39,8 +39,6 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	private static DEACTIVATED = "deactivated";
 
 	private did: DID | null = null;
-
-	private static final Logger log = LoggerFactory.getLogger(DIDMetadata.class);
 
 	/**
 	 * Constructs the empty DIDMetadataImpl with the given store.
@@ -173,23 +171,23 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
      *
      * @return a shallow copy of this object
      */
-	public clone(): DIDMetadata | null {
-		try {
-			return super.clone() as DIDMetadata;
-		} catch (e) {
-			console.error(e);
-			return null;
-		}
+	public clone(): DIDMetadata  | null {
+		let clonedData: DIDMetadata = new DIDMetadata();
+		clonedData.props = this.props;
+		clonedData.did = this.did;
+		clonedData.store = this.store;
+		return clonedData;
     }
 
 	protected save() {
-		if (this.attachedStore()) {
-			try {
-				this.getStore().storeDidMetadata(this.did, this);
-			} catch (e) {
-				if (e instanceof DIDStoreException)
-					this.log.error("INTERNAL - error store metadata for DID {}", this.did);
-			}
+		if (!this.attachedStore()) {
+			throw new DIDStoreException();
+		}
+		try {
+			//this.getStore()?.storeDidMetadata(this.did, this);
+		} catch (e) {
+			if (e instanceof DIDStoreException)
+				console.log("INTERNAL - error store metadata for DID {}", this.did);
 		}
 	}
 }

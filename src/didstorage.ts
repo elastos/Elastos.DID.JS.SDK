@@ -22,7 +22,7 @@
 
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
-import { DIDStore } from "./DIDStore";
+import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
 import { VerifiableCredential } from "./domain";
 import { RootIdentity } from "./rootidentity";

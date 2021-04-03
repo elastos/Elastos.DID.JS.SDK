@@ -22,7 +22,7 @@
 
 import { Cloneable } from "./cloneable";
 import { DIDEntity } from "./didentity";
-import { DIDStore } from "./DIDStore";
+import { DIDStore } from "./didstore";
 import { checkArgument } from "./utils";
 
 /* package org.elastos.did;
@@ -41,14 +41,13 @@ import com.fasterxml.jackson.annotation.JsonAnySetter; */
  * The class defines the base interface of Meta data.
  *
  */
-export abstract class AbstractMetadata<T> extends DIDEntity<T>
-		 implements Cloneable<T> {
+export abstract class AbstractMetadata<T> extends DIDEntity<T> implements Cloneable<T> {
 	private static ALIAS = "alias";
 
 	protected static USER_EXTRA_PREFIX = "UX-";
 
 	public props: Map<string, string> = new Map();
-	private store: DIDStore | null = null;
+	protected store: DIDStore | null = null;
 
 	/**
 	 * Constructs the AbstractMetadata and attach with the store.
@@ -56,6 +55,7 @@ export abstract class AbstractMetadata<T> extends DIDEntity<T>
 	 * @param store the DIDStore
 	 */
 	protected constructor(store: DIDStore | null = null) {
+		super();
 		this.store = store;
 	}
 
@@ -200,7 +200,7 @@ export abstract class AbstractMetadata<T> extends DIDEntity<T>
 	 *
 	 * @param metadata the metadata to be merged.
 	 */
-	protected merge(metadata: AbstractMetadata) {
+	protected merge(metadata: AbstractMetadata<T>) {
 		if (metadata == this || metadata == null)
 			return;
 
@@ -215,19 +215,7 @@ export abstract class AbstractMetadata<T> extends DIDEntity<T>
 		});
 	}
 
-    /**
-     * Returns a shallow copy of this instance: the keys and values themselves
-     * are not cloned.
-     *
-     * @return a shallow copy of this object
-     */
-	protected clone(): T {
-		let result = super.clone();
-        result.store = this.store;
-        result.props = this.props.clone();
-
-        return result;
-    }
+	public abstract clone();
 
 	protected abstract save();
 }
