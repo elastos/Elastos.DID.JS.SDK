@@ -45,7 +45,7 @@ export class DIDMetadata extends AbstractMetadata<DIDMetadata> implements Clonea
 	 *
 	 * @param store the specified DIDStore
 	 */
-	protected constructor(did: DID | null = null, store: DIDStore | null = null) {
+	public constructor(did: DID | null = null, store: DIDStore | null = null) {
 		super(store);
 		this.did = did;
 	}
