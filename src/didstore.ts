@@ -218,7 +218,7 @@ import { HDKey } from "./hdkey-secp256r1";
 			return result;
 		}
 
-		public /*protected*/ storeRootIdentity(identity: RootIdentity, storepass: string) {
+		public /*protected*/ storeRootIdentity(identity: RootIdentity, storepass: string = undefined) {
 			checkArgument(identity != null, "Invalid identity");
 
 			if (storepass !== undefined) {
@@ -349,7 +349,8 @@ import { HDKey } from "./hdkey-secp256r1";
 
 				if (value != DIDStore.NULL) {
 					let keyData = this.decrypt(value, storepass);
-					return HDKey.deserialize(keyData);
+					return HDKey.fromExtendedKey(keyData);
+					// JAVA: return HDKey.deserialize(keyData);
 				} else {
 					return null;
 				}
@@ -359,14 +360,13 @@ import { HDKey } from "./hdkey-secp256r1";
 			}
 		}
 
-		protected derive(id: string, path: string, storepass: string): HDKey {
+		public /*protected*/ derive(id: string, path: string, storepass: string): HDKey {
 			checkArgument(id != null && id !== "", "Invalid identity");
 			checkArgument(path != null && path !== "", "Invalid path");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 			let rootPrivateKey = this.loadRootIdentityPrivateKey(id, storepass);
 			let key = rootPrivateKey.derive(path);
-			rootPrivateKey.wipe();
 
 			return key;
 		}
@@ -376,7 +376,7 @@ import { HDKey } from "./hdkey-secp256r1";
 
 			let success = this.storage.deleteRootIdentity(id);
 			if (success) {
-				if (this.metadata.getDefaultRootIdentity() != null && this.metadata.getDefaultRootIdentity().equals(id))
+				if (this.metadata.getDefaultRootIdentity() != null && this.metadata.getDefaultRootIdentity() === id)
 					this.metadata.setDefaultRootIdentity(null);
 
 					this.cache.invalidate(DIDStore.Key.forRootIdentity(id));
@@ -566,7 +566,7 @@ import { HDKey } from "./hdkey-secp256r1";
 				for (let key of this.cache.keys()) {
 					if (key.id instanceof DIDURL) {
 						let id = key.id;
-						if (id.getDid().equals(did))
+						if (id.getDid() === did)
 							this.cache.invalidate(key);
 					}
 				}
@@ -753,31 +753,28 @@ import { HDKey } from "./hdkey-secp256r1";
 		 * @return the meta data for Credential
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* protected CredentialMetadata loadCredentialMetadata(DIDURL id)
-				throws DIDStoreException {
+		 protected loadCredentialMetadata(id: DIDURL): CredentialMetadata {
 			checkArgument(id != null, "Invalid credential id");
 
 			try {
-				Object value = cache.get(Key.forCredentialMetadata(id), new Callable<Object>() {
-					@Override
-					public Object call() throws DIDStorageException {
-						CredentialMetadata metadata = storage.loadCredentialMetadata(id);
-						if (metadata != null) {
-							metadata.setId(id);
-							metadata.attachStore(DIDStore.this);
-						} else {
-							metadata = new CredentialMetadata(id, DIDStore.this);
-						}
-
-						return metadata;
+				let value = this.cache.get(DIDStore.Key.forCredentialMetadata(id), () => {
+					let metadata = this.storage.loadCredentialMetadata(id);
+					if (metadata != null) {
+						metadata.setId(id);
+						metadata.attachStore(this);
+					} else {
+						metadata = new CredentialMetadata(id, this);
 					}
+
+					return metadata;
 				});
 
-				return value == NULL ? null : (CredentialMetadata)value;
-			} catch (ExecutionException e) {
+				return value == DIDStore.NULL ? null : value;
+			} catch (e) {
+				// ExecutionException
 				throw new DIDStoreException("Load Credential metadata failed: " + id, e);
 			}
-		} */
+		}
 
 		/**
 		 * Delete the specified Credential
@@ -788,30 +785,23 @@ import { HDKey } from "./hdkey-secp256r1";
 		 *         the returned value is false if there is credentials owned the specific DID.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public boolean deleteCredential(DIDURL id) throws DIDStoreException {
-			checkArgument(id != null, "Invalid credential id");
+		public deleteCredential(idOrString: DIDURL | string): boolean {
+			checkArgument(idOrString != null, "Invalid credential id");
 
-			boolean success = storage.deleteCredential(id);
+			let id: DIDURL;
+			if (idOrString instanceof DIDURL)
+				id = idOrString;
+			else
+				id = DIDURL.valueOf(idOrString);
+
+			let success = this.storage.deleteCredential(id);
 			if (success) {
-				cache.invalidate(Key.forCredential(id));
-				cache.invalidate(Key.forCredentialMetadata(id));
+				this.cache.invalidate(DIDStore.Key.forCredential(id));
+				this.cache.invalidate(DIDStore.Key.forCredentialMetadata(id));
 			}
 
 			return success;
-		} */
-
-		/**
-		 * Delete the specified Credential
-		 *
-		 * @param did the owner of Credential
-		 * @param id the identifier of Credential
-		 * @return the returned value is true if there is no credential owned the specific DID;
-		 *         the returned value is false if there is credentials owned the specific DID.
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public boolean deleteCredential(String id) throws DIDStoreException {
-			return deleteCredential(DIDURL.valueOf(id));
-		} */
+		}
 
 		/**
 		 * List the Credentials owned the specified DID.
@@ -820,28 +810,23 @@ import { HDKey } from "./hdkey-secp256r1";
 		 * @return the Credential array owned the specified DID.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public List<DIDURL> listCredentials(DID did) throws DIDStoreException {
-			checkArgument(did != null, "Invalid did");
+		public listCredentials(didOrString: DID | string): ImmutableList<DIDURL> {
+			checkArgument(didOrString != null, "Invalid did");
 
-			List<DIDURL> ids = storage.listCredentials(did);
-			for (DIDURL id : ids) {
-				CredentialMetadata metadata = loadCredentialMetadata(id);
+			let did: DID;
+			if (didOrString instanceof DID)
+				did = didOrString;
+			else
+				did = DID.valueOf(didOrString);
+
+			let ids = this.storage.listCredentials(did);
+			for (let id of ids) {
+				let metadata = this.loadCredentialMetadata(id);
 				id.setMetadata(metadata);
 			}
 
-			return Collections.unmodifiableList(ids);
-		} */
-
-		/**
-		 * List the Credentials owned the specified DID.
-		 *
-		 * @param did the owner of Credential
-		 * @return the Credential array owned the specified DID.
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public List<DIDURL> listCredentials(String did) throws DIDStoreException {
-			return listCredentials(DID.valueOf(did));
-		} */
+			return ImmutableList(ids);
+		}
 
 		/**
 		 * Select the Credentials according to the specified condition.
@@ -852,39 +837,29 @@ import { HDKey } from "./hdkey-secp256r1";
 		 * @return the Credential array
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public List<DIDURL> selectCredentials(DID did, CredentialFilter filter)
-				throws DIDStoreException {
-			checkArgument(did != null, "Invalid did");
+		public selectCredentials(didOrString: DID | string, filter: DIDStore.CredentialFilter): ImmutableList<DIDURL> {
+			checkArgument(didOrString != null, "Invalid did");
 
-			List<DIDURL> vcs = listCredentials(did);
+			let did: DID;
+			if (didOrString instanceof DID)
+				did = didOrString;
+			else
+				did = DID.valueOf(didOrString);
+
+			let vcs = this.listCredentials(did);
 
 			if (filter != null) {
-				List<DIDURL> dest = new ArrayList<DIDURL>();
-
-				for (DIDURL id : vcs) {
+				let dest: DIDURL[] = [];
+				for (let id of vcs) {
 					if (filter.select(id))
-						dest.add(id);
+						dest.push(id);
 				}
 
-				vcs = dest;
+				vcs = ImmutableList(dest);
 			}
 
-			return Collections.unmodifiableList(vcs);
-		} */
-
-		/**
-		 * Select the Credentials according to the specified condition.
-		 *
-		 * @param did the owner of Credential
-		 * @param id the identifier of Credential
-		 * @param type the Credential type
-		 * @return the Credential array
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public List<DIDURL> selectCredentials(String did, CredentialFilter filter)
-				throws DIDStoreException {
-			return selectCredentials(DID.valueOf(did), filter);
-		} */
+			return ImmutableList(vcs);
+		}
 
 		/**
 		 * Store private key. Encrypt and encode private key with base64url method.
@@ -1050,26 +1025,24 @@ import { HDKey } from "./hdkey-secp256r1";
 			this.cache.invalidateAll();
 		}
 
-		/* public void synchronize(ConflictHandle handle)
-				throws DIDResolveException, DIDStoreException {
-
+		public synchronize(handle: DIDStore.ConflictHandle = null) {
 			if (handle == null)
 				handle = defaultConflictHandle;
 
-			List<RootIdentity> identities = storage.listRootIdentities();
-			for (RootIdentity identity : identities) {
+			let identities = this.storage.listRootIdentities();
+			for (let identity of identities) {
 				identity.synchronize(handle);
 			}
 
-			List<DID> dids = storage.listDids();
-			for (DID did : dids) {
-				DIDDocument localDoc = storage.loadDid(did);
+			let dids = this.storage.listDids();
+			for (let did of dids) {
+				let localDoc = this.storage.loadDid(did);
 				if (localDoc.isCustomizedDid()) {
-					DIDDocument resolvedDoc = did.resolve();
+					let resolvedDoc = did.resolve();
 					if (resolvedDoc == null)
 						continue;
 
-					DIDDocument finalDoc = resolvedDoc;
+					let finalDoc = resolvedDoc;
 
 					localDoc.getMetadata().detachStore();
 
@@ -1092,42 +1065,34 @@ import { HDKey } from "./hdkey-secp256r1";
 						}
 					}
 
-					storage.storeDid(finalDoc);
+					this.storage.storeDid(finalDoc);
 				}
 
-				List<DIDURL> vcIds = storage.listCredentials(did);
-				for (DIDURL vcId : vcIds) {
-					VerifiableCredential localVc = storage.loadCredential(vcId);
+				let vcIds = this.storage.listCredentials(did);
+				for (let vcId of vcIds) {
+					let localVc = this.storage.loadCredential(vcId);
 
-					VerifiableCredential resolvedVc = VerifiableCredential.resolve(vcId, localVc.getIssuer());
+					let resolvedVc = VerifiableCredential.resolve(vcId, localVc.getIssuer());
 					if (resolvedVc == null)
 						continue;
 
 					resolvedVc.getMetadata().merge(localVc.getMetadata());
-					storage.storeCredential(resolvedVc);
+					this.storage.storeCredential(resolvedVc);
 				}
 			}
 		}
 
-		public void synchronize() throws DIDResolveException, DIDStoreException {
-			synchronize(null);
-		}
-
-		public CompletableFuture<Void> synchronizeAsync(ConflictHandle handle) {
-			CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+		public synchronizeAsync(handle: DIDStore.ConflictHandle = null): Promise<void> {
+			return new Promise((resolve, reject)=>{
 				try {
-					synchronize(handle);
-				} catch (DIDResolveException | DIDStoreException e) {
-					throw new CompletionException(e);
+					this.synchronize(handle);
+					resolve();
+				}
+				catch (e) {
+					reject(e);
 				}
 			});
-
-			return future;
 		}
-
-		public CompletableFuture<Void> synchronizeAsync() {
-			return synchronizeAsync(null);
-		} */
 
 		/* private DIDExport exportDid(DID did, String password, String storepass)
 throws DIDStoreException, IOException {
@@ -2284,7 +2249,7 @@ export namespace DIDStore {
 			private metadata: CredentialMetadata;
 
 			@JsonCreator
-			protected constructor(@JsonProperty({value:"content", required = true}) content: VerifiableCredential,
+			protected constructor(@JsonProperty({value:"content", required: true}) content: VerifiableCredential,
 				@JsonProperty({value:"metadata"}) metadata: CredentialMetadata) {
 				this.content = content;
 				this.metadata = metadata;

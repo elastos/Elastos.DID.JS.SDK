@@ -48,12 +48,12 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 	 *
 	 * @param store the specified DIDStore
 	 */
-	protected constructor(id: DIDURL = null, store: DIDStore = null) {
+	constructor(id: DIDURL = null, store: DIDStore = null) {
 		super(store);
 		this.id = id;
 	}
 
-	protected setId(id: DIDURL) {
+	public /*protected*/ setId(id: DIDURL) {
 		this.id = id;
 	}
 

@@ -4,6 +4,7 @@ import { DIDDocument } from "./diddocument";
 import { DIDStore } from "./DIDStore";
 import { DIDURL } from "./didurl";
 import { DIDAlreadyExistException, DIDDeactivatedException, DIDStoreException, IllegalArgumentException, RootIdentityAlreadyExistException, UnknownInternalException } from "./exceptions/exceptions";
+import { HDKey } from "./hdkey-secp256r1";
 import { Logger } from "./logger";
 import { Mnemonic } from "./mnemonic";
 import { checkArgument } from "./utils";
@@ -267,9 +268,10 @@ export class RootIdentity {
 			throw new DIDStoreException("Invalid DID metadata: " + id.getDid());
 		}
 
-		store.storePrivateKey(id, key.serialize(), storepass);
-		let sk = key.serialize();
-		key.wipe();
+		store.storePrivateKey(id, key.privateExtendedKey, storepass);
+		let sk = key.privateExtendedKey;
+		// JAVA: store.storePrivateKey(id, key.serialize(), storepass);
+		// JAVA: let sk = key.serialize();
 		return sk;
 	}
 

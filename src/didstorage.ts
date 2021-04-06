@@ -80,7 +80,7 @@ export interface DIDStorage {
 	 */
 	loadRootIdentity(id: string): RootIdentity;
 
-	updateRootIdentityIndex(id: string, index: string);
+	updateRootIdentityIndex(id: string, index: number);
 
 	loadRootIdentityPrivateKey(id: string): string;
 

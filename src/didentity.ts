@@ -22,6 +22,7 @@
 
 import { ObjectMapper } from "jackson-js";
 import { ClassType } from "jackson-js/dist/@types";
+import { Cloneable } from "./cloneable";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { checkArgument } from "./utils";
@@ -29,7 +30,7 @@ import { checkArgument } from "./utils";
 /**
  * Base class for all DID objects.
  */
-export abstract class DIDEntity<T> {
+export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
 	private static NORMALIZED_DEFAULT = true;
 
 	//protected static SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT);
@@ -58,6 +59,13 @@ export abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException if the DID object is invalid
 	 */
 	protected sanitize() {}
+
+	// TODO: CHECK THIS! NOT SURE THIS REALLY CLONES INHERITING CLASSES (FIELDS, METHODS) WELL
+	public clone(): DIDEntity<T> {
+		const clone = Object.assign({}, this);
+		Object.setPrototypeOf(clone, Object.getPrototypeOf(this) );
+		return clone;
+	}
 
 	/**
 	 * Get the ObjectMapper for serialization.

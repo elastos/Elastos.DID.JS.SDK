@@ -14,3 +14,4 @@ List of things to consider while migrating:
     => https://www.npmjs.com/package/crypto-js
 
 - TODO: replace our custom LRUCache with an existing library (typescript-lru-cache) with TTL.
+- TODO: cleanup core.ts, make sure the library we use for HDKey can do everything done by core.ts well

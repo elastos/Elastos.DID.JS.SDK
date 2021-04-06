@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+import { Map as ImmutableMap } from "immutable";
 import { AbstractMetadata } from "./abstractmetadata";
 import { DID } from "./did";
 import { checkArgument } from "./utils";
@@ -171,8 +172,8 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 		return this.mapToString(this.parameters, ";");
 	}
 
-	public getParameters(): Map<string, string> {
-		return Collections.unmodifiableMap(parameters);
+	public getParameters(): ImmutableMap<string, string> {
+		return ImmutableMap(this.parameters);
 	}
 
 	/**
@@ -219,8 +220,8 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 		return this.mapToString(this.query, "&");
 	}
 
-	public getQuery(): Map<string, string> {
-		return Collections.unmodifiableMap(query);
+	public getQuery(): ImmutableMap<string, string> {
+		return ImmutableMap(this.query);
 	}
 
 	/**
@@ -260,7 +261,7 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 	 *
 	 * @param metadata the meta data
 	 */
-	protected setMetadata(metadata: AbstractMetadata) {
+	public /*protected*/ setMetadata(metadata: AbstractMetadata) {
 		this.metadata = metadata;
 	}
 

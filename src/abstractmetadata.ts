@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,21 +25,8 @@ import { DIDEntity } from "./didentity";
 import { DIDStore } from "./didstore";
 import { checkArgument } from "./utils";
 
-/* package org.elastos.did;
-
-import static com.google.common.base.Preconditions.checkArgument;
-
-import java.text.ParseException;
-import java.util.Date;
-import java.util.Map;
-import java.util.TreeMap;
-
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter; */
-
 /**
  * The class defines the base interface of Meta data.
- *
  */
 export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneable<any> {
 	private static ALIAS = "alias";
@@ -223,11 +210,11 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
      * @return a shallow copy of this object
      */
 	 public clone(): any {
-		 let result = super.clone(); // TODO BPI: Check this - Parent DIDEntity is not cloneable, how can we call clone()?
-		 result.store = this.store;
-		 result.props = this.props.clone(); // TODO BPI: shallow copy of the tree
+		let result = super.clone() as AbstractMetadata;
+		result.store = this.store;
+		result.props = new Map(this.props);
 
-		 return result;
+		return result;
 	 }
 
 	protected abstract save();
