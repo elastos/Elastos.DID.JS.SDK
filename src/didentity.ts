@@ -21,7 +21,10 @@
  */
 
 import { ObjectMapper } from "jackson-js";
+import { ClassType } from "jackson-js/dist/@types";
 import { DID } from "./did";
+import { DIDDocument } from "./diddocument";
+import { checkArgument } from "./utils";
 
 /**
  * Base class for all DID objects.
@@ -57,11 +60,12 @@ export abstract class DIDEntity<T> {
 	protected sanitize() {}
 
 	/**
-	 * Get the ObjectMapper for serialization or deserialization.
+	 * Get the ObjectMapper for serialization.
 	 *
-	 * @return the ObjectMapper instance.
+	 * @param normalized if normalized output, ignored when the sign is true
+	 * @return the ObjectMapper instance
 	 */
-	protected static getObjectMapper(): ObjectMapper {
+	private getObjectMapper(normalized: boolean): ObjectMapper {
 		let jsonFactory = new JsonFactory();
 		jsonFactory.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 		jsonFactory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
@@ -82,27 +86,17 @@ export abstract class DIDEntity<T> {
 
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-		return mapper;
-	}
+        if (normalized !== undefined) {
+            mapper.setConfig(mapper.getSerializationConfig().withAttribute(CONTEXT_KEY,
+                    new SerializeContext(normalized, this.getSerializeContextDid())));
 
-	/**
-	 * Get the ObjectMapper for serialization.
-	 *
-	 * @param normalized if normalized output, ignored when the sign is true
-	 * @return the ObjectMapper instance
-	 */
-	private getObjectMapper(normalized: boolean): ObjectMapper {
-		let mapper = getObjectMapper();
-
-		mapper.setConfig(mapper.getSerializationConfig().withAttribute(CONTEXT_KEY,
-				new SerializeContext(normalized, getSerializeContextDid())));
-
-		SimpleFilterProvider filters = new SimpleFilterProvider();
-		filters.addFilter("publicKeyFilter", DIDDocument.PublicKey.getFilter());
-		filters.addFilter("didDocumentProofFilter", DIDDocument.Proof.getFilter());
-		filters.addFilter("credentialFilter", VerifiableCredential.getFilter());
-		filters.addFilter("credentialProofFilter", VerifiableCredential.Proof.getFilter());
-		mapper.setFilterProvider(filters);
+            let filters = new SimpleFilterProvider();
+            filters.addFilter("publicKeyFilter", DIDDocument.PublicKey.getFilter());
+            filters.addFilter("didDocumentProofFilter", DIDDocument.Proof.getFilter());
+            filters.addFilter("credentialFilter", VerifiableCredential.getFilter());
+            filters.addFilter("credentialProofFilter", VerifiableCredential.Proof.getFilter());
+            mapper.setFilterProvider(filters);
+        }
 
 		return mapper;
 	}
@@ -117,14 +111,15 @@ export abstract class DIDEntity<T> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	protected static <T extends DIDEntity<?>> parse(content: JsonNode, clazz: Class<T>) {
-		let mapper = getObjectMapper();
+	protected static <T extends DIDEntity<?>> parse(content: JsonNode, clazz: ClassType<T>) {
+		let mapper = this.getObjectMapper();
 
 		try {
 			T o = mapper.treeToValue(content, clazz);
 			o.sanitize();
 			return o;
-		} catch (JsonProcessingException e) {
+		} catch (e) {
+            //  JsonProcessingException
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
 	}
@@ -139,8 +134,7 @@ export abstract class DIDEntity<T> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public static<T extends DIDEntity<?>> T parse(String content, Class<T> clazz)
-			throws DIDSyntaxException {
+	public static<T extends DIDEntity<?>> T parse(String content, Class<T> clazz) {
 		checkArgument(content != null && !content.isEmpty(), "Invalid JSON content");
 		checkArgument(clazz != null, "Invalid result class object");
 
@@ -166,8 +160,7 @@ export abstract class DIDEntity<T> {
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
-	public static<T extends DIDEntity<?>> T parse(Reader src, Class<T> clazz)
-			throws DIDSyntaxException, IOException {
+	public static<T extends DIDEntity<?>> T parse(Reader src, Class<T> clazz) {
 		checkArgument(src != null, "Invalid src reader");
 		checkArgument(clazz != null, "Invalid result class object");
 
@@ -354,124 +347,8 @@ export abstract class DIDEntity<T> {
 	 * @param normalized whether normalized output
 	 * @return a JSON string representation of the object
 	 */
-	public String toString(boolean normalized) {
+	public toString(boolean normalized = NORMALIZED_DEFAULT): string {
 		return serialize(normalized);
-	}
-
-	/**
-	 * Get the JSON string representation of the object.
-	 *
-	 * @return a JSON string representation of the object
-	 */
-	@Override
-	public String toString() {
-		return toString(NORMALIZED_DEFAULT);
-	}
-
-	/**
-	 * Serialize DID object to a JSON string.
-	 *
-	 * @param normalized whether normalized output
-	 * @return the serialized JSON string
-	 * @throws DIDSyntaxException if a serialization error occurs
-	 * @deprecated use {@link #serialize(boolean)} instead
-	 */
-	@Deprecated
-	public String toJson(boolean normalized) {
-		return serialize(normalized);
-	}
-
-	/**
-	 * Serialize DID object to a JSON string.
-	 *
-	 * @return the serialized JSON string
-	 * @throws DIDSyntaxException if a serialization error occurs
-	 * @deprecated use {@link #serialize()} instead
-	 */
-	@Deprecated
-	public String toJson() {
-		return serialize();
-	}
-
-	/**
-	 * Serialize DID object to a Writer.
-	 *
-	 * @param out the output writer object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
-	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(Writer, boolean)} instead
-	 */
-	@Deprecated
-	public void toJson(Writer out, boolean normalized) throws IOException {
-		serialize(out, normalized);
-	}
-
-	/**
-	 * Serialize DID object to a Writer.
-	 *
-	 * @param out the output writer object
-	 * @throws DIDSyntaxException  if a serialization error occurs
-	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(Writer)} instead
-	 */
-	@Deprecated
-	public void toJson(Writer out) throws IOException {
-		serialize(out);
-	}
-
-	/**
-	 * Serialize DID object to an OutputStream.
-	 *
-	 * @param out the output stream object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
-	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(OutputStream, boolean)} instead
-	 */
-	@Deprecated
-	public void toJson(OutputStream out, boolean normalized) throws IOException {
-		serialize(out, normalized);
-	}
-
-	/**
-	 * Serialize DID object to an OutputStream.
-	 *
-	 * @param out the output stream object
-	 * @throws DIDSyntaxException  if a serialization error occurs
-	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(OutputStream)} instead
-	 */
-	@Deprecated
-	public void toJson(OutputStream out) throws IOException {
-		serialize(out);
-	}
-
-	/**
-	 * Serialize DID object to a file.
-	 *
-	 * @param out the output file object
-	 * @param normalized whether normalized output
-	 * @throws DIDSyntaxException  if a serialization error occurs
-	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(File, boolean)} instead
-	 */
-	@Deprecated
-	public void toJson(File out, boolean normalized) throws IOException {
-		serialize(out, normalized);
-	}
-
-	/**
-	 * Serialize DID object to a file.
-	 *
-	 * @param out the output file object
-	 * @throws DIDSyntaxException  if a serialization error occurs
-	 * @throws IOException if an IO error occurs
-	 * @deprecated use {@link #serialize(File)} instead
-	 */
-	@Deprecated
-	public void toJson(File out) throws IOException {
-		serialize(out);
 	}
 }
 

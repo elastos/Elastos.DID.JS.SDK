@@ -21,3 +21,5 @@ export class DIDAlreadyExistException extends ParentException {}
 export class RootIdentityAlreadyExistException extends ParentException {}
 
 export class UnknownInternalException extends ParentException {}
+
+export class DIDStoreCryptoException extends ParentException {}

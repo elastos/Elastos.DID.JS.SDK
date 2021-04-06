@@ -150,7 +150,7 @@ export class RootIdentity {
 		return this.metadata.getStore();
 	}
 
-	protected setMetadata(metadata: RootIdentity.Metadata) {
+	public /*protected*/ setMetadata(metadata: RootIdentity.Metadata) {
 		this.metadata = metadata;
 	}
 
@@ -201,19 +201,19 @@ export class RootIdentity {
 		this.metadata.setDefaultDid(this.getDid(index));
 	}
 
-	protected getMnemonic(): string {
+	public /*protected*/ getMnemonic(): string {
 		return this.mnemonic;
 	}
 
-	protected getRootPrivateKey(): HDKey {
+	public /*protected*/ getRootPrivateKey(): HDKey {
 		return this.rootPrivateKey;
 	}
 
-	protected getPreDerivedPublicKey(): HDKey {
+	public /*protected*/ getPreDerivedPublicKey(): HDKey {
 		return this.preDerivedPublicKey;
 	}
 
-	protected getIndex(): number {
+	public /*protected*/ getIndex(): number {
 		return this.index.get();
 	}
 
@@ -242,7 +242,7 @@ export class RootIdentity {
 		return did;
 	}
 
-	protected static lazyCreateDidPrivateKey(id: DIDURL, store: DIDStore, storepass: string): byte[] {
+	public /*protected*/ static lazyCreateDidPrivateKey(id: DIDURL, store: DIDStore, storepass: string): string {
 		let doc = store.loadDid(id.getDid());
 		if (doc == null) {
 			log.error("INTERNAL - Missing document for DID: {}", id.getDid());

@@ -19,6 +19,7 @@
     "isolatedModules": true,
     "preserveConstEnums": true,
     "experimentalDecorators": true,
+    "resolveJsonModule": true,
     "rootDirs": ["src/"],
     "typeRoots": ["node_modules/@types", "typings"]
   }

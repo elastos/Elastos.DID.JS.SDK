@@ -20,8 +20,10 @@
  * SOFTWARE.
  */
 
+import { List as ImmutableList } from "immutable";
 import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
 import { AbstractMetadata } from "./abstractmetadata";
+import { CredentialMetadata } from "./credentialmetadata";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDEntity } from "./didentity";
@@ -29,10 +31,13 @@ import { DIDMetadata } from "./didmetadata";
 import { DIDStorage } from "./didstorage";
 import { DIDURL } from "./didurl";
 import { VerifiableCredential } from "./domain";
-import { DIDStoreException, IllegalArgumentException, WrongPasswordException } from "./exceptions/exceptions";
+import { DIDStoreCryptoException, DIDStoreException, IllegalArgumentException, WrongPasswordException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { RootIdentity } from "./rootidentity";
 import { checkArgument } from "./utils";
+import { LruCache } from "./lrucache";
+import { Aes256cbc } from "./crypto/aes256cbc";
+import { HDKey } from "./hdkey-secp256r1";
 
 /**
  * DIDStore is local store for all DIDs.
@@ -50,9 +55,9 @@ import { checkArgument } from "./utils";
 
 	private static DID_EXPORT = "did.elastos.export/2.0";
 
-	private cache: Cache<Key, Object>;
+	private cache: LruCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
-	private storage: DIDStorage;
+	public /*private*/ storage: DIDStorage;
 	private metadata: DIDStore.Metadata;
 
 	/* protected static final ConflictHandle defaultConflictHandle = (c, l) -> {
@@ -68,13 +73,7 @@ import { checkArgument } from "./utils";
 		if (maxCacheCapacity < 0)
 			maxCacheCapacity = 0;
 
-		this.cache = CacheBuilder.newBuilder()
-			.initialCapacity(initialCacheCapacity)
-			.maximumSize(maxCacheCapacity)
-			.softValues()
-			// .removalListener(listener)
-			// .recordStats()
-			.build();
+		this.cache = new LruCache(maxCacheCapacity);
 
 		this.storage = storage;
 		this.metadata = storage.loadMetadata();
@@ -138,23 +137,17 @@ import { checkArgument } from "./utils";
 			this.storage = null;
 		}
 
-		private static calcFingerprint(password: string): string /* throws DIDStoreException */ {
-			/* MD5Digest md5 = new MD5Digest();
-			byte[] digest = new byte[md5.getDigestSize()];
-			byte[] passwd = password.getBytes();
-			md5.update(passwd, 0, passwd.length);
-			md5.doFinal(digest, 0);
-			md5.reset();
+		private static calcFingerprint(password: string): string {
+			let passwordDigest = CryptoJS.MD5(password).toString();
 
 			try {
-				byte[] cipher = Aes256cbc.encrypt(digest, password);
-				md5.update(cipher, 0, cipher.length);
-				md5.doFinal(digest, 0);
-
-				return Hex.toHexString(digest);
-			} catch (CryptoException e) {
+				let cipher = Aes256cbc.encrypt(passwordDigest, password);
+				let digest = CryptoJS.MD5(cipher);
+				return CryptoJS.enc.Hex.stringify(digest);
+			} catch (e) {
+				// CryptoException
 				throw new DIDStoreCryptoException("Calculate fingerprint error.", e);
-			} */
+			}
 		}
 
 		/**
@@ -165,15 +158,14 @@ import { checkArgument } from "./utils";
 		 * @return the encrypt result
 		 * @throws DIDStoreException Encrypt data error.
 		 */
-		private static encryptToBase64(input: byte[], passwd: string): string /* throws DIDStoreException */ {
-			/* try {
-				byte[] cipher = Aes256cbc.encrypt(input, passwd);
-
-				return Base64.encodeToString(cipher,
-					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-			} catch (CryptoException e) {
+		private static encryptToBase64(input: string, passwd: string): string {
+			try {
+				return Aes256cbc.encryptToBase64(input, passwd);
+				// TODO: CHECK IF CRYPTOJS HANDLE THOSE OPTIONS return Base64.encodeToString(cipher, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+			} catch (e) {
+				// CryptoException
 				throw new DIDStoreCryptoException("Encrypt data error.", e);
-			} */
+			}
 		}
 
 		/**
@@ -184,46 +176,43 @@ import { checkArgument } from "./utils";
 		 * @return the original data before encrpting
 		 * @throws DIDStoreException Decrypt private key error.
 		 */
-		private static decryptFromBase64(input: string, passwd: string): byte[] {
-			/* try {
-				byte[] cipher = Base64.decode(input,
-					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-
-				return Aes256cbc.decrypt(cipher, passwd);
-			} catch (CryptoException e) {
+		private static decryptFromBase64(input: string, passwd: string): string {
+			try {
+				return Aes256cbc.decryptFromBase64(input, passwd);
+			} catch (e) {
+				// CryptoException
 				throw new WrongPasswordException("Decrypt private key error.", e);
-			} */
+			}
 		}
 
 		private static reEncrypt(secret: string, oldpass: string, newpass: string): string {
-			/* byte[] plain = decryptFromBase64(secret, oldpass);
-			String newSecret = encryptToBase64(plain, newpass);
-			Arrays.fill(plain, (byte)0);
-			return newSecret; */
+			let plain = this.decryptFromBase64(secret, oldpass);
+			let newSecret = this.encryptToBase64(plain, newpass);
+			return newSecret;
 		}
 
-		private encrypt(input: byte[], passwd: string): string {
+		private encrypt(input: string, passwd: string): string {
 			let fingerprint = this.metadata.getFingerprint();
-			let currentFingerprint = this.calcFingerprint(passwd);
+			let currentFingerprint = DIDStore.calcFingerprint(passwd);
 
-			if (fingerprint != null && !currentFingerprint.equals(fingerprint))
+			if (fingerprint != null && currentFingerprint !== fingerprint)
 				throw new WrongPasswordException("Password mismatched with previous password.");
 
-			let result = this.encryptToBase64(input, passwd);
+			let result = DIDStore.encryptToBase64(input, passwd);
 
-			if (fingerprint == null || fingerprint.isEmpty())
+			if (fingerprint == null || fingerprint === "")
 				this.metadata.setFingerprint(currentFingerprint);
 
 			return result;
 		}
 
-		private decrypt(input: string, passwd: string): byte[] {
+		private decrypt(input: string, passwd: string): string {
 			let fingerprint = this.metadata.getFingerprint();
-			let currentFingerprint = this.calcFingerprint(passwd);
+			let currentFingerprint = DIDStore.calcFingerprint(passwd);
 
-			let result = this.decryptFromBase64(input, passwd);
+			let result = DIDStore.decryptFromBase64(input, passwd);
 
-			if (fingerprint == null || fingerprint.isEmpty())
+			if (fingerprint == null || fingerprint === "")
 				this.metadata.setFingerprint(currentFingerprint);
 
 			return result;
@@ -231,29 +220,30 @@ import { checkArgument } from "./utils";
 
 		public /*protected*/ storeRootIdentity(identity: RootIdentity, storepass: string) {
 			checkArgument(identity != null, "Invalid identity");
-			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-			let encryptedMnemonic = null;
-			if (identity.getMnemonic() != null)
-				encryptedMnemonic = this.encrypt(identity.getMnemonic().getBytes(), storepass);
+			if (storepass !== undefined) {
+				checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-			let encryptedPrivateKey = this.encrypt(identity.getRootPrivateKey().serialize(), storepass);
+				let encryptedMnemonic = null;
+				if (identity.getMnemonic() != null)
+					encryptedMnemonic = this.encrypt(identity.getMnemonic(), storepass);
 
-			let publicKey = identity.getPreDerivedPublicKey().serializePublicKeyBase58();
+				let encryptedPrivateKey = this.encrypt(identity.getRootPrivateKey().serialize(), storepass);
 
-			this.storage.storeRootIdentity(identity.getId(), encryptedMnemonic,
-				encryptedPrivateKey, publicKey, identity.getIndex());
+				let publicKey = identity.getPreDerivedPublicKey().serializePublicKeyBase58();
 
-			if (this.metadata.getDefaultRootIdentity() == null)
-			this.metadata.setDefaultRootIdentity(identity.getId());
+				this.storage.storeRootIdentity(identity.getId(), encryptedMnemonic,
+					encryptedPrivateKey, publicKey, identity.getIndex());
 
-			this.cache.invalidate(Key.forRootIdentity(identity.getId()));
-			this.cache.invalidate(Key.forRootIdentityPrivateKey(identity.getId()));
-		}
+				if (this.metadata.getDefaultRootIdentity() == null)
+				this.metadata.setDefaultRootIdentity(identity.getId());
 
-		public /*protected*/ storeRootIdentity(identity: RootIdentity) {
-			checkArgument(identity != null, "Invalid identity");
-			this.storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
+				this.cache.invalidate(DIDStore.Key.forRootIdentity(identity.getId()));
+				this.cache.invalidate(DIDStore.Key.forRootIdentityPrivateKey(identity.getId()));
+			}
+			else {
+				this.storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
+			}
 		}
 
 		public /*protected*/ setDefaultRootIdentity(identity: RootIdentity) {
@@ -272,42 +262,39 @@ import { checkArgument } from "./utils";
 		 * @return the HDKey object(private identity)
 		 * @throws DIDStoreException there is invalid private identity in DIDStore.
 		 */
-		public RootIdentity loadRootIdentity(id: string) {
-			checkArgument(id != null && !id.isEmpty(), "Invalid id");
-
-			try {
-				let value = this.cache.get(Key.forRootIdentity(id), new Callable<Object>() {
-					public Object call()  {
-						let identity = this.storage.loadRootIdentity(id);
-						if (identity != null) {
-							identity.setMetadata(loadRootIdentityMetadata(id));
-							return identity;
-						} else {
-							return DIDStore.NULL;
-						}
+		public loadRootIdentity(id: string): RootIdentity {
+			if (id === undefined) {
+				id = this.metadata.getDefaultRootIdentity();
+				if (id == null || id === "") {
+					let ids = this.storage.listRootIdentities();
+					if (ids.length != 1) {
+						return null;
+					} else {
+						let identity = ids[0];
+						this.metadata.setDefaultRootIdentity(identity.getId());
+						return identity;
 					}
-				});
-
-				return value == DIDStore.NULL ? null : (RootIdentity)value;
-			} catch (ExecutionException e) {
-				throw new DIDStoreException("Load root identity failed: " + id, e);
-			}
-		}
-
-		public loadRootIdentity(): RootIdentity | null {
-			let id = this.metadata.getDefaultRootIdentity();
-			if (id == null || id === "") {
-				let ids = this.storage.listRootIdentities();
-				if (ids.length != 1) {
-					return null;
-				} else {
-					let identity = ids[0];
-					this.metadata.setDefaultRootIdentity(identity.getId());
-					return identity;
 				}
 			}
 
-			return this.loadRootIdentity(id);
+			checkArgument(id != null && id !== "", "Invalid id");
+
+			try {
+				let value = this.cache.get(DIDStore.Key.forRootIdentity(id), ()=>{
+					let identity = this.storage.loadRootIdentity(id);
+					if (identity != null) {
+						identity.setMetadata(this.loadRootIdentityMetadata(id));
+						return identity;
+					} else {
+						return DIDStore.NULL;
+					}
+				});
+
+				return value == DIDStore.NULL ? null : value;
+			} catch (e) {
+				// ExecutionException
+				throw new DIDStoreException("Load root identity failed: " + id, e);
+			}
 		}
 
 		/**
@@ -354,23 +341,22 @@ import { checkArgument } from "./utils";
 		 * @throws DIDStoreException there is invalid private identity in DIDStore.
 		 */
 		private loadRootIdentityPrivateKey(id: string, storepass: string): HDKey {
-			/* try {
-				Object value = cache.get(Key.forRootIdentityPrivateKey(id), new Callable<Object>() {
-					public Object call() throws DIDStorageException {
-						String encryptedKey = storage.loadRootIdentityPrivateKey(id);
-						return encryptedKey != null ? encryptedKey : NULL;
-					}
+			try {
+				let value = this.cache.get(DIDStore.Key.forRootIdentityPrivateKey(id), () => {
+					let encryptedKey = this.storage.loadRootIdentityPrivateKey(id);
+					return encryptedKey != null ? encryptedKey : DIDStore.NULL;
 				});
 
-				if (value != NULL) {
-					byte[] keyData = decrypt((String)value, storepass);
+				if (value != DIDStore.NULL) {
+					let keyData = this.decrypt(value, storepass);
 					return HDKey.deserialize(keyData);
 				} else {
 					return null;
 				}
-			} catch (ExecutionException e) {
+			} catch (e) {
+				// ExecutionException
 				throw new DIDStoreException("Load root identity private key failed: " + id, e);
-			} */
+			}
 		}
 
 		protected derive(id: string, path: string, storepass: string): HDKey {
@@ -393,15 +379,16 @@ import { checkArgument } from "./utils";
 				if (this.metadata.getDefaultRootIdentity() != null && this.metadata.getDefaultRootIdentity().equals(id))
 					this.metadata.setDefaultRootIdentity(null);
 
-					this.cache.invalidate(Key.forRootIdentity(id));
-					this.cache.invalidate(Key.forRootIdentityPrivateKey(id));
+					this.cache.invalidate(DIDStore.Key.forRootIdentity(id));
+					this.cache.invalidate(DIDStore.Key.forRootIdentityPrivateKey(id));
 			}
 
 			return success;
 		}
 
-		public List < RootIdentity > listRootIdentities() {
-			return Collections.unmodifiableList(storage.listRootIdentities());
+		public listRootIdentities(): RootIdentity[] {
+			return this.storage.listRootIdentities();
+			// TODO - Check if we need to clone the list or not like java probably does - return Collections.unmodifiableList(this.storage.listRootIdentities());
 		}
 
 		public containsRootIdentities(): boolean {
@@ -460,37 +447,31 @@ import { checkArgument } from "./utils";
 		 * @return the DIDDocument object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public loadDid(did: DID): DIDDocument {
-			/* checkArgument(did != null, "Invalid did");
+		public loadDid(didOrString: DID | string): DIDDocument {
+			checkArgument(didOrString != null, "Invalid did");
+
+			let did: DID;
+			if (!(didOrString instanceof DID))
+				did = DID.valueOf(didOrString);
+			else
+				did = didOrString;
 
 			try {
-				let value = cache.get(Key.forDidDocument(did), new Callable<Object>() {
-					public Object call() throws DIDStoreException {
-						DIDDocument doc = storage.loadDid(did);
-						if (doc != null) {
-							doc.setMetadata(loadDidMetadata(did));
-							return doc;
-						} else {
-							return NULL;
-						}
+				let value = this.cache.get(DIDStore.Key.forDidDocument(did), () => {
+					let doc = this.storage.loadDid(did);
+					if (doc != null) {
+						doc.setMetadata(this.loadDidMetadata(did));
+						return doc;
+					} else {
+						return DIDStore.NULL;
 					}
 				});
 
-				return value == NULL ? null : (DIDDocument)value;
-			} catch (ExecutionException e) {
+				return value == DIDStore.NULL ? null : value;
+			} catch (e) {
+				// ExecutionException
 				throw new DIDStoreException("Load did document failed: " + did, e);
-			} */
-		}
-
-		/**
-		 * Load the specified DID content(DIDDocument).
-		 *
-		 * @param did the specified DID string
-		 * @return the DIDDocument object
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		public loadDid(did: string): DIDDocument {
-			return this.loadDid(DID.valueOf(did));
+			}
 		}
 
 		/**
@@ -501,21 +482,13 @@ import { checkArgument } from "./utils";
 		 *         the returned value is false if the specified DID is not in the DIDStore.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public containsDid(did: DID): boolean {
+		public containsDid(did: DID | string): boolean {
 			checkArgument(did != null, "Invalid did");
-			return this.loadDid(did) != null;
-		}
 
-		/**
-		 * Judge whether containing the specified DID or not.
-		 *
-		 * @param did the specified DID string
-		 * @return the returned value is true if the specified DID is in the DIDStore;
-		 *         the returned value is false if the specified DID is not in the DIDStore.
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		public containsDid(did: string): boolean {
-			return this.containsDid(DID.valueOf(did));
+			if (did instanceof DID)
+				return this.loadDid(did) != null;
+			else
+				return this.loadDid(DID.valueOf(did)) != null;
 		}
 
 		/**
@@ -525,16 +498,15 @@ import { checkArgument } from "./utils";
 		 * @param metadata the meta data
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* protected void storeDidMetadata(DID did, DIDMetadata metadata)
-				throws DIDStoreException {
+		protected storeDidMetadata(did: DID, metadata: DIDMetadata) {
 			checkArgument(did != null, "Invalid did");
 			checkArgument(metadata != null, "Invalid metadata");
 
-			storage.storeDidMetadata(did, metadata);
+			this.storage.storeDidMetadata(did, metadata);
 			metadata.attachStore(this);
 
-			cache.put(Key.forDidMetadata(did), metadata);
-		} */
+			this.cache.put(DIDStore.Key.forDidMetadata(did), metadata);
+		}
 
 		/**
 		 * Load Meta data for the specified DID.
@@ -543,30 +515,28 @@ import { checkArgument } from "./utils";
 		 * @return the Meta data
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* protected DIDMetadata loadDidMetadata(DID did) throws DIDStoreException {
+		protected loadDidMetadata(did: DID): DIDMetadata {
 			checkArgument(did != null, "Invalid did");
 
 			try {
-				Object value = cache.get(Key.forDidMetadata(did) , new Callable<Object>() {
-					@Override
-					public Object call() throws DIDStorageException {
-						DIDMetadata metadata = storage.loadDidMetadata(did);
-						if (metadata != null) {
-							metadata.setDid(did);
-							metadata.attachStore(DIDStore.this);
-						} else {
-							metadata = new DIDMetadata(did, DIDStore.this);
-						}
-
-						return metadata;
+				let value = this.cache.get(DIDStore.Key.forDidMetadata(did), () => {
+					let metadata = this.storage.loadDidMetadata(did);
+					if (metadata != null) {
+						metadata.setDid(did);
+						metadata.attachStore(this);
+					} else {
+						metadata = new DIDMetadata(did, this);
 					}
+
+					return metadata;
 				});
 
-				return value == NULL ? null : (DIDMetadata)value;
-			} catch (ExecutionException e) {
+				return value == DIDStore.NULL ? null : value;
+			} catch (e) {
+				// ExecutionException
 				throw new DIDStoreException("Load did metadata failed: " + did, e);
 			}
-		} */
+		}
 
 
 		/**
@@ -577,39 +547,33 @@ import { checkArgument } from "./utils";
 		 *         the returned value is false if deleting is failed.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public boolean deleteDid(DID did) throws DIDStoreException {
-			checkArgument(did != null, "Invalid did");
+		public deleteDid(didOrString: DID | string): boolean {
+			checkArgument(didOrString != null, "Invalid did");
 
-			boolean success = storage.deleteDid(did);
+			let did: DID;
+			if (didOrString instanceof DID)
+				did = didOrString;
+			else
+				did = DID.valueOf(didOrString);
+
+			let success = this.storage.deleteDid(did);
 
 			if (success) {
-				cache.invalidate(Key.forDidDocument(did));
-				cache.invalidate(Key.forDidMetadata(did));
+				this.cache.invalidate(DIDStore.Key.forDidDocument(did));
+				this.cache.invalidate(DIDStore.Key.forDidMetadata(did));
 
 				// invalidate every thing belongs to this did
-				for (Key key : cache.asMap().keySet()) {
+				for (let key of this.cache.keys()) {
 					if (key.id instanceof DIDURL) {
-						DIDURL id = (DIDURL)key.id;
+						let id = key.id;
 						if (id.getDid().equals(did))
-							cache.invalidate(key);
+							this.cache.invalidate(key);
 					}
 				}
 			}
 
 			return success;
-		} */
-
-		/**
-		 * Delete the specified DID.
-		 *
-		 * @param did the specified DID string
-		 * @return the returned value is true if deleting is successful;
-		 *         the returned value is false if deleting is failed.
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public boolean deleteDid(String did) throws DIDStoreException {
-			return deleteDid(DID.valueOf(did));
-		} */
+		}
 
 		/**
 		 * List all DIDs according to the specified condition.
@@ -617,32 +581,32 @@ import { checkArgument } from "./utils";
 		 * @return the DID array.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public List<DID> listDids() throws DIDStoreException {
-			List<DID> dids = storage.listDids();
-			for (DID did : dids) {
-				DIDMetadata metadata = loadDidMetadata(did);
+		public listDids(): ImmutableList<DID> {
+			let dids = this.storage.listDids();
+			for (let did of dids) {
+				let metadata = this.loadDidMetadata(did);
 				did.setMetadata(metadata);
 			}
 
-			return Collections.unmodifiableList(dids);
+			return ImmutableList<DID>(dids);
 		}
 
-		public List<DID> selectDids(DIDFilter filter) throws DIDStoreException {
-			List<DID> dids = listDids();
+		public selectDids(filter: DIDStore.DIDFilter): ImmutableList<DID> {
+			let dids = this.listDids();
 
 			if (filter != null) {
-				List<DID> dest = new ArrayList<DID>();
+				let dest: DID[] = []
 
-				for (DID did : dids) {
+				for (let did of dids) {
 					if (filter.select(did))
-						dest.add(did);
+						dest.push(did);
 				}
 
-				dids = dest;
+				dids = ImmutableList<DID>(dest);
 			}
 
-			return Collections.unmodifiableList(dids);
-		} */
+			return ImmutableList<DID>(dids);
+		}
 
 		/**
 		 * Store the specified Credential.
@@ -771,16 +735,15 @@ import { checkArgument } from "./utils";
 		 * @param metadata the meta data for Credential
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* protected void storeCredentialMetadata(DIDURL id,
-				CredentialMetadata metadata) throws DIDStoreException {
+		public /*protected*/ storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
 			checkArgument(id != null, "Invalid credential id");
 			checkArgument(metadata != null, "Invalid credential metadata");
 
-			storage.storeCredentialMetadata(id, metadata);
+			this.storage.storeCredentialMetadata(id, metadata);
 			metadata.attachStore(this);
 
-			cache.put(Key.forCredentialMetadata(id), metadata);
-		} */
+			this.cache.put(DIDStore.Key.forCredentialMetadata(id), metadata);
+		}
 
 		/**
 		 * Load the meta data about the specified Credential.
@@ -932,47 +895,23 @@ import { checkArgument } from "./utils";
 		 * @param storepass the password for DIDStore
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		 public storePrivateKey(DIDURL id, byte[] privateKey,
-				String storepass) {
-			checkArgument(id != null, "Invalid private key id");
+		 public storePrivateKey(idOrString: DIDURL | string, privateKey: string, storepass: string) {
+			checkArgument(idOrString != null, "Invalid private key id");
+
+			let id: DIDURL;
+			if (idOrString instanceof DIDURL)
+				id = idOrString;
+			else
+				id = DIDURL.valueOf(idOrString);
+
 			checkArgument(privateKey != null && privateKey.length != 0, "Invalid private key");
-			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-			String encryptedKey = encrypt(privateKey, storepass);
-			storage.storePrivateKey(id, encryptedKey);
+			let encryptedKey = this.encrypt(privateKey, storepass);
+			this.storage.storePrivateKey(id, encryptedKey);
 
-			cache.put(Key.forDidPrivateKey(id), encryptedKey);
+			this.cache.put(DIDStore.Key.forDidPrivateKey(id), encryptedKey);
 		}
-
-		/**
-		 * Store private key. Encrypt and encode private key with base64url method.
-		 *
-		 * @param did the owner of key
-		 * @param id the identifier of key
-		 * @param privateKey the original private key(32 bytes)
-		 * @param storepass the password for DIDStore
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public void storePrivateKey(String id, byte[] privateKey,
-				String storepass) throws DIDStoreException {
-			storePrivateKey(DIDURL.valueOf(id), privateKey, storepass);
-		}
-
-		private String loadPrivateKey(DIDURL id) throws DIDStoreException {
-			try {
-				Object value = cache.get(Key.forDidPrivateKey(id), new Callable<Object>() {
-					@Override
-					public Object call() throws DIDStoreException {
-						String encryptedKey = storage.loadPrivateKey(id);
-						return encryptedKey != null ? encryptedKey : NULL;
-					}
-				});
-
-				return value == NULL ? null : (String)value;
-			} catch (ExecutionException e) {
-				throw new DIDStoreException("Load did private key failed: " + id, e);
-			}
-		} */
 
 		/**
 		 * Load private key.
@@ -983,19 +922,29 @@ import { checkArgument } from "./utils";
 		 * @return the original private key
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* protected byte[] loadPrivateKey(DIDURL id, String storepass)
-				throws DIDStoreException {
+		 protected loadPrivateKey(id: DIDURL, storepass: string = undefined): string {
 			checkArgument(id != null, "Invalid private key id");
-			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
-			String encryptedKey = loadPrivateKey(id);
+			let encryptedKey: string = null;
+			if (storepass !== undefined) {
+				let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
+					let encryptedKey = this.storage.loadPrivateKey(id);
+					return encryptedKey != null ? encryptedKey : DIDStore.NULL;
+				});
+
+				encryptedKey = value == DIDStore.NULL ? null : value;
+			}
+			else {
+				checkArgument(storepass != null && storepass !== "", "Invalid storepass");
+			}
+
 			if (encryptedKey == null) {
 				// fail-back to lazy private key generation
 				return RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
 			} else {
-				return decrypt(encryptedKey, storepass);
+				return this.decrypt(encryptedKey, storepass);
 			}
-		} */
+		}
 
 		/**
 		 * Judge that the specified key has private key in DIDStore.
@@ -1006,23 +955,14 @@ import { checkArgument } from "./utils";
 		 *         the returned value is false if there is no private keys owned the specified key.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public boolean containsPrivateKey(DIDURL id) throws DIDStoreException {
+		public containsPrivateKey(id: DIDURL | string): boolean {
 			checkArgument(id != null, "Invalid private key id");
-			return loadPrivateKey(id) != null;
-		} */
 
-		/**
-		 * Judge that the specified key has private key in DIDStore.
-		 *
-		 * @param did the owner of key
-		 * @param id the identifier of key
-		 * @return the returned value is true if there is private keys owned the specified key;
-		 *         the returned value is false if there is no private keys owned the specified key.
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public boolean containsPrivateKey(String id) throws DIDStoreException {
-			return containsPrivateKey(DIDURL.valueOf(id));
-		} */
+			if (id instanceof DIDURL)
+				return this.loadPrivateKey(id) != null;
+			else
+				return this.loadPrivateKey(DIDURL.valueOf(id)) != null;
+		}
 
 		/**
 		 * Judge whether there is private key owned the specified DID in DIDStore.
@@ -1032,23 +972,14 @@ import { checkArgument } from "./utils";
 		 *         the returned value is false if there is no private keys owned the specified DID.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public boolean containsPrivateKeys(DID did) throws DIDStoreException {
+		 public containsPrivateKeys(did: DID | string): boolean {
 			checkArgument(did != null, "Invalid did");
-			return storage.containsPrivateKeys(did);
-		} */
 
-		/**
-		 * Judge whether there is private key owned the specified DID in DIDStore.
-		 *
-		 * @param did the specified DID string
-		 * @return the returned value is true if there is private keys owned the specified DID;
-		 *         the returned value is false if there is no private keys owned the specified DID.
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public boolean containsPrivateKeys(String did) throws DIDStoreException {
-			return containsPrivateKeys(DID.valueOf(did));
-		} */
-
+			if (did instanceof DID)
+				return this.storage.containsPrivateKeys(did);
+			else
+				return this.storage.containsPrivateKeys(DID.valueOf(did));
+		}
 
 		/**
 		 * Delete the private key owned to the specified key.
@@ -1059,28 +990,21 @@ import { checkArgument } from "./utils";
 		 *         the returned value is false if deleting private keys failed.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public boolean deletePrivateKey(DIDURL id) throws DIDStoreException {
-			checkArgument(id != null, "Invalid private key id");
+		 public deletePrivateKey(idOrString: DIDURL | string): boolean {
+			checkArgument(idOrString != null, "Invalid private key id");
 
-			boolean success = storage.deletePrivateKey(id);
+			let id: DIDURL;
+			if (idOrString instanceof DIDURL)
+				id = idOrString;
+			else
+				id = DIDURL.valueOf(idOrString);
+
+			let success = this.storage.deletePrivateKey(id);
 			if (success)
-				cache.invalidate(Key.forDidPrivateKey(id));
+				this.cache.invalidate(DIDStore.Key.forDidPrivateKey(id));
 
 			return success;
-		} */
-
-		/**
-		 * Delete the private key owned to the specified key.
-		 *
-		 * @param did the owner of key
-		 * @param id the identifier of key
-		 * @return the returned value is true if deleting private keys successfully;
-		 *         the returned value is false if deleting private keys failed.
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public boolean deletePrivateKey(String id) throws DIDStoreException {
-			return deletePrivateKey(DIDURL.valueOf(id));
-		} */
+		}
 
 		/**
 		 * Sign the digest data by the specified key.
@@ -1092,19 +1016,18 @@ import { checkArgument } from "./utils";
 		 * @return the signature string
 		 * @throws DIDStoreException can not get DID Document if no specified sign key.
 		 */
-		/* protected String sign(DIDURL id, String storepass, byte[] digest)
-				throws DIDStoreException {
+		protected sign(id: DIDURL, storepass: string, digest: string): string {
 			checkArgument(id != null, "Invalid private key id");
-			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 			checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
-			HDKey key = HDKey.deserialize(loadPrivateKey(id, storepass));
-			byte[] sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
-			key.wipe();
+			let key = HDKey.fromExtendedKey(this.loadPrivateKey(id, storepass));
+			let sig = key.sign(Buffer.from(digest));
+			key = null;
 
-			return Base64.encodeToString(sig,
-					Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-		} */
+			// TODO: check this! not sure buffer.toString() is what we need here, beware the encodings...
+			return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Hex.parse(sig.toString()));
+		}
 
 		/**
 		 * Change password for DIDStore.
@@ -1113,18 +1036,19 @@ import { checkArgument } from "./utils";
 		 * @param newPassword the new password
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public void changePassword(String oldPassword, String newPassword)
-				throws DIDStoreException {
-			checkArgument(oldPassword != null && !oldPassword.isEmpty(), "Invalid old password");
-			checkArgument(newPassword != null && !newPassword.isEmpty(), "Invalid new password");
+		public changePassword(oldPassword: string, newPassword: string) {
+			checkArgument(oldPassword != null && oldPassword !== "", "Invalid old password");
+			checkArgument(newPassword != null && newPassword !== "", "Invalid new password");
 
-			storage.changePassword((data) -> {
-				return DIDStore.reEncrypt(data, oldPassword, newPassword);
+			this.storage.changePassword({
+				reEncrypt: (data)=>{
+					return DIDStore.reEncrypt(data, oldPassword, newPassword);
+				}
 			});
 
-			metadata.setFingerprint(calcFingerprint(newPassword));
-			cache.invalidateAll();
-		} */
+			this.metadata.setFingerprint(DIDStore.calcFingerprint(newPassword));
+			this.cache.invalidateAll();
+		}
 
 		/* public void synchronize(ConflictHandle handle)
 				throws DIDResolveException, DIDStoreException {
@@ -2026,71 +1950,63 @@ throws MalformedExportDataException, DIDStoreException, IOException {
 }
 
 export namespace DIDStore {
-	/* class Key {
-	private static final int TYPE_ROOT_IDENTITY = 0x00;
-	private static final int TYPE_ROOT_IDENTITY_PRIVATEKEY = 0x01;
-	private static final int TYPE_DID_DOCUMENT = 0x10;
-	private static final int TYPE_DID_METADATA = 0x11;
-	private static final int TYPE_DID_PRIVATEKEY = 0x12;
-	private static final int TYPE_CREDENTIAL = 0x20;
-	private static final int TYPE_CREDENTIAL_METADATA = 0x21;
+	export class Key {
+		private static TYPE_ROOT_IDENTITY = 0x00;
+		private static TYPE_ROOT_IDENTITY_PRIVATEKEY = 0x01;
+		private static TYPE_DID_DOCUMENT = 0x10;
+		private static TYPE_DID_METADATA = 0x11;
+		private static TYPE_DID_PRIVATEKEY = 0x12;
+		private static TYPE_CREDENTIAL = 0x20;
+		private static TYPE_CREDENTIAL_METADATA = 0x21;
 
-	private int type;
-	private Object id;
+		private constructor(private type: number, public id: Object) {}
 
-	private Key(int type, Object id) {
-		this.type = type;
-		this.id = id;
-	}
-
-	@Override
-	public int hashCode() {
-		return type + id.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-
-		if (obj instanceof Key) {
-			Key key = (Key)obj;
-			return type == key.type ? id.equals(key.id) : false;
+		public hashCode(): number {
+			return this.type + this.id.hashCode();
 		}
 
-		return false;
+		public equals(obj: Object): boolean {
+			if (obj == this)
+				return true;
+
+			if (obj instanceof Key) {
+				let key = obj as Key;
+				return this.type == key.type ? this.id.equals(key.id) : false;
+			}
+
+			return false;
+		}
+
+		public static forRootIdentity(id: string): Key {
+			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY, id);
+		}
+
+		public static forRootIdentityPrivateKey(id: string): Key {
+			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY_PRIVATEKEY, id);
+		}
+
+		public static forDidDocument(did: DID): Key {
+			return new Key(DIDStore.Key.TYPE_DID_DOCUMENT, did);
+		}
+
+		public static forDidMetadata(did: DID): Key {
+			return new Key(DIDStore.Key.TYPE_DID_METADATA, did);
+		}
+
+		public /*private*/ static forDidPrivateKey(id: DIDURL): Key {
+			return new Key(DIDStore.Key.TYPE_DID_PRIVATEKEY, id);
+		}
+
+		public /*private*/ static forCredential(id: DIDURL): Key {
+			return new Key(DIDStore.Key.TYPE_CREDENTIAL, id);
+		}
+
+		public /*private*/ static forCredentialMetadata(id: DIDURL): Key {
+			return new Key(DIDStore.Key.TYPE_CREDENTIAL_METADATA, id);
+		}
 	}
 
-	public static Key forRootIdentity(String id) {
-		return new Key(TYPE_ROOT_IDENTITY, id);
-	}
-
-	public static Key forRootIdentityPrivateKey(String id) {
-		return new Key(TYPE_ROOT_IDENTITY_PRIVATEKEY, id);
-	}
-
-	public static Key forDidDocument(DID did) {
-		return new Key(TYPE_DID_DOCUMENT, did);
-	}
-
-	public static Key forDidMetadata(DID did) {
-		return new Key(TYPE_DID_METADATA, did);
-	}
-
-	private static Key forDidPrivateKey(DIDURL id) {
-		return new Key(TYPE_DID_PRIVATEKEY, id);
-	}
-
-	private static Key forCredential(DIDURL id) {
-		return new Key(TYPE_CREDENTIAL, id);
-	}
-
-	private static Key forCredentialMetadata(DIDURL id) {
-		return new Key(TYPE_CREDENTIAL_METADATA, id);
-	}
-	*/
-
-	export class Metadata extends AbstractMetadata<Metadata> {
+	export class Metadata extends AbstractMetadata {
 		private static TYPE = "type";
 		private static VERSION = "version";
 		private static FINGERPRINT = "fingerprint";
@@ -2110,7 +2026,7 @@ export namespace DIDStore {
 			return this.getInteger(Metadata.VERSION);
 		}
 
-		private setFingerprint(fingerprint: string) {
+		public /*private*/ setFingerprint(fingerprint: string) {
 			checkArgument(fingerprint != null && fingerprint != "", "Invalid fingerprint");
 
 			this.put(Metadata.FINGERPRINT, fingerprint);
@@ -2120,7 +2036,7 @@ export namespace DIDStore {
 			return this.get(Metadata.FINGERPRINT);
 		}
 
-		protected setDefaultRootIdentity(id: string) {
+		public /*protected*/ setDefaultRootIdentity(id: string) {
 			this.put(Metadata.DEFAULT_ROOT_IDENTITY, id);
 		}
 
@@ -2134,7 +2050,7 @@ export namespace DIDStore {
 					this.getStore().storage.storeMetadata(this);
 				} catch (ignore) {
 					if (ignore instanceof DIDStoreException)
-					DIDStore.log.error("INTERNAL - error store metadata for DIDStore");
+					log.error("INTERNAL - error store metadata for DIDStore");
 				}
 			}
 		}
@@ -2144,7 +2060,7 @@ export namespace DIDStore {
 	 * The interface for ConflictHandle to indicate how to resolve the conflict,
 	 * if the local document is different with the one resolved from chain.
 	 */
-	 interface ConflictHandle {
+	export interface ConflictHandle {
 		/**
 		 * The method to merge two did document.
 		 *
@@ -2155,15 +2071,15 @@ export namespace DIDStore {
 		merge(chainCopy: DIDDocument, localCopy: DIDDocument): DIDDocument;
 	}
 
-	interface DIDFilter {
+	export interface DIDFilter {
 		select(did: DID): boolean;
 	}
 
-	interface CredentialFilter {
+	export interface CredentialFilter {
 		select(id: DIDURL): boolean;
 	}
 
-	namespace DIDExport {
+	export namespace DIDExport {
 		//@JsonPropertyOrder({ "content", "metadata" })
 		class Document {
 			//@JsonProperty("content")
@@ -2226,8 +2142,8 @@ export namespace DIDStore {
 					return [];
 
 				let vcs: VerifiableCredential[] = [];
-				for (let cred of credentials)
-					vcs.add(cred.content);
+				for (let cred of this.credentials)
+					vcs.push(cred.content);
 
 				return vcs;
 			}
@@ -2236,7 +2152,7 @@ export namespace DIDStore {
 				if (this.credentials == null)
 					this.credentials = [];
 
-				this.credentials.add(new Credential(credential,
+				this.credentials.push(new Credential(credential,
 					credential.getMetadata().isEmpty() ? null : credential.getMetadata()));
 			}
 
@@ -2244,13 +2160,13 @@ export namespace DIDStore {
 				return this.privatekeys != null ? this.privatekeys : [];
 			}
 
-			public addPrivatekey(id: DIDURL, privatekey: String, storepass: String, exportpass: String) /* throws DIDStoreException */ {
+			public addPrivatekey(id: DIDURL, privatekey: string, storepass: string, exportpass: string) /* throws DIDStoreException */ {
 				if (this.privatekeys == null)
-					this.privatekeys = new ArrayList<PrivateKey>();
+					this.privatekeys = [];
 
-				let sk = new PrivateKey(id);
+				let sk = new DIDStore.DIDExport.PrivateKey(id);
 				sk.setKey(privatekey, storepass, exportpass);
-				this.privatekeys.add(sk);
+				this.privatekeys.push(sk);
 			}
 
 			/* private calculateFingerprint(exportpass: string): string {
@@ -2362,28 +2278,28 @@ export namespace DIDStore {
 
 		//@JsonPropertyOrder({ "content", "metadata" })
 		class Credential {
-			@JsonProperty("content")
+			@JsonProperty({value:"content"}) @JsonClassType({type: () => [VerifiableCredential]})
 			private content: VerifiableCredential;
-			@JsonProperty("metadata")
+			@JsonProperty({value:"metadata"}) @JsonClassType({type: () => [CredentialMetadata]})
 			private metadata: CredentialMetadata;
 
 			@JsonCreator
-			protected Credential(@JsonProperty(value = "content", required = true) content: VerifiableCredential,
-				@JsonProperty(value = "metadata") metadata: CredentialMetadata) {
+			protected constructor(@JsonProperty({value:"content", required = true}) content: VerifiableCredential,
+				@JsonProperty({value:"metadata"}) metadata: CredentialMetadata) {
 				this.content = content;
 				this.metadata = metadata;
 			}
 		}
 
 		//@JsonPropertyOrder({ "id", "key" })
-		class PrivateKey {
+		export class PrivateKey {
 			@JsonProperty({value: "id"}) @JsonClassType({type: () => [DIDURL]})
 			private id: DIDURL;
 			@JsonProperty({value: "key"}) @JsonClassType({type: () => [String]})
 			private key: string;
 
 			@JsonCreator
-			protected constructor(@JsonProperty({value = "id", required = true}) id: DIDURL) {
+			constructor(@JsonProperty({value = "id", required = true}) id: DIDURL) {
 				this.id = id;
 			}
 

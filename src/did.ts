@@ -70,7 +70,7 @@ export class DID {
         return this.methodSpecificId;
     }
 
-    protected setMetadata(metadata: DIDMetadata): void {
+    public /*protected*/ setMetadata(metadata: DIDMetadata): void {
         this.metadata = metadata;
     }
 

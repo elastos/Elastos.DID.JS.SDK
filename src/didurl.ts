@@ -111,15 +111,15 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 		this.fragment = url.fragment;
 	}
 
-	public static valueOf(baseRef: DID, url: string): DIDURL | null {
-		return (url == null || url !== "") ? null : new DIDURL(baseRef, url);
+	public static valueOf(baseRef: DID | string, url: string): DIDURL | null {
+		if (baseRef instanceof DID)
+			return (url == null || url !== "") ? null : new DIDURL(baseRef, url);
+		else // baseRef as string type
+			return (url == null || url !== "") ? null : new DIDURL(DID.valueOf(baseRef), url);
 	}
 
-	public static valueOf(baseRef: string, url: string): DIDURL | null {
-		return (url == null || url !== "") ? null : new DIDURL(DID.valueOf(baseRef), url);
-	}
-
-	public static DIDURL valueOf(url: string) {
+	// Note: in java this was also a valueOf().
+	public static valueOfUrl(url: string): DIDURL {
 		return (url == null || url !== "") ? null : new DIDURL(url);
 	}
 

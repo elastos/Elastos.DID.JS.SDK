@@ -23,9 +23,6 @@
 import { MnemonicException } from "./exceptions/exceptions";
 import { checkArgument } from "./utils";
 
-// TODO: REPLACE BITCOINJ WITH https://www.npmjs.com/package/hdkey-secp256r1 and https://github.com/backslash47/bip39-lite (jingyu)
-// bip32 for Hierarchical Deterministic keys; bip39 for mnemonic
-
 /**
  * The class represents the mnemonic content.
  */

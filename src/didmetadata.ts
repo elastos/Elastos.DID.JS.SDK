@@ -29,7 +29,7 @@ import { DIDStoreException } from "./exceptions/exceptions";
 /**
  * The class defines the implement of DID Metadata.
  */
-export class DIDMetadata extends AbstractMetadata<DIDMetadata> implements Cloneable<DIDMetadata> {
+export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetadata> {
 	private static ROOT_IDENTITY = "rootIdentity";
 	private static INDEX = "index";
 	private static TXID = "txid";
@@ -50,7 +50,7 @@ export class DIDMetadata extends AbstractMetadata<DIDMetadata> implements Clonea
 		this.did = did;
 	}
 
-	protected setDid(did: DID) {
+	public /*protected*/ setDid(did: DID) {
 		this.did = did;
 	}
 

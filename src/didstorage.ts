@@ -20,8 +20,10 @@
  * SOFTWARE.
  */
 
+import { CredentialMetadata } from "./credentialmetadata";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
+import { DIDMetadata } from "./didmetadata";
 import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
 import { VerifiableCredential } from "./domain";
