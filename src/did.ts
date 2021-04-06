@@ -1,10 +1,5 @@
-import { DIDMetadata } from "./didmetadata";
-import { ParserHelper } from "./parser/parserhelper"
-import { checkEmpty, isEmpty } from "./utils";
-import { DIDDocument } from "./diddocument";
-import { DIDResolveException } from "./exceptions/exceptions";
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +19,12 @@ import { DIDResolveException } from "./exceptions/exceptions";
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+import { DIDMetadata } from "./didmetadata";
+import { ParserHelper } from "./parser/parserhelper"
+import { checkEmpty, isEmpty } from "./utils";
+import { DIDDocument } from "./diddocument";
+import { DIDResolveException } from "./exceptions/exceptions";
 
 /**
  * DID is a globally unique identifier that does not require

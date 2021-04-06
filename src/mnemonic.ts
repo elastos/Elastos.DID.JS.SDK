@@ -20,6 +20,12 @@
  * SOFTWARE.
  */
 
+import { MnemonicException } from "./exceptions/exceptions";
+import { checkArgument } from "./utils";
+
+// TODO: REPLACE BITCOINJ WITH https://www.npmjs.com/package/hdkey-secp256r1 and https://github.com/backslash47/bip39-lite (jingyu)
+// bip32 for Hierarchical Deterministic keys; bip39 for mnemonic
+
 /**
  * The class represents the mnemonic content.
  */
@@ -47,50 +53,41 @@ export class Mnemonic {
 	/**
 	 * language: "english"
 	 */
-	public static final String ENGLISH = "english";
+	public static ENGLISH = "english";
 
 	/**
 	 * language: "french"
 	 */
-	public static final String FRENCH = "french";
+	public static FRENCH = "french";
 
 	/**
 	 * language: "italian"
 	 */
-	public static final String ITALIAN = "italian";
+	public static ITALIAN = "italian";
 
 	/**
 	 * language: "japanese"
 	 */
-	public static final String JAPANESE = "japanese";
+	public static JAPANESE = "japanese";
 
 	/**
 	 * language: "korean"
 	 */
-	public static final String KOREAN = "korean";
+	public static KOREAN = "korean";
 
 	/**
 	 * language: "spanish"
 	 */
-	public static final String SPANISH = "spanish";
+	public static SPANISH = "spanish";
 
-	private static final int TWELVE_WORDS_ENTROPY = 16;
+	private static TWELVE_WORDS_ENTROPY = 16;
 
-	private MnemonicCode mc;
+	private mc: MnemonicCode;
 
-	private static HashMap<String, Mnemonic> mcTable = new HashMap<String, Mnemonic>(4);
+	private static mcTable = new Map<string, Mnemonic>(); //new Map<String, Mnemonic>(4);
 
-	private Mnemonic(MnemonicCode mc) {
+	private constructor(mc: MnemonicCode) {
 		this.mc = mc;
-	}
-
-	/**
-	 * Get empty Mnemonic's instance.
-	 *
-	 * @return the Mnemonic object
-	 */
-	public static Mnemonic getInstance() throws MnemonicException {
-		return getInstance(null);
 	}
 
 	/**
@@ -100,25 +97,25 @@ export class Mnemonic {
 	 * @return the Mnemonic object
 	 * @throws DIDException generate Mnemonic into table failed.
 	 */
-	public static synchronized Mnemonic getInstance(String language)
-			throws MnemonicException {
+	public static getInstance(language: string = null): Mnemonic {
 		if (language == null)
-			language = ENGLISH;
+			language = Mnemonic.ENGLISH;
 
-		if (mcTable.containsKey(language))
-			return mcTable.get(language);
+		if (this.mcTable.has(language))
+			return this.mcTable.get(language);
 
 		try {
-			MnemonicCode mc =  MnemonicCode.INSTANCE;
+			let mc =  MnemonicCode.INSTANCE;
 			if (!language.isEmpty()) {
 				InputStream is = MnemonicCode.openDefaultWords(language);
 				mc = new MnemonicCode(is, null);
 			}
 
-			Mnemonic m = new Mnemonic(mc);
-			mcTable.put(language, m);
+			let m = new Mnemonic(mc);
+			this.mcTable.set(language, m);
 			return m;
-		} catch (IOException | IllegalArgumentException e) {
+		} catch (e) {
+			// IOException | IllegalArgumentException
 			throw new MnemonicException(e);
 		}
 	}
@@ -129,7 +126,7 @@ export class Mnemonic {
 	 * @return the mnemonic string
 	 * @throws DIDException generate Mnemonic into table failed.
 	 */
-	public String generate() throws MnemonicException {
+	public generate(): string {
 		try {
 			byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
 			new SecureRandom().nextBytes(entropy);
@@ -152,8 +149,8 @@ export class Mnemonic {
 	 * @return the returned value is true if mnemonic is valid;
 	 *         the returned value is false if mnemonic is not valid.
 	 */
-	public boolean isValid(String mnemonic) {
-		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+	public isValid(mnemonic: string): boolean {
+		checkArgument(mnemonic != null && mnemonic !== "", "Invalid menmonic");
 
     	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
 		List<String> words = Arrays.asList(mnemonic.split(" "));
@@ -167,17 +164,17 @@ export class Mnemonic {
 	}
 
 
-	public static String getLanguage(String mnemonic) throws MnemonicException {
-		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+	public static getLanguage(mnemonic: string): string {
+		checkArgument(mnemonic != null && mnemonic !== "", "Invalid menmonic");
 
     	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
 		List<String> words = Arrays.asList(mnemonic.split(" "));
 
-		String[] langs = { ENGLISH, SPANISH, FRENCH, CZECH, ITALIAN,
-				CHINESE_SIMPLIFIED, CHINESE_TRADITIONAL, JAPANESE, KOREAN };
+		let langs = [ Mnemonic.ENGLISH, Mnemonic.SPANISH, Mnemonic.FRENCH, Mnemonic.CZECH, Mnemonic.ITALIAN,
+			Mnemonic.CHINESE_SIMPLIFIED, Mnemonic.CHINESE_TRADITIONAL, Mnemonic.JAPANESE, Mnemonic.KOREAN ];
 
-		for (String lang : langs) {
-			Mnemonic m = getInstance(lang);
+		for (let lang of langs) {
+			let m = this.getInstance(lang);
 	    	try {
 				m.mc.check(words);
 				return lang;
@@ -189,10 +186,10 @@ export class Mnemonic {
 		return null;
 	}
 
-	public static boolean checkIsValid(String mnemonic) throws MnemonicException {
-		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+	public static checkIsValid(mnemonic: string): boolean {
+		checkArgument(mnemonic != null && mnemonic !== "", "Invalid menmonic");
 
-		String lang = getLanguage(mnemonic);
+		let lang = this.getLanguage(mnemonic);
 		return lang != null;
 	}
 

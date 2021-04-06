@@ -41,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter; */
  * The class defines the base interface of Meta data.
  *
  */
-export abstract class AbstractMetadata<T> extends DIDEntity<T> implements Cloneable<T> {
+export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneable<any> {
 	private static ALIAS = "alias";
 
 	protected static USER_EXTRA_PREFIX = "UX-";
@@ -63,7 +63,7 @@ export abstract class AbstractMetadata<T> extends DIDEntity<T> implements Clonea
 	 * Set store for Abstract Metadata.
 	 * @param store the DIDStore
 	 */
-	protected attachStore(store: DIDStore) {
+	public /*protected*/ attachStore(store: DIDStore) {
 		checkArgument(store != null, "Invalid store");
 		this.store = store;
 	}
@@ -77,7 +77,7 @@ export abstract class AbstractMetadata<T> extends DIDEntity<T> implements Clonea
 	 *
 	 * @return the DIDStore object
 	 */
-	protected getStore(): DIDStore | null {
+	public /*protected*/ getStore(): DIDStore | null {
 		return this.store;
 	}
 
@@ -200,7 +200,7 @@ export abstract class AbstractMetadata<T> extends DIDEntity<T> implements Clonea
 	 *
 	 * @param metadata the metadata to be merged.
 	 */
-	protected merge(metadata: AbstractMetadata<T>) {
+	protected merge(metadata: AbstractMetadata) {
 		if (metadata == this || metadata == null)
 			return;
 
@@ -215,7 +215,20 @@ export abstract class AbstractMetadata<T> extends DIDEntity<T> implements Clonea
 		});
 	}
 
-	public abstract clone();
+
+    /**
+     * Returns a shallow copy of this instance: the keys and values themselves
+     * are not cloned.
+     *
+     * @return a shallow copy of this object
+     */
+	 public clone(): any {
+		 let result = super.clone(); // TODO BPI: Check this - Parent DIDEntity is not cloneable, how can we call clone()?
+		 result.store = this.store;
+		 result.props = this.props.clone(); // TODO BPI: shallow copy of the tree
+
+		 return result;
+	 }
 
 	protected abstract save();
 }

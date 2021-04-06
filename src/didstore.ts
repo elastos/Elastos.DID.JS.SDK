@@ -229,7 +229,7 @@ import { checkArgument } from "./utils";
 			return result;
 		}
 
-		protected storeRootIdentity(identity: RootIdentity, storepass: string) {
+		public /*protected*/ storeRootIdentity(identity: RootIdentity, storepass: string) {
 			checkArgument(identity != null, "Invalid identity");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
@@ -251,12 +251,12 @@ import { checkArgument } from "./utils";
 			this.cache.invalidate(Key.forRootIdentityPrivateKey(identity.getId()));
 		}
 
-		protected storeRootIdentity(identity: RootIdentity) {
+		public /*protected*/ storeRootIdentity(identity: RootIdentity) {
 			checkArgument(identity != null, "Invalid identity");
 			this.storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
 		}
 
-		protected setDefaultRootIdentity(identity: RootIdentity) {
+		public /*protected*/ setDefaultRootIdentity(identity: RootIdentity) {
 			checkArgument(identity != null, "Invalid identity");
 
 			if (!this.containsRootIdentity(identity.getId()))
@@ -328,18 +328,18 @@ import { checkArgument } from "./utils";
 		 * @return the mnemonic string
 		 * @throws DIDStoreException there is no mnemonic in DID Store.
 		 */
-		protected exportRootIdentityMnemonic(id: string, storepass: string): string | null {
+		public /*protected*/ exportRootIdentityMnemonic(id: string, storepass: string): string | null {
 			checkArgument(id != null && id !== "", "Invalid id");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 			let encryptedMnemonic = this.storage.loadRootIdentityMnemonic(id);
 			if (encryptedMnemonic != null)
-				return new String(this.decrypt(encryptedMnemonic, storepass));
+				return new String(this.decrypt(encryptedMnemonic, storepass)).valueOf();
 			else
 				return null;
 		}
 
-		protected containsRootIdentityMnemonic(id: string): boolean {
+		public /*protected*/ containsRootIdentityMnemonic(id: string): boolean {
 			checkArgument(id != null && id !== "", "Invalid id");
 
 			let encryptedMnemonic = this.storage.loadRootIdentityMnemonic(id);
@@ -353,7 +353,7 @@ import { checkArgument } from "./utils";
 		 * @return the HDKey object(private identity)
 		 * @throws DIDStoreException there is invalid private identity in DIDStore.
 		 */
-		private HDKey loadRootIdentityPrivateKey(String id, String storepass) {
+		private loadRootIdentityPrivateKey(id: string, storepass: string): HDKey {
 			/* try {
 				Object value = cache.get(Key.forRootIdentityPrivateKey(id), new Callable<Object>() {
 					public Object call() throws DIDStorageException {
@@ -373,13 +373,13 @@ import { checkArgument } from "./utils";
 			} */
 		}
 
-		protected HDKey derive(String id, String path, String storepass) {
-			checkArgument(id != null && !id.isEmpty(), "Invalid identity");
-			checkArgument(path != null && !path.isEmpty(), "Invalid path");
-			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		protected derive(id: string, path: string, storepass: string): HDKey {
+			checkArgument(id != null && id !== "", "Invalid identity");
+			checkArgument(path != null && path !== "", "Invalid path");
+			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-			HDKey rootPrivateKey = loadRootIdentityPrivateKey(id, storepass);
-			HDKey key = rootPrivateKey.derive(path);
+			let rootPrivateKey = this.loadRootIdentityPrivateKey(id, storepass);
+			let key = rootPrivateKey.derive(path);
 			rootPrivateKey.wipe();
 
 			return key;
@@ -408,7 +408,7 @@ import { checkArgument } from "./utils";
 			return this.storage.containsRootIdenities();
 		}
 
-		protected storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata ) {
+		public /*protected*/ storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata ) {
 			checkArgument(id != null && id !== "", "Invalid id");
 			checkArgument(metadata != null, "Invalid metadata");
 
@@ -932,8 +932,8 @@ import { checkArgument } from "./utils";
 		 * @param storepass the password for DIDStore
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public void storePrivateKey(DIDURL id, byte[] privateKey,
-				String storepass) throws DIDStoreException {
+		 public storePrivateKey(DIDURL id, byte[] privateKey,
+				String storepass) {
 			checkArgument(id != null, "Invalid private key id");
 			checkArgument(privateKey != null && privateKey.length != 0, "Invalid private key");
 			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -942,7 +942,7 @@ import { checkArgument } from "./utils";
 			storage.storePrivateKey(id, encryptedKey);
 
 			cache.put(Key.forDidPrivateKey(id), encryptedKey);
-		} */
+		}
 
 		/**
 		 * Store private key. Encrypt and encode private key with base64url method.

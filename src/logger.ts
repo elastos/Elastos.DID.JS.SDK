@@ -9,6 +9,10 @@ export class Logger {
         console.log.apply(console, args);
     }
 
+    debug(...args: any) {
+        console.log.apply(console, args);
+    }
+
     warn(...args: any) {
         console.warn.apply(console, args);
     }

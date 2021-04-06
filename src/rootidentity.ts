@@ -1,66 +1,24 @@
 import { AbstractMetadata } from "./abstractmetadata";
 import { DID } from "./did";
+import { DIDDocument } from "./diddocument";
 import { DIDStore } from "./DIDStore";
-import { DIDStoreException, IllegalArgumentException } from "./exceptions/exceptions";
+import { DIDURL } from "./didurl";
+import { DIDAlreadyExistException, DIDDeactivatedException, DIDStoreException, IllegalArgumentException, RootIdentityAlreadyExistException, UnknownInternalException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
+import { Mnemonic } from "./mnemonic";
 import { checkArgument } from "./utils";
 
 const log = new Logger("RootIdentity");
 
-export namespace RootIdentity {
-	export class Metadata extends AbstractMetadata<Metadata> {
-		public static DEFAULT_DID = "defaultDid";
-
-		private id: string;
-
-		protected constructor(id: string, store: DIDStore | null = null) {
-			super(store);
-			this.id = id;
-		}
-
-		protected setId(id: string) {
-			this.id = id;
-		}
-
-		/**
-		 * Set transaction id for CredentialMetadata.
-		 *
-		 * @param txid the transaction id string
-		 */
-		protected setDefaultDid(did: DID) {
-			this.put(Metadata.DEFAULT_DID, did.toString());
-		}
-
-		/**
-		 * Get the last transaction id.
-		 *
-		 * @return the transaction string
-		 */
-		public getDefaultDid(): DID {
-			return DID.valueOf(this.get(Metadata.DEFAULT_DID));
-		}
-
-		protected save() {
-			if (this.attachedStore()) {
-				try {
-					this.getStore()?.storeRootIdentityMetadata(this.id, this);
-				} catch (e) {
-					if (e instanceof DIDStoreException)
-						log.error("INTERNAL - error store metadata for credential {}", this.id);
-				}
-			}
-		}
-	}
-}
-
 export class RootIdentity {
 	private mnemonic: string;
+
 	private rootPrivateKey: HDKey;
 	private preDerivedPublicKey: HDKey;
 	private index: AtomicInteger;
 
 	private id: string;
-	private metadata: Metadata;
+	private metadata: RootIdentity.Metadata;
 
 	private RootIdentity(String mnemonic, String passphrase) {
 		this.mnemonic = mnemonic;
@@ -129,9 +87,9 @@ export class RootIdentity {
 	 * @param storepass the password for DIDStore
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static RootIdentity create(String mnemonic, String passphrase,
-			DIDStore store, String storepass) throws DIDStoreException {
-		return create(mnemonic, passphrase, false, store, storepass);
+	public static create(mnemonic: string, passphrase: string,
+			store: DIDStore, storepass: string): RootIdentity {
+		return this.create(mnemonic, passphrase, false, store, storepass);
 	}
 
 	/**
@@ -143,15 +101,15 @@ export class RootIdentity {
 	 *              force = false, must not create new private identity if there is private identity.
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static RootIdentity create(String extentedPrivateKey, boolean overwrite,
-			DIDStore store, String storepass) throws DIDStoreException {
-		checkArgument(extentedPrivateKey != null && !extentedPrivateKey.isEmpty(),
+	public static create(extentedPrivateKey: string, overwrite: boolean,
+			store: DIDStore, storepass: string): RootIdentity {
+		checkArgument(extentedPrivateKey != null && extentedPrivateKey !== "",
 				"Invalid extended private key");
 		checkArgument(store != null, "Invalid DID store");
-		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-		HDKey rootPrivateKey = HDKey.deserialize(Base58.decode(extentedPrivateKey));
-		RootIdentity identity = new RootIdentity(rootPrivateKey);
+		let rootPrivateKey = HDKey.deserialize(Base58.decode(extentedPrivateKey));
+		let identity = new RootIdentity(rootPrivateKey);
 
 		if (store.containsRootIdentity(identity.getId()) && !overwrite)
 			throw new RootIdentityAlreadyExistException(identity.getId());
@@ -170,36 +128,36 @@ export class RootIdentity {
 	 * @param storepass the password for DIDStore
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static RootIdentity create(String extentedPrivateKey,
-			DIDStore store, String storepass) throws DIDStoreException {
-		return create(extentedPrivateKey, false, store, storepass);
+	public static create(extentedPrivateKey: string,
+			store: DIDStore, storepass: String): RootIdentity {
+		return this.create(extentedPrivateKey, false, store, storepass);
 	}
 
-	protected static RootIdentity create(String preDerivedPublicKey, int index) {
-		HDKey key = preDerivedPublicKey == null ? null : HDKey.deserializeBase58(preDerivedPublicKey);
+	protected static create(preDerivedPublicKey: string, index: number): RootIdentity {
+		let key = preDerivedPublicKey == null ? null : HDKey.deserializeBase58(preDerivedPublicKey);
 
 		return new RootIdentity(key, index);
 	}
 
-	private void wipe() {
-		rootPrivateKey.wipe();
+	private wipe() {
+		this.rootPrivateKey.wipe();
 
-		mnemonic = null;
-		rootPrivateKey = null;
+		this.mnemonic = null;
+		this.rootPrivateKey = null;
 	}
 
-	protected DIDStore getStore() {
-		return metadata.getStore();
+	protected getStore(): DIDStore {
+		return this.metadata.getStore();
 	}
 
-	protected void setMetadata(Metadata metadata) {
+	protected setMetadata(metadata: RootIdentity.Metadata) {
 		this.metadata = metadata;
 	}
 
-	protected static String getId(byte[] key) {
+	protected static getId(key: byte[]): string {
 		checkArgument(key != null && key.length > 0, "Invalid key bytes");
 
-		MD5Digest md5 = new MD5Digest();
+		let md5 = new MD5Digest();
 		byte[] digest = new byte[md5.getDigestSize()];
 		md5.update(key, 0, key.length);
 		md5.doFinal(digest, 0);
@@ -207,67 +165,66 @@ export class RootIdentity {
 		return Hex.toHexString(digest);
 	}
 
-	public synchronized String getId() {
-		if (id == null)
-			id = getId(preDerivedPublicKey.serializePublicKey());
+	public getId(): string {
+		if (this.id == null)
+			this.id = this.getId(this.preDerivedPublicKey.serializePublicKey());
 
-		return id;
+		return this.id;
 	}
 
-	public String getAlias() {
-		return metadata.getAlias();
+	public getAlias(): string {
+		return this.metadata.getAlias();
 	}
 
-	public void setAlias(String alias) {
-		metadata.setAlias(alias);
+	public setAlias(alias: string) {
+		this.metadata.setAlias(alias);
 	}
 
-	public void setAsDefault() throws DIDStoreException {
-		getStore().setDefaultRootIdentity(this);
+	public setAsDefault() {
+		this.getStore().setDefaultRootIdentity(this);
 	}
 
-	public DID getDefaultDid() {
-		return metadata.getDefaultDid();
+	public getDefaultDid(): DID {
+		return this.metadata.getDefaultDid();
 	}
 
-	public void setDefaultDid(DID did) {
-		metadata.setDefaultDid(did);
+	public setDefaultDid(did: DID | String) {
+		if (did instanceof DID)
+			this.metadata.setDefaultDid(did);
+		else
+			this.metadata.setDefaultDid(DID.valueOf(did as string));
 	}
 
-	public void setDefaultDid(String did) {
-		metadata.setDefaultDid(DID.valueOf(did));
-	}
-
-	public void setDefaultDid(int index) {
+	public setDefaultDidByIndex(index: number) {
 		checkArgument(index >=0, "Invalid index");
 
-		metadata.setDefaultDid(getDid(index));
+		this.metadata.setDefaultDid(this.getDid(index));
 	}
 
-	protected String getMnemonic() {
-		return mnemonic;
+	protected getMnemonic(): string {
+		return this.mnemonic;
 	}
 
-	protected HDKey getRootPrivateKey() {
-		return rootPrivateKey;
+	protected getRootPrivateKey(): HDKey {
+		return this.rootPrivateKey;
 	}
 
-	protected HDKey getPreDerivedPublicKey() {
-		return preDerivedPublicKey;
+	protected getPreDerivedPublicKey(): HDKey {
+		return this.preDerivedPublicKey;
 	}
 
-	protected int getIndex() {
-		return index.get();
+	protected getIndex(): number {
+		return this.index.get();
 	}
 
-	protected void setIndex(int idx) throws DIDStoreException {
-		index.set(idx);
-		getStore().storeRootIdentity(this);
+	protected setIndex(idx: number) {
+		this.index.set(idx);
+		this.getStore().storeRootIdentity(this);
 	}
 
-	protected int incrementIndex() throws DIDStoreException {
-		int idx = index.incrementAndGet();
-		getStore().storeRootIdentity(this);
+	protected incrementIndex(): number {
+		let idx = this.index.incrementAndGet();
+		this.getStore().storeRootIdentity(this);
 		return idx;
 	}
 
@@ -277,30 +234,29 @@ export class RootIdentity {
 	 * @param index the index
 	 * @return the DID object
 	 */
-	public DID getDid(int index) {
+	public getDid(index: number): DID {
 		checkArgument(index >= 0, "Invalid index");
 
-		HDKey key = preDerivedPublicKey.derive("0/" + index);
-		DID did = new DID(DID.METHOD, key.getAddress());
+		let key = this.preDerivedPublicKey.derive("0/" + index);
+		let did = new DID(DID.METHOD, key.getAddress());
 		return did;
 	}
 
-	protected static byte[] lazyCreateDidPrivateKey(DIDURL id, DIDStore store, String storepass)
-			throws DIDStoreException {
-		DIDDocument doc = store.loadDid(id.getDid());
+	protected static lazyCreateDidPrivateKey(id: DIDURL, store: DIDStore, storepass: string): byte[] {
+		let doc = store.loadDid(id.getDid());
 		if (doc == null) {
 			log.error("INTERNAL - Missing document for DID: {}", id.getDid());
 			throw new DIDStoreException("Missing document for DID: " + id.getDid());
 		}
 
-		String identity = doc.getMetadata().getRootIdentityId();
+		let identity = doc.getMetadata().getRootIdentityId();
 		if (identity == null)
 			return null;
 
-		HDKey key = store.derive(identity, HDKey.DERIVE_PATH_PREFIX +
+		let key = store.derive(identity, HDKey.DERIVE_PATH_PREFIX +
 				doc.getMetadata().getIndex(), storepass);
 
-		DIDDocument.PublicKey pk = doc.getPublicKey(id);
+		let pk = doc.getPublicKey(id);
 		if (pk == null) {
 			log.error("INTERNAL - Invalid public key: {}", id);
 			throw new DIDStoreException("Invalid public key: " + id);
@@ -312,7 +268,7 @@ export class RootIdentity {
 		}
 
 		store.storePrivateKey(id, key.serialize(), storepass);
-		byte[] sk = key.serialize();
+		let sk = key.serialize();
 		key.wipe();
 		return sk;
 	}
@@ -326,13 +282,12 @@ export class RootIdentity {
 	 * @return the DIDDocument content related to the new DID
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
-	public DIDDocument newDid(int index, boolean overwrite, String storepass)
-			throws DIDResolveException, DIDStoreException {
+	public newDid(index: number, overwrite: boolean, storepass: string): DIDDocument {
 		checkArgument(index >= 0, "Invalid index");
-		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-		DID did = getDid(index);
-		DIDDocument doc = getStore().loadDid(did);
+		let did = this.getDid(index);
+		let doc = this.getStore().loadDid(did);
 		if (doc != null) {
 			if (doc.isDeactivated())
 				throw new DIDDeactivatedException(did.toString());
@@ -352,27 +307,27 @@ export class RootIdentity {
 
 		log.debug("Creating new DID {} at index {}...", did.toString(), index);
 
-		HDKey key = getStore().derive(getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
+		let key = this.getStore().derive(this.getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
 		try {
-			DIDURL id = new DIDURL(did, "#primary");
-			getStore().storePrivateKey(id, key.serialize(), storepass);
+			let id = new DIDURL(did, "#primary");
+			this.getStore().storePrivateKey(id, key.serialize(), storepass);
 
-			DIDDocument.Builder db = new DIDDocument.Builder(did, getStore());
+			let db = new DIDDocument.Builder(did, this.getStore());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 			doc = db.seal(storepass);
-			getStore().storeDid(doc);
+			this.getStore().storeDid(doc);
 
 			return doc;
-		} catch (MalformedDocumentException ignore) {
-			throw new UnknownInternalException(ignore);
+		} catch (e) {
+			// MalformedDocumentException
+			throw new UnknownInternalException(e);
 		} finally {
 			key.wipe();
 		}
 	}
 
-	public DIDDocument newDid(int index, String storepass)
-			throws DIDResolveException, DIDStoreException {
-		return newDid(index, false, storepass);
+	public newDid(index: number, storepass: number): DIDDocument {
+		return this.newDid(index, false, storepass);
 	}
 
 	/**
@@ -382,10 +337,9 @@ export class RootIdentity {
 	 * @return the DIDDocument content related to the new DID
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
-	public synchronized DIDDocument newDid(boolean overwrite, String storepass)
-			throws DIDResolveException, DIDStoreException {
-		DIDDocument doc = newDid(getIndex(), overwrite, storepass);
-		incrementIndex();
+	public newDid(overwrite: boolean, storepass: string): DIDDocument {
+		let doc = this.newDid(this.getIndex(), overwrite, storepass);
+		this.incrementIndex();
 		return doc;
 	}
 
@@ -396,13 +350,12 @@ export class RootIdentity {
 	 * @return the DIDDocument content related to the new DID
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
-	public DIDDocument newDid(String storepass)
-			throws DIDResolveException, DIDStoreException {
-		return newDid(false, storepass);
+	public newDid(String storepass): DIDDocument {
+		return this.newDid(false, storepass);
 	}
 
-	public boolean hasMnemonic() throws DIDStoreException {
-		return getStore().containsRootIdentityMnemonic(getId());
+	public hasMnemonic(): boolean {
+		return this.getStore().containsRootIdentityMnemonic(this.getId());
 	}
 
 	/**
@@ -412,31 +365,30 @@ export class RootIdentity {
  	 * @return the mnemonic string
 	 * @throws DIDStoreException there is no mnemonic in DID Store.
 	 */
-	public String exportMnemonic(String storepass) throws DIDStoreException {
-		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+	public exportMnemonic(storepass: string): string {
+		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-		return getStore().exportRootIdentityMnemonic(getId(), storepass);
+		return this.getStore().exportRootIdentityMnemonic(this.getId(), storepass);
 	}
 
-	public boolean synchronize(int index, ConflictHandle handle)
-			throws DIDResolveException, DIDStoreException {
+	public synchronize(index: number, handle: ConflictHandle): boolean {
 		checkArgument(index >= 0, "Invalid index");
 
 		if (handle == null)
 			handle = DIDStore.defaultConflictHandle;
 
-		DID did = getDid(index);
+		let did = this.getDid(index);
 		log.info("Synchronize {}/{}...", did.toString(), index);
 
-		DIDDocument resolvedDoc = did.resolve(true);
+		resolvedDoc = did.resolve(true);
 		if (resolvedDoc == null) {
 			log.info("Synchronize {}/{}...not exists", did.toString(), index);
 			return false;
 		}
 
 		log.debug("Synchronize {}/{}..exists, got the on-chain copy.", did.toString(), index);
-		DIDDocument finalDoc = resolvedDoc;
-		DIDDocument localDoc = getStore().loadDid(did);
+		let finalDoc = resolvedDoc;
+		let localDoc = this.getStore().loadDid(did);
 		if (localDoc != null) {
 			// Update metadata off-store, then store back
 			localDoc.getMetadata().detachStore();
@@ -461,20 +413,19 @@ export class RootIdentity {
 			}
 		}
 
-		DIDMetadata metadata = finalDoc.getMetadata();
-		metadata.setRootIdentityId(getId());
+		let metadata = finalDoc.getMetadata();
+		metadata.setRootIdentityId(this.getId());
 		metadata.setIndex(index);
 
-		getStore().storeDid(finalDoc);
+		this.getStore().storeDid(finalDoc);
 		return true;
 	}
 
-	public synchronize(index: number): boolean
-			throws DIDResolveException, DIDStoreException {
-		return synchronize(index, null);
+	public synchronize(index: number): boolean {
+		return this.synchronize(index, null);
 	}
 
-	public CompletableFuture<Void> synchronizeAsync(int index, ConflictHandle handle) {
+	public synchronizeAsync(index: number, handle: ConflictHandle): CompletableFuture<Void>  {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
 				synchronize(index, handle);
@@ -497,16 +448,15 @@ export class RootIdentity {
 	 * @throws DIDResolveException synchronize did faile with resolve error.
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
-	public void synchronize(ConflictHandle handle)
-			throws DIDResolveException, DIDStoreException {
-		log.info("Synchronize root identity {}...", getId());
+	public synchronize(handle: ConflictHandle = null) {
+		log.info("Synchronize root identity {}...", this.getId());
 
-		int lastIndex = getIndex() - 1;
-		int blanks = 0;
-		int i = 0;
+		let lastIndex = this.getIndex() - 1;
+		let blanks = 0;
+		let i = 0;
 
 		while (i < lastIndex || blanks < 20) {
-			boolean exists = synchronize(i, handle);
+			let exists = this.synchronize(i, handle);
 			if (exists) {
 				if (i > lastIndex)
 					lastIndex = i;
@@ -520,21 +470,8 @@ export class RootIdentity {
 			i++;
 		}
 
-		if (lastIndex >= getIndex())
-			setIndex(lastIndex + 1);
-	}
-
-	/**
-	 * Synchronize DIDStore.
-	 * ConflictHandle uses default method.
-	 *
-	 * @param storepass the password for DIDStore
-	 * @throws DIDResolveException synchronize did faile with resolve error.
-	 * @throws DIDStoreException there is no private identity in DIDStore.
-	 */
-	public void synchronize()
-			throws DIDResolveException, DIDStoreException {
-		synchronize(null);
+		if (lastIndex >= this.getIndex())
+			this.setIndex(lastIndex + 1);
 	}
 
     /**
@@ -545,7 +482,7 @@ export class RootIdentity {
 	 * @return the new CompletableStage, the result is the DIDDocument interface for
 	 *         resolved DIDDocument if success; null otherwise.
      */
-	public CompletableFuture<Void> synchronizeAsync(ConflictHandle handle) {
+	public synchronizeAsync(ConflictHandle handle = null): CompletableFuture<Void> {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
 				synchronize(handle);
@@ -556,15 +493,50 @@ export class RootIdentity {
 
 		return future;
 	}
+}
 
-    /**
-     * Synchronize DIDStore with asynchronous mode.
-     * ConflictHandle uses default method.
-     *
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, no result.
-     */
-	public CompletableFuture<Void> synchronizeAsync() {
-		return synchronizeAsync(null);
-	}
+export namespace RootIdentity {
+	export class Metadata extends AbstractMetadata {
+		public static DEFAULT_DID = "defaultDid";
+
+		private id: string;
+
+		constructor(id: string, store: DIDStore | null = null) {
+			super(store);
+			this.id = id;
+		}
+
+		public /*protected*/ setId(id: string) {
+			this.id = id;
+		}
+
+		/**
+		 * Set transaction id for CredentialMetadata.
+		 *
+		 * @param txid the transaction id string
+		 */
+		public /*protected*/ setDefaultDid(did: DID) {
+			this.put(Metadata.DEFAULT_DID, did.toString());
+		}
+
+		/**
+		 * Get the last transaction id.
+		 *
+		 * @return the transaction string
+		 */
+		public getDefaultDid(): DID {
+			return DID.valueOf(this.get(Metadata.DEFAULT_DID));
+		}
+
+		protected save() {
+			if (this.attachedStore()) {
+				try {
+					this.getStore()?.storeRootIdentityMetadata(this.id, this);
+				} catch (e) {
+					if (e instanceof DIDStoreException)
+						log.error("INTERNAL - error store metadata for credential {}", this.id);
+				}
+			}
+		}
+	};
 }
