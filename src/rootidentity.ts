@@ -1,10 +1,11 @@
+import { MD5 } from "crypto-js";
 import { AbstractMetadata } from "./abstractmetadata";
+import { HDKey } from "./crypto/hdkey";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDStore } from "./DIDStore";
 import { DIDURL } from "./didurl";
 import { DIDAlreadyExistException, DIDDeactivatedException, DIDStoreException, IllegalArgumentException, RootIdentityAlreadyExistException, UnknownInternalException } from "./exceptions/exceptions";
-import { HDKey } from "./hdkey-secp256r1";
 import { Logger } from "./logger";
 import { Mnemonic } from "./mnemonic";
 import { checkArgument } from "./utils";
@@ -102,20 +103,19 @@ export class RootIdentity {
 	 *              force = false, must not create new private identity if there is private identity.
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static create(extentedPrivateKey: string, overwrite: boolean,
-			store: DIDStore, storepass: string): RootIdentity {
+	public static create(extentedPrivateKey: string, overwrite: boolean, store: DIDStore, storepass: string): RootIdentity {
 		checkArgument(extentedPrivateKey != null && extentedPrivateKey !== "",
 				"Invalid extended private key");
 		checkArgument(store != null, "Invalid DID store");
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-		let rootPrivateKey = HDKey.deserialize(Base58.decode(extentedPrivateKey));
+		let rootPrivateKey = HDKey.deserializeBase58(extentedPrivateKey);
 		let identity = new RootIdentity(rootPrivateKey);
 
 		if (store.containsRootIdentity(identity.getId()) && !overwrite)
 			throw new RootIdentityAlreadyExistException(identity.getId());
 
-		identity.setMetadata(new Metadata(identity.getId(), store));
+		identity.setMetadata(new RootIdentity.Metadata(identity.getId(), store));
 		store.storeRootIdentity(identity, storepass);
 		identity.wipe();
 
@@ -155,20 +155,14 @@ export class RootIdentity {
 		this.metadata = metadata;
 	}
 
-	protected static getId(key: byte[]): string {
+	protected static getId(key: string): string {
 		checkArgument(key != null && key.length > 0, "Invalid key bytes");
-
-		let md5 = new MD5Digest();
-		byte[] digest = new byte[md5.getDigestSize()];
-		md5.update(key, 0, key.length);
-		md5.doFinal(digest, 0);
-
-		return Hex.toHexString(digest);
+		return MD5(key).toString(CryptoJS.enc.Hex);
 	}
 
 	public getId(): string {
 		if (this.id == null)
-			this.id = this.getId(this.preDerivedPublicKey.serializePublicKey());
+			this.id = RootIdentity.getId(this.preDerivedPublicKey.serializePublicKey());
 
 		return this.id;
 	}
@@ -373,7 +367,7 @@ export class RootIdentity {
 		return this.getStore().exportRootIdentityMnemonic(this.getId(), storepass);
 	}
 
-	public synchronize(index: number, handle: ConflictHandle): boolean {
+	public synchronize(index: number, handle: DIDStore.ConflictHandle): boolean {
 		checkArgument(index >= 0, "Invalid index");
 
 		if (handle == null)
@@ -382,7 +376,7 @@ export class RootIdentity {
 		let did = this.getDid(index);
 		log.info("Synchronize {}/{}...", did.toString(), index);
 
-		resolvedDoc = did.resolve(true);
+		let resolvedDoc = did.resolve(true);
 		if (resolvedDoc == null) {
 			log.info("Synchronize {}/{}...not exists", did.toString(), index);
 			return false;

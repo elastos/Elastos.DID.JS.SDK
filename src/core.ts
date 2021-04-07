@@ -41,9 +41,9 @@ export class KeyManager {
         const parent = new HDPrivateKey(prvKey.xprivkey);
         const privateKey = parent
             .deriveChild(44, true)
-            .deriveChild(coinType, true)
             .deriveChild(0, true)
-            .deriveChild(changeChain, false)
+            .deriveChild(0, true)
+            .deriveChild(0, false)
             .deriveChild(index, false);
         return privateKey.privateKey;
     }

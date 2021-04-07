@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+import { mnemonicToSeedSync, generateMnemonic, wordlists, validateMnemonic } from "bip39";
 import { MnemonicException } from "./exceptions/exceptions";
 import { checkArgument } from "./utils";
 
@@ -79,42 +80,20 @@ export class Mnemonic {
 
 	private static TWELVE_WORDS_ENTROPY = 16;
 
-	private mc: MnemonicCode;
+	private static WORDLISTS:{[index: string]: string[]} = {
+        "english": wordlists.english,
+        "chinese_simplified": wordlists.chinese_simplified,
+		"chinese_traditional": wordlists.chinese_traditional,
+        "french": wordlists.french,
+        "italian": wordlists.italian,
+        "japanese": wordlists.japanese,
+        "spanish": wordlists.spanish,
+		"korean": wordlists.korean
+    }
 
-	private static mcTable = new Map<string, Mnemonic>(); //new Map<String, Mnemonic>(4);
-
-	private constructor(mc: MnemonicCode) {
-		this.mc = mc;
-	}
-
-	/**
-	 * Get the Mnemonic's instance with the given language.
-	 *
-	 * @param language the language string
-	 * @return the Mnemonic object
-	 * @throws DIDException generate Mnemonic into table failed.
-	 */
-	public static getInstance(language: string = null): Mnemonic {
-		if (language == null)
-			language = Mnemonic.ENGLISH;
-
-		if (this.mcTable.has(language))
-			return this.mcTable.get(language);
-
-		try {
-			let mc =  MnemonicCode.INSTANCE;
-			if (!language.isEmpty()) {
-				InputStream is = MnemonicCode.openDefaultWords(language);
-				mc = new MnemonicCode(is, null);
-			}
-
-			let m = new Mnemonic(mc);
-			this.mcTable.set(language, m);
-			return m;
-		} catch (e) {
-			// IOException | IllegalArgumentException
-			throw new MnemonicException(e);
-		}
+	private constructor(private language: string) {
+		if (!(language in Mnemonic.WORDLISTS))
+			throw new MnemonicException("Unsupported language for mnemonic "+language);
 	}
 
 	/**
@@ -124,19 +103,7 @@ export class Mnemonic {
 	 * @throws DIDException generate Mnemonic into table failed.
 	 */
 	public generate(): string {
-		try {
-			byte[] entropy = new byte[TWELVE_WORDS_ENTROPY];
-			new SecureRandom().nextBytes(entropy);
-			List<String> words = mc.toMnemonic(entropy);
-
-			StringJoiner joiner = new StringJoiner(" ");
-	        for (String word: words)
-	            joiner.add(word);
-
-	        return joiner.toString();
-		} catch (org.bitcoinj.crypto.MnemonicException e) {
-			throw new MnemonicException(e);
-		}
+		return generateMnemonic(Mnemonic.TWELVE_WORDS_ENTROPY, null, Mnemonic.WORDLISTS[this.language]);
 	}
 
 	/**
@@ -147,37 +114,19 @@ export class Mnemonic {
 	 *         the returned value is false if mnemonic is not valid.
 	 */
 	public isValid(mnemonic: string): boolean {
-		checkArgument(mnemonic != null && mnemonic !== "", "Invalid menmonic");
-
-    	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
-		List<String> words = Arrays.asList(mnemonic.split(" "));
-
-    	try {
-	    	mc.check(words);
-		    return true;
-		} catch (org.bitcoinj.crypto.MnemonicException e) {
-			return false;
-		}
+		checkArgument(mnemonic != null && mnemonic !== "", "Invalid mnemonic");
+		return validateMnemonic(mnemonic, Mnemonic.WORDLISTS[this.language]);
 	}
 
 
 	public static getLanguage(mnemonic: string): string {
 		checkArgument(mnemonic != null && mnemonic !== "", "Invalid menmonic");
 
-    	mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
-		List<String> words = Arrays.asList(mnemonic.split(" "));
-
-		let langs = [ Mnemonic.ENGLISH, Mnemonic.SPANISH, Mnemonic.FRENCH, Mnemonic.CZECH, Mnemonic.ITALIAN,
-			Mnemonic.CHINESE_SIMPLIFIED, Mnemonic.CHINESE_TRADITIONAL, Mnemonic.JAPANESE, Mnemonic.KOREAN ];
-
-		for (let lang of langs) {
-			let m = this.getInstance(lang);
-	    	try {
-				m.mc.check(words);
+    	// TODO CONVERT FROM JAVA - mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+		for (let lang of Object.keys(Mnemonic.WORDLISTS)) {
+			let m = new Mnemonic(lang);
+			if (m.isValid(mnemonic))
 				return lang;
-	    	} catch (org.bitcoinj.crypto.MnemonicException e) {
-				continue;
-			}
 		}
 
 		return null;
@@ -197,17 +146,15 @@ export class Mnemonic {
 	 * @param passphrase the password combine with mnemonic
 	 * @return the original seed
 	 */
-	public static byte[] toSeed(String mnemonic, String passphrase) {
-		checkArgument(mnemonic != null && !mnemonic.isEmpty(), "Invalid menmonic");
+	public static toSeed(mnemonic: string, passphrase: string): string {
+		checkArgument(mnemonic != null && mnemonic !== "", "Invalid menmonic");
 
 		if (passphrase == null)
 			passphrase = "";
 
-		mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
-    	passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
+		// TODO - CONVERT FROM JAVA NEEDED? - mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+    	// TODO - CONVERT FROM JAVA NEEDED? - passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
 
-		List<String> words = Arrays.asList(mnemonic.split(" "));
-
-    	return MnemonicCode.toSeed(words, passphrase);
+		return mnemonicToSeedSync(mnemonic, passphrase).toString();
 	}
 }

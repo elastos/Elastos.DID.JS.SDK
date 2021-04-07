@@ -1,8 +1,5 @@
-import { DIDEntity } from "./didentity";
-import { DID } from "./did";
-
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +20,13 @@ import { DID } from "./did";
  * SOFTWARE.
  */
 
+import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType } from "jackson-js";
+import { DIDEntity } from "./didentity";
+import { DID } from "./did";
+import { Logger } from "./logger";
+import { List as ImmutableList } from "immutable";
+
+const log = new Logger("DIDDocument");
 
 /**
  * The DIDDocument represents the DID information.
@@ -55,600 +59,54 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     private id: DID;
 
-    @JsonProperty(CONTROLLER)
-    @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,
-                        JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
-    @JsonInclude(Include.NON_EMPTY)
-    private List<DID> controllers;
+    @JsonProperty({value: DIDDocument.CONTROLLER})
+    // TODO: Convert from java - @JsonFormat(with:{JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
+    @JsonInclude({value: JsonIncludeType.NON_EMPTY})
+    private controllers: DID[];
 
-    @JsonProperty(MULTI_SIGNATURE)
-    @JsonInclude(Include.NON_NULL)
-    MultiSignature multisig;
+    @JsonProperty({value: DIDDocument.MULTI_SIGNATURE})
+    @JsonInclude({value: JsonIncludeType.NON_NULL})
+    private multisig: MultiSignature;
 
     @JsonProperty(PUBLICKEY)
     @JsonInclude(Include.NON_EMPTY)
-    private List<PublicKey> _publickeys;
+    private _publickeys: PublicKey[];
 
     @JsonProperty(AUTHENTICATION)
     @JsonInclude(Include.NON_EMPTY)
-    private List<PublicKeyReference> _authentications;
+    private _authentications: PublicKeyReference[];
 
     @JsonProperty(AUTHORIZATION)
     @JsonInclude(Include.NON_EMPTY)
-    private List<PublicKeyReference> _authorizations;
+    private _authorizations: PublicKeyReference[];
 
     @JsonProperty(VERIFIABLE_CREDENTIAL)
     @JsonInclude(Include.NON_EMPTY)
-    private List<VerifiableCredential> _credentials;
+    private _credentials: VerifiableCredential[];
 
     @JsonProperty(SERVICE)
     @JsonInclude(Include.NON_EMPTY)
-    private List<Service> _services;
+    private _services: Service[];
 
     @JsonProperty(EXPIRES)
     @JsonInclude(Include.NON_NULL)
-    private Date expires;
+    private expires: Date;
 
     @JsonProperty(PROOF)
     @JsonInclude(Include.NON_EMPTY)
-    @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,
-            JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
-    private List<Proof> _proofs;
-
-    private Map<DID, DIDDocument> controllerDocs;
-    private Map<DIDURL, PublicKey> publicKeys;
-    private Map<DIDURL, VerifiableCredential> credentials;
-    private Map<DIDURL, Service> services;
-    private HashMap<DID, Proof> proofs;
-
-    private DID effectiveController;
-    public PublicKey defaultPublicKey;
-
-    private DIDMetadata metadata;
-
-    private static final Logger log = LoggerFactory.getLogger(DIDDocument.class);
-
-    public static class MultiSignature {
-        private int m;
-        private int n;
-
-        public MultiSignature(int m, int n) {
-            apply(m, n);
-        }
-
-        private MultiSignature(MultiSignature ms) {
-            apply(ms.m, ms.n);
-        }
-
-        @JsonCreator
-        public MultiSignature(String mOfN) {
-            if (mOfN == null || mOfN.isEmpty())
-                throw new IllegalArgumentException("Invalid multisig spec");
-
-            String[] mn = mOfN.split(":");
-            if (mn == null || mn.length != 2)
-                throw new IllegalArgumentException("Invalid multisig spec");
-
-            apply(Integer.valueOf(mn[0]), Integer.valueOf(mn[1]));
-        }
-
-        protected void apply(int m, int n) {
-            checkArgument(n > 1, "Invalid multisig spec: n should > 1");
-            checkArgument(m > 0 && m <= n,  "Invalid multisig spec: m should > 0 and <= n");
-
-            this.m = m;
-            this.n = n;
-        }
-
-        public int m() {
-            return m;
-        }
-
-        public int n() {
-            return n;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-
-            if (obj instanceof MultiSignature) {
-                MultiSignature multisig = (MultiSignature)obj;
-                return m == multisig.m && n == multisig.n;
-            }
-
-            return false;
-        }
-
-        @Override
-        @JsonValue
-        public String toString() {
-            return String.format("%d:%d", m, n);
-        }
-    }
-
-    /**
-     * Publickey is used for digital signatures, encryption and
-     * other cryptographic operations, which are the basis for purposes such as
-     * authentication or establishing secure communication with service endpoints.
-     */
-    @JsonPropertyOrder({ ID, TYPE, CONTROLLER, PUBLICKEY_BASE58 })
-    @JsonFilter("publicKeyFilter")
-    public static class PublicKey implements DIDObject, Comparable<PublicKey> {
-        @JsonProperty(ID)
-        private DIDURL id;
-        @JsonProperty(TYPE)
-        private String type;
-        @JsonProperty(CONTROLLER)
-        private DID controller;
-        @JsonProperty(PUBLICKEY_BASE58)
-        private String keyBase58;
-        private boolean authenticationKey;
-        private boolean authorizationKey;
-
-        /**
-         * Constructs Publickey with the given value.
-         *
-         * @param id the Id for PublicKey
-         * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
-         * @param controller the DID who holds private key
-         * @param keyBase58 the string from encoded base58 of public key
-         */
-        @JsonCreator
-        protected PublicKey(@JsonProperty(value = ID, required = true) DIDURL id,
-                @JsonProperty(value = TYPE) String type,
-                @JsonProperty(value = CONTROLLER) DID controller,
-                @JsonProperty(value = PUBLICKEY_BASE58, required = true) String keyBase58) {
-            this.id = id;
-            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-            this.controller = controller;
-            this.keyBase58 = keyBase58;
-        }
-
-        /**
-         * Get the PublicKey id.
-         *
-         * @return the identifier
-         */
-        @Override
-        public DIDURL getId() {
-            return id;
-        }
-
-        /**
-         * Get the PublicKey type.
-         *
-         * @return the type string
-         */
-        @Override
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * Get the controller of Publickey.
-         *
-         * @return the controller
-         */
-        public DID getController() {
-            return controller;
-        }
-
-        /**
-         * Get public key base58 string.
-         *
-         * @return the key base58 string
-         */
-        public String getPublicKeyBase58() {
-            return keyBase58;
-        }
-
-        /**
-         * Get public key bytes.
-         *
-         * @return the key bytes
-         */
-        public byte[] getPublicKeyBytes() {
-            return Base58.decode(keyBase58);
-        }
-
-        /**
-         * Check if the key is an authentication key or not.
-         *
-         * @return if the key is an authentication key or not
-         */
-        public boolean isAuthenticationKey() {
-            return authenticationKey;
-        }
-
-        private void setAuthenticationKey(boolean authenticationKey) {
-            this.authenticationKey = authenticationKey;
-        }
-
-        /**
-         * Check if the key is an authorization key or not.
-         *
-         * @return if the key is an authorization key or not
-         */
-        public boolean isAuthorizationKey() {
-            return authorizationKey;
-        }
-
-        private void setAuthorizationKey(boolean authorizationKey) {
-            this.authorizationKey = authorizationKey;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-
-            if (obj instanceof PublicKey) {
-                PublicKey ref = (PublicKey)obj;
-
-                if (getId().equals(ref.getId()) &&
-                        getType().equals(ref.getType()) &&
-                        getController().equals(ref.getController()) &&
-                        getPublicKeyBase58().equals(ref.getPublicKeyBase58()))
-                    return true;
-            }
-
-            return false;
-        }
-
-        @Override
-        public int compareTo(PublicKey key) {
-            int rc = id.compareTo(key.id);
-
-            if (rc != 0)
-                return rc;
-            else
-                rc = keyBase58.compareTo(key.keyBase58);
-
-            if (rc != 0)
-                return rc;
-            else
-                rc = type.compareTo(key.type);
-
-            if (rc != 0)
-                return rc;
-            else
-                return controller.compareTo(key.controller);
-        }
-
-        protected static PropertyFilter getFilter() {
-            return new DIDPropertyFilter() {
-                @Override
-                protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
-                    if (context.isNormalized())
-                        return true;
-
-                    PublicKey pk = (PublicKey)pojo;
-                    switch (writer.getName()) {
-                    case TYPE:
-                        return !(pk.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
-
-                    case CONTROLLER:
-                        return !(pk.getController().equals(context.getDid()));
-
-                    default:
-                        return true;
-                    }
-                }
-            };
-        }
-    }
-
-    @JsonSerialize(using = PublicKeyReference.Serializer.class)
-    @JsonDeserialize(using = PublicKeyReference.Deserializer.class)
-    protected static class PublicKeyReference implements Comparable<PublicKeyReference> {
-        private DIDURL id;
-        private PublicKey key;
-
-        protected PublicKeyReference(DIDURL id) {
-            this.id = id;
-            this.key = null;
-        }
-
-        protected PublicKeyReference(PublicKey key) {
-            this.id = key.getId();
-            this.key = key;
-        }
-
-        public boolean isVirtual() {
-            return key == null;
-        }
-
-        public DIDURL getId() {
-            return id;
-        }
-
-        public PublicKey getPublicKey() {
-            return key;
-        }
-
-        protected void update(PublicKey key) {
-            checkArgument(key != null && key.getId().equals(id));
-
-            this.id = key.getId();
-            this.key = key;
-        }
-
-        @Override
-        public int compareTo(PublicKeyReference ref) {
-            if (key != null && ref.key != null)
-                return key.compareTo(ref.key);
-            else
-                return id.compareTo(ref.id);
-        }
-
-        static class Serializer extends StdSerializer<PublicKeyReference> {
-            private static final long serialVersionUID = -6934608221544406405L;
-
-            public Serializer() {
-                this(null);
-            }
-
-            public Serializer(Class<PublicKeyReference> t) {
-                super(t);
-            }
-
-            @Override
-            public void serialize(PublicKeyReference keyRef, JsonGenerator gen,
-                    SerializerProvider provider) throws IOException {
-                gen.writeObject(keyRef.getId());
-            }
-        }
-
-        static class Deserializer extends StdDeserializer<PublicKeyReference> {
-            private static final long serialVersionUID = -4252894239212420927L;
-
-            public Deserializer() {
-                this(null);
-            }
-
-            public Deserializer(Class<?> t) {
-                super(t);
-            }
-
-            @Override
-            public PublicKeyReference deserialize(JsonParser p, DeserializationContext ctxt)
-                    throws IOException, JsonProcessingException {
-                JsonToken token = p.getCurrentToken();
-                if (token.equals(JsonToken.VALUE_STRING)) {
-                    DIDURL id = p.readValueAs(DIDURL.class);
-                    return new PublicKeyReference(id);
-                } else if (token.equals(JsonToken.START_OBJECT)) {
-                    PublicKey key = p.readValueAs(PublicKey.class);
-                    return new PublicKeyReference(key);
-                } else
-                    throw ctxt.weirdStringException(p.getText(),
-                            PublicKey.class, "Invalid public key");
-            }
-
-        }
-    }
-
-    /**
-     * A Service may represent any type of service the subject
-     * wishes to advertise, including decentralized identity management services
-     * for further discovery, authentication, authorization, or interaction.
-     */
-    @JsonPropertyOrder({ ID, TYPE, SERVICE_ENDPOINT })
-    public static class Service implements DIDObject {
-        @JsonProperty(ID)
-        private DIDURL id;
-        @JsonProperty(TYPE)
-        private String type;
-        @JsonProperty(SERVICE_ENDPOINT)
-        private String endpoint;
-
-        private Map<String, Object> properties;
-
-        protected Service(DIDURL id, String type, String endpoint,
-                Map<String, Object> properties) {
-            this.id = id;
-            this.type = type;
-            this.endpoint = endpoint;
-
-            if (properties != null && !properties.isEmpty()) {
-                this.properties = new TreeMap<String, Object>(properties);
-                this.properties.remove(ID);
-                this.properties.remove(TYPE);
-                this.properties.remove(SERVICE_ENDPOINT);
-            }
-        }
-
-        /**
-         * Constructs Service with the given value.
-         *
-         * @param id the id for Service
-         * @param type the type of Service
-         * @param endpoint the address of service point
-         */
-        @JsonCreator
-        protected Service(@JsonProperty(value = ID, required = true) DIDURL id,
-                @JsonProperty(value = TYPE, required = true) String type,
-                @JsonProperty(value = SERVICE_ENDPOINT, required = true) String endpoint) {
-            this(id, type, endpoint, null);
-        }
-
-        /**
-         * Get the service id.
-         *
-         * @return the identifier
-         */
-        @Override
-        public DIDURL getId() {
-            return id;
-        }
-
-        /**
-         * Get the service type.
-         *
-         * @return the type string
-         */
-        @Override
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * Get service point string.
-         *
-         * @return the service point string
-         */
-        public String getServiceEndpoint() {
-            return endpoint;
-        }
-
-        /**
-         * Helper getter method for properties serialization.
-         * NOTICE: Should keep the alphabetic serialization order.
-         *
-         * @return a String to Object map include all application defined
-         *         properties
-         */
-        @JsonAnyGetter
-        @JsonPropertyOrder(alphabetic = true)
-        private Map<String, Object> _getProperties() {
-            return properties;
-        }
-
-        /**
-         * Helper setter method for properties deserialization.
-         *
-         * @param name the property name
-         * @param value the property value
-         */
-        @JsonAnySetter
-        private void setProperty(String name, Object value) {
-            if (name.equals(ID) || name.equals(TYPE) || name.equals(SERVICE_ENDPOINT))
-                return;
-
-            if (properties == null)
-                properties = new TreeMap<String, Object>();
-
-            properties.put(name, value);
-        }
-
-        public Map<String, Object> getProperties() {
-            // TODO: make it unmodifiable recursively
-             return Collections.unmodifiableMap(properties != null ?
-                     properties : Collections.emptyMap());
-        }
-    }
-
-    /**
-     * The Proof represents the proof content of DID Document.
-     */
-    @JsonPropertyOrder({ TYPE, CREATED, CREATOR, SIGNATURE_VALUE })
-    @JsonFilter("didDocumentProofFilter")
-    public static class Proof implements Comparable<Proof> {
-        @JsonProperty(TYPE)
-        private String type;
-        @JsonInclude(Include.NON_NULL)
-        @JsonProperty(CREATED)
-        private Date created;
-        @JsonInclude(Include.NON_NULL)
-        @JsonProperty(CREATOR)
-        private DIDURL creator;
-        @JsonProperty(SIGNATURE_VALUE)
-        private String signature;
-
-        /**
-         * Constructs the proof of DIDDocument with the given value.
-         *
-         * @param type the type of Proof
-         * @param created the time to create DIDDocument
-         * @param creator the key to sign
-         * @param signature the signature string
-         */
-        @JsonCreator
-        protected Proof(@JsonProperty(value = TYPE) String type,
-                @JsonProperty(value = CREATED, required = true) Date created,
-                @JsonProperty(value = CREATOR) DIDURL creator,
-                @JsonProperty(value = SIGNATURE_VALUE, required = true) String signature) {
-            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-            this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
-            this.creator = creator;
-            this.signature = signature;
-        }
-
-        /**
-         * Constructs the proof of DIDDocument with the key id and signature string.
-         *
-         * @param creator the key to sign
-         * @param signature the signature string
-         */
-        protected Proof(DIDURL creator, String signature) {
-            this(null, Calendar.getInstance(Constants.UTC).getTime(), creator, signature);
-        }
-
-        /**
-         * Get Proof type.
-         *
-         * @return the type string
-         */
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * Get the time to create DIDDocument.
-         *
-         * @return the time
-         */
-        public Date getCreated() {
-            return created;
-        }
-
-        /**
-         * Get the key id to sign.
-         *
-         * @return the key id
-         */
-        public DIDURL getCreator() {
-            return creator;
-        }
-
-        /**
-         * Get signature string.
-         *
-         * @return the signature string
-         */
-        public String getSignature() {
-            return signature;
-        }
-
-        @Override
-        public int compareTo(Proof proof) {
-            int rc = (int)(this.created.getTime() - proof.created.getTime());
-            if (rc == 0)
-                rc = this.creator.compareTo(proof.creator);
-            return rc;
-        }
-
-        protected static PropertyFilter getFilter() {
-            return new DIDPropertyFilter() {
-                @Override
-                protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
-                    if (context.isNormalized())
-                        return true;
-
-                    Proof proof = (Proof)pojo;
-                    switch (writer.getName()) {
-                    case TYPE:
-                        return !(proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
-
-                    default:
-                        return true;
-                    }
-                }
-            };
-        }
-    }
+    // TODO - Convert from Java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
+    private _proofs: Proof[];
+
+    private controllerDocs: Map<DID, DIDDocument>;
+    private publicKeys: Map<DIDURL, PublicKey>;
+    private credentials: Map<DIDURL, VerifiableCredential>;
+    private services: Map<DIDURL, Service>;
+    private proofs: HashMap<DID, Proof>;
+
+    private effectiveController: DID;
+    public defaultPublicKey: PublicKey;
+
+    private metadata: DIDMetadata;
 
     /**
      * Set the DIDDocument subject.
@@ -656,7 +114,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param subject the owner of DIDDocument
      */
     @JsonCreator
-    protected DIDDocument(@JsonProperty(value = ID, required = true) DID subject) {
+    protected constructor(@JsonProperty({value: ID, required: true}) subject: DID) {
         this.subject = subject;
     }
 
@@ -665,7 +123,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @param doc the document be copied
      */
-    private DIDDocument(DIDDocument doc, boolean withProof) {
+    private constructor(doc: DIDDocument, withProof: boolean) {
         this.subject = doc.subject;
         this.controllers = doc.controllers;
         this.controllerDocs = doc.controllerDocs;
@@ -693,42 +151,42 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the DID object
      */
-    public DID getSubject() {
-        return subject;
+    public getSubject(): DID {
+        return this.subject;
     }
 
-    private DIDURL canonicalId(String id) {
+    private canonicalId(id: string): DIDURL {
         return DIDURL.valueOf(getSubject(), id);
     }
 
-    private DIDURL canonicalId(DIDURL id) {
+    private canonicalId(id: DIDURL): DIDURL {
         if (id == null || id.getDid() != null)
             return id;
 
         return new DIDURL(getSubject(), id);
     }
 
-    private void checkAttachedStore() throws NotAttachedWithStoreException {
+    private checkAttachedStore() {
         if (!getMetadata().attachedStore())
             throw new NotAttachedWithStoreException();
     }
 
-    private void checkIsPrimitive() throws NotPrimitiveDIDException {
+    private checkIsPrimitive() {
         if (isCustomizedDid())
             throw new NotPrimitiveDIDException(getSubject().toString());
     }
 
-    private void checkIsCustomized() throws NotCustomizedDIDException {
+    private checkIsCustomized() {
         if (!isCustomizedDid())
             throw new NotCustomizedDIDException(getSubject().toString());
     }
 
-    private void checkHasEffectiveController() throws NoEffectiveControllerException {
+    private checkHasEffectiveController() {
         if (getEffectiveController() == null)
             throw new NoEffectiveControllerException(getSubject().toString());
     }
 
-    public boolean isCustomizedDid() {
+    public isCustomizedDid(): boolean {
         return defaultPublicKey == null;
     }
 
@@ -737,7 +195,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the Controllers DID list or empty list if no controller
      */
-    public List<DID> getControllers() {
+    public getControllers(): DID[] {
         return Collections.unmodifiableList(controllers);
     }
 
@@ -746,8 +204,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the controller count
      */
-    public int getControllerCount() {
-        return controllers.size();
+    public getControllerCount(): number {
+        return this.controllers.size();
     }
 
     /**
@@ -755,8 +213,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the Controller's DID if only has one controller, other wise null
      */
-    protected DID getController() {
-        return controllers.size() == 1 ? controllers.get(0) : null;
+    protected getController(): DID {
+        return this.controllers.size() == 1 ? this.controllers.get(0) : null;
     }
 
     /**
@@ -764,8 +222,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return true if has, otherwise false
      */
-    public boolean hasController() {
-        return !controllers.isEmpty();
+    public hasController(): boolean {
+        return !this.controllers.isEmpty();
     }
 
     /**
@@ -773,8 +231,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return true if has, otherwise false
      */
-    public boolean hasController(DID did) {
-        return controllers.contains(did);
+    public hasController(did: DID): boolean {
+        return this.controllers.contains(did);
     }
 
     /**
@@ -782,19 +240,19 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the DIDDocument object or null if no controller
      */
-    protected DIDDocument getControllerDocument(DID did) {
-        return controllerDocs.get(did);
+    protected getControllerDocument(did: DID): DIDDocument {
+        return this.controllerDocs.get(did);
     }
 
-    public DID getEffectiveController() {
+    public getEffectiveController(): DID {
         return effectiveController;
     }
 
-    protected DIDDocument getEffectiveControllerDocument() {
+    protected getEffectiveControllerDocument(): DIDDocument {
         return effectiveController == null ? null : getControllerDocument(effectiveController);
     }
 
-    public void setEffectiveController(DID controller) {
+    public setEffectiveController(controller: DID) {
         checkIsCustomized();
 
         if (controller == null) {
@@ -807,17 +265,17 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             effectiveController = controller;
 
             // attach to the store if necessary
-            DIDDocument doc = getControllerDocument(effectiveController);
+            let doc = this.getControllerDocument(effectiveController);
             if (!doc.getMetadata().attachedStore())
                 doc.getMetadata().attachStore(getMetadata().getStore());
         }
     }
 
-    public boolean isMultiSignature() {
+    public isMultiSignature(): boolean {
         return multisig != null;
     }
 
-    public MultiSignature getMultiSignature() {
+    public getMultiSignature(): MultiSignature {
         return multisig;
     }
 
@@ -826,11 +284,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the count
      */
-    public int getPublicKeyCount() {
-        int count = publicKeys.size();
+    public getPublicKeyCount(): number {
+        let count = publicKeys.size();
 
         if (hasController()) {
-            for (DIDDocument doc : controllerDocs.values())
+            for (let doc of controllerDocs.values())
                 count += doc.getAuthenticationKeyCount();
         }
 
@@ -842,11 +300,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the PublicKey array
      */
-    public List<PublicKey> getPublicKeys() {
-        List<PublicKey> pks = new ArrayList<PublicKey>(publicKeys.values());
+    public getPublicKeys(): ImmutableList<PublicKey> {
+        let pks = new ArrayList<PublicKey>(publicKeys.values());
 
         if (hasController()) {
-            for (DIDDocument doc : controllerDocs.values())
+            for (let doc of controllerDocs.values())
                 pks.addAll(doc.getAuthenticationKeys());
         }
 
@@ -860,7 +318,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param type the type string
      * @return the matched PublicKey array
      */
-    public List<PublicKey> selectPublicKeys(DIDURL id, String type) {
+    public selectPublicKeys(id: DIDURL, type: string): PublicKey[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = canonicalId(id);
@@ -892,7 +350,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param type the type string
      * @return the matched PublicKey array
      */
-    public List<PublicKey> selectPublicKeys(String id, String type) {
+    public selectPublicKeys(id: string, type: string): PublicKey[] {
         return selectPublicKeys(canonicalId(id), type);
     }
 
@@ -902,7 +360,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param id the key id string
      * @return the PublicKey object
      */
-    public PublicKey getPublicKey(String id) {
+    public getPublicKey(id: string): PublicKey {
         return getPublicKey(canonicalId(id));
     }
 
@@ -912,13 +370,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param id the key id
      * @return the PublicKey object
      */
-    public PublicKey getPublicKey(DIDURL id) {
+    public getPublicKey(id: DIDURL): PublicKey {
         checkArgument(id != null, "Invalid publicKey id");
 
         id = canonicalId(id);
-        PublicKey pk = publicKeys.get(id);
+        let pk = publicKeys.get(id);
         if (pk == null && hasController()) {
-            DIDDocument doc = getControllerDocument(id.getDid());
+            let doc = getControllerDocument(id.getDid());
             if (doc != null)
                 pk = doc.getAuthenticationKey(id);
         }
@@ -932,7 +390,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param id the key id
      * @return the key exists or not
      */
-    public boolean hasPublicKey(DIDURL id) {
+    public hasPublicKey(id: DIDURL): boolean {
         return getPublicKey(id) != null;
     }
 
@@ -942,7 +400,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param id the key id string
      * @return the key exists or not
      */
-    public boolean hasPublicKey(String id) {
+    public hasPublicKey(id: string): boolean {
         return hasPublicKey(canonicalId(id));
     }
 
@@ -953,7 +411,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the key exists or not
      * @throws DIDStoreException there is no store
      */
-    public boolean hasPrivateKey(DIDURL id) throws DIDStoreException {
+    public hasPrivateKey(id: DIDURL): boolean {
         checkArgument(id != null, "Invalid publicKey id");
 
         if (hasPublicKey(id) && getMetadata().attachedStore())
@@ -969,7 +427,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the key exists or not
      * @throws DIDStoreException there is no store
      */
-    public boolean hasPrivateKey(String id) throws DIDStoreException {
+    public hasPrivateKey(id: string): boolean {
         return hasPrivateKey(canonicalId(id));
     }
 
@@ -978,8 +436,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the default key id
      */
-    public DIDURL getDefaultPublicKeyId() {
-        PublicKey pk = getDefaultPublicKey();
+    public getDefaultPublicKeyId(): DIDURL {
+        let pk = getDefaultPublicKey();
         return pk != null ? pk.getId() : null;
     }
 
@@ -988,7 +446,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the default key
      */
-    public PublicKey getDefaultPublicKey() {
+    public getDefaultPublicKey(): PublicKey {
         if (defaultPublicKey != null)
             return defaultPublicKey;
 
@@ -1005,8 +463,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the KeyPair object
      * @throws InvalidKeyException there is no the matched key
      */
-    public KeyPair getKeyPair(DIDURL id) {
-        PublicKey pk;
+    public getKeyPair(id: DIDURL): KeyPair {
+        let pk: PublicKey;
 
         if (id == null) {
             pk = getDefaultPublicKey();
@@ -1018,7 +476,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 throw new InvalidKeyException(id.toString());
         }
 
-        HDKey key = HDKey.deserialize(HDKey.paddingToExtendedPublicKey(
+        let key = HDKey.deserialize(HDKey.paddingToExtendedPublicKey(
                 pk.getPublicKeyBytes()));
 
         return key.getJCEKeyPair();
@@ -1031,7 +489,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the KeyPair object
      * @throws InvalidKeyException there is no matched key
      */
-    public KeyPair getKeyPair(String id) {
+    public getKeyPair(id: string): KeyPair {
         return getKeyPair(canonicalId(id));
     }
 
@@ -1041,11 +499,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the KeyPair object
      * @throws InvalidKeyException there is no the matched key
      */
-    public KeyPair getKeyPair() {
-        return getKeyPair((DIDURL)null);
+    public getKeyPair(): KeyPair {
+        return getKeyPair(null as DIDURL);
     }
 
-    private KeyPair getKeyPair(DIDURL id, String storepass) throws DIDStoreException {
+    private getKeyPair(id: DIDURL, storepass: string): KeyPair {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
 
@@ -1061,7 +519,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (!getMetadata().getStore().containsPrivateKey(id))
             throw new InvalidKeyException("No private key: " + id);
 
-        HDKey key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
+        let key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
                 id, storepass));
 
         return key.getJCEKeyPair();
@@ -1076,18 +534,18 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *         32 bytes long start from position 46)
      * @throws DIDStoreException there is no DID store to get root private key
      */
-    public String derive(int index, String storepass) throws DIDStoreException {
+    public derive(index: number, storepass: string): string {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
         checkIsPrimitive();
 
-        HDKey key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
+        let key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
                 getDefaultPublicKeyId(), storepass));
 
         return key.derive(index).serializeBase58();
     }
 
-    private String mapToDerivePath(String identifier, int securityCode) {
+    private mapToDerivePath(identifier: string, securityCode: number): string {
         byte digest[] = new byte[32];
         SHA256Digest sha256 = new SHA256Digest();
         byte[] in = identifier.getBytes();
@@ -1123,16 +581,15 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the extended derived private key
      * @throws DIDStoreException there is no DID store to get root private key
      */
-    public String derive(String identifier, int securityCode, String storepass)
-            throws DIDStoreException {
+    public derive(identifier: string, securityCode: number, storepass: string): string {
         checkArgument(identifier != null && !identifier.isEmpty(), "Invalid identifier");
         checkAttachedStore();
         checkIsPrimitive();
 
-        HDKey key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
+        let key = HDKey.deserialize(getMetadata().getStore().loadPrivateKey(
                 getDefaultPublicKeyId(), storepass));
 
-        String path = mapToDerivePath(identifier, securityCode);
+        let path = mapToDerivePath(identifier, securityCode);
         return key.derive(path).serializeBase58();
     }
 
@@ -1141,7 +598,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the count of authentication key array
      */
-    public int getAuthenticationKeyCount() {
+    public getAuthenticationKeyCount(): number {
         int count = 0;
 
         for (PublicKey pk : publicKeys.values()) {
@@ -1596,7 +1053,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws MalformedDocumentException if the document object is invalid
      */
     @Override
-    protected void sanitize() throws MalformedDocumentException {
+    protected void sanitize() {
         sanitizeControllers();
         sanitizePublickKey();
         sanitizeCredential();
@@ -1608,7 +1065,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         sanitizeProof();
     }
 
-    private void sanitizeControllers() throws MalformedDocumentException {
+    private void sanitizeControllers() {
         if (controllers == null || controllers.isEmpty()) {
             controllers = Collections.emptyList();
             controllerDocs = Collections.emptyMap();
@@ -1649,7 +1106,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             effectiveController = controllers.get(0);
     }
 
-    private void sanitizePublickKey() throws MalformedDocumentException {
+    private void sanitizePublickKey() {
         Map<DIDURL, PublicKey> pks = new TreeMap<DIDURL, PublicKey>();
 
         if (_publickeys != null && _publickeys.size() > 0) {
@@ -1816,7 +1273,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             throw new MalformedDocumentException("Missing default public key.");
     }
 
-    private void sanitizeCredential() throws MalformedDocumentException {
+    private void sanitizeCredential() {
         if (_credentials == null || _credentials.isEmpty()) {
             _credentials = Collections.emptyList();
             credentials = Collections.emptyMap();
@@ -1854,7 +1311,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this._credentials = new ArrayList<VerifiableCredential>(credentials.values());
     }
 
-    private void sanitizeService() throws MalformedDocumentException {
+    private void sanitizeService() {
         if (_services == null || _services.isEmpty()) {
             _services = Collections.emptyList();
             services = Collections.emptyMap();
@@ -1886,7 +1343,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this._services = new ArrayList<Service>(svcs.values());
     }
 
-    private void sanitizeProof() throws MalformedDocumentException {
+    private void sanitizeProof() {
         if (_proofs == null || _proofs.isEmpty())
             throw new MalformedDocumentException("Missing document proof");
 
@@ -2133,8 +1590,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key
      */
-    public String sign(DIDURL id, String storepass, byte[] ... data)
-            throws DIDStoreException {
+    public String sign(DIDURL id, String storepass, byte[] ... data) {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkArgument(data != null && data.length > 0, "Invalid input data");
         checkAttachedStore();
@@ -2153,8 +1609,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key.
      */
-    public String sign(String id, String storepass, byte[] ... data)
-            throws DIDStoreException {
+    public String sign(String id, String storepass, byte[] ... data) {
         return sign(canonicalId(id), storepass, data);
     }
 
@@ -2166,7 +1621,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the signature string
      * @throws DIDStoreException there is no DIDStore to get private key.
      */
-    public String sign(String storepass, byte[] ... data) throws DIDStoreException {
+    public String sign(String storepass, byte[] ... data) {
         return sign((DIDURL)null, storepass, data);
     }
 
@@ -2180,8 +1635,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key
      */
-    public String signDigest(DIDURL id, String storepass, byte[] digest)
-            throws DIDStoreException {
+    public String signDigest(DIDURL id, String storepass, byte[] digest) {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
         checkAttachedStore();
@@ -2207,8 +1661,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key.
      */
-    public String signDigest(String id, String storepass, byte[] digest)
-            throws DIDStoreException {
+    public String signDigest(String id, String storepass, byte[] digest) {
         return signDigest(canonicalId(id), storepass, digest);
     }
 
@@ -2220,8 +1673,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the signature string
      * @throws DIDStoreException there is no DIDStore to get private key.
      */
-    public String signDigest(String storepass, byte[] digest)
-            throws DIDStoreException {
+    public String signDigest(String storepass, byte[] digest) {
         return signDigest((DIDURL)null, storepass, digest);
     }
 
@@ -2329,8 +1781,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
 
             @Override
-            public PrivateKey getPrivateKey(String id, String storepass)
-                    throws DIDStoreException {
+            public PrivateKey getPrivateKey(String id, String storepass) {
                 return getKeyPair(canonicalId(id), storepass).getPrivate();
             }
         });
@@ -2356,28 +1807,23 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return jpb;
     }
 
-    public DIDDocument newCustomizedDid(DID did, boolean force, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public DIDDocument newCustomizedDid(DID did, boolean force, String storepass) {
         return newCustomizedDid(did, null, 1, force, storepass);
     }
 
-    public DIDDocument newCustomizedDid(DID did, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public DIDDocument newCustomizedDid(DID did, String storepass) {
         return newCustomizedDid(did, false, storepass);
     }
 
-    public DIDDocument newCustomizedDid(String did, boolean force, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public DIDDocument newCustomizedDid(String did, boolean force, String storepass) {
         return newCustomizedDid(DID.valueOf(did), force, storepass);
     }
 
-    public DIDDocument newCustomizedDid(String did, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public DIDDocument newCustomizedDid(String did, String storepass) {
         return newCustomizedDid(DID.valueOf(did), false, storepass);
     }
 
-    public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, boolean force, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, boolean force, String storepass) {
         checkArgument(did != null, "Invalid DID");
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
@@ -2420,13 +1866,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         }
     }
 
-    public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public DIDDocument newCustomizedDid(DID did, DID[] controllers, int multisig, String storepass) {
         return newCustomizedDid(did, controllers, multisig, false, storepass);
     }
 
-    public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, boolean force, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, boolean force, String storepass) {
         List<DID> _controllers = new ArrayList<DID>(controllers.length);
         for (String ctrl : controllers)
             _controllers.add(new DID(ctrl));
@@ -2435,13 +1879,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 multisig, force, storepass);
     }
 
-    public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public DIDDocument newCustomizedDid(String did, String controllers[], int multisig, String storepass) {
         return newCustomizedDid(did, controllers, multisig, false, storepass);
     }
 
-    public TransferTicket createTransferTicket(DID to, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public TransferTicket createTransferTicket(DID to, String storepass) {
         checkArgument(to != null, "Invalid to");
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkIsCustomized();
@@ -2453,8 +1895,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return ticket;
     }
 
-    public TransferTicket createTransferTicket(DID did, DID to, String storepass)
-            throws DIDResolveException, DIDStoreException {
+    public TransferTicket createTransferTicket(DID did, DID to, String storepass) {
         checkArgument(did != null, "Invalid did");
         checkArgument(to != null, "Invalid to");
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -2479,8 +1920,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return ticket;
     }
 
-    public TransferTicket sign(TransferTicket ticket, String storepass)
-            throws DIDStoreException {
+    public TransferTicket sign(TransferTicket ticket, String storepass) {
         checkArgument(ticket != null, "Invalid ticket");
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
@@ -2489,7 +1929,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return ticket;
     }
 
-    public DIDDocument sign(DIDDocument doc, String storepass) throws DIDStoreException {
+    public DIDDocument sign(DIDDocument doc, String storepass) {
         checkArgument(doc != null, "Invalid document");
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
@@ -2519,8 +1959,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         }
     }
 
-    public void publish(TransferTicket ticket, DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(TransferTicket ticket, DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
         checkArgument(ticket.isValid(), "Invalid ticket");
         checkArgument(ticket.getSubject().equals(getSubject()), "Ticket mismatch with current DID");
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
@@ -2549,28 +1988,23 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         DIDBackend.getInstance().transferDid(this, ticket, signKey, storepass, adapter);
     }
 
-    public void publish(TransferTicket ticket, DIDURL signKey, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(TransferTicket ticket, DIDURL signKey, String storepass) {
         publish(ticket,signKey, storepass, null);
     }
 
-    public void publish(TransferTicket ticket, String signKey, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(TransferTicket ticket, String signKey, String storepass, DIDTransactionAdapter adapter) {
         publish(ticket, canonicalId(signKey), storepass, adapter);
     }
 
-    public void publish(TransferTicket ticket, String signKey, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(TransferTicket ticket, String signKey, String storepass) {
         publish(ticket, canonicalId(signKey), storepass, null);
     }
 
-    public void publish(TransferTicket ticket, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(TransferTicket ticket, String storepass, DIDTransactionAdapter adapter) {
         publish(ticket, (DIDURL)null, storepass, adapter);
     }
 
-    public void publish(TransferTicket ticket, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(TransferTicket ticket, String storepass) {
         publish(ticket, (DIDURL)null, storepass, null);
     }
 
@@ -2625,7 +2059,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException there is no an authentication key.
      */
     public void publish(DIDURL signKey, boolean force, String storepass,
-            DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
+            DIDTransactionAdapter adapter), DIDBackendException {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
 
@@ -2722,8 +2156,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public void publish(DIDURL signKey, boolean force, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(DIDURL signKey, boolean force, String storepass) {
         publish(signKey, force, storepass, null);
     }
 
@@ -2736,8 +2169,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public void publish(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
         publish(signKey, false, storepass, adapter);
     }
 
@@ -2750,8 +2182,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public void publish(DIDURL signKey, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(DIDURL signKey, String storepass) {
         publish(signKey, false, storepass, null);
     }
 
@@ -2768,8 +2199,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public void publish(String signKey, boolean force, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(String signKey, boolean force, String storepass, DIDTransactionAdapter adapter) {
         publish(canonicalId(signKey), force, storepass, adapter);
     }
 
@@ -2786,8 +2216,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public void publish(String signKey, boolean force, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(String signKey, boolean force, String storepass) {
         publish(canonicalId(signKey), force, storepass, null);
     }
 
@@ -2800,8 +2229,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public void publish(String signKey, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(String signKey, String storepass, DIDTransactionAdapter adapter) {
         publish(canonicalId(signKey), false, storepass, adapter);
     }
 
@@ -2814,8 +2242,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public void publish(String signKey, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(String signKey, String storepass) {
         publish(canonicalId(signKey), false, storepass, null);
     }
 
@@ -2827,8 +2254,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDBackendException publish did failed because of DIDBackend error.
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      */
-    public void publish(String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void publish(String storepass, DIDTransactionAdapter adapter) {
         publish((DIDURL)null, false, storepass, adapter);
     }
 
@@ -2840,7 +2266,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDBackendException publish did failed because of DIDBackend error.
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      */
-    public void publish(String storepass) throws DIDStoreException, DIDBackendException {
+    public void publish(String storepass), DIDBackendException {
         publish((DIDURL)null, false, storepass, null);
     }
 
@@ -3001,8 +2427,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public void deactivate(DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
 
@@ -3040,8 +2465,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public void deactivate(DIDURL signKey, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(DIDURL signKey, String storepass) {
         deactivate(signKey, storepass, null);
     }
 
@@ -3054,8 +2478,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public void deactivate(String signKey, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(String signKey, String storepass, DIDTransactionAdapter adapter) {
         deactivate(canonicalId(signKey), storepass, adapter);
     }
 
@@ -3068,8 +2491,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public void deactivate(String signKey, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(String signKey, String storepass) {
         deactivate(canonicalId(signKey), storepass, null);
     }
 
@@ -3082,8 +2504,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public void deactivate(String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(String storepass, DIDTransactionAdapter adapter) {
         deactivate((DIDURL)null, storepass, adapter);
     }
 
@@ -3096,7 +2517,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public void deactivate(String storepass) throws DIDStoreException, DIDBackendException {
+    public void deactivate(String storepass), DIDBackendException {
         deactivate((DIDURL)null, storepass, null);
     }
 
@@ -3194,8 +2615,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error.
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
-    public void deactivate(DID target, DIDURL signKey, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(DID target, DIDURL signKey, String storepass, DIDTransactionAdapter adapter) {
         checkArgument(target != null, "Invalid target DID");
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
@@ -3275,8 +2695,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error.
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
-    public void deactivate(DID target, DIDURL signKey, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(DID target, DIDURL signKey, String storepass) {
         deactivate(target, signKey, storepass, null);
     }
 
@@ -3290,8 +2709,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error.
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
-    public void deactivate(String target, String signKey, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(String target, String signKey, String storepass, DIDTransactionAdapter adapter) {
         deactivate(DID.valueOf(target), canonicalId(signKey), storepass, adapter);
     }
 
@@ -3305,8 +2723,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error.
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
-    public void deactivate(String target, String signKey, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(String target, String signKey, String storepass) {
         deactivate(DID.valueOf(target), canonicalId(signKey), storepass, null);
     }
 
@@ -3319,8 +2736,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error.
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
-    public void deactivate(DID target, String storepass, DIDTransactionAdapter adapter)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(DID target, String storepass, DIDTransactionAdapter adapter) {
         deactivate(target, null, storepass, adapter);
     }
 
@@ -3333,8 +2749,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error.
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
-    public void deactivate(DID target, String storepass)
-            throws DIDStoreException, DIDBackendException {
+    public void deactivate(DID target, String storepass) {
         deactivate(target, null, storepass, null);
     }
 
@@ -3442,7 +2857,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the DIDDocument object.
      * @throws MalformedDocumentException if a parse error occurs.
      */
-    public static DIDDocument parse(String content) throws MalformedDocumentException {
+    public static DIDDocument parse(String content) {
         try {
             return parse(content, DIDDocument.class);
         } catch (DIDSyntaxException e) {
@@ -3461,8 +2876,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws MalformedDocumentException if a parse error occurs
      * @throws IOException if an IO error occurs
      */
-    public static DIDDocument parse(Reader src)
-            throws MalformedDocumentException, IOException {
+    public static DIDDocument parse(Reader src) {
         try {
             return parse(src, DIDDocument.class);
         } catch (DIDSyntaxException e) {
@@ -3481,8 +2895,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws MalformedDocumentException if a parse error occurs
      * @throws IOException if an IO error occurs
      */
-    public static DIDDocument parse(InputStream src)
-            throws MalformedDocumentException, IOException {
+    public static DIDDocument parse(InputStream src) {
         try {
             return parse(src, DIDDocument.class);
         } catch (DIDSyntaxException e) {
@@ -3501,8 +2914,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws MalformedDocumentException if a parse error occurs
      * @throws IOException if an IO error occurs
      */
-    public static DIDDocument parse(File src)
-            throws MalformedDocumentException, IOException {
+    public static DIDDocument parse(File src) {
         try {
             return parse(src, DIDDocument.class);
         } catch (DIDSyntaxException e) {
@@ -3522,7 +2934,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @deprecated use {@link #parse(String)} instead
      */
     @Deprecated
-    public static DIDDocument fromJson(String content) throws MalformedDocumentException {
+    public static DIDDocument fromJson(String content) {
         return parse(content);
     }
 
@@ -3536,8 +2948,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @deprecated use {@link #parse(Reader)} instead
      */
     @Deprecated
-    public static DIDDocument fromJson(Reader src)
-            throws MalformedDocumentException, IOException {
+    public static DIDDocument fromJson(Reader src) {
         return parse(src);
     }
 
@@ -3551,8 +2962,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @deprecated use {@link #parse(InputStream)} instead
      */
     @Deprecated
-    public static DIDDocument fromJson(InputStream src)
-            throws MalformedDocumentException, IOException {
+    public static DIDDocument fromJson(InputStream src) {
         return parse(src);
     }
 
@@ -3566,8 +2976,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @deprecated use {@link #parse(File)} instead
      */
     @Deprecated
-    public static DIDDocument fromJson(File src)
-            throws MalformedDocumentException, IOException {
+    public static DIDDocument fromJson(File src) {
         return parse(src);
     }
 
@@ -3644,12 +3053,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 document.proofs.clear();
         }
 
-        private void checkNotSealed() throws AlreadySealedException {
+        private void checkNotSealed() {
             if (document == null)
                 throw new AlreadySealedException();
         }
 
-        private void checkIsCustomized() throws NotCustomizedDIDException {
+        private void checkIsCustomized() {
             if (!document.isCustomizedDid())
                 throw new NotCustomizedDIDException(document.getSubject().toString());
         }
@@ -3671,7 +3080,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @return the Builder object
          * @throws DIDResolveException if failed resolve the new controller's DID
          */
-        public Builder addController(DID controller) throws DIDResolveException {
+        public Builder addController(DID controller) {
             checkArgument(controller != null, "Invalid controller");
             checkNotSealed();
             checkIsCustomized();
@@ -3708,7 +3117,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @return the Builder object
          * @throws DIDResolveException if failed resolve the new controller's DID
          */
-        public Builder addController(String controller) throws DIDResolveException {
+        public Builder addController(String controller) {
             return addController(DID.valueOf(controller));
         }
 
@@ -4144,8 +3553,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws DIDResolveException resolve controller failed.
          * @throws InvalidKeyException the key is not an authentication key.
          */
-        public Builder authorizationDid(DIDURL id, DID controller, DIDURL key)
-                throws DIDResolveException {
+        public Builder authorizationDid(DIDURL id, DID controller, DIDURL key) {
             checkNotSealed();
             checkArgument(id != null && (id.getDid() == null || id.getDid().equals(getSubject())),
                     "Invalid publicKey id");
@@ -4198,8 +3606,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws DIDResolveException resolve controller failed.
          * @throws InvalidKeyException the key is not an authentication key.
          */
-        public Builder authorizationDid(DIDURL id, DID controller)
-                throws DIDResolveException {
+        public Builder authorizationDid(DIDURL id, DID controller) {
             return authorizationDid(id, controller, null);
         }
 
@@ -4216,8 +3623,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws DIDResolveException resolve controller failed.
          * @throws InvalidKeyException the key is not an authentication key.
          */
-        public Builder authorizationDid(String id, String controller, String key)
-                throws DIDResolveException {
+        public Builder authorizationDid(String id, String controller, String key) {
             return authorizationDid(canonicalId(id),
                     DID.valueOf(controller), DIDURL.valueOf(controller, key));
         }
@@ -4234,8 +3640,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws DIDResolveException resolve controller failed.
          * @throws InvalidKeyException the key is not an authentication key.
          */
-        public Builder authorizationDid(String id, String controller)
-                throws DIDResolveException {
+        public Builder authorizationDid(String id, String controller) {
             return authorizationDid(id, controller, null);
         }
 
@@ -4317,8 +3722,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(DIDURL id, String[] types,
-                Map<String, Object> subject, Date expirationDate, String storepass)
-                throws DIDStoreException {
+                Map<String, Object> subject, Date expirationDate, String storepass) {
             checkNotSealed();
             checkArgument(id != null && (id.getDid() == null || id.getDid().equals(getSubject())),
                     "Invalid publicKey id");
@@ -4360,8 +3764,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(String id, String[] types,
-                Map<String, Object> subject, Date expirationDate, String storepass)
-                throws DIDStoreException {
+                Map<String, Object> subject, Date expirationDate, String storepass) {
             return addCredential(canonicalId(id), types, subject,
                     expirationDate, storepass);
         }
@@ -4378,7 +3781,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(DIDURL id, Map<String, Object> subject,
-                Date expirationDate, String storepass) throws DIDStoreException {
+                Date expirationDate, String storepass) {
             return addCredential(id, null, subject, expirationDate, storepass);
         }
 
@@ -4394,7 +3797,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(String id, Map<String, Object> subject,
-                Date expirationDate, String storepass) throws DIDStoreException {
+                Date expirationDate, String storepass) {
             return addCredential(canonicalId(id), null, subject, expirationDate, storepass);
         }
 
@@ -4411,7 +3814,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(DIDURL id, String[] types,
-                Map<String, Object> subject, String storepass) throws DIDStoreException {
+                Map<String, Object> subject, String storepass) {
             return addCredential(id, types, subject, null, storepass);
         }
 
@@ -4428,7 +3831,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(String id, String[] types,
-                Map<String, Object> subject, String storepass) throws DIDStoreException {
+                Map<String, Object> subject, String storepass) {
             return addCredential(canonicalId(id), types, subject, null, storepass);
         }
 
@@ -4444,7 +3847,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(DIDURL id, Map<String, Object> subject,
-                String storepass) throws DIDStoreException {
+                String storepass) {
             return addCredential(id, null, subject, null, storepass);
         }
 
@@ -4460,7 +3863,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(String id, Map<String, Object> subject,
-                String storepass) throws DIDStoreException {
+                String storepass) {
             return addCredential(canonicalId(id), null, subject, null, storepass);
         }
 
@@ -4478,8 +3881,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(DIDURL id, String[] types,
-                String json, Date expirationDate, String storepass)
-                throws DIDStoreException {
+                String json, Date expirationDate, String storepass) {
             checkNotSealed();
             checkArgument(id != null && (id.getDid() == null || id.getDid().equals(getSubject())),
                     "Invalid publicKey id");
@@ -4523,8 +3925,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(String id, String[] types,
-                String json, Date expirationDate, String storepass)
-                throws DIDStoreException {
+                String json, Date expirationDate, String storepass) {
             return addCredential(canonicalId(id), types, json, expirationDate, storepass);
         }
 
@@ -4541,7 +3942,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(DIDURL id, String json,
-                Date expirationDate, String storepass) throws DIDStoreException {
+                Date expirationDate, String storepass) {
             return addCredential(id, null, json, expirationDate, storepass);
         }
 
@@ -4558,7 +3959,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(String id, String json,
-                Date expirationDate, String storepass) throws DIDStoreException {
+                Date expirationDate, String storepass) {
             return addCredential(canonicalId(id), null, json, expirationDate, storepass);
         }
 
@@ -4576,7 +3977,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(DIDURL id, String[] types,
-                String json, String storepass) throws DIDStoreException {
+                String json, String storepass) {
             return addCredential(id, types, json, null, storepass);
         }
 
@@ -4594,7 +3995,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws InvalidKeyException there is no authentication key.
          */
         public Builder addCredential(String id, String[] types,
-                String json, String storepass) throws DIDStoreException {
+                String json, String storepass) {
             return addCredential(canonicalId(id), types, json, null, storepass);
         }
 
@@ -4610,8 +4011,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws DIDStoreException there is no DID store to attach.
          * @throws InvalidKeyException there is no authentication key.
          */
-        public Builder addCredential(DIDURL id, String json, String storepass)
-                throws DIDStoreException {
+        public Builder addCredential(DIDURL id, String json, String storepass) {
             return addCredential(id, null, json, null, storepass);
         }
 
@@ -4627,8 +4027,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws DIDStoreException there is no DID store to attach.
          * @throws InvalidKeyException there is no authentication key.
          */
-        public Builder addCredential(String id, String json, String storepass)
-                throws DIDStoreException {
+        public Builder addCredential(String id, String json, String storepass) {
             return addCredential(canonicalId(id), null, json, null, storepass);
         }
 
@@ -4807,7 +4206,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             return this;
         }
 
-        private void sanitize() throws MalformedDocumentException {
+        private void sanitize() {
             if (document.isCustomizedDid()) {
                 if (document.controllers == null || document.controllers.isEmpty())
                     throw new MalformedDocumentException("Missing controllers");
@@ -4896,8 +4295,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
          * @throws MalformedDocumentException if the DIDDocument is malformed
          * @throws DIDStoreException if an error occurs when access DID store
          */
-        public DIDDocument seal(String storepass)
-                throws MalformedDocumentException, DIDStoreException {
+        public DIDDocument seal(String storepass) {
             checkNotSealed();
             checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
 
@@ -4925,6 +4323,548 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 }
 
+namespace DIDDocument {
+    public static class MultiSignature {
+        private int m;
+        private int n;
+
+        public MultiSignature(int m, int n) {
+            apply(m, n);
+        }
+
+        private MultiSignature(MultiSignature ms) {
+            apply(ms.m, ms.n);
+        }
+
+        @JsonCreator
+        public MultiSignature(String mOfN) {
+            if (mOfN == null || mOfN.isEmpty())
+                throw new IllegalArgumentException("Invalid multisig spec");
+
+            String[] mn = mOfN.split(":");
+            if (mn == null || mn.length != 2)
+                throw new IllegalArgumentException("Invalid multisig spec");
+
+            apply(Integer.valueOf(mn[0]), Integer.valueOf(mn[1]));
+        }
+
+        protected void apply(int m, int n) {
+            checkArgument(n > 1, "Invalid multisig spec: n should > 1");
+            checkArgument(m > 0 && m <= n,  "Invalid multisig spec: m should > 0 and <= n");
+
+            this.m = m;
+            this.n = n;
+        }
+
+        public int m() {
+            return m;
+        }
+
+        public int n() {
+            return n;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+
+            if (obj instanceof MultiSignature) {
+                MultiSignature multisig = (MultiSignature)obj;
+                return m == multisig.m && n == multisig.n;
+            }
+
+            return false;
+        }
+
+        @Override
+        @JsonValue
+        public String toString() {
+            return String.format("%d:%d", m, n);
+        }
+    }
+
+    /**
+     * Publickey is used for digital signatures, encryption and
+     * other cryptographic operations, which are the basis for purposes such as
+     * authentication or establishing secure communication with service endpoints.
+     */
+    @JsonPropertyOrder({ ID, TYPE, CONTROLLER, PUBLICKEY_BASE58 })
+    @JsonFilter("publicKeyFilter")
+    public static class PublicKey implements DIDObject, Comparable<PublicKey> {
+        @JsonProperty(ID)
+        private DIDURL id;
+        @JsonProperty(TYPE)
+        private String type;
+        @JsonProperty(CONTROLLER)
+        private DID controller;
+        @JsonProperty(PUBLICKEY_BASE58)
+        private String keyBase58;
+        private boolean authenticationKey;
+        private boolean authorizationKey;
+
+        /**
+         * Constructs Publickey with the given value.
+         *
+         * @param id the Id for PublicKey
+         * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
+         * @param controller the DID who holds private key
+         * @param keyBase58 the string from encoded base58 of public key
+         */
+        @JsonCreator
+        protected PublicKey(@JsonProperty(value = ID, required = true) DIDURL id,
+                @JsonProperty(value = TYPE) String type,
+                @JsonProperty(value = CONTROLLER) DID controller,
+                @JsonProperty(value = PUBLICKEY_BASE58, required = true) String keyBase58) {
+            this.id = id;
+            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+            this.controller = controller;
+            this.keyBase58 = keyBase58;
+        }
+
+        /**
+         * Get the PublicKey id.
+         *
+         * @return the identifier
+         */
+        @Override
+        public DIDURL getId() {
+            return id;
+        }
+
+        /**
+         * Get the PublicKey type.
+         *
+         * @return the type string
+         */
+        @Override
+        public String getType() {
+            return type;
+        }
+
+        /**
+         * Get the controller of Publickey.
+         *
+         * @return the controller
+         */
+        public DID getController() {
+            return controller;
+        }
+
+        /**
+         * Get public key base58 string.
+         *
+         * @return the key base58 string
+         */
+        public String getPublicKeyBase58() {
+            return keyBase58;
+        }
+
+        /**
+         * Get public key bytes.
+         *
+         * @return the key bytes
+         */
+        public byte[] getPublicKeyBytes() {
+            return Base58.decode(keyBase58);
+        }
+
+        /**
+         * Check if the key is an authentication key or not.
+         *
+         * @return if the key is an authentication key or not
+         */
+        public boolean isAuthenticationKey() {
+            return authenticationKey;
+        }
+
+        private void setAuthenticationKey(boolean authenticationKey) {
+            this.authenticationKey = authenticationKey;
+        }
+
+        /**
+         * Check if the key is an authorization key or not.
+         *
+         * @return if the key is an authorization key or not
+         */
+        public boolean isAuthorizationKey() {
+            return authorizationKey;
+        }
+
+        private void setAuthorizationKey(boolean authorizationKey) {
+            this.authorizationKey = authorizationKey;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+
+            if (obj instanceof PublicKey) {
+                PublicKey ref = (PublicKey)obj;
+
+                if (getId().equals(ref.getId()) &&
+                        getType().equals(ref.getType()) &&
+                        getController().equals(ref.getController()) &&
+                        getPublicKeyBase58().equals(ref.getPublicKeyBase58()))
+                    return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public int compareTo(PublicKey key) {
+            int rc = id.compareTo(key.id);
+
+            if (rc != 0)
+                return rc;
+            else
+                rc = keyBase58.compareTo(key.keyBase58);
+
+            if (rc != 0)
+                return rc;
+            else
+                rc = type.compareTo(key.type);
+
+            if (rc != 0)
+                return rc;
+            else
+                return controller.compareTo(key.controller);
+        }
+
+        protected static PropertyFilter getFilter() {
+            return new DIDPropertyFilter() {
+                @Override
+                protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
+                    if (context.isNormalized())
+                        return true;
+
+                    PublicKey pk = (PublicKey)pojo;
+                    switch (writer.getName()) {
+                    case TYPE:
+                        return !(pk.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
+
+                    case CONTROLLER:
+                        return !(pk.getController().equals(context.getDid()));
+
+                    default:
+                        return true;
+                    }
+                }
+            };
+        }
+    }
+
+    @JsonSerialize(using = PublicKeyReference.Serializer.class)
+    @JsonDeserialize(using = PublicKeyReference.Deserializer.class)
+    protected static class PublicKeyReference implements Comparable<PublicKeyReference> {
+        private DIDURL id;
+        private PublicKey key;
+
+        protected PublicKeyReference(DIDURL id) {
+            this.id = id;
+            this.key = null;
+        }
+
+        protected PublicKeyReference(PublicKey key) {
+            this.id = key.getId();
+            this.key = key;
+        }
+
+        public boolean isVirtual() {
+            return key == null;
+        }
+
+        public DIDURL getId() {
+            return id;
+        }
+
+        public PublicKey getPublicKey() {
+            return key;
+        }
+
+        protected void update(PublicKey key) {
+            checkArgument(key != null && key.getId().equals(id));
+
+            this.id = key.getId();
+            this.key = key;
+        }
+
+        @Override
+        public int compareTo(PublicKeyReference ref) {
+            if (key != null && ref.key != null)
+                return key.compareTo(ref.key);
+            else
+                return id.compareTo(ref.id);
+        }
+
+        static class Serializer extends StdSerializer<PublicKeyReference> {
+            private static final long serialVersionUID = -6934608221544406405L;
+
+            public Serializer() {
+                this(null);
+            }
+
+            public Serializer(Class<PublicKeyReference> t) {
+                super(t);
+            }
+
+            @Override
+            public void serialize(PublicKeyReference keyRef, JsonGenerator gen,
+                    SerializerProvider provider) {
+                gen.writeObject(keyRef.getId());
+            }
+        }
+
+        static class Deserializer extends StdDeserializer<PublicKeyReference> {
+            private static final long serialVersionUID = -4252894239212420927L;
+
+            public Deserializer() {
+                this(null);
+            }
+
+            public Deserializer(Class<?> t) {
+                super(t);
+            }
+
+            @Override
+            public PublicKeyReference deserialize(JsonParser p, DeserializationContext ctxt) {
+                JsonToken token = p.getCurrentToken();
+                if (token.equals(JsonToken.VALUE_STRING)) {
+                    DIDURL id = p.readValueAs(DIDURL.class);
+                    return new PublicKeyReference(id);
+                } else if (token.equals(JsonToken.START_OBJECT)) {
+                    PublicKey key = p.readValueAs(PublicKey.class);
+                    return new PublicKeyReference(key);
+                } else
+                    throw ctxt.weirdStringException(p.getText(),
+                            PublicKey.class, "Invalid public key");
+            }
+
+        }
+    }
+
+    /**
+     * A Service may represent any type of service the subject
+     * wishes to advertise, including decentralized identity management services
+     * for further discovery, authentication, authorization, or interaction.
+     */
+    @JsonPropertyOrder({ ID, TYPE, SERVICE_ENDPOINT })
+    public static class Service implements DIDObject {
+        @JsonProperty(ID)
+        private DIDURL id;
+        @JsonProperty(TYPE)
+        private String type;
+        @JsonProperty(SERVICE_ENDPOINT)
+        private String endpoint;
+
+        private Map<String, Object> properties;
+
+        protected Service(DIDURL id, String type, String endpoint,
+                Map<String, Object> properties) {
+            this.id = id;
+            this.type = type;
+            this.endpoint = endpoint;
+
+            if (properties != null && !properties.isEmpty()) {
+                this.properties = new TreeMap<String, Object>(properties);
+                this.properties.remove(ID);
+                this.properties.remove(TYPE);
+                this.properties.remove(SERVICE_ENDPOINT);
+            }
+        }
+
+        /**
+         * Constructs Service with the given value.
+         *
+         * @param id the id for Service
+         * @param type the type of Service
+         * @param endpoint the address of service point
+         */
+        @JsonCreator
+        protected Service(@JsonProperty(value = ID, required = true) DIDURL id,
+                @JsonProperty(value = TYPE, required = true) String type,
+                @JsonProperty(value = SERVICE_ENDPOINT, required = true) String endpoint) {
+            this(id, type, endpoint, null);
+        }
+
+        /**
+         * Get the service id.
+         *
+         * @return the identifier
+         */
+        @Override
+        public DIDURL getId() {
+            return id;
+        }
+
+        /**
+         * Get the service type.
+         *
+         * @return the type string
+         */
+        @Override
+        public String getType() {
+            return type;
+        }
+
+        /**
+         * Get service point string.
+         *
+         * @return the service point string
+         */
+        public String getServiceEndpoint() {
+            return endpoint;
+        }
+
+        /**
+         * Helper getter method for properties serialization.
+         * NOTICE: Should keep the alphabetic serialization order.
+         *
+         * @return a String to Object map include all application defined
+         *         properties
+         */
+        @JsonAnyGetter
+        @JsonPropertyOrder(alphabetic = true)
+        private Map<String, Object> _getProperties() {
+            return properties;
+        }
+
+        /**
+         * Helper setter method for properties deserialization.
+         *
+         * @param name the property name
+         * @param value the property value
+         */
+        @JsonAnySetter
+        private void setProperty(String name, Object value) {
+            if (name.equals(ID) || name.equals(TYPE) || name.equals(SERVICE_ENDPOINT))
+                return;
+
+            if (properties == null)
+                properties = new TreeMap<String, Object>();
+
+            properties.put(name, value);
+        }
+
+        public Map<String, Object> getProperties() {
+            // TODO: make it unmodifiable recursively
+             return Collections.unmodifiableMap(properties != null ?
+                     properties : Collections.emptyMap());
+        }
+    }
+
+    /**
+     * The Proof represents the proof content of DID Document.
+     */
+    @JsonPropertyOrder({ TYPE, CREATED, CREATOR, SIGNATURE_VALUE })
+    @JsonFilter("didDocumentProofFilter")
+    public static class Proof implements Comparable<Proof> {
+        @JsonProperty(TYPE)
+        private String type;
+        @JsonInclude(Include.NON_NULL)
+        @JsonProperty(CREATED)
+        private Date created;
+        @JsonInclude(Include.NON_NULL)
+        @JsonProperty(CREATOR)
+        private DIDURL creator;
+        @JsonProperty(SIGNATURE_VALUE)
+        private String signature;
+
+        /**
+         * Constructs the proof of DIDDocument with the given value.
+         *
+         * @param type the type of Proof
+         * @param created the time to create DIDDocument
+         * @param creator the key to sign
+         * @param signature the signature string
+         */
+        @JsonCreator
+        protected Proof(@JsonProperty(value = TYPE) String type,
+                @JsonProperty(value = CREATED, required = true) Date created,
+                @JsonProperty(value = CREATOR) DIDURL creator,
+                @JsonProperty(value = SIGNATURE_VALUE, required = true) String signature) {
+            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+            this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
+            this.creator = creator;
+            this.signature = signature;
+        }
+
+        /**
+         * Constructs the proof of DIDDocument with the key id and signature string.
+         *
+         * @param creator the key to sign
+         * @param signature the signature string
+         */
+        protected Proof(DIDURL creator, String signature) {
+            this(null, Calendar.getInstance(Constants.UTC).getTime(), creator, signature);
+        }
+
+        /**
+         * Get Proof type.
+         *
+         * @return the type string
+         */
+        public String getType() {
+            return type;
+        }
+
+        /**
+         * Get the time to create DIDDocument.
+         *
+         * @return the time
+         */
+        public Date getCreated() {
+            return created;
+        }
+
+        /**
+         * Get the key id to sign.
+         *
+         * @return the key id
+         */
+        public DIDURL getCreator() {
+            return creator;
+        }
+
+        /**
+         * Get signature string.
+         *
+         * @return the signature string
+         */
+        public String getSignature() {
+            return signature;
+        }
+
+        @Override
+        public int compareTo(Proof proof) {
+            int rc = (int)(this.created.getTime() - proof.created.getTime());
+            if (rc == 0)
+                rc = this.creator.compareTo(proof.creator);
+            return rc;
+        }
+
+        protected static PropertyFilter getFilter() {
+            return new DIDPropertyFilter() {
+                @Override
+                protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
+                    if (context.isNormalized())
+                        return true;
+
+                    Proof proof = (Proof)pojo;
+                    switch (writer.getName()) {
+                    case TYPE:
+                        return !(proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
+
+                    default:
+                        return true;
+                    }
+                }
+            };
+        }
+    }
+}
 
 
 

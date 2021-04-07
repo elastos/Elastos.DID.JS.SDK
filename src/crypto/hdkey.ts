@@ -20,6 +20,10 @@
  * SOFTWARE.
  */
 
+import { Mnemonic } from "../mnemonic";
+import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
+import { encode as encodeBase58, decode as decodeBase58 } from "bs58check";
+
 export class HDKey {
 	public static PUBLICKEY_BYTES = 33;
 	public static PRIVATEKEY_BYTES = 32;
@@ -31,76 +35,71 @@ export class HDKey {
     private static PADDING_IDENTITY = 0x67;
     private static PADDING_STANDARD = 0xAD;
 
-    private DeterministicKey key;
-
 	// Derive path: m/44'/0'/0'/0/index
 	public static DERIVE_PATH_PREFIX = "44H/0H/0H/0/";
 
 	// Pre-derive publickey path: m/44'/0'/0'
 	public static PRE_DERIVED_PUBLICKEY_PATH = "44H/0H/0H";
 
-
-
-	public HDKey(String mnemonic, String passphrase) {
-		this(Mnemonic.toSeed(mnemonic, passphrase));
+	public static newWithMnemonic(mnemonic: string, passphrase, string): HDKey {
+		return HDKey.newWithSeed(Mnemonic.toSeed(mnemonic, passphrase));
 	}
 
-	public HDKey(byte[] seed) {
-		this(HDKeyDerivation.createMasterPrivateKey(seed));
+	public static newWithSeed(seed: string): HDKey {
+		return HDKey.newWithKey(DeterministicKey.fromMasterSeed(Buffer.from(seed)));
 	}
 
-	private HDKey(DeterministicKey key) {
-		this.key = key;
+	public static newWithKey(key: DeterministicKey): HDKey {
+		return new HDKey(key);
 	}
 
-	public byte[] getPrivateKeyBytes() {
-		return key.getPrivKeyBytes();
+	private constructor(private key: DeterministicKey) {}
+
+	public getPrivateKeyBytes(): string {
+		return this.key.privateKey.toString();
 	}
 
-	public String getPrivateKeyBase58() {
-		return Base58.encode(getPrivateKeyBytes());
+	public getPrivateKeyBase58(): string {
+		return encodeBase58(this.getPrivateKeyBytes());
 	}
 
-	public byte[] getPublicKeyBytes() {
-		return key.getPubKey();
+	public getPublicKeyBytes(): string {
+		return this.key.publicKey.toString();
 	}
 
-	public String getPublicKeyBase58() {
-		return Base58.encode(getPublicKeyBytes());
+	public getPublicKeyBase58(): string {
+		return encodeBase58(this.getPublicKeyBytes());
 	}
 
-	public byte[] serialize() {
-		return Base58.decode(serializeBase58());
+	public serialize(): string {
+		return decodeBase58(this.serializeBase58());
 	}
 
-	public String serializeBase58() {
-		return key.serializePrivB58(MainNetParams.get());
+	public serializeBase58(): string {
+		return encodeBase58(this.key.privateExtendedKey);
+		// JAVA: return this.key.serializePrivB58(MainNetParams.get());
 	}
 
-	public byte[] serializePublicKey() {
-		return Base58.decode(serializePublicKeyBase58());
+	public serializePublicKey(): string {
+		return decodeBase58(this.serializePublicKeyBase58());
 	}
 
-    public String serializePublicKeyBase58() {
-    	return key.serializePubB58(MainNetParams.get());
+    public serializePublicKeyBase58(): string {
+		return encodeBase58(this.key.publicExtendedKey);
+    	// JAVA: return this.key.serializePubB58(MainNetParams.get());
     }
 
-	public static HDKey deserialize(byte[] keyData) {
-		/*
-		DeterministicKey k = DeterministicKey.deserialize(
-				MainNetParams.get(), keyData);
-		return new HDKey(k);
-		*/
-		return deserializeBase58(Base58.encode(keyData));
+	public static deserialize(keyData: string): HDKey {
+		return this.deserializeBase58(encodeBase58(keyData));
 	}
 
-	public static HDKey deserializeBase58(String keyData) {
-		DeterministicKey k = DeterministicKey.deserializeB58(
-				keyData, MainNetParams.get());
+	public static deserializeBase58(keyData: string): HDKey {
+		let k = DeterministicKey.fromExtendedKey(keyData);
+		// JAVA: let k = DeterministicKey.deserializeB58(keyData, MainNetParams.get());
 		return new HDKey(k);
 	}
 
-	public static byte[] paddingToExtendedPrivateKey(byte[] privateKeyBytes) {
+	/*public static paddingToExtendedPrivateKey(privateKeyBytes: string): string {
 		byte[] extendedPrivateKeyBytes = new byte[EXTENDED_PRIVATEKEY_BYTES];
 
 		int version = MainNetParams.get().getBip32HeaderP2PKHpriv();
@@ -118,10 +117,10 @@ export class HDKey {
 		return extendedPrivateKeyBytes;
 	}
 
-	public static byte[] paddingToExtendedPublicKey(byte[] publicKeyBytes) {
-		byte[] extendedPublicKeyBytes = new byte[EXTENDED_PUBLICKEY_BYTES];
+	public static paddingToExtendedPublicKey(publicKeyBytes: string): string {
+		let extendedPublicKeyBytes = new byte[EXTENDED_PUBLICKEY_BYTES];
 
-		int version = MainNetParams.get().getBip32HeaderP2PKHpub();
+		let version = MainNetParams.get().getBip32HeaderP2PKHpub();
 		extendedPublicKeyBytes[0] = (byte)((version >> 24) & 0xFF);
 		extendedPublicKeyBytes[1] = (byte)((version >> 16) & 0xFF);
 		extendedPublicKeyBytes[2] = (byte)((version >> 8) & 0xFF);
@@ -134,29 +133,19 @@ export class HDKey {
 		System.arraycopy(hash, 0, extendedPublicKeyBytes, 78, 4);
 
 		return extendedPublicKeyBytes;
+	}*/
+
+	public deriveWithPath(path: string): HDKey {
+		return new HDKey(this.key.derive(path));
 	}
 
-	public HDKey derive(String path) {
-		HDPath derivePath = HDPath.parsePath(path);
-
-		DeterministicKey child = key;
-		for (ChildNumber childNumber: derivePath)
-			child = HDKeyDerivation.deriveChildKey(child, childNumber);
-
-		return new HDKey(child);
+	public deriveWithIndex(index: number, hardened: boolean = false): HDKey {
+		let childNumber = new ChildNumber(index, hardened);
+		return new HDKey(HDKeyDerivation.deriveChildKey(this.key, childNumber));
 	}
 
-	public HDKey derive(int index, boolean hardened) {
-		ChildNumber childNumber = new ChildNumber(index, hardened);
-		return new HDKey(HDKeyDerivation.deriveChildKey(key, childNumber));
-	}
-
-	public HDKey derive(int index) {
-		return derive(index, false);
-	}
-
-    public KeyPair getJCEKeyPair() {
-    	ECParameterSpec paramSpec = new ECNamedCurveSpec(
+    /*public getJCEKeyPair(): KeyPair {
+    	let paramSpec = new ECNamedCurveSpec(
         		"secp256r1", CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(),
         		CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
 
@@ -189,11 +178,11 @@ export class HDKey {
     	return new KeyPair(pub, priv);
     }
 
-	private static byte[] getRedeemScript(byte[] pk) {
-		byte[] script = new byte[35];
+	private static getRedeemScript(pk: string): string {
+		let script = new byte[35];
 		script[0] = 33;
 		System.arraycopy(pk, 0, script, 1, 33);
-		script[34] = PADDING_STANDARD;
+		script[34] = HDKey.PADDING_STANDARD;
 		return script;
 	}
 
@@ -211,10 +200,10 @@ export class HDKey {
 		return out;
 	}
 
-	private static byte[] getBinAddress(byte[] pk) {
-		byte[] script = getRedeemScript(pk);
+	private static getBinAddress(pk: string): string {
+		let script = this.getRedeemScript(pk);
 
-		byte[] hash = sha256Ripemd160(script);
+		let hash = this.sha256Ripemd160(script);
 		byte[] programHash = new byte[hash.length + 1];
 		programHash[0] = PADDING_IDENTITY;
 		System.arraycopy(hash, 0, programHash, 1, hash.length);
@@ -227,59 +216,59 @@ export class HDKey {
 		return binAddress;
 	}
 
-	public byte[] getBinAddress() {
-		return getBinAddress(getPublicKeyBytes());
+	public getBinAddress(): string {
+		return this.getBinAddress(this.getPublicKeyBytes());
 	}
 
-	public String getAddress() {
+	public getAddress(): string {
 		return Base58.encode(getBinAddress());
 	}
 
 	public static String toAddress(byte[] pk) {
 		return Base58.encode(getBinAddress(pk));
-	}
+	}*/
 
-	public static boolean isAddressValid(String address) {
-		byte[] binAddress = Base58.decode(address);
+	public static isAddressValid(address: string): boolean {
+		let binAddress = decodeBase58(address);
 
 		if (binAddress.length != 25)
 			return false;
 
-		if (binAddress[0] != PADDING_IDENTITY)
+		if (binAddress[0] != HDKey.PADDING_IDENTITY)
 			return false;
 
-		byte[] hash = Sha256Hash.hashTwice(binAddress, 0, 21);
+		let hash = Sha256Hash.hashTwice(binAddress, 0, 21);
 
 		return (hash[0] == binAddress[21] && hash[1] == binAddress[22]
 				&& hash[2] == binAddress[23] && hash[3] == binAddress[24]);
 	}
 
-	public byte[] sign(byte[] sha256Hash) {
-		ECDSASignature sig = key.sign(Sha256Hash.wrap(sha256Hash));
+	public sign(sha256Hash: string): string {
+		let sig = this.key.sign(Sha256Hash.wrap(sha256Hash));
 		return sig.encodeToDER();
 	}
 
-	public byte[] signData(byte[] ... inputs) {
-		byte[] hash = sha256Digest(inputs);
+	public signData(byte[] ... inputs): string {
+		let hash = this.sha256Digest(inputs);
 
-		return sign(hash);
+		return this.sign(hash);
 	}
 
-	public boolean verify(byte[] sha256Hash, byte[] signature) {
+	public verify(sha256Hash: string, signature: string): boolean {
 		try {
-			return key.verify(sha256Hash, signature);
-		} catch (SignatureDecodeException e) {
+			return this.key.verify(sha256Hash, signature);
+		} catch (e) {
+			// SignatureDecodeException
 			return false;
 		}
 	}
 
-	public boolean verifyData(byte[] signature, byte[] ... inputs) {
-		byte[] hash = sha256Digest(inputs);
-
-		return verify(hash, signature);
+	public verifyData(signature: string, byte[] ... inputs): boolean {
+		let hash = this.sha256Digest(inputs);
+		return this.verify(hash, signature);
 	}
 
-	private static byte[] sha256Digest(byte[] ... inputs) {
+	private static sha256Digest(byte[] ... inputs): string {
 		byte digest[] = new byte[32];
 
 		SHA256Digest sha256 = new SHA256Digest();
@@ -292,7 +281,7 @@ export class HDKey {
 		return digest;
 	}
 
-	public void wipe() {
-		// TODO:
+	public wipe() {
+		// TODO
 	}
 }

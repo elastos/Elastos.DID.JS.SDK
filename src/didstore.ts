@@ -37,7 +37,7 @@ import { RootIdentity } from "./rootidentity";
 import { checkArgument } from "./utils";
 import { LruCache } from "./lrucache";
 import { Aes256cbc } from "./crypto/aes256cbc";
-import { HDKey } from "./hdkey-secp256r1";
+import { HDKey } from "./crypto/hdkey";
 
 /**
  * DIDStore is local store for all DIDs.
@@ -60,11 +60,13 @@ import { HDKey } from "./hdkey-secp256r1";
 	public /*private*/ storage: DIDStorage;
 	private metadata: DIDStore.Metadata;
 
-	/* protected static final ConflictHandle defaultConflictHandle = (c, l) -> {
-		l.getMetadata().setPublished(c.getMetadata().getPublished());
-		l.getMetadata().setSignature(c.getMetadata().getSignature());
-		return l;
-	};*/
+	public /*protected*/ static defaultConflictHandle: DIDStore.ConflictHandle = {
+		merge: (chainDoc, localDoc) => {
+			localDoc.getMetadata().setPublished(chainDoc.getMetadata().getPublished());
+			localDoc.getMetadata().setSignature(chainDoc.getMetadata().getSignature());
+			return localDoc;
+		}
+	};
 
 	private constructor(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage) {
 		if (initialCacheCapacity < 0)
@@ -349,8 +351,7 @@ import { HDKey } from "./hdkey-secp256r1";
 
 				if (value != DIDStore.NULL) {
 					let keyData = this.decrypt(value, storepass);
-					return HDKey.fromExtendedKey(keyData);
-					// JAVA: return HDKey.deserialize(keyData);
+					return HDKey.deserialize(keyData);
 				} else {
 					return null;
 				}
@@ -366,7 +367,7 @@ import { HDKey } from "./hdkey-secp256r1";
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 			let rootPrivateKey = this.loadRootIdentityPrivateKey(id, storepass);
-			let key = rootPrivateKey.derive(path);
+			let key = rootPrivateKey.deriveWithPath(path);
 
 			return key;
 		}
@@ -792,7 +793,7 @@ import { HDKey } from "./hdkey-secp256r1";
 			if (idOrString instanceof DIDURL)
 				id = idOrString;
 			else
-				id = DIDURL.valueOf(idOrString);
+				id = DIDURL.valueOfUrl(idOrString);
 
 			let success = this.storage.deleteCredential(id);
 			if (success) {
@@ -877,7 +878,7 @@ import { HDKey } from "./hdkey-secp256r1";
 			if (idOrString instanceof DIDURL)
 				id = idOrString;
 			else
-				id = DIDURL.valueOf(idOrString);
+				id = DIDURL.valueOfUrl(idOrString);
 
 			checkArgument(privateKey != null && privateKey.length != 0, "Invalid private key");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -936,7 +937,7 @@ import { HDKey } from "./hdkey-secp256r1";
 			if (id instanceof DIDURL)
 				return this.loadPrivateKey(id) != null;
 			else
-				return this.loadPrivateKey(DIDURL.valueOf(id)) != null;
+				return this.loadPrivateKey(DIDURL.valueOfUrl(id)) != null;
 		}
 
 		/**
@@ -972,7 +973,7 @@ import { HDKey } from "./hdkey-secp256r1";
 			if (idOrString instanceof DIDURL)
 				id = idOrString;
 			else
-				id = DIDURL.valueOf(idOrString);
+				id = DIDURL.valueOfUrl(idOrString);
 
 			let success = this.storage.deletePrivateKey(id);
 			if (success)

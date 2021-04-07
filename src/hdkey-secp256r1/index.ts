@@ -153,7 +153,7 @@ export class HDKey {
         return bs58check.encode(serialize(this, this.versions.public, this.publicKey!));
     }
 
-    derive(path: string) {
+    derive(path: string): HDKey {
         if (path === 'm' || path === 'M' || path === "m'" || path === "M'") {
             return this;
         }
