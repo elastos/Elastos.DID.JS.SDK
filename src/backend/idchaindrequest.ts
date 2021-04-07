@@ -278,7 +278,7 @@ export class Proof {
 	private signature: string;
 
 	@JsonCreator()
-	private constructor(
+	public /*private*/ constructor(
 			@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD, required: true}) verificationMethod: DIDURL,
 			@JsonProperty({value: IDChainRequest.SIGNATURE, required: true}) signature: string,
 			@JsonProperty({value: IDChainRequest.TYPE}) type: string = null

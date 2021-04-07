@@ -25,12 +25,15 @@ import { DIDEntity } from "./didentity";
 import { DID } from "./did";
 import { DIDURL } from "./didurl";
 import { Logger } from "./logger";
+import { checkArgument } from "./utils";
 import { List as ImmutableList } from "immutable";
 import {
     MalformedDocumentException,
     NotCustomizedDIDException,
     NotAttachedWithStoreException,
-    NotPrimitiveDIDException
+    NotPrimitiveDIDException,
+    NoEffectiveControllerException,
+    InvalidKeyException
 } from "./exceptions/exceptions";
 
 const log = new Logger("DIDDocument");
@@ -213,7 +216,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the controller count
      */
     public getControllerCount(): number {
-        return this.controllers.size();
+        return this.controllers.length;
     }
 
     /**
@@ -222,7 +225,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the Controller's DID if only has one controller, other wise null
      */
     protected getController(): DID {
-        return this.controllers.size() == 1 ? this.controllers.get(0) : null;
+        return this.controllers.length == 1 ? this.controllers[0] : null;
     }
 
     /**
@@ -231,7 +234,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return true if has, otherwise false
      */
     public hasController(): boolean {
-        return !this.controllers.isEmpty();
+        return this.controllers.length != 0;
     }
 
     /**
@@ -293,7 +296,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the count
      */
     public getPublicKeyCount(): number {
-        let count = this.publicKeys.size();
+        let count = this.publicKeys.size;
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
@@ -316,7 +319,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 pks.addAll(doc.getAuthenticationKeys());
         }
 
-        return Collections.unmodifiableList(pks);
+        return ImmutableList(pks);
     }
 
     /**
@@ -326,12 +329,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param type the type string
      * @return the matched PublicKey array
      */
-    public selectPublicKeys(id: DIDURL, type: string): PublicKey[] {
+    public selectPublicKeys(id: DIDURL | string, type: string): ImmutableList<PublicKey> {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let pks = new ArrayList<PublicKey>(publicKeys.size());
+        let pks: PublicKey[] = [];
         for (let pk of this.publicKeys.values()) {
             if (id != null && !pk.getId().equals(id))
                 continue;
@@ -339,27 +342,16 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (type != null && !pk.getType().equals(type))
                 continue;
 
-            pks.add(pk);
+            pks.push(pk);
         }
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
-                pks.addAll(doc.selectAuthenticationKeys(id, type));
+                pks.push(doc.selectAuthenticationKeys(id, type));
         }
 
-        return Collections.unmodifiableList(pks);
+        return ImmutableList(pks);
 
-    }
-
-    /**
-     * Select public keys with the specified key id or key type.
-     *
-     * @param id the key id string
-     * @param type the type string
-     * @return the matched PublicKey array
-     */
-    public selectPublicKeys(id: string, type: string): PublicKey[] {
-        return this.selectPublicKeys(this.canonicalId(id), type);
     }
 
     /**
@@ -388,18 +380,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param id the key id
      * @return the key exists or not
      */
-    public hasPublicKey(id: DIDURL): boolean {
-        return this.getPublicKey(id) != null;
-    }
-
-    /**
-     * Check if the specified public key exists.
-     *
-     * @param id the key id string
-     * @return the key exists or not
-     */
-    public hasPublicKey(id: string): boolean {
-        return this.hasPublicKey(this.canonicalId(id));
+    public hasPublicKey(id: DIDURL | string): boolean {
+        return this.getPublicKey(this.canonicalId(id)) != null;
     }
 
     /**
@@ -502,7 +484,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 
     private getKeyPair(id: DIDURL, storepass: string): KeyPair {
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass != null && storepass !== "", "Invalid storepass");
         this.checkAttachedStore();
 
         if (id == null) {
@@ -533,7 +515,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no DID store to get root private key
      */
     public derive(index: number, storepass: string): string {
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass != null && storepass !== "", "Invalid storepass");
         this.checkAttachedStore();
         this.checkIsPrimitive();
 
@@ -617,20 +599,20 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the matched authentication key array
      */
-    public getAuthenticationKeys(): PublicKey[] {
-        let pks = new ArrayList<PublicKey>();
+    public getAuthenticationKeys(): ImmutableList<PublicKey> {
+        let pks: PublicKey[] = [];
 
         for (let pk of this.publicKeys.values()) {
             if (pk.isAuthenticationKey())
-                pks.add(pk);
+                pks.push(pk);
         }
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
-                pks.addAll(doc.getAuthenticationKeys());
+                pks.push(doc.getAuthenticationKeys());
         }
 
-        return Collections.unmodifiableList(pks);
+        return ImmutableList(pks);
     }
 
     /**
@@ -1579,7 +1561,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key
      */
-    public sign(id: DIDURL, storepass: string, ...data: string): string {
+    public sign(id: DIDURL, storepass: string, ...data: string[]): string {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkArgument(data != null && data.length > 0, "Invalid input data");
         checkAttachedStore();
@@ -2065,9 +2047,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             throw new DIDExpiredException(this.getSubject().toString());
         }
 
-        String lastTxid = null;
-        String reolvedSignautre = null;
-        DIDDocument resolvedDoc = getSubject().resolve(true);
+        let lastTxid: string = null;
+        let reolvedSignautre: string= null;
+        let resolvedDoc = getSubject().resolve(true);
         if (resolvedDoc != null) {
             if (resolvedDoc.isDeactivated()) {
                 getMetadata().setDeactivated(true);
@@ -2247,7 +2229,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDBackendException publish did failed because of DIDBackend error.
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      */
-    public publish(storepass: string), DIDBackendException {
+    public publish(storepass: string) {
         publish(null as DIDURL, false, storepass, null);
     }
 
@@ -2261,142 +2243,16 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param storepass the password for DIDStore
      * @return the new CompletableStage, no result.
      */
-    public CompletableFuture<Void> publishAsync(signKey: DIDURL, force: boolean,
-            storepass: string, adapter: DIDTransactionAdapter) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+    public publishAsync(signKey: DIDURL, force: boolean = false, storepass: string = null, adapter: DIDTransactionAdapter = null): Promise<boolean> {
+        return new Promise((resolve, reject)=>{
             try {
                 publish(signKey, force, storepass, adapter);
-            } catch (DIDException e) {
-                throw new CompletionException(e);
+                resolve();
+            } catch (e) {
+                // DIDException
+                reject(e);
             }
         });
-
-        return future;
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     *
-     * @param signKey the key to sign
-     * @param force force = true, must be publish whether the local document is lastest one or not;
-     *              force = false, must not be publish if the local document is not the lastest one,
-     *              and must resolve at first.
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> publishAsync(signKey: DIDURL, force: boolean,
-            storepass: string) {
-        return publishAsync(signKey, force, storepass, null);
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     *
-     * @param signKey the key to sign
-     * @param force force = true, must be publish whether the local document is lastest one or not;
-     *              force = false, must not be publish if the local document is not the lastest one,
-     *              and must resolve at first.
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> publishAsync(signKey: string, force: boolean,
-            storepass: string, adapter: DIDTransactionAdapter) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            try {
-                publish(signKey, force, storepass, adapter);
-            } catch (DIDException e) {
-                throw new CompletionException(e);
-            }
-        });
-
-        return future;
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     *
-     * @param signKey the key to sign
-     * @param force force = true, must be publish whether the local document is lastest one or not;
-     *              force = false, must not be publish if the local document is not the lastest one,
-     *              and must resolve at first.
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> publishAsync(signKey: string, force: boolean,
-            storepass: string) {
-        return publishAsync(signKey, force, storepass, null);
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     * Also this method is defined without force mode.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> publishAsync(signKey: DIDURL, storepass: string,
-            adapter: DIDTransactionAdapter) {
-        return publishAsync(signKey, false, storepass, adapter);
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     * Also this method is defined without force mode.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> publishAsync(signKey: DIDURL, storepass: string) {
-        return publishAsync(signKey, false, storepass, null);
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     * Also this method is defined without force mode.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> publishAsync(signKey: string, storepass: string,
-            adapter: DIDTransactionAdapter) {
-        return publishAsync(signKey, false, storepass, adapter);
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     * Also this method is defined without force mode.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public publishAsync(signKey: string, storepass: string): CompletableFuture<Void>  {
-        return publishAsync(signKey, false, storepass, null);
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     * Also this method is defined without force mode and specify the default key to sign.
-     *
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public publishAsync(storepass: string, adapter: DIDTransactionAdapter): CompletableFuture<Void>  {
-        return publishAsync(null as DIDURL, false, storepass, adapter);
-    }
-
-    /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     * Also this method is defined without force mode and specify the default key to sign.
-     *
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> publishAsync(storepass: string) {
-        return publishAsync(null as DIDURL, false, storepass, null);
     }
 
     /**
@@ -2408,7 +2264,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public deactivate(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+    public deactivate(signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkAttachedStore();
 
@@ -2416,7 +2272,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             throw new NoEffectiveControllerException(this.getSubject().toString());
 
         // Document should use the IDChain's copy
-        DIDDocument doc = getSubject().resolve(true);
+        let doc = getSubject().resolve(true);
         if (doc == null)
             throw new DIDNotFoundException(this.getSubject().toString());
         else if (doc.isDeactivated())
@@ -2438,152 +2294,22 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 
     /**
-     * Deactivate self use authentication key.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key
-     * @throws DIDStoreException deactivate did failed because of did store error
-     * @throws DIDBackendException deactivate did failed because of did backend error
-     */
-    public deactivate(signKey: DIDURL, storepass: string) {
-        deactivate(signKey, storepass, null);
-    }
-
-    /**
-     * Deactivate self use authentication key.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key
-     * @throws DIDStoreException deactivate did failed because of did store error
-     * @throws DIDBackendException deactivate did failed because of did backend error
-     */
-    public deactivate(signKey: string, storepass: string, adapter: DIDTransactionAdapter) {
-        deactivate(canonicalId(signKey), storepass, adapter);
-    }
-
-    /**
-     * Deactivate self use authentication key.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key
-     * @throws DIDStoreException deactivate did failed because of did store error
-     * @throws DIDBackendException deactivate did failed because of did backend error
-     */
-    public deactivate(signKey: string, storepass: string) {
-        deactivate(canonicalId(signKey), storepass, null);
-    }
-
-    /**
-     * Deactivate self use authentication key.
-     * Specify the default key to sign.
-     *
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key
-     * @throws DIDStoreException deactivate did failed because of did store error
-     * @throws DIDBackendException deactivate did failed because of did backend error
-     */
-    public deactivate(storepass: string, adapter: DIDTransactionAdapter) {
-        deactivate(null as DIDURL, storepass, adapter);
-    }
-
-    /**
-     * Deactivate self use authentication key.
-     * Specify the default key to sign.
-     *
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key
-     * @throws DIDStoreException deactivate did failed because of did store error
-     * @throws DIDBackendException deactivate did failed because of did backend error
-     */
-    public deactivate(storepass: string), DIDBackendException {
-        deactivate(null as DIDURL, storepass, null);
-    }
-
-    /**
      * Deactivate self use authentication key with asynchronous mode.
      *
      * @param signKey the key to sign
      * @param storepass the password for DIDStore
      * @return the new CompletableStage, no result.
      */
-    public CompletableFuture<Void> deactivateAsync(signKey: DIDURL, storepass: string,
-            adapter: DIDTransactionAdapter) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+    public deactivateAsync(signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null): Promise<void> {
+        return new Promise((resolve, reject)=>{
             try {
-                deactivate(signKey, storepass, adapter);
-            } catch (DIDException e) {
-                throw new CompletionException(e);
+                this.deactivate(signKey, storepass, adapter);
+                resolve();
+            } catch (e) {
+                //DIDException
+                reject(e);
             }
         });
-
-        return future;
-    }
-
-    /**
-     * Deactivate self use authentication key with asynchronous mode.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(signKey: DIDURL, storepass: string) {
-        return deactivateAsync(signKey, storepass, null);
-    }
-
-    /**
-     * Deactivate self use authentication key with asynchronous mode.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(signKey: string, storepass: string,
-            adapter: DIDTransactionAdapter) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            try {
-                deactivate(signKey, storepass, adapter);
-            } catch (DIDException e) {
-                throw new CompletionException(e);
-            }
-        });
-
-        return future;
-    }
-
-    /**
-     * Deactivate self use authentication key with asynchronous mode.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(signKey: string, storepass: string) {
-        return deactivateAsync(signKey, storepass, (DIDTransactionAdapter)null);
-    }
-
-    /**
-     * Deactivate self use authentication key with asynchronous mode.
-     * Specify the default key to sign.
-     *
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(storepass: string, adapter: DIDTransactionAdapter) {
-        return deactivateAsync(null as DIDURL, storepass, adapter);
-    }
-
-    /**
-     * Deactivate self use authentication key with asynchronous mode.
-     * Specify the default key to sign.
-     *
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(storepass: string) {
-        return deactivateAsync(null as DIDURL, storepass, null);
     }
 
     /**
@@ -2596,15 +2322,16 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException deactivate did failed because of did store error.
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
-    public deactivate(DID target, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+    // NOTE: Was deactivate() in java
+    public deactivateTargetDID(target: DID, signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
         checkArgument(target != null, "Invalid target DID");
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
-        checkAttachedStore();
+        this.checkAttachedStore();
 
         if (signKey == null && getDefaultPublicKeyId() == null)
             throw new NoEffectiveControllerException(this.getSubject().toString());
 
-        DIDDocument targetDoc = target.resolve(true);
+        let targetDoc = target.resolve(true);
         if (targetDoc == null)
             throw new DIDNotFoundException(target.toString());
         else if (targetDoc.isDeactivated())
@@ -2616,11 +2343,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (targetDoc.getAuthorizationKeyCount() == 0)
                 throw new InvalidKeyException("No authorization key from: " + target);
 
-            List<PublicKey> candidatePks = null;
+            let candidatePks: PublicKey[]  = null;
             if (signKey == null) {
                 candidatePks = this.getAuthenticationKeys();
             } else {
-                PublicKey pk = getAuthenticationKey(signKey);
+                let pk = this.getAuthenticationKey(signKey);
                 if (pk == null)
                     throw new InvalidKeyException(signKey.toString());
                 candidatePks = new ArrayList<PublicKey>(1);
@@ -2628,10 +2355,10 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
 
             // Lookup the authorization key id in the target doc
-            DIDURL realSignKey = null;
-            DIDURL targetSignKey = null;
-            lookup: for (PublicKey candidatePk : candidatePks) {
-                for (PublicKey pk : targetDoc.getAuthorizationKeys()) {
+            let realSignKey: DIDURL = null;
+            let targetSignKey: DIDURL = null;
+            loopkup: for (let candidatePk of candidatePks) {
+                for (let pk of targetDoc.getAuthorizationKeys()) {
                     if (!pk.getController().equals(this.getSubject()))
                         continue;
 
@@ -2667,74 +2394,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 
     /**
-     * Deactivate target DID by authorizor's DID.
-     *
-     * @param target the target DID
-     * @param signKey the authorizor's key to sign
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key.
-     * @throws DIDStoreException deactivate did failed because of did store error.
-     * @throws DIDBackendException deactivate did failed because of did backend error.
-     */
-    public deactivate(DID target, signKey: DIDURL, storepass: string) {
-        deactivate(target, signKey, storepass, null);
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID.
-     *
-     * @param target the target DID string
-     * @param signKey the authorizor's key to sign
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key.
-     * @throws DIDStoreException deactivate did failed because of did store error.
-     * @throws DIDBackendException deactivate did failed because of did backend error.
-     */
-    public deactivate(String target, signKey: string, storepass: string, adapter: DIDTransactionAdapter) {
-        deactivate(DID.valueOf(target), canonicalId(signKey), storepass, adapter);
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID.
-     *
-     * @param target the target DID string
-     * @param signKey the authorizor's key to sign
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key.
-     * @throws DIDStoreException deactivate did failed because of did store error.
-     * @throws DIDBackendException deactivate did failed because of did backend error.
-     */
-    public deactivate(String target, signKey: string, storepass: string) {
-        deactivate(DID.valueOf(target), canonicalId(signKey), storepass, null);
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID.
-     *
-     * @param target the target DID string
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key.
-     * @throws DIDStoreException deactivate did failed because of did store error.
-     * @throws DIDBackendException deactivate did failed because of did backend error.
-     */
-    public deactivate(DID target, storepass: string, adapter: DIDTransactionAdapter) {
-        deactivate(target, null, storepass, adapter);
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID.
-     *
-     * @param target the target DID string
-     * @param storepass the password for DIDStore
-     * @throws InvalidKeyException there is no an authentication key.
-     * @throws DIDStoreException deactivate did failed because of did store error.
-     * @throws DIDBackendException deactivate did failed because of did backend error.
-     */
-    public deactivate(DID target, storepass: string) {
-        deactivate(target, null, storepass, null);
-    }
-
-    /**
      * Deactivate target DID by authorizor's DID with asynchronous mode.
      *
      * @param target the target DID
@@ -2742,93 +2401,19 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param storepass the password for DIDStore
      * @return the new CompletableStage, no result.
      */
-    public CompletableFuture<Void> deactivateAsync(DID target,
-            signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+    // NOTE: Was deactivateAsync() in java
+    public deactivateTargetDIDAsync(target: DID, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
+        return new Promise((resolve, reject)=>{
             try {
-                deactivate(target, signKey, storepass, adapter);
-            } catch (DIDException e) {
-                throw new CompletionException(e);
+                this.deactivateTargetDID(target, signKey, storepass, adapter);
+                resolve();
+            } catch ( e) {
+                // DIDException
+                reject(e);
             }
         });
 
         return future;
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID with asynchronous mode.
-     *
-     * @param target the target DID
-     * @param signKey the authorizor's key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(DID target,
-            signKey: DIDURL, storepass: string) {
-        return deactivateAsync(target, signKey, storepass, null);
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID with asynchronous mode.
-     *
-     * @param target the target DID
-     * @param did the authorizor's DID.
-     * @param confirms the count of confirms
-     * @param signKey the authorizor's key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(String target,
-            signKey: string, storepass: string, adapter: DIDTransactionAdapter) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            try {
-                deactivate(target, signKey, storepass, adapter);
-            } catch (DIDException e) {
-                throw new CompletionException(e);
-            }
-        });
-
-        return future;
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID with asynchronous mode.
-     *
-     * @param target the target DID
-     * @param did the authorizor's DID.
-     * @param confirms the count of confirms
-     * @param signKey the authorizor's key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(String target,
-            signKey: string, storepass: string) {
-        return deactivateAsync(target, signKey, storepass, null);
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID with asynchronous mode.
-     *
-     * @param target the target DID
-     * @param did the authorizor's DID, use the default key to sign.
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(DID target, storepass: string,
-            adapter: DIDTransactionAdapter) {
-        return deactivateAsync(target, null, storepass, adapter);
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID with asynchronous mode.
-     *
-     * @param target the target DID
-     * @param did the authorizor's DID, use the default key to sign.
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public CompletableFuture<Void> deactivateAsync(DID target, storepass: string) {
-        return deactivateAsync(target, null, storepass, null);
     }
 
     /**
@@ -2838,12 +2423,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the DIDDocument object.
      * @throws MalformedDocumentException if a parse error occurs.
      */
-    public static DIDDocument parse(String content) {
+    public static parse(content: string): DIDDocument {
         try {
             return parse(content, DIDDocument.class);
-        } catch (DIDSyntaxException e) {
+        } catch (e) {
+            // DIDSyntaxException
             if (e instanceof MalformedDocumentException)
-                throw (MalformedDocumentException)e;
+                throw e;
             else
                 throw new MalformedDocumentException(e);
         }
@@ -2857,7 +2443,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws MalformedDocumentException if a parse error occurs
      * @throws IOException if an IO error occurs
      */
-    public static DIDDocument parse(Reader src) {
+    /* public static DIDDocument parse(Reader src) {
         try {
             return parse(src, DIDDocument.class);
         } catch (DIDSyntaxException e) {
@@ -2866,7 +2452,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             else
                 throw new MalformedDocumentException(e);
         }
-    }
+    } */
 
     /**
      * Parse a DIDDocument object from from a InputStream object.
@@ -2876,7 +2462,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws MalformedDocumentException if a parse error occurs
      * @throws IOException if an IO error occurs
      */
-    public static DIDDocument parse(InputStream src) {
+    /* public static DIDDocument parse(InputStream src) {
         try {
             return parse(src, DIDDocument.class);
         } catch (DIDSyntaxException e) {
@@ -2885,7 +2471,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             else
                 throw new MalformedDocumentException(e);
         }
-    }
+    } */
 
     /**
      * Parse a DIDDocument object from from a File object.
@@ -2895,7 +2481,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws MalformedDocumentException if a parse error occurs
      * @throws IOException if an IO error occurs
      */
-    public static parse(File src): DIDDocument {
+    /* public static parse(File src): DIDDocument {
         try {
             return parse(src, DIDDocument.class);
         } catch (DIDSyntaxException e) {
@@ -2904,1348 +2490,1095 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             else
                 throw new MalformedDocumentException(e);
         }
+    } */
+}
+
+/**
+ * Builder object to create or modify the DIDDocument.
+ */
+export class Builder {
+    private document: DIDDocument;
+    private controllerDoc: DIDDocument;
+
+    /**
+     * Constructs DID Document Builder with given DID and DIDStore.
+     *
+     * @param did the specified DID
+     * @param store the DIDStore object
+     */
+    protected Builder(did: DID, store: DIDStore) {
+        this.document = new DIDDocument(did);
+        metadata: DIDMetadata = new DIDMetadata(did, store);
+        this.document.setMetadata(metadata);
     }
 
     /**
-     * Builder object to create or modify the DIDDocument.
+     * Constructs DID Document Builder with given customizedDid and DIDStore.
+     *
+     * @param did the specified DID
+     * @param store the DIDStore object
      */
-    public static class Builder {
-        private document: DIDDocument;
-        private controllerDoc: DIDDocument;
+    protected constructor(did: DID, controller: DIDDocument, store: DIDStore) {
+        this.document = new DIDDocument(did);
 
-        /**
-         * Constructs DID Document Builder with given DID and DIDStore.
-         *
-         * @param did the specified DID
-         * @param store the DIDStore object
-         */
-        protected Builder(did: DID, store: DIDStore) {
-            this.document = new DIDDocument(did);
-            metadata: DIDMetadata = new DIDMetadata(did, store);
-            this.document.setMetadata(metadata);
-        }
+        this.document.controllers = new ArrayList<DID>();
+        this.document.controllerDocs = new HashMap<DID, DIDDocument>();
 
-        /**
-         * Constructs DID Document Builder with given customizedDid and DIDStore.
-         *
-         * @param did the specified DID
-         * @param store the DIDStore object
-         */
-        protected Builder(did: DID, controller: DIDDocument, store: DIDStore) {
-            this.document = new DIDDocument(did);
+        this.document.controllers.add(controller.getSubject());
+        this.document.controllerDocs.put(controller.getSubject(), controller);
+        this.document.effectiveController = controller.getSubject();
 
-            this.document.controllers = new ArrayList<DID>();
-            this.document.controllerDocs = new HashMap<DID, DIDDocument>();
+        this.document.setMetadata(new DIDMetadata(did, store));
 
-            this.document.controllers.add(controller.getSubject());
-            this.document.controllerDocs.put(controller.getSubject(), controller);
-            this.document.effectiveController = controller.getSubject();
+        this.controllerDoc = controller;
+    }
 
-            this.document.setMetadata(new DIDMetadata(did, store));
+    /**
+     * Constructs DID Document Builder with given DID Document.
+     *
+     * @param doc the DID Document object
+     */
+    protected constructor(doc: DIDDocument) {
+        this.document = doc.copy();
+    }
 
-            this.controllerDoc = controller;
-        }
+    public constructor(doc: DIDDocument, controller: DIDDocument) {
+        this.document = doc.copy();
+        this.document.effectiveController = controller.getSubject();
+        // if (controller.getMetadata().attachedStore())
+        //    this.document.getMetadata().setStore(controller.getMetadata().getStore());
+        this.controllerDoc = controller;
+    }
 
-        /**
-         * Constructs DID Document Builder with given DID Document.
-         *
-         * @param doc the DID Document object
-         */
-        protected Builder(doc: DIDDocument) {
-            this.document = doc.copy();
-        }
+    private canonicalId(id: string): DIDURL {
+        return DIDURL.valueOf(this.getSubject(), id);
+    }
 
-        public Builder(doc: DIDDocument, controller: DIDDocument) {
-            this.document = doc.copy();
-            this.document.effectiveController = controller.getSubject();
-            // if (controller.getMetadata().attachedStore())
-            //    this.document.getMetadata().setStore(controller.getMetadata().getStore());
-            this.controllerDoc = controller;
-        }
+    private canonicalId(id: DIDURL): DIDURL {
+        if (id == null || id.getDid() != null)
+            return id;
 
-        private canonicalId(id: string): DIDURL {
-            return DIDURL.valueOf(this.getSubject(), id);
-        }
+        return new DIDURL(this.getSubject(), id);
+    }
 
-        private canonicalId(id: DIDURL): DIDURL {
-            if (id == null || id.getDid() != null)
-                return id;
+    private invalidateProof() {
+        if (document.proofs != null && !document.proofs.isEmpty())
+            document.proofs.clear();
+    }
 
-            return new DIDURL(this.getSubject(), id);
-        }
+    private checkNotSealed() {
+        if (document == null)
+            throw new AlreadySealedException();
+    }
 
-        private invalidateProof() {
-            if (document.proofs != null && !document.proofs.isEmpty())
-                document.proofs.clear();
-        }
+    private checkIsCustomized() {
+        if (!document.isCustomizedDid())
+            throw new NotCustomizedDIDException(document.getSubject().toString());
+    }
 
-        private checkNotSealed() {
-            if (document == null)
-                throw new AlreadySealedException();
-        }
+    /**
+     * Get document subject from did document builder.
+     *
+     * @return the owner of did document builder
+     */
+    public DID getSubject() {
+        checkNotSealed();
+        return document.getSubject();
+    }
 
-        private checkIsCustomized() {
-            if (!document.isCustomizedDid())
-                throw new NotCustomizedDIDException(document.getSubject().toString());
-        }
+    /**
+     * Add a new controller to the customized DID document.
+     *
+     * @param controller the new controller's DID
+     * @return the Builder object
+     * @throws DIDResolveException if failed resolve the new controller's DID
+     */
+    public addController(controller: DID): Builder {
+        checkArgument(controller != null, "Invalid controller");
+        checkNotSealed();
+        checkIsCustomized();
+        checkArgument(!document.controllers.contains(controller), "Controller already exists");
 
-        /**
-         * Get document subject from did document builder.
-         *
-         * @return the owner of did document builder
-         */
-        public DID getSubject() {
-            checkNotSealed();
-            return document.getSubject();
-        }
+        let controllerDoc = controller.resolve(true);
+        if (controllerDoc == null)
+            throw new DIDNotFoundException(controller.toString());
 
-        /**
-         * Add a new controller to the customized DID document.
-         *
-         * @param controller the new controller's DID
-         * @return the Builder object
-         * @throws DIDResolveException if failed resolve the new controller's DID
-         */
-        public Builder addController(controller: DID) {
-            checkArgument(controller != null, "Invalid controller");
-            checkNotSealed();
-            checkIsCustomized();
-            checkArgument(!document.controllers.contains(controller), "Controller already exists");
+        if (controllerDoc.isDeactivated())
+            throw new DIDDeactivatedException(controller.toString());
 
-            DIDDocument controllerDoc = controller.resolve(true);
-            if (controllerDoc == null)
-                throw new DIDNotFoundException(controller.toString());
+        if (controllerDoc.isExpired())
+            throw new DIDExpiredException(controller.toString());
 
-            if (controllerDoc.isDeactivated())
-                throw new DIDDeactivatedException(controller.toString());
+        if (!controllerDoc.isGenuine())
+            throw new DIDNotGenuineException(controller.toString());
 
-            if (controllerDoc.isExpired())
-                throw new DIDExpiredException(controller.toString());
+        if (controllerDoc.isCustomizedDid())
+            throw new NotPrimitiveDIDException(controller.toString());
 
-            if (!controllerDoc.isGenuine())
-                throw new DIDNotGenuineException(controller.toString());
+        document.controllers.add(controller);
+        document.controllerDocs.put(controller, controllerDoc);
 
-            if (controllerDoc.isCustomizedDid())
-                throw new NotPrimitiveDIDException(controller.toString());
+        document.multisig = null; // invalidate multisig
+        invalidateProof();
+        return this;
+    }
 
-            document.controllers.add(controller);
-            document.controllerDocs.put(controller, controllerDoc);
+    /**
+     * Add a new controller to the customized DID document.
+     *
+     * @param controller the new controller's DID
+     * @return the Builder object
+     * @throws DIDResolveException if failed resolve the new controller's DID
+     */
+    public addController(controller: string): Builder {
+        return addController(DID.valueOf(controller));
+    }
 
-            document.multisig = null; // invalidate multisig
-            invalidateProof();
-            return this;
-        }
+    /**
+     * Remove controller from the customized DID document.
+     *
+     * @param controller the controller's DID to be remove
+     * @return the Builder object
+     */
+    public removeController(controller: DID): Builder {
+        checkArgument(controller != null, "Invalid controller");
+        checkNotSealed();
+        checkIsCustomized();
+        // checkArgument(document.controllers.contains(controller), "Controller not exists");
 
-        /**
-         * Add a new controller to the customized DID document.
-         *
-         * @param controller the new controller's DID
-         * @return the Builder object
-         * @throws DIDResolveException if failed resolve the new controller's DID
-         */
-        public addController(controller: string): Builder {
-            return addController(DID.valueOf(controller));
-        }
+        if (controller.equals(controllerDoc.getSubject()))
+            throw new CanNotRemoveEffectiveController(controller.toString());
 
-        /**
-         * Remove controller from the customized DID document.
-         *
-         * @param controller the controller's DID to be remove
-         * @return the Builder object
-         */
-        public removeController(controller: DID): Builder {
-            checkArgument(controller != null, "Invalid controller");
-            checkNotSealed();
-            checkIsCustomized();
-            // checkArgument(document.controllers.contains(controller), "Controller not exists");
-
-            if (controller.equals(controllerDoc.getSubject()))
-                throw new CanNotRemoveEffectiveController(controller.toString());
-
-            if (document.controllers.remove(controller)) {
-                document.controllerDocs.remove(controller);
-                invalidateProof();
-            }
-
-            return this;
-        }
-
-        /**
-         * Remove controller from the customized DID document.
-         *
-         * @param controller the controller's DID to be remove
-         * @return the Builder object
-         */
-        public Builder removeController(controller: string) {
-            return removeController(DID.valueOf(controller));
-        }
-
-        /**
-         * Set multiple signature for multi-controllers DID document.
-         *
-         * @param m the required signature count
-         * @return the Builder object
-         */
-        public setMultiSignature(m: number): Builder {
-            checkNotSealed();
-            checkIsCustomized();
-            checkArgument(m >= 1, "Invalid signature count");
-
-            let n = document.controllers.size();
-            checkArgument(m <= n, "Signature count exceeds the upper limit");
-
-            let multisig: MultiSignature = null;
-            if (n > 1)
-                multisig = new MultiSignature(m, n);
-
-            if (document.multisig == null && multisig == null)
-                return this;
-
-            if (document.multisig != null && multisig != null &&
-                    document.multisig.equals(multisig))
-                return this;
-
-            document.multisig = new MultiSignature(m, n);
-
-            invalidateProof();
-            return this;
-        }
-
-        private addPublicKey(key: PublicKey) {
-            if (document.publicKeys == null) {
-                document.publicKeys = new TreeMap<DIDURL, PublicKey>();
-            } else {
-                // Check the existence, both id and keyBase58
-                for (PublicKey pk : document.publicKeys.values()) {
-                    if (pk.getId().equals(key.getId()))
-                        throw new DIDObjectAlreadyExistException("PublicKey id '"
-                                + key.getId() + "' already exist.");
-
-                    if (pk.getPublicKeyBase58().equals(key.getPublicKeyBase58()))
-                        throw new DIDObjectAlreadyExistException("PublicKey '"
-                                + key.getPublicKeyBase58() + "' already exist.");
-                }
-            }
-
-            document.publicKeys.put(key.getId(), key);
-            if (document.defaultPublicKey == null) {
-                String address = HDKey.toAddress(key.getPublicKeyBytes());
-                if (address.equals(this.getSubject().getMethodSpecificId())) {
-                    document.defaultPublicKey = key;
-                    key.setAuthenticationKey(true);
-                }
-            }
-
+        if (document.controllers.remove(controller)) {
+            document.controllerDocs.remove(controller);
             invalidateProof();
         }
 
-        /**
-         * Add PublicKey to did document builder.
-         *
-         * @param id the key id
-         * @param controller the owner of public key
-         * @param pk the public key base58 string
-         * @return the DID Document Builder object
-         */
-        public Builder addPublicKey(id: DIDURL, type: string, controller: DID, pk: string) {
-            checkNotSealed();
-            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
-                    "Invalid publicKey id");
-            checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
+        return this;
+    }
 
-            if (controller == null)
-                controller = getSubject();
+    /**
+     * Remove controller from the customized DID document.
+     *
+     * @param controller the controller's DID to be remove
+     * @return the Builder object
+     */
+    public removeController(controller: string): Builder {
+        return removeController(DID.valueOf(controller));
+    }
 
-            addPublicKey(new PublicKey(canonicalId(id), type, controller, pk));
+    /**
+     * Set multiple signature for multi-controllers DID document.
+     *
+     * @param m the required signature count
+     * @return the Builder object
+     */
+    public setMultiSignature(m: number): Builder {
+        checkNotSealed();
+        checkIsCustomized();
+        checkArgument(m >= 1, "Invalid signature count");
+
+        let n = document.controllers.size();
+        checkArgument(m <= n, "Signature count exceeds the upper limit");
+
+        let multisig: MultiSignature = null;
+        if (n > 1)
+            multisig = new MultiSignature(m, n);
+
+        if (document.multisig == null && multisig == null)
             return this;
-        }
 
-        /**
-         * Add PublicKey to did document builder.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @param pk the public key base58 string
-         * @return the DID Document Builder object
-         */
-        public addPublicKey(id: string, type: string, controller: string, pk: string): Builder {
-            return addPublicKey(canonicalId(id), type, DID.valueOf(controller), pk);
-        }
-
-        public addPublicKey(id: DIDURL, controller: DID, pk: string): Builder {
-            return addPublicKey(id, null, controller, pk);
-        }
-
-        public addPublicKey(id: string, controller: string, pk: string): Builder {
-            return addPublicKey(id, null, controller, pk);
-        }
-
-        public addPublicKey(id: DIDURL, pk: string): Builder {
-            return addPublicKey(id, null, null, pk);
-        }
-
-        public addPublicKey(id: string, pk: string): Builder {
-            return addPublicKey(id, null, null, pk);
-        }
-
-        /**
-         * Remove PublicKey with the specified key id.
-         *
-         * @param id the key id
-         * @param force the owner of public key
-         * @return the DID Document Builder object
-         */
-        public removePublicKey(id: DIDURL, force: boolean): Builder {
-            checkNotSealed();
-            checkArgument(id != null, "Invalid publicKey id");
-
-            if (document.publicKeys == null || document.publicKeys.isEmpty())
-                throw new DIDObjectNotExistException(id.toString());
-
-            id = canonicalId(id);
-            PublicKey pk = document.publicKeys.get(id);
-            if (pk == null)
-                throw new DIDObjectNotExistException(id.toString());
-
-            // Can not remove default public key
-            if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
-                throw new DIDObjectHasReference(id.toString() + "is default key");
-
-            if (!force) {
-                if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
-                    throw new DIDObjectHasReference(id.toString());
-            }
-
-            if (document.publicKeys.remove(id) != null) {
-                try {
-                    // TODO: should delete the loosed private key when store the document
-                    if (document.getMetadata().attachedStore())
-                        document.getMetadata().getStore().deletePrivateKey(id);
-                } catch (DIDStoreException ignore) {
-                    log.error("INTERNAL - Remove private key", ignore);
-                }
-
-                invalidateProof();
-            }
-
+        if (document.multisig != null && multisig != null &&
+                document.multisig.equals(multisig))
             return this;
+
+        document.multisig = new MultiSignature(m, n);
+
+        invalidateProof();
+        return this;
+    }
+
+    private addPublicKey(key: PublicKey) {
+        if (document.publicKeys == null) {
+            document.publicKeys = new TreeMap<DIDURL, PublicKey>();
+        } else {
+            // Check the existence, both id and keyBase58
+            for (let pk of document.publicKeys.values()) {
+                if (pk.getId().equals(key.getId()))
+                    throw new DIDObjectAlreadyExistException("PublicKey id '"
+                            + key.getId() + "' already exist.");
+
+                if (pk.getPublicKeyBase58().equals(key.getPublicKeyBase58()))
+                    throw new DIDObjectAlreadyExistException("PublicKey '"
+                            + key.getPublicKeyBase58() + "' already exist.");
+            }
         }
 
-        /**
-         * Remove PublicKey matched the specified key id.
-         *
-         * @param id the key id
-         * @param force force = true, the matched key must be removed.
-         *              force = false, the matched key must not be removed if this key is authentiacation
-         *              or authorization key.
-         * @return the DID Document Builder object
-         */
-        public removePublicKey(id: string, force: boolean): Builder {
-            return removePublicKey(canonicalId(id), force);
-        }
-
-        /**
-         * Remove PublicKey matched the specified key id without force module.
-         *
-         * @param id the key id
-         * @return the DID Document Builder object
-         */
-        public Builder removePublicKey(id: DIDURL) {
-            return removePublicKey(id, false);
-        }
-
-        /**
-         * Remove PublicKey matched the specified key id without force module.
-         *
-         * @param id the key id
-         * @return the DID Document Builder object
-         */
-        public Builder removePublicKey(id: string) {
-            return removePublicKey(id, false);
-        }
-
-        /**
-         * Add the exist Public Key matched the key id to be Authentication key.
-         *
-         * @param id the key id
-         * @return the DID Document Builder object
-         */
-        public Builder addAuthenticationKey(id: DIDURL) {
-            checkNotSealed();
-            checkArgument(id != null, "Invalid publicKey id");
-
-            if (document.publicKeys == null || document.publicKeys.isEmpty())
-                throw new DIDObjectNotExistException(id.toString());
-
-            id = canonicalId(id);
-            let key: PublicKey =document.publicKeys.get(id);
-            if (key == null)
-                throw new DIDObjectNotExistException(id.toString());
-
-            // Check the controller is current DID subject
-            if (!key.getController().equals(this.getSubject()))
-                throw new IllegalUsage(id.toString());
-
-            if (!key.isAuthenticationKey()) {
+        document.publicKeys.put(key.getId(), key);
+        if (document.defaultPublicKey == null) {
+            let address = HDKey.toAddress(key.getPublicKeyBytes());
+            if (address.equals(this.getSubject().getMethodSpecificId())) {
+                document.defaultPublicKey = key;
                 key.setAuthenticationKey(true);
-                invalidateProof();
+            }
+        }
+
+        invalidateProof();
+    }
+
+    /**
+     * Add PublicKey to did document builder.
+     *
+     * @param id the key id
+     * @param controller the owner of public key
+     * @param pk the public key base58 string
+     * @return the DID Document Builder object
+     */
+    public addPublicKey(id: DIDURL, type: string, controller: DID, pk: string): Builder {
+        checkNotSealed();
+        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+        checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
+
+        if (controller == null)
+            controller = getSubject();
+
+        addPublicKey(new PublicKey(canonicalId(id), type, controller, pk));
+        return this;
+    }
+
+    /**
+     * Add PublicKey to did document builder.
+     *
+     * @param id the key id string
+     * @param controller the owner of public key
+     * @param pk the public key base58 string
+     * @return the DID Document Builder object
+     */
+    public addPublicKey(id: string, type: string, controller: string, pk: string): Builder {
+        return addPublicKey(canonicalId(id), type, DID.valueOf(controller), pk);
+    }
+
+    public addPublicKey(id: DIDURL, controller: DID, pk: string): Builder {
+        return addPublicKey(id, null, controller, pk);
+    }
+
+    public addPublicKey(id: string, controller: string, pk: string): Builder {
+        return addPublicKey(id, null, controller, pk);
+    }
+
+    public addPublicKey(id: DIDURL, pk: string): Builder {
+        return addPublicKey(id, null, null, pk);
+    }
+
+    public addPublicKey(id: string, pk: string): Builder {
+        return addPublicKey(id, null, null, pk);
+    }
+
+    /**
+     * Remove PublicKey with the specified key id.
+     *
+     * @param id the key id
+     * @param force the owner of public key
+     * @return the DID Document Builder object
+     */
+    public removePublicKey(id: DIDURL, force: boolean): Builder {
+        checkNotSealed();
+        checkArgument(id != null, "Invalid publicKey id");
+
+        if (document.publicKeys == null || document.publicKeys.isEmpty())
+            throw new DIDObjectNotExistException(id.toString());
+
+        id = canonicalId(id);
+        let pk = document.publicKeys.get(id);
+        if (pk == null)
+            throw new DIDObjectNotExistException(id.toString());
+
+        // Can not remove default public key
+        if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
+            throw new DIDObjectHasReference(id.toString() + "is default key");
+
+        if (!force) {
+            if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
+                throw new DIDObjectHasReference(id.toString());
+        }
+
+        if (document.publicKeys.remove(id) != null) {
+            try {
+                // TODO: should delete the loosed private key when store the document
+                if (document.getMetadata().attachedStore())
+                    document.getMetadata().getStore().deletePrivateKey(id);
+            } catch (DIDStoreException ignore) {
+                log.error("INTERNAL - Remove private key", ignore);
             }
 
-            return this;
+            invalidateProof();
         }
 
-        /**
-         * Add the exist Public Key matched the key id to be Authentication key.
-         *
-         * @param id the key id string
-         * @return the DID Document Builder object
-         */
-        public Builder addAuthenticationKey(id: string) {
-            return addAuthenticationKey(canonicalId(id));
-        }
+        return this;
+    }
 
-        /**
-         * Add the PublicKey named the key id to be an authentication key.
-         * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
-         *
-         * @param id the key id
-         * @param pk the public key base58 string
-         * @return the DID Document Builder
-         */
-        public Builder addAuthenticationKey(id: DIDURL, pk: string) {
-            checkNotSealed();
-            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
-                    "Invalid publicKey id");
-            checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
+    /**
+     * Remove PublicKey matched the specified key id.
+     *
+     * @param id the key id
+     * @param force force = true, the matched key must be removed.
+     *              force = false, the matched key must not be removed if this key is authentiacation
+     *              or authorization key.
+     * @return the DID Document Builder object
+     */
+    public removePublicKey(id: string, force: boolean): Builder {
+        return removePublicKey(canonicalId(id), force);
+    }
 
-            let key: PublicKey =new PublicKey(canonicalId(id), null, getSubject(), pk);
+    /**
+     * Remove PublicKey matched the specified key id without force module.
+     *
+     * @param id the key id
+     * @return the DID Document Builder object
+     */
+    public removePublicKey(id: DIDURL): Builder {
+        return removePublicKey(id, false);
+    }
+
+    /**
+     * Remove PublicKey matched the specified key id without force module.
+     *
+     * @param id the key id
+     * @return the DID Document Builder object
+     */
+    public removePublicKey(id: string): Builder {
+        return removePublicKey(id, false);
+    }
+
+    /**
+     * Add the exist Public Key matched the key id to be Authentication key.
+     *
+     * @param id the key id
+     * @return the DID Document Builder object
+     */
+    public addAuthenticationKey(id: DIDURL): Builder {
+        checkNotSealed();
+        checkArgument(id != null, "Invalid publicKey id");
+
+        if (document.publicKeys == null || document.publicKeys.isEmpty())
+            throw new DIDObjectNotExistException(id.toString());
+
+        id = canonicalId(id);
+        let key: PublicKey =document.publicKeys.get(id);
+        if (key == null)
+            throw new DIDObjectNotExistException(id.toString());
+
+        // Check the controller is current DID subject
+        if (!key.getController().equals(this.getSubject()))
+            throw new IllegalUsage(id.toString());
+
+        if (!key.isAuthenticationKey()) {
             key.setAuthenticationKey(true);
-            addPublicKey(key);
-
-            return this;
+            invalidateProof();
         }
 
-        /**
-         * Add the PublicKey named the key id to be an authentication key.
-         * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
-         *
-         * @param id the key id string
-         * @param pk the public key base58 string
-         * @return the DID Document Builder
-         */
-        public Builder addAuthenticationKey(id: string, pk: string) {
-            return addAuthenticationKey(canonicalId(id), pk);
+        return this;
+    }
+
+    /**
+     * Add the exist Public Key matched the key id to be Authentication key.
+     *
+     * @param id the key id string
+     * @return the DID Document Builder object
+     */
+    public addAuthenticationKey(id: string): Builder {
+        return addAuthenticationKey(canonicalId(id));
+    }
+
+    /**
+     * Add the PublicKey named the key id to be an authentication key.
+     * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+     *
+     * @param id the key id
+     * @param pk the public key base58 string
+     * @return the DID Document Builder
+     */
+    public addAuthenticationKey(id: DIDURL, pk: string): Builder {
+        checkNotSealed();
+        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+        checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
+
+        let key: PublicKey =new PublicKey(canonicalId(id), null, getSubject(), pk);
+        key.setAuthenticationKey(true);
+        addPublicKey(key);
+
+        return this;
+    }
+
+    /**
+     * Add the PublicKey named the key id to be an authentication key.
+     * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+     *
+     * @param id the key id string
+     * @param pk the public key base58 string
+     * @return the DID Document Builder
+     */
+    public addAuthenticationKey(id: string, pk: string): Builder {
+        return addAuthenticationKey(canonicalId(id), pk);
+    }
+
+    /**
+     * Remove Authentication Key matched the given id.
+     *
+     * @param id the key id
+     * @return the DID Document Builder
+     */
+    public removeAuthenticationKey(id: DIDURL): Builder {
+        checkNotSealed();
+        checkArgument(id != null, "Invalid publicKey id");
+
+        if (document.publicKeys == null || document.publicKeys.isEmpty())
+            throw new DIDObjectNotExistException(id.toString());
+
+        id = canonicalId(id);
+        let key = document.publicKeys.get(id);
+        if (key == null || !key.isAuthenticationKey())
+            throw new DIDObjectNotExistException(id.toString());
+
+        // Can not remove default public key
+        if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
+            throw new DIDObjectHasReference(
+                    "Cannot remove the default PublicKey from authentication.");
+
+        if (key.isAuthenticationKey()) {
+            key.setAuthenticationKey(false);
+            invalidateProof();
+        } else {
+            throw new DIDObjectNotExistException(id.toString());
         }
 
-        /**
-         * Remove Authentication Key matched the given id.
-         *
-         * @param id the key id
-         * @return the DID Document Builder
-         */
-        public removeAuthenticationKey(id: DIDURL): Builder {
-            checkNotSealed();
-            checkArgument(id != null, "Invalid publicKey id");
+        return this;
+    }
 
-            if (document.publicKeys == null || document.publicKeys.isEmpty())
-                throw new DIDObjectNotExistException(id.toString());
+    /**
+     * Remove Authentication Key matched the given id.
+     *
+     * @param id the key id string
+     * @return the DID Document Builder
+     */
+    public removeAuthenticationKey(id: string): Builder {
+        return removeAuthenticationKey(canonicalId(id));
+    }
 
-            id = canonicalId(id);
-            let key = document.publicKeys.get(id);
-            if (key == null || !key.isAuthenticationKey())
-                throw new DIDObjectNotExistException(id.toString());
+    /**
+     * Add the exist Public Key matched the key id to be Authorization key.
+     *
+     * @param id the key id
+     * @return the DID Document Builder
+     */
+    public addAuthorizationKey(id: DIDURL): Builder {
+        checkNotSealed();
+        checkArgument(id != null, "Invalid publicKey id");
 
-            // Can not remove default public key
-            if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
-                throw new DIDObjectHasReference(
-                        "Cannot remove the default PublicKey from authentication.");
+        if (document.isCustomizedDid())
+            throw new NotPrimitiveDIDException(this.getSubject().toString());
 
-            if (key.isAuthenticationKey()) {
-                key.setAuthenticationKey(false);
-                invalidateProof();
-            } else {
-                throw new DIDObjectNotExistException(id.toString());
-            }
+        if (document.publicKeys == null || document.publicKeys.isEmpty())
+            throw new DIDObjectNotExistException(id.toString());
 
-            return this;
-        }
+        id = canonicalId(id);
+        let key: PublicKey = document.publicKeys.get(id);
+        if (key == null)
+            throw new DIDObjectNotExistException(id.toString());
 
-        /**
-         * Remove Authentication Key matched the given id.
-         *
-         * @param id the key id string
-         * @return the DID Document Builder
-         */
-        public removeAuthenticationKey(id: string): Builder {
-            return removeAuthenticationKey(canonicalId(id));
-        }
+        // Can not authorize to self
+        if (key.getController().equals(this.getSubject()))
+            throw new IllegalUsage(id.toString());
 
-        /**
-         * Add the exist Public Key matched the key id to be Authorization key.
-         *
-         * @param id the key id
-         * @return the DID Document Builder
-         */
-        public addAuthorizationKey(id: DIDURL): Builder {
-            checkNotSealed();
-            checkArgument(id != null, "Invalid publicKey id");
-
-            if (document.isCustomizedDid())
-                throw new NotPrimitiveDIDException(this.getSubject().toString());
-
-            if (document.publicKeys == null || document.publicKeys.isEmpty())
-                throw new DIDObjectNotExistException(id.toString());
-
-            id = canonicalId(id);
-            let key: PublicKey = document.publicKeys.get(id);
-            if (key == null)
-                throw new DIDObjectNotExistException(id.toString());
-
-            // Can not authorize to self
-            if (key.getController().equals(this.getSubject()))
-                throw new IllegalUsage(id.toString());
-
-            if (!key.isAuthorizationKey()) {
-                key.setAuthorizationKey(true);
-                invalidateProof();
-            }
-
-            return this;
-        }
-
-        /**
-         * Add the exist Public Key matched the key id to be Authorization Key.
-         *
-         * @param id the key id string
-         * @return the DID Document Builder
-         */
-        public Builder addAuthorizationKey(id: string) {
-            return addAuthorizationKey(canonicalId(id));
-        }
-
-        /**
-         * Add the PublicKey named key id to be Authorization Key.
-         * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
-         *
-         * @param id the key id
-         * @param controller the owner of public key
-         * @param pk the public key base58 string
-         * @return the DID Document Builder
-         */
-        public addAuthorizationKey(id: DIDURL, controller: DID, pk: string): Builder {
-            checkNotSealed();
-            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
-                    "Invalid publicKey id");
-            checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
-
-            if (document.isCustomizedDid())
-                throw new NotPrimitiveDIDException(this.getSubject().toString());
-
-            // Can not authorize to self
-            if (controller.equals(this.getSubject()))
-                throw new IllegalUsage("Key's controller is self.");
-
-            let key: PublicKey =new PublicKey(canonicalId(id), null, controller, pk);
+        if (!key.isAuthorizationKey()) {
             key.setAuthorizationKey(true);
-            addPublicKey(key);
+            invalidateProof();
+        }
 
+        return this;
+    }
+
+    /**
+     * Add the exist Public Key matched the key id to be Authorization Key.
+     *
+     * @param id the key id string
+     * @return the DID Document Builder
+     */
+    public Builder addAuthorizationKey(id: string) {
+        return addAuthorizationKey(canonicalId(id));
+    }
+
+    /**
+     * Add the PublicKey named key id to be Authorization Key.
+     * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+     *
+     * @param id the key id
+     * @param controller the owner of public key
+     * @param pk the public key base58 string
+     * @return the DID Document Builder
+     */
+    public addAuthorizationKey(id: DIDURL, controller: DID, pk: string): Builder {
+        checkNotSealed();
+        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+        checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
+
+        if (document.isCustomizedDid())
+            throw new NotPrimitiveDIDException(this.getSubject().toString());
+
+        // Can not authorize to self
+        if (controller.equals(this.getSubject()))
+            throw new IllegalUsage("Key's controller is self.");
+
+        let key: PublicKey =new PublicKey(canonicalId(id), null, controller, pk);
+        key.setAuthorizationKey(true);
+        addPublicKey(key);
+
+        return this;
+    }
+
+    /**
+     * Add the PublicKey named key id to be Authorization Key.
+     * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+     *
+     * @param id the key id string
+     * @param controller the owner of public key
+     * @param pk the public key base58 string
+     * @return the DID Document Builder
+     */
+    public addAuthorizationKey(id: string, controller: string, pk: string): Builder {
+        return addAuthorizationKey(canonicalId(id), DID.valueOf(controller), pk);
+    }
+
+    /**
+     * Add the specified key to be an Authorization key.
+     * This specified key is the key of specified controller.
+     * Authentication is the mechanism by which the controller(s) of a DID can
+     * cryptographically prove that they are associated with that DID.
+     * A DID Document must include authentication key.
+     *
+     * @param id the key id
+     * @param controller the owner of 'key'
+     * @param key the key of controller to be an Authorization key.
+     * @return the DID Document Builder
+     * @throws DIDResolveException resolve controller failed.
+     * @throws InvalidKeyException the key is not an authentication key.
+     */
+    public authorizationDid(id: DIDURL, controller: DID, key: DIDURL): Builder {
+        checkNotSealed();
+        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+        checkArgument(controller != null && !controller.equals(this.getSubject()), "Invalid controller");
+
+        if (document.isCustomizedDid())
+            throw new NotPrimitiveDIDException(this.getSubject().toString());
+
+        let controllerDoc = controller.resolve();
+        if (controllerDoc == null)
+            throw new DIDNotFoundException(id.toString());
+
+        if (controllerDoc.isDeactivated())
+            throw new DIDDeactivatedException(controller.toString());
+
+        if (controllerDoc.isExpired())
+            throw new DIDExpiredException(controller.toString());
+
+        if (!controllerDoc.isGenuine())
+            throw new DIDNotGenuineException(controller.toString());
+
+        if (controllerDoc.isCustomizedDid())
+            throw new NotPrimitiveDIDException(controller.toString());
+
+        if (key == null)
+            key = controllerDoc.getDefaultPublicKeyId();
+
+            // Check the key should be a authentication key.
+        let targetPk = controllerDoc.getAuthenticationKey(key);
+        if (targetPk == null)
+            throw new DIDObjectNotExistException(key.toString());
+
+        let pk = new PublicKey(canonicalId(id), targetPk.getType(),
+                controller, targetPk.getPublicKeyBase58());
+        pk.setAuthorizationKey(true);
+        addPublicKey(pk);
+
+        return this;
+    }
+
+    /**
+     * Add Authorization key to Authentication array according to DID.
+     * Authentication is the mechanism by which the controller(s) of a DID can
+     * cryptographically prove that they are associated with that DID.
+     * A DID Document must include authentication key.
+     *
+     * @param id the key id string
+     * @param controller the owner of public key
+     * @return the DID Document Builder
+     * @throws DIDResolveException resolve controller failed.
+     * @throws InvalidKeyException the key is not an authentication key.
+     */
+    public authorizationDid(id: DIDURL, controller: DID): Builder {
+        return authorizationDid(id, controller, null);
+    }
+
+    /**
+     * Add Authorization key to Authentication array according to DID.
+     * Authentication is the mechanism by which the controller(s) of a DID can
+     * cryptographically prove that they are associated with that DID.
+     * A DID Document must include authentication key.
+     *
+     * @param id the key id string
+     * @param controller the owner of public key
+     * @param key the key of controller to be an Authorization key.
+     * @return the DID Document Builder
+     * @throws DIDResolveException resolve controller failed.
+     * @throws InvalidKeyException the key is not an authentication key.
+     */
+    public authorizationDid(id: string, controller: string, key: string): Builder {
+        return authorizationDid(canonicalId(id),
+                DID.valueOf(controller), DIDURL.valueOf(controller, key));
+    }
+
+    /**
+     * Add Authorization key to Authentication array according to DID.
+     * Authentication is the mechanism by which the controller(s) of a DID can
+     * cryptographically prove that they are associated with that DID.
+     * A DID Document must include authentication key.
+     *
+     * @param id the key id string
+     * @param controller the owner of public key
+     * @return the DID Document Builder
+     * @throws DIDResolveException resolve controller failed.
+     * @throws InvalidKeyException the key is not an authentication key.
+     */
+    public authorizationDid(id: string, controller: string): Builder {
+        return authorizationDid(id, controller, null);
+    }
+
+    /**
+     * Remove the Authorization Key matched the given id.
+     *
+     * @param id the key id
+     * @return the DID Document Builder
+     */
+    public removeAuthorizationKey(id: DIDURL): Builder {
+        checkNotSealed();
+        checkArgument(id != null, "Invalid publicKey id");
+
+        if (document.publicKeys == null || document.publicKeys.isEmpty())
+            throw new DIDObjectNotExistException(id.toString());
+
+        id = canonicalId(id);
+        let key: PublicKey =document.publicKeys.get(id);
+        if (key == null)
+            throw new DIDObjectNotExistException(id.toString());
+
+        if (key.isAuthorizationKey()) {
+            key.setAuthorizationKey(false);
+            invalidateProof();
+        } else {
+            throw new DIDObjectNotExistException(id.toString());
+        }
+
+        return this;
+    }
+
+    /**
+     * Remove the Authorization Key matched the given id.
+     *
+     * @param id the key id string
+     * @return the DID Document Builder
+     */
+    public removeAuthorizationKey(id: string): Builder {
+        return removeAuthorizationKey(canonicalId(id));
+    }
+
+    /**
+     * Add Credentail to DID Document Builder.
+     *
+     * @param vc the Verifiable Credential object
+     * @return the DID Document Builder
+     */
+    public addCredential(vc: VerifiableCredential): Builder {
+        checkNotSealed();
+        checkArgument(vc != null, "Invalid credential");
+
+        // Check the credential belongs to current DID.
+        if (!vc.getSubject().getId().equals(this.getSubject()))
+            throw new IllegalUsage(vc.getSubject().getId().toString());
+
+        if (document.credentials == null) {
+            document.credentials = new TreeMap<DIDURL, VerifiableCredential>();
+        } else {
+            if (document.credentials.containsKey(vc.getId()))
+                throw new DIDObjectAlreadyExistException(vc.getId().toString());
+        }
+
+        document.credentials.put(vc.getId(), vc);
+        invalidateProof();
+
+        return this;
+    }
+
+    /**
+     * Add Credential with the given values.
+     *
+     * @param id the Credential id
+     * @param types the Credential types set
+     * @param subject the Credential subject(key/value)
+     * @param expirationDate the Credential expires time
+     * @param storepass the password for DIDStore
+     * @return the DID Document Builder
+     * @throws DIDStoreException there is no DID store to attach.
+     * @throws InvalidKeyException there is no authentication key.
+     */
+    // TODO: Use our new "Json" type instead of a map
+    public addCredential(id: DIDURL, types: string[] = null, subject: Map<String, Object> = null, expirationDate: Date = null, storepass: string): Builder {
+        checkNotSealed();
+        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
+        let issuer = new Issuer(document);
+        let cb = issuer.issueFor(document.getSubject());
+        if (types == null)
+            types = ["SelfProclaimedCredential"];
+
+        if (expirationDate == null)
+            expirationDate = document.getExpires();
+
+        try {
+            let vc = cb.id(canonicalId(id))
+                    .type(types)
+                    .properties(subject)
+                    .expirationDate(expirationDate)
+                    .seal(storepass);
+
+            addCredential(vc);
+        } catch (ignore) {
+            // MalformedCredentialException
+            throw new UnknownInternalException(ignore);
+        }
+
+        return this;
+    }
+
+    /**
+     * Add Credential with the given values.
+     * Credential subject supports json string.
+     *
+     * @param id the Credential id
+     * @param types the Credential types
+     * @param json the Credential subject(json string)
+     * @param expirationDate the Credential expires time
+     * @param storepass the password for DIDStore
+     * @return the DID Document Builder
+     * @throws DIDStoreException there is no DID store to attach.
+     * @throws InvalidKeyException there is no authentication key.
+     */
+    // NOTE: compared to java, almost all addCredential overrides have been removed for clarity.
+    // Callers must use DIDURL.valueOf(string) for the id, and a json object (not a map nor a Map).
+    // TODO: also remove this "json subject" version + use json objec tinstead of subject map
+    public addCredential(id: DIDURL, String[] types, String json, Date expirationDate, storepass: string): Builder {
+        checkNotSealed();
+        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+        checkArgument(json != null && !json.isEmpty(), "Invalid json");
+        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
+        Issuer issuer = new Issuer(document);
+        VerifiableCredential.Builder cb = issuer.issueFor(document.getSubject());
+        if (types == null)
+            types = new String[]{ "SelfProclaimedCredential" };
+
+        if (expirationDate == null)
+            expirationDate = document.expires;
+
+        try {
+            VerifiableCredential vc = cb.id(canonicalId(id))
+                    .type(types)
+                    .properties(json)
+                    .expirationDate(expirationDate)
+                    .seal(storepass);
+
+            addCredential(vc);
+        } catch (MalformedCredentialException ignore) {
+            throw new UnknownInternalException(ignore);
+        }
+
+        return this;
+    }
+
+    /**
+     * Remove Credential with the specified id.
+     *
+     * @param id the Credential id
+     * @return the DID Document Builder
+     */
+    public removeCredential(id: DIDURL): Builder {
+        checkNotSealed();
+        checkArgument(id != null, "Invalid credential id");
+
+        if (document.credentials == null || document.credentials.isEmpty())
+            throw new DIDObjectNotExistException(id.toString());
+
+        if (document.credentials.remove(canonicalId(id)) != null)
+            invalidateProof();
+        else
+            throw new DIDObjectNotExistException(id.toString());
+
+        return this;
+    }
+
+    /**
+     * Add Service.
+     *
+     * @param id the specified Service id
+     * @param type the Service type
+     * @param endpoint the service point's adderss
+     * @return the DID Document Builder
+     */
+    // TODO: Use JSON object (~~ type json = {[key: string]:json}), not map, for properties?
+    public addService(id: DIDURL, type: string, endpoint: string, properties: Map<string, Object>): Builder {
+        checkNotSealed();
+        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+        checkArgument(type != null && !type.isEmpty(), "Invalid type");
+        checkArgument(endpoint != null && !endpoint.isEmpty(), "Invalid endpoint");
+
+        Service svc = new Service(canonicalId(id), type, endpoint, properties);
+        if (document.services == null)
+            document.services = new TreeMap<DIDURL, Service>();
+        else {
+            if (document.services.containsKey(svc.getId()))
+                throw new DIDObjectAlreadyExistException("Service '"
+                        + svc.getId() + "' already exist.");
+        }
+
+        document.services.put(svc.getId(), svc);
+        invalidateProof();
+
+        return this;
+    }
+
+    public Builder addService(id: string, type: string, String endpoint,
+            Map<String, Object> properties) {
+        return addService(canonicalId(id), type, endpoint, properties);
+    }
+
+    public Builder addService(id: DIDURL, type: string, String endpoint) {
+        return addService(id, type, endpoint, null);
+    }
+
+    /**
+     * Add Service.
+     *
+     * @param id the specified Service id string
+     * @param type the Service type
+     * @param endpoint the service point's adderss
+     * @return the DID Document Builder
+     */
+    public addService(id: string, type: string, endpoint: string): Builder {
+        return addService(canonicalId(id), type, endpoint, null);
+    }
+
+    /**
+     * Remove the Service with the specified id.
+     *
+     * @param id the Service id
+     * @return the DID Document Builder
+     */
+    public removeService(id: DIDURL): Builder {
+        checkNotSealed();
+        checkArgument(id != null, "Invalid credential id");
+
+        if (document.services == null || document.services.isEmpty())
+            throw new DIDObjectNotExistException(id.toString());
+
+        if (document.services.remove(canonicalId(id)) != null)
+            invalidateProof();
+        else
+            throw new DIDObjectNotExistException(id.toString());
+
+        return this;
+    }
+
+    private Calendar getMaxExpires() {
+        Calendar cal = Calendar.getInstance(Constants.UTC);
+        cal.add(Calendar.YEAR, Constants.MAX_VALID_YEARS);
+        return cal;
+    }
+
+    /**
+     * Set the current time to be expires time for DID Document Builder.
+     *
+     * @return the DID Document Builder
+     */
+    public Builder setDefaultExpires() {
+        checkNotSealed();
+
+        document.expires = getMaxExpires().getTime();
+        invalidateProof();
+
+        return this;
+    }
+
+    /**
+     * Set the specified time to be expires time for DID Document Builder.
+     *
+     * @param expires the specified time
+     * @return the DID Document Builder
+     */
+    public Builder setExpires(Date expires) {
+        checkNotSealed();
+        checkArgument(expires != null, "Invalid expires");
+
+        Calendar cal = Calendar.getInstance(Constants.UTC);
+        cal.setTime(expires);
+
+        if (cal.after(getMaxExpires()))
+            throw new IllegalArgumentException("Invalid expires, out of range.");
+
+        document.expires = expires;
+        invalidateProof();
+
+        return this;
+    }
+
+    /**
+     * Remove the proof that created by the specific controller.
+     *
+     * @param controller the controller's DID
+     * @return the DID Document Builder
+     */
+    public Builder removeProof(controller: DID) {
+        checkNotSealed();
+        checkArgument(controller != null, "Invalid controller");
+
+        if (document.proofs == null || document.proofs.isEmpty())
             return this;
-        }
 
-        /**
-         * Add the PublicKey named key id to be Authorization Key.
-         * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @param pk the public key base58 string
-         * @return the DID Document Builder
-         */
-        public Builder addAuthorizationKey(id: string, controller: string, pk: string) {
-            return addAuthorizationKey(canonicalId(id), DID.valueOf(controller), pk);
-        }
+        if (document.proofs.remove(controller) == null)
+            throw new DIDObjectNotExistException("No proof signed by: " + controller);
 
-        /**
-         * Add the specified key to be an Authorization key.
-         * This specified key is the key of specified controller.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
-         *
-         * @param id the key id
-         * @param controller the owner of 'key'
-         * @param key the key of controller to be an Authorization key.
-         * @return the DID Document Builder
-         * @throws DIDResolveException resolve controller failed.
-         * @throws InvalidKeyException the key is not an authentication key.
-         */
-        public Builder authorizationDid(id: DIDURL, controller: DID, DIDURL key) {
-            checkNotSealed();
-            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
-                    "Invalid publicKey id");
-            checkArgument(controller != null && !controller.equals(this.getSubject()), "Invalid controller");
+        return this;
+    }
 
-            if (document.isCustomizedDid())
-                throw new NotPrimitiveDIDException(this.getSubject().toString());
+    private sanitize() {
+        if (document.isCustomizedDid()) {
+            if (document.controllers == null || document.controllers.isEmpty())
+                throw new MalformedDocumentException("Missing controllers");
 
-            DIDDocument controllerDoc = controller.resolve();
-            if (controllerDoc == null)
-                throw new DIDNotFoundException(id.toString());
+            if (document.controllers.size() > 1) {
+                if (document.multisig == null)
+                    throw new MalformedDocumentException("Missing multisig");
 
-            if (controllerDoc.isDeactivated())
-                throw new DIDDeactivatedException(controller.toString());
-
-            if (controllerDoc.isExpired())
-                throw new DIDExpiredException(controller.toString());
-
-            if (!controllerDoc.isGenuine())
-                throw new DIDNotGenuineException(controller.toString());
-
-            if (controllerDoc.isCustomizedDid())
-                throw new NotPrimitiveDIDException(controller.toString());
-
-            if (key == null)
-                key = controllerDoc.getDefaultPublicKeyId();
-
-                // Check the key should be a authentication key.
-            PublicKey targetPk = controllerDoc.getAuthenticationKey(key);
-            if (targetPk == null)
-                throw new DIDObjectNotExistException(key.toString());
-
-            PublicKey pk = new PublicKey(canonicalId(id), targetPk.getType(),
-                    controller, targetPk.getPublicKeyBase58());
-            pk.setAuthorizationKey(true);
-            addPublicKey(pk);
-
-            return this;
-        }
-
-        /**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @return the DID Document Builder
-         * @throws DIDResolveException resolve controller failed.
-         * @throws InvalidKeyException the key is not an authentication key.
-         */
-        public Builder authorizationDid(id: DIDURL, DID controller) {
-            return authorizationDid(id, controller, null);
-        }
-
-        /**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @param key the key of controller to be an Authorization key.
-         * @return the DID Document Builder
-         * @throws DIDResolveException resolve controller failed.
-         * @throws InvalidKeyException the key is not an authentication key.
-         */
-        public Builder authorizationDid(id: string, controller: string, String key) {
-            return authorizationDid(canonicalId(id),
-                    DID.valueOf(controller), DIDURL.valueOf(controller, key));
-        }
-
-        /**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @return the DID Document Builder
-         * @throws DIDResolveException resolve controller failed.
-         * @throws InvalidKeyException the key is not an authentication key.
-         */
-        public Builder authorizationDid(id: string, String controller) {
-            return authorizationDid(id, controller, null);
-        }
-
-        /**
-         * Remove the Authorization Key matched the given id.
-         *
-         * @param id the key id
-         * @return the DID Document Builder
-         */
-        public Builder removeAuthorizationKey(id: DIDURL) {
-            checkNotSealed();
-            checkArgument(id != null, "Invalid publicKey id");
-
-            if (document.publicKeys == null || document.publicKeys.isEmpty())
-                throw new DIDObjectNotExistException(id.toString());
-
-            id = canonicalId(id);
-            let key: PublicKey =document.publicKeys.get(id);
-            if (key == null)
-                throw new DIDObjectNotExistException(id.toString());
-
-            if (key.isAuthorizationKey()) {
-                key.setAuthorizationKey(false);
-                invalidateProof();
+                if (document.multisig.n() != document.controllers.size())
+                    throw new MalformedDocumentException("Invalid multisig, not matched with controllers");
             } else {
-                throw new DIDObjectNotExistException(id.toString());
+                if (document.multisig != null)
+                    throw new MalformedDocumentException("Invalid multisig");
+            }
+        }
+
+        int sigs = document.multisig == null ? 1 : document.multisig.m();
+        if (document.proofs != null && document.proofs.size() == sigs)
+            throw new AlreadySealedException(this.getSubject().toString());
+
+        if (document.controllers == null || document.controllers.isEmpty()) {
+            document.controllers = Collections.emptyList();
+            document.controllerDocs = Collections.emptyMap();
+        } else {
+            Collections.sort(document.controllers);
+        }
+
+        if (document.publicKeys == null || document.publicKeys.isEmpty()) {
+            document.publicKeys = Collections.emptyMap();
+            document._publickeys = Collections.emptyList();
+            document._authentications = Collections.emptyList();
+            document._authorizations = Collections.emptyList();
+        } else {
+            document._publickeys = new ArrayList<PublicKey>(document.publicKeys.values());
+
+            document._authentications = new ArrayList<PublicKeyReference>();
+            document._authorizations = new ArrayList<PublicKeyReference>();
+
+            for (PublicKey pk : document.publicKeys.values()) {
+                if (pk.isAuthenticationKey())
+                    document._authentications.add(new PublicKeyReference(pk));
+
+                if (pk.isAuthorizationKey())
+                    document._authorizations.add(new PublicKeyReference(pk));
             }
 
-            return this;
-        }
-
-        /**
-         * Remove the Authorization Key matched the given id.
-         *
-         * @param id the key id string
-         * @return the DID Document Builder
-         */
-        public Builder removeAuthorizationKey(id: string) {
-            return removeAuthorizationKey(canonicalId(id));
-        }
-
-        /**
-         * Add Credentail to DID Document Builder.
-         *
-         * @param vc the Verifiable Credential object
-         * @return the DID Document Builder
-         */
-        public Builder addCredential(VerifiableCredential vc) {
-            checkNotSealed();
-            checkArgument(vc != null, "Invalid credential");
-
-            // Check the credential belongs to current DID.
-            if (!vc.getSubject().getId().equals(this.getSubject()))
-                throw new IllegalUsage(vc.getSubject().getId().toString());
-
-            if (document.credentials == null) {
-                document.credentials = new TreeMap<DIDURL, VerifiableCredential>();
-            } else {
-                if (document.credentials.containsKey(vc.getId()))
-                    throw new DIDObjectAlreadyExistException(vc.getId().toString());
-            }
-
-            document.credentials.put(vc.getId(), vc);
-            invalidateProof();
-
-            return this;
-        }
-
-        /**
-         * Add Credential with the given values.
-         *
-         * @param id the Credential id
-         * @param types the Credential types set
-         * @param subject the Credential subject(key/value)
-         * @param expirationDate the Credential expires time
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: DIDURL, String[] types,
-                Map<String, Object> subject, Date expirationDate, storepass: string) {
-            checkNotSealed();
-            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
-                    "Invalid publicKey id");
-            checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
-
-            Issuer issuer = new Issuer(document);
-            VerifiableCredential.Builder cb = issuer.issueFor(document.getSubject());
-            if (types == null)
-                types = new String[]{ "SelfProclaimedCredential" };
-
-            if (expirationDate == null)
-                expirationDate = document.getExpires();
-
-            try {
-                VerifiableCredential vc = cb.id(canonicalId(id))
-                        .type(types)
-                        .properties(subject)
-                        .expirationDate(expirationDate)
-                        .seal(storepass);
-
-                addCredential(vc);
-            } catch (MalformedCredentialException ignore) {
-                throw new UnknownInternalException(ignore);
-            }
-
-            return this;
-        }
-
-        /**
-         * Add Credential with the given values.
-         *
-         * @param id the Credential id string
-         * @param types the Credential types set
-         * @param subject the Credential subject(key/value)
-         * @param expirationDate the Credential expires time
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: string, String[] types,
-                Map<String, Object> subject, Date expirationDate, storepass: string) {
-            return addCredential(canonicalId(id), types, subject,
-                    expirationDate, storepass);
-        }
-
-        /**
-         * Add SelfProclaimed Credential with the given values.
-         *
-         * @param id the Credential id
-         * @param subject the Credential subject(key/value)
-         * @param expirationDate the Credential expires time
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: DIDURL, Map<String, Object> subject,
-                Date expirationDate, storepass: string) {
-            return addCredential(id, null, subject, expirationDate, storepass);
-        }
-
-        /**
-         * Add SelfProclaimed Credential with the given values.
-         *
-         * @param id the Credential id string
-         * @param subject the Credential subject(key/value)
-         * @param expirationDate the Credential expires time
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: string, Map<String, Object> subject,
-                Date expirationDate, storepass: string) {
-            return addCredential(canonicalId(id), null, subject, expirationDate, storepass);
-        }
-
-        /**
-         * Add Credential with the given values.
-         * The Credential expires time is the document expires time of Credential subject id.
-         *
-         * @param id the Credential id
-         * @param types the Credential id
-         * @param subject the Credential subject(key/value)
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: DIDURL, String[] types,
-                Map<String, Object> subject, storepass: string) {
-            return addCredential(id, types, subject, null, storepass);
-        }
-
-        /**
-         * Add Credential with the given values.
-         * The Credential expires time is the document expires time of Credential subject id.
-         *
-         * @param id the Credential id string
-         * @param types the Credential id
-         * @param subject the Credential subject(key/value)
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: string, String[] types,
-                Map<String, Object> subject, storepass: string) {
-            return addCredential(canonicalId(id), types, subject, null, storepass);
-        }
-
-        /**
-         * Add SelfProclaimed Credential with the given values.
-         * The Credential expires time is the document expires time of Credential subject id.
-         *
-         * @param id the Credential id
-         * @param subject the Credential subject(key/value)
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: DIDURL, Map<String, Object> subject,
-                storepass: string) {
-            return addCredential(id, null, subject, null, storepass);
-        }
-
-        /**
-         * Add SelfProclaimed Credential with the given values.
-         * The Credential expires time is the document expires time of Credential subject id.
-         *
-         * @param id the Credential id string
-         * @param subject the Credential subject(key/value)
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: string, Map<String, Object> subject,
-                storepass: string) {
-            return addCredential(canonicalId(id), null, subject, null, storepass);
-        }
-
-        /**
-         * Add Credential with the given values.
-         * Credential subject supports json string.
-         *
-         * @param id the Credential id
-         * @param types the Credential types
-         * @param json the Credential subject(json string)
-         * @param expirationDate the Credential expires time
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: DIDURL, String[] types,
-                String json, Date expirationDate, storepass: string) {
-            checkNotSealed();
-            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
-                    "Invalid publicKey id");
-            checkArgument(json != null && !json.isEmpty(), "Invalid json");
-            checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
-
-            Issuer issuer = new Issuer(document);
-            VerifiableCredential.Builder cb = issuer.issueFor(document.getSubject());
-            if (types == null)
-                types = new String[]{ "SelfProclaimedCredential" };
-
-            if (expirationDate == null)
-                expirationDate = document.expires;
-
-            try {
-                VerifiableCredential vc = cb.id(canonicalId(id))
-                        .type(types)
-                        .properties(json)
-                        .expirationDate(expirationDate)
-                        .seal(storepass);
-
-                addCredential(vc);
-            } catch (MalformedCredentialException ignore) {
-                throw new UnknownInternalException(ignore);
-            }
-
-            return this;
-        }
-
-        /**
-         * Add Credential with the given values.
-         * Credential subject supports json string.
-         *
-         * @param id the Credential id string
-         * @param types the Credential types
-         * @param json the Credential subject(json string)
-         * @param expirationDate the Credential expires time
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: string, String[] types,
-                String json, Date expirationDate, storepass: string) {
-            return addCredential(canonicalId(id), types, json, expirationDate, storepass);
-        }
-
-        /**
-         * Add SelfProclaimed Credential with the given values.
-         * Credential subject supports json string.
-         *
-         * @param id the Credential id
-         * @param json the Credential subject(json string)
-         * @param expirationDate the Credential expires time
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: DIDURL, String json,
-                Date expirationDate, storepass: string) {
-            return addCredential(id, null, json, expirationDate, storepass);
-        }
-
-        /**
-         * Add SelfProclaimed Credential with the given values.
-         * Credential subject supports json string.
-         *
-         * @param id the Credential id string
-         * @param json the Credential subject(json string)
-         * @param expirationDate the Credential expires time
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: string, String json,
-                Date expirationDate, storepass: string) {
-            return addCredential(canonicalId(id), null, json, expirationDate, storepass);
-        }
-
-        /**
-         * Add Credential with the given values.
-         * Credential subject supports json string.
-         * The Credential expires time is the document expires time of Credential subject id.
-         *
-         * @param id the Credential id
-         * @param types the Credential types
-         * @param json the Credential subject(json string)
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: DIDURL, String[] types,
-                String json, storepass: string) {
-            return addCredential(id, types, json, null, storepass);
-        }
-
-        /**
-         * Add Credential with the given values.
-         * Credential subject supports json string.
-         * The Credential expires time is the document expires time of Credential subject id.
-         *
-         * @param id the Credential id
-         * @param types the Credential types
-         * @param json the Credential subject(json string)
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: string, String[] types,
-                String json, storepass: string) {
-            return addCredential(canonicalId(id), types, json, null, storepass);
-        }
-
-        /**
-         * Add SelfProclaimed Credential with the given values.
-         * Credential subject supports json string.
-         * The Credential expires time is the document expires time of Credential subject id.
-         *
-         * @param id the Credential id
-         * @param json the Credential subject(json string)
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: DIDURL, String json, storepass: string) {
-            return addCredential(id, null, json, null, storepass);
-        }
-
-        /**
-         * Add SelfProclaimed Credential with the given values.
-         * Credential subject supports json string.
-         * The Credential expires time is the document expires time of Credential subject id.
-         *
-         * @param id the Credential id string
-         * @param json the Credential subject(json string)
-         * @param storepass the password for DIDStore
-         * @return the DID Document Builder
-         * @throws DIDStoreException there is no DID store to attach.
-         * @throws InvalidKeyException there is no authentication key.
-         */
-        public Builder addCredential(id: string, String json, storepass: string) {
-            return addCredential(canonicalId(id), null, json, null, storepass);
-        }
-
-        /**
-         * Remove Credential with the specified id.
-         *
-         * @param id the Credential id
-         * @return the DID Document Builder
-         */
-        public Builder removeCredential(id: DIDURL) {
-            checkNotSealed();
-            checkArgument(id != null, "Invalid credential id");
-
-            if (document.credentials == null || document.credentials.isEmpty())
-                throw new DIDObjectNotExistException(id.toString());
-
-            if (document.credentials.remove(canonicalId(id)) != null)
-                invalidateProof();
-            else
-                throw new DIDObjectNotExistException(id.toString());
-
-            return this;
-        }
-
-        /**
-         * Remove Credential with the specified id.
-         *
-         * @param id the Credential id string
-         * @return the DID Document Builder
-         */
-        public Builder removeCredential(id: string) {
-            return removeCredential(canonicalId(id));
-        }
-
-        /**
-         * Add Service.
-         *
-         * @param id the specified Service id
-         * @param type the Service type
-         * @param endpoint the service point's adderss
-         * @return the DID Document Builder
-         */
-        public Builder addService(id: DIDURL, type: string, String endpoint,
-                Map<String, Object> properties) {
-            checkNotSealed();
-            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
-                    "Invalid publicKey id");
-            checkArgument(type != null && !type.isEmpty(), "Invalid type");
-            checkArgument(endpoint != null && !endpoint.isEmpty(), "Invalid endpoint");
-
-            Service svc = new Service(canonicalId(id), type, endpoint, properties);
-            if (document.services == null)
-                document.services = new TreeMap<DIDURL, Service>();
-            else {
-                if (document.services.containsKey(svc.getId()))
-                    throw new DIDObjectAlreadyExistException("Service '"
-                            + svc.getId() + "' already exist.");
-            }
-
-            document.services.put(svc.getId(), svc);
-            invalidateProof();
-
-            return this;
-        }
-
-        public Builder addService(id: string, type: string, String endpoint,
-                Map<String, Object> properties) {
-            return addService(canonicalId(id), type, endpoint, properties);
-        }
-
-        public Builder addService(id: DIDURL, type: string, String endpoint) {
-            return addService(id, type, endpoint, null);
-        }
-
-        /**
-         * Add Service.
-         *
-         * @param id the specified Service id string
-         * @param type the Service type
-         * @param endpoint the service point's adderss
-         * @return the DID Document Builder
-         */
-        public Builder addService(id: string, type: string, String endpoint) {
-            return addService(canonicalId(id), type, endpoint, null);
-        }
-
-        /**
-         * Remove the Service with the specified id.
-         *
-         * @param id the Service id
-         * @return the DID Document Builder
-         */
-        public Builder removeService(id: DIDURL) {
-            checkNotSealed();
-            checkArgument(id != null, "Invalid credential id");
-
-            if (document.services == null || document.services.isEmpty())
-                throw new DIDObjectNotExistException(id.toString());
-
-            if (document.services.remove(canonicalId(id)) != null)
-                invalidateProof();
-            else
-                throw new DIDObjectNotExistException(id.toString());
-
-            return this;
-        }
-
-        /**
-         * Remove the Service with the specified id.
-         *
-         * @param id the Service id string
-         * @return the DID Document Builder
-         */
-        public Builder removeService(id: string) {
-            return removeService(canonicalId(id));
-        }
-
-        private Calendar getMaxExpires() {
-            Calendar cal = Calendar.getInstance(Constants.UTC);
-            cal.add(Calendar.YEAR, Constants.MAX_VALID_YEARS);
-            return cal;
-        }
-
-        /**
-         * Set the current time to be expires time for DID Document Builder.
-         *
-         * @return the DID Document Builder
-         */
-        public Builder setDefaultExpires() {
-            checkNotSealed();
-
-            document.expires = getMaxExpires().getTime();
-            invalidateProof();
-
-            return this;
-        }
-
-        /**
-         * Set the specified time to be expires time for DID Document Builder.
-         *
-         * @param expires the specified time
-         * @return the DID Document Builder
-         */
-        public Builder setExpires(Date expires) {
-            checkNotSealed();
-            checkArgument(expires != null, "Invalid expires");
-
-            Calendar cal = Calendar.getInstance(Constants.UTC);
-            cal.setTime(expires);
-
-            if (cal.after(getMaxExpires()))
-                throw new IllegalArgumentException("Invalid expires, out of range.");
-
-            document.expires = expires;
-            invalidateProof();
-
-            return this;
-        }
-
-        /**
-         * Remove the proof that created by the specific controller.
-         *
-         * @param controller the controller's DID
-         * @return the DID Document Builder
-         */
-        public Builder removeProof(controller: DID) {
-            checkNotSealed();
-            checkArgument(controller != null, "Invalid controller");
-
-            if (document.proofs == null || document.proofs.isEmpty())
-                return this;
-
-            if (document.proofs.remove(controller) == null)
-                throw new DIDObjectNotExistException("No proof signed by: " + controller);
-
-            return this;
-        }
-
-        private sanitize() {
-            if (document.isCustomizedDid()) {
-                if (document.controllers == null || document.controllers.isEmpty())
-                    throw new MalformedDocumentException("Missing controllers");
-
-                if (document.controllers.size() > 1) {
-                    if (document.multisig == null)
-                        throw new MalformedDocumentException("Missing multisig");
-
-                    if (document.multisig.n() != document.controllers.size())
-                        throw new MalformedDocumentException("Invalid multisig, not matched with controllers");
-                } else {
-                    if (document.multisig != null)
-                        throw new MalformedDocumentException("Invalid multisig");
-                }
-            }
-
-            int sigs = document.multisig == null ? 1 : document.multisig.m();
-            if (document.proofs != null && document.proofs.size() == sigs)
-                throw new AlreadySealedException(this.getSubject().toString());
-
-            if (document.controllers == null || document.controllers.isEmpty()) {
-                document.controllers = Collections.emptyList();
-                document.controllerDocs = Collections.emptyMap();
-            } else {
-                Collections.sort(document.controllers);
-            }
-
-            if (document.publicKeys == null || document.publicKeys.isEmpty()) {
-                document.publicKeys = Collections.emptyMap();
-                document._publickeys = Collections.emptyList();
+            if (document._authentications.isEmpty())
                 document._authentications = Collections.emptyList();
+
+            if (document._authentications.isEmpty())
                 document._authorizations = Collections.emptyList();
-            } else {
-                document._publickeys = new ArrayList<PublicKey>(document.publicKeys.values());
-
-                document._authentications = new ArrayList<PublicKeyReference>();
-                document._authorizations = new ArrayList<PublicKeyReference>();
-
-                for (PublicKey pk : document.publicKeys.values()) {
-                    if (pk.isAuthenticationKey())
-                        document._authentications.add(new PublicKeyReference(pk));
-
-                    if (pk.isAuthorizationKey())
-                        document._authorizations.add(new PublicKeyReference(pk));
-                }
-
-                if (document._authentications.isEmpty())
-                    document._authentications = Collections.emptyList();
-
-                if (document._authentications.isEmpty())
-                    document._authorizations = Collections.emptyList();
-            }
-
-            if (document.credentials == null || document.credentials.isEmpty()) {
-                document.credentials = Collections.emptyMap();
-                document._credentials = Collections.emptyList();
-            } else {
-                document._credentials = new ArrayList<VerifiableCredential>(document.credentials.values());
-            }
-
-            if (document.services == null || document.services.isEmpty()) {
-                document.services = Collections.emptyMap();
-                document._services = Collections.emptyList();
-            } else {
-                document._services = new ArrayList<Service>(document.services.values());
-            }
-
-            if (document.proofs == null || document.proofs.isEmpty()) {
-                if (document.getExpires() == null)
-                    setDefaultExpires();
-            }
-
-            if (document.proofs == null)
-                document.proofs = new HashMap<DID, Proof>();
-
-            document._proofs = null;
         }
 
-        /**
-         * Seal the document object, attach the generated proof to the
-         * document.
-         *
-         * @param storepass the password for DIDStore
-         * @return the DIDDocument object
-         * @throws InvalidKeyException if no valid sign key to seal the document
-         * @throws MalformedDocumentException if the DIDDocument is malformed
-         * @throws DIDStoreException if an error occurs when access DID store
-         */
-        public DIDDocument seal(storepass: string) {
-            checkNotSealed();
-            checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
-
-            sanitize();
-
-            DIDDocument    signerDoc = document.isCustomizedDid() ? controllerDoc : document;
-            DIDURL signKey = signerDoc.getDefaultPublicKeyId();
-
-            if (document.proofs.containsKey(signerDoc.getSubject()))
-                throw new AlreadySignedException(signerDoc.getSubject().toString());
-
-            String json = document.serialize(true);
-            String sig = document.sign(signKey, storepass, json.getBytes());
-            Proof proof = new Proof(signKey, sig);
-            document.proofs.put(proof.getCreator().getDid(), proof);
-            document._proofs = new ArrayList<Proof>(document.proofs.values());
-            Collections.sort(document._proofs);
-
-            // Invalidate builder
-            DIDDocument doc = document;
-            this.document = null;
-
-            return doc;
+        if (document.credentials == null || document.credentials.isEmpty()) {
+            document.credentials = Collections.emptyMap();
+            document._credentials = Collections.emptyList();
+        } else {
+            document._credentials = new ArrayList<VerifiableCredential>(document.credentials.values());
         }
+
+        if (document.services == null || document.services.isEmpty()) {
+            document.services = Collections.emptyMap();
+            document._services = Collections.emptyList();
+        } else {
+            document._services = new ArrayList<Service>(document.services.values());
+        }
+
+        if (document.proofs == null || document.proofs.isEmpty()) {
+            if (document.getExpires() == null)
+                setDefaultExpires();
+        }
+
+        if (document.proofs == null)
+            document.proofs = new HashMap<DID, Proof>();
+
+        document._proofs = null;
+    }
+
+    /**
+     * Seal the document object, attach the generated proof to the
+     * document.
+     *
+     * @param storepass the password for DIDStore
+     * @return the DIDDocument object
+     * @throws InvalidKeyException if no valid sign key to seal the document
+     * @throws MalformedDocumentException if the DIDDocument is malformed
+     * @throws DIDStoreException if an error occurs when access DID store
+     */
+    public DIDDocument seal(storepass: string) {
+        checkNotSealed();
+        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
+        sanitize();
+
+        DIDDocument    signerDoc = document.isCustomizedDid() ? controllerDoc : document;
+        DIDURL signKey = signerDoc.getDefaultPublicKeyId();
+
+        if (document.proofs.containsKey(signerDoc.getSubject()))
+            throw new AlreadySignedException(signerDoc.getSubject().toString());
+
+        String json = document.serialize(true);
+        String sig = document.sign(signKey, storepass, json.getBytes());
+        Proof proof = new Proof(signKey, sig);
+        document.proofs.put(proof.getCreator().getDid(), proof);
+        document._proofs = new ArrayList<Proof>(document.proofs.values());
+        Collections.sort(document._proofs);
+
+        // Invalidate builder
+        DIDDocument doc = document;
+        this.document = null;
+
+        return doc;
     }
 }
 

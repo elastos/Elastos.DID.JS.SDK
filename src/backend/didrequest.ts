@@ -291,7 +291,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 			throw new MalformedIDChainRequestException("Missing payload");
 
 		let signature = this.doc.sign(signKey, storepass, this.getSigningInputs());
-		setProof(new Proof(signKey, signature));
+		this.setProof(new Proof(signKey, signature));
 	}
 
 	private seal(targetSignKey: DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string) {
