@@ -417,13 +417,6 @@ export namespace DIDEntity {
 		}
 
 		@Override
-		@Deprecated
-		public void depositSchemaProperty(PropertyWriter writer, ObjectNode propertiesNode,
-				SerializerProvider provider) throws JsonMappingException {
-            writer.depositSchemaProperty(propertiesNode, provider);
-		}
-
-		@Override
 		public void depositSchemaProperty(PropertyWriter writer, JsonObjectFormatVisitor objectVisitor,
 				SerializerProvider provider) throws JsonMappingException {
             writer.depositSchemaProperty(objectVisitor, provider);

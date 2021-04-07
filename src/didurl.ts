@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+import * as Collections from 'typescript-collections';
 import { Map as ImmutableMap } from "immutable";
 import { AbstractMetadata } from "./abstractmetadata";
 import { DID } from "./did";
@@ -104,11 +105,12 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 	// Deep-copy constructor
 	private DIDURL(DIDURL url) {
 		this.did = url.did;
-		this.parameters = url.parameters.isEmpty() ? Collections.emptyMap() :
-				new LinkedHashMap<String, String>(url.parameters);
+		this.parameters = url.parameters.isEmpty() ? new Map() :
+		// TODO: LinkedHashMap is used to preserve the parameters orders during serialization of DIDURL to string
+				new Map<String, String>(url.parameters);
 		this.path = url.path;
 		this.query = url.query.isEmpty() ? Collections.emptyMap() :
-				new LinkedHashMap<String, String>(url.query);
+				new Map<String, String>(url.query);
 		this.fragment = url.fragment;
 	}
 
@@ -138,7 +140,7 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 	 *
 	 * @param did the DID Object
 	 */
-	protected setDid(did: DID) {
+	public /*protected*/ setDid(did: DID) {
 		this.did = did;
 	}
 

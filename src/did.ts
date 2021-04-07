@@ -22,9 +22,12 @@
 
 import { DIDMetadata } from "./didmetadata";
 import { ParserHelper } from "./parser/parserhelper"
-import { checkEmpty, isEmpty } from "./utils";
+import { checkEmpty, checkNotNull, isEmpty } from "./utils";
 import { DIDDocument } from "./diddocument";
 import { DIDResolveException } from "./exceptions/exceptions";
+import { rejects } from "node:assert";
+import { DIDBackend } from "./didbackend";
+import { Class } from "./class";
 
 /**
  * DID is a globally unique identifier that does not require
@@ -99,24 +102,12 @@ export class DID {
      * @return the DIDDocument object
      * @throws DIDResolveException throw this exception if resolving did failed.
      */
-    public DIDDocument resolve(boolean force)
-            throws DIDResolveException {
-        DIDDocument doc = DIDBackend.getInstance().resolveDid(this, force);
+    public resolve(force: boolean = false): DIDDocument {
+        let doc = DIDBackend.getInstance().resolveDid(this, force);
         if (doc != null)
-            setMetadata(doc.getMetadata());
+            this.setMetadata(doc.getMetadata());
 
         return doc;
-    }
-
-    /**
-     * Resolve DID content(DIDDocument) without force method.
-     *
-     * @return the DIDDocument object
-     * @throws DIDResolveException throw this exception if resolving did failed.
-     */
-    public DIDDocument resolve()
-            throws DIDResolveException {
-        return resolve(false);
     }
 
     /**
@@ -127,26 +118,15 @@ export class DID {
      * @return the new CompletableStage, the result is the DIDDocument interface for
      *             resolved DIDDocument if success; null otherwise.
      */
-    public CompletableFuture<DIDDocument> resolveAsync(boolean force) {
-        CompletableFuture<DIDDocument> future = CompletableFuture.supplyAsync(() -> {
+    public resolveAsync(force: boolean = false): Promise<DIDDocument> {
+        return new Promise((resolve, reject)=>{
             try {
-                return resolve(force);
-            } catch (DIDBackendException e) {
-                throw new CompletionException(e);
+                resolve(this.resolve(force));
+            } catch (e) {
+                // DIDBackendException
+                reject(e);
             }
         });
-
-        return future;
-    }
-
-    /**
-     * Resolve DID Document without force method in asynchronous model.
-     *
-     * @return the new CompletableStage, the result is the DIDDocument interface for
-     *             resolved DIDDocument if success; null otherwise.
-     */
-    public CompletableFuture<DIDDocument> resolveAsync() {
-        return resolveAsync(false);
     }
 
     /**
@@ -155,7 +135,7 @@ export class DID {
      * @return the DIDBiography object
      * @throws DIDResolveException throw this exception if resolving all did transactions failed.
      */
-    public DIDBiography resolveBiography() throws DIDResolveException {
+    public resolveBiography(): DIDBiography {
         return DIDBackend.getInstance().resolveDidBiography(this);
     }
 
@@ -165,80 +145,65 @@ export class DID {
      * @return the new CompletableStage, the result is the DIDHistory interface for
      *             resolved transactions if success; null otherwise.
      */
-    public CompletableFuture<DIDBiography> resolveBiographyAsync() {
-        CompletableFuture<DIDBiography> future = CompletableFuture.supplyAsync(() -> {
+    public resolveBiographyAsync(): Promise<DIDBiography> {
+        return new Promise((resolve, reject)=>{
             try {
-                return resolveBiography();
-            } catch (DIDResolveException e) {
-                throw new CompletionException(e);
+                resolve(this.resolveBiography());
+            } catch (e) {
+                // DIDResolveException
+                reject(e);
             }
         });
-
-        return future;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder(64);
-        builder.append("did:")
-            .append(method)
-            .append(":")
-            .append(methodSpecificId);
-
-        return builder.toString();
+    public toString(): string {
+        return "did:"+this.method+":"+this.methodSpecificId;
     }
 
-    @Override
-    public int hashCode() {
-        return METHOD.hashCode() + methodSpecificId.hashCode();
+    public hashCode(): number {
+        return DID.METHOD.hashCode() + this.methodSpecificId.hashCode();
     }
 
-    @Override
-    public boolean equals(Object obj) {
+    public equals(obj: Object): boolean {
         if (obj == this)
             return true;
 
         if (obj instanceof DID) {
-            DID did = (DID)obj;
-            boolean eq = method.equals(did.method);
-            return eq ? methodSpecificId.equals(did.methodSpecificId) : eq;
+            let did = obj;
+            let eq = this.method.equals(did.method);
+            return eq ? this.methodSpecificId.equals(did.methodSpecificId) : eq;
         }
 
         if (obj instanceof String) {
-            String did = (String)obj;
-            return toString().equals(did);
+            let did = obj;
+            return this.toString().equals(did);
         }
 
         return false;
     }
 
-    @Override
-    public int compareTo(DID did) {
+    public compareTo(did: DID): number {
         checkNotNull(did, "did is null");
 
-        int rc = method.compareTo(did.method);
-        return rc == 0 ? methodSpecificId.compareTo(did.methodSpecificId) : rc;
+        let rc = this.method.compareTo(did.method);
+        return rc == 0 ? this.methodSpecificId.compareTo(did.methodSpecificId) : rc;
     }
+}
 
-    static class Serializer extends StdSerializer<DID> {
+export namespace DID {
+    export class Serializer extends StdSerializer<DID> {
         private static final long serialVersionUID = -5048323762128760963L;
 
-        public Serializer() {
-            this(null);
-        }
-
-        public Serializer(Class<DID> t) {
+        public constructor(t: Class<DID> = null) {
             super(t);
         }
 
-        @Override
-        public void serialize(DID did, JsonGenerator gen,
-                SerializerProvider provider) throws IOException {
+        public serialize(did: DID, JsonGenerator gen, SerializerProvider provider) {
             gen.writeString(did.toString());
         }
     }
 
-    static class Deserializer extends StdDeserializer<DID> {
+    export class Deserializer extends StdDeserializer<DID> {
         private static final long serialVersionUID = -306953602840919050L;
 
         public Deserializer() {
@@ -249,10 +214,8 @@ export class DID {
             super(vc);
         }
 
-        @Override
-        public DID deserialize(JsonParser p, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
-            JsonToken token = p.getCurrentToken();
+        public deserialize(JsonParser p, DeserializationContext ctxt): DID {
+            let token: JsonToken = p.getCurrentToken();
             if (!token.equals(JsonToken.VALUE_STRING))
                 throw ctxt.weirdStringException(p.getText(), DID.class, "Invalid DIDURL");
 
@@ -264,10 +227,9 @@ export class DID {
                 throw ctxt.weirdStringException(did, DID.class, "Invalid DID");
             }
         }
-
     }
 
-    class Listener extends DIDURLBaseListener {
+    export Listener extends DIDURLBaseListener {
         @Override
         public void exitMethod(DIDURLParser.MethodContext ctx) {
             String method = ctx.getText();

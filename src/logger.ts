@@ -13,6 +13,10 @@ export class Logger {
         console.log.apply(console, args);
     }
 
+    trace(...args: any) {
+        console.log.apply(console, args);
+    }
+
     warn(...args: any) {
         console.warn.apply(console, args);
     }

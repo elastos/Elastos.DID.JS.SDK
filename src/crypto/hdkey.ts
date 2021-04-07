@@ -136,12 +136,12 @@ export class HDKey {
 	}*/
 
 	public deriveWithPath(path: string): HDKey {
+		this.key.identifier
 		return new HDKey(this.key.derive(path));
 	}
 
 	public deriveWithIndex(index: number, hardened: boolean = false): HDKey {
-		let childNumber = new ChildNumber(index, hardened);
-		return new HDKey(HDKeyDerivation.deriveChildKey(this.key, childNumber));
+		return new HDKey(this.key.deriveChild(index + (hardened ? DeterministicKey.HARDENED_OFFSET : 0)));
 	}
 
     /*public getJCEKeyPair(): KeyPair {
@@ -248,7 +248,7 @@ export class HDKey {
 		return sig.encodeToDER();
 	}
 
-	public signData(byte[] ... inputs): string {
+	public signData(...inputs: string[]): string {
 		let hash = this.sha256Digest(inputs);
 
 		return this.sign(hash);

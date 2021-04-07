@@ -15,3 +15,6 @@ List of things to consider while migrating:
 
 - TODO: replace our custom LRUCache with an existing library (typescript-lru-cache) with TTL.
 - TODO: cleanup core.ts, make sure the library we use for HDKey can do everything done by core.ts well
+- Beware of byte[] replaced with "string" for all crypto operations.
+    => Some libraries use string, some others use Buffer. We have started to use string but
+    I would be tempted to use Buffer everywhere, strings may do weird character conversions.
