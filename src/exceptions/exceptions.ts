@@ -25,3 +25,7 @@ export class MalformedTransferTicketException extends ParentException {}
 export class MalformedCredentialException extends ParentException {}
 export class MalformedIDChainRequestException extends ParentException {}
 export class InvalidKeyException extends ParentException {}
+export class MalformedIDChainTransactionException extends ParentException {}
+export class MalformedResolveResultException extends ParentException {}
+export class DIDSyntaxException extends ParentException {}
+export class MalformedResolveResponseException extends ParentException {}

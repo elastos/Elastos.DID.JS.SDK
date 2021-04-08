@@ -229,21 +229,15 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 
     /**
-     * Check if current DID has controller.
+     * Check if current DID has controller, or has specific controller.
      *
      * @return true if has, otherwise false
      */
-    public hasController(): boolean {
-        return this.controllers.length != 0;
-    }
-
-    /**
-     * Check if current DID has specific controller.
-     *
-     * @return true if has, otherwise false
-     */
-    public hasController(did: DID): boolean {
-        return this.controllers.contains(did);
+    public hasController(did: DID = null): boolean {
+        if (did)
+            return this.controllers.contains(did);
+        else
+            return this.controllers.length != 0;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,41 +20,13 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+import { DIDEntity } from "../didentity"
 
-import java.util.TimeZone;
-
-/**
- * The class to provide the main constant.
- */
-public final class Constants {
-    /**
-     * The deprecated default PublicKey type
-     */
-	public final static String _DEFAULT_PUBLICKEY_TYPE = "secp256r1";
-
-    /**
-     * The default PublicKey type
-     */
-	public final static String DEFAULT_PUBLICKEY_TYPE = "ECDSAsecp256r1";
-
+export abstract class ResolveResult<T> extends DIDEntity<T> {
 	/**
-	 * The date format
+	 * Post sanitize routine after deserialization.
+	 *
+	 * @throws MalformedResolveResultException if the DID object is invalid
 	 */
-	public final static String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-
-	/**
-	 * The iso8601 date format
-	 */
-	public final static String DATE_FORMAT_ISO_8601 = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-
-	/**
-	 * The max valid year
-	 */
-	public final static int MAX_VALID_YEARS = 5;
-
-	/**
-	 * The UTC timezone
-	 */
-	public final static TimeZone UTC = TimeZone.getTimeZone("UTC");
+	public /* protected */ sanitize() {}
 }
