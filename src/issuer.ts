@@ -28,6 +28,7 @@ import { DIDURL } from "./didurl";
 import { DIDDocument } from "./diddocument";
 import { DID } from "./did";
 import { DIDStore } from "./didstore";
+import { VerifiableCredential } from "./verifiablecredential";
 
 /**
  * A issuer is the DID to issue Credential. Issuer includes issuer's did and
@@ -131,7 +132,7 @@ export class Issuer {
 	 * @param did the owner of Credential
 	 * @return the VerifiableCredential builder to issuer Credential
 	 */
-	public issueFor(did: DID | string): Builder {
+	public issueFor(did: DID | string): VerifiableCredential.Builder {
 		checkArgument(did != null, "Invalid did");
 
         if (did instanceof DID) {

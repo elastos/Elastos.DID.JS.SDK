@@ -74,7 +74,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 * @return the returned value is true if there is store attached meta data;
 	 *         the returned value is false if there is no store attached meta data.
 	 */
-	protected attachedStore(): boolean {
+	public /* protected */ attachedStore(): boolean {
 		return this.store != null;
 	}
 

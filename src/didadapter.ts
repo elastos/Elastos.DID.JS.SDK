@@ -20,24 +20,19 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
-import { DIDURL } from "./didurl";
+import { DIDTransactionAdapter } from "./didtransactionadapter";
 
 /**
- * The class is the base object for PublicKey and Credential.
+ * The interface to provide DID Adapter method to publish DID Document.
  */
-export interface DIDObject<Type> {
+export interface DIDAdapter extends DIDTransactionAdapter {
 	/**
-	 * Get the entry id.
+	 * Perform the DID related resolve.
 	 *
-	 * @return the identifier object
+	 * @param requestId the request identifier by user defined
+	 * @param request the resolve request
+	 * @return the resolve result
+	 * @throws DIDResolveException resolve did failed.
 	 */
-	getId(): DIDURL;
-
-	/**
-	 * Get the entry type.
-	 *
-	 * @return the type string or array
-	 */
-	getType(): string | ImmutableList<Type>;
+	// TODO FROM JAVA public InputStream resolve(request: string);
 }

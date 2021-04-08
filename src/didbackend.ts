@@ -20,12 +20,26 @@
  * SOFTWARE.
  */
 
+import { CredentialRequest } from "./backend/credentialrequest";
+import { CredentialTransaction } from "./backend/credentialtransaction";
+import { DIDBiography } from "./backend/didbiography";
+import { DIDRequest } from "./backend/didrequest";
+import { DIDResolveRequest } from "./backend/didresolverequest";
+import { DIDTransaction } from "./backend/didtransaction";
+import { IDChainRequest } from "./backend/idchaindrequest";
+import { ResolveRequest } from "./backend/resolverequest";
+import { ResolveResult } from "./backend/resolveresult";
+import { CredentialMetadata } from "./credentialmetadata";
 import { DID } from "./did";
+import { DIDAdapter } from "./didadapter";
 import { DIDDocument } from "./diddocument";
+import { DIDMetadata } from "./didmetadata";
 import { DIDTransactionAdapter } from "./didtransactionadapter";
 import { DIDURL } from "./didurl";
 import { DIDResolveException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
+import { LRUCache } from "./lrucache";
+import { TransferTicket } from "./transferticket";
 import { checkArgument } from "./utils";
 import { VerifiableCredential } from "./verifiablecredential";
 
@@ -57,7 +71,7 @@ export class DIDBackend {
 	private adapter: DIDAdapter;
 	private resolveHandle: LocalResolveHandle;
 
-	private cache: LoadingCache<ResolveRequest<?, ?>, ResolveResult<?>>;
+	private cache: LRUCache<ResolveRequest<any, any>, ResolveResult<any>>;
 
 	private static instance: DIDBackend;
 
@@ -89,14 +103,10 @@ export class DIDBackend {
 			}
 		}; */
 
-		this.cache = CacheBuilder.newBuilder()
-				.initialCapacity(initialCacheCapacity)
-				.maximumSize(maxCacheCapacity)
-				.expireAfterWrite(cacheTtl, TimeUnit.MILLISECONDS)
-				.softValues()
-				// .removalListener(listener)
-				// .recordStats()
-				.build(loader);
+		this.cache = new LRUCache({
+			maxItems: maxCacheCapacity,
+      		maxAge: cacheTtl/1000 //TimeUnit.MILLISECONDS,
+		});
 
 		log.info("DID backend initialized, cache(init:{}, max:{}, ttl:{})",
 				initialCacheCapacity, maxCacheCapacity, cacheTtl / 1000);
@@ -110,7 +120,12 @@ export class DIDBackend {
      * @param maxCacheCapacity the maximum cache capacity, 0 for default capacity
      * @param int cacheTtl the live time for the cached entries, 0 for default
      */
-	public static initialize(adapter: DIDAdapter, initialCacheCapacity: number, maxCacheCapacity: number, int cacheTtl) {
+	public static initialize(
+		adapter: DIDAdapter,
+		initialCacheCapacity: number = DIDBackend.DEFAULT_CACHE_MAX_CAPACITY,
+		maxCacheCapacity: number = DIDBackend.DEFAULT_CACHE_INITIAL_CAPACITY,
+		cacheTtl: number = DIDBackend.DEFAULT_CACHE_TTL
+	) {
 		checkArgument(adapter != null, "Invalid adapter");
 		checkArgument(initialCacheCapacity <= maxCacheCapacity, "Invalid cache capacity");
 
@@ -119,38 +134,6 @@ export class DIDBackend {
 
 		this.instance = new DIDBackend(adapter, initialCacheCapacity,
 				maxCacheCapacity, cacheTtl);
-	}
-
-    /**
-	 * Initialize the DIDBackend with the adapter and the cache specification.
-     *
-     * @param adapter the DIDAdapter object
-     * @param maxCacheCapacity the maximum cache capacity, 0 for default capacity
-     * @param int cacheTtl the live time for the cached entries, 0 for default
-     */
-	public static initialize(adapter: DIDAdapter, maxCacheCapacity: number, cacheTtl: number) {
-		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY, maxCacheCapacity, cacheTtl);
-	}
-
-    /**
-	 * Initialize the DIDBackend with the adapter and the cache specification.
-     *
-     * @param adapter the DIDAdapter object
-     * @param int cacheTtl the live time for the cached entries, 0 for default
-     */
-	public static initialize(adapter: DIDAdapter, cacheTtl: number) {
-		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY,
-				DEFAULT_CACHE_MAX_CAPACITY, cacheTtl);
-	}
-
-    /**
-	 * Initialize the DIDBackend with the adapter.
-     *
-     * @param adapter the DIDAdapter object
-     */
-	public static initialize(adapter: DIDAdapter) {
-		initialize(adapter, DEFAULT_CACHE_INITIAL_CAPACITY,
-				DEFAULT_CACHE_MAX_CAPACITY, DEFAULT_CACHE_TTL);
 	}
 
 	/**
@@ -218,7 +201,8 @@ export class DIDBackend {
 		} finally {
 			try {
 				is.close();
-			} catch (IOException ignore) {
+			} catch (ignore) {
+				// IOException
 			}
 		}
 
@@ -243,8 +227,9 @@ export class DIDBackend {
 			this.cache.invalidate(request);
 
 		try {
-			return this.cache.get(request);
-		} catch (ExecutionException e) {
+			return this.cache.get(request) as DIDBiography;
+		} catch (e) {
+			// ExecutionException
 			throw new DIDResolveException(e);
 		}
 	}
@@ -323,18 +308,19 @@ export class DIDBackend {
 		return doc;
 	}
 
-	private resolveCredentialBiography(id: DIDURL, issuer: DID = null, force: boolean = false): CredentialBiography {
+	public /* private */ resolveCredentialBiography(id: DIDURL, issuer: DID = null, force: boolean = false): CredentialBiography {
 		log.info("Resolving credential {}, issuer={}...", id, issuer);
 
-		let request = new CredentialResolveRequest(generateRequestId());
+		let request = new CredentialResolveRequest(this.generateRequestId());
 		request.setParameters(id, issuer);
 
 		if (force)
-			cache.invalidate(request);
+			this.cache.invalidate(request);
 
 		try {
-			return (CredentialBiography)cache.get(request);
-		} catch (ExecutionException e) {
+			return this.cache.get(request);
+		} catch (e) {
+			// ExecutionException
 			throw new DIDResolveException(e);
 		}
 	}
@@ -401,10 +387,10 @@ export class DIDBackend {
 		return vc;
 	}
 
-	protected listCredentials(DID did, int skip, int limit): DIDURL[] {
+	protected listCredentials(did: DID, skip: number, limit: number): DIDURL[] {
 		log.info("List credentials for {}", did);
 
-		let request = new CredentialListRequest(generateRequestId());
+		let request = new CredentialListRequest(this.generateRequestId());
 		request.setParameters(did, skip, limit);
 
 		let list = this.resolve(request) as CredentialList;
@@ -429,7 +415,7 @@ export class DIDBackend {
 	}
 
 	private invalidDidCache(did: DID) {
-		let request = new DIDResolveRequest(generateRequestId());
+		let request = new DIDResolveRequest(this.generateRequestId());
 		request.setParameters(did, true);
 		this.cache.invalidate(request);
 
@@ -523,7 +509,7 @@ export class DIDBackend {
 		this.invalidDidCache(target.getSubject());
 	}
 
-	protected declareCredential(vc: VerifiableCredential, signer: DIDDocument,
+	public /* protected */ declareCredential(vc: VerifiableCredential, signer: DIDDocument,
 			signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = CredentialRequest.declare(vc, signer, signKey, storepass);
 		this.createTransaction(request, adapter);
@@ -531,15 +517,15 @@ export class DIDBackend {
 		this.invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
-	protected revokeCredential(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public /* protected */ revokeCredential(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidCredentialCache(vc.getId(), null);
 		this.invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
-	protected revokeCredential(vc: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		CredentialRequest request = CredentialRequest.revoke(vc, signer, signKey, storepass);
+	public /* protected */ revokeCredential(vc: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+		let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidCredentialCache(vc, null);
 		this.invalidCredentialCache(vc, signer.getSubject());

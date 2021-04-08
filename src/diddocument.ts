@@ -1828,7 +1828,7 @@ export class DIDDocument extends JSONobject {
      *
      * @return the Proof object
      */
-    protected getProof(): Proof {
+     public /*protected*/ getProof(): Proof {
         return this._proofs.get(0);
     }
 
@@ -2188,7 +2188,7 @@ export class DIDDocument extends JSONobject {
      *
      * @param metadata the DIDMetadataImpl object
      */
-    protected setMetadata(metadata: DIDMetadata) {
+     public /*protected*/ setMetadata(metadata: DIDMetadata) {
         this.metadata = metadata;
         subject.setMetadata(metadata);
     }
@@ -2206,7 +2206,7 @@ export class DIDDocument extends JSONobject {
         return metadata;
     }
 
-    protected getStore(): DIDStore {
+    public /*protected*/ getStore(): DIDStore {
         return this.getMetadata().getStore();
     }
 

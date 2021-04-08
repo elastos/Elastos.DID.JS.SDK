@@ -31,3 +31,8 @@ export class DIDSyntaxException extends ParentException {}
 export class MalformedResolveResponseException extends ParentException {}
 export class DIDNotFoundException extends ParentException {}
 export class MalformedDIDURLException extends ParentException {}
+export class AlreadySealedException extends ParentException {}
+export class CredentialNotGenuineException extends ParentException {}
+export class CredentialExpiredException extends ParentException {}
+export class CredentialRevokedException extends ParentException {}
+export class CredentialAlreadyExistException extends ParentException {}

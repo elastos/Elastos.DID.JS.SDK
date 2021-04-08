@@ -18,3 +18,4 @@ List of things to consider while migrating:
 - Beware of byte[] replaced with "string" for all crypto operations.
     => Some libraries use string, some others use Buffer. We have started to use string but
     I would be tempted to use Buffer everywhere, strings may do weird character conversions.
+- TODO: With what do we want to replace Calendar, Dates ? Try to avoid a heavy library dependency
