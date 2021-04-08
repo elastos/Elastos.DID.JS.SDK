@@ -24,9 +24,11 @@ import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, 
 import { DIDEntity } from "./didentity";
 import { DID } from "./did";
 import { DIDURL } from "./didurl";
+import { DIDObject } from "./didobject";
 import { Logger } from "./logger";
 import { checkArgument } from "./utils";
 import { List as ImmutableList } from "immutable";
+import { VerifiableCredential } from "./verifiablecredential";
 import {
     MalformedDocumentException,
     NotCustomizedDIDException,
@@ -37,6 +39,835 @@ import {
 } from "./exceptions/exceptions";
 
 const log = new Logger("DIDDocument");
+
+export namespace DIDDocument {
+    export class MultiSignature {
+        private int m;
+        private int n;
+
+        public MultiSignature(int m, int n) {
+            apply(m, n);
+        }
+
+        private MultiSignature(MultiSignature ms) {
+            apply(ms.m, ms.n);
+        }
+
+        @JsonCreator
+        public MultiSignature(String mOfN) {
+            if (mOfN == null || mOfN.isEmpty())
+                throw new IllegalArgumentException("Invalid multisig spec");
+
+            String[] mn = mOfN.split(":");
+            if (mn == null || mn.length != 2)
+                throw new IllegalArgumentException("Invalid multisig spec");
+
+            apply(Integer.valueOf(mn[0]), Integer.valueOf(mn[1]));
+        }
+
+        protected apply(int m, int n) {
+            checkArgument(n > 1, "Invalid multisig spec: n should > 1");
+            checkArgument(m > 0 && m <= n,  "Invalid multisig spec: m should > 0 and <= n");
+
+            this.m = m;
+            this.n = n;
+        }
+
+        public int m() {
+            return m;
+        }
+
+        public int n() {
+            return n;
+        }
+
+        @Override
+        public boolean equals(object obj) {
+            if (this == obj)
+                return true;
+
+            if (obj instanceof MultiSignature) {
+                MultiSignature multisig = (MultiSignature)obj;
+                return m == multisig.m && n == multisig.n;
+            }
+
+            return false;
+        }
+
+        @Override
+        @JsonValue
+        public String toString() {
+            return String.format("%d:%d", m, n);
+        }
+    }
+
+    /**
+     * Publickey is used for digital signatures, encryption and
+     * other cryptographic operations, which are the basis for purposes such as
+     * authentication or establishing secure communication with service endpoints.
+     */
+    @JsonPropertyOrder({ ID, TYPE, CONTROLLER, PUBLICKEY_BASE58 })
+    @JsonFilter("publicKeyFilter")
+    export class PublicKey implements DIDobject, Comparable<PublicKey> {
+        @JsonProperty(ID)
+        private DIDURL id;
+        @JsonProperty(TYPE)
+        private type: string;
+        @JsonProperty(CONTROLLER)
+        private DID controller;
+        @JsonProperty(PUBLICKEY_BASE58)
+        private String keyBase58;
+        private boolean authenticationKey;
+        private boolean authorizationKey;
+
+        /**
+         * Constructs Publickey with the given value.
+         *
+         * @param id the Id for PublicKey
+         * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
+         * @param controller the DID who holds private key
+         * @param keyBase58 the string from encoded base58 of public key
+         */
+        @JsonCreator
+        protected PublicKey(@JsonProperty(value = ID, required = true) DIDURL id,
+                @JsonProperty(value = TYPE) type: string,
+                @JsonProperty(value = CONTROLLER) controller: DID,
+                @JsonProperty(value = PUBLICKEY_BASE58, required = true) String keyBase58) {
+            this.id = id;
+            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+            this.controller = controller;
+            this.keyBase58 = keyBase58;
+        }
+
+        /**
+         * Get the PublicKey id.
+         *
+         * @return the identifier
+         */
+        @Override
+        public DIDURL getId() {
+            return id;
+        }
+
+        /**
+         * Get the PublicKey type.
+         *
+         * @return the type string
+         */
+        @Override
+        public String getType() {
+            return type;
+        }
+
+        /**
+         * Get the controller of Publickey.
+         *
+         * @return the controller
+         */
+        public DID getController() {
+            return controller;
+        }
+
+        /**
+         * Get public key base58 string.
+         *
+         * @return the key base58 string
+         */
+        public String getPublicKeyBase58() {
+            return keyBase58;
+        }
+
+        /**
+         * Get public key bytes.
+         *
+         * @return the key bytes
+         */
+        public byte[] getPublicKeyBytes() {
+            return Base58.decode(keyBase58);
+        }
+
+        /**
+         * Check if the key is an authentication key or not.
+         *
+         * @return if the key is an authentication key or not
+         */
+        public boolean isAuthenticationKey() {
+            return authenticationKey;
+        }
+
+        private setAuthenticationKey(boolean authenticationKey) {
+            this.authenticationKey = authenticationKey;
+        }
+
+        /**
+         * Check if the key is an authorization key or not.
+         *
+         * @return if the key is an authorization key or not
+         */
+        public boolean isAuthorizationKey() {
+            return authorizationKey;
+        }
+
+        private setAuthorizationKey(boolean authorizationKey) {
+            this.authorizationKey = authorizationKey;
+        }
+
+        @Override
+        public boolean equals(object obj) {
+            if (this == obj)
+                return true;
+
+            if (obj instanceof PublicKey) {
+                PublicKey ref = (PublicKey)obj;
+
+                if (getId().equals(ref.getId()) &&
+                        getType().equals(ref.getType()) &&
+                        getController().equals(ref.getController()) &&
+                        getPublicKeyBase58().equals(ref.getPublicKeyBase58()))
+                    return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public int compareTo(key: PublicKey) {
+            int rc = id.compareTo(key.id);
+
+            if (rc != 0)
+                return rc;
+            else
+                rc = keyBase58.compareTo(key.keyBase58);
+
+            if (rc != 0)
+                return rc;
+            else
+                rc = type.compareTo(key.type);
+
+            if (rc != 0)
+                return rc;
+            else
+                return controller.compareTo(key.controller);
+        }
+
+        protected static PropertyFilter getFilter() {
+            return new DIDPropertyFilter() {
+                @Override
+                protected boolean include(PropertyWriter writer, object pojo, SerializeContext context) {
+                    if (context.isNormalized())
+                        return true;
+
+                    PublicKey pk = (PublicKey)pojo;
+                    switch (writer.getName()) {
+                    case TYPE:
+                        return !(pk.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
+
+                    case CONTROLLER:
+                        return !(pk.getController().equals(context.getDid()));
+
+                    default:
+                        return true;
+                    }
+                }
+            };
+        }
+    }
+
+    @JsonSerialize(using = PublicKeyReference.Serializer.class)
+    @JsonDeserialize(using = PublicKeyReference.Deserializer.class)
+    export class PublicKeyReference implements Comparable<PublicKeyReference> {
+        private DIDURL id;
+        private PublicKey key;
+
+        protected PublicKeyReference(id: DIDURL) {
+            this.id = id;
+            this.key = null;
+        }
+
+        protected PublicKeyReference(key: PublicKey) {
+            this.id = key.getId();
+            this.key = key;
+        }
+
+        public boolean isVirtual() {
+            return key == null;
+        }
+
+        public DIDURL getId() {
+            return id;
+        }
+
+        public PublicKey getPublicKey() {
+            return key;
+        }
+
+        protected update(key: PublicKey) {
+            checkArgument(key != null && key.getId().equals(id));
+
+            this.id = key.getId();
+            this.key = key;
+        }
+
+        @Override
+        public int compareTo(PublicKeyReference ref) {
+            if (key != null && ref.key != null)
+                return key.compareTo(ref.key);
+            else
+                return id.compareTo(ref.id);
+        }
+
+        static class Serializer extends StdSerializer<PublicKeyReference> {
+            private static final long serialVersionUID = -6934608221544406405L;
+
+            public Serializer() {
+                this(null);
+            }
+
+            public Serializer(Class<PublicKeyReference> t) {
+                super(t);
+            }
+
+            @Override
+            public serialize(PublicKeyReference keyRef, JsonGenerator gen,
+                    SerializerProvider provider) {
+                gen.writeobject(keyRef.getId());
+            }
+        }
+
+        static class Deserializer extends StdDeserializer<PublicKeyReference> {
+            private static final long serialVersionUID = -4252894239212420927L;
+
+            public Deserializer() {
+                this(null);
+            }
+
+            public Deserializer(Class<?> t) {
+                super(t);
+            }
+
+            @Override
+            public PublicKeyReference deserialize(JsonParser p, DeserializationContext ctxt) {
+                JsonToken token = p.getCurrentToken();
+                if (token.equals(JsonToken.VALUE_STRING)) {
+                    DIDURL id = p.readValueAs(DIDURL.class);
+                    return new PublicKeyReference(id);
+                } else if (token.equals(JsonToken.START_OBJECT)) {
+                    let key: PublicKey =p.readValueAs(PublicKey.class);
+                    return new PublicKeyReference(key);
+                } else
+                    throw ctxt.weirdStringException(p.getText(),
+                            PublicKey.class, "Invalid public key");
+            }
+
+        }
+    }
+
+    /**
+     * A Service may represent any type of service the subject
+     * wishes to advertise, including decentralized identity management services
+     * for further discovery, authentication, authorization, or interaction.
+     */
+    @JsonPropertyOrder({ value: [ID, TYPE, SERVICE_ENDPOINT]})
+    export class Service implements DIDobject {
+        @JsonProperty(ID)
+        private id: DIDURL;
+        @JsonProperty(TYPE) @JsonClassType({type: () => [String]})
+        private type: string;
+        @JsonProperty(SERVICE_ENDPOINT) @JsonClassType({type: () => [String]})
+        private endpoint: string;
+        private properties: Map<String, object>;
+
+        protected Service(id: DIDURL, type: string, endpoint: string,
+                properties: Map<String, object>) {
+            this.id = id;
+            this.type = type;
+            this.endpoint = endpoint;
+
+            if (properties && properties.size > 0) {
+                this.properties = new Map<String, object>(properties);
+                this.properties.delete(ID);
+                this.properties.delete(TYPE);
+                this.properties.delete(SERVICE_ENDPOINT);
+            }
+        }
+
+        /**
+         * Constructs Service with the given value.
+         *
+         * @param id the id for Service
+         * @param type the type of Service
+         * @param endpoint the address of service point
+         */
+        @JsonCreator
+        protected Service(@JsonProperty(value = ID, required = true) id: DIDURL,
+                @JsonProperty(value = TYPE, required = true) type: string,
+                @JsonProperty(value = SERVICE_ENDPOINT, required = true) endpoint: string) {
+            this(id, type, endpoint, null);
+        }
+
+        /**
+         * Get the service id.
+         *
+         * @return the identifier
+         */
+        @Override
+        public getId(): DIDURL {
+            return id;
+        }
+
+        /**
+         * Get the service type.
+         *
+         * @return the type string
+         */
+        @Override
+        public getType(): string {
+            return type;
+        }
+
+        /**
+         * Get service point string.
+         *
+         * @return the service point string
+         */
+        public getServiceEndpoint():string {
+            return endpoint;
+        }
+
+        /**
+         * Helper getter method for properties serialization.
+         * NOTICE: Should keep the alphabetic serialization order.
+         *
+         * @return a String to object map include all application defined
+         *         properties
+         */
+        @JsonAnyGetter
+        @JsonPropertyOrder(alphabetic = true)
+        private getProperties(): Map<String, object> {
+            return properties;
+        }
+
+        /**
+         * Helper setter method for properties deserialization.
+         *
+         * @param name the property name
+         * @param value the property value
+         */
+        @JsonAnySetter
+        private setProperty(name: string, value: object ) {
+            if (name.equals(ID) || name.equals(TYPE) || name.equals(SERVICE_ENDPOINT))
+                return;
+
+            if (properties == null)
+                properties = new TreeMap<String, object>();
+
+            properties.put(name, value);
+        }
+
+        public Map<String, object> getProperties() {
+            // TODO: make it unmodifiable recursively
+             return Collections.unmodifiableMap(properties != null ?
+                     properties : Collections.emptyMap());
+        }
+    }
+
+    /**
+     * The Proof represents the proof content of DID Document.
+     */
+    @JsonPropertyOrder({ TYPE, CREATED, CREATOR, SIGNATURE_VALUE })
+    @JsonFilter("didDocumentProofFilter")
+    export class Proof implements Comparable<Proof> {
+        @JsonProperty(TYPE)
+        private type: string;
+        @JsonInclude({value: JsonIncludeType.NON_NULL})
+        @JsonProperty(CREATED)
+        private Date created;
+        @JsonInclude({value: JsonIncludeType.NON_NULL})
+        @JsonProperty(CREATOR)
+        private DIDURL creator;
+        @JsonProperty(SIGNATURE_VALUE)
+        private signature: string;
+
+        /**
+         * Constructs the proof of DIDDocument with the given value.
+         *
+         * @param type the type of Proof
+         * @param created the time to create DIDDocument
+         * @param creator the key to sign
+         * @param signature the signature string
+         */
+        @JsonCreator
+        protected Proof(@JsonProperty(value = TYPE) type: string,
+                @JsonProperty(value = CREATED, required = true) Date created,
+                @JsonProperty(value = CREATOR) DIDURL creator,
+                @JsonProperty(value = SIGNATURE_VALUE, required = true) signature: string) {
+            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+            this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
+            this.creator = creator;
+            this.signature = signature;
+        }
+
+        /**
+         * Constructs the proof of DIDDocument with the key id and signature string.
+         *
+         * @param creator the key to sign
+         * @param signature the signature string
+         */
+        protected Proof(DIDURL creator, signature: string) {
+            this(null, Calendar.getInstance(Constants.UTC).getTime(), creator, signature);
+        }
+
+        /**
+         * Get Proof type.
+         *
+         * @return the type string
+         */
+        public String getType() {
+            return type;
+        }
+
+        /**
+         * Get the time to create DIDDocument.
+         *
+         * @return the time
+         */
+        public Date getCreated() {
+            return created;
+        }
+
+        /**
+         * Get the key id to sign.
+         *
+         * @return the key id
+         */
+        public DIDURL getCreator() {
+            return creator;
+        }
+
+        /**
+         * Get signature string.
+         *
+         * @return the signature string
+         */
+        public String getSignature() {
+            return signature;
+        }
+
+        @Override
+        public int compareTo(Proof proof) {
+            int rc = (int)(this.created.getTime() - proof.created.getTime());
+            if (rc == 0)
+                rc = this.creator.compareTo(proof.creator);
+            return rc;
+        }
+
+        protected static PropertyFilter getFilter() {
+            return new DIDPropertyFilter() {
+                @Override
+                protected boolean include(PropertyWriter writer, object pojo, SerializeContext context) {
+                    if (context.isNormalized())
+                        return true;
+
+                    Proof proof = (Proof)pojo;
+                    switch (writer.getName()) {
+                    case TYPE:
+                        return !(proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
+
+                    default:
+                        return true;
+                    }
+                }
+            };
+        }
+    }
+}
+
+
+
+/*
+import { StaticConfiguration } from "./staticconfiguration";
+import { Util, Signer, DIDUtil, Cache } from "./core";
+import { DIDElement, JSONobject, Service, Subject, Proof, DocumentPublicKey, VerifiableCredential, VerifiablePresentation } from "./domain";
+import { DID } from "./did"
+
+export class DIDDocument extends JSONobject {
+
+    public verifiableCredential: VerifiableCredential[];
+    public verifiablePresentation: VerifiablePresentation[];
+    public service: Service[];
+    public proof?: Proof;
+    public readonly id: any;
+    public readonly publicKey: DocumentPublicKey[];
+    public readonly authentication: any;
+    public readonly expires: string;
+    private didElement: DIDElement;
+
+    public constructor (didElement: DIDElement) {
+        super();
+        this.id = didElement.did;
+        this.publicKey = this.getPublicKeyProperty(didElement);
+        this.authentication = [`${didElement.did}#primary`];
+        this.expires = this.getExpiration().toISOString().split('.')[0]+"Z";
+        this.verifiableCredential = [];
+        this.verifiablePresentation = [];
+        this.service = [];
+    }
+
+    public clone(): DIDDocument {
+        let clonedDocument = new DIDDocument(this.didElement);
+
+        if (this.proof) {
+            clonedDocument.proof = this.proof;
+        }
+        if (this.verifiableCredential) {
+            clonedDocument.verifiableCredential = this.verifiableCredential;
+        }
+        if (this.verifiablePresentation) {
+            clonedDocument.verifiablePresentation = this.verifiablePresentation;
+        }
+        if (this.service) {
+            clonedDocument.service = this.service;
+        }
+        return clonedDocument;
+    }
+
+
+
+    public addVerfiableCredential (vc: VerifiableCredential) {
+        if (this.proof)
+        {
+            console.error("You can't modify this document because is already sealed");
+            return;
+        }
+
+        if (!this.verifiableCredential) this.verifiableCredential = [];
+        this.verifiableCredential.push(vc);
+    }
+
+    public addService (service: Service) {
+        if (this.proof)
+        {
+            console.error("You can't modify this document because is already sealed");
+            return;
+        }
+        if (!this.service) this.service = [];
+
+        let serviceIndex = -1;
+        this.service.forEach((element, index) => {
+            if (element.id.toLowerCase() === service.id.toLowerCase())
+            {
+              serviceIndex = index
+            }
+        });
+
+        if (serviceIndex >= 0){
+            this.service[serviceIndex] = service
+        }
+        else {
+            this.service.push(service);
+        }
+    }
+
+
+    public createVerifiableCredential (didElement: DIDElement, issuer: DID, subjectName: string, subjectTypes: string[], subjectValue: any) {
+        let issuanceDate = new Date();
+        let vcTypes = subjectTypes
+        vcTypes.push(issuer === didElement.did ? "SelfProclaimedCredential" : "VerifiableCredential")
+
+        let subject = new Subject(didElement.did);
+        subject.name = subjectName;
+        subject.value = subjectValue;
+        let vc = new VerifiableCredential(
+            didElement.did,
+            vcTypes,
+            issuer,
+            issuanceDate.toISOString().split('.')[0]+"Z",
+            this.getExpiration(issuanceDate).toISOString().split('.')[0]+"Z",
+            subject);
+
+        this.sign(didElement, vc);
+
+        return vc;
+    }
+
+    public createService (didElement, did: DID, type, endpoint) {
+        return new Service(`${did}#${type.toLowerCase()}`, type, endpoint);
+    }
+
+    public createVerifiableCredentialVP (appDid: DID, userDid: DID, appName: string) {
+        let issuanceDate = new Date();
+        let vcTypes = ["AppIdCredential"];
+        let subject = new Subject(appDid.did);
+        subject.appDid = appName;
+        subject.appInstanceDid = appDid.did;
+
+        let vc = new VerifiableCredential(
+            `${appDid.did}#app-id-credential`,
+            vcTypes,
+            userDid.did,
+            issuanceDate.toISOString().split('.')[0]+"Z",
+            this.getExpiration(issuanceDate).toISOString().split('.')[0]+"Z",
+            subject);
+
+        this.sign(userDid, vc);
+
+        return vc
+    }
+
+    public createVerifiablePresentation (didElement: DIDElement, type: String, verifiableCredential: VerifiableCredential, realm: string, nonce: string) {
+        let createDate = new Date();
+        let vp = new VerifiablePresentation(type, createDate.toISOString().split('.')[0]+"Z", [verifiableCredential]);
+
+        this.signVp(didElement, vp, realm, nonce);
+
+        return vp;
+    }
+
+    public sealDocument (didElement: DIDElement) {
+        if (this.proof)
+        {
+            console.error("You can't modify this document because is already sealed");
+            return;
+        }
+
+        let proof = new Proof("ECDSAsecp256r1");
+        proof.created = new Date().toISOString().split('.')[0]+"Z";
+        proof.creator = `${didElement.did}#primary`;
+
+        let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
+        let signature = Signer.signData(dataToSign, didElement.privateKey);
+        proof.signatureValue = signature;
+        this.proof = proof;
+    }
+
+    public isValid (diddocument, didElement) {
+
+        let document = JSON.parse(JSON.stringify(diddocument));
+        delete document.proof;
+        let dataToValidate = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
+
+        return Signer.verifyData(dataToValidate, diddocument["proof"]["signatureValue"], didElement.publicKey);
+    }
+
+    public async getMostRecentDIDDocument (did, options: Map<string, any> = new Map()) {
+        let elastosRPCHost = StaticConfiguration.ELASTOS_RPC_ADDRESS.mainchain;
+        let useCache =  true;
+
+        if (options && "elastosRPCHost" in options) elastosRPCHost = options["elastosRPCHost"];
+        if (options && "useCache" in options) useCache = options["useCache"];
+        if (!did) throw new Error("Invalid DID");
+
+        let searchDid = did.replace("did:elastos:", "");
+
+        if (useCache){
+            let found = this.searchDIDDocumentOnCache(searchDid);
+            if (found) return found;
+        }
+
+
+        let document = await this.searchDIDDocumentOnBlockchain(searchDid, elastosRPCHost);
+        if (!document) return undefined;
+        if (useCache) this.setDIDDocumentOnCache(searchDid, document);
+
+        return document;
+    }
+
+    private sign (didElement, document) {
+        let proof = new Proof("ECDSAsecp256r1");
+        proof.verificationMethod = `${didElement.did}#primary`;
+
+        let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase()
+        let signature = Signer.signData(dataToSign, didElement.privateKey);
+        proof.signature = signature;
+        document.proof = proof;
+    }
+
+    private signVp (didElement, document, realm, nonce) {
+        let proof = new Proof("ECDSAsecp256r1");
+        proof.verificationMethod = `${didElement.did}#primary`;
+        proof.realm = realm;
+        proof.nonce = nonce;
+
+        let json = JSON.stringify(document, null, "");
+
+        let dataToSign = Buffer.from(json + realm + nonce, "utf8").toString("hex").toUpperCase()
+        let signature = Signer.signData(dataToSign, didElement.privateKey);
+        proof.signature = signature;
+        document.proof = proof;
+    }
+
+    private getExpiration (date: Date = new Date(), yearsToAdd: number = 5) {
+        let newDate: Date = new Date(date.getTime());
+        newDate.setFullYear(date.getFullYear() + yearsToAdd)
+
+        return newDate;
+    }
+
+    private getPublicKeyProperty (didElement) {
+        return [new DocumentPublicKey(
+            `${didElement.did}#primary`,
+            "ECDSAsecp256r1",
+            didElement.did,
+            didElement.publicKeyBase58)];
+    }
+
+    private setDIDDocumentOnCache (did, diddocument) {
+        console.log("Enter on setDIDDocumentOnCache", did, diddocument);
+        let storage = window.localStorage; //?? localStorage
+        let cache = storage.key["elastos_cache"];
+        if (!cache){
+            cache = {};
+        }
+
+        this.clearExpiredCacheItems(cache);
+
+        cache[did] = {
+            "expiration": Util.getTimestamp() + (5 * 60),  //Five minutes cache
+            "document": diddocument
+        }
+
+        console.log("store cache", cache);
+        storage.setItem("elastos_cache", JSON.stringify(cache));
+    }
+
+    private clearExpiredCacheItems (cache) {
+        var keys = object.keys(cache);
+        let timestamp = Util.getTimestamp();
+        for (var i = 0; i < keys.length; i++) {
+            if (timestamp > keys[i]["expiration"]) delete keys[i];
+        }
+    }
+
+    private async searchDIDDocumentOnBlockchain (did, rpcHost) {
+
+        let responseJson = await DIDUtil.rpcResolveDID(did, rpcHost);
+
+        if (!responseJson ||
+            !responseJson["result"] ||
+            !responseJson["result"]["transaction"]) return undefined;
+
+        let lastTransaction = responseJson["result"]["transaction"][0];
+        let payload = atob(lastTransaction["operation"]["payload"]);
+        return JSON.parse(payload);
+    }
+
+    private searchDIDDocumentOnCache (did) {
+        let storage = window.localStorage; //?? localStorage
+        let cache = storage.getItem("elastos_cache");
+        if (!cache) return undefined;
+        let jsonCache = JSON.parse(cache);
+        let cacheItem = jsonCache[did];
+        if (!cacheItem) return undefined;
+
+        let timestamp = Util.getTimestamp();
+
+        if (timestamp > cacheItem["expiration"]) return undefined;
+
+        return cacheItem["document"];
+    }
+}
+*>
+
 
 /**
  * The DIDDocument represents the DID information.
@@ -49,7 +880,7 @@ const log = new Logger("DIDDocument");
  * services. One document must be have one subject, and at least one public
  * key.
  */
-export class DIDDocument extends DIDEntity<DIDDocument> {
+ export class DIDDocument extends DIDEntity<DIDDocument> {
     protected const static ID: string = "id";
     protected const static PUBLICKEY: string = "publicKey";
     protected const static TYPE: string = "type";
@@ -124,7 +955,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param subject the owner of DIDDocument
      */
     @JsonCreator
-    protected constructor(@JsonProperty({value: ID, required: true}) subject: DID) {
+    public constructor(@JsonProperty({value: ID, required: true}) subject: DID) {
         this.subject = subject;
     }
 
@@ -229,11 +1060,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 
     /**
-     * Check if current DID has controller, or has specific controller.
+     * Check if current DID has controller, or has specific controller
      *
      * @return true if has, otherwise false
      */
-    public hasController(did: DID = null): boolean {
+     public hasController(did: DID = null): boolean {
         if (did)
             return this.controllers.contains(did);
         else
@@ -2575,7 +3406,7 @@ export class Builder {
      *
      * @return the owner of did document builder
      */
-    public DID getSubject() {
+    public getSubject(): DID {
         checkNotSealed();
         return document.getSubject();
     }
@@ -2699,11 +3530,11 @@ export class Builder {
             // Check the existence, both id and keyBase58
             for (let pk of document.publicKeys.values()) {
                 if (pk.getId().equals(key.getId()))
-                    throw new DIDObjectAlreadyExistException("PublicKey id '"
+                    throw new DIDobjectAlreadyExistException("PublicKey id '"
                             + key.getId() + "' already exist.");
 
                 if (pk.getPublicKeyBase58().equals(key.getPublicKeyBase58()))
-                    throw new DIDObjectAlreadyExistException("PublicKey '"
+                    throw new DIDobjectAlreadyExistException("PublicKey '"
                             + key.getPublicKeyBase58() + "' already exist.");
             }
         }
@@ -2781,20 +3612,20 @@ export class Builder {
         checkArgument(id != null, "Invalid publicKey id");
 
         if (document.publicKeys == null || document.publicKeys.isEmpty())
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         id = canonicalId(id);
         let pk = document.publicKeys.get(id);
         if (pk == null)
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         // Can not remove default public key
         if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
-            throw new DIDObjectHasReference(id.toString() + "is default key");
+            throw new DIDobjectHasReference(id.toString() + "is default key");
 
         if (!force) {
             if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
-                throw new DIDObjectHasReference(id.toString());
+                throw new DIDobjectHasReference(id.toString());
         }
 
         if (document.publicKeys.remove(id) != null) {
@@ -2802,7 +3633,7 @@ export class Builder {
                 // TODO: should delete the loosed private key when store the document
                 if (document.getMetadata().attachedStore())
                     document.getMetadata().getStore().deletePrivateKey(id);
-            } catch (DIDStoreException ignore) {
+            } catch (ignore: DIDStoreException) {
                 log.error("INTERNAL - Remove private key", ignore);
             }
 
@@ -2856,12 +3687,12 @@ export class Builder {
         checkArgument(id != null, "Invalid publicKey id");
 
         if (document.publicKeys == null || document.publicKeys.isEmpty())
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         id = canonicalId(id);
         let key: PublicKey =document.publicKeys.get(id);
         if (key == null)
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         // Check the controller is current DID subject
         if (!key.getController().equals(this.getSubject()))
@@ -2929,23 +3760,23 @@ export class Builder {
         checkArgument(id != null, "Invalid publicKey id");
 
         if (document.publicKeys == null || document.publicKeys.isEmpty())
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         id = canonicalId(id);
         let key = document.publicKeys.get(id);
         if (key == null || !key.isAuthenticationKey())
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         // Can not remove default public key
         if (document.defaultPublicKey != null && document.defaultPublicKey.getId().equals(id))
-            throw new DIDObjectHasReference(
+            throw new DIDobjectHasReference(
                     "Cannot remove the default PublicKey from authentication.");
 
         if (key.isAuthenticationKey()) {
             key.setAuthenticationKey(false);
             invalidateProof();
         } else {
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
         }
 
         return this;
@@ -2975,12 +3806,12 @@ export class Builder {
             throw new NotPrimitiveDIDException(this.getSubject().toString());
 
         if (document.publicKeys == null || document.publicKeys.isEmpty())
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         id = canonicalId(id);
         let key: PublicKey = document.publicKeys.get(id);
         if (key == null)
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         // Can not authorize to self
         if (key.getController().equals(this.getSubject()))
@@ -3000,7 +3831,7 @@ export class Builder {
      * @param id the key id string
      * @return the DID Document Builder
      */
-    public Builder addAuthorizationKey(id: string) {
+    public addAuthorizationKey(id: string): Builder {
         return addAuthorizationKey(canonicalId(id));
     }
 
@@ -3091,7 +3922,7 @@ export class Builder {
             // Check the key should be a authentication key.
         let targetPk = controllerDoc.getAuthenticationKey(key);
         if (targetPk == null)
-            throw new DIDObjectNotExistException(key.toString());
+            throw new DIDobjectNotExistException(key.toString());
 
         let pk = new PublicKey(canonicalId(id), targetPk.getType(),
                 controller, targetPk.getPublicKeyBase58());
@@ -3162,18 +3993,18 @@ export class Builder {
         checkArgument(id != null, "Invalid publicKey id");
 
         if (document.publicKeys == null || document.publicKeys.isEmpty())
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         id = canonicalId(id);
         let key: PublicKey =document.publicKeys.get(id);
         if (key == null)
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         if (key.isAuthorizationKey()) {
             key.setAuthorizationKey(false);
             invalidateProof();
         } else {
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
         }
 
         return this;
@@ -3207,7 +4038,7 @@ export class Builder {
             document.credentials = new TreeMap<DIDURL, VerifiableCredential>();
         } else {
             if (document.credentials.containsKey(vc.getId()))
-                throw new DIDObjectAlreadyExistException(vc.getId().toString());
+                throw new DIDobjectAlreadyExistException(vc.getId().toString());
         }
 
         document.credentials.put(vc.getId(), vc);
@@ -3229,7 +4060,7 @@ export class Builder {
      * @throws InvalidKeyException there is no authentication key.
      */
     // TODO: Use our new "Json" type instead of a map
-    public addCredential(id: DIDURL, types: string[] = null, subject: Map<String, Object> = null, expirationDate: Date = null, storepass: string): Builder {
+    public addCredential(id: DIDURL, types: string[] = null, subject: Map<String, object> = null, expirationDate: Date = null, storepass: string): Builder {
         checkNotSealed();
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
                 "Invalid publicKey id");
@@ -3316,12 +4147,12 @@ export class Builder {
         checkArgument(id != null, "Invalid credential id");
 
         if (document.credentials == null || document.credentials.isEmpty())
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         if (document.credentials.remove(canonicalId(id)) != null)
             invalidateProof();
         else
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         return this;
     }
@@ -3335,7 +4166,7 @@ export class Builder {
      * @return the DID Document Builder
      */
     // TODO: Use JSON object (~~ type json = {[key: string]:json}), not map, for properties?
-    public addService(id: DIDURL, type: string, endpoint: string, properties: Map<string, Object>): Builder {
+    public addService(id: DIDURL, type: string, endpoint: string, properties: Map<string, object>): Builder {
         checkNotSealed();
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
                 "Invalid publicKey id");
@@ -3347,7 +4178,7 @@ export class Builder {
             document.services = new TreeMap<DIDURL, Service>();
         else {
             if (document.services.containsKey(svc.getId()))
-                throw new DIDObjectAlreadyExistException("Service '"
+                throw new DIDobjectAlreadyExistException("Service '"
                         + svc.getId() + "' already exist.");
         }
 
@@ -3358,7 +4189,7 @@ export class Builder {
     }
 
     public Builder addService(id: string, type: string, String endpoint,
-            Map<String, Object> properties) {
+            Map<String, object> properties) {
         return addService(canonicalId(id), type, endpoint, properties);
     }
 
@@ -3389,12 +4220,12 @@ export class Builder {
         checkArgument(id != null, "Invalid credential id");
 
         if (document.services == null || document.services.isEmpty())
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         if (document.services.remove(canonicalId(id)) != null)
             invalidateProof();
         else
-            throw new DIDObjectNotExistException(id.toString());
+            throw new DIDobjectNotExistException(id.toString());
 
         return this;
     }
@@ -3455,7 +4286,7 @@ export class Builder {
             return this;
 
         if (document.proofs.remove(controller) == null)
-            throw new DIDObjectNotExistException("No proof signed by: " + controller);
+            throw new DIDobjectNotExistException("No proof signed by: " + controller);
 
         return this;
     }
@@ -3575,832 +4406,3 @@ export class Builder {
         return doc;
     }
 }
-
-export namespace DIDDocument {
-    export class MultiSignature {
-        private int m;
-        private int n;
-
-        public MultiSignature(int m, int n) {
-            apply(m, n);
-        }
-
-        private MultiSignature(MultiSignature ms) {
-            apply(ms.m, ms.n);
-        }
-
-        @JsonCreator
-        public MultiSignature(String mOfN) {
-            if (mOfN == null || mOfN.isEmpty())
-                throw new IllegalArgumentException("Invalid multisig spec");
-
-            String[] mn = mOfN.split(":");
-            if (mn == null || mn.length != 2)
-                throw new IllegalArgumentException("Invalid multisig spec");
-
-            apply(Integer.valueOf(mn[0]), Integer.valueOf(mn[1]));
-        }
-
-        protected apply(int m, int n) {
-            checkArgument(n > 1, "Invalid multisig spec: n should > 1");
-            checkArgument(m > 0 && m <= n,  "Invalid multisig spec: m should > 0 and <= n");
-
-            this.m = m;
-            this.n = n;
-        }
-
-        public int m() {
-            return m;
-        }
-
-        public int n() {
-            return n;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-
-            if (obj instanceof MultiSignature) {
-                MultiSignature multisig = (MultiSignature)obj;
-                return m == multisig.m && n == multisig.n;
-            }
-
-            return false;
-        }
-
-        @Override
-        @JsonValue
-        public String toString() {
-            return String.format("%d:%d", m, n);
-        }
-    }
-
-    /**
-     * Publickey is used for digital signatures, encryption and
-     * other cryptographic operations, which are the basis for purposes such as
-     * authentication or establishing secure communication with service endpoints.
-     */
-    @JsonPropertyOrder({ ID, TYPE, CONTROLLER, PUBLICKEY_BASE58 })
-    @JsonFilter("publicKeyFilter")
-    export class PublicKey implements DIDObject, Comparable<PublicKey> {
-        @JsonProperty(ID)
-        private DIDURL id;
-        @JsonProperty(TYPE)
-        private type: string;
-        @JsonProperty(CONTROLLER)
-        private DID controller;
-        @JsonProperty(PUBLICKEY_BASE58)
-        private String keyBase58;
-        private boolean authenticationKey;
-        private boolean authorizationKey;
-
-        /**
-         * Constructs Publickey with the given value.
-         *
-         * @param id the Id for PublicKey
-         * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
-         * @param controller the DID who holds private key
-         * @param keyBase58 the string from encoded base58 of public key
-         */
-        @JsonCreator
-        protected PublicKey(@JsonProperty(value = ID, required = true) DIDURL id,
-                @JsonProperty(value = TYPE) type: string,
-                @JsonProperty(value = CONTROLLER) controller: DID,
-                @JsonProperty(value = PUBLICKEY_BASE58, required = true) String keyBase58) {
-            this.id = id;
-            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-            this.controller = controller;
-            this.keyBase58 = keyBase58;
-        }
-
-        /**
-         * Get the PublicKey id.
-         *
-         * @return the identifier
-         */
-        @Override
-        public DIDURL getId() {
-            return id;
-        }
-
-        /**
-         * Get the PublicKey type.
-         *
-         * @return the type string
-         */
-        @Override
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * Get the controller of Publickey.
-         *
-         * @return the controller
-         */
-        public DID getController() {
-            return controller;
-        }
-
-        /**
-         * Get public key base58 string.
-         *
-         * @return the key base58 string
-         */
-        public String getPublicKeyBase58() {
-            return keyBase58;
-        }
-
-        /**
-         * Get public key bytes.
-         *
-         * @return the key bytes
-         */
-        public byte[] getPublicKeyBytes() {
-            return Base58.decode(keyBase58);
-        }
-
-        /**
-         * Check if the key is an authentication key or not.
-         *
-         * @return if the key is an authentication key or not
-         */
-        public boolean isAuthenticationKey() {
-            return authenticationKey;
-        }
-
-        private setAuthenticationKey(boolean authenticationKey) {
-            this.authenticationKey = authenticationKey;
-        }
-
-        /**
-         * Check if the key is an authorization key or not.
-         *
-         * @return if the key is an authorization key or not
-         */
-        public boolean isAuthorizationKey() {
-            return authorizationKey;
-        }
-
-        private setAuthorizationKey(boolean authorizationKey) {
-            this.authorizationKey = authorizationKey;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-
-            if (obj instanceof PublicKey) {
-                PublicKey ref = (PublicKey)obj;
-
-                if (getId().equals(ref.getId()) &&
-                        getType().equals(ref.getType()) &&
-                        getController().equals(ref.getController()) &&
-                        getPublicKeyBase58().equals(ref.getPublicKeyBase58()))
-                    return true;
-            }
-
-            return false;
-        }
-
-        @Override
-        public int compareTo(key: PublicKey) {
-            int rc = id.compareTo(key.id);
-
-            if (rc != 0)
-                return rc;
-            else
-                rc = keyBase58.compareTo(key.keyBase58);
-
-            if (rc != 0)
-                return rc;
-            else
-                rc = type.compareTo(key.type);
-
-            if (rc != 0)
-                return rc;
-            else
-                return controller.compareTo(key.controller);
-        }
-
-        protected static PropertyFilter getFilter() {
-            return new DIDPropertyFilter() {
-                @Override
-                protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
-                    if (context.isNormalized())
-                        return true;
-
-                    PublicKey pk = (PublicKey)pojo;
-                    switch (writer.getName()) {
-                    case TYPE:
-                        return !(pk.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
-
-                    case CONTROLLER:
-                        return !(pk.getController().equals(context.getDid()));
-
-                    default:
-                        return true;
-                    }
-                }
-            };
-        }
-    }
-
-    @JsonSerialize(using = PublicKeyReference.Serializer.class)
-    @JsonDeserialize(using = PublicKeyReference.Deserializer.class)
-    export class PublicKeyReference implements Comparable<PublicKeyReference> {
-        private DIDURL id;
-        private PublicKey key;
-
-        protected PublicKeyReference(id: DIDURL) {
-            this.id = id;
-            this.key = null;
-        }
-
-        protected PublicKeyReference(key: PublicKey) {
-            this.id = key.getId();
-            this.key = key;
-        }
-
-        public boolean isVirtual() {
-            return key == null;
-        }
-
-        public DIDURL getId() {
-            return id;
-        }
-
-        public PublicKey getPublicKey() {
-            return key;
-        }
-
-        protected update(key: PublicKey) {
-            checkArgument(key != null && key.getId().equals(id));
-
-            this.id = key.getId();
-            this.key = key;
-        }
-
-        @Override
-        public int compareTo(PublicKeyReference ref) {
-            if (key != null && ref.key != null)
-                return key.compareTo(ref.key);
-            else
-                return id.compareTo(ref.id);
-        }
-
-        static class Serializer extends StdSerializer<PublicKeyReference> {
-            private static final long serialVersionUID = -6934608221544406405L;
-
-            public Serializer() {
-                this(null);
-            }
-
-            public Serializer(Class<PublicKeyReference> t) {
-                super(t);
-            }
-
-            @Override
-            public serialize(PublicKeyReference keyRef, JsonGenerator gen,
-                    SerializerProvider provider) {
-                gen.writeObject(keyRef.getId());
-            }
-        }
-
-        static class Deserializer extends StdDeserializer<PublicKeyReference> {
-            private static final long serialVersionUID = -4252894239212420927L;
-
-            public Deserializer() {
-                this(null);
-            }
-
-            public Deserializer(Class<?> t) {
-                super(t);
-            }
-
-            @Override
-            public PublicKeyReference deserialize(JsonParser p, DeserializationContext ctxt) {
-                JsonToken token = p.getCurrentToken();
-                if (token.equals(JsonToken.VALUE_STRING)) {
-                    DIDURL id = p.readValueAs(DIDURL.class);
-                    return new PublicKeyReference(id);
-                } else if (token.equals(JsonToken.START_OBJECT)) {
-                    let key: PublicKey =p.readValueAs(PublicKey.class);
-                    return new PublicKeyReference(key);
-                } else
-                    throw ctxt.weirdStringException(p.getText(),
-                            PublicKey.class, "Invalid public key");
-            }
-
-        }
-    }
-
-    /**
-     * A Service may represent any type of service the subject
-     * wishes to advertise, including decentralized identity management services
-     * for further discovery, authentication, authorization, or interaction.
-     */
-    @JsonPropertyOrder({ ID, TYPE, SERVICE_ENDPOINT })
-    export class Service implements DIDObject {
-        @JsonProperty(ID)
-        private DIDURL id;
-        @JsonProperty(TYPE)
-        private type: string;
-        @JsonProperty(SERVICE_ENDPOINT)
-        private String endpoint;
-
-        private Map<String, Object> properties;
-
-        protected Service(id: DIDURL, type: string, String endpoint,
-                Map<String, Object> properties) {
-            this.id = id;
-            this.type = type;
-            this.endpoint = endpoint;
-
-            if (properties != null && !properties.isEmpty()) {
-                this.properties = new TreeMap<String, Object>(properties);
-                this.properties.remove(ID);
-                this.properties.remove(TYPE);
-                this.properties.remove(SERVICE_ENDPOINT);
-            }
-        }
-
-        /**
-         * Constructs Service with the given value.
-         *
-         * @param id the id for Service
-         * @param type the type of Service
-         * @param endpoint the address of service point
-         */
-        @JsonCreator
-        protected Service(@JsonProperty(value = ID, required = true) DIDURL id,
-                @JsonProperty(value = TYPE, required = true) type: string,
-                @JsonProperty(value = SERVICE_ENDPOINT, required = true) String endpoint) {
-            this(id, type, endpoint, null);
-        }
-
-        /**
-         * Get the service id.
-         *
-         * @return the identifier
-         */
-        @Override
-        public DIDURL getId() {
-            return id;
-        }
-
-        /**
-         * Get the service type.
-         *
-         * @return the type string
-         */
-        @Override
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * Get service point string.
-         *
-         * @return the service point string
-         */
-        public String getServiceEndpoint() {
-            return endpoint;
-        }
-
-        /**
-         * Helper getter method for properties serialization.
-         * NOTICE: Should keep the alphabetic serialization order.
-         *
-         * @return a String to Object map include all application defined
-         *         properties
-         */
-        @JsonAnyGetter
-        @JsonPropertyOrder(alphabetic = true)
-        private Map<String, Object> _getProperties() {
-            return properties;
-        }
-
-        /**
-         * Helper setter method for properties deserialization.
-         *
-         * @param name the property name
-         * @param value the property value
-         */
-        @JsonAnySetter
-        private setProperty(String name, Object value) {
-            if (name.equals(ID) || name.equals(TYPE) || name.equals(SERVICE_ENDPOINT))
-                return;
-
-            if (properties == null)
-                properties = new TreeMap<String, Object>();
-
-            properties.put(name, value);
-        }
-
-        public Map<String, Object> getProperties() {
-            // TODO: make it unmodifiable recursively
-             return Collections.unmodifiableMap(properties != null ?
-                     properties : Collections.emptyMap());
-        }
-    }
-
-    /**
-     * The Proof represents the proof content of DID Document.
-     */
-    @JsonPropertyOrder({ TYPE, CREATED, CREATOR, SIGNATURE_VALUE })
-    @JsonFilter("didDocumentProofFilter")
-    export class Proof implements Comparable<Proof> {
-        @JsonProperty(TYPE)
-        private type: string;
-        @JsonInclude({value: JsonIncludeType.NON_NULL})
-        @JsonProperty(CREATED)
-        private Date created;
-        @JsonInclude({value: JsonIncludeType.NON_NULL})
-        @JsonProperty(CREATOR)
-        private DIDURL creator;
-        @JsonProperty(SIGNATURE_VALUE)
-        private signature: string;
-
-        /**
-         * Constructs the proof of DIDDocument with the given value.
-         *
-         * @param type the type of Proof
-         * @param created the time to create DIDDocument
-         * @param creator the key to sign
-         * @param signature the signature string
-         */
-        @JsonCreator
-        protected Proof(@JsonProperty(value = TYPE) type: string,
-                @JsonProperty(value = CREATED, required = true) Date created,
-                @JsonProperty(value = CREATOR) DIDURL creator,
-                @JsonProperty(value = SIGNATURE_VALUE, required = true) signature: string) {
-            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-            this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
-            this.creator = creator;
-            this.signature = signature;
-        }
-
-        /**
-         * Constructs the proof of DIDDocument with the key id and signature string.
-         *
-         * @param creator the key to sign
-         * @param signature the signature string
-         */
-        protected Proof(DIDURL creator, signature: string) {
-            this(null, Calendar.getInstance(Constants.UTC).getTime(), creator, signature);
-        }
-
-        /**
-         * Get Proof type.
-         *
-         * @return the type string
-         */
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * Get the time to create DIDDocument.
-         *
-         * @return the time
-         */
-        public Date getCreated() {
-            return created;
-        }
-
-        /**
-         * Get the key id to sign.
-         *
-         * @return the key id
-         */
-        public DIDURL getCreator() {
-            return creator;
-        }
-
-        /**
-         * Get signature string.
-         *
-         * @return the signature string
-         */
-        public String getSignature() {
-            return signature;
-        }
-
-        @Override
-        public int compareTo(Proof proof) {
-            int rc = (int)(this.created.getTime() - proof.created.getTime());
-            if (rc == 0)
-                rc = this.creator.compareTo(proof.creator);
-            return rc;
-        }
-
-        protected static PropertyFilter getFilter() {
-            return new DIDPropertyFilter() {
-                @Override
-                protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
-                    if (context.isNormalized())
-                        return true;
-
-                    Proof proof = (Proof)pojo;
-                    switch (writer.getName()) {
-                    case TYPE:
-                        return !(proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
-
-                    default:
-                        return true;
-                    }
-                }
-            };
-        }
-    }
-}
-
-
-
-/*
-import { StaticConfiguration } from "./staticconfiguration";
-import { Util, Signer, DIDUtil, Cache } from "./core";
-import { DIDElement, JSONObject, Service, Subject, Proof, DocumentPublicKey, VerifiableCredential, VerifiablePresentation } from "./domain";
-import { DID } from "./did"
-
-export class DIDDocument extends JSONObject {
-
-    public verifiableCredential: VerifiableCredential[];
-    public verifiablePresentation: VerifiablePresentation[];
-    public service: Service[];
-    public proof?: Proof;
-    public readonly id: any;
-    public readonly publicKey: DocumentPublicKey[];
-    public readonly authentication: any;
-    public readonly expires: string;
-    private didElement: DIDElement;
-
-    public constructor (didElement: DIDElement) {
-        super();
-        this.id = didElement.did;
-        this.publicKey = this.getPublicKeyProperty(didElement);
-        this.authentication = [`${didElement.did}#primary`];
-        this.expires = this.getExpiration().toISOString().split('.')[0]+"Z";
-        this.verifiableCredential = [];
-        this.verifiablePresentation = [];
-        this.service = [];
-    }
-
-    public clone(): DIDDocument {
-        let clonedDocument = new DIDDocument(this.didElement);
-
-        if (this.proof) {
-            clonedDocument.proof = this.proof;
-        }
-        if (this.verifiableCredential) {
-            clonedDocument.verifiableCredential = this.verifiableCredential;
-        }
-        if (this.verifiablePresentation) {
-            clonedDocument.verifiablePresentation = this.verifiablePresentation;
-        }
-        if (this.service) {
-            clonedDocument.service = this.service;
-        }
-        return clonedDocument;
-    }
-
-
-
-    public addVerfiableCredential (vc: VerifiableCredential) {
-        if (this.proof)
-        {
-            console.error("You can't modify this document because is already sealed");
-            return;
-        }
-
-        if (!this.verifiableCredential) this.verifiableCredential = [];
-        this.verifiableCredential.push(vc);
-    }
-
-    public addService (service: Service) {
-        if (this.proof)
-        {
-            console.error("You can't modify this document because is already sealed");
-            return;
-        }
-        if (!this.service) this.service = [];
-
-        let serviceIndex = -1;
-        this.service.forEach((element, index) => {
-            if (element.id.toLowerCase() === service.id.toLowerCase())
-            {
-              serviceIndex = index
-            }
-        });
-
-        if (serviceIndex >= 0){
-            this.service[serviceIndex] = service
-        }
-        else {
-            this.service.push(service);
-        }
-    }
-
-
-    public createVerifiableCredential (didElement: DIDElement, issuer: DID, subjectName: string, subjectTypes: string[], subjectValue: any) {
-        let issuanceDate = new Date();
-        let vcTypes = subjectTypes
-        vcTypes.push(issuer === didElement.did ? "SelfProclaimedCredential" : "VerifiableCredential")
-
-        let subject = new Subject(didElement.did);
-        subject.name = subjectName;
-        subject.value = subjectValue;
-        let vc = new VerifiableCredential(
-            didElement.did,
-            vcTypes,
-            issuer,
-            issuanceDate.toISOString().split('.')[0]+"Z",
-            this.getExpiration(issuanceDate).toISOString().split('.')[0]+"Z",
-            subject);
-
-        this.sign(didElement, vc);
-
-        return vc;
-    }
-
-    public createService (didElement, did: DID, type, endpoint) {
-        return new Service(`${did}#${type.toLowerCase()}`, type, endpoint);
-    }
-
-    public createVerifiableCredentialVP (appDid: DID, userDid: DID, appName: string) {
-        let issuanceDate = new Date();
-        let vcTypes = ["AppIdCredential"];
-        let subject = new Subject(appDid.did);
-        subject.appDid = appName;
-        subject.appInstanceDid = appDid.did;
-
-        let vc = new VerifiableCredential(
-            `${appDid.did}#app-id-credential`,
-            vcTypes,
-            userDid.did,
-            issuanceDate.toISOString().split('.')[0]+"Z",
-            this.getExpiration(issuanceDate).toISOString().split('.')[0]+"Z",
-            subject);
-
-        this.sign(userDid, vc);
-
-        return vc
-    }
-
-    public createVerifiablePresentation (didElement: DIDElement, type: String, verifiableCredential: VerifiableCredential, realm: string, nonce: string) {
-        let createDate = new Date();
-        let vp = new VerifiablePresentation(type, createDate.toISOString().split('.')[0]+"Z", [verifiableCredential]);
-
-        this.signVp(didElement, vp, realm, nonce);
-
-        return vp;
-    }
-
-    public sealDocument (didElement: DIDElement) {
-        if (this.proof)
-        {
-            console.error("You can't modify this document because is already sealed");
-            return;
-        }
-
-        let proof = new Proof("ECDSAsecp256r1");
-        proof.created = new Date().toISOString().split('.')[0]+"Z";
-        proof.creator = `${didElement.did}#primary`;
-
-        let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
-        let signature = Signer.signData(dataToSign, didElement.privateKey);
-        proof.signatureValue = signature;
-        this.proof = proof;
-    }
-
-    public isValid (diddocument, didElement) {
-
-        let document = JSON.parse(JSON.stringify(diddocument));
-        delete document.proof;
-        let dataToValidate = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase();
-
-        return Signer.verifyData(dataToValidate, diddocument["proof"]["signatureValue"], didElement.publicKey);
-    }
-
-    public async getMostRecentDIDDocument (did, options: Map<string, any> = new Map()) {
-        let elastosRPCHost = StaticConfiguration.ELASTOS_RPC_ADDRESS.mainchain;
-        let useCache =  true;
-
-        if (options && "elastosRPCHost" in options) elastosRPCHost = options["elastosRPCHost"];
-        if (options && "useCache" in options) useCache = options["useCache"];
-        if (!did) throw new Error("Invalid DID");
-
-        let searchDid = did.replace("did:elastos:", "");
-
-        if (useCache){
-            let found = this.searchDIDDocumentOnCache(searchDid);
-            if (found) return found;
-        }
-
-
-        let document = await this.searchDIDDocumentOnBlockchain(searchDid, elastosRPCHost);
-        if (!document) return undefined;
-        if (useCache) this.setDIDDocumentOnCache(searchDid, document);
-
-        return document;
-    }
-
-    private sign (didElement, document) {
-        let proof = new Proof("ECDSAsecp256r1");
-        proof.verificationMethod = `${didElement.did}#primary`;
-
-        let dataToSign = Buffer.from(JSON.stringify(document, null, ""), "utf8").toString("hex").toUpperCase()
-        let signature = Signer.signData(dataToSign, didElement.privateKey);
-        proof.signature = signature;
-        document.proof = proof;
-    }
-
-    private signVp (didElement, document, realm, nonce) {
-        let proof = new Proof("ECDSAsecp256r1");
-        proof.verificationMethod = `${didElement.did}#primary`;
-        proof.realm = realm;
-        proof.nonce = nonce;
-
-        let json = JSON.stringify(document, null, "");
-
-        let dataToSign = Buffer.from(json + realm + nonce, "utf8").toString("hex").toUpperCase()
-        let signature = Signer.signData(dataToSign, didElement.privateKey);
-        proof.signature = signature;
-        document.proof = proof;
-    }
-
-    private getExpiration (date: Date = new Date(), yearsToAdd: number = 5) {
-        let newDate: Date = new Date(date.getTime());
-        newDate.setFullYear(date.getFullYear() + yearsToAdd)
-
-        return newDate;
-    }
-
-    private getPublicKeyProperty (didElement) {
-        return [new DocumentPublicKey(
-            `${didElement.did}#primary`,
-            "ECDSAsecp256r1",
-            didElement.did,
-            didElement.publicKeyBase58)];
-    }
-
-    private setDIDDocumentOnCache (did, diddocument) {
-        console.log("Enter on setDIDDocumentOnCache", did, diddocument);
-        let storage = window.localStorage; //?? localStorage
-        let cache = storage.key["elastos_cache"];
-        if (!cache){
-            cache = {};
-        }
-
-        this.clearExpiredCacheItems(cache);
-
-        cache[did] = {
-            "expiration": Util.getTimestamp() + (5 * 60),  //Five minutes cache
-            "document": diddocument
-        }
-
-        console.log("store cache", cache);
-        storage.setItem("elastos_cache", JSON.stringify(cache));
-    }
-
-    private clearExpiredCacheItems (cache) {
-        var keys = Object.keys(cache);
-        let timestamp = Util.getTimestamp();
-        for (var i = 0; i < keys.length; i++) {
-            if (timestamp > keys[i]["expiration"]) delete keys[i];
-        }
-    }
-
-    private async searchDIDDocumentOnBlockchain (did, rpcHost) {
-
-        let responseJson = await DIDUtil.rpcResolveDID(did, rpcHost);
-
-        if (!responseJson ||
-            !responseJson["result"] ||
-            !responseJson["result"]["transaction"]) return undefined;
-
-        let lastTransaction = responseJson["result"]["transaction"][0];
-        let payload = atob(lastTransaction["operation"]["payload"]);
-        return JSON.parse(payload);
-    }
-
-    private searchDIDDocumentOnCache (did) {
-        let storage = window.localStorage; //?? localStorage
-        let cache = storage.getItem("elastos_cache");
-        if (!cache) return undefined;
-        let jsonCache = JSON.parse(cache);
-        let cacheItem = jsonCache[did];
-        if (!cacheItem) return undefined;
-
-        let timestamp = Util.getTimestamp();
-
-        if (timestamp > cacheItem["expiration"]) return undefined;
-
-        return cacheItem["document"];
-    }
-}
-*>
