@@ -30,3 +30,4 @@ export class MalformedResolveResultException extends ParentException {}
 export class DIDSyntaxException extends ParentException {}
 export class MalformedResolveResponseException extends ParentException {}
 export class DIDNotFoundException extends ParentException {}
+export class MalformedDIDURLException extends ParentException {}

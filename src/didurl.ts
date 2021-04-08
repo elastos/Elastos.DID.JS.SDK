@@ -20,10 +20,11 @@
  * SOFTWARE.
  */
 
-import * as Collections from 'typescript-collections';
 import { Map as ImmutableMap } from "immutable";
 import { AbstractMetadata } from "./abstractmetadata";
 import { DID } from "./did";
+import { MalformedDIDURLException } from "./exceptions/exceptions";
+import { ParserHelper } from "./parser/parserhelper";
 import { checkArgument } from "./utils";
 
 /**
@@ -36,94 +37,78 @@ import { checkArgument } from "./utils";
 //@JsonSerialize(using = DIDURL.Serializer.class)
 //@JsonDeserialize(using = DIDURL.Deserializer.class)
 export class DIDURL /* implements Comparable<DIDURL> */ {
-	private static SEPS = ":;/?#";
+	//private static SEPS = ":;/?#";
+	private static SEPS = [':', ';', '/', '?', '#'];
 
-	private did: DID | null = null;
-	private parameters: Map<string, string> = new Map();
-	private path: string = "";
-	private query: Map<string, string> = new Map();
-	private fragment: string = "";
+	public /* private */ did: DID | null = null;
+	public /* private */ parameters: Map<string, string> = new Map();
+	public /* private */ path: string = "";
+	public /* private */ query: Map<string, string> = new Map();
+	public /* private */ fragment: string = "";
 
-	private metadata: AbstractMetadata | null = null;
+	public /* private */ metadata: AbstractMetadata | null = null;
 
-	/**
-	 * Constructs the DIDURl with the given value.
-	 *
-	 * @param base the owner of DIDURL
-	 * @param url the DIDURl string
-	 */
-	public constructor(baseRef: DID | null, url: string | null = null) {
-		checkArgument(url != null && url !== "", "Invalid url");
-
-		// Compatible with v1, support fragment without leading '#'
-		/* if (!url.startsWith("did:")) {
-			let noSep = true;
-			char[] chars = url.toCharArray();
-			for (char ch : chars) {
-				if (SEPS.indexOf(ch) >= 0) {
-					noSep = false;
-					break;
-				}
-			}
-
-			if (noSep) // fragment only
-				url = "#" + url;
-		}
-
-		try {
-			ParserHelper.parse(url, false, new Listener());
-
-			if (parameters == null || parameters.isEmpty())
-				parameters = Collections.emptyMap();
-
-			if (query == null || query.isEmpty())
-				query = Collections.emptyMap();
-
-		} catch (Exception e) {
-			throw new MalformedDIDURLException(url, e);
-		}
-
-		if (this.did == null && baseRef != null)
-			this.did = baseRef; */
-	}
-
-	public DIDURL(DID baseRef, DIDURL url) {
-		checkArgument(url != null, "Invalid url");
-
-		this.did = url.did == null ? baseRef : url.did;
-		this.parameters = url.parameters;
-		this.path = url.path;
-		this.query = url.query;
-		this.fragment = url.fragment;
-		this.metadata = url.metadata;
-	}
-
-	public DIDURL(DID did) {
-		this.did = did;
-	}
+	protected constructor() {}
 
 	// Deep-copy constructor
-	private DIDURL(DIDURL url) {
-		this.did = url.did;
-		this.parameters = url.parameters.isEmpty() ? new Map() :
-		// TODO: LinkedHashMap is used to preserve the parameters orders during serialization of DIDURL to string
-				new Map<String, String>(url.parameters);
-		this.path = url.path;
-		this.query = url.query.isEmpty() ? Collections.emptyMap() :
-				new Map<String, String>(url.query);
-		this.fragment = url.fragment;
-	}
+	public static valueOf(baseRef: DID | string | null, didUrlOrString: DIDURL | string | null = null): DIDURL {
+		checkArgument(didUrlOrString != null, "Invalid url");
 
-	public static valueOf(baseRef: DID | string, url: string): DIDURL | null {
-		if (baseRef instanceof DID)
-			return (url == null || url !== "") ? null : new DIDURL(baseRef, url);
-		else // baseRef as string type
-			return (url == null || url !== "") ? null : new DIDURL(DID.valueOf(baseRef), url);
+		if (typeof baseRef === "string")
+			baseRef = DID.valueOf(baseRef);
+
+		let didUrl = new DIDURL();
+		if (typeof didUrlOrString === "string") {
+			checkArgument(didUrlOrString !== "", "Invalid url");
+
+			// Compatible with v1, support fragment without leading '#'
+			if (!didUrlOrString.startsWith("did:")) {
+				/* JAVA: let noSep = true;
+				char[] chars = didUrlOrString.toCharArray();
+				for (char ch : chars) {
+					if (DIDURL.SEPS.indexOf(ch) >= 0) {
+						noSep = false;
+						break;
+					}
+				}*/
+
+				let url: string = didUrlOrString;
+				let noSep = !DIDURL.SEPS.some(c => url.includes(c));
+
+				if (noSep) // fragment only
+					didUrlOrString = "#" + didUrlOrString;
+			}
+
+			try {
+				ParserHelper.parse(didUrlOrString, false, new Listener());
+
+				if (didUrl.parameters == null || didUrl.parameters.size == 0)
+					didUrl.parameters = new Map();
+
+				if (didUrl.query == null || didUrl.query.size == 0)
+					didUrl.query = new Map();
+
+			} catch (e) {
+				throw new MalformedDIDURLException(didUrlOrString, e);
+			}
+
+			if (didUrl.did == null && baseRef != null)
+				didUrl.did = baseRef;
+		}
+		else {
+			// url is a string
+			didUrl.did = didUrlOrString.did == null ? baseRef : didUrlOrString.did;
+			didUrl.parameters = didUrlOrString.parameters.size == 0 ? new Map() : new Map<String, String>(didUrlOrString.parameters);
+			didUrl.path = didUrlOrString.path;
+			didUrl.query = didUrlOrString.query.size == 0 ? new Map() : new Map<String, String>(didUrlOrString.query);
+			didUrl.fragment = didUrlOrString.fragment;
+			return didUrl;
+		}
 	}
 
 	// Note: in java this was also a valueOf().
 	public static valueOfUrl(url: string): DIDURL {
-		return (url == null || url !== "") ? null : new DIDURL(url);
+		return (url == null || url !== "") ? null : DIDURL.valueOf(null, url);
 	}
 
 	/**
@@ -147,19 +132,18 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 	private mapToString(map: Map<string, string>, sep: string): string {
 		let init = true;
 
-		StringBuilder builder = new StringBuilder(512);
-		for (Map.Entry<String, String> entry : map.entrySet()) {
+		let str: string = "";
+		map.forEach((value, key)=> {
 			if (init)
 				init = false;
 			else
-				builder.append(sep);
+				str += sep;
 
-			builder.append(entry.getKey());
-			if (entry.getValue() != null)
-				builder.append("=").append(entry.getValue());
-		}
-
-		return builder.toString();
+		 	str += key;
+			if (value != null)
+				str += "=" + value;
+		});
+		return str;
 	}
 
 	/**
@@ -504,121 +488,123 @@ class Listener extends DIDURLBaseListener {
 	}
 }
 
-class Builder {
-	private url: DIDURL;
+export namespace DIDURL {
+	export class Builder {
+		private url: DIDURL;
 
-	public constructor(didOrDidUrl: DIDURL | DID | string) {
-		let didUrl: DIDURL;
-		if (didOrDidUrl instanceof DID) {
-			didUrl = new DIDURL(didOrDidUrl);
+		public constructor(didOrDidUrl: DIDURL | DID | string) {
+			let didUrl: DIDURL;
+			if (didOrDidUrl instanceof DID) {
+				didUrl = DIDURL.valueOf(didOrDidUrl);
+			}
+			else if (didOrDidUrl instanceof DID) {
+				didUrl = DIDURL.valueOfUrl(didOrDidUrl);
+			}
+			else {
+				didUrl = didOrDidUrl as DIDURL;
+			}
+
+			this.url = DIDURL.valueOf(didUrl.getDid());
+			this.url.parameters = new Map<string, string>(didUrl.parameters);
+			this.url.path = didUrl.path;
+			this.url.query = new Map<string, string>(didUrl.query);
+			this.url.fragment = didUrl.fragment;
 		}
-		else if (didOrDidUrl instanceof DID) {
-			didUrl = new DIDURL(didOrDidUrl);
+
+		public setDid(didOrString: DID | string): Builder {
+			checkArgument(didOrString != null, "Invalid did");
+
+			if (didOrString instanceof DID)
+				this.url.setDid(didOrString);
+			else
+				this.url.setDid(DID.valueOf(didOrString));
+			return this;
 		}
-		else {
-			didUrl = didOrDidUrl as DIDURL;
+
+		public clearDid(): Builder {
+			this.url.setDid(null);
+			return this;
 		}
 
-		this.url = new DIDURL(didUrl.getDid());
-		this.url.parameters = new LinkedHashMap<String, String>(didUrl.parameters);
-		this.url.path = didUrl.path;
-		this.url.query = new LinkedHashMap<String, String>(didUrl.query);
-		this.url.fragment = didUrl.fragment;
-	}
+		public setParameter(name: string, value: string): Builder {
+			checkArgument(name != null && name !== "", "Invalid parameter name");
 
-	public setDid(didOrString: DID | string): Builder {
-		checkArgument(didOrString != null, "Invalid did");
+			this.url.parameters.set(name, value);
+			return this;
+		}
 
-		if (didOrString instanceof DID)
-			this.url.setDid(didOrString);
-		else
-			this.url.setDid(DID.valueOf(didOrString));
-		return this;
-	}
+		public setParameters(params: Map<string, string>): Builder {
+			this.url.parameters.clear();
 
-	public clearDid(): Builder {
-		this.url.setDid(null);
-		return this;
-	}
+			if (params != null && params.size > 0)
+			params.forEach((v,k)=> this.url.parameters.set(k, v));
 
-	public setParameter(name: string, value: string): Builder {
-		checkArgument(name != null && name !== "", "Invalid parameter name");
+			return this;
+		}
 
-		this.url.parameters.put(name, value);
-		return this;
-	}
+		public removeParameter(name: string): Builder {
+			checkArgument(name != null && name !== "", "Invalid parameter name");
 
-	public setParameters(params: Map<string, string>): Builder {
-		this.url.parameters.clear();
+			this.url.parameters.delete(name);
 
-		if (params != null && params.size > 0)
-		this.url.parameters.putAll(params);
+			return this;
+		}
 
-		return this;
-	}
+		public clearParameters(): Builder {
+			this.url.parameters.clear();
+			return this;
+		}
 
-	public removeParameter(name: string): Builder {
-		checkArgument(name != null && name !== "", "Invalid parameter name");
+		public setPath(path: string): Builder {
+			this.url.path = path == null || path === "" ? null : path;
+			return this;
+		}
 
-		this.url.parameters.remove(name);
+		public clearPath(): Builder {
+			this.url.path = null;
+			return this;
+		}
 
-		return this;
-	}
+		public setQueryParameter(name: string, value: string): Builder {
+			checkArgument(name != null && name !== "", "Invalid parameter name");
 
-	public clearParameters(): Builder {
-		this.url.parameters.clear();
-		return this;
-	}
+			this.url.query.set(name, value);
+			return this;
+		}
 
-	public setPath(path: string): Builder {
-		this.url.path = path == null || path === "" ? null : path;
-		return this;
-	}
+		public setQueryParameters(params: Map<string, string>): Builder {
+			this.url.query.clear();
 
-	public clearPath(): Builder {
-		this.url.path = null;
-		return this;
-	}
+			if (params != null && params.size > 0)
+				params.forEach((v,k)=> this.url.query.set(k, v));
 
-	public setQueryParameter(name: string, value: string): Builder {
-		checkArgument(name != null && name !== "", "Invalid parameter name");
+			return this;
+		}
 
-		this.url.query.put(name, value);
-		return this;
-	}
+		public removeQueryParameter(name: string): Builder {
+			checkArgument(name != null && name !== "", "Invalid parameter name");
 
-	public setQueryParameters(params: Map<string, string>): Builder {
-		this.url.query.clear();
+			this.url.query.delete(name);
+			return this;
+		}
 
-		if (params != null && params.size > 0)
-			this.url.query.putAll(params);
+		public clearQueryParameters(): Builder {
+			this.url.query.clear();
+			return this;
+		}
 
-		return this;
-	}
+		public setFragment(fragment: string): Builder {
+			this.url.fragment = fragment == null || fragment === "" ? null : fragment;
+			return this;
+		}
 
-	public removeQueryParameter(name: string): Builder {
-		checkArgument(name != null && name !== "", "Invalid parameter name");
+		public clearFragment(): Builder {
+			this.url.fragment = null;
+			return this;
+		}
 
-		this.url.query.remove(name);
-		return this;
-	}
-
-	public clearQueryParameters(): Builder {
-		this.url.query.clear();
-		return this;
-	}
-
-	public setFragment(fragment: string): Builder {
-		this.url.fragment = fragment == null || fragment === "" ? null : fragment;
-		return this;
-	}
-
-	public clearFragment(): Builder {
-		this.url.fragment = null;
-		return this;
-	}
-
-	public build(): DIDURL {
-		return new DIDURL(this.url);
+		public build(): DIDURL {
+			return DIDURL.valueOf(null, this.url);
+		}
 	}
 }
