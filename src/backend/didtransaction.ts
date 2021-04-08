@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,20 +20,19 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.backend;
-
-import java.util.Date;
-
-import org.elastos.did.DID;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
+import { JsonCreator } from "jackson-js";
+import { DID } from "../did";
+import { DIDRequest } from "./didrequest";
+import { IDTransaction } from "./idtransaction";
 
 /**
  * The class records the information of the specified DID's transaction.
  */
-public class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
-	@JsonCreator
-	protected DIDTransaction() {}
+export class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
+	@JsonCreator()
+	static toDIDTransaction(): DIDTransaction {
+		return new DIDTransaction();
+	}
 
 	/**
 	 * Constructs the DIDTransaction with the given value.
@@ -42,11 +41,11 @@ public class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
 	 * @param timestamp the time stamp
 	 * @param request the IDChainRequest content
 	 */
-	protected DIDTransaction(String txid, Date timestamp, DIDRequest request) {
+	protected constructor(txid: string = null, timestamp: Date = null, request: DIDRequest = null) {
 		super(txid, timestamp, request);
 	}
 
-	public DID getDid() {
-		return getRequest().getDid();
+	public getDid(): DID {
+		return this.getRequest().getDid();
 	}
 }

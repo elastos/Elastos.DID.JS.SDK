@@ -31,29 +31,34 @@ import { IDChainRequest, Proof } from "./idchaindrequest";
 /**
  * The DID request class.
  */
+ @JsonCreator()
 export class DIDRequest extends IDChainRequest<DIDRequest> {
 	private did: DID;
 	private doc: DIDDocument;
 
-	@JsonCreator()
-	protected constructor() {}
-
-	private constructor(Operation operation) {
-		super(operation);
+	private static newWithOperation(operation: Operation): DIDRequest {
+		let didRequest = new DIDRequest();
+		didRequest.constructWithOperation(operation);
+		return didRequest;
 	}
 
-	private constructor(Operation operation, String previousTxid) {
-		super(operation, previousTxid);
+	private static newWithPreviousTxId(operation: Operation, previousTxid: string): DIDRequest {
+		let didRequest = new DIDRequest();
+		didRequest.constructWithPreviousTxId(operation, previousTxid);
+		return didRequest;
 	}
 
-	private constructor(Operation operation, TransferTicket ticket) {
-		super(operation, ticket);
+	private static newWithTransferTicket(operation: Operation, ticket: TransferTicket): DIDRequest {
+		let didRequest = new DIDRequest();
+		didRequest.constructWithTransferTicket(operation, ticket);
+		return didRequest;
 	}
 
-	protected constructor(request: DIDRequest) {
-		super(request);
-		this.did = request.did;
-		this.doc = request.doc;
+	protected static newWithDIDRequest(request: DIDRequest) {
+		let didRequest = new DIDRequest();
+		didRequest.constructWithIDChainRequest(request);
+		didRequest.did = request.did;
+		didRequest.doc = request.doc;
 	}
 
 	/**
@@ -207,7 +212,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		return this.doc;
 	}
 
-	private setPayload(docOrString: DIDDocument | string) {
+	public /*private*/ setPayload(docOrString: DIDDocument | string) {
 		if (docOrString instanceof DIDDocument) {
 			this.did = this.doc.getSubject();
 			this.doc = this.doc;
@@ -226,7 +231,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		}
 	}
 
-	protected sanitize() {
+	public /*protected*/ sanitize() {
 		let header = this.getHeader();
 
 		if (header == null)

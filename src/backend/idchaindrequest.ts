@@ -72,19 +72,20 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 
 	protected IDChainRequest() {}
 
-	protected constructor(operation: Operation) {
-		this.header = new Header(operation);
+	// Called by inheriting constructors
+	protected constructWithOperation(operation: Operation) {
+		this.header = Header.newWithPreviousTxId(operation, null);
 	}
 
-	protected constructor(operation: Operation, previousTxid: string) {
-		this.header = new Header(operation, previousTxid);
+	protected constructWithPreviousTxId(operation: Operation, previousTxid: string) {
+		this.header = Header.newWithPreviousTxId(operation, previousTxid);
 	}
 
-	protected constructor(operation: Operation, ticket: TransferTicket) {
-		this.header = new Header(operation, ticket);
+	protected constructWithTransferTicket(operation: Operation, ticket: TransferTicket) {
+		this.header = Header.newWithTransferTicket(operation, ticket);
 	}
 
-	protected constructor(request: IDChainRequest<?>) {
+	protected constructWithIDChainRequest(request: IDChainRequest<unknown>) {
 		this.header = request.header;
 		this.payload = request.payload;
 		this.proof = request.proof;
@@ -145,7 +146,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 
 	protected abstract getSignerDocument(): DIDDocument;
 
-	protected sanitize() {
+	public /*protected*/ sanitize() {
 	}
 
 	/**
@@ -174,10 +175,10 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 				return false;
 		}
 
-		return doc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), getSigningInputs());
+		return doc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), this.getSigningInputs());
 	}
 
-	protected static parse<T extends DIDEntity<?>>(content: JsonNode, clazz: Class<T>): T {
+	public /* protected */ static parse<T extends DIDEntity<unknown>>(content: JsonNode, clazz: Class<T>): T {
 		return DIDEntity.parse(content, clazz);
 	}
 }
@@ -189,7 +190,8 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	IDChainRequest.TICKET
 ]})
 @JsonInclude({value: JsonIncludeType.NON_NULL})
-protected static class Header {
+@JsonCreator()
+class Header {
 	@JsonProperty({value: IDChainRequest.SPECIFICATION})
 	private specification: string;
 	@JsonProperty({value: IDChainRequest.OPERATION})
@@ -202,30 +204,28 @@ protected static class Header {
 	private ticket: string;
 	private transferTicket: TransferTicket;
 
-	@JsonCreator()
-	private constructor(@JsonProperty(value = SPECIFICATION, required = true) String spec) {
+	constructor(@JsonProperty({value: IDChainRequest.SPECIFICATION, required: true}) spec: string) {
 		this.specification = spec;
 	}
 
-	private constructor(Operation operation, String previousTxid) {
-		this(operation.getSpecification());
-		this.operation = operation;
-		this.previousTxid = previousTxid;
+	static newWithPreviousTxId(operation: Operation, previousTxid: string) {
+		let header = new Header(operation.getSpecification());
+		header.operation = operation;
+		header.previousTxid = previousTxid;
+		return header;
 	}
 
-	private constructor(Operation operation, TransferTicket ticket) {
-		this(operation.getSpecification());
-		this.operation = operation;
+	static newWithTransferTicket(operation: Operation, ticket: TransferTicket = null) {
+		let header = new Header(operation.getSpecification());
+		header.operation = operation;
 
-		String json = ticket.toString(true);
-		this.ticket = Base64.encodeToString(json.getBytes(),
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-		this.transferTicket = ticket;
-	}
+		if (ticket) {
+			let json = ticket.toString(true);
+			header.ticket = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(json));
+			header.transferTicket = ticket;
+		}
 
-	private constructor(Operation operation) {
-		this(operation.getSpecification());
-		this.operation = operation;
+		return header;
 	}
 
 	public getSpecification(): string {

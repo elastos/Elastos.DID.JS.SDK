@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,35 +20,28 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.backend;
+import { JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { DIDEntity } from "../didentity";
+import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
+import { IDChainRequest } from "./idchaindrequest";
 
-import java.util.Date;
-
-import org.elastos.did.DIDEntity;
-import org.elastos.did.exception.MalformedIDChainRequestException;
-import org.elastos.did.exception.MalformedIDChainTransactionException;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-@JsonPropertyOrder({ IDTransaction.TXID,
+@JsonPropertyOrder({value: [
+	IDTransaction.TXID,
 	IDTransaction.TIMESTAMP,
-	IDTransaction.OPERATION })
-public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDEntity<T> {
-	protected final static String TXID = "txid";
-	protected final static String TIMESTAMP = "timestamp";
-	protected final static String OPERATION = "operation";
+	IDTransaction.OPERATION
+]})
+@JsonCreator()
+export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDEntity<T> {
+	protected static TXID = "txid";
+	protected static TIMESTAMP = "timestamp";
+	protected static OPERATION = "operation";
 
-	@JsonProperty(TXID)
-	private String txId;
-	@JsonProperty(TIMESTAMP)
-	private Date timestamp;
-	@JsonProperty(OPERATION)
-	private R request;
-
-	@JsonCreator
-	protected IDTransaction() {}
+	@JsonProperty({value: IDTransaction.TXID})
+	private txId: string;
+	@JsonProperty({value: IDTransaction.TIMESTAMP})
+	private timestamp: Date;
+	@JsonProperty({value: IDTransaction.OPERATION})
+	private request: R;
 
 	/**
 	 * Constructs the DIDTransaction with the given value.
@@ -57,18 +50,19 @@ public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 	 * @param timestamp the time stamp
 	 * @param request the IDChainRequest content
 	 */
-	protected IDTransaction(String txid, Date timestamp, R request) {
+	protected constructor(txid: string = null, timestamp: Date = null, request: R = null) {
+		super();
 		this.txId = txid;
 		this.timestamp = timestamp;
 		this.request = request;
 	}
 
-	public String getTransactionId() {
-		return txId;
+	public getTransactionId(): string {
+		return this.txId;
 	}
 
-	public Date getTimestamp() {
-		return timestamp;
+	public getTimestamp(): Date {
+		return this.timestamp;
 	}
 
 	/**
@@ -76,24 +70,24 @@ public abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 	 *
 	 * @return the IDRequest object
 	 */
-	public R getRequest() {
-		return request;
+	public getRequest(): R {
+		return this.request;
 	}
 
-	@Override
-	protected void sanitize() throws MalformedIDChainTransactionException {
-		if (txId == null || txId.isEmpty())
+	public /* protected */ sanitize() {
+		if (this.txId == null || this.txId === "")
 			throw new MalformedIDChainTransactionException("Missing txid");
 
-		if (timestamp == null)
+		if (this.timestamp == null)
 			throw new MalformedIDChainTransactionException("Missing timestamp");
 
-		if (request == null)
+		if (this.request == null)
 			throw new MalformedIDChainTransactionException("Missing request");
 
 		try {
-			request.sanitize();
-		} catch (MalformedIDChainRequestException e) {
+			this.request.sanitize();
+		} catch (e) {
+			// MalformedIDChainRequestException
 			throw new MalformedIDChainTransactionException("Invalid request", e);
 		}
 	}

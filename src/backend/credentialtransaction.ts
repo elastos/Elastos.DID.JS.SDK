@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,18 +20,26 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.backend;
+import { JsonCreator } from "jackson-js";
+import { DIDURL } from "../didurl";
+import { IDTransaction } from "./idtransaction";
 
-import org.elastos.did.DIDEntity;
-import org.elastos.did.exception.MalformedResolveResultException;
+export class CredentialTransaction extends IDTransaction<CredentialTransaction, CredentialRequest> {
+	protected CredentialTransaction() {}
 
-public abstract class ResolveResult<T> extends DIDEntity<T> {
 	/**
-	 * Post sanitize routine after deserialization.
+	 * Constructs the DIDTransaction with the given value.
 	 *
-	 * @throws MalformedResolveResultException if the DID object is invalid
+	 * @param txid the transaction id string
+	 * @param timestamp the time stamp
+	 * @param request the IDChainRequest content
 	 */
-	@Override
-	protected void sanitize() throws MalformedResolveResultException {
+	@JsonCreator()
+	protected constructor(txid: string = null, timestamp: Date = null, request: CredentialRequest = null) {
+		super(txid, timestamp, request);
+	}
+
+	public getId(): DIDURL {
+		return this.getRequest().getCredentialId();
 	}
 }
