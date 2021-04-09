@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,21 +20,14 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.backend;
+import { JsonCreator } from "jackson-js";
+import { DIDBiography } from "./didbiography";
+import { ResolveError } from "./resolveerror";
+import { ResolveResponse } from "./resolveresponse";
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
-public class CredentialResolveResponse extends ResolveResponse<CredentialResolveResponse, CredentialBiography> {
-	@JsonCreator
-	protected CredentialResolveResponse() {
-		super();
-	}
-
-	protected CredentialResolveResponse(String responseId, CredentialBiography result) {
-		super(responseId, result);
-	}
-
-	protected CredentialResolveResponse(String responseId, int code, String message) {
-		super(responseId, code, message);
+@JsonCreator()
+export class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDBiography> {
+	protected constructor(responseId: string, resultOrError: DIDBiography | ResolveError) {
+		super(responseId, resultOrError);
 	}
 }

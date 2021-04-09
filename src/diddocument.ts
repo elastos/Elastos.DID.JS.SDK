@@ -35,8 +35,10 @@ import {
     NotAttachedWithStoreException,
     NotPrimitiveDIDException,
     NoEffectiveControllerException,
-    InvalidKeyException
+    InvalidKeyException,
+    NotControllerException
 } from "./exceptions/exceptions";
+import { DIDMetadata } from "./didmetadata";
 
 const log = new Logger("DIDDocument");
 
@@ -114,7 +116,7 @@ const log = new Logger("DIDDocument");
     private publicKeys?: Map<DIDURL, PublicKey>;
     private credentials?: Map<DIDURL, VerifiableCredential>;
     private services?: Map<DIDURL, Service>;
-    private proofs?: HashMap<DID, Proof>;
+    private proofs?: Map<DID, Proof>;
 
     private effectiveController?: DID;
     public defaultPublicKey?: PublicKey;
@@ -176,7 +178,7 @@ const log = new Logger("DIDDocument");
             if (id == null || id.getDid() != null)
                 return id;
 
-            return new DIDURL(this.getSubject(), id);
+            return DIDURL.valueOf(this.getSubject(), id);
         }
         else {
             return DIDURL.valueOf(this.getSubject(), id);
@@ -1564,10 +1566,10 @@ const log = new Logger("DIDDocument");
     public sign(id: DIDURL, storepass: string, ...data: string[]): string {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkArgument(data != null && data.length > 0, "Invalid input data");
-        checkAttachedStore();
+        this.checkAttachedStore();
 
         let digest = EcdsaSigner.sha256Digest(data);
-        return signDigest(id, storepass, digest);
+        return this.signDigest(id, storepass, digest);
     }
 
     /**

@@ -20,62 +20,57 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonValue } from "jackson-js";
 import { List as ImmutableList } from "immutable";
 import { DID } from "../did";
-import { MalformedResolveResultException } from "../exceptions/exceptions";
+import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
 import { DIDTransaction } from "./didtransaction";
 
-enum Status {
+export class Status {
 	/**
 	 * The credential is valid.
 	 */
-	VALID(0),
-	/**
-	 * The credential is expired.
-	 */
-	// EXPIRED,
+	public static VALID = new Status("valid", 0);
 	/**
 	 * The credential is deactivated.
 	 */
-	DEACTIVATED(2),
+	public static DEACTIVATED = new Status("deactivated", 2);
 	/**
 	 * The credential is not published.
 	 */
-	NOT_FOUND(3);
+	public static NOT_FOUND = new Status("not_found", 3);
 
-	private int value;
+	private constructor(private name: string, private value: number) {}
 
-	private Status(int value) {
-		this.value = value;
+	@JsonValue()
+	public getValue(): number {
+		return this.value;
 	}
 
-	@JsonValue
-	public int getValue() {
-		return value;
-	}
-
-	@JsonCreator
-	public static Status valueOf(int value) {
+	@JsonCreator()
+	public static fromJson(value: number): Status {
 		switch (value) {
 		case 0:
-			return VALID;
+			return Status.VALID;
 
 		case 2:
-			return DEACTIVATED;
+			return Status.DEACTIVATED;
 
 		case 3:
-			return NOT_FOUND;
+			return Status.NOT_FOUND;
 
 		default:
 			throw new IllegalArgumentException("Invalid status value: " + value);
 		}
 	}
 
-	@Override
-	public String toString() {
-		return name().toLowerCase();
+	public toString(): string {
+		return this.name.toLowerCase();
+	}
+
+	public equals(status: Status): boolean {
+		return this.value == status.value;
 	}
 }
 
@@ -166,7 +161,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 		if (this.did == null)
 			throw new MalformedResolveResultException("Missing did");
 
-		if (status != Status.NOT_FOUND) {
+		if (!this.status.equals(Status.NOT_FOUND)) {
 			if (this.txs == null || this.txs.length == 0)
 				throw new MalformedResolveResultException("Missing transaction");
 

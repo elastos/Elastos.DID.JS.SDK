@@ -174,7 +174,7 @@ export class DIDBackend {
 		log.debug("Resolving request {}...", request);
 
 		let requestJson = request.serialize(true);
-		InputStream is = getAdapter().resolve(requestJson);
+		let is: InputStream = this.getAdapter().resolve(requestJson);
 
 		let response: ResolveResponse<?, ?>  = null;
 		try {

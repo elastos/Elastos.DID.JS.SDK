@@ -145,7 +145,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			if (this.getHeader().getOperation().equals(Operation.DECLARE)) {
 				let json = vc.toString(true);
 
-				this.setPayload(Base64.encodeToString(json.getBytes(), Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
+				this.setPayload(json.base64Encode());
 			} else if (this.getHeader().getOperation().equals(Operation.REVOKE)) {
 				this.setPayload(vc.getId().toString());
 			}
@@ -187,7 +187,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 
 		try {
 			if (header.getOperation().equals(Operation.DECLARE)) {
-				let json = new String(Base64.decode(payload, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
+				let json = payload.base64Decode();
 
 				this.vc = VerifiableCredential.parse(json);
 				this.id = this.vc.getId();
