@@ -25,7 +25,7 @@ import { DIDDocument } from "../diddocument";
 import { DIDURL } from "../didurl";
 import { InvalidKeyException, MalformedIDChainRequestException, UnknownInternalException } from "../exceptions/exceptions";
 import { VerifiableCredential } from "../verifiablecredential";
-import { IDChainRequest } from "./idchaindrequest";
+import { IDChainRequest, Operation } from "./idchaindrequest";
 
 /**
  * The credential request class.
@@ -61,7 +61,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static declare(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string): CredentialRequest {
-		let request = new CredentialRequest(Operation.DECLARE);
+		let request = CredentialRequest.newWithOperation(Operation.DECLARE);
 		request.setPayload(vc);
 		request.setSigner(signer);
 
@@ -86,7 +86,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static revoke(vc: VerifiableCredential, doc: DIDDocument, signKey: DIDURL, storepass: string): CredentialRequest {
-		let request = new CredentialRequest(Operation.REVOKE);
+		let request = CredentialRequest.newWithOperation(Operation.REVOKE);
 		request.setPayload(vc);
 		request.setSigner(doc);
 
@@ -111,7 +111,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static revoke(id: DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: String): CredentialRequest {
-		let request = new CredentialRequest(Operation.REVOKE);
+		let request = CredentialRequest.newWithOperation(Operation.REVOKE);
 		request.setPayload(id);
 		request.setSigner(doc);
 		try {
@@ -142,11 +142,11 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			this.id = vc.getId();
 			this.vc = vc;
 
-			if (this.getHeader().getOperation() == Operation.DECLARE) {
+			if (this.getHeader().getOperation().equals(Operation.DECLARE)) {
 				let json = vc.toString(true);
 
 				this.setPayload(Base64.encodeToString(json.getBytes(), Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
-			} else if (this.getHeader().getOperation() == Operation.REVOKE) {
+			} else if (this.getHeader().getOperation().equals(Operation.REVOKE)) {
 				this.setPayload(vc.getId().toString());
 			}
 		}
@@ -173,12 +173,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		if (header.getSpecification() !== CredentialRequest.CREDENTIAL_SPECIFICATION)
 			throw new MalformedIDChainRequestException("Unsupported specification");
 
-		switch (header.getOperation()) {
-		case DECLARE:
-		case REVOKE:
-			break;
-
-		default:
+		if (!header.getOperation().equals(Operation.DECLARE) && !header.getOperation().equals(Operation.REVOKE)) {
 			throw new MalformedIDChainRequestException("Invalid operation " + header.getOperation());
 		}
 
@@ -191,13 +186,13 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			throw new MalformedIDChainRequestException("Missing proof");
 
 		try {
-			if (header.getOperation() == Operation.DECLARE) {
+			if (header.getOperation().equals(Operation.DECLARE)) {
 				let json = new String(Base64.decode(payload, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP));
 
 				this.vc = VerifiableCredential.parse(json);
 				this.id = this.vc.getId();
 			} else {
-				this.id = new DIDURL(payload);
+				this.id = DIDURL.valueOfUrl(payload);
 			}
 		} catch (e) {
 			// DIDException
@@ -222,7 +217,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		if (this.signer != null)
 			return this.signer;
 
-		if (this.getOperation() == Operation.DECLARE)
+		if (this.getOperation().equals(Operation.DECLARE))
 			this.signer = this.getCredential().getSubject().getId().resolve();
 		else {
 			if (this.getCredential() != null)

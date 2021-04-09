@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+import createHash  from 'create-hash';
 import { Mnemonic } from "../mnemonic";
 import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
 import { encode as encodeBase58, decode as decodeBase58 } from "bs58check";
@@ -237,13 +237,16 @@ export class HDKey {
 		if (binAddress[0] != HDKey.PADDING_IDENTITY)
 			return false;
 
-		let hash = Sha256Hash.hashTwice(binAddress, 0, 21);
+		// Hash twice
+		let bufferToHash = Buffer.from(binAddress.substr(0,21));
+		var firstHash = createHash('sha256').update(bufferToHash).digest();
+		let hash = createHash('sha256').update(firstHash).digest()
 
 		return (hash[0] == binAddress[21] && hash[1] == binAddress[22]
 				&& hash[2] == binAddress[23] && hash[3] == binAddress[24]);
 	}
 
-	public sign(sha256Hash: string): string {
+	/*public sign(sha256Hash: string): string {
 		let sig = this.key.sign(Sha256Hash.wrap(sha256Hash));
 		return sig.encodeToDER();
 	}
@@ -279,7 +282,7 @@ export class HDKey {
 		sha256.doFinal(digest, 0);
 
 		return digest;
-	}
+	} */
 
 	public wipe() {
 		// TODO

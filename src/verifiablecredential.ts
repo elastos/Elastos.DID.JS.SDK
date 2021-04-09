@@ -22,7 +22,8 @@
 
 import { List as ImmutableList, Map as ImmutableMap } from "immutable";
 import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, JsonIncludeType, JsonGetter, JsonAnyGetter, JsonAnySetter, JsonFilter } from "jackson-js";
-import { IDChainRequest } from "./backend/idchaindrequest";
+import { CredentialBiography } from "./backend/credentialbiography";
+import { IDChainRequest, Operation } from "./backend/idchaindrequest";
 import { Collections } from "./collections";
 import { Constants } from "./constants";
 import { CredentialMetadata } from "./credentialmetadata";
@@ -522,7 +523,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return false;
 
 		for (let tx of bio.getAllTransactions()) {
-			if (tx.getRequest().getOperation() == IDChainRequest.Operation.DECLARE)
+			if (tx.getRequest().getOperation().equals(Operation.DECLARE))
 				return true;
 		}
 

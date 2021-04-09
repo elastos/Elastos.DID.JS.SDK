@@ -26,7 +26,7 @@ import { DIDBiography } from "./backend/didbiography";
 import { DIDRequest } from "./backend/didrequest";
 import { DIDResolveRequest } from "./backend/didresolverequest";
 import { DIDTransaction } from "./backend/didtransaction";
-import { IDChainRequest } from "./backend/idchaindrequest";
+import { IDChainRequest, Operation } from "./backend/idchaindrequest";
 import { ResolveRequest } from "./backend/resolverequest";
 import { ResolveResult } from "./backend/resolveresult";
 import { CredentialMetadata } from "./credentialmetadata";
@@ -265,7 +265,7 @@ export class DIDBackend {
 				throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
 
 			tx = bio.getTransaction(0);
-			if (tx.getRequest().getOperation() != IDChainRequest.Operation.DEACTIVATE)
+			if (!tx.getRequest().getOperation().equals(Operation.DEACTIVATE))
 				throw new DIDResolveException("Invalid DID biography, wrong status.");
 
 			let doc = bio.getTransaction(1).getRequest().getDocument();
@@ -289,9 +289,9 @@ export class DIDBackend {
 			return null;
 		}
 
-		if (tx.getRequest().getOperation() != IDChainRequest.Operation.CREATE &&
-				tx.getRequest().getOperation() != IDChainRequest.Operation.UPDATE &&
-				tx.getRequest().getOperation() != IDChainRequest.Operation.TRANSFER)
+		if (!tx.getRequest().getOperation().equals(Operation.CREATE) &&
+			!tx.getRequest().getOperation().equals(Operation.UPDATE) &&
+			!tx.getRequest().getOperation().equals(Operation.TRANSFER))
 			throw new DIDResolveException("Invalid ID transaction, unknown operation.");
 
 		if (!tx.getRequest().isValid())
@@ -338,7 +338,7 @@ export class DIDBackend {
 
 		case REVOKED:
 			tx = bio.getTransaction(0);
-			if (tx.getRequest().getOperation() != IDChainRequest.Operation.REVOKE)
+			if (!tx.getRequest().getOperation().equals(Operation.REVOKE))
 				throw new DIDResolveException("Invalid credential biography, wrong status.");
 
 			if (bio.getTransactionCount() < 1 || bio.getTransactionCount() > 2)
@@ -371,7 +371,7 @@ export class DIDBackend {
 			return null;
 		}
 
-		if (tx.getRequest().getOperation() != IDChainRequest.Operation.DECLARE)
+		if (!tx.getRequest().getOperation().equals(Operation.DECLARE))
 			throw new DIDResolveException("Invalid credential transaction, unknown operation.");
 
 		if (!tx.getRequest().isValid())

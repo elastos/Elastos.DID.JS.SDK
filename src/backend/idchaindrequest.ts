@@ -130,8 +130,8 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	}
 
 	protected getSigningInputs(): string[] {
-		let prevtxid = this.getOperation() == Operation.UPDATE ? this.header.getPreviousTxid() : "";
-		let ticket = this.getOperation() == Operation.TRANSFER ? this.header.getTicket() : "";
+		let prevtxid = this.getOperation().equals(Operation.UPDATE) ? this.header.getPreviousTxid() : "";
+		let ticket = this.getOperation().equals(Operation.TRANSFER) ? this.header.getTicket() : "";
 
 		let inputs: string[] = [
 			this.header.getSpecification(), // .getBytes(),
@@ -167,7 +167,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 		if (!doc.isValid())
 			return false;
 
-		if (this.getOperation() != Operation.DEACTIVATE) {
+		if (!this.getOperation().equals(Operation.DEACTIVATE)) {
 			if (!doc.isAuthenticationKey(signKey))
 				return false;
 		} else {
@@ -299,7 +299,7 @@ export class Proof {
 	public /*protected*/ qualifyVerificationMethod(ref: DID) {
 		// TODO: need improve the impl
 		if (this.verificationMethod.getDid() == null)
-			this.verificationMethod = new DIDURL(ref, this.verificationMethod);
+			this.verificationMethod = DIDURL.valueOf(ref, this.verificationMethod);
 	}
 
 	public getSignature(): string {
@@ -309,35 +309,34 @@ export class Proof {
 
 /**
  * The IDChain Request Operation
- * TODO: DOESNT WORK
  */
-class Operation {
+export class Operation {
 	/**
 	 * Create a new DID
 	 */
-	public static CREATE = new Operation(IDChainRequest.DID_SPECIFICATION);
+	public static CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
 	/**
 	 * Update an exist DID
 	 */
-	public static UPDATE = new Operation(IDChainRequest.DID_SPECIFICATION);
+	public static UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
 	/**
 	 * Transfer the DID' ownership
 	 */
-	public static TRANSFER = new Operation(IDChainRequest.DID_SPECIFICATION);
+	public static TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
 	/**
 	 * Deactivate a DID
 	 */
-	public static DEACTIVATE = new Operation(IDChainRequest.DID_SPECIFICATION);
+	public static DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
 	/**
 	 * Declare a credential
 	 */
-	public static DECLARE = new Operation(IDChainRequest.CREDENTIAL_SPECIFICATION);
+	public static DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
 	/**
 	 * Revoke a credential
 	 */
-	public static REVOKE = new Operation(IDChainRequest.CREDENTIAL_SPECIFICATION);
+	public static REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
 
-	private constructor(private specification: string) {}
+	constructor(private name: string, private specification: string) {}
 
 	public getSpecification(): string {
 		return this.specification;
@@ -345,11 +344,15 @@ class Operation {
 
 	@JsonValue()
 	public toString(): string {
-		return name().toLowerCase();
+		return this.name;
 	}
 
 	@JsonCreator()
 	public static fromString(name: string): Operation {
-		return valueOf(name.toUpperCase());
+		return Operation[name.toUpperCase()];
+	}
+
+	public equals(operation: Operation): boolean {
+		return this.name === operation.name;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,21 +20,14 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.backend;
+import { JsonCreator } from "jackson-js";
+import { CredentialList } from "./credentiallist";
+import { ResolveError } from "./resolveerror";
+import { ResolveResponse } from "./resolveresponse";
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
-public class CredentialListResponse extends ResolveResponse<CredentialListResponse, CredentialList> {
-	@JsonCreator
-	protected CredentialListResponse() {
-		super();
-	}
-
-	protected CredentialListResponse(String responseId, CredentialList result) {
-		super(responseId, result);
-	}
-
-	protected CredentialListResponse(String responseId, int code, String message) {
-		super(responseId, code, message);
+@JsonCreator()
+export class CredentialListResponse extends ResolveResponse<CredentialListResponse, CredentialList> {
+	protected constructor(responseId: string, resultOrError: CredentialList | ResolveError) {
+		super(responseId, resultOrError);
 	}
 }
