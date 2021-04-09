@@ -32,7 +32,7 @@ import { checkArgument } from "./utils";
 /**
  * Base class for all DID objects.
  */
-export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
+export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	private static NORMALIZED_DEFAULT = true;
 
 	//protected static SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT);
@@ -128,7 +128,8 @@ export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	/* protected static <T extends DIDEntity<?>> parse(content: JsonNode, clazz: ClassType<T>) {
+	/*
+	protected static parse(content: JsonNode, clazz: ClassType<T>): <T extends DIDEntity<?>> {
 		let mapper = this.getObjectMapper();
 
 		try {
@@ -139,8 +140,8 @@ export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
             //  JsonProcessingException
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
-	} */
-
+	}
+	*/
 	/**
 	 * Generic method to parse a DID object from a string JSON
 	 * representation into given DIDObject type.
@@ -151,6 +152,7 @@ export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
+	/*
 	public static parse<T extends DIDEntity<unknown>>(content: string, clazz: Class<T>): T {
 		checkArgument(content != null && content !== "", "Invalid JSON content");
 		checkArgument(clazz != null, "Invalid result class object");
@@ -167,7 +169,7 @@ export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
 			throw new DIDSyntaxException(e);
 		}
 	}
-
+	*/
 	/**
 	 * Generic method to parse a DID object from a Reader object
 	 * into given DIDObject type.
@@ -255,6 +257,7 @@ export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
 	 * @return the serialized JSON string
 	 * @throws DIDSyntaxException if a serialization error occurs
 	 */
+	/*
 	public serialize(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
 		try {
 			return DIDEntity.getObjectMapper(normalized).writeValueAsString(this);
@@ -263,7 +266,7 @@ export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
 			throw new UnknownInternalException(e);
 		}
 	}
-
+	*/
 	/**
 	 * Serialize DID object to a Writer.
 	 *
@@ -357,43 +360,41 @@ export abstract class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
 	 * @param normalized whether normalized output
 	 * @return a JSON string representation of the object
 	 */
+	/*
 	public toString(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
 		return this.serialize(normalized);
 	}
+	*/
 }
 
 class SerializeContext {
-	private boolean normalized;
-	private DID did;
+	private normalized: boolean;
+	private did: DID;
 
-	protected SerializeContext() {
-		this(false, null);
-	}
-
-	protected SerializeContext(boolean normalized, DID did) {
+	protected constructor(normalized: boolean = false, did?: DID) {
 		this.normalized = normalized;
 		this.did = did;
 	}
 
-	public boolean isNormalized() {
-		return normalized;
+	public isNormalized(): boolean {
+		return this.normalized;
 	}
 
-	public SerializeContext setNormalized(boolean normalized) {
+	public setNormalized(normalized: boolean): SerializeContext {
 		this.normalized = normalized;
 		return this;
 	}
 
-	public DID getDid() {
-		return did;
+	public getDid(): DID  {
+		return this.did;
 	}
 
-	public void setDid(DID did) {
+	public setDid(did: DID): void {
 		this.did = did;
 	}
 }
 
-class DIDPropertyFilter implements PropertyFilter {
+class DIDPropertyFilter { /*implements PropertyFilter {
 	protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
 			return true;
 	}
@@ -422,9 +423,10 @@ class DIDPropertyFilter implements PropertyFilter {
 			SerializerProvider provider) throws JsonMappingException {
 		writer.depositSchemaProperty(objectVisitor, provider);
 	}
+	*/
 }
 
-class DateDeserializer extends StdDeserializer<Date> {
+class DateDeserializer { /*extends StdDeserializer<Date> {
 	private static final long serialVersionUID = -4252894239212420927L;
 
 	public DateDeserializer() {
@@ -457,4 +459,5 @@ class DateDeserializer extends StdDeserializer<Date> {
 					Date.class, "Invalid datetime string");
 		}
 	}
+	*/
 }

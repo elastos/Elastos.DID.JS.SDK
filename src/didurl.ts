@@ -26,6 +26,7 @@ import { DID } from "./did";
 import { MalformedDIDURLException } from "./exceptions/exceptions";
 import { ParserHelper } from "./parser/parserhelper";
 import { checkArgument } from "./utils";
+import { ParentException } from "./exceptions/exceptions";
 
 /**
  * DID URL defines by the did-url rule, refers to a URL that begins with a DID
@@ -40,15 +41,87 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 	//private static SEPS = ":;/?#";
 	private static SEPS = [':', ';', '/', '?', '#'];
 
-	public /* private */ did: DID | null = null;
-	public /* private */ parameters: Map<string, string> = new Map();
-	public /* private */ path: string = "";
-	public /* private */ query: Map<string, string> = new Map();
-	public /* private */ fragment: string = "";
+	private did?: DID;
+	private parameters: Map<string, string> = new Map();
+	private path: string = "";
+	private query: Map<string, string> = new Map();
+	private fragment: string = "";
+	private metadata?: AbstractMetadata;
 
-	public /* private */ metadata: AbstractMetadata | null = null;
+	private constructor() {
+		//super();
+	}
 
-	protected constructor() {}
+	public static newWithDID(did: DID): DIDURL {
+		let newInstance: DIDURL = new DIDURL();
+		newInstance.did = did;
+
+		return newInstance;
+	}
+
+	public static newWithUrl(url: string): DIDURL {
+		return DIDURL.newWithBaseRef(url);
+	}
+
+	public static newWithBaseRef(url: DIDURL | string, baseRef?: DID) {
+		let newInstance: DIDURL = new DIDURL();
+
+		if (url instanceof DIDURL) {
+			newInstance.did = url.did == null ? baseRef : url.did;
+			newInstance.parameters = url.parameters;
+			newInstance.path = url.path;
+			newInstance.query = url.query;
+			newInstance.fragment = url.fragment;
+			newInstance.metadata = url.metadata;
+		} else {
+			// Compatible with v1, support fragment without leading '#'
+			if (!url.startsWith("did:")) {
+				let noSep: boolean = true;
+				let chars: string[] = url.split("");
+				for (var ch of chars) {
+					if (DIDURL.SEPS.indexOf(ch) >= 0) {
+						noSep = false;
+						break;
+					}
+				}
+
+				if (noSep) // fragment only
+					url = "#" + url;
+			}
+
+			try {
+				ParserHelper.parse(url, false, new DIDURL.Listener());
+
+				if (!newInstance.parameters)
+					newInstance.parameters = new Map();
+
+				if (!newInstance)
+					newInstance.query = new Map();
+
+			} catch (e: ParentException) {
+				throw new MalformedDIDURLException(url, e);
+			}
+
+			if (!newInstance.did && baseRef)
+				newInstance.did = baseRef;
+		}
+
+		return newInstance;
+	}
+
+	// Deep-copy constructor
+	private clone(url: DIDURL): DIDURL {
+		let newInstance = new DIDURL();
+		newInstance.did = url.did;
+		newInstance.parameters = !url.parameters ? new Map() :
+				new Map<String, String>(url.parameters);
+		newInstance.path = url.path;
+		newInstance.query = !url.query ? new Map() :
+				new Map<String, String>(url.query);
+		newInstance.fragment = url.fragment;
+
+		return newInstance;
+	}
 
 	// Deep-copy constructor
 	public static valueOf(baseRef: DID | string | null, didUrlOrString: DIDURL | string | null = null): DIDURL {
@@ -335,276 +408,279 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 
 }
 
-class Serializer /* extends StdSerializer<DIDURL> */ {
-	/* private static serialVersionUID = -5560151545310632117;
-
-	public Serializer() {
-		this(null);
-	}
-
-	public Serializer(Class<DIDURL> t) {
-		super(t);
-	}
-
-	@Override
-	public void serialize(DIDURL id, JsonGenerator gen,
-			SerializerProvider provider) throws IOException {
-		SerializeContext context = (SerializeContext)provider.getConfig()
-				.getAttributes().getAttribute(DIDEntity.CONTEXT_KEY);
-		// TODO: checkme
-		DID base = null;
-		if (!context.isNormalized())
-			base = context.getDid() != null ? context.getDid() : id.getDid();
-
-		gen.writeString(id.toString(base));
-	} */
-}
-
-class NormalizedSerializer /* extends StdSerializer<DIDURL> */ {
-	/* private static final long serialVersionUID = -5560151545310632117L;
-
-	public NormalizedSerializer() {
-		this(null);
-	}
-
-	public NormalizedSerializer(Class<DIDURL> t) {
-		super(t);
-	}
-
-	@Override
-	public void serialize(DIDURL id, JsonGenerator gen,
-			SerializerProvider provider) throws IOException {
-		gen.writeString(id.toString());
-	} */
-}
-
-class Deserializer /* extends StdDeserializer<DIDURL> */ {
-	/* private static final long serialVersionUID = -3649714336670800081L;
-
-	public Deserializer() {
-		this(null);
-	}
-
-	public Deserializer(Class<Proof> t) {
-		super(t);
-	}
-
-	@Override
-	public DIDURL deserialize(JsonParser p, DeserializationContext ctxt)
-			throws IOException, JsonProcessingException {
-		JsonToken token = p.getCurrentToken();
-		if (!token.equals(JsonToken.VALUE_STRING))
-			throw ctxt.weirdStringException(p.getText(), DIDURL.class, "Invalid DIDURL");
-
-		String url = p.getText().trim();
-		return new DIDURL(null, url);
-	} */
-}
-
-class Listener extends DIDURLBaseListener {
-	private String name;
-	private String value;
-
-	@Override
-	public void exitMethod(DIDURLParser.MethodContext ctx) {
-		String method = ctx.getText();
-		if (!method.equals(DID.METHOD))
-			throw new IllegalArgumentException("Unknown method: " + method);
-
-		name = method;
-	}
-
-	@Override
-	public void exitMethodSpecificString(
-			DIDURLParser.MethodSpecificStringContext ctx) {
-		value = ctx.getText();
-	}
-
-	@Override
-	public void exitDid(DIDURLParser.DidContext ctx) {
-		did = new DID(name, value);
-		name = null;
-		value = null;
-	}
-
-	@Override
-	public void exitParamMethod(DIDURLParser.ParamMethodContext ctx) {
-		String method = ctx.getText();
-		if (!method.equals(DID.METHOD))
-			throw new IllegalArgumentException(
-					"Unknown parameter method: " + method);
-	}
-
-	@Override
-	public void exitParamQName(DIDURLParser.ParamQNameContext ctx) {
-		name = ctx.getText();
-	}
-
-	@Override
-	public void exitParamValue(DIDURLParser.ParamValueContext ctx) {
-		value = ctx.getText();
-	}
-
-	@Override
-	public void exitParam(DIDURLParser.ParamContext ctx) {
-		if (parameters == null)
-			parameters = new LinkedHashMap<String, String>(8);
-
-		parameters.put(name, value);
-
-		name = null;
-		value = null;
-	}
-
-	@Override
-	public void exitPath(DIDURLParser.PathContext ctx) {
-		path = "/" + ctx.getText();
-	}
-
-	@Override
-	public void exitQueryParamName(DIDURLParser.QueryParamNameContext ctx) {
-		name = ctx.getText();
-	}
-
-	@Override
-	public void exitQueryParamValue(DIDURLParser.QueryParamValueContext ctx) {
-		value = ctx.getText();
-	}
-
-	@Override
-	public void exitQueryParam(DIDURLParser.QueryParamContext ctx) {
-		if (query == null)
-			query = new LinkedHashMap<String, String>(8);
-
-		query.put(name, value);
-
-		name = null;
-		value = null;
-	}
-
-	@Override
-	public void exitFrag(DIDURLParser.FragContext ctx) {
-		fragment = ctx.getText();
-	}
-}
-
 export namespace DIDURL {
-	export class Builder {
-		private url: DIDURL;
 
-		public constructor(didOrDidUrl: DIDURL | DID | string) {
-			let didUrl: DIDURL;
-			if (didOrDidUrl instanceof DID) {
-				didUrl = DIDURL.valueOf(didOrDidUrl);
+	class Serializer /* extends StdSerializer<DIDURL> */ {
+		/* private static serialVersionUID = -5560151545310632117;
+
+		public Serializer() {
+			this(null);
+		}
+
+		public Serializer(Class<DIDURL> t) {
+			super(t);
+		}
+
+		@Override
+		public void serialize(DIDURL id, JsonGenerator gen,
+				SerializerProvider provider) throws IOException {
+			SerializeContext context = (SerializeContext)provider.getConfig()
+					.getAttributes().getAttribute(DIDEntity.CONTEXT_KEY);
+			// TODO: checkme
+			DID base = null;
+			if (!context.isNormalized())
+				base = context.getDid() != null ? context.getDid() : id.getDid();
+
+			gen.writeString(id.toString(base));
+		} */
+	}
+
+	class NormalizedSerializer /* extends StdSerializer<DIDURL> */ {
+		/* private static final long serialVersionUID = -5560151545310632117L;
+
+		public NormalizedSerializer() {
+			this(null);
+		}
+
+		public NormalizedSerializer(Class<DIDURL> t) {
+			super(t);
+		}
+
+		@Override
+		public void serialize(DIDURL id, JsonGenerator gen,
+				SerializerProvider provider) throws IOException {
+			gen.writeString(id.toString());
+		} */
+	}
+
+	class Deserializer /* extends StdDeserializer<DIDURL> */ {
+		/* private static final long serialVersionUID = -3649714336670800081L;
+
+		public Deserializer() {
+			this(null);
+		}
+
+		public Deserializer(Class<Proof> t) {
+			super(t);
+		}
+
+		@Override
+		public DIDURL deserialize(JsonParser p, DeserializationContext ctxt)
+				throws IOException, JsonProcessingException {
+			JsonToken token = p.getCurrentToken();
+			if (!token.equals(JsonToken.VALUE_STRING))
+				throw ctxt.weirdStringException(p.getText(), DIDURL.class, "Invalid DIDURL");
+
+			String url = p.getText().trim();
+			return new DIDURL(null, url);
+		} */
+	}
+
+	class Listener extends DIDURLBaseListener {
+		private String name;
+		private String value;
+
+		@Override
+		public void exitMethod(DIDURLParser.MethodContext ctx) {
+			String method = ctx.getText();
+			if (!method.equals(DID.METHOD))
+				throw new IllegalArgumentException("Unknown method: " + method);
+
+			name = method;
+		}
+
+		@Override
+		public void exitMethodSpecificString(
+				DIDURLParser.MethodSpecificStringContext ctx) {
+			value = ctx.getText();
+		}
+
+		@Override
+		public void exitDid(DIDURLParser.DidContext ctx) {
+			did = new DID(name, value);
+			name = null;
+			value = null;
+		}
+
+		@Override
+		public void exitParamMethod(DIDURLParser.ParamMethodContext ctx) {
+			String method = ctx.getText();
+			if (!method.equals(DID.METHOD))
+				throw new IllegalArgumentException(
+						"Unknown parameter method: " + method);
+		}
+
+		@Override
+		public void exitParamQName(DIDURLParser.ParamQNameContext ctx) {
+			name = ctx.getText();
+		}
+
+		@Override
+		public void exitParamValue(DIDURLParser.ParamValueContext ctx) {
+			value = ctx.getText();
+		}
+
+		@Override
+		public void exitParam(DIDURLParser.ParamContext ctx) {
+			if (parameters == null)
+				parameters = new LinkedHashMap<String, String>(8);
+
+			parameters.put(name, value);
+
+			name = null;
+			value = null;
+		}
+
+		@Override
+		public void exitPath(DIDURLParser.PathContext ctx) {
+			path = "/" + ctx.getText();
+		}
+
+		@Override
+		public void exitQueryParamName(DIDURLParser.QueryParamNameContext ctx) {
+			name = ctx.getText();
+		}
+
+		@Override
+		public void exitQueryParamValue(DIDURLParser.QueryParamValueContext ctx) {
+			value = ctx.getText();
+		}
+
+		@Override
+		public void exitQueryParam(DIDURLParser.QueryParamContext ctx) {
+			if (query == null)
+				query = new LinkedHashMap<String, String>(8);
+
+			query.put(name, value);
+
+			name = null;
+			value = null;
+		}
+
+		@Override
+		public void exitFrag(DIDURLParser.FragContext ctx) {
+			fragment = ctx.getText();
+		}
+	}
+
+	export namespace DIDURL {
+		export class Builder {
+			private url: DIDURL;
+
+			public constructor(didOrDidUrl: DIDURL | DID | string) {
+				let didUrl: DIDURL;
+				if (didOrDidUrl instanceof DID) {
+					didUrl = DIDURL.valueOf(didOrDidUrl);
+				}
+				else if (didOrDidUrl instanceof DID) {
+					didUrl = DIDURL.valueOfUrl(didOrDidUrl);
+				}
+				else {
+					didUrl = didOrDidUrl as DIDURL;
+				}
+
+				this.url = DIDURL.valueOf(didUrl.getDid());
+				this.url.parameters = new Map<string, string>(didUrl.parameters);
+				this.url.path = didUrl.path;
+				this.url.query = new Map<string, string>(didUrl.query);
+				this.url.fragment = didUrl.fragment;
 			}
-			else if (didOrDidUrl instanceof DID) {
-				didUrl = DIDURL.valueOfUrl(didOrDidUrl);
+
+			public setDid(didOrString: DID | string): Builder {
+				checkArgument(didOrString != null, "Invalid did");
+
+				if (didOrString instanceof DID)
+					this.url.setDid(didOrString);
+				else
+					this.url.setDid(DID.valueOf(didOrString));
+				return this;
 			}
-			else {
-				didUrl = didOrDidUrl as DIDURL;
+
+			public clearDid(): Builder {
+				this.url.setDid(null);
+				return this;
 			}
 
-			this.url = DIDURL.valueOf(didUrl.getDid());
-			this.url.parameters = new Map<string, string>(didUrl.parameters);
-			this.url.path = didUrl.path;
-			this.url.query = new Map<string, string>(didUrl.query);
-			this.url.fragment = didUrl.fragment;
-		}
+			public setParameter(name: string, value: string): Builder {
+				checkArgument(name != null && name !== "", "Invalid parameter name");
 
-		public setDid(didOrString: DID | string): Builder {
-			checkArgument(didOrString != null, "Invalid did");
+				this.url.parameters.set(name, value);
+				return this;
+			}
 
-			if (didOrString instanceof DID)
-				this.url.setDid(didOrString);
-			else
-				this.url.setDid(DID.valueOf(didOrString));
-			return this;
-		}
+			public setParameters(params: Map<string, string>): Builder {
+				this.url.parameters.clear();
 
-		public clearDid(): Builder {
-			this.url.setDid(null);
-			return this;
-		}
+				if (params != null && params.size > 0)
+				params.forEach((v,k)=> this.url.parameters.set(k, v));
 
-		public setParameter(name: string, value: string): Builder {
-			checkArgument(name != null && name !== "", "Invalid parameter name");
+				return this;
+			}
 
-			this.url.parameters.set(name, value);
-			return this;
-		}
+			public removeParameter(name: string): Builder {
+				checkArgument(name != null && name !== "", "Invalid parameter name");
 
-		public setParameters(params: Map<string, string>): Builder {
-			this.url.parameters.clear();
+				this.url.parameters.delete(name);
 
-			if (params != null && params.size > 0)
-			params.forEach((v,k)=> this.url.parameters.set(k, v));
+				return this;
+			}
 
-			return this;
-		}
+			public clearParameters(): Builder {
+				this.url.parameters.clear();
+				return this;
+			}
 
-		public removeParameter(name: string): Builder {
-			checkArgument(name != null && name !== "", "Invalid parameter name");
+			public setPath(path: string): Builder {
+				this.url.path = path == null || path === "" ? null : path;
+				return this;
+			}
 
-			this.url.parameters.delete(name);
+			public clearPath(): Builder {
+				this.url.path = null;
+				return this;
+			}
 
-			return this;
-		}
+			public setQueryParameter(name: string, value: string): Builder {
+				checkArgument(name != null && name !== "", "Invalid parameter name");
 
-		public clearParameters(): Builder {
-			this.url.parameters.clear();
-			return this;
-		}
+				this.url.query.set(name, value);
+				return this;
+			}
 
-		public setPath(path: string): Builder {
-			this.url.path = path == null || path === "" ? null : path;
-			return this;
-		}
+			public setQueryParameters(params: Map<string, string>): Builder {
+				this.url.query.clear();
 
-		public clearPath(): Builder {
-			this.url.path = null;
-			return this;
-		}
+				if (params != null && params.size > 0)
+					params.forEach((v,k)=> this.url.query.set(k, v));
 
-		public setQueryParameter(name: string, value: string): Builder {
-			checkArgument(name != null && name !== "", "Invalid parameter name");
+				return this;
+			}
 
-			this.url.query.set(name, value);
-			return this;
-		}
+			public removeQueryParameter(name: string): Builder {
+				checkArgument(name != null && name !== "", "Invalid parameter name");
 
-		public setQueryParameters(params: Map<string, string>): Builder {
-			this.url.query.clear();
+				this.url.query.delete(name);
+				return this;
+			}
 
-			if (params != null && params.size > 0)
-				params.forEach((v,k)=> this.url.query.set(k, v));
+			public clearQueryParameters(): Builder {
+				this.url.query.clear();
+				return this;
+			}
 
-			return this;
-		}
+			public setFragment(fragment: string): Builder {
+				this.url.fragment = fragment == null || fragment === "" ? null : fragment;
+				return this;
+			}
 
-		public removeQueryParameter(name: string): Builder {
-			checkArgument(name != null && name !== "", "Invalid parameter name");
+			public clearFragment(): Builder {
+				this.url.fragment = null;
+				return this;
+			}
 
-			this.url.query.delete(name);
-			return this;
-		}
-
-		public clearQueryParameters(): Builder {
-			this.url.query.clear();
-			return this;
-		}
-
-		public setFragment(fragment: string): Builder {
-			this.url.fragment = fragment == null || fragment === "" ? null : fragment;
-			return this;
-		}
-
-		public clearFragment(): Builder {
-			this.url.fragment = null;
-			return this;
-		}
-
-		public build(): DIDURL {
-			return DIDURL.valueOf(null, this.url);
+			public build(): DIDURL {
+				return DIDURL.valueOf(null, this.url);
+			}
 		}
 	}
 }
