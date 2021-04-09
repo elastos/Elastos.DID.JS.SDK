@@ -96,8 +96,8 @@ export class DIDURLParser extends Parser {
 		this._interp = new ParserATNSimulator(DIDURLParser._ATN, this);
 	}
 	// @RuleVersion(0)
-	public didurl(): DidurlContext {
-		let _localctx: DidurlContext = new DidurlContext(this._ctx, this.state);
+	public didurl(): DIDURLParser.DidurlContext {
+		let _localctx: DIDURLParser.DidurlContext = new DIDURLParser.DidurlContext(this._ctx, this.state);
 		this.enterRule(_localctx, 0, DIDURLParser.RULE_didurl);
 		let _la: number;
 		try {
@@ -188,8 +188,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public did(): DidContext {
-		let _localctx: DidContext = new DidContext(this._ctx, this.state);
+	public did(): DIDURLParser.DidContext {
+		let _localctx: DIDURLParser.DidContext = new DIDURLParser.DidContext(this._ctx, this.state);
 		this.enterRule(_localctx, 2, DIDURLParser.RULE_did);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -221,8 +221,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public method(): MethodContext {
-		let _localctx: MethodContext = new MethodContext(this._ctx, this.state);
+	public method(): DIDURLParser.MethodContext {
+		let _localctx: DIDURLParser.MethodContext = new DIDURLParser.MethodContext(this._ctx, this.state);
 		this.enterRule(_localctx, 4, DIDURLParser.RULE_method);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -246,8 +246,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public methodSpecificString(): MethodSpecificStringContext {
-		let _localctx: MethodSpecificStringContext = new MethodSpecificStringContext(this._ctx, this.state);
+	public methodSpecificString(): DIDURLParser.MethodSpecificStringContext {
+		let _localctx: DIDURLParser.MethodSpecificStringContext = new DIDURLParser.MethodSpecificStringContext(this._ctx, this.state);
 		this.enterRule(_localctx, 6, DIDURLParser.RULE_methodSpecificString);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -271,8 +271,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public params(): ParamsContext {
-		let _localctx: ParamsContext = new ParamsContext(this._ctx, this.state);
+	public params(): DIDURLParser.ParamsContext {
+		let _localctx: DIDURLParser.ParamsContext = new DIDURLParser.ParamsContext(this._ctx, this.state);
 		this.enterRule(_localctx, 8, DIDURLParser.RULE_params);
 		let _la: number;
 		try {
@@ -313,8 +313,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public param(): ParamContext {
-		let _localctx: ParamContext = new ParamContext(this._ctx, this.state);
+	public param(): DIDURLParser.ParamContext {
+		let _localctx: DIDURLParser.ParamContext = new DIDURLParser.ParamContext(this._ctx, this.state);
 		this.enterRule(_localctx, 10, DIDURLParser.RULE_param);
 		let _la: number;
 		try {
@@ -351,8 +351,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public paramQName(): ParamQNameContext {
-		let _localctx: ParamQNameContext = new ParamQNameContext(this._ctx, this.state);
+	public paramQName(): DIDURLParser.ParamQNameContext {
+		let _localctx: DIDURLParser.ParamQNameContext = new DIDURLParser.ParamQNameContext(this._ctx, this.state);
 		this.enterRule(_localctx, 12, DIDURLParser.RULE_paramQName);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -388,8 +388,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public paramMethod(): ParamMethodContext {
-		let _localctx: ParamMethodContext = new ParamMethodContext(this._ctx, this.state);
+	public paramMethod(): DIDURLParser.ParamMethodContext {
+		let _localctx: DIDURLParser.ParamMethodContext = new DIDURLParser.ParamMethodContext(this._ctx, this.state);
 		this.enterRule(_localctx, 14, DIDURLParser.RULE_paramMethod);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -413,8 +413,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public paramName(): ParamNameContext {
-		let _localctx: ParamNameContext = new ParamNameContext(this._ctx, this.state);
+	public paramName(): DIDURLParser.ParamNameContext {
+		let _localctx: DIDURLParser.ParamNameContext = new DIDURLParser.ParamNameContext(this._ctx, this.state);
 		this.enterRule(_localctx, 16, DIDURLParser.RULE_paramName);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -438,8 +438,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public paramValue(): ParamValueContext {
-		let _localctx: ParamValueContext = new ParamValueContext(this._ctx, this.state);
+	public paramValue(): DIDURLParser.ParamValueContext {
+		let _localctx: DIDURLParser.ParamValueContext = new DIDURLParser.ParamValueContext(this._ctx, this.state);
 		this.enterRule(_localctx, 18, DIDURLParser.RULE_paramValue);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -463,8 +463,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public path(): PathContext {
-		let _localctx: PathContext = new PathContext(this._ctx, this.state);
+	public path(): DIDURLParser.PathContext {
+		let _localctx: DIDURLParser.PathContext = new DIDURLParser.PathContext(this._ctx, this.state);
 		this.enterRule(_localctx, 20, DIDURLParser.RULE_path);
 		let _la: number;
 		try {
@@ -505,8 +505,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public query(): QueryContext {
-		let _localctx: QueryContext = new QueryContext(this._ctx, this.state);
+	public query(): DIDURLParser.QueryContext {
+		let _localctx: DIDURLParser.QueryContext = new DIDURLParser.QueryContext(this._ctx, this.state);
 		this.enterRule(_localctx, 22, DIDURLParser.RULE_query);
 		let _la: number;
 		try {
@@ -547,8 +547,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public queryParam(): QueryParamContext {
-		let _localctx: QueryParamContext = new QueryParamContext(this._ctx, this.state);
+	public queryParam(): DIDURLParser.QueryParamContext {
+		let _localctx: DIDURLParser.QueryParamContext = new DIDURLParser.QueryParamContext(this._ctx, this.state);
 		this.enterRule(_localctx, 24, DIDURLParser.RULE_queryParam);
 		let _la: number;
 		try {
@@ -585,8 +585,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public queryParamName(): QueryParamNameContext {
-		let _localctx: QueryParamNameContext = new QueryParamNameContext(this._ctx, this.state);
+	public queryParamName(): DIDURLParser.QueryParamNameContext {
+		let _localctx: DIDURLParser.QueryParamNameContext = new DIDURLParser.QueryParamNameContext(this._ctx, this.state);
 		this.enterRule(_localctx, 26, DIDURLParser.RULE_queryParamName);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -610,8 +610,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public queryParamValue(): QueryParamValueContext {
-		let _localctx: QueryParamValueContext = new QueryParamValueContext(this._ctx, this.state);
+	public queryParamValue(): DIDURLParser.QueryParamValueContext {
+		let _localctx: DIDURLParser.QueryParamValueContext = new DIDURLParser.QueryParamValueContext(this._ctx, this.state);
 		this.enterRule(_localctx, 28, DIDURLParser.RULE_queryParamValue);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -635,8 +635,8 @@ export class DIDURLParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public frag(): FragContext {
-		let _localctx: FragContext = new FragContext(this._ctx, this.state);
+	public frag(): DIDURLParser.FragContext {
+		let _localctx: DIDURLParser.FragContext = new DIDURLParser.FragContext(this._ctx, this.state);
 		this.enterRule(_localctx, 30, DIDURLParser.RULE_frag);
 		try {
 			this.enterOuterAlt(_localctx, 1);
@@ -717,542 +717,542 @@ export class DIDURLParser extends Parser {
 
 }
 
-export class DidurlContext extends ParserRuleContext {
-	public did(): DidContext | undefined {
-		return this.tryGetRuleContext(0, DidContext);
-	}
-	public params(): ParamsContext | undefined {
-		return this.tryGetRuleContext(0, ParamsContext);
-	}
-	public path(): PathContext | undefined {
-		return this.tryGetRuleContext(0, PathContext);
-	}
-	public query(): QueryContext | undefined {
-		return this.tryGetRuleContext(0, QueryContext);
-	}
-	public frag(): FragContext | undefined {
-		return this.tryGetRuleContext(0, FragContext);
-	}
-	public SPACE(): TerminalNode | undefined { return this.tryGetToken(DIDURLParser.SPACE, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_didurl; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterDidurl) {
-			listener.enterDidurl(this);
+export namespace DIDURLParser {
+	export class DidurlContext extends ParserRuleContext {
+		public did(): DidContext | undefined {
+			return this.tryGetRuleContext(0, DidContext);
+		}
+		public params(): ParamsContext | undefined {
+			return this.tryGetRuleContext(0, ParamsContext);
+		}
+		public path(): PathContext | undefined {
+			return this.tryGetRuleContext(0, PathContext);
+		}
+		public query(): QueryContext | undefined {
+			return this.tryGetRuleContext(0, QueryContext);
+		}
+		public frag(): FragContext | undefined {
+			return this.tryGetRuleContext(0, FragContext);
+		}
+		public SPACE(): TerminalNode | undefined { return this.tryGetToken(DIDURLParser.SPACE, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_didurl; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterDidurl) {
+				listener.enterDidurl(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitDidurl) {
+				listener.exitDidurl(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitDidurl) {
+				return visitor.visitDidurl(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
 		}
 	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitDidurl) {
-			listener.exitDidurl(this);
+
+
+	export class DidContext extends ParserRuleContext {
+		public method(): MethodContext {
+			return this.getRuleContext(0, MethodContext);
+		}
+		public methodSpecificString(): MethodSpecificStringContext {
+			return this.getRuleContext(0, MethodSpecificStringContext);
+		}
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_did; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterDid) {
+				listener.enterDid(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitDid) {
+				listener.exitDid(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitDid) {
+				return visitor.visitDid(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
 		}
 	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitDidurl) {
-			return visitor.visitDidurl(this);
-		} else {
-			return visitor.visitChildren(this);
+
+
+	export class MethodContext extends ParserRuleContext {
+		public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_method; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterMethod) {
+				listener.enterMethod(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitMethod) {
+				listener.exitMethod(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitMethod) {
+				return visitor.visitMethod(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class MethodSpecificStringContext extends ParserRuleContext {
+		public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_methodSpecificString; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterMethodSpecificString) {
+				listener.enterMethodSpecificString(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitMethodSpecificString) {
+				listener.exitMethodSpecificString(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitMethodSpecificString) {
+				return visitor.visitMethodSpecificString(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class ParamsContext extends ParserRuleContext {
+		public param(): ParamContext[];
+		public param(i: number): ParamContext;
+		public param(i?: number): ParamContext | ParamContext[] {
+			if (i === undefined) {
+				return this.getRuleContexts(ParamContext);
+			} else {
+				return this.getRuleContext(i, ParamContext);
+			}
+		}
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_params; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterParams) {
+				listener.enterParams(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitParams) {
+				listener.exitParams(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitParams) {
+				return visitor.visitParams(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class ParamContext extends ParserRuleContext {
+		public paramQName(): ParamQNameContext {
+			return this.getRuleContext(0, ParamQNameContext);
+		}
+		public paramValue(): ParamValueContext | undefined {
+			return this.tryGetRuleContext(0, ParamValueContext);
+		}
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_param; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterParam) {
+				listener.enterParam(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitParam) {
+				listener.exitParam(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitParam) {
+				return visitor.visitParam(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class ParamQNameContext extends ParserRuleContext {
+		public paramName(): ParamNameContext {
+			return this.getRuleContext(0, ParamNameContext);
+		}
+		public paramMethod(): ParamMethodContext | undefined {
+			return this.tryGetRuleContext(0, ParamMethodContext);
+		}
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_paramQName; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterParamQName) {
+				listener.enterParamQName(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitParamQName) {
+				listener.exitParamQName(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitParamQName) {
+				return visitor.visitParamQName(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class ParamMethodContext extends ParserRuleContext {
+		public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_paramMethod; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterParamMethod) {
+				listener.enterParamMethod(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitParamMethod) {
+				listener.exitParamMethod(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitParamMethod) {
+				return visitor.visitParamMethod(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class ParamNameContext extends ParserRuleContext {
+		public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_paramName; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterParamName) {
+				listener.enterParamName(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitParamName) {
+				listener.exitParamName(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitParamName) {
+				return visitor.visitParamName(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class ParamValueContext extends ParserRuleContext {
+		public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_paramValue; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterParamValue) {
+				listener.enterParamValue(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitParamValue) {
+				listener.exitParamValue(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitParamValue) {
+				return visitor.visitParamValue(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class PathContext extends ParserRuleContext {
+		public STRING(): TerminalNode[];
+		public STRING(i: number): TerminalNode;
+		public STRING(i?: number): TerminalNode | TerminalNode[] {
+			if (i === undefined) {
+				return this.getTokens(DIDURLParser.STRING);
+			} else {
+				return this.getToken(DIDURLParser.STRING, i);
+			}
+		}
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_path; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterPath) {
+				listener.enterPath(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitPath) {
+				listener.exitPath(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitPath) {
+				return visitor.visitPath(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class QueryContext extends ParserRuleContext {
+		public queryParam(): QueryParamContext[];
+		public queryParam(i: number): QueryParamContext;
+		public queryParam(i?: number): QueryParamContext | QueryParamContext[] {
+			if (i === undefined) {
+				return this.getRuleContexts(QueryParamContext);
+			} else {
+				return this.getRuleContext(i, QueryParamContext);
+			}
+		}
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_query; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterQuery) {
+				listener.enterQuery(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitQuery) {
+				listener.exitQuery(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitQuery) {
+				return visitor.visitQuery(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class QueryParamContext extends ParserRuleContext {
+		public queryParamName(): QueryParamNameContext {
+			return this.getRuleContext(0, QueryParamNameContext);
+		}
+		public queryParamValue(): QueryParamValueContext | undefined {
+			return this.tryGetRuleContext(0, QueryParamValueContext);
+		}
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_queryParam; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterQueryParam) {
+				listener.enterQueryParam(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitQueryParam) {
+				listener.exitQueryParam(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitQueryParam) {
+				return visitor.visitQueryParam(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class QueryParamNameContext extends ParserRuleContext {
+		public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_queryParamName; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterQueryParamName) {
+				listener.enterQueryParamName(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitQueryParamName) {
+				listener.exitQueryParamName(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitQueryParamName) {
+				return visitor.visitQueryParamName(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class QueryParamValueContext extends ParserRuleContext {
+		public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_queryParamValue; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterQueryParamValue) {
+				listener.enterQueryParamValue(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitQueryParamValue) {
+				listener.exitQueryParamValue(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitQueryParamValue) {
+				return visitor.visitQueryParamValue(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
+		}
+	}
+
+
+	export class FragContext extends ParserRuleContext {
+		public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
+		constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+			super(parent, invokingState);
+		}
+		// @Override
+		public get ruleIndex(): number { return DIDURLParser.RULE_frag; }
+		// @Override
+		public enterRule(listener: DIDURLListener): void {
+			if (listener.enterFrag) {
+				listener.enterFrag(this);
+			}
+		}
+		// @Override
+		public exitRule(listener: DIDURLListener): void {
+			if (listener.exitFrag) {
+				listener.exitFrag(this);
+			}
+		}
+		// @Override
+		public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
+			if (visitor.visitFrag) {
+				return visitor.visitFrag(this);
+			} else {
+				return visitor.visitChildren(this);
+			}
 		}
 	}
 }
-
-
-export class DidContext extends ParserRuleContext {
-	public method(): MethodContext {
-		return this.getRuleContext(0, MethodContext);
-	}
-	public methodSpecificString(): MethodSpecificStringContext {
-		return this.getRuleContext(0, MethodSpecificStringContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_did; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterDid) {
-			listener.enterDid(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitDid) {
-			listener.exitDid(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitDid) {
-			return visitor.visitDid(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class MethodContext extends ParserRuleContext {
-	public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_method; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterMethod) {
-			listener.enterMethod(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitMethod) {
-			listener.exitMethod(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitMethod) {
-			return visitor.visitMethod(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class MethodSpecificStringContext extends ParserRuleContext {
-	public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_methodSpecificString; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterMethodSpecificString) {
-			listener.enterMethodSpecificString(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitMethodSpecificString) {
-			listener.exitMethodSpecificString(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitMethodSpecificString) {
-			return visitor.visitMethodSpecificString(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class ParamsContext extends ParserRuleContext {
-	public param(): ParamContext[];
-	public param(i: number): ParamContext;
-	public param(i?: number): ParamContext | ParamContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(ParamContext);
-		} else {
-			return this.getRuleContext(i, ParamContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_params; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterParams) {
-			listener.enterParams(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitParams) {
-			listener.exitParams(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitParams) {
-			return visitor.visitParams(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class ParamContext extends ParserRuleContext {
-	public paramQName(): ParamQNameContext {
-		return this.getRuleContext(0, ParamQNameContext);
-	}
-	public paramValue(): ParamValueContext | undefined {
-		return this.tryGetRuleContext(0, ParamValueContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_param; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterParam) {
-			listener.enterParam(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitParam) {
-			listener.exitParam(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitParam) {
-			return visitor.visitParam(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class ParamQNameContext extends ParserRuleContext {
-	public paramName(): ParamNameContext {
-		return this.getRuleContext(0, ParamNameContext);
-	}
-	public paramMethod(): ParamMethodContext | undefined {
-		return this.tryGetRuleContext(0, ParamMethodContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_paramQName; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterParamQName) {
-			listener.enterParamQName(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitParamQName) {
-			listener.exitParamQName(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitParamQName) {
-			return visitor.visitParamQName(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class ParamMethodContext extends ParserRuleContext {
-	public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_paramMethod; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterParamMethod) {
-			listener.enterParamMethod(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitParamMethod) {
-			listener.exitParamMethod(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitParamMethod) {
-			return visitor.visitParamMethod(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class ParamNameContext extends ParserRuleContext {
-	public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_paramName; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterParamName) {
-			listener.enterParamName(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitParamName) {
-			listener.exitParamName(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitParamName) {
-			return visitor.visitParamName(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class ParamValueContext extends ParserRuleContext {
-	public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_paramValue; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterParamValue) {
-			listener.enterParamValue(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitParamValue) {
-			listener.exitParamValue(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitParamValue) {
-			return visitor.visitParamValue(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class PathContext extends ParserRuleContext {
-	public STRING(): TerminalNode[];
-	public STRING(i: number): TerminalNode;
-	public STRING(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(DIDURLParser.STRING);
-		} else {
-			return this.getToken(DIDURLParser.STRING, i);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_path; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterPath) {
-			listener.enterPath(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitPath) {
-			listener.exitPath(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitPath) {
-			return visitor.visitPath(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class QueryContext extends ParserRuleContext {
-	public queryParam(): QueryParamContext[];
-	public queryParam(i: number): QueryParamContext;
-	public queryParam(i?: number): QueryParamContext | QueryParamContext[] {
-		if (i === undefined) {
-			return this.getRuleContexts(QueryParamContext);
-		} else {
-			return this.getRuleContext(i, QueryParamContext);
-		}
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_query; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterQuery) {
-			listener.enterQuery(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitQuery) {
-			listener.exitQuery(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitQuery) {
-			return visitor.visitQuery(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class QueryParamContext extends ParserRuleContext {
-	public queryParamName(): QueryParamNameContext {
-		return this.getRuleContext(0, QueryParamNameContext);
-	}
-	public queryParamValue(): QueryParamValueContext | undefined {
-		return this.tryGetRuleContext(0, QueryParamValueContext);
-	}
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_queryParam; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterQueryParam) {
-			listener.enterQueryParam(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitQueryParam) {
-			listener.exitQueryParam(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitQueryParam) {
-			return visitor.visitQueryParam(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class QueryParamNameContext extends ParserRuleContext {
-	public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_queryParamName; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterQueryParamName) {
-			listener.enterQueryParamName(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitQueryParamName) {
-			listener.exitQueryParamName(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitQueryParamName) {
-			return visitor.visitQueryParamName(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class QueryParamValueContext extends ParserRuleContext {
-	public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_queryParamValue; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterQueryParamValue) {
-			listener.enterQueryParamValue(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitQueryParamValue) {
-			listener.exitQueryParamValue(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitQueryParamValue) {
-			return visitor.visitQueryParamValue(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class FragContext extends ParserRuleContext {
-	public STRING(): TerminalNode { return this.getToken(DIDURLParser.STRING, 0); }
-	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
-		super(parent, invokingState);
-	}
-	// @Override
-	public get ruleIndex(): number { return DIDURLParser.RULE_frag; }
-	// @Override
-	public enterRule(listener: DIDURLListener): void {
-		if (listener.enterFrag) {
-			listener.enterFrag(this);
-		}
-	}
-	// @Override
-	public exitRule(listener: DIDURLListener): void {
-		if (listener.exitFrag) {
-			listener.exitFrag(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: DIDURLVisitor<Result>): Result {
-		if (visitor.visitFrag) {
-			return visitor.visitFrag(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
