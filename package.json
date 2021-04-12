@@ -17,7 +17,6 @@
     "antlr4ts": "^0.5.0-alpha.4",
     "bip39": "^3.0.2",
     "bitcore-lib": "^8.25.7",
-    "bitcore-lib-curve": "^0.16.0",
     "bs58check": "^2.1.2",
     "buffer": "^5.6.0",
     "crypto-js": "^4.0.0",
