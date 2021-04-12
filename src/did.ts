@@ -28,6 +28,7 @@ import { DIDResolveException } from "./exceptions/exceptions";
 import { rejects } from "node:assert";
 import { DIDBackend } from "./didbackend";
 import { Class } from "./class";
+import { DIDBiography } from "./backend/didbiography";
 
 /**
  * DID is a globally unique identifier that does not require
@@ -174,7 +175,7 @@ export class DID {
             return eq ? this.methodSpecificId.equals(did.methodSpecificId) : eq;
         }
 
-        if (obj instanceof String) {
+        if (typeof obj === "string") {
             let did = obj;
             return this.toString().equals(did);
         }

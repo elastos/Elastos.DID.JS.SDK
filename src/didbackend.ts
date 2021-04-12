@@ -36,7 +36,7 @@ import { DIDRequest } from "./backend/didrequest";
 import { DIDResolveRequest } from "./backend/didresolverequest";
 import { DIDResolveResponse } from "./backend/didresolveresponse";
 import { DIDTransaction } from "./backend/didtransaction";
-import { IDChainRequest, Operation } from "./backend/idchaindrequest";
+import { IDChainRequest } from "./backend/idchaindrequest";
 import { ResolveRequest } from "./backend/resolverequest";
 import { ResolveResponse } from "./backend/resolveresponse";
 import { ResolveResult } from "./backend/resolveresult";
@@ -177,25 +177,25 @@ export class DIDBackend {
 		this.resolveHandle = handle;
 	}
 
-	private resolve(request: ResolveRequest<?, ?>): ResolveResult<?> {
+	private resolve(request: ResolveRequest<any, any>): ResolveResult<any> {
 		log.debug("Resolving request {}...", request);
 
 		let requestJson = request.serialize(true);
-		let is: InputStream = this.getAdapter().resolve(requestJson);
+		let resolvedJson = this.getAdapter().resolve(requestJson);
 
-		let response: ResolveResponse<?, ?>  = null;
+		let response: ResolveResponse<any, any>  = null;
 		try {
 			switch (request.getMethod()) {
 			case DIDResolveRequest.METHOD_NAME:
-				response = DIDResolveResponse.parse(is, DIDResolveResponse.class);
+				response = DIDResolveResponse.parse(resolvedJson, DIDResolveResponse);
 				break;
 
 			case CredentialResolveRequest.METHOD_NAME:
-				response = CredentialResolveResponse.parse(is, CredentialResolveResponse.class);
+				response = CredentialResolveResponse.parse(resolvedJson, CredentialResolveResponse);
 				break;
 
 			case CredentialListRequest.METHOD_NAME:
-				response = CredentialListResponse.parse(is, CredentialListResponse.class);
+				response = CredentialListResponse.parse(resolvedJson, CredentialListResponse);
 				break;
 
 			default:
@@ -207,14 +207,13 @@ export class DIDBackend {
 			throw new DIDResolveException(e);
 		} finally {
 			try {
-				is.close();
+				// Java: is.close();
 			} catch (ignore) {
 				// IOException
 			}
 		}
 
-		if (response.getResponseId() == null ||
-				!response.getResponseId().equals(request.getRequestId()))
+		if (response.getResponseId() == null || !response.getResponseId().equals(request.getRequestId()))
 			throw new DIDResolveException("Mismatched resolve result with request.");
 
 		if (response.getResult() != null)
@@ -224,7 +223,7 @@ export class DIDBackend {
 					+ "): " + response.getErrorMessage());
 	}
 
-	private resolveDidBiography(did: DID, all: boolean= true, force: boolean = false): DIDBiography {
+	public /* private */ resolveDidBiography(did: DID, all: boolean= true, force: boolean = false): DIDBiography {
 		log.info("Resolving DID {}, all={}...", did.toString(), all);
 
 		let request = new DIDResolveRequest(this.generateRequestId());
@@ -250,7 +249,7 @@ export class DIDBackend {
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	protected resolveDid(did: DID, force: boolean = false): DIDDocument {
+	public /* protected */ resolveDid(did: DID, force: boolean = false): DIDDocument {
 		log.debug("Resolving DID {}...", did.toString());
 
 		if (this.resolveHandle != null) {
@@ -264,14 +263,13 @@ export class DIDBackend {
 		let tx: DIDTransaction = null;
 		if (bio.getStatus().equals(DIDBiographyStatus.VALID)) {
 			tx = bio.getTransaction(0);
-			break;
 		}
 		else if (bio.getStatus().equals(DIDBiographyStatus.DEACTIVATED)) {
 			if (bio.getTransactionCount() != 2)
 				throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
 
 			tx = bio.getTransaction(0);
-			if (!tx.getRequest().getOperation().equals(Operation.DEACTIVATE))
+			if (!tx.getRequest().getOperation().equals(IDChainRequest.Operation.DEACTIVATE))
 				throw new DIDResolveException("Invalid DID biography, wrong status.");
 
 			let doc = bio.getTransaction(1).getRequest().getDocument();
@@ -289,15 +287,14 @@ export class DIDBackend {
 				throw new DIDResolveException("Invalid DID biography, transaction signature mismatch.");
 
 			tx = bio.getTransaction(1);
-			break;
 		}
 		else if (bio.getStatus().equals(DIDBiographyStatus.NOT_FOUND)) {
 			return null;
 		}
 
-		if (!tx.getRequest().getOperation().equals(Operation.CREATE) &&
-			!tx.getRequest().getOperation().equals(Operation.UPDATE) &&
-			!tx.getRequest().getOperation().equals(Operation.TRANSFER))
+		if (!tx.getRequest().getOperation().equals(IDChainRequest.Operation.CREATE) &&
+			!tx.getRequest().getOperation().equals(IDChainRequest.Operation.UPDATE) &&
+			!tx.getRequest().getOperation().equals(IDChainRequest.Operation.TRANSFER))
 			throw new DIDResolveException("Invalid ID transaction, unknown operation.");
 
 		if (!tx.getRequest().isValid())
@@ -342,7 +339,7 @@ export class DIDBackend {
 		}
 		else if (bio.getStatus().equals(CredentialBiographyStatus.REVOKED)) {
 			tx = bio.getTransaction(0);
-			if (!tx.getRequest().getOperation().equals(Operation.REVOKE))
+			if (!tx.getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE))
 				throw new DIDResolveException("Invalid credential biography, wrong status.");
 
 			if (bio.getTransactionCount() < 1 || bio.getTransactionCount() > 2)
@@ -374,7 +371,7 @@ export class DIDBackend {
 			return null;
 		}
 
-		if (!tx.getRequest().getOperation().equals(Operation.DECLARE))
+		if (!tx.getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE))
 			throw new DIDResolveException("Invalid credential transaction, unknown operation.");
 
 		if (!tx.getRequest().isValid())
@@ -403,7 +400,7 @@ export class DIDBackend {
 		return list.getCredentialIds();
 	}
 
-	private createTransaction(request: IDChainRequest<?>, adapter: DIDTransactionAdapter) {
+	private createTransaction(request: IDChainRequest<any>, adapter: DIDTransactionAdapter) {
 		log.info("Create ID transaction...");
 
 		let payload = request.serialize(true);

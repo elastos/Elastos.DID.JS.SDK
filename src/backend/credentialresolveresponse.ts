@@ -27,7 +27,7 @@ import { ResolveResponse } from "./resolveresponse";
 
 @JsonCreator()
 export class CredentialResolveResponse extends ResolveResponse<CredentialResolveResponse, CredentialBiography> {
-	protected constructor(responseId: string, resultOrError: CredentialBiography | ResolveError) {
+	/* protected */ constructor(responseId: string, resultOrError: CredentialBiography | ResolveError) {
 		super(responseId, resultOrError);
 	}
 }

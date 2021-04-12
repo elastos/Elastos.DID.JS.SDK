@@ -27,7 +27,7 @@ import { ResolveResponse } from "./resolveresponse";
 
 @JsonCreator()
 export class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDBiography> {
-	protected constructor(responseId: string, resultOrError: DIDBiography | ResolveError) {
+	/* protected */ constructor(responseId: string, resultOrError: DIDBiography | ResolveError) {
 		super(responseId, resultOrError);
 	}
 }

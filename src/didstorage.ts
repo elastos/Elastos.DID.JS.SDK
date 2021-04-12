@@ -27,6 +27,7 @@ import { DIDMetadata } from "./didmetadata";
 import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
 import { RootIdentity } from "./rootidentity";
+import { VerifiableCredential } from "./verifiablecredential";
 
 /**
  * The inferface to change password.

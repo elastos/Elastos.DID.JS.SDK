@@ -25,6 +25,7 @@ import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, 
 import { Collections } from "./collections";
 import { Comparable } from "./comparable";
 import { Constants } from "./constants";
+import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDEntity } from "./didentity";
@@ -183,7 +184,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 		let tt = TransferTicket.newWithTicket(this, false);
 		let json = tt.serialize(true);
-		let digest = EcdsaSigner.sha256Digest(json.getBytes());
+		let digest = EcdsaSigner.sha256Digest(Buffer.from(json, 'utf-8'));
 
 		let checkedControllers: DID[] = [];
 

@@ -187,7 +187,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 			}
 		}
 
-		private static reEncrypt(secret: string, oldpass: string, newpass: string): string {
+		public /* private */ static reEncrypt(secret: string, oldpass: string, newpass: string): string {
 			let plain = this.decryptFromBase64(secret, oldpass);
 			let newSecret = this.encryptToBase64(plain, newpass);
 			return newSecret;
@@ -2047,14 +2047,14 @@ export namespace DIDStore {
 
 	export namespace DIDExport {
 		//@JsonPropertyOrder({ "content", "metadata" })
-		class Document {
+		export class Document {
 			//@JsonProperty("content")
 			private content: DIDDocument;
 			//@JsonProperty("metadata")
 			private metadata: DIDMetadata;
 
 			//@JsonCreator
-			protected constructor(/* @JsonProperty(value = "content", required = true) */ content: DIDDocument,
+			/* protected */ constructor(/* @JsonProperty(value = "content", required = true) */ content: DIDDocument,
 					/* @JsonProperty(value = "metadata") */ metadata: DIDMetadata) {
 				this.content = content;
 				this.metadata = metadata;
@@ -2100,7 +2100,7 @@ export namespace DIDStore {
 			}
 
 			public setDocument(doc: DIDDocument) {
-				this.document = new Document(doc, doc.getMetadata().isEmpty() ? null : doc.getMetadata());
+				this.document = new DIDStore.DIDExport.Document(doc, doc.getMetadata().isEmpty() ? null : doc.getMetadata());
 			}
 
 			public getCredentials(): VerifiableCredential[] {
@@ -2245,12 +2245,12 @@ export namespace DIDStore {
 		//@JsonPropertyOrder({ "content", "metadata" })
 		class Credential {
 			@JsonProperty({value:"content"}) @JsonClassType({type: () => [VerifiableCredential]})
-			private content: VerifiableCredential;
+			public /* private */ content: VerifiableCredential;
 			@JsonProperty({value:"metadata"}) @JsonClassType({type: () => [CredentialMetadata]})
 			private metadata: CredentialMetadata;
 
-			@JsonCreator
-			protected constructor(@JsonProperty({value:"content", required: true}) content: VerifiableCredential,
+			// Java: @JsonCreator
+			/* protected */ constructor(@JsonProperty({value:"content", required: true}) content: VerifiableCredential,
 				@JsonProperty({value:"metadata"}) metadata: CredentialMetadata) {
 				this.content = content;
 				this.metadata = metadata;
@@ -2264,8 +2264,8 @@ export namespace DIDStore {
 			@JsonProperty({value: "key"}) @JsonClassType({type: () => [String]})
 			private key: string;
 
-			@JsonCreator
-			constructor(@JsonProperty({value = "id", required = true}) id: DIDURL) {
+			// Java: @JsonCreator
+			constructor(@JsonProperty({value: "id", required: true}) id: DIDURL) {
 				this.id = id;
 			}
 
@@ -2278,11 +2278,11 @@ export namespace DIDStore {
 			}
 
 			public getKey(exportpass: string, storepass: string): string {
-				return reEncrypt(key, exportpass, storepass);
+				return DIDStore.reEncrypt(this.key, exportpass, storepass);
 			}
 
 			public setKey(key: string, storepass: string, exportpass: string) {
-				this.key = reEncrypt(key, storepass, exportpass);
+				this.key = DIDStore.reEncrypt(key, storepass, exportpass);
 			}
 		}
 	}

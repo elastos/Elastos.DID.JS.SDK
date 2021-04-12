@@ -27,6 +27,7 @@ import { Cloneable } from "./cloneable";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDSyntaxException, UnknownInternalException } from "./exceptions/exceptions";
+import { JSONObject } from "./json";
 import { checkArgument } from "./utils";
 
 /**
@@ -128,12 +129,11 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	/*
-	protected static parse(content: JsonNode, clazz: ClassType<T>): <T extends DIDEntity<?>> {
+	public /* protected */ static parse<T extends DIDEntity<any>>(content: JSONObject, clazz: ClassType<T>): T {
 		let mapper = this.getObjectMapper();
 
 		try {
-			T o = mapper.treeToValue(content, clazz);
+			let o: T = mapper.treeToValue(content, clazz);
 			o.sanitize();
 			return o;
 		} catch (e) {
@@ -141,7 +141,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
 	}
-	*/
+
 	/**
 	 * Generic method to parse a DID object from a string JSON
 	 * representation into given DIDObject type.

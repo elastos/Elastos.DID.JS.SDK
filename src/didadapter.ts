@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+import { JSONObject } from "./json";
 import { DIDTransactionAdapter } from "./didtransactionadapter";
 
 /**
@@ -34,5 +35,6 @@ export interface DIDAdapter extends DIDTransactionAdapter {
 	 * @return the resolve result
 	 * @throws DIDResolveException resolve did failed.
 	 */
+	resolve(request: string): JSONObject;
 	// TODO FROM JAVA public InputStream resolve(request: string);
 }
