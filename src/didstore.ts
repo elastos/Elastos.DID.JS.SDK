@@ -898,7 +898,7 @@ import { HDKey } from "./crypto/hdkey";
 		 * @return the original private key
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		 protected loadPrivateKey(id: DIDURL, storepass: string = undefined): string {
+		 public /* protected */ loadPrivateKey(id: DIDURL, storepass: string = undefined): string {
 			checkArgument(id != null, "Invalid private key id");
 
 			let encryptedKey: string = null;
@@ -992,7 +992,7 @@ import { HDKey } from "./crypto/hdkey";
 		 * @return the signature string
 		 * @throws DIDStoreException can not get DID Document if no specified sign key.
 		 */
-		protected sign(id: DIDURL, storepass: string, digest: string): string {
+		public /* protected */ sign(id: DIDURL, storepass: string, digest: string): string {
 			checkArgument(id != null, "Invalid private key id");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 			checkArgument(digest != null && digest.length > 0, "Invalid digest");
@@ -1028,7 +1028,7 @@ import { HDKey } from "./crypto/hdkey";
 
 		public synchronize(handle: DIDStore.ConflictHandle = null) {
 			if (handle == null)
-				handle = defaultConflictHandle;
+				handle = DIDStore.defaultConflictHandle;
 
 			let identities = this.storage.listRootIdentities();
 			for (let identity of identities) {

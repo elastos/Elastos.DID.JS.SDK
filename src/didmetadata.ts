@@ -93,7 +93,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 *
 	 * @param signature the signature string
 	 */
-	protected setPreviousSignature(signature: string) {
+	public /* protected */ setPreviousSignature(signature: string) {
 		this.put(DIDMetadata.PREV_SIGNATURE, signature);
 	}
 

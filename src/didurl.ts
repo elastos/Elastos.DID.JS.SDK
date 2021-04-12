@@ -24,7 +24,7 @@ import { AbstractMetadata } from "./abstractmetadata";
 import { DID } from "./did";
 import { ParentException, MalformedDIDURLException } from "./exceptions/exceptions";
 import { ParserHelper } from "./parser/parserhelper";
-import { checkArgument } from "./utils";
+import { checkArgument, checkNotNull } from "./utils";
 import { DIDURLBaseListener } from "./parser/DIDURLBaseListener";
 import { DIDURLParser } from "./parser/DIDURLParser";
 import { JsonStringifier } from "jackson-js";
@@ -350,57 +350,50 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 		return this.metadata;
 	}
 
-	/* public String toString(DID base) {
-		StringBuilder builder = new StringBuilder(512);
-		if (did != null && (base == null || !did.equals(base)))
-			builder.append(did);
+	public toString(base: DID = null): string {
+		let output: string = "";
+		if (this.did != null && (base == null || !this.did.equals(base)))
+			output += this.did;
 
-		if (parameters != null && !parameters.isEmpty())
-			builder.append(";").append(getParametersString());
+		if (this.parameters != null && this.parameters.size != 0)
+			output += ";" + this.getParametersString();
 
-		if (path != null && !path.isEmpty())
-			builder.append(path);
+		if (this.path != null && !this.path.isEmpty())
+			output += this.path;
 
-		if (query != null && !query.isEmpty())
-			builder.append("?").append(getQueryString());
+		if (this.query != null && this.query.size != 0)
+			output += "?" + this.getQueryString();
 
-		if (fragment != null && !fragment.isEmpty())
-			builder.append("#").append(getFragment());
+		if (this.fragment != null && !this.fragment.isEmpty())
+			output += "#" + this.getFragment();
 
-		return builder.toString();
+		return output;
 	}
 
-	@Override
-	public String toString() {
-		return toString(null);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
+	public equals(obj: Object): boolean {
 		if (obj == this)
 			return true;
 
 		if (obj instanceof DIDURL) {
-			DIDURL id = (DIDURL)obj;
-			return toString().equals(id.toString());
+			let id = obj as DIDURL;
+			return this.toString().equals(id.toString());
 		}
 
-		if (obj instanceof String) {
-			String url = (String)obj;
-			return toString().equals(url);
+		if (typeof obj === "string") {
+			let url = obj as string;
+			return this.toString().equals(url);
 		}
 
 		return false;
 	}
 
-	@Override
-	public int compareTo(DIDURL id) {
+	public compareTo(id: DIDURL): number {
 		checkNotNull(id, "id is null");
 
-		return toString().compareTo(id.toString());
+		return this.toString().compareTo(id.toString());
 	}
 
-	private int mapHashCode(Map<String, String> map) {
+	/*private int mapHashCode(Map<String, String> map) {
 		int hash = 0;
 
 		for (Map.Entry<String, String> entry : map.entrySet()) {

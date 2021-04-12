@@ -217,7 +217,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param withProof check the proof object or not
 	 * @throws MalformedCredentialException if the credential object is invalid
 	 */
-	protected sanitize() {
+	public /* protected */ sanitize() {
 		if (this.id == null)
 			throw new MalformedCredentialException("Missing credential id");
 
@@ -1263,7 +1263,7 @@ export namespace VerifiableCredential {
 		  *
 		  * @param did the controller's DID
 		  */
-		 protected setId(did: DID) {
+		 public /* protected */ setId(did: DID) {
 			 this.id = did;
 		 }
 

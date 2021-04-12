@@ -36,3 +36,11 @@ export class CredentialNotGenuineException extends ParentException {}
 export class CredentialExpiredException extends ParentException {}
 export class CredentialRevokedException extends ParentException {}
 export class CredentialAlreadyExistException extends ParentException {}
+export class DIDNotGenuineException extends ParentException {}
+export class DIDExpiredException extends ParentException {}
+export class DIDNotUpToDateException extends ParentException {}
+export class DIDObjectAlreadyExistException extends ParentException {}
+export class IllegalUsage extends ParentException {}
+export class DIDObjectNotExistException extends ParentException {}
+export class CanNotRemoveEffectiveController extends ParentException {}
+export class DIDObjectHasReference extends ParentException {}

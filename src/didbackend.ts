@@ -20,14 +20,25 @@
  * SOFTWARE.
  */
 
+import { randomInt } from "crypto";
+import { List as ImmutableList } from "immutable";
+import { randomBytes } from "node:crypto";
+import { CredentialBiography, Status as CredentialBiographyStatus } from "./backend/credentialbiography";
+import { CredentialList } from "./backend/credentiallist";
+import { CredentialListRequest } from "./backend/credentiallistrequest";
+import { CredentialListResponse } from "./backend/credentiallistresponse";
 import { CredentialRequest } from "./backend/credentialrequest";
+import { CredentialResolveRequest } from "./backend/credentialresolverequest";
+import { CredentialResolveResponse } from "./backend/credentialresolveresponse";
 import { CredentialTransaction } from "./backend/credentialtransaction";
-import { DIDBiography } from "./backend/didbiography";
+import { DIDBiography, Status as DIDBiographyStatus } from "./backend/didbiography";
 import { DIDRequest } from "./backend/didrequest";
 import { DIDResolveRequest } from "./backend/didresolverequest";
+import { DIDResolveResponse } from "./backend/didresolveresponse";
 import { DIDTransaction } from "./backend/didtransaction";
 import { IDChainRequest, Operation } from "./backend/idchaindrequest";
 import { ResolveRequest } from "./backend/resolverequest";
+import { ResolveResponse } from "./backend/resolveresponse";
 import { ResolveResult } from "./backend/resolveresult";
 import { CredentialMetadata } from "./credentialmetadata";
 import { DID } from "./did";
@@ -65,8 +76,6 @@ export class DIDBackend {
 	private static DEFAULT_CACHE_INITIAL_CAPACITY = 16;
 	private static DEFAULT_CACHE_MAX_CAPACITY = 64;
 	private static DEFAULT_CACHE_TTL = 10 * 60 * 1000;
-
-	private static random: Random = new Random();
 
 	private adapter: DIDAdapter;
 	private resolveHandle: LocalResolveHandle;
@@ -146,9 +155,7 @@ export class DIDBackend {
 	}
 
 	private generateRequestId(): string {
-		byte[] bin = new byte[16];
-	    random.nextBytes(bin);
-	    return Hex.toHexString(bin);
+		return randomBytes(16).toString("hex");
 	}
 
 	/**
@@ -255,12 +262,11 @@ export class DIDBackend {
 		let bio = this.resolveDidBiography(did, false, force);
 
 		let tx: DIDTransaction = null;
-		switch (bio.getStatus()) {
-		case VALID:
+		if (bio.getStatus().equals(DIDBiographyStatus.VALID)) {
 			tx = bio.getTransaction(0);
 			break;
-
-		case DEACTIVATED:
+		}
+		else if (bio.getStatus().equals(DIDBiographyStatus.DEACTIVATED)) {
 			if (bio.getTransactionCount() != 2)
 				throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
 
@@ -284,8 +290,8 @@ export class DIDBackend {
 
 			tx = bio.getTransaction(1);
 			break;
-
-		case NOT_FOUND:
+		}
+		else if (bio.getStatus().equals(DIDBiographyStatus.NOT_FOUND)) {
 			return null;
 		}
 
@@ -302,7 +308,7 @@ export class DIDBackend {
 		metadata.setTransactionId(tx.getTransactionId());
 		metadata.setSignature(doc.getProof().getSignature());
 		metadata.setPublished(tx.getTimestamp());
-		if (bio.getStatus() == DIDBiography.Status.DEACTIVATED)
+		if (bio.getStatus().equals(DIDBiographyStatus.DEACTIVATED))
 			metadata.setDeactivated(true);
 		doc.setMetadata(metadata);
 		return doc;
@@ -318,7 +324,7 @@ export class DIDBackend {
 			this.cache.invalidate(request);
 
 		try {
-			return this.cache.get(request);
+			return this.cache.get(request) as CredentialBiography;
 		} catch (e) {
 			// ExecutionException
 			throw new DIDResolveException(e);
@@ -331,12 +337,10 @@ export class DIDBackend {
 		let bio = this.resolveCredentialBiography(id, issuer, force);
 
 		let tx: CredentialTransaction = null;
-		switch (bio.getStatus()) {
-		case VALID:
+		if (bio.getStatus().equals(CredentialBiographyStatus.VALID)) {
 			tx = bio.getTransaction(0);
-			break;
-
-		case REVOKED:
+		}
+		else if (bio.getStatus().equals(CredentialBiographyStatus.REVOKED)) {
 			tx = bio.getTransaction(0);
 			if (!tx.getRequest().getOperation().equals(Operation.REVOKE))
 				throw new DIDResolveException("Invalid credential biography, wrong status.");
@@ -365,9 +369,8 @@ export class DIDBackend {
 			}
 
 			tx = bio.getTransaction(1);
-			break;
-
-		case NOT_FOUND:
+		}
+		else if (bio.getStatus().equals(CredentialBiographyStatus.NOT_FOUND)) {
 			return null;
 		}
 
@@ -381,13 +384,13 @@ export class DIDBackend {
 		let metadata = new CredentialMetadata(vc.getId());
 		metadata.setTransactionId(tx.getTransactionId());
 		metadata.setPublished(tx.getTimestamp());
-		if (bio.getStatus() == CredentialBiography.Status.REVOKED)
+		if (bio.getStatus() == CredentialBiographyStatus.REVOKED)
 			metadata.setRevoked(true);
 		vc.setMetadata(metadata);
 		return vc;
 	}
 
-	protected listCredentials(did: DID, skip: number, limit: number): DIDURL[] {
+	protected listCredentials(did: DID, skip: number, limit: number): ImmutableList<DIDURL> {
 		log.info("List credentials for {}", did);
 
 		let request = new CredentialListRequest(this.generateRequestId());
@@ -424,7 +427,7 @@ export class DIDBackend {
 	}
 
 	private invalidCredentialCache(id: DIDURL, signer: DID) {
-		let request = new CredentialResolveRequest(generateRequestId());
+		let request = new CredentialResolveRequest(this.generateRequestId());
 		request.setParameters(id, signer);
 		this.cache.invalidate(request);
 
@@ -447,7 +450,7 @@ export class DIDBackend {
 	 * @throws DIDTransactionException publishing did failed because of did transaction error.
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	protected createDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public /* protected */ createDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.create(doc, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
@@ -463,13 +466,13 @@ export class DIDBackend {
 	 * @throws DIDTransactionException publishing did failed because of did transaction error.
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	protected updateDid(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public /* protected */ updateDid(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.update(doc, previousTxid, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
 
-	protected transferDid(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public /* protected */ transferDid(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.transfer(doc, ticket, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
@@ -484,7 +487,7 @@ export class DIDBackend {
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
      */
-	protected deactivateDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public /* protected */ deactivateDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.deactivate(doc, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
@@ -501,7 +504,7 @@ export class DIDBackend {
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	protected deactivateDid(target: DIDDocument, targetSignKey: DIDURL,
+	protected deactivateTargetDid(target: DIDDocument, targetSignKey: DIDURL,
 			signer: DIDDocument, signKey: DIDURL, storepass: string,
 			adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.deactivate(target, targetSignKey, signer, signKey, storepass);

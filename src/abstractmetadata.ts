@@ -55,7 +55,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 		this.store = store;
 	}
 
-	protected detachStore() {
+	public /* protected */ detachStore() {
 		this.store = null;
 	}
 
@@ -187,7 +187,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 *
 	 * @param metadata the metadata to be merged.
 	 */
-	protected merge(metadata: AbstractMetadata) {
+	public /* protected */ merge(metadata: AbstractMetadata) {
 		if (metadata == this || metadata == null)
 			return;
 

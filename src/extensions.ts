@@ -5,6 +5,7 @@ declare global {
     interface String {
         hashCode(): number;
         isEmpty(): boolean;
+        equals(otherString: string): boolean;
         /**
          * Decodes current Base64 string into a non-Base64 string.
          */
@@ -34,6 +35,10 @@ String.prototype.hashCode = function() {
 
 String.prototype.isEmpty = function() {
     return this === "";
+}
+
+String.prototype.equals = function(otherString: string) {
+    return this === otherString;
 }
 
 String.prototype.base64Decode = function() {

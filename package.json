@@ -19,6 +19,7 @@
     "bs58check": "^2.1.2",
     "buffer": "^5.6.0",
     "crypto-js": "^4.0.0",
+    "dayjs": "^1.10.4",
     "ecdh-crypto": "^1.0.5",
     "immutable": "^4.0.0-rc.12",
     "jackson-js": "^1.1.0",

@@ -38,7 +38,7 @@ export class Issuer {
 	private self: DIDDocument ;
 	private signKey: DIDURL ;
 
-	private constructor(doc: DIDDocument, signKey?: DIDURL) {
+	/* private */ constructor(doc: DIDDocument, signKey?: DIDURL) {
 		this.self = doc;
 
 		if (signKey) {

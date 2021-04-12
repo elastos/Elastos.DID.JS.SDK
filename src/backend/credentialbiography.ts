@@ -72,6 +72,10 @@ export class Status {
 	public toString(): string {
 		return this.name.toLowerCase();
 	}
+
+	public equals(status: Status): boolean {
+		return this.value == status.value;
+	}
 }
 
 @JsonPropertyOrder({value: [

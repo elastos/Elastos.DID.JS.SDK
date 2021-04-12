@@ -214,19 +214,19 @@ export class HDKey {
 		System.arraycopy(hash, 0, binAddress, programHash.length, 4);
 
 		return binAddress;
-	}
-
-	public getBinAddress(): string {
-		return this.getBinAddress(this.getPublicKeyBytes());
-	}
-
-	public getAddress(): string {
-		return Base58.encode(getBinAddress());
-	}
-
-	public static String toAddress(byte[] pk) {
-		return Base58.encode(getBinAddress(pk));
 	}*/
+
+	/* public getBinAddress(): string {
+		return this.getBinAddress(this.getPublicKeyBytes());
+	} */
+
+	/* public getAddress(): string {
+		return Base58.encode(getBinAddress());
+	} */
+
+	public static toAddress(pk: string): string {
+		return encodeBase58(this.getBinAddress(pk));
+	}
 
 	public static isAddressValid(address: string): boolean {
 		let binAddress = decodeBase58(address);
