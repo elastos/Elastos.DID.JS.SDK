@@ -75,7 +75,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @param normalized if normalized output, ignored when the sign is true
 	 * @return the ObjectMapper instance
 	 */
-	private static getObjectMapper(normalized: boolean = undefined): ObjectMapper {
+	public /* private */ static getObjectMapper(normalized: boolean = undefined): ObjectMapper {
 		/* TODO FROM JAVA let jsonFactory = new JsonFactory();
 		jsonFactory.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 		jsonFactory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);*/
@@ -257,16 +257,16 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @return the serialized JSON string
 	 * @throws DIDSyntaxException if a serialization error occurs
 	 */
-	/*
 	public serialize(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
-		try {
+		/* TODO try {
 			return DIDEntity.getObjectMapper(normalized).writeValueAsString(this);
 		} catch (e) {
 			// JsonProcessingException
 			throw new UnknownInternalException(e);
-		}
+		}*/
+		return null;
 	}
-	*/
+
 	/**
 	 * Serialize DID object to a Writer.
 	 *
@@ -360,11 +360,9 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @param normalized whether normalized output
 	 * @return a JSON string representation of the object
 	 */
-	/*
 	public toString(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
 		return this.serialize(normalized);
 	}
-	*/
 }
 
 class SerializeContext {

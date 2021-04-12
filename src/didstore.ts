@@ -30,7 +30,6 @@ import { DIDEntity } from "./didentity";
 import { DIDMetadata } from "./didmetadata";
 import { DIDStorage } from "./didstorage";
 import { DIDURL } from "./didurl";
-import { VerifiableCredential } from "./domain";
 import { DIDStoreCryptoException, DIDStoreException, IllegalArgumentException, WrongPasswordException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { RootIdentity } from "./rootidentity";
@@ -38,6 +37,7 @@ import { checkArgument } from "./utils";
 import { LruCache } from "./lrucache";
 import { Aes256cbc } from "./crypto/aes256cbc";
 import { HDKey } from "./crypto/hdkey";
+import { VerifiableCredential } from "./verifiablecredential";
 
 /**
  * DIDStore is local store for all DIDs.

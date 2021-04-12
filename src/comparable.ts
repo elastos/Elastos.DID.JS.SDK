@@ -1,3 +1,4 @@
 export interface Comparable<T> {
-    compareTo(proof: T): number;
+    equals(obj: T): boolean
+    compareTo(obj: T): number;
 }

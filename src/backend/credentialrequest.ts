@@ -36,6 +36,10 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	private vc: VerifiableCredential;
 	private signer: DIDDocument;
 
+	private constructor() {
+		super();
+	}
+
 	private static newWithOperation(operation: Operation): CredentialRequest {
 		let credentialRequest = new CredentialRequest();
 		credentialRequest.constructWithOperation(operation);
@@ -85,35 +89,11 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
 	 */
-	public static revoke(vc: VerifiableCredential, doc: DIDDocument, signKey: DIDURL, storepass: string): CredentialRequest {
+	public static revoke(vc: VerifiableCredential | DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): CredentialRequest {
 		let request = CredentialRequest.newWithOperation(Operation.REVOKE);
 		request.setPayload(vc);
 		request.setSigner(doc);
 
-		try {
-			request.seal(doc, signKey, storepass);
-		} catch (ignore) {
-			// MalformedIDChainRequestException
-			throw new UnknownInternalException(ignore);
-		}
-
-		return request;
-	}
-
-	/**
-	 * Constructs the 'revoke' credential Request.
-	 *
-	 * @param id the id of the VerifiableCredential needs to be revoke
-	 * @param doc the credential owner's or issuer's DIDDocument object
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
-	 */
-	public static revoke(id: DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: String): CredentialRequest {
-		let request = CredentialRequest.newWithOperation(Operation.REVOKE);
-		request.setPayload(id);
-		request.setSigner(doc);
 		try {
 			request.seal(doc, signKey, storepass);
 		} catch (ignore) {
@@ -210,7 +190,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			throw new MalformedIDChainRequestException("Missing payload");
 
 		let signature = doc.sign(signKey, storepass, this.getSigningInputs());
-		this.setProof(new Proof(signKey, signature));
+		this.setProof(new IDChainRequest.Proof(signKey, signature));
 	}
 
 	protected getSignerDocument(): DIDDocument {

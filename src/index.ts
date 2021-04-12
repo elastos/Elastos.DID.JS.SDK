@@ -2,7 +2,7 @@
 import { Core } from "./core";
 import { Did } from "./did";
 import { DidDocument } from "./diddocument";
-import { IdChainRequest } from "./idchainrequest";
+import { IdChainRequest } from "./DEPRECATED_idchainrequest";
 import { Hive } from "./hive";
 
 export class ElastosClient {

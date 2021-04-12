@@ -1,11 +1,11 @@
 import { DIDDocument } from "./diddocument"
-import { JSONObject, Proof } from "./domain"
 import { Signer, DIDUtil } from "./core"
+import { IDChainRequest } from "./backend/idchaindrequest";
+import { JSONObject } from "./DEPRECATED_domain";
 
 const rs = require('jsrsasign')
-
+/*
 export class RequestHeader extends JSONObject {
-
     public readonly specification: string;
     public readonly operation: string;
     public readonly previousTxid: string;
@@ -21,7 +21,7 @@ export class RequestHeader extends JSONObject {
 export class RequestInternal extends JSONObject {
     public readonly header: RequestHeader;
     public readonly payload: string;
-    public proof?: Proof;
+    public proof?: IDChainRequest.Proof;
 
     public constructor (header, payload) {
         super();
@@ -97,3 +97,4 @@ export class IdChainRequest {
         request.proof = proof;
     }
 }
+ */

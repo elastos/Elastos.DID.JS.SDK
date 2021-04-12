@@ -331,7 +331,7 @@ export class DIDBackend {
 		}
 	}
 
-	protected resolveCredential(id: DIDURL, issuer: DID = null, force: boolean= false): VerifiableCredential {
+	public /* protected */ resolveCredential(id: DIDURL, issuer: DID = null, force: boolean= false): VerifiableCredential {
 		log.debug("Resolving credential {}...", id);
 
 		let bio = this.resolveCredentialBiography(id, issuer, force);
@@ -390,7 +390,7 @@ export class DIDBackend {
 		return vc;
 	}
 
-	protected listCredentials(did: DID, skip: number, limit: number): ImmutableList<DIDURL> {
+	public /* protected */ listCredentials(did: DID, skip: number, limit: number): ImmutableList<DIDURL> {
 		log.info("List credentials for {}", did);
 
 		let request = new CredentialListRequest(this.generateRequestId());
@@ -504,10 +504,10 @@ export class DIDBackend {
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	protected deactivateTargetDid(target: DIDDocument, targetSignKey: DIDURL,
+	public /* protected */ deactivateTargetDid(target: DIDDocument, targetSignKey: DIDURL,
 			signer: DIDDocument, signKey: DIDURL, storepass: string,
 			adapter: DIDTransactionAdapter) {
-		let request = DIDRequest.deactivate(target, targetSignKey, signer, signKey, storepass);
+		let request = DIDRequest.deactivateTarget(target, targetSignKey, signer, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(target.getSubject());
 	}
@@ -520,17 +520,18 @@ export class DIDBackend {
 		this.invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
-	public /* protected */ revokeCredential(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
-		this.createTransaction(request, adapter);
-		this.invalidCredentialCache(vc.getId(), null);
-		this.invalidCredentialCache(vc.getId(), vc.getIssuer());
-	}
-
-	public /* protected */ revokeCredential(vc: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
-		this.createTransaction(request, adapter);
-		this.invalidCredentialCache(vc, null);
-		this.invalidCredentialCache(vc, signer.getSubject());
+	public /* protected */ revokeCredential(vc: VerifiableCredential | DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+		if (vc instanceof VerifiableCredential) {
+			let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
+			this.createTransaction(request, adapter);
+			this.invalidCredentialCache(vc.getId(), null);
+			this.invalidCredentialCache(vc.getId(), vc.getIssuer());
+		}
+		else {
+			let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
+			this.createTransaction(request, adapter);
+			this.invalidCredentialCache(vc, null);
+			this.invalidCredentialCache(vc, signer.getSubject());
+		}
 	}
 }

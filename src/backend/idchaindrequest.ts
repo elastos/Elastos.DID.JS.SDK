@@ -64,25 +64,25 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	public /*private*/ static SIGNATURE = "signature";
 
 	@JsonProperty({value: IDChainRequest.HEADER})
-	private header: Header;
+	private header: IDChainRequest.Header;
 	@JsonProperty({value: IDChainRequest.PAYLOAD})
 	private payload: string;
 	@JsonProperty({value: IDChainRequest.PROOF})
-	private proof: Proof;
+	private proof: IDChainRequest.Proof;
 
 	protected IDChainRequest() {}
 
 	// Called by inheriting constructors
-	protected constructWithOperation(operation: Operation) {
-		this.header = Header.newWithPreviousTxId(operation, null);
+	protected constructWithOperation(operation: IDChainRequest.Operation) {
+		this.header = IDChainRequest.Header.newWithPreviousTxId(operation, null);
 	}
 
-	protected constructWithPreviousTxId(operation: Operation, previousTxid: string) {
-		this.header = Header.newWithPreviousTxId(operation, previousTxid);
+	protected constructWithPreviousTxId(operation: IDChainRequest.Operation, previousTxid: string) {
+		this.header = IDChainRequest.Header.newWithPreviousTxId(operation, previousTxid);
 	}
 
-	protected constructWithTransferTicket(operation: Operation, ticket: TransferTicket) {
-		this.header = Header.newWithTransferTicket(operation, ticket);
+	protected constructWithTransferTicket(operation: IDChainRequest.Operation, ticket: TransferTicket) {
+		this.header = IDChainRequest.Header.newWithTransferTicket(operation, ticket);
 	}
 
 	protected constructWithIDChainRequest(request: IDChainRequest<unknown>) {
@@ -91,7 +91,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 		this.proof = request.proof;
 	}
 
-	protected getHeader(): Header {
+	protected getHeader(): IDChainRequest.Header {
 		return this.header;
 	}
 
@@ -99,7 +99,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	 * Get operation string.
 	 * @return the operation string
 	 */
-	public getOperation(): Operation {
+	public getOperation(): IDChainRequest.Operation {
 		return this.header.getOperation();
 	}
 
@@ -121,17 +121,17 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	 *
 	 * @return the proof object
 	 */
-	public getProof(): Proof {
+	public getProof(): IDChainRequest.Proof {
 		return this.proof;
 	}
 
-	protected setProof(proof: Proof) {
+	protected setProof(proof: IDChainRequest.Proof) {
 		this.proof = proof;
 	}
 
 	protected getSigningInputs(): string[] {
-		let prevtxid = this.getOperation().equals(Operation.UPDATE) ? this.header.getPreviousTxid() : "";
-		let ticket = this.getOperation().equals(Operation.TRANSFER) ? this.header.getTicket() : "";
+		let prevtxid = this.getOperation().equals(IDChainRequest.Operation.UPDATE) ? this.header.getPreviousTxid() : "";
+		let ticket = this.getOperation().equals(IDChainRequest.Operation.TRANSFER) ? this.header.getTicket() : "";
 
 		let inputs: string[] = [
 			this.header.getSpecification(), // .getBytes(),
@@ -167,7 +167,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 		if (!doc.isValid())
 			return false;
 
-		if (!this.getOperation().equals(Operation.DEACTIVATE)) {
+		if (!this.getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
 			if (!doc.isAuthenticationKey(signKey))
 				return false;
 		} else {
@@ -183,176 +183,178 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	}
 }
 
-@JsonPropertyOrder({value: [
-	IDChainRequest.SPECIFICATION,
-	IDChainRequest.OPERATION,
-	IDChainRequest.PREVIOUS_TXID,
-	IDChainRequest.TICKET
-]})
-@JsonInclude({value: JsonIncludeType.NON_NULL})
-@JsonCreator()
-class Header {
-	@JsonProperty({value: IDChainRequest.SPECIFICATION})
-	private specification: string;
-	@JsonProperty({value: IDChainRequest.OPERATION})
-	private operation: Operation;
-	@JsonProperty({value: IDChainRequest.PREVIOUS_TXID})
+export namespace IDChainRequest {
+	@JsonPropertyOrder({value: [
+		IDChainRequest.SPECIFICATION,
+		IDChainRequest.OPERATION,
+		IDChainRequest.PREVIOUS_TXID,
+		IDChainRequest.TICKET
+	]})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	private previousTxid: string;
-	@JsonProperty({value: IDChainRequest.TICKET})
-	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	private ticket: string;
-	private transferTicket: TransferTicket;
+	@JsonCreator()
+	export class Header {
+		@JsonProperty({value: IDChainRequest.SPECIFICATION})
+		private specification: string;
+		@JsonProperty({value: IDChainRequest.OPERATION})
+		private operation: Operation;
+		@JsonProperty({value: IDChainRequest.PREVIOUS_TXID})
+		@JsonInclude({value: JsonIncludeType.NON_NULL})
+		private previousTxid: string;
+		@JsonProperty({value: IDChainRequest.TICKET})
+		@JsonInclude({value: JsonIncludeType.NON_NULL})
+		private ticket: string;
+		private transferTicket: TransferTicket;
 
-	constructor(@JsonProperty({value: IDChainRequest.SPECIFICATION, required: true}) spec: string) {
-		this.specification = spec;
-	}
-
-	static newWithPreviousTxId(operation: Operation, previousTxid: string) {
-		let header = new Header(operation.getSpecification());
-		header.operation = operation;
-		header.previousTxid = previousTxid;
-		return header;
-	}
-
-	static newWithTransferTicket(operation: Operation, ticket: TransferTicket = null) {
-		let header = new Header(operation.getSpecification());
-		header.operation = operation;
-
-		if (ticket) {
-			let json = ticket.toString(true);
-			header.ticket = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(json));
-			header.transferTicket = ticket;
+		constructor(@JsonProperty({value: IDChainRequest.SPECIFICATION, required: true}) spec: string) {
+			this.specification = spec;
 		}
 
-		return header;
-	}
-
-	public getSpecification(): string {
-		return this.specification;
-	}
-
-	public getOperation(): Operation {
-		return this.operation;
-	}
-
-	public getPreviousTxid(): string {
-		return this.previousTxid;
-	}
-
-	public getTicket(): string {
-		return this.ticket;
-	}
-
-	@JsonSetter({value: IDChainRequest.TICKET})
-	private setTicket(ticket: string) {
-		checkArgument(ticket != null && ticket !== "", "Invalid ticket");
-
-		let json = CryptoJS.enc.Base64.parse(ticket).toString();
-		try {
-			this.transferTicket = TransferTicket.parse(json);
-		} catch (e) {
-			// MalformedTransferTicketException
-			throw new IllegalArgumentException("Invalid ticket", e);
+		static newWithPreviousTxId(operation: Operation, previousTxid: string) {
+			let header = new Header(operation.getSpecification());
+			header.operation = operation;
+			header.previousTxid = previousTxid;
+			return header;
 		}
 
-		this.ticket = ticket;
+		static newWithTransferTicket(operation: Operation, ticket: TransferTicket = null) {
+			let header = new Header(operation.getSpecification());
+			header.operation = operation;
+
+			if (ticket) {
+				let json = ticket.toString(true);
+				header.ticket = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(json));
+				header.transferTicket = ticket;
+			}
+
+			return header;
+		}
+
+		public getSpecification(): string {
+			return this.specification;
+		}
+
+		public getOperation(): Operation {
+			return this.operation;
+		}
+
+		public getPreviousTxid(): string {
+			return this.previousTxid;
+		}
+
+		public getTicket(): string {
+			return this.ticket;
+		}
+
+		@JsonSetter({value: IDChainRequest.TICKET})
+		private setTicket(ticket: string) {
+			checkArgument(ticket != null && ticket !== "", "Invalid ticket");
+
+			let json = CryptoJS.enc.Base64.parse(ticket).toString();
+			try {
+				this.transferTicket = TransferTicket.parse(json);
+			} catch (e) {
+				// MalformedTransferTicketException
+				throw new IllegalArgumentException("Invalid ticket", e);
+			}
+
+			this.ticket = ticket;
+		}
+
+		public getTransferTicket(): TransferTicket {
+			return this.transferTicket;
+		}
 	}
 
-	public getTransferTicket(): TransferTicket {
-		return this.transferTicket;
+	@JsonPropertyOrder({value:[
+		IDChainRequest.TYPE,
+		IDChainRequest.VERIFICATION_METHOD,
+		IDChainRequest.SIGNATURE
+	]})
+	export class Proof {
+		@JsonProperty({value: IDChainRequest.TYPE})
+		private type: string;
+		@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD})
+		private verificationMethod: DIDURL;
+		@JsonProperty({value: IDChainRequest.SIGNATURE})
+		private signature: string;
+
+		// Java: @JsonCreator()
+		public /*private*/ constructor(
+				@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD, required: true}) verificationMethod: DIDURL,
+				@JsonProperty({value: IDChainRequest.SIGNATURE, required: true}) signature: string,
+				@JsonProperty({value: IDChainRequest.TYPE}) type: string = null
+		) {
+			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+			this.verificationMethod = verificationMethod;
+			this.signature = signature;
+		}
+
+		public getType(): string {
+			return this.type;
+		}
+
+		public getVerificationMethod(): DIDURL {
+			return this.verificationMethod;
+		}
+
+		public /*protected*/ qualifyVerificationMethod(ref: DID) {
+			// TODO: need improve the impl
+			if (this.verificationMethod.getDid() == null)
+				this.verificationMethod = DIDURL.valueOf(ref, this.verificationMethod);
+		}
+
+		public getSignature(): string {
+			return this.signature;
+		}
 	}
-}
 
-@JsonPropertyOrder({value:[
-	IDChainRequest.TYPE,
-	IDChainRequest.VERIFICATION_METHOD,
-	IDChainRequest.SIGNATURE
-]})
-export class Proof {
-	@JsonProperty({value: IDChainRequest.TYPE})
-	private type: string;
-	@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD})
-	private verificationMethod: DIDURL;
-	@JsonProperty({value: IDChainRequest.SIGNATURE})
-	private signature: string;
-
-	@JsonCreator()
-	public /*private*/ constructor(
-			@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD, required: true}) verificationMethod: DIDURL,
-			@JsonProperty({value: IDChainRequest.SIGNATURE, required: true}) signature: string,
-			@JsonProperty({value: IDChainRequest.TYPE}) type: string = null
-	) {
-		this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-		this.verificationMethod = verificationMethod;
-		this.signature = signature;
-	}
-
-	public getType(): string {
-		return this.type;
-	}
-
-	public getVerificationMethod(): DIDURL {
-		return this.verificationMethod;
-	}
-
-	public /*protected*/ qualifyVerificationMethod(ref: DID) {
-		// TODO: need improve the impl
-		if (this.verificationMethod.getDid() == null)
-			this.verificationMethod = DIDURL.valueOf(ref, this.verificationMethod);
-	}
-
-	public getSignature(): string {
-		return this.signature;
-	}
-}
-
-/**
- * The IDChain Request Operation
- */
-export class Operation {
 	/**
-	 * Create a new DID
+	 * The IDChain Request Operation
 	 */
-	public static CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
-	/**
-	 * Update an exist DID
-	 */
-	public static UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
-	/**
-	 * Transfer the DID' ownership
-	 */
-	public static TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
-	/**
-	 * Deactivate a DID
-	 */
-	public static DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
-	/**
-	 * Declare a credential
-	 */
-	public static DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
-	/**
-	 * Revoke a credential
-	 */
-	public static REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
+	export class Operation {
+		/**
+		 * Create a new DID
+		 */
+		public static CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
+		/**
+		 * Update an exist DID
+		 */
+		public static UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
+		/**
+		 * Transfer the DID' ownership
+		 */
+		public static TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
+		/**
+		 * Deactivate a DID
+		 */
+		public static DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
+		/**
+		 * Declare a credential
+		 */
+		public static DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
+		/**
+		 * Revoke a credential
+		 */
+		public static REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
 
-	constructor(private name: string, private specification: string) {}
+		constructor(private name: string, private specification: string) {}
 
-	public getSpecification(): string {
-		return this.specification;
-	}
+		public getSpecification(): string {
+			return this.specification;
+		}
 
-	@JsonValue()
-	public toString(): string {
-		return this.name;
-	}
+		@JsonValue()
+		public toString(): string {
+			return this.name;
+		}
 
-	@JsonCreator()
-	public static fromString(name: string): Operation {
-		return Operation[name.toUpperCase()];
-	}
+		@JsonCreator()
+		public static fromString(name: string): Operation {
+			return Operation[name.toUpperCase()];
+		}
 
-	public equals(operation: Operation): boolean {
-		return this.name === operation.name;
+		public equals(operation: Operation): boolean {
+			return this.name === operation.name;
+		}
 	}
 }

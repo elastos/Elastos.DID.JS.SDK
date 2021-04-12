@@ -1,8 +1,10 @@
 /**
  * Core type that represents a JSON object.
  */
-export interface Json {
-    [x: string]: string|number|boolean|Date|Json|JsonArray;
+export interface JSONObject {
+    [x: string]: JSONValue;
 }
 
-interface JsonArray extends Array<string|number|boolean|Date|Json|JsonArray> { }
+export type JSONValue = string|number|boolean|JSONObject|JSONArray;
+
+export interface JSONArray extends Array<string|number|boolean|JSONObject|JSONArray> { }

@@ -26,7 +26,6 @@ import { DIDDocument } from "./diddocument";
 import { DIDMetadata } from "./didmetadata";
 import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
-import { VerifiableCredential } from "./domain";
 import { RootIdentity } from "./rootidentity";
 
 /**

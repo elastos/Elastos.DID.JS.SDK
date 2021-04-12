@@ -20,10 +20,12 @@
  * SOFTWARE.
  */
 
+import dayjs, { Dayjs } from "dayjs";
 import { List as ImmutableList, Map as ImmutableMap } from "immutable";
 import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, JsonIncludeType, JsonGetter, JsonAnyGetter, JsonAnySetter, JsonFilter } from "jackson-js";
 import { CredentialBiography } from "./backend/credentialbiography";
-import { IDChainRequest, Operation } from "./backend/idchaindrequest";
+import { IDChainRequest } from "./backend/idchaindrequest";
+import { Status as CredentialBiographyStatus} from "./backend/credentialbiography";
 import { Collections } from "./collections";
 import { Constants } from "./constants";
 import { CredentialMetadata } from "./credentialmetadata";
@@ -39,6 +41,7 @@ import { AlreadySealedException, CredentialAlreadyExistException, CredentialExpi
 import { Issuer } from "./issuer";
 import { Logger } from "./logger";
 import { checkArgument } from "./utils";
+import { JSONValue } from "./json";
 
 const log = new Logger("VerifiableCredential");
 
@@ -158,7 +161,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @return whether the credential has expiration time
 	 */
-	protected hasExpirationDate(): boolean {
+	public /* protected */ hasExpirationDate(): boolean {
 		return this.expirationDate != null;
 	}
 
@@ -330,12 +333,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 */
 	public isExpired(): boolean {
 		if (this.expirationDate != null) {
-			Calendar now = Calendar.getInstance(Constants.UTC);
-
-			Calendar expireDate  = Calendar.getInstance(Constants.UTC);
-			expireDate.setTime(this.expirationDate);
-
-			if (now.after(expireDate))
+			if (dayjs().isAfter(dayjs(this.expirationDate)))
 				return true;
 		}
 
@@ -361,7 +359,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public isExpiredAsync(): Promise<boolean> {
 		return new Promise((resolve, reject)=>{
 			try {
-				resolve(isExpired());
+				resolve(this.isExpired());
 			} catch (e) {
 				// DIDResolveException
 				reject(e);
@@ -394,10 +392,10 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (!this.proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false; // TODO: should throw an exception?
 
-		let vc = new VerifiableCredential(this, false);
+		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
 		let json = vc.serialize(true);
-		if (!issuerDoc.verify(proof.getVerificationMethod(),
-			this.proof.getSignature(), json.getBytes()))
+		if (!issuerDoc.verify(this.proof.getVerificationMethod(),
+			this.proof.getSignature(), json))
 			return false;
 
 		if (!this.isSelfProclaimed()) {
@@ -432,7 +430,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		let bio = DIDBackend.getInstance().resolveCredentialBiography(
 			this.getId(), this.getIssuer());
-		let revoked = bio.getStatus() == CredentialBiography.Status.REVOKED;
+		let revoked = bio.getStatus().equals(CredentialBiographyStatus.REVOKED);
 
 		if (revoked)
 		this.getMetadata().setRevoked(revoked);
@@ -458,17 +456,12 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
 	public isValid(): boolean {
-		if (expirationDate != null) {
-			Calendar now = Calendar.getInstance(Constants.UTC);
-
-			Calendar expireDate  = Calendar.getInstance(Constants.UTC);
-			expireDate.setTime(this.expirationDate);
-
-			if (now.after(expireDate))
+		if (this.expirationDate != null) {
+			if (dayjs().isAfter(dayjs(this.expirationDate)))
 				return false;
 		}
 
-		let issuerDoc = issuer.resolve();
+		let issuerDoc = this.issuer.resolve();
 		if (issuerDoc == null)
 			throw new DIDNotFoundException(this.issuer.toString());
 
@@ -483,9 +476,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (!this.proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
 			return false; // TODO: should throw an exception.
 
-		let vc = new VerifiableCredential(this, false);
+		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
 		let json = vc.serialize(true);
-		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), json.getBytes()))
+		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), json))
 			return false;
 
 
@@ -519,11 +512,11 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public wasDeclared(): boolean {
 		let bio = DIDBackend.getInstance().resolveCredentialBiography(this.getId(), this.getIssuer());
 
-		if (bio.getStatus() == CredentialBiography.Status.NOT_FOUND)
+		if (bio.getStatus() == CredentialBiographyStatus.NOT_FOUND)
 			return false;
 
 		for (let tx of bio.getAllTransactions()) {
-			if (tx.getRequest().getOperation().equals(Operation.DECLARE))
+			if (tx.getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE))
 				return true;
 		}
 
@@ -597,17 +590,15 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		declare((DIDURL)null, storepass, null);
 	} */
 
-	public CompletableFuture<Void> declareAsync(signKey: DIDURL, storepass: string,
-			DIDTransactionAdapter adapter) {
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+	public declareAsync(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
+		return new Promise((resolve, reject)=>{
 			try {
-				declare(signKey, storepass, adapter);
-			} catch (DIDException e) {
-				throw new CompletionException(e);
+				this.declare(signKey, storepass, adapter);
+			} catch (e) {
+				// DIDException
+				reject(e);
 			}
 		});
-
-		return future;
 	}
 
 	/* public CompletableFuture<Void> declareAsync(signKey: DIDURL, storepass: string) {
@@ -640,7 +631,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return this.declareAsync((DIDURL)null, storepass, null);
 	} */
 
-	public revoke(signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public revoke(signKey: DIDURL | string, signer: DIDDocument = null, storepass: string = null, adapter: DIDTransactionAdapter = null) {
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 		this.checkAttachedStore();
 
@@ -662,6 +653,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			log.error("Publish failed because the credential is revoked.");
 			throw new CredentialRevokedException(this.getId().toString());
 		}
+
+		if (typeof signKey === "string")
+			signKey = DIDURL.valueOf(this.getSubject().getId(), signKey);
 
 		if (signer == null) {
 			let signerDid: DID = (signKey != null && signKey.getDid() != null) ?
@@ -699,55 +693,10 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, adapter);
 	}
 
-	/* public revoke(signer: DIDDocument, signKey: DIDURL, storepass: string) {
-		revoke(signer, signKey, storepass, null);
-	}
-
-	public revoke(signer: DIDDocument, storepass: string, adapter: DIDTransactionAdapter) {
-		revoke(signer, (DIDURL)null, storepass, adapter);
-	}
-
-	public revoke(signer: DIDDocument, storepass: string) {
-		revoke(signer, (DIDURL)null, storepass, null);
-	}
-
-	public void revoke(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		revoke(null, signKey, storepass, adapter);
-	}
-
-	public void revoke(signKey: DIDURL, storepass: string) {
-		revoke(null, signKey, storepass, null);
-	}
-
-	public void revoke(signer: DIDDocument, String signKey, storepass: string,
-			DIDTransactionAdapter adapter) {
-		revoke(signer, DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
-	}
-
-	public void revoke(signer: DIDDocument, String signKey, storepass: string) {
-		revoke(signer, signKey, storepass, null);
-	}
-
-	public void revoke(signKey: string, storepass: string, adapter: DIDTransactionAdapter) {
-		revoke(null, signKey, storepass, adapter);
-	}
-
-	public void revoke(signKey: string, storepass: string) {
-		revoke(null, signKey, storepass, null);
-	}
-
-	public void revoke(storepass: string, adapter: DIDTransactionAdapter) {
-		revoke(null, (DIDURL)null, storepass, adapter);
-	}
-
-	public void revoke(storepass: string) {
-		revoke(null, (DIDURL)null, storepass, null);
-	} */
-
 	public revokeAsync(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		return new Promise((resolve, reject)=>{
 			try {
-				revoke(signKey, storepass, adapter);
+				this.revoke(signKey, null, storepass, adapter);
 				resolve();
 			} catch (e) {
 				// DIDException
@@ -786,24 +735,23 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return revokeAsync((DIDURL)null, storepass, null);
 	} */
 
-	public static revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL,
-			storepass: string, adapter: DIDTransactionAdapter) {
+	public static revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		checkArgument(id != null, "Invalid credential id");
 		checkArgument(signer != null, "Invalid issuer's document");
 		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+
 		if (!signer.getMetadata().attachedStore())
 			throw new NotAttachedWithStoreException(signer.getSubject().toString());
 
-		CredentialBiography bio = DIDBackend.getInstance().resolveCredentialBiography(id, signer.getSubject());
-		if (bio.getStatus() == CredentialBiography.Status.REVOKED) {
+		let bio = DIDBackend.getInstance().resolveCredentialBiography(id, signer.getSubject());
+		if (bio.getStatus().equals(CredentialBiographyStatus.REVOKED)) {
 			log.error("Publish failed because the credential is revoked.");
 			throw new CredentialRevokedException(id.toString());
 		}
 
-		if (bio.getStatus() == CredentialBiography.Status.VALID) {
+		if (bio.getStatus().equals(CredentialBiographyStatus.VALID)) {
 			let vc = bio.getTransaction(0).getRequest().getCredential();
-			if (!signer.getSubject().equals(vc.getSubject().getId()) &&
-					signer.getSubject().equals(vc.getIssuer())) {
+			if (!signer.getSubject().equals(vc.getSubject().getId()) && signer.getSubject().equals(vc.getIssuer())) {
 				log.error("Publish failed because the invalid signer or signkey.");
 				throw new InvalidKeyException("Not owner or issuer: " + signer.getSubject());
 			}
@@ -857,7 +805,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public static revokeAsync(id: DIDURL, issuer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		return new Promise((resolve, reject)=>{
 			try {
-				revoke(id, issuer, signKey, storepass, adapter);
+				this.revoke(id, issuer, signKey, storepass, adapter);
 				resolve();
 			} catch (e) {
 				// DIDException
@@ -908,9 +856,23 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return revokeAsync(id, issuer, null, storepass, null);
 	} */
 
-	public static VerifiableCredential resolve(id: DIDURL, DID issuer, boolean force) {
+	/**
+	 * Resolve VerifiableCredential object.
+	 *
+	 * @param id the credential id
+	 * @param force if true ignore local cache and try to resolve from ID chain
+	 * @return the VerifiableCredential object
+	 * @throws DIDResolveException throw this exception if resolving did failed.
+	 */
+	public static resolve(id: DIDURL | string, issuer: DID | string  = null, force: boolean = false): VerifiableCredential {
 		if (id == null)
 			throw new IllegalArgumentException();
+
+		if (typeof id === "string")
+			id = DIDURL.valueOf(id);
+
+		if (typeof issuer === "string")
+			issuer = DID.valueOf(issuer);
 
 		let vc = DIDBackend.getInstance().resolveCredential(id, issuer, force);
 		if (vc != null)
@@ -918,69 +880,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		return vc;
 	}
-
-	/* public static VerifiableCredential resolve(String id, String issuer, boolean force) {
-		return resolve(DIDURL.valueOf(id), DID.valueOf(issuer), force);
-	}
-
-	public static VerifiableCredential resolve(id: DIDURL, DID issuer) {
-		return resolve(id, issuer, false);
-	}
-
-	public static VerifiableCredential resolve(String id, String issuer)
-			throws DIDResolveException {
-		return resolve(DIDURL.valueOf(id), DID.valueOf(issuer), false);
-	} */
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
-	 */
-	/* public static VerifiableCredential resolve(id: DIDURL, boolean force)
-			throws DIDResolveException {
-		return resolve(id, null, force);
-	} */
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed
-	 */
-	/* public static VerifiableCredential resolve(String id, boolean force)
-			throws DIDResolveException {
-		return resolve(DIDURL.valueOf(id), null, force);
-	} */
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
-	 */
-	/* public static VerifiableCredential resolve(id: DIDURL)
-			throws DIDResolveException {
-		return resolve(id, null, false);
-	} */
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @return the VerifiableCredential object
-	 * @throws DIDResolveException throw this exception if resolving did failed.
-	 */
-	/* public static VerifiableCredential resolve(String id)
-			throws DIDResolveException {
-		return resolve(DIDURL.valueOf(id), null, false);
-	} */
 
 	/**
 	 * Resolve VerifiableCredential object.
@@ -990,7 +889,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return the new CompletableStage, the result is the DIDDocument interface for
 	 *             resolved DIDDocument if success; null otherwise.
 	 */
-	public static CompletableFuture<VerifiableCredential> resolveAsync(id: DIDURL, DID issuer, boolean force) {
+	/* public static CompletableFuture<VerifiableCredential> resolveAsync(id: DIDURL, DID issuer, boolean force) {
 		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
 			try {
 				return resolve(id, issuer, force);
@@ -1000,7 +899,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		});
 
 		return future;
-	}
+	} */
 
 	/**
 	 * Resolve VerifiableCredential object.
@@ -1010,44 +909,16 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return the new CompletableStage, the result is the DIDDocument interface for
 	 *             resolved DIDDocument if success; null otherwise.
 	 */
-	public static CompletableFuture<VerifiableCredential> resolveAsync(String id, String issuer, boolean force) {
-		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
+	public static resolveAsync(id: DIDURL | string, issuer: DID | string, force: boolean): Promise<VerifiableCredential> {
+		return new Promise((resolve, reject) => {
 			try {
-				return resolve(id, issuer, force);
-			} catch (DIDBackendException | MalformedDIDURLException e) {
-				throw new CompletionException(e);
+				resolve(this.resolve(id, issuer, force));
+			} catch (e) {
+				// DIDBackendException | MalformedDIDURLException
+				reject(e);
 			}
 		});
-
-		return future;
 	}
-
-	/* public static CompletableFuture<VerifiableCredential> resolveAsync(id: DIDURL, DID issuer) {
-		return resolveAsync(id, issuer, false);
-	}
-
-	public static CompletableFuture<VerifiableCredential> resolveAsync(String id, String issuer) {
-		return resolveAsync(id, issuer, false);
-	}
-
-	public static CompletableFuture<VerifiableCredential> resolveAsync(id: DIDURL, boolean force) {
-		return resolveAsync(id, null, force);
-	}
-
-	public static CompletableFuture<VerifiableCredential> resolveAsync(String id, boolean force) {
-		return resolveAsync(id, null, force);
-	} */
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
-	 */
-	/* public static CompletableFuture<VerifiableCredential> resolveAsync(id: DIDURL) {
-		return resolveAsync(id, null, false);
-	} */
 
 	/**
 	 * Resolve VerifiableCredential object.
@@ -1060,7 +931,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return resolveAsync(id, null, false);
 	} */
 
-	public static CredentialBiography resolveBiography(id: DIDURL, DID issuer) {
+	public static resolveBiography(id: DIDURL, issuer: DID): CredentialBiography {
 		checkArgument(id != null, "Invalid credential id");
 
 		return DIDBackend.getInstance().resolveCredentialBiography(id, issuer);
@@ -1127,9 +998,8 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	} */
 
-	public static List<DIDURL> list(did: DID, skip: number = 0, limit: number = 0) {
+	public static list(did: DID, skip: number = 0, limit: number = 0): ImmutableList<DIDURL> {
 		checkArgument(did != null, "Invalid did");
-
 		return DIDBackend.getInstance().listCredentials(did, skip, limit);
 	}
 
@@ -1242,8 +1112,8 @@ export namespace VerifiableCredential {
 		  *
 		  * @param id the controller of Credential Subject
 		  */
-		 @JsonCreator()
-		 protected Subject(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
+		 // Java: @JsonCreator()
+		 /* protected */ constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
 			 this.id = id;
 			 this.properties = new Map<string, Object>();
 		 }
@@ -1287,7 +1157,7 @@ export namespace VerifiableCredential {
 		  * @param value the property value
 		  */
 		 @JsonAnySetter()
-		 public /* private */ setProperty(name: string, value: Map<String, Object>) {
+		 public /* private */ setProperty(name: string, value: JSONValue) {
 			 if (name === VerifiableCredential.ID)
 				 return;
 
@@ -1330,7 +1200,7 @@ export namespace VerifiableCredential {
 		  */
 		 public getPropertiesAsString(): string {
 			 try {
-				 return this.getObjectMapper().writeValueAsString(this.properties);
+				 return DIDEntity.getObjectMapper().writeValueAsString(this.properties);
 			 } catch (ignore) {
 				 // JsonProcessingException
 				 throw new UnknownInternalException(ignore);
@@ -1363,11 +1233,11 @@ export namespace VerifiableCredential {
 		  * @param method the verification method, normally it's a public key
 		  * @param signature the signature encoded in base64 URL safe format
 		  */
-		 @JsonCreator()
-		 protected constructor(
+		 // Java: @JsonCreator()
+		 /* protected */ constructor(
 				 @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD, required: true}) method: DIDURL,
 				 @JsonProperty({value: VerifiableCredential.SIGNATURE, required: true}) signature: string,
-				 @JsonProperty({value: VerifiableCredential.CREATED}) created: Date = Calendar.getInstance(Constants.UTC).getTime(),
+				 @JsonProperty({value: VerifiableCredential.CREATED}) created: Date = new Date(),
 				 @JsonProperty({value: VerifiableCredential.TYPE}) type: string = Constants.DEFAULT_PUBLICKEY_TYPE
 		) {
 			 this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
@@ -1449,7 +1319,7 @@ export namespace VerifiableCredential {
 		 *
 		 * @param target the owner of Credential
 		 */
-		protected constructor(issuer: Issuer, target: DID) {
+		/* protected */ constructor(issuer: Issuer, target: DID) {
 			this.issuer = issuer;
 			this.target = target;
 
@@ -1469,26 +1339,21 @@ export namespace VerifiableCredential {
 		 * @param id the Credential id
 		 * @return the Builder object
 		 */
-		public id(id: DIDURL): Builder {
+		public id(id: DIDURL | string): Builder {
 			this.checkNotSealed();
-			checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.target)),
-					"Invalid id");
+
+			checkArgument(id != null, "Invalid id");
+
+			if (typeof id === "string")
+				id = DIDURL.valueOf(id);
+
+			checkArgument(id.getDid() == null || id.getDid().equals(this.target), "Invalid id");
 
 			if (id.getDid() == null)
 				id = DIDURL.valueOf(this.target, id);
 
 			this.credential.id = id;
 			return this;
-		}
-
-		/**
-		 * Set Credential id.
-		 *
-		 * @param id the Credential id
-		 * @return the Builder object
-		 */
-		public id(id: string): Builder {
-			return id(DIDURL.valueOf(target, id));
 		}
 
 		/**
@@ -1506,19 +1371,20 @@ export namespace VerifiableCredential {
 			return this;
 		}
 
-		private getMaxExpires(): Calendar {
-			Calendar cal = Calendar.getInstance(Constants.UTC);
-			if (credential.getIssuanceDate() != null)
-				cal.setTime(credential.getIssuanceDate());
-			cal.add(Calendar.YEAR, Constants.MAX_VALID_YEARS);
+		private getMaxExpires(): Date {
+			let maxExpires: Dayjs;
+			if (this.credential.getIssuanceDate() != null)
+				maxExpires = dayjs(this.credential.getIssuanceDate());
+			else
+				maxExpires = dayjs();
+			maxExpires = maxExpires.add(Constants.MAX_VALID_YEARS, "years");
 
-			return cal;
+			return maxExpires.toDate();
 		}
 
 		private defaultExpirationDate(): Builder {
 			this.checkNotSealed();
-
-			this.credential.expirationDate = this.getMaxExpires().getTime();
+			this.credential.expirationDate = this.getMaxExpires();
 			return this;
 		}
 
@@ -1532,14 +1398,12 @@ export namespace VerifiableCredential {
 			this.checkNotSealed();
 			checkArgument(expirationDate != null, "Invalid expiration date");
 
-			Calendar cal = Calendar.getInstance(Constants.UTC);
-			cal.setTime(expirationDate);
+			let expDate = dayjs(expirationDate);
+			let maxExpires = this.getMaxExpires();
+			if (expDate.isAfter(maxExpires))
+				expDate = dayjs(maxExpires);
 
-			Calendar maxExpires = getMaxExpires();
-			if (cal.after(maxExpires))
-				cal = maxExpires;
-
-			this.credential.expirationDate = cal.getTime();
+			this.credential.expirationDate = expDate.toDate();
 
 			return this;
 		}
@@ -1555,11 +1419,11 @@ export namespace VerifiableCredential {
 
 			this.credential.subject.properties.clear();
 
-			if (properties == null || properties.size() == 0)
+			if (properties == null || properties.size == 0)
 				return this;
 
-				this.credential.subject.properties.putAll(properties);
-				this.credential.subject.properties.remove(ID);
+				properties.forEach((v, k) => this.credential.subject.properties.set(k, v));
+				this.credential.subject.properties.delete(VerifiableCredential.ID);
 			return this;
 		}
 
@@ -1590,9 +1454,9 @@ export namespace VerifiableCredential {
 		 * @param value the property value
 		 * @return the Builder object
 		 */
-		public property(name: string, value: Object): Builder {
+		public property(name: string, value: JSONValue): Builder {
 			this.checkNotSealed();
-			checkArgument(name != null && name !== "" && !name.equals(ID), "Invalid name");
+			checkArgument(name != null && name !== "" && !name.equals(VerifiableCredential.ID), "Invalid name");
 
 			this.credential.subject.setProperty(name, value);
 			return this;
@@ -1602,11 +1466,10 @@ export namespace VerifiableCredential {
 			if (this.credential.id == null)
 				throw new MalformedCredentialException("Missing credential id");
 
-			if (this.credential.type == null || this.credential.type.isEmpty())
+			if (this.credential.type == null || this.credential.type.length == 0)
 				throw new MalformedCredentialException("Missing credential type");
 
-			Calendar cal = Calendar.getInstance(Constants.UTC);
-			this.credential.issuanceDate = cal.getTime();
+			this.credential.issuanceDate = new Date();
 
 			if (!this.credential.hasExpirationDate())
 				this.defaultExpirationDate();
@@ -1631,7 +1494,7 @@ export namespace VerifiableCredential {
 
 			let json = this.credential.serialize(true);
 			let sig = this.issuer.sign(storepass, json);
-			let proof = new Proof(this.issuer.getSignKey(), sig);
+			let proof = new VerifiableCredential.Proof(this.issuer.getSignKey(), sig);
 			this.credential.proof = proof;
 
 			// Invalidate builder

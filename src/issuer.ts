@@ -122,7 +122,7 @@ export class Issuer {
 		return this.signKey;
 	}
 
-	protected sign(storepass: string, ...data: string[]): string {
+	public /* protected */ sign(storepass: string, data: string): string {
 		return this.self.sign(this.signKey, storepass, data);
 	}
 
@@ -136,8 +136,8 @@ export class Issuer {
 		checkArgument(did != null, "Invalid did");
 
         if (did instanceof DID) {
-		    return new Builder(this, did);
+		    return new VerifiableCredential.Builder(this, did);
         }
-        return new Builder(this, DID.valueOf(did));
+        return new VerifiableCredential.Builder(this, DID.valueOf(did));
 	}
 }

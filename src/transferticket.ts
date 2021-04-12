@@ -87,7 +87,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @param to (one of ) the new owner's DID
 	 * @throws DIDResolveException if failed resolve the subject DID
 	 */
-	protected static newForDIDDocument(target: DIDDocument, to: DID): TransferTicket {
+	public /* protected */ static newForDIDDocument(target: DIDDocument, to: DID): TransferTicket {
 		checkArgument(target != null, "Invalid target DID document");
 		checkArgument(to != null, "Invalid to DID");
 
@@ -102,7 +102,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		return newTicket;
 	}
 
-	private static newWithTicket(ticket: TransferTicket, withProof: boolean): TransferTicket {
+	public /* private */ static newWithTicket(ticket: TransferTicket, withProof: boolean): TransferTicket {
 		let newTicket = new TransferTicket(ticket.id, ticket.to, ticket.txid);
 		newTicket.doc = ticket.doc;
 		if (withProof) {
@@ -284,7 +284,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		Collections.sort(this._proofs);
 	}
 
-	protected seal(controller: DIDDocument, storepass: string) {
+	public /* protected */ seal(controller: DIDDocument, storepass: string) {
 		try {
 			if (this.isQualified())
 				return;

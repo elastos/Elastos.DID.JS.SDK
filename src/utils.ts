@@ -16,3 +16,8 @@ export function checkNotNull(value: any, errorMessage: string) {
 export function isEmpty(value: string) {
 	return !value || value == null;
 }
+
+export function uint8ArrayCopy(src: Uint8Array, srcIndex: number, dest: Uint8Array, destIndex: number, length: number): void {
+    let values = [...src.slice(srcIndex, srcIndex + length)];
+    dest.set(values, destIndex);
+}
