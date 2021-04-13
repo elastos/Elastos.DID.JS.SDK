@@ -41,7 +41,7 @@ export class HDKey {
 	// Pre-derive publickey path: m/44'/0'/0'
 	public static PRE_DERIVED_PUBLICKEY_PATH = "44H/0H/0H";
 
-	public static newWithMnemonic(mnemonic: string, passphrase, string): HDKey {
+	public static newWithMnemonic(mnemonic: string, passphrase: string): HDKey {
 		return HDKey.newWithSeed(Mnemonic.toSeed(mnemonic, passphrase));
 	}
 
