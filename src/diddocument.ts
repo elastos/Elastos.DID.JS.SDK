@@ -67,6 +67,7 @@ import { Base58 } from "./crypto/base58";
 import { Issuer } from "./issuer";
 import { TransferTicket } from "./transferticket";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
+import { SHA256 } from "./crypto/sha256";
 
 const log = new Logger("DIDDocument");
 
@@ -1470,7 +1471,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key
      */
-    public sign(id: DIDURL | string | null, storepass: string, data: string): string {
+    public sign(id: DIDURL | string | null, storepass: string, ...data: Buffer[]): string {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkArgument(data != null && data.length > 0, "Invalid input data");
         this.checkAttachedStore();
@@ -1478,7 +1479,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (typeof id === "string")
             id = this.canonicalId(id);
 
-        let digest = CryptoJS.SHA256(data).toString();
+        let digest = SHA256.encodeToString(...data);
         return this.signDigest(id, storepass, digest);
     }
 
@@ -1520,11 +1521,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the returned value is true if verifing data is successfully;
      *         the returned value is false if verifing data is not successfully.
      */
-    public verify(id: DIDURL | string | null, signature: string, data: Buffer): boolean {
+    public verify(id: DIDURL | string | null, signature: string, ...data: Buffer[]): boolean {
         checkArgument(signature != null && !signature.isEmpty(), "Invalid signature");
         checkArgument(data != null && data.length > 0, "Invalid digest");
 
-        let digest = EcdsaSigner.sha256Digest(data);
+        let digest = EcdsaSigner.sha256Digest(...data);
         return this.verifyDigest(id, signature, digest);
     }
 
@@ -1614,17 +1615,17 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         this.checkAttachedStore();
 
-        let ctrls = new ArrayList<DID>();
+        let ctrls = [];
         if (controllers != null && controllers.length > 0) {
             for (let ctrl of controllers) {
                 if (ctrl.equals(this.getSubject()) || ctrls.contains(ctrl))
                     continue;
 
-                ctrls.add(ctrl);
+                ctrls.push(ctrl);
             }
         }
 
-        checkArgument(multisig >= 0 && multisig <= ctrls.size() + 1, "Invalid multisig");
+        checkArgument(multisig >= 0 && multisig <= ctrls.length + 1, "Invalid multisig");
 
         log.info("Creating new DID {} with controller {}...", did, this.getSubject());
 
@@ -1658,9 +1659,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     } */
 
     public newCustomizedDid(did: string, controllers: string[], multisig: number, force: boolean, storepass: string): DIDDocument {
-        let _controllers = new ArrayList<DID>(controllers.length);
+        let _controllers: DID[] = [];
         for (let ctrl of controllers)
-            _controllers.add(new DID(ctrl));
+            _controllers.push(new DID(ctrl));
 
         return newCustomizedDid(DID.valueOf(did), _controllers.toArray(new DID[0]),
             multisig, force, storepass);

@@ -6,6 +6,10 @@ import { Comparable } from "./comparable";
 declare global {
     interface String {
         hashCode(): number;
+        /**
+         * Convenient method imported from java, to convert this string to a buffer.
+         */
+        getBytes(): Buffer;
         isEmpty(): boolean;
         equals(otherString: string): boolean;
         compareTo(otherString: string): number;
@@ -52,6 +56,10 @@ String.prototype.hashCode = function() {
 
 String.prototype.isEmpty = function() {
     return this === "";
+}
+
+String.prototype.getBytes = function() {
+    return Buffer.from(this);
 }
 
 String.prototype.equals = function(otherString: string) {
