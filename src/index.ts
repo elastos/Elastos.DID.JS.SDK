@@ -1,11 +1,14 @@
 'use strict';
-import { Core } from "./core";
-import { Did } from "./did";
-import { DidDocument } from "./diddocument";
-import { IdChainRequest } from "./DEPRECATED_idchainrequest";
-import { Hive } from "./hive";
+import { DID } from "./did";
+import { DIDDocument } from "./diddocument";
 
-export class ElastosClient {
+export {
+	DID,
+	DIDDocument,
+	// TODO
+}
+
+/* DEPRECATED export class ElastosClient {
 
 	private static readonly core: Core = new Core();
 	public static readonly did: Did = new Did(ElastosClient.core);
@@ -15,3 +18,4 @@ export class ElastosClient {
 
 	private constructor() {}
 }
+*/

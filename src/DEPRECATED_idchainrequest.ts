@@ -1,5 +1,5 @@
 import { DIDDocument } from "./diddocument"
-import { Signer, DIDUtil } from "./core"
+import { Signer, DIDUtil } from "./DEPRECATED_core"
 import { IDChainRequest } from "./backend/idchaindrequest";
 import { JSONObject } from "./DEPRECATED_domain";
 

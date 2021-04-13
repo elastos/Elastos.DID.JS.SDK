@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,43 +20,18 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
-
-import static com.google.common.base.Preconditions.checkArgument;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-
-import org.elastos.did.exception.AlreadySealedException;
-import org.elastos.did.exception.DIDNotFoundException;
-import org.elastos.did.exception.DIDObjectAlreadyExistException;
-import org.elastos.did.exception.DIDResolveException;
-import org.elastos.did.exception.DIDStoreException;
-import org.elastos.did.exception.DIDSyntaxException;
-import org.elastos.did.exception.IllegalUsage;
-import org.elastos.did.exception.InvalidKeyException;
-import org.elastos.did.exception.MalformedCredentialException;
-import org.elastos.did.exception.MalformedPresentationException;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import { List as ImmutableList } from "immutable";
+import { JsonFormat, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { Collections } from "./collections";
+import { Constants } from "./constants";
+import { DID } from "./did";
+import { DIDEntity } from "./didentity";
+import { DIDStore } from "./didstore";
+import { DIDURL } from "./didurl";
+import { DIDResolveException, DIDStoreException, DIDNotFoundException, InvalidKeyException, AlreadySealedException, IllegalUsage, DIDObjectAlreadyExistException, MalformedPresentationException } from "./exceptions/exceptions";
+import { Proof } from "./transferticket";
+import { checkArgument } from "./utils";
+import { VerifiableCredential } from "./verifiablecredential";
 
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
@@ -65,148 +40,49 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * This also helps prevent a verifier from reusing a verifiable presentation as
  * their own.
  */
-@JsonPropertyOrder({ VerifiablePresentation.ID,
+@JsonPropertyOrder({value: [
+	VerifiablePresentation.ID,
 	VerifiablePresentation.TYPE,
 	VerifiablePresentation.HOLDER,
 	VerifiablePresentation.CREATED,
 	VerifiablePresentation.VERIFIABLE_CREDENTIAL,
-	VerifiablePresentation.PROOF })
-public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
+	VerifiablePresentation.PROOF
+]})
+export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Default presentation type
 	 */
-	public final static String DEFAULT_PRESENTATION_TYPE = "VerifiablePresentation";
+	public static DEFAULT_PRESENTATION_TYPE = "VerifiablePresentation";
 
-	protected final static String ID = "id";
-	protected final static String TYPE = "type";
-	protected final static String HOLDER = "holder";
-	protected final static String VERIFIABLE_CREDENTIAL = "verifiableCredential";
-	protected final static String CREATED = "created";
-	protected final static String PROOF = "proof";
-	protected final static String NONCE = "nonce";
-	protected final static String REALM = "realm";
-	protected final static String VERIFICATION_METHOD = "verificationMethod";
-	protected final static String SIGNATURE = "signature";
+	protected static ID = "id";
+	protected static TYPE = "type";
+	protected static HOLDER = "holder";
+	protected static VERIFIABLE_CREDENTIAL = "verifiableCredential";
+	protected static CREATED = "created";
+	protected static PROOF = "proof";
+	protected static NONCE = "nonce";
+	protected static REALM = "realm";
+	protected static VERIFICATION_METHOD = "verificationMethod";
+	protected static SIGNATURE = "signature";
 
-	@JsonProperty(ID)
-	@JsonInclude(Include.NON_NULL)
-	private DIDURL id;
-	@JsonProperty(TYPE)
-	@JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,
-			JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
-	private List<String> type;
-	@JsonProperty(HOLDER)
-	@JsonInclude(Include.NON_NULL)
-	private DID holder;
-	@JsonProperty(CREATED)
-	private Date created;
-	@JsonProperty(VERIFIABLE_CREDENTIAL)
-	private List<VerifiableCredential> _credentials;
-	@JsonProperty(PROOF)
-	@JsonInclude(Include.NON_NULL)
-	private Proof proof;
+	@JsonProperty({value: VerifiablePresentation.ID})
+	@JsonInclude({value: JsonIncludeType.NON_NULL})
+	private id: DIDURL;
+	@JsonProperty({value: VerifiablePresentation.TYPE})
+	// TODO JAVA: @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
+	private type: string[];
+	@JsonProperty({value: VerifiablePresentation.HOLDER})
+	@JsonInclude({value: JsonIncludeType.NON_NULL})
+	private holder: DID;
+	@JsonProperty({value: VerifiablePresentation.CREATED})
+	private created: Date;
+	@JsonProperty({value: VerifiablePresentation.VERIFIABLE_CREDENTIAL})
+	private _credentials: VerifiableCredential[];
+	@JsonProperty({value: VerifiablePresentation.PROOF})
+	@JsonInclude({value: JsonIncludeType.NON_NULL})
+	private proof: Proof;
 
-	private Map<DIDURL, VerifiableCredential> credentials;
-
-	/**
-	 * The proof information for verifiable presentation.
-	 *
-	 * The default proof type is ECDSAsecp256r1.
-	 */
-	@JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, REALM, NONCE, SIGNATURE })
-	static public class Proof {
-		@JsonProperty(TYPE)
-		private String type;
-		@JsonProperty(VERIFICATION_METHOD)
-		@JsonSerialize(using = DIDURL.NormalizedSerializer.class)
-		private DIDURL verificationMethod;
-		@JsonProperty(REALM)
-		private String realm;
-		@JsonProperty(NONCE)
-		private String nonce;
-		@JsonProperty(SIGNATURE)
-		private String signature;
-
-		/**
-		 * Create the proof object with the given values.
-		 *
-		 * @param type the type string
-		 * @param method the sign key
-		 * @param realm where is presentation use
-		 * @param nonce the nonce string
-		 * @param signature the signature string
-		 */
-		@JsonCreator
-		protected Proof(@JsonProperty(value = TYPE) String type,
-				@JsonProperty(value = VERIFICATION_METHOD, required = true) DIDURL method,
-				@JsonProperty(value = REALM, required = true) String realm,
-				@JsonProperty(value = NONCE, required = true) String nonce,
-				@JsonProperty(value = SIGNATURE, required = true) String signature) {
-			this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-			this.verificationMethod = method;
-			this.realm = realm;
-			this.nonce = nonce;
-			this.signature = signature;
-		}
-
-		/**
-		 * Create the proof object with the given values.
-		 *
-		 * @param method the sign key
-		 * @param realm where is Presentation use
-		 * @param nonce the nonce string
-		 * @param signature the signature string
-		 */
-		protected Proof(DIDURL method, String realm,
-				String nonce, String signature) {
-			this(Constants.DEFAULT_PUBLICKEY_TYPE, method, realm, nonce, signature);
-		}
-
-		/**
-		 * Get presentation type.
-		 *
-		 * @return the type string
-		 */
-	    public String getType() {
-	    	return type;
-	    }
-
-	    /**
-	     * Get key to sign Presentation.
-	     *
-	     * @return the sign key
-	     */
-	    public DIDURL getVerificationMethod() {
-	    	return verificationMethod;
-	    }
-
-	    /**
-	     * Get realm string of Presentation.
-	     *
-	     * @return the realm string
-	     */
-	    public String getRealm() {
-	    	return realm;
-	    }
-
-	    /**
-	     * Get nonce string of Presentation.
-	     *
-	     * @return the nonce string
-	     */
-	    public String getNonce() {
-	    	return nonce;
-	    }
-
-	    /**
-	     * Get signature string of Presentation.
-	     *
-	     * @return the signature string
-	     */
-	    public String getSignature() {
-	    	return signature;
-	    }
-	}
+	private credentials: Map<DIDURL, VerifiableCredential>;
 
 	/**
 	 * Constructs the simplest Presentation.
@@ -236,8 +112,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			this.proof = vp.proof;
 	}
 
-	public DIDURL getId() {
-		return id;
+	public getId(): DIDURL {
+		return this.id;
 	}
 
 	/**
@@ -245,8 +121,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the type string
 	 */
-	public List<String> getType() {
-		return Collections.unmodifiableList(type);
+	public getType(): ImmutableList<string> {
+		return ImmutableList(this.type);
 	}
 
 	/**
@@ -254,7 +130,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the holder's DID
 	 */
-	public DID getHolder() {
+	public getHolder(): DID {
 		// NOTICE:
 		//
 		// DID 2 SDK should add the holder field as a mandatory field when
@@ -263,7 +139,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		//
 		// This will ensure compatibility with the presentations that
 		// created by the old SDK.
-		return holder != null ? holder : proof.getVerificationMethod().getDid();
+		return this.holder != null ? this.holder : this.proof.getVerificationMethod().getDid();
 	}
 
 	/**
@@ -271,8 +147,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the time created
 	 */
-	public Date getCreated() {
-		return created;
+	public getCreated(): Date {
+		return this.created;
 	}
 
 	/**
@@ -280,8 +156,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the Credentials' count
 	 */
-	public int getCredentialCount() {
-		return credentials.size();
+	public getCredentialCount(): number {
+		return this.credentials.size;
 	}
 
 	/**
@@ -289,8 +165,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the Credential array
 	 */
-	public List<VerifiableCredential> getCredentials() {
-		return Collections.unmodifiableList(_credentials);
+	public getCredentials(): ImmutableList<VerifiableCredential> {
+		return ImmutableList(this._credentials);
 	}
 
 	/**
@@ -299,23 +175,15 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @param id the specified Credential id
 	 * @return the Credential object
 	 */
-	public VerifiableCredential getCredential(DIDURL id) {
+	public getCredential(id: DIDURL | string): VerifiableCredential {
 		checkArgument(id != null, "Invalid credential id");
 
-		if (id.getDid() == null)
-			id = new DIDURL(getHolder(), id);
+		if (typeof id === "string")
+			id = DIDURL.valueOf(this.getHolder(), id)
+		else if (id.getDid() == null)
+			id = DIDURL.valueOf(this.getHolder(), id);
 
-		return credentials.get(id);
-	}
-
-	/**
-	 * Get the specified Credential.
-	 *
-	 * @param id the specified Credential id string
-	 * @return the Credential object
-	 */
-	public VerifiableCredential getCredential(String id) {
-		return getCredential(DIDURL.valueOf(getHolder(), id));
+		return this.credentials.get(id);
 	}
 
 	/**
@@ -323,8 +191,8 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the Presentation Proof object
 	 */
-	public Proof getProof() {
-		return proof;
+	public getProof(): Proof {
+		return this.proof;
 	}
 
 	/**
@@ -333,37 +201,37 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @param withProof check the proof object or not
 	 * @throws MalformedPresentationException if the presentation object is invalid
 	 */
-	@Override
-	protected void sanitize() throws MalformedPresentationException {
-		if (type == null || type.isEmpty())
+	protected sanitize() {
+		if (this.type == null || this.type.length == 0)
 			throw new MalformedPresentationException("Missing presentation type");
 
-		if (created == null)
+		if (this.created == null)
 			throw new MalformedPresentationException("Missing presentation create timestamp");
 
-		if (_credentials != null && _credentials.size() > 0) {
-			for (VerifiableCredential vc : _credentials) {
+		if (this._credentials != null && this._credentials.length > 0) {
+			for (let vc of this._credentials) {
 				try {
 					vc.sanitize();
-				} catch (MalformedCredentialException e) {
+				} catch (e) {
+					// MalformedCredentialException
 					throw new MalformedPresentationException("credential invalid: " + vc.getId(), e);
 				}
 
-				if (credentials.containsKey(vc.getId()))
+				if (this.credentials.has(vc.getId()))
 					throw new MalformedPresentationException("Duplicated credential id: " + vc.getId());
 
-				credentials.put(vc.getId(), vc);
+					this.credentials.set(vc.getId(), vc);
 			}
 		}
 
-		if (proof == null)
+		if (this.proof == null)
 			throw new MalformedPresentationException("Missing presentation proof");
 
-		if (proof.getVerificationMethod().getDid() == null)
+		if (this.proof.getVerificationMethod().getDid() == null)
 			throw new MalformedPresentationException("Invalid verification method");
 
-		Collections.sort(type);
-		_credentials = new ArrayList<VerifiableCredential>(credentials.values());
+		Collections.sort(this.type);
+		this._credentials = Array.from(this.credentials.values());
 	}
 
 	/**
@@ -372,7 +240,7 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return whether the Credential object is genuine
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public boolean isGenuine() throws DIDResolveException {
+	public isGenuine(): boolean {
 		DIDDocument holderDoc = getHolder().resolve();
 		if (holderDoc == null)
 			return false;
@@ -826,4 +694,106 @@ public class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return vp;
 		}
 	}
+}
+
+namespace VerifiablePresentation {
+	/**
+	 * The proof information for verifiable presentation.
+	 *
+	 * The default proof type is ECDSAsecp256r1.
+	 */
+	 @JsonPropertyOrder({ TYPE, VERIFICATION_METHOD, REALM, NONCE, SIGNATURE })
+	 static public class Proof {
+		 @JsonProperty(TYPE)
+		 private String type;
+		 @JsonProperty(VERIFICATION_METHOD)
+		 @JsonSerialize(using = DIDURL.NormalizedSerializer.class)
+		 private DIDURL verificationMethod;
+		 @JsonProperty(REALM)
+		 private String realm;
+		 @JsonProperty(NONCE)
+		 private String nonce;
+		 @JsonProperty(SIGNATURE)
+		 private String signature;
+
+		 /**
+		  * Create the proof object with the given values.
+		  *
+		  * @param type the type string
+		  * @param method the sign key
+		  * @param realm where is presentation use
+		  * @param nonce the nonce string
+		  * @param signature the signature string
+		  */
+		 @JsonCreator
+		 protected Proof(@JsonProperty(value = TYPE) String type,
+				 @JsonProperty(value = VERIFICATION_METHOD, required = true) DIDURL method,
+				 @JsonProperty(value = REALM, required = true) String realm,
+				 @JsonProperty(value = NONCE, required = true) String nonce,
+				 @JsonProperty(value = SIGNATURE, required = true) String signature) {
+			 this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+			 this.verificationMethod = method;
+			 this.realm = realm;
+			 this.nonce = nonce;
+			 this.signature = signature;
+		 }
+
+		 /**
+		  * Create the proof object with the given values.
+		  *
+		  * @param method the sign key
+		  * @param realm where is Presentation use
+		  * @param nonce the nonce string
+		  * @param signature the signature string
+		  */
+		 protected Proof(DIDURL method, String realm,
+				 String nonce, String signature) {
+			 this(Constants.DEFAULT_PUBLICKEY_TYPE, method, realm, nonce, signature);
+		 }
+
+		 /**
+		  * Get presentation type.
+		  *
+		  * @return the type string
+		  */
+		 public String getType() {
+			 return type;
+		 }
+
+		 /**
+		  * Get key to sign Presentation.
+		  *
+		  * @return the sign key
+		  */
+		 public DIDURL getVerificationMethod() {
+			 return verificationMethod;
+		 }
+
+		 /**
+		  * Get realm string of Presentation.
+		  *
+		  * @return the realm string
+		  */
+		 public String getRealm() {
+			 return realm;
+		 }
+
+		 /**
+		  * Get nonce string of Presentation.
+		  *
+		  * @return the nonce string
+		  */
+		 public String getNonce() {
+			 return nonce;
+		 }
+
+		 /**
+		  * Get signature string of Presentation.
+		  *
+		  * @return the signature string
+		  */
+		 public String getSignature() {
+			 return signature;
+		 }
+	 }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,49 +20,26 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
+import { DIDStore } from "../src/didstore";
+import { Logger } from "../src/logger";
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+const log = new Logger("DIDStoreTest");
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+let testData: TestData;
+let store: DIDStore;
 
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.exception.DIDStoreException;
-import org.elastos.did.exception.WrongPasswordException;
-import org.elastos.did.utils.DIDTestExtension;
-import org.elastos.did.utils.TestConfig;
-import org.elastos.did.utils.TestData;
-import org.elastos.did.utils.Utils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+beforeEach(()=>{
+	testData = new TestData();
+	store = testData.getStore();
+})
 
-@ExtendWith(DIDTestExtension.class)
-public class DIDStoreTest {
-	private TestData testData;
-	private DIDStore store;
+// Java: @ExtendWith(DIDTestExtension.class)
+// Java: public class DIDStoreTest {
 
-	private static final Logger log = LoggerFactory.getLogger(DIDStoreTest.class);
 
     @BeforeEach
     public void beforeEach() throws DIDException {
-    	testData = new TestData();
-    	store = testData.getStore();
+
     }
 
     @AfterEach

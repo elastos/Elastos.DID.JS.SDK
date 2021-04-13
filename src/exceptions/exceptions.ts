@@ -44,3 +44,4 @@ export class IllegalUsage extends ParentException {}
 export class DIDObjectNotExistException extends ParentException {}
 export class CanNotRemoveEffectiveController extends ParentException {}
 export class DIDObjectHasReference extends ParentException {}
+export class MalformedPresentationException extends ParentException {}
