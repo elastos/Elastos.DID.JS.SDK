@@ -5,18 +5,31 @@ List of things to consider while migrating:
     => use instanceof and typeof checks inside a single constructor() when the number of parameters is the same.
     => Use a builder is this gets more complex than this.
 - No namespace access control, no better choice than using "public" modifiers everywhere?
-- JSONFactory, XML parsing
-    => Antlr4-ts
-- HDKeys, BIP39 management (jingyu - close to java).
-    => hdkeys: https://www.npmjs.com/package/hdkey-secp256r1 (also for signature/verification)
-    => bip39: https://www.npmjs.com/package/bip39 (jingyu)
-- What about MD5Digest, SHA256Digest libraries?
-    => https://www.npmjs.com/package/crypto-js
 
-- TODO: replace our custom LRUCache with an existing library (typescript-lru-cache) with TTL.
-- TODO: cleanup core.ts, make sure the library we use for HDKey can do everything done by core.ts well
 - Beware of byte[] replaced with "string" for all crypto operations.
     => Some libraries use string, some others use Buffer. We have started to use string but
     I would be tempted to use Buffer everywhere, strings may do weird character conversions.
-- TODO: With what do we want to replace Calendar, Dates ? Try to avoid a heavy library dependency
 - Exceptions may be better put in their respective parent classes rather than flattened in a exception.ts file. Let's see how it goes during tests and exceptions catching
+
+
+NOTE:
+- extensions.ts contains helper methods for classes like string, arrays. This is inherited from Swift behaviour and
+this is quite convenient. We may keep adding helpers there in that way.
+
+Ricardo:
+- Stop using CryptoJS and "../hdkey-secp256r1" - replace with bitcore-lib and previous libs from the JS version
+- Maybe don't use the bip39 lib for mnemonics in case this is already handled by existing libs like bitcore (to reduce the number of dependencies / code size)
+- Dispatch content of DEPRECATED_core.ts everywhere needed in the new files structure.
+- Continue to enrich the "crypto/" folder with all helpers with need for convenience: base64, base58, bip39, sha256, key management, derivations, etc.
+- Continue to replace usage of "strings" with "Buffers" everywhere crypto is involved. Using strings was influenced by the CryptoJS library but we want to revert back to Buffers everywhere.
+
+Carl:
+- Keep focusing on JSON serialization / deserialization / xml handling.
+- Make sure to finalize what can't build to get a buildable SDK asap (even if this means commenting out some code).
+
+Ben:
+- Migrate DefaultDIDAdapter and FileSystemStorage.
+- Get the DID store class ready for the initial tests (uncomment commented code)
+
+Ricardo / Carl / Ben:
+- Migrate tests from java. Convert to Jest format. Start with didstore.test.ts.

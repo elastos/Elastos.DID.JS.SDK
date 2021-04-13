@@ -479,8 +479,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 throw new InvalidKeyException(id.toString());
         }
 
-        let key = HDKey.deserialize(HDKey.paddingToExtendedPublicKey(
-            pk.getPublicKeyBytes()));
+        let key = HDKey.deserialize(HDKey.paddingToExtendedPublicKey(pk.getPublicKeyBytes()));
 
         return key.getJCEKeyPair();
     }
@@ -1418,7 +1417,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         doc.controllers = Array.from(this.controllers);
         doc.controllerDocs = new Map<DID, DIDDocument>(this.controllerDocs);
         if (this.multisig != null)
-            doc.multisig = new DIDDocument.MultiSignature(this.multisig);
+            doc.multisig = DIDDocument.MultiSignature.newFromMultiSignature(this.multisig);
         doc.publicKeys = new Map<DIDURL, DIDDocument.PublicKey>(this.publicKeys);
         doc.defaultPublicKey = this.defaultPublicKey;
         doc.credentials = new Map<DIDURL, VerifiableCredential>(this.credentials);
@@ -1432,7 +1431,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return doc;
     }
 
-    public edit(controller: DIDDocument = undefined): Builder {
+    public edit(controller: DIDDocument = undefined): DIDDocument.Builder {
         if (controller !== undefined) {
             this.checkIsCustomized();
 
@@ -1445,13 +1444,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (!this.hasController(controller.getSubject()))
                 throw new NotControllerException(controller.getSubject().toString());
 
-            return Builder.newFromDocument(this, controller);
+            return DIDDocument.Builder.newFromDocument(this, controller);
         }
         else {
             if (!this.isCustomizedDid()) {
                 this.checkAttachedStore();
 
-                return Builder.newFromDocument(this);
+                return DIDDocument.Builder.newFromDocument(this);
             } else {
                 if (this.getEffectiveController() == null)
                     throw new NoEffectiveControllerException();
@@ -2320,9 +2319,9 @@ export namespace DIDDocument {
             this.apply(m, n);
         }
 
-        /* private MultiSignature(ms: MultiSignature) {
-            apply(ms.m, ms.n);
-        } */
+        public /* private */ static newFromMultiSignature(ms: MultiSignature): MultiSignature {
+            return new MultiSignature(ms.m(), ms.n());
+        }
 
         /* @JsonCreator
         public MultiSignature(mOfN: string) {
@@ -2763,6 +2762,10 @@ export namespace DIDDocument {
 
             this.creator = creator;
             this.signature = signature;
+        }
+
+        equals(obj: Proof): boolean {
+            return this.compareTo(obj) == 0;
         }
 
         /**
@@ -3548,7 +3551,7 @@ export namespace DIDDocument {
 
             try {
                 let vc = cb.id(this.canonicalId(id))
-                    .type(types)
+                    .type(...types)
                     .properties(subject)
                     .expirationDate(expirationDate)
                     .seal(storepass);
@@ -3749,7 +3752,7 @@ export namespace DIDDocument {
             this.checkNotSealed();
             checkArgument(controller != null, "Invalid controller");
 
-            if (this.document.proofs == null || this.document.proofs.isEmpty())
+            if (this.document.proofs == null || this.document.proofs.size == 0)
                 return this;
 
             if (this.document.proofs.delete(controller) == null)

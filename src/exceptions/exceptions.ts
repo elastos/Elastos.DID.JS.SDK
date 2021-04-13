@@ -45,3 +45,6 @@ export class DIDObjectNotExistException extends ParentException {}
 export class CanNotRemoveEffectiveController extends ParentException {}
 export class DIDObjectHasReference extends ParentException {}
 export class MalformedPresentationException extends ParentException {}
+export class UnsupportedOperationException extends ParentException {}
+export class NetworkException extends ParentException {}
+export class ResolveException extends ParentException {}

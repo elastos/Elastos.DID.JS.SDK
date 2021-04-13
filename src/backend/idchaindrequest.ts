@@ -28,6 +28,7 @@ import { DIDDocument } from "../diddocument";
 import { DIDEntity } from "../didentity";
 import { DIDURL } from "../didurl";
 import { IllegalArgumentException } from "../exceptions/exceptions";
+import { JSONObject } from "../json";
 import { TransferTicket } from "../transferticket";
 import { checkArgument } from "../utils";
 
@@ -129,16 +130,16 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 		this.proof = proof;
 	}
 
-	protected getSigningInputs(): string[] {
+	protected getSigningInputs(): Buffer[] {
 		let prevtxid = this.getOperation().equals(IDChainRequest.Operation.UPDATE) ? this.header.getPreviousTxid() : "";
 		let ticket = this.getOperation().equals(IDChainRequest.Operation.TRANSFER) ? this.header.getTicket() : "";
 
-		let inputs: string[] = [
-			this.header.getSpecification(), // .getBytes(),
-			this.header.getOperation().toString(), // .getBytes(),
-			prevtxid, //.getBytes(),
-			ticket, //.getBytes(),
-			this.payload //.getBytes()
+		let inputs: Buffer[] = [
+			this.header.getSpecification().getBytes(),
+			this.header.getOperation().toString().getBytes(),
+			prevtxid.getBytes(),
+			ticket.getBytes(),
+			this.payload.getBytes()
 		];
 
 		return inputs;
@@ -175,10 +176,10 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 				return false;
 		}
 
-		return doc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), this.getSigningInputs());
+		return doc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), ...this.getSigningInputs());
 	}
 
-	public /* protected */ static parse<T extends DIDEntity<unknown>>(content: JsonNode, clazz: Class<T>): T {
+	public /* protected */ static parse<T extends DIDEntity<unknown>>(content: JSONObject, clazz: Class<T>): T {
 		return DIDEntity.parse(content, clazz);
 	}
 }

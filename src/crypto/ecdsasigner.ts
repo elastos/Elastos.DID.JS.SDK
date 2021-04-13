@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-import { HDKey } from "../hdkey-secp256r1";
-import { Base58 } from "./base58";
 import { KJUR, hextob64u, BAtohex, ArrayBuffertohex, b64toBA, b64utob64 } from "jsrsasign";
 import { crypto, PublicKey } from "bitcore-lib";
 import BN from "bn.js";
