@@ -1978,7 +1978,7 @@ export namespace DIDStore {
 		private static FINGERPRINT = "fingerprint";
 		private static DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
 
-		protected constructor(store: DIDStore | null = null) {
+		/* protected */ constructor(store: DIDStore | null = null) {
 			super(store);
 			this.put(Metadata.TYPE, DIDStore.DID_STORE_TYPE);
 			this.put(Metadata.VERSION, DIDStore.DID_STORE_VERSION);

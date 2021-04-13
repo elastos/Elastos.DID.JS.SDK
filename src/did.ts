@@ -193,7 +193,7 @@ export class DID {
 
 export namespace DID {
     export class Serializer extends StdSerializer<DID> {
-        private static final long serialVersionUID = -5048323762128760963L;
+        // Java: private static final long serialVersionUID = -5048323762128760963L;
 
         public constructor(t: Class<DID> = null) {
             super(t);
@@ -205,7 +205,7 @@ export namespace DID {
     }
 
     export class Deserializer extends StdDeserializer<DID> {
-        private static final long serialVersionUID = -306953602840919050L;
+        // Java: private static final long serialVersionUID = -306953602840919050L;
 
         public Deserializer() {
             this(null);

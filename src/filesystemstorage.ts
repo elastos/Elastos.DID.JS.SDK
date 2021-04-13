@@ -20,9 +20,75 @@
  * SOFTWARE.
  */
 
+import { List as ImmutableList } from "immutable";
+import { CredentialMetadata } from "./credentialmetadata";
+import { DID } from "./did";
+import { DIDDocument } from "./diddocument";
+import { DIDMetadata } from "./didmetadata";
+import { DIDStorage } from "./didstorage";
+import { DIDStore } from "./didstore";
+import { DIDURL } from "./didurl";
+import { DIDStorageException, DIDStoreException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
+import { RootIdentity } from "./rootidentity";
+import { VerifiableCredential } from "./verifiablecredential";
+
+// Root prefix to distinguish this file's storage from other data in local storage.
+const FILESYSTEM_LOCAL_STORAGE_PREFIX = "DID_FS_STORAGE";
 
 const log = new Logger("FileSystemStorage");
+
+/**
+ * Internal class mimicing Java File class in order to reduce the divergence with Java implementation
+ * for now.
+ */
+class File {
+	public static SEPARATOR = "/";
+
+	constructor(private path: string) {}
+
+	public exists(): boolean {
+		return localStorage.getItem(File.pathWithPrefix(this.path)) != null;
+	}
+
+	public getAbsolutePath(): string {
+		return this.path;
+	}
+
+	public isDirectory(): boolean {
+		return false;
+	}
+
+	public isFile(): boolean {
+		return true;
+	}
+
+	public writeText(text: string) {
+		localStorage.setItem(File.pathWithPrefix(this.path), text);
+	}
+
+	public readText(): string {
+		return localStorage.getItem(File.pathWithPrefix(this.path));
+	}
+
+	private static pathWithPrefix(path: string): string {
+		return FILESYSTEM_LOCAL_STORAGE_PREFIX + "_" + path;
+	}
+
+	public static join(...paths: string[]): string {
+		return paths.join(File.SEPARATOR);
+	}
+}
+
+class Dir extends File {
+	public isDirectory(): boolean {
+		return true;
+	}
+
+	public isFile(): boolean {
+		return false;
+	}
+}
 
 /*
  * FileSystem DID Store: storage layout
@@ -78,12 +144,12 @@ class FileSystemStorage implements DIDStorage {
 
 	private static JOURNAL_SUFFIX = ".journal";
 
-	private File storeRoot;
-	private String currentDataDir;
+	private storeRoot: File;
+	private currentDataDir: string;
 
 	protected constructor(dir: File) {
 		this.storeRoot = dir;
-		this.currentDataDir = DATA_DIR;
+		this.currentDataDir = FileSystemStorage.DATA_DIR;
 
 		if (this.storeRoot.exists())
 			this.checkStore();
@@ -95,17 +161,16 @@ class FileSystemStorage implements DIDStorage {
 		try {
 			log.debug("Initializing DID store at {}", this.storeRoot.getAbsolutePath());
 
-			this.storeRoot.mkdirs();
+			// Java: this.storeRoot.mkdirs();
 
-			DIDStore.Metadata metadata = new DIDStore.Metadata();
+			let metadata = new DIDStore.Metadata();
 
-			File file = getFile(true, currentDataDir, METADATA);
+			let  file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
 			metadata.serialize(file);
 		} catch (e) {
 			// IOException
 			log.error("Initialize DID store error", e);
-			throw new DIDStorageException("Initialize DIDStore \""
-					+ storeRoot.getAbsolutePath() + "\" error.", e);
+			throw new DIDStorageException("Initialize DIDStore \""+ this.storeRoot.getAbsolutePath() + "\" error.", e);
 		}
 	}
 
@@ -120,44 +185,46 @@ class FileSystemStorage implements DIDStorage {
 
 		this.postOperations();
 
-		File file = getDir(currentDataDir);
+		let file: Dir = this.getDir(this.currentDataDir);
 		if (!file.exists()) {
-			File oldMetadata = getFile(".meta");
+			let oldMetadata = this.getFile(".meta");
 			if (oldMetadata.exists()) {
 				if (oldMetadata.isFile()) {
+
+TODO: if metadata file not exist or parse error then throw the exception
+
+
+
+
 					upgradeFromV2();
 				} else {
-					log.error("Path {} not a DID store", storeRoot.getAbsolutePath());
-					throw new DIDStorageException("Invalid DIDStore \""
-							+ storeRoot.getAbsolutePath() + "\".");
+					log.error("Path {} not a DID store", this.storeRoot.getAbsolutePath());
+					throw new DIDStorageException("Invalid DIDStore \"" + this.storeRoot.getAbsolutePath() + "\".");
 				}
 			} else {
-				String[] files = storeRoot.list();
+				let files: string[] = this.storeRoot.list();
 				if (files == null || files.length == 0) {
 					// if an empty folder
-					initializeStore();
+					this.initializeStore();
 					return;
 				} else {
-					log.error("Path {} not a DID store", storeRoot.getAbsolutePath());
-					throw new DIDStorageException("Invalid DIDStore \""
-							+ storeRoot.getAbsolutePath() + "\".");
+					log.error("Path {} not a DID store", this.storeRoot.getAbsolutePath());
+					throw new DIDStorageException("Invalid DIDStore \"" + this.storeRoot.getAbsolutePath() + "\".");
 				}
 			}
 		}
 
 		if (!file.isDirectory()) {
 			log.error("Path {} not a DID store, missing data directory",
-					storeRoot.getAbsolutePath());
+				this.storeRoot.getAbsolutePath());
 			throw new DIDStorageException("Invalid DIDStore \""
-					+ storeRoot.getAbsolutePath() + "\".");
+					+ this.storeRoot.getAbsolutePath() + "\".");
 		}
 
-		file = getFile(false, currentDataDir, METADATA);
+		file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
 		if (!file.exists() || !file.isFile()) {
-			log.error("Path {} not a DID store, missing store metadata",
-					storeRoot.getAbsolutePath());
-			throw new DIDStorageException("Invalid DIDStore \""
-					+ storeRoot.getAbsolutePath() + "\".");
+			log.error("Path {} not a DID store, missing store metadata", this.storeRoot.getAbsolutePath());
+			throw new DIDStorageException("Invalid DIDStore \"" + this.storeRoot.getAbsolutePath() + "\".");
 		}
 
 		try {
@@ -168,7 +235,8 @@ class FileSystemStorage implements DIDStorage {
 
 			if (metadata.getVersion() != DIDStore.DID_STORE_VERSION)
 				throw new DIDStorageException("Unsupported DIDStore version");
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (e) {
+			// DIDSyntaxException | IOException
 			log.error("Check DID store error, failed load store metadata", e);
 			throw new DIDStorageException("Can not check the store metadata", e);
 		}
@@ -181,10 +249,10 @@ class FileSystemStorage implements DIDStorage {
 
 	private static toDIDURL(did: DID, path: string): DIDURL {
 		path = path.replace('.', ';').replace('_', '/').replace('-', '?');
-		return new DIDURL(did, path);
+		return DIDURL.valueOf(did, path);
 	}
 
-	private static void deleteFile(File file) {
+	/* private static void deleteFile(File file) {
 		if (file.isDirectory()) {
 			File[] children = file.listFiles();
 			for (File child : children)
@@ -192,9 +260,9 @@ class FileSystemStorage implements DIDStorage {
 		}
 
 		file.delete();
-	}
+	} */
 
-	private static void copyFile(File src, File dest) throws IOException {
+	/* private static void copyFile(File src, File dest) throws IOException {
 	    FileInputStream in = null;
 	    FileOutputStream out = null;
 	    try {
@@ -209,11 +277,7 @@ class FileSystemStorage implements DIDStorage {
 			if (out != null)
 				out.close();
 		}
-	}
-
-	private File getFile(String ... path) {
-		return getFile(false, path);
-	}
+	} */
 
 	private File getFile(boolean create, String ... path) {
 		StringBuffer relPath = new StringBuffer(256);
@@ -241,49 +305,18 @@ class FileSystemStorage implements DIDStorage {
 		return file;
 	}
 
-	private File getDir(String ... path) {
-		StringBuffer relPath = new StringBuffer(256);
-
-		relPath.append(storeRoot.getAbsolutePath());
-		for (String p : path) {
-			relPath.append(File.separator);
-			relPath.append(p);
-		}
-
-		return new File(relPath.toString());
+	private getDir(...paths: string[]): File {
+		let relPath = this.storeRoot.getAbsolutePath() + File.SEPARATOR + paths.join(File.SEPARATOR);
+		return new File(relPath);
 	}
 
-	private static void writeText(File file, String text) throws IOException {
-		FileWriter writer = null;
+	public getLocation(): string {
+		return this.storeRoot.toString();
+	}
+
+	public storeMetadata(metadata: DIDStore.Metadata) {
 		try {
-			writer = new FileWriter(file);
-			writer.write(text);
-		} finally {
-			if (writer != null)
-				writer.close();
-		}
-	}
-
-	private static String readText(File file) throws IOException {
-		BufferedReader reader = null;
-		try {
-			reader = new BufferedReader(new FileReader(file));
-			return reader.readLine();
-		} finally {
-			if (reader != null)
-				reader.close();
-		}
-	}
-
-	@Override
-	public String getLocation() {
-		return storeRoot.toString();
-	}
-
-	@Override
-	public void storeMetadata(DIDStore.Metadata metadata) throws DIDStorageException {
-		try {
-			File file = getFile(true, currentDataDir, METADATA);
+			let file = this.getFile(true, this.currentDataDir, METADATA);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
@@ -294,130 +327,127 @@ class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	@Override
-	public DIDStore.Metadata loadMetadata() throws DIDStorageException {
+	public loadMetadata(): DIDStore.Metadata {
 		try {
-			File file = getFile(currentDataDir, METADATA);
-			DIDStore.Metadata metadata = null;
+			let file = this.getFile(this.currentDataDir, METADATA);
+			let metadata: DIDStore.Metadata = null;
 			if (file.exists())
 				metadata = DIDStore.Metadata.parse(file, DIDStore.Metadata.class);
 
 			return metadata;
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (e) {
+			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load DIDStore metadata error", e);
 		}
 	}
 
-	private File getRootIdentityFile(String id, String file, boolean create) {
-		return getFile(create, currentDataDir, ROOT_IDENTITIES_DIR, id, file);
+	private getRootIdentityFile(id: string, file: string, create: boolean): File {
+		return this.getFile(create, this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR, id, file);
 	}
 
-	private File getRootIdentityDir(String id) {
-		return getDir(currentDataDir, ROOT_IDENTITIES_DIR, id);
+	private getRootIdentityDir(id: string): File {
+		return this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR, id);
 	}
 
-	@Override
-	public void storeRootIdentityMetadata(String id, RootIdentity.Metadata metadata)
-			throws DIDStorageException {
+	public storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata) {
 		try {
-			File file = getRootIdentityFile(id, METADATA, true);
+			let file = this.getRootIdentityFile(id, METADATA, true);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
 				metadata.serialize(file);
-		} catch (IOException e) {
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Store root identity metadata error: " + id, e);
 		}
 	}
 
-	@Override
-	public RootIdentity.Metadata loadRootIdentityMetadata(String id) throws DIDStorageException {
+	public loadRootIdentityMetadata(id: string): RootIdentity.Metadata {
 		try {
-			File file = getRootIdentityFile(id, METADATA, false);
-			RootIdentity.Metadata metadata = null;
+			let file = this.getRootIdentityFile(id, METADATA, false);
+			let metadata: RootIdentity.Metadata = null;
 			if (file.exists())
 				metadata = RootIdentity.Metadata.parse(file, RootIdentity.Metadata.class);
 
 			return metadata;
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (e) {
+			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load root identity metadata error: " + id, e);
 		}
 	}
 
-	@Override
-	public void storeRootIdentity(String id, String mnemonic, String privateKey,
-			String publicKey, int index) throws DIDStorageException {
+	public storeRootIdentity(id: string, mnemonic: string, privateKey: string,
+			publicKey: string, index: number) {
 		try {
-			File file;
+			let file: File;
 
 			if (mnemonic != null) {
-				file = getRootIdentityFile(id, ROOT_IDENTITY_MNEMONIC_FILE, true);
-				writeText(file, mnemonic);
+				file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, true);
+				file.writeText(mnemonic);
 			}
 
 			if (privateKey != null) {
-				file = getRootIdentityFile(id, ROOT_IDENTITY_PRIVATEKEY_FILE, true);
-				writeText(file, privateKey);
+				file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, true);
+				file.writeText(privateKey);
 			}
 
 			if (publicKey != null) {
-				file = getRootIdentityFile(id, ROOT_IDENTITY_PUBLICKEY_FILE, true);
-				writeText(file, publicKey);
+				file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, true);
+				file.writeText(publicKey);
 			}
 
-			file = getRootIdentityFile(id, ROOT_IDENTITY_INDEX_FILE, true);
-			writeText(file, Integer.toString(index));
-		} catch (IOException e) {
+			file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, true);
+			file.writeText(index.toFixed());
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Store root identity error: " + id, e);
 		}
 	}
 
-	@Override
-	public RootIdentity loadRootIdentity(String id) throws DIDStorageException {
+	public loadRootIdentity(id: string): RootIdentity {
 		try {
-			File file = getRootIdentityFile(id, ROOT_IDENTITY_PUBLICKEY_FILE, false);
+			let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, false);
 			if (!file.exists())
 				return null;
 
-			String publicKey = readText(file);
-			file = getRootIdentityFile(id, ROOT_IDENTITY_INDEX_FILE, false);
-			int index = Integer.valueOf(readText(file));
+			let publicKey = file.readText();
+			file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
+			int index = Integer.valueOf(file.readText());
 
 			return RootIdentity.create(publicKey, index);
-		} catch (IOException e) {
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Load public key for identity error: " + id, e);
 		}
 	}
 
-	@Override
-	public void updateRootIdentityIndex(String id, int index)
-			throws DIDStorageException {
+	public updateRootIdentityIndex(id: string, index: number) {
 		try {
-			File file = getRootIdentityFile(id, ROOT_IDENTITY_INDEX_FILE, false);
-			writeText(file, Integer.toString(index));
-		} catch (IOException e) {
+			let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
+			file.writeText(Integer.toString(index));
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Update index for indentiy error: " + id, e);
 		}
 	}
 
-	@Override
-	public String loadRootIdentityPrivateKey(String id) throws DIDStorageException {
+	public loadRootIdentityPrivateKey(id: string): string {
 		// TODO: support multiple named identity
 		try {
-			File file = getRootIdentityFile(id, ROOT_IDENTITY_PRIVATEKEY_FILE, false);
+			let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, false);
 			if (!file.exists())
 				return null;
 
-			return readText(file);
-		} catch (IOException e) {
+			return file.readText();
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Load private key for identity error: " + id, e);
 		}
 	}
 
-	@Override
-	public boolean deleteRootIdentity(String id) {
-		File dir = getRootIdentityDir(id);
+	public deleteRootIdentity(id: string): boolean {
+		let dir = this.getRootIdentityDir(id);
 		if (dir.exists()) {
 			deleteFile(dir);
 			return true;
@@ -426,119 +456,115 @@ class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	@Override
-	public List<RootIdentity> listRootIdentities() throws DIDStorageException {
-		File dir = getDir(currentDataDir, ROOT_IDENTITIES_DIR);
+	public listRootIdentities(): RootIdentity[] {
+		let dir = this.getDir(currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
 
 		if (!dir.exists())
-			return Collections.emptyList();
+			return [];
 
-		File[] children = dir.listFiles((file) -> {
+		let children = dir.listFiles((file) -> {
 			return file.isDirectory();
 		});
 
 		if (children == null || children.length == 0)
-			return Collections.emptyList();
+			return [];
 
-		ArrayList<RootIdentity> ids = new ArrayList<RootIdentity>(children.length);
-		for (File id : children) {
-			RootIdentity identity = loadRootIdentity(id.getName());
-			ids.add(identity);
+		let ids: RootIdentity[] = [];
+		for (let id of children) {
+			let identity = this.loadRootIdentity(id.getName());
+			ids.push(identity);
 		}
 
 		return ids;
 	}
 
-	@Override
-	public boolean containsRootIdenities() {
-		File dir = getDir(currentDataDir, ROOT_IDENTITIES_DIR);
+	public containsRootIdenities(): boolean {
+		let dir = this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
 		if (!dir.exists())
 			return false;
 
-		File[] children = dir.listFiles((file) -> {
+		let children = dir.listFiles((file) -> {
 			return file.isDirectory();
 		});
 
 		return (children != null && children.length > 0);
 	}
 
-	@Override
-	public String loadRootIdentityMnemonic(String id) throws DIDStorageException {
+	public loadRootIdentityMnemonic(id: string): string {
 		try {
-			File file = getRootIdentityFile(id, ROOT_IDENTITY_MNEMONIC_FILE, false);
-			return readText(file);
-		} catch (IOException e) {
+			let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, false);
+			return file.readText();
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Load mnemonic for identity error: " + id, e);
 		}
 	}
 
-	private File getDidFile(DID did, boolean create) {
-		return getFile(create, currentDataDir, DID_DIR, did.getMethodSpecificId(), DOCUMENT_FILE);
+	private getDidFile(did: DID, create: boolean): File {
+		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.DOCUMENT_FILE);
 	}
 
-	private File getDidMetadataFile(DID did, boolean create) {
-		return getFile(create, currentDataDir, DID_DIR, did.getMethodSpecificId(), METADATA);
+	private getDidMetadataFile(did: DID, create: boolean): File {
+		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), METADATA);
 	}
 
-	private File getDidDir(DID did) {
-		return getDir(currentDataDir, DID_DIR, did.getMethodSpecificId());
+	private getDidDir(did: DID): File {
+		return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId());
 	}
 
-	@Override
-	public void storeDidMetadata(DID did, DIDMetadata metadata) throws DIDStorageException {
+	public storeDidMetadata(did: DID, metadata: DIDMetadata) {
 		try {
-			File file = getDidMetadataFile(did, true);
+			let file = this.getDidMetadataFile(did, true);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
 				metadata.serialize(file);
-		} catch (IOException e) {
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Store DID metadata error: " + did, e);
 		}
 	}
 
-	@Override
-	public DIDMetadata loadDidMetadata(DID did) throws DIDStorageException {
+	public loadDidMetadata(did: DID): DIDMetadata {
 		try {
-			File file = getDidMetadataFile(did, false);
-			DIDMetadata metadata = null;
+			let file = this.getDidMetadataFile(did, false);
+			let metadata: DIDMetadata = null;
 			if (file.exists())
 				metadata = DIDMetadata.parse(file, DIDMetadata.class);
 
 			return metadata;
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (e) {
+			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load DID metadata error: " + did, e);
 		}
 	}
 
-	@Override
-	public void storeDid(DIDDocument doc) throws DIDStorageException {
+	public storeDid(doc: DIDDocument) {
 		try {
-			File file = getDidFile(doc.getSubject(), true);
+			let file = this.getDidFile(doc.getSubject(), true);
 			doc.serialize(file, true);
-		} catch (IOException e) {
-			throw new DIDStorageException("Store DID document error: " +
-					doc.getSubject(), e);
+		} catch (e) {
+			// IOException
+			throw new DIDStorageException("Store DID document error: " + doc.getSubject(), e);
 		}
 	}
 
-	@Override
-	public DIDDocument loadDid(DID did) throws DIDStorageException {
+	public loadDid(did: DID): DIDDocument {
 		try {
-			File file = getDidFile(did, false);
+			let file = this.getDidFile(did, false);
 			if (!file.exists())
 				return null;
 
 			return DIDDocument.parse(file);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (e) {
+			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load DID document error: " + did, e);
 		}
 	}
 
-	@Override
-	public boolean deleteDid(DID did) {
-		File dir = getDidDir(did);
+	public deleteDid(did: DID): boolean {
+		let dir = this.getDidDir(did);
 		if (dir.exists()) {
 			deleteFile(dir);
 			return true;
@@ -547,123 +573,115 @@ class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	@Override
-	public List<DID> listDids() {
-		File dir = getDir(currentDataDir, DID_DIR);
+	public listDids(): DID[] {
+		let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
 		if (!dir.exists())
-			return Collections.emptyList();
+			return [];
 
-		File[] children = dir.listFiles((file) -> {
+		let children = dir.listFiles((file) -> {
 			return file.isDirectory();
 		});
 
 		if (children == null || children.length == 0)
-			return Collections.emptyList();
+			return [];
 
-		ArrayList<DID> dids = new ArrayList<DID>(children.length);
-		for (File didRoot : children) {
-			DID did = new DID(DID.METHOD, didRoot.getName());
-			dids.add(did);
+		let dids: DID[] = [];
+		for (let didRoot of children) {
+			let did = new DID(DID.METHOD, didRoot.getName());
+			dids.push(did);
 		}
 
 		return dids;
 	}
 
-	private File getCredentialFile(DIDURL id, boolean create) {
-		return getFile(create, currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
-				CREDENTIALS_DIR, toPath(id), CREDENTIAL_FILE);
+	private getCredentialFile(id: DIDURL, create: boolean): File {
+		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
+				FileSystemStorage.CREDENTIALS_DIR, this.toPath(id), FileSystemStorage.CREDENTIAL_FILE);
 	}
 
-	private File getCredentialMetadataFile(DIDURL id, boolean create) {
-		return getFile(create, currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
-				CREDENTIALS_DIR, toPath(id), METADATA);
+	private getCredentialMetadataFile(id: DIDURL, create: boolean): File {
+		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
+				FileSystemStorage.CREDENTIALS_DIR, this.toPath(id), METADATA);
 	}
 
-	private File getCredentialDir(DIDURL id) {
-		return getDir(currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
-				CREDENTIALS_DIR, toPath(id));
+	private getCredentialDir(id: DIDURL): File {
+		return getDir(this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
+				FileSystemStorage.CREDENTIALS_DIR, this.toPath(id));
 	}
 
-	private File getCredentialsDir(DID did) {
-		return getDir(currentDataDir, DID_DIR, did.getMethodSpecificId(), CREDENTIALS_DIR);
+	private getCredentialsDir(did: DID): File {
+		return this.getDir(currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.CREDENTIALS_DIR);
 	}
 
-	@Override
-	public void storeCredentialMetadata(DIDURL id, CredentialMetadata metadata)
-			throws DIDStorageException {
+	public storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
 		try {
-			File file = getCredentialMetadataFile(id, true);
+			let file = this.getCredentialMetadataFile(id, true);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
 				metadata.serialize(file);
-		} catch (IOException e) {
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Store credential metadata error: " + id, e);
 		}
 	}
 
-	@Override
-	public CredentialMetadata loadCredentialMetadata(DIDURL id)
-			throws DIDStorageException {
+	public loadCredentialMetadata(id: DIDURL): CredentialMetadata {
 		try {
-			File file = getCredentialMetadataFile(id, false);
+			let file = this.getCredentialMetadataFile(id, false);
 			if (!file.exists())
 				return null;
 
 			return CredentialMetadata.parse(file, CredentialMetadata.class);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (e) {
+			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load credential metadata error: " + id, e);
 		}
 	}
 
-	@Override
-	public void storeCredential(VerifiableCredential credential)
-			throws DIDStorageException {
+	public storeCredential(credential: VerifiableCredential) {
 		try {
-			File file = getCredentialFile(credential.getId(), true);
+			let file = this.getCredentialFile(credential.getId(), true);
 			credential.serialize(file, true);
-		} catch (IOException e) {
-			throw new DIDStorageException("Store credential error: " +
-					credential.getId(), e);
+		} catch (e) {
+			// IOException
+			throw new DIDStorageException("Store credential error: " + credential.getId(), e);
 		}
 	}
 
-	@Override
-	public VerifiableCredential loadCredential(DIDURL id)
-			throws DIDStorageException {
+	public  loadCredential(id: DIDURL): VerifiableCredential {
 		try {
-			File file = getCredentialFile(id, false);
+			let file = this.getCredentialFile(id, false);
 			if (!file.exists())
 				return null;
 
 			return VerifiableCredential.parse(file);
-		} catch (DIDSyntaxException | IOException e) {
+		} catch (e) {
+			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load credential error: " + id, e);
 		}
 	}
 
-	@Override
-	public boolean containsCredentials(DID did) {
-		File dir = getCredentialsDir(did);
+	public containsCredentials(did: DID): boolean {
+		let dir = this.getCredentialsDir(did);
 		if (!dir.exists())
 			return false;
 
-		File[] creds = dir.listFiles((file) -> {
+		let creds = dir.listFiles((file) -> {
 			return file.isDirectory();
 		});
 
 		return creds == null ? false : creds.length > 0;
 	}
 
-	@Override
-	public boolean deleteCredential(DIDURL id) {
-		File dir = getCredentialDir(id);
+	public deleteCredential(id: DIDURL): boolean {
+		let dir = this.getCredentialDir(id);
 		if (dir.exists()) {
 			deleteFile(dir);
 
 			// Remove the credentials directory is no credential exists.
-			dir = getCredentialsDir(id.getDid());
+			dir = this.getCredentialsDir(id.getDid());
 			if (dir.list().length == 0)
 				dir.delete();
 
@@ -673,38 +691,35 @@ class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	@Override
-	public List<DIDURL> listCredentials(DID did) {
-		File dir = getCredentialsDir(did);
+	public listCredentials(did: DID): DIDURL[] {
+		let dir = this.getCredentialsDir(did);
 		if (!dir.exists())
-			return Collections.emptyList();
+			return [];
 
-		File[] children = dir.listFiles((file) -> {
+		let children = dir.listFiles((file) -> {
 			return file.isDirectory();
 		});
 
 		if (children == null || children.length == 0)
-			return Collections.emptyList();
+			return [];
 
-		ArrayList<DIDURL> credentials = new ArrayList<DIDURL>(children.length);
-		for (File credential : children)
-			credentials.add(toDIDURL(did, credential.getName()));
+		let credentials: DIDURL[] = [];
+		for (let credential of children)
+			credentials.push(FileSystemStorage.toDIDURL(did, credential.getName()));
 
 		return credentials;
 	}
 
-	private File getPrivateKeyFile(DIDURL id, boolean create) {
-		return getFile(create, currentDataDir, DID_DIR, id.getDid().getMethodSpecificId(),
-				PRIVATEKEYS_DIR, toPath(id));
+	private getPrivateKeyFile(id: DIDURL, create: boolean): File {
+		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
+				FileSystemStorage.PRIVATEKEYS_DIR, this.toPath(id));
 	}
 
-	private File getPrivateKeysDir(DID did) {
-		return getDir(currentDataDir, DID_DIR, did.getMethodSpecificId(), PRIVATEKEYS_DIR);
+	private getPrivateKeysDir(did: DID): File {
+		return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.PRIVATEKEYS_DIR);
 	}
 
-	@Override
-	public void storePrivateKey(DIDURL id, String privateKey)
-			throws DIDStorageException {
+	public storePrivateKey(id: DIDURL, privateKey: string) {
 		try {
 			File file = getPrivateKeyFile(id, true);
 			writeText(file, privateKey);
@@ -713,40 +728,37 @@ class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	@Override
-	public String loadPrivateKey(DIDURL id) throws DIDStorageException {
+	public loadPrivateKey(id: DIDURL): string {
 		try {
-			File file = getPrivateKeyFile(id, false);
+			let file = this.getPrivateKeyFile(id, false);
 			if (!file.exists())
 				return null;
 
 			return readText(file);
-		} catch (Exception e) {
+		} catch (e) {
 			throw new DIDStorageException("Load private key error: " + id, e);
 		}
 	}
 
-	@Override
-	public boolean containsPrivateKeys(DID did) {
-		File dir = getPrivateKeysDir(did);
+	public containsPrivateKeys(did: DID): boolean {
+		let dir = this.getPrivateKeysDir(did);
 		if (!dir.exists())
 			return false;
 
-		File[] keys = dir.listFiles((file) -> {
+		let keys = dir.listFiles((file) -> {
 			return file.isFile();
 		});
 
 		return keys == null ? false : keys.length > 0;
 	}
 
-	@Override
-	public boolean deletePrivateKey(DIDURL id) {
-		File file = getPrivateKeyFile(id, false);
+	public deletePrivateKey(id: DIDURL): boolean {
+		let file = this.getPrivateKeyFile(id, false);
 		if (file.exists()) {
 			file.delete();
 
 			// Remove the privatekeys directory is no privatekey exists.
-			File dir = getPrivateKeysDir(id.getDid());
+			let dir = this.getPrivateKeysDir(id.getDid());
 			if (dir.list().length == 0)
 				dir.delete();
 
@@ -756,44 +768,43 @@ class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	@Override
-	public List<DIDURL> listPrivateKeys(DID did) throws DIDStorageException {
-		File dir = getPrivateKeysDir(did);
+	public listPrivateKeys(did: DID): DIDURL[] {
+		let dir = this.getPrivateKeysDir(did);
 		if (!dir.exists())
-			return Collections.emptyList();
+			return [];
 
-		File[] keys = dir.listFiles((file) -> {
+		let keys = dir.listFiles((file) -> {
 			return file.isFile();
 		});
 
 		if (keys == null || keys.length == 0)
-			return Collections.emptyList();
+			return [];
 
-		ArrayList<DIDURL> sks = new ArrayList<DIDURL>(keys.length);
-		for (File key : keys)
-			sks.add(toDIDURL(did, key.getName()));
+		let sks: DIDURL[] = [];
+		for (let key of keys)
+			sks.push(FileSystemStorage.toDIDURL(did, key.getName()));
 
 		return sks;
 	}
 
-	private boolean needReencrypt(File file) {
-		String[] patterns = {
+	private needReencrypt(file: File): boolean {
+		let patterns: string[] = [
 				// Root identity's private key
 				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
-				ROOT_IDENTITIES_DIR + "\\" + File.separator + "(.+)\\" +
-				File.separator + ROOT_IDENTITY_PRIVATEKEY_FILE,
+				FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.separator + "(.+)\\" +
+				File.separator + FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE,
 				// Root identity's mnemonic
 				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
-				ROOT_IDENTITIES_DIR + "\\" + File.separator + "(.+)\\" +
-				File.separator + ROOT_IDENTITY_MNEMONIC_FILE,
+				FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.separator + "(.+)\\" +
+				File.separator + FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE,
 				// DID's private keys
 				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
-				DID_DIR + "\\" + File.separator + "(.+)\\" + File.separator +
-				PRIVATEKEYS_DIR + "\\" + File.separator + "(.+)"
-		};
+				FileSystemStorage.DID_DIR + "\\" + File.separator + "(.+)\\" + File.separator +
+				FileSystemStorage.PRIVATEKEYS_DIR + "\\" + File.separator + "(.+)"
+		];
 
-		String path = file.getAbsolutePath();
-		for (String pattern : patterns) {
+		let path = file.getAbsolutePath();
+		for (let pattern of patterns) {
 			if (path.matches(pattern))
 				return true;
 		}
@@ -801,37 +812,36 @@ class FileSystemStorage implements DIDStorage {
 		return false;
 	}
 
-	private void copy(File src, File dest, ReEncryptor reEncryptor)
-			throws IOException, DIDStoreException {
+	private copy(src: File, dest: File, reEncryptor: ReEncryptor) {
 		if (src.isDirectory()) {
 			if (!dest.exists()) {
 				dest.mkdir();
 			}
 
-			String files[] = src.list();
-			for (String file : files) {
-				File srcFile = new File(src, file);
-				File destFile = new File(dest, file);
-				copy(srcFile, destFile, reEncryptor);
+			let files = src.list();
+			for (let file of files) {
+				let srcFile = new File(src, file);
+				let destFile = new File(dest, file);
+				this.copy(srcFile, destFile, reEncryptor);
 			}
 		} else {
-			if (needReencrypt(src)) {
-				String text = readText(src);
-				writeText(dest, reEncryptor.reEncrypt(text));
+			if (this.needReencrypt(src)) {
+				let text = src.readText();
+				dest.writeText(reEncryptor.reEncrypt(text));
 			} else {
-			    copyFile(src, dest);
+			    this.copyFile(src, dest);
 			}
 		}
 	}
 
-	private void postChangePassword() {
-		File dataDir = getDir(DATA_DIR);
-		File dataJournal = getDir(DATA_DIR + JOURNAL_SUFFIX);
+	private postChangePassword() {
+		let dataDir = this.getDir(DATA_DIR);
+		let dataJournal = this.getDir(DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
 
-		int timestamp = (int)(System.currentTimeMillis() / 1000);
-		File dataDeprecated = getDir(DATA_DIR + "_" + timestamp);
+		let timestamp = new Date().getTime() / 1000;
+		let dataDeprecated = this.getDir(DATA_DIR + "_" + timestamp);
 
-		File stageFile = getFile("postChangePassword");
+		let stageFile = this.getFile("postChangePassword");
 
 		if (stageFile.exists()) {
 			if (dataJournal.exists()) {
@@ -848,28 +858,27 @@ class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	@Override
-	public void changePassword(ReEncryptor reEncryptor)
-			throws DIDStorageException {
+	public changePassword(reEncryptor: ReEncryptor) {
 		try {
-			File dataDir = getDir(DATA_DIR);
-			File dataJournal = getDir(DATA_DIR + JOURNAL_SUFFIX);
+			let dataDir = this.getDir(DATA_DIR);
+			let dataJournal = this.getDir(DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
 
-			copy(dataDir, dataJournal, reEncryptor);
+			this.copy(dataDir, dataJournal, reEncryptor);
 
-			File stageFile = getFile(true, "postChangePassword");
+			let stageFile = this.getFile(true, "postChangePassword");
 			stageFile.createNewFile();
-		} catch (DIDStoreException | IOException e) {
+		} catch (e) {
+			// DIDStoreException | IOException
 			throw new DIDStorageException("Change store password failed.");
 		} finally {
-			postChangePassword();
+			this.postChangePassword();
 		}
 	}
 
-	private void postOperations() throws DIDStorageException {
-		File stageFile = getFile("postChangePassword");
+	private postOperations() {
+		let stageFile = this.getFile("postChangePassword");
 		if (stageFile.exists()) {
-			postChangePassword();
+			this.postChangePassword();
 			return;
 		}
 	}

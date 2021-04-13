@@ -48,3 +48,4 @@ export class MalformedPresentationException extends ParentException {}
 export class UnsupportedOperationException extends ParentException {}
 export class NetworkException extends ParentException {}
 export class ResolveException extends ParentException {}
+export class DIDStorageException extends ParentException {}

@@ -22,6 +22,7 @@
 
 import { JsonCreator } from "jackson-js";
 import { DIDURL } from "../didurl";
+import { CredentialRequest } from "./credentialrequest";
 import { IDTransaction } from "./idtransaction";
 
 export class CredentialTransaction extends IDTransaction<CredentialTransaction, CredentialRequest> {
@@ -34,7 +35,7 @@ export class CredentialTransaction extends IDTransaction<CredentialTransaction, 
 	 * @param timestamp the time stamp
 	 * @param request the IDChainRequest content
 	 */
-	@JsonCreator()
+	// Java: @JsonCreator
 	protected constructor(txid: string = null, timestamp: Date = null, request: CredentialRequest = null) {
 		super(txid, timestamp, request);
 	}
