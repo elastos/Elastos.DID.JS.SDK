@@ -15,6 +15,7 @@
     "skipLibCheck": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
+    "emitDecoratorMetadata": true,
     "removeComments": true,
     "isolatedModules": true,
     "preserveConstEnums": true,
