@@ -20,7 +20,8 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonFilter, JsonValue, JsonSerialize, JsonDeserialize, JsonAnyGetter, JsonAnySetter } from "jackson-js";
+import { ObjectMapper, JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonFilter, JsonValue, JsonSerialize, JsonDeserialize, JsonAnyGetter, JsonAnySetter } from "jackson-js";
+import { JsonStringifierTransformerContext, JsonParserTransformerContext } from "jackson-js/dist/@types";
 import { DIDEntity } from "./didentity";
 import { DID } from "./did";
 import { DIDURL } from "./didurl";
@@ -30,6 +31,7 @@ import { checkArgument } from "./utils";
 import { List as ImmutableList, Map as ImmutableMap } from "immutable";
 import { VerifiableCredential } from "./verifiablecredential";
 import {
+    ParentException,
     MalformedDocumentException,
     NotCustomizedDIDException,
     NotAttachedWithStoreException,
@@ -68,9 +70,53 @@ import { Issuer } from "./issuer";
 import { TransferTicket } from "./transferticket";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { SHA256 } from "./crypto/sha256";
+import { type } from "node:os";
+import { Nullable, Override } from "antlr4ts/Decorators";
+import { PropertySerializerFilter } from "./propertyfilter";
 
 const log = new Logger("DIDDocument");
 
+export class TypeSerializerFilter extends PropertySerializerFilter<string> {
+    @Override
+    public static include (type: string, context: JsonStringifierTransformerContext): boolean {
+        return !(type && type.equals(Constants._DEFAULT_PUBLICKEY_TYPE));
+    }
+}
+
+export class PublicKeySerializerFilter extends PropertySerializerFilter<DID> {
+    @Override
+    public static include (controller: DID, context: JsonStringifierTransformerContext): boolean {
+        let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
+
+        return !(serializeContext && controller && controller.equals(serializeContext.getDid()));
+    }
+}
+
+export class PublicKeyReferenceSerializer {
+
+    public static serialize(keyRef: DIDDocument.PublicKeyReference, context: JsonStringifierTransformerContext): string | null {
+        let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
+        
+        return keyRef ? serializeContext.getObjectMapper().stringify(keyRef.getId()) : null;
+    }
+}
+
+export class PublicKeyReferenceDeserializer {
+
+    public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocument.PublicKeyReference {
+        try {
+            let objectMapper: ObjectMapper = DIDEntity.getObjectMapper(true);
+
+            if (value && value.includes("{")) {
+                let jsonObj = JSON.parse(value);
+                return DIDDocument.PublicKeyReference.newWithKey(objectMapper.parse<DIDDocument.PublicKey>(jsonObj.key, {mainCreator: () => [DIDDocument.PublicKey]}));
+            }
+            return DIDDocument.PublicKeyReference.newWithURL(DIDURL.newWithUrl(value));
+        } catch (e) {
+            throw new ParentException("Invalid public key");
+        }
+    }
+}
 
 /**
  * The DIDDocument represents the DID information.
@@ -2240,9 +2286,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the DIDDocument object.
      * @throws MalformedDocumentException if a parse error occurs.
      */
-    public static parse(content: string): DIDDocument {
+    public static parseContent(content: string): DIDDocument {
         try {
-            return parse(content, DIDDocument.class);
+            return DIDEntity.parseFromString(content, DIDDocument);
         } catch (e) {
             // DIDSyntaxException
             if (e instanceof MalformedDocumentException)
@@ -2374,12 +2420,13 @@ export namespace DIDDocument {
             DIDDocument.ID, DIDDocument.TYPE, DIDDocument.CONTROLLER, DIDDocument.PUBLICKEY_BASE58
         ]
     })
-    @JsonFilter({ value: "publicKeyFilter" })
     export class PublicKey implements DIDObject<string>, Comparable<PublicKey> {
         @JsonProperty({ value: DIDDocument.ID })
         public /* private */ id: DIDURL;
+        @JsonSerialize({using: TypeSerializerFilter.serialize})
         @JsonProperty({ value: DIDDocument.TYPE })
         public /* private */ type: string;
+        @JsonSerialize({using: PublicKeySerializerFilter.serialize})
         @JsonProperty({ value: DIDDocument.CONTROLLER })
         public /* private */ controller: DID;
         @JsonProperty({ value: DIDDocument.PUBLICKEY_BASE58 })
@@ -2505,34 +2552,10 @@ export namespace DIDDocument {
             else
                 return this.controller.compareTo(key.controller);
         }
-
-        /*
-        protected static getFilter(): PropertyFilter {
-            return new DIDPropertyFilter() {
-                @Override
-                protected boolean include(PropertyWriter writer, object pojo, SerializeContext context) {
-                    if (context.isNormalized())
-                        return true;
-
-                    PublicKey pk = (PublicKey)pojo;
-                    switch (writer.getName()) {
-                    case TYPE:
-                        return !(pk.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
-
-                    case CONTROLLER:
-                        return !(pk.getController().equals(context.getDid()));
-
-                    default:
-                        return true;
-                    }
-                }
-            };
-        }
-        */
     }
 
-    @JsonSerialize({ using: PublicKeyReference.Serializer.class })
-    @JsonDeserialize({ using: PublicKeyReference.Deserializer.class })
+    @JsonSerialize({ using: PublicKeyReferenceSerializer.serialize })
+    @JsonDeserialize({ using: PublicKeyReferenceDeserializer.deserialize })
     export class PublicKeyReference implements Comparable<PublicKeyReference> {
         private id: DIDURL;
         private key?: PublicKey;
@@ -2569,6 +2592,10 @@ export namespace DIDDocument {
 
             this.id = key.getId();
             this.key = key;
+        }
+
+        public equals(other: PublicKeyReference): boolean {
+            return false;
         }
 
         public compareTo(ref?: PublicKeyReference): number {
@@ -2724,8 +2751,8 @@ export namespace DIDDocument {
             DIDDocument.TYPE, DIDDocument.CREATED, DIDDocument.CREATOR, DIDDocument.SIGNATURE_VALUE
         ]
     })
-    @JsonFilter({ value: "didDocumentProofFilter" })
     export class Proof implements Comparable<Proof> {
+        @JsonSerialize({using: TypeSerializerFilter.serialize})
         @JsonProperty({ value: DIDDocument.TYPE })
         private type: string;
         @JsonInclude({ value: JsonIncludeType.NON_NULL })
@@ -2810,32 +2837,11 @@ export namespace DIDDocument {
                 rc = this.creator.compareTo(proof.creator);
             return rc;
         }
-
-        /*
-        protected static getFilter(): PropertyFilter {
-            return new DIDPropertyFilter() {
-                @Override
-                protected boolean include(PropertyWriter writer, object pojo, SerializeContext context) {
-                    if (context.isNormalized())
-                        return true;
-
-                    Proof proof = (Proof)pojo;
-                    switch (writer.getName()) {
-                    case TYPE:
-                        return !(proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
-
-                    default:
-                        return true;
-                    }
-                }
-            };
-        }
-        */
     }
 
     /**
- * Builder object to create or modify the DIDDocument.
- */
+    * Builder object to create or modify the DIDDocument.
+    */
     export class Builder {
         private document: DIDDocument;
         private controllerDoc: DIDDocument;

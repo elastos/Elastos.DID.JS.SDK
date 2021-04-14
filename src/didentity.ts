@@ -21,12 +21,12 @@
  */
 
 import { ObjectMapper } from "jackson-js";
-import { ClassType } from "jackson-js/dist/@types";
+import { ClassType, JsonStringifierTransformerContext } from "jackson-js/dist/@types";
 import { Class } from "./class";
 import { Cloneable } from "./cloneable";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
-import { DIDSyntaxException, UnknownInternalException } from "./exceptions/exceptions";
+import { DIDSyntaxException, UnknownInternalException, InvalidDateFormat } from "./exceptions/exceptions";
 import { JSONObject } from "./json";
 import { checkArgument } from "./utils";
 
@@ -34,13 +34,15 @@ import { checkArgument } from "./utils";
  * Base class for all DID objects.
  */
 export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
+
+	public static CONTEXT_KEY = "org.elastos.did.context";
+
 	private static NORMALIZED_DEFAULT = true;
 
 	//protected static SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.DATE_FORMAT);
 
 	//protected static SimpleDateFormat isoDateFormat = new SimpleDateFormat(Constants.DATE_FORMAT_ISO_8601);
 
-	protected static CONTEXT_KEY = "org.elastos.did.context";
 
 	/* static {
 		dateFormat.setTimeZone(Constants.UTC);
@@ -76,7 +78,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @param normalized if normalized output, ignored when the sign is true
 	 * @return the ObjectMapper instance
 	 */
-	public /* private */ static getObjectMapper(normalized: boolean = undefined): ObjectMapper {
+	public static getObjectMapper(normalized: boolean = undefined): ObjectMapper {
 		/* TODO FROM JAVA let jsonFactory = new JsonFactory();
 		jsonFactory.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 		jsonFactory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);*/
@@ -129,7 +131,9 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public /* protected */ static parse<T extends DIDEntity<any>>(content: JSONObject, clazz: ClassType<T>): T {
+	public /* protected */ static parseFromJSON<T extends DIDEntity<any>>(content: JSONObject, clazz: ClassType<T>): T {
+		return;
+		/*
 		let mapper = this.getObjectMapper();
 
 		try {
@@ -140,6 +144,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
             //  JsonProcessingException
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
+		*/
 	}
 
 	/**
@@ -152,8 +157,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	/*
-	public static parse<T extends DIDEntity<unknown>>(content: string, clazz: Class<T>): T {
+	public static parseFromString<T extends DIDEntity<any>>(content: string, clazz: Class<T>): T {
 		checkArgument(content != null && content !== "", "Invalid JSON content");
 		checkArgument(clazz != null, "Invalid result class object");
 
@@ -169,7 +173,6 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 			throw new DIDSyntaxException(e);
 		}
 	}
-	*/
 	/**
 	 * Generic method to parse a DID object from a Reader object
 	 * into given DIDObject type.
@@ -181,7 +184,8 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @throws DIDSyntaxException if a parse error occurs
 	 * @throws IOException if an IO error occurs
 	 */
-	/* public static<T extends DIDEntity<?>> T parse(Reader src, Class<T> clazz) {
+	/*
+	public static<T extends DIDEntity<?>> T parseFromReader(Reader src, Class<T> clazz) {
 		checkArgument(src != null, "Invalid src reader");
 		checkArgument(clazz != null, "Invalid result class object");
 
@@ -194,8 +198,8 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 		} catch (JsonParseException | JsonMappingException e) {
 			throw DIDSyntaxException.instantiateFor(clazz, e.getMessage(), e);
 		}
-	} */
-
+	}
+*/
 	/**
 	 * Generic method to parse a DID object from a InputStream object
 	 * into given DIDObject type.
@@ -258,12 +262,12 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @throws DIDSyntaxException if a serialization error occurs
 	 */
 	public serialize(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
-		/* TODO try {
-			return DIDEntity.getObjectMapper(normalized).writeValueAsString(this);
+		try {
+			return DIDEntity.getObjectMapper(normalized).stringify(this);
 		} catch (e) {
 			// JsonProcessingException
 			throw new UnknownInternalException(e);
-		}*/
+		}
 		return null;
 	}
 
@@ -365,97 +369,50 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	}
 }
 
-class SerializeContext {
-	private normalized: boolean;
-	private did: DID;
+export namespace DIDEntity {
 
-	protected constructor(normalized: boolean = false, did?: DID) {
-		this.normalized = normalized;
-		this.did = did;
-	}
+	export class SerializeContext {
+		private normalized: boolean;
+		private did: DID;
+		private objectMapper: ObjectMapper;
 
-	public isNormalized(): boolean {
-		return this.normalized;
-	}
+		protected constructor(normalized: boolean = false, objectMapper: ObjectMapper, did?: DID) {
+			this.normalized = normalized;
+			this.did = did;
+			this.objectMapper = objectMapper;
+		}
 
-	public setNormalized(normalized: boolean): SerializeContext {
-		this.normalized = normalized;
-		return this;
-	}
+		public isNormalized(): boolean {
+			return this.normalized;
+		}
 
-	public getDid(): DID  {
-		return this.did;
-	}
+		public setNormalized(normalized: boolean): SerializeContext {
+			this.normalized = normalized;
+			return this;
+		}
 
-	public setDid(did: DID): void {
-		this.did = did;
-	}
-}
+		public getObjectMapper() {
+			return this.objectMapper;
+		}
 
-class DIDPropertyFilter { /*implements PropertyFilter {
-	protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
-			return true;
-	}
+		public getDid(): DID  {
+			return this.did;
+		}
 
-	@Override
-	public void serializeAsField(Object pojo, JsonGenerator gen, SerializerProvider provider,
-			PropertyWriter writer) throws Exception {
-		SerializeContext context = (SerializeContext)provider.getConfig()
-				.getAttributes().getAttribute(DIDEntity.CONTEXT_KEY);
-
-		if (include(writer, pojo, context)) {
-			writer.serializeAsField(pojo, gen, provider);
-		} else if (!gen.canOmitFields()) { // since 2.3
-			writer.serializeAsOmittedField(pojo, gen, provider);
+		public setDid(did: DID): void {
+			this.did = did;
 		}
 	}
 
-	@Override
-	public void serializeAsElement(Object elementValue, JsonGenerator gen, SerializerProvider provider,
-			PropertyWriter writer) throws Exception {
-		 writer.serializeAsElement(elementValue, gen, provider);
-	}
-
-	@Override
-	public void depositSchemaProperty(PropertyWriter writer, JsonObjectFormatVisitor objectVisitor,
-			SerializerProvider provider) throws JsonMappingException {
-		writer.depositSchemaProperty(objectVisitor, provider);
-	}
-	*/
-}
-
-class DateDeserializer { /*extends StdDeserializer<Date> {
-	private static final long serialVersionUID = -4252894239212420927L;
-
-	public DateDeserializer() {
-		this(null);
-	}
-
-	public DateDeserializer(Class<?> t) {
-		super(t);
-	}
-
-	@Override
-	public Date deserialize(JsonParser p, DeserializationContext ctxt)
-			throws IOException, JsonProcessingException {
-		JsonToken token = p.getCurrentToken();
-		if (!token.equals(JsonToken.VALUE_STRING))
-			throw ctxt.weirdStringException(p.getText(),
-					Date.class, "Invalid datetime string");
-
-		String dateStr = p.getValueAsString();
-		try {
-			return dateFormat.parse(dateStr);
-		} catch (ParseException ignore) {
+	export class DateSerializer {
+		static serialize(dateObj: Date, context: JsonStringifierTransformerContext): string {
+			return dateObj ? dateObj.toISOString() : "";
 		}
 
-		// Fail-back to ISO 8601 format.
-		try {
-			return isoDateFormat.parse(dateStr);
-		} catch (ParseException e) {
-			throw ctxt.weirdStringException(p.getText(),
-					Date.class, "Invalid datetime string");
+		static deserialize(dateStr: string, context: JsonStringifierTransformerContext): Date {
+			if (dateStr && isNaN(Date.parse(dateStr)))
+				throw new InvalidDateFormat(dateStr);
+			return dateStr ? new Date(dateStr + (dateStr.slice(dateStr.length - 1) == 'Z' ? '':'Z')) : null;
 		}
 	}
-	*/
 }
