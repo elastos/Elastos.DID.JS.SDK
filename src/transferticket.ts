@@ -231,7 +231,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		if (!this.isGenuine())
 			return false;
 
-		if (!this.txid === doc.getMetadata().getTransactionId())
+		if (this.txid !== doc.getMetadata().getTransactionId())
 			return false;
 
 		return true;
