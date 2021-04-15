@@ -50,6 +50,7 @@ export class LRUCache<K extends Hashable | string, V> {
       this.options = Object.assign({
         maxItems: undefined,
         maxAge: undefined,
+        loader: undefined
       }, options);
 
       this.invalidateAll();

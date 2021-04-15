@@ -355,7 +355,7 @@ export class DIDBackend {
 				let vc = bio.getTransaction(1).getRequest().getCredential();
 
 				// Avoid resolve current credential recursively
-				let request = new CredentialRequest(tx.getRequest(), {
+				let request = CredentialRequest.newWithCredentialRequest(tx.getRequest(), {
 					getCredential() {
 						return vc;
 					}

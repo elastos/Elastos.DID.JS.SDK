@@ -96,7 +96,7 @@ export class PublicKeyReferenceSerializer {
 
     public static serialize(keyRef: DIDDocument.PublicKeyReference, context: JsonStringifierTransformerContext): string | null {
         let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
-        
+
         return keyRef ? serializeContext.getObjectMapper().stringify(keyRef.getId()) : null;
     }
 }
@@ -2626,13 +2626,12 @@ export namespace DIDDocument {
                 let token: JsonToken = p.getCurrentToken();
                 if (token.equals(JsonToken.VALUE_STRING)) {
                     let id: DIDURL = p.readValueAs(DIDURL.class);
-                    return new PublicKeyReference(id);
+                    return  PublicKeyReference.newWithURL(id);
                 } else if (token.equals(JsonToken.START_OBJECT)) {
                     let key: PublicKey = p.readValueAs(PublicKey.class);
-                    return new PublicKeyReference(key);
+                    return PublicKeyReference.newWithKey(key);
                 } else
-                    throw ctxt.weirdStringException(p.getText(),
-                        PublicKey.class, "Invalid public key");
+                    throw ctxt.weirdStringException(p.getText(), PublicKey.class, "Invalid public key");
             }
         }
     }

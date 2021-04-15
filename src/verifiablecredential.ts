@@ -285,7 +285,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @param metadata the meta data object
 	 */
-	protected setMetadata(metadata: CredentialMetadata) {
+	public /* protected */ setMetadata(metadata: CredentialMetadata) {
 		this.metadata = metadata;
 		this.getId().setMetadata(metadata);
 	}
@@ -394,8 +394,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
 		let json = vc.serialize(true);
-		if (!issuerDoc.verify(this.proof.getVerificationMethod(),
-			this.proof.getSignature(), json))
+		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), json.getBytes()))
 			return false;
 
 		if (!this.isSelfProclaimed()) {
@@ -478,7 +477,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
 		let json = vc.serialize(true);
-		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), json))
+		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), json.getBytes()))
 			return false;
 
 

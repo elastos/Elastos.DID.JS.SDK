@@ -34,7 +34,7 @@ import { DIDStoreCryptoException, DIDStoreException, IllegalArgumentException, W
 import { Logger } from "./logger";
 import { RootIdentity } from "./rootidentity";
 import { checkArgument } from "./utils";
-import { LruCache } from "./lrucache";
+import { LRUCache } from "./lrucache";
 import { Aes256cbc } from "./crypto/aes256cbc";
 import { HDKey } from "./crypto/hdkey";
 import { VerifiableCredential } from "./verifiablecredential";
@@ -55,7 +55,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 
 	private static DID_EXPORT = "did.elastos.export/2.0";
 
-	private cache: LruCache<DIDStore.Key, any>; // TODO: Change any to the right type
+	private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
 	public /*private*/ storage: DIDStorage;
 	private metadata: DIDStore.Metadata;
@@ -75,7 +75,9 @@ import { VerifiableCredential } from "./verifiablecredential";
 		if (maxCacheCapacity < 0)
 			maxCacheCapacity = 0;
 
-		this.cache = new LruCache(maxCacheCapacity);
+		this.cache = new LRUCache({
+			maxItems: maxCacheCapacity
+		});
 
 		this.storage = storage;
 		this.metadata = storage.loadMetadata();
@@ -128,7 +130,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 		 * @throws DIDStoreException Unsupport the specified store type.
 		 */
 		public static open(location: string): DIDStore /* throws DIDStoreException */ {
-			return open(location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
+			return this.open(location, DIDStore.CACHE_INITIAL_CAPACITY, DIDStore.CACHE_MAX_CAPACITY);
 		}
 
 		public close() {
@@ -615,21 +617,20 @@ import { VerifiableCredential } from "./verifiablecredential";
 		 * @param credential the Credential object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public void storeCredential(VerifiableCredential credential)
-				throws DIDStoreException {
+		public storeCredential(credential: VerifiableCredential) {
 			checkArgument(credential != null, "Invalid credential");
 
-			storage.storeCredential(credential);
+			this.storage.storeCredential(credential);
 			if (credential.getMetadata().getStore() != this) {
-				CredentialMetadata metadata = loadCredentialMetadata(credential.getId());
+				let metadata = this.loadCredentialMetadata(credential.getId());
 				credential.getMetadata().merge(metadata);
-				storeCredentialMetadata(credential.getId(), credential.getMetadata());
+				this.storeCredentialMetadata(credential.getId(), credential.getMetadata());
 
 				credential.getMetadata().attachStore(this);
 			}
 
-			cache.put(Key.forCredential(credential.getId()), credential);
-		} */
+			this.cache.put(DIDStore.Key.forCredential(credential.getId()), credential);
+		}
 
 		/**
 		 * Load the specified Credential.
@@ -639,17 +640,16 @@ import { VerifiableCredential } from "./verifiablecredential";
 		 * @return the Credential object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		/* public VerifiableCredential loadCredential(DIDURL id)
-				throws DIDStoreException {
+		public loadCredential(id: DIDURL): VerifiableCredential {
 			checkArgument(id != null, "Invalid credential id");
 
 			try {
-				Object value = cache.get(Key.forCredential(id), new Callable<Object>() {
+				let value = this.cache.get(DIDStore.Key.forCredential(id), new Callable<Object>() {
 					@Override
-					public Object call() throws DIDStoreException {
-						VerifiableCredential vc = storage.loadCredential(id);
+					public Object call()  {
+						let vc = this.storage.loadCredential(id);
 						if (vc != null) {
-							vc.setMetadata(loadCredentialMetadata(id));
+							vc.setMetadata(this.loadCredentialMetadata(id));
 							return vc;
 						} else {
 							return NULL;
@@ -658,10 +658,11 @@ import { VerifiableCredential } from "./verifiablecredential";
 				});
 
 				return value == NULL ? null : (VerifiableCredential)value;
-			} catch (ExecutionException e) {
+			} catch (e) {
+				// ExecutionException
 				throw new DIDStoreException("Load credential failed: " + id, e);
 			}
-		} */
+		}
 
 		/**
 		 * Load the specified Credential.

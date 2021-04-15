@@ -46,7 +46,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		return credentialRequest;
 	}
 
-	protected static newWithCredentialRequest(request: CredentialRequest) {
+	public /* protected */ static newWithCredentialRequest(request: CredentialRequest): CredentialRequest {
 		let credentialRequest = new CredentialRequest();
 		credentialRequest.constructWithIDChainRequest(request);
 		credentialRequest.id = request.id;

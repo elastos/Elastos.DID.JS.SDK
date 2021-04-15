@@ -25,10 +25,11 @@ import { CredentialMetadata } from "./credentialmetadata";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDMetadata } from "./didmetadata";
-import { DIDStorage } from "./didstorage";
+import { DIDStorage, ReEncryptor } from "./didstorage";
 import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
 import { DIDStorageException, DIDStoreException } from "./exceptions/exceptions";
+import { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { RootIdentity } from "./rootidentity";
 import { VerifiableCredential } from "./verifiablecredential";
@@ -38,6 +39,24 @@ const FILESYSTEM_LOCAL_STORAGE_PREFIX = "DID_FS_STORAGE";
 
 const log = new Logger("FileSystemStorage");
 
+type StorageEntry = {
+	type: "file" | "dir";
+}
+
+/**
+ * Structure representing a file entity, while stored in the local storage object.
+ */
+type FileEntry = StorageEntry & {
+	data: string;
+}
+
+/**
+ * Structure representing a folder entity, while stored in the local storage object.
+ */
+type DirEntry = StorageEntry & {
+	files: string[]; // List of file names that belong to this virtual folder.
+}
+
 /**
  * Internal class mimicing Java File class in order to reduce the divergence with Java implementation
  * for now.
@@ -45,7 +64,7 @@ const log = new Logger("FileSystemStorage");
 class File {
 	public static SEPARATOR = "/";
 
-	constructor(private path: string) {}
+	constructor(protected path: string) {}
 
 	public exists(): boolean {
 		return localStorage.getItem(File.pathWithPrefix(this.path)) != null;
@@ -53,6 +72,22 @@ class File {
 
 	public getAbsolutePath(): string {
 		return this.path;
+	}
+
+	/**
+	 * Returns the file name, i.e. the last component part of the path.
+	 */
+	public getName(): string {
+		let fileName = this.path.substring(this.path.lastIndexOf("/"));
+		return fileName;
+	}
+
+	/**
+	 * Returns the directory object that contains this file.
+	 */
+	public getDirectory(): Dir {
+		let rootPath = this.path.substring(0, this.path.lastIndexOf("/")-1);
+		return new Dir(rootPath);
 	}
 
 	public isDirectory(): boolean {
@@ -64,14 +99,28 @@ class File {
 	}
 
 	public writeText(text: string) {
-		localStorage.setItem(File.pathWithPrefix(this.path), text);
+		let fileEntry: FileEntry = {
+			type: "file",
+			data: text
+		};
+		localStorage.setItem(File.pathWithPrefix(this.path), JSON.stringify(fileEntry));
 	}
 
 	public readText(): string {
-		return localStorage.getItem(File.pathWithPrefix(this.path));
+		let fileEntry: FileEntry = JSON.parse(localStorage.getItem(File.pathWithPrefix(this.path)));
+		return fileEntry.data;
 	}
 
-	private static pathWithPrefix(path: string): string {
+	/**
+	 * Deletes thsis file from storage.
+	 */
+	public delete() {
+		// Ask the containing folder to handle the deletion
+		let parentDir = this.getDirectory();
+		parentDir.deleteFile(this);
+	}
+
+	protected static pathWithPrefix(path: string): string {
 		return FILESYSTEM_LOCAL_STORAGE_PREFIX + "_" + path;
 	}
 
@@ -85,8 +134,77 @@ class Dir extends File {
 		return true;
 	}
 
+	private getStorageEntry(): DirEntry {
+		let dirEntry: DirEntry = JSON.parse(localStorage.getItem(File.pathWithPrefix(this.path)));
+		return dirEntry;
+	}
+
+	private setStorageEntry(dirEntry: DirEntry) {
+		localStorage.setItem(File.pathWithPrefix(this.path), JSON.stringify(dirEntry));
+	}
+
 	public isFile(): boolean {
 		return false;
+	}
+
+	/**
+	 * Lists all files (as File) in this directory.
+	 * An optional filter can be used to return only the target files.
+	 */
+	public listFiles(keepFilter?:(file: File)=>boolean): File[] {
+		let dirEntry = this.getStorageEntry();
+
+		let files: File[] = [];
+		dirEntry.files.forEach((fileName)=>{
+			let file = new File(this.getFilePathFromName(fileName));
+			if (!keepFilter || (keepFilter && keepFilter(file)))
+				files.push(file);
+		});
+
+		return files;
+	}
+
+	/**
+	 * Lists all files (as file name strings) in this directory.
+	 */
+	 public list(): string[] {
+		let dirEntry = this.getStorageEntry();
+		return dirEntry.files;
+	}
+
+	/**
+	 * Returns the full path for the given file name (or folder name) in this folder.
+	 */
+	private getFilePathFromName(fileName: string): string {
+		return this.getAbsolutePath()+File.SEPARATOR+fileName;
+	}
+
+	/**
+	 * Removes a file from this folder, meaning that we remove the file from the folder files list,
+	 * and also remove the file entry itself.
+	 */
+	public deleteFile(file: File) {
+		// Delete from the directory listing
+		let dirEntry = this.getStorageEntry();
+		dirEntry.files = dirEntry.files.filter((name)=>file.getName() !== name);
+		this.setStorageEntry(dirEntry);
+
+		// Delete the file entry itself
+		localStorage.removeItem(File.pathWithPrefix(file.getAbsolutePath()));
+	}
+
+	/**
+	 * Recursively deletes this directory and all sub directories and folders.
+	 */
+	 public delete() {
+		// Recursive deletion
+		let dirEntry = this.getStorageEntry();
+		dirEntry.files.forEach((fileName)=>{
+			new File(this.getFilePathFromName(fileName)).delete();
+		});
+
+		// Delete the directory entry itself
+		localStorage.removeItem(File.pathWithPrefix(this.getAbsolutePath()));
 	}
 }
 
@@ -252,16 +370,6 @@ TODO: if metadata file not exist or parse error then throw the exception
 		return DIDURL.valueOf(did, path);
 	}
 
-	/* private static void deleteFile(File file) {
-		if (file.isDirectory()) {
-			File[] children = file.listFiles();
-			for (File child : children)
-				deleteFile(child);
-		}
-
-		file.delete();
-	} */
-
 	/* private static void copyFile(File src, File dest) throws IOException {
 	    FileInputStream in = null;
 	    FileOutputStream out = null;
@@ -279,7 +387,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 		}
 	} */
 
-	private File getFile(boolean create, String ... path) {
+	private getFile(boolean create, String ... path): File {
 		StringBuffer relPath = new StringBuffer(256);
 		File file;
 
@@ -305,9 +413,9 @@ TODO: if metadata file not exist or parse error then throw the exception
 		return file;
 	}
 
-	private getDir(...paths: string[]): File {
+	private getDir(...paths: string[]): Dir {
 		let relPath = this.storeRoot.getAbsolutePath() + File.SEPARATOR + paths.join(File.SEPARATOR);
-		return new File(relPath);
+		return new Dir(relPath);
 	}
 
 	public getLocation(): string {
@@ -316,13 +424,14 @@ TODO: if metadata file not exist or parse error then throw the exception
 
 	public storeMetadata(metadata: DIDStore.Metadata) {
 		try {
-			let file = this.getFile(true, this.currentDataDir, METADATA);
+			let file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
-				metadata.serialize(file);
-		} catch (IOException e) {
+				file.writeText(metadata.serialize());
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Store DIDStore metadata error", e);
 		}
 	}
@@ -345,18 +454,18 @@ TODO: if metadata file not exist or parse error then throw the exception
 		return this.getFile(create, this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR, id, file);
 	}
 
-	private getRootIdentityDir(id: string): File {
+	private getRootIdentityDir(id: string): Dir {
 		return this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR, id);
 	}
 
 	public storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata) {
 		try {
-			let file = this.getRootIdentityFile(id, METADATA, true);
+			let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, true);
 
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
-				metadata.serialize(file);
+				file.writeText(metadata.serialize());
 		} catch (e) {
 			// IOException
 			throw new DIDStorageException("Store root identity metadata error: " + id, e);
@@ -365,7 +474,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 
 	public loadRootIdentityMetadata(id: string): RootIdentity.Metadata {
 		try {
-			let file = this.getRootIdentityFile(id, METADATA, false);
+			let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
 			let metadata: RootIdentity.Metadata = null;
 			if (file.exists())
 				metadata = RootIdentity.Metadata.parse(file, RootIdentity.Metadata.class);
@@ -413,7 +522,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 
 			let publicKey = file.readText();
 			file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
-			int index = Integer.valueOf(file.readText());
+			let index = Number.parseInt(file.readText());
 
 			return RootIdentity.create(publicKey, index);
 		} catch (e) {
@@ -425,7 +534,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 	public updateRootIdentityIndex(id: string, index: number) {
 		try {
 			let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
-			file.writeText(Integer.toString(index));
+			file.writeText(""+index);
 		} catch (e) {
 			// IOException
 			throw new DIDStorageException("Update index for indentiy error: " + id, e);
@@ -449,7 +558,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 	public deleteRootIdentity(id: string): boolean {
 		let dir = this.getRootIdentityDir(id);
 		if (dir.exists()) {
-			deleteFile(dir);
+			dir.delete();
 			return true;
 		} else {
 			return false;
@@ -457,12 +566,12 @@ TODO: if metadata file not exist or parse error then throw the exception
 	}
 
 	public listRootIdentities(): RootIdentity[] {
-		let dir = this.getDir(currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
+		let dir = this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
 
 		if (!dir.exists())
 			return [];
 
-		let children = dir.listFiles((file) -> {
+		let children = dir.listFiles((file) => {
 			return file.isDirectory();
 		});
 
@@ -483,7 +592,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 		if (!dir.exists())
 			return false;
 
-		let children = dir.listFiles((file) -> {
+		let children = dir.listFiles((file) => {
 			return file.isDirectory();
 		});
 
@@ -519,7 +628,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
-				metadata.serialize(file);
+				file.writeText(metadata.serialize());
 		} catch (e) {
 			// IOException
 			throw new DIDStorageException("Store DID metadata error: " + did, e);
@@ -543,7 +652,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 	public storeDid(doc: DIDDocument) {
 		try {
 			let file = this.getDidFile(doc.getSubject(), true);
-			doc.serialize(file, true);
+			file.writeText(doc.serialize(true));
 		} catch (e) {
 			// IOException
 			throw new DIDStorageException("Store DID document error: " + doc.getSubject(), e);
@@ -566,7 +675,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 	public deleteDid(did: DID): boolean {
 		let dir = this.getDidDir(did);
 		if (dir.exists()) {
-			deleteFile(dir);
+			dir.delete();
 			return true;
 		} else {
 			return false;
@@ -578,7 +687,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 		if (!dir.exists())
 			return [];
 
-		let children = dir.listFiles((file) -> {
+		let children = dir.listFiles((file) => {
 			return file.isDirectory();
 		});
 
@@ -596,21 +705,21 @@ TODO: if metadata file not exist or parse error then throw the exception
 
 	private getCredentialFile(id: DIDURL, create: boolean): File {
 		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
-				FileSystemStorage.CREDENTIALS_DIR, this.toPath(id), FileSystemStorage.CREDENTIAL_FILE);
+				FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.CREDENTIAL_FILE);
 	}
 
 	private getCredentialMetadataFile(id: DIDURL, create: boolean): File {
 		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
-				FileSystemStorage.CREDENTIALS_DIR, this.toPath(id), METADATA);
+				FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.METADATA);
 	}
 
-	private getCredentialDir(id: DIDURL): File {
-		return getDir(this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
-				FileSystemStorage.CREDENTIALS_DIR, this.toPath(id));
+	private getCredentialDir(id: DIDURL): Dir {
+		return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
+				FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id));
 	}
 
-	private getCredentialsDir(did: DID): File {
-		return this.getDir(currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.CREDENTIALS_DIR);
+	private getCredentialsDir(did: DID): Dir {
+		return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.CREDENTIALS_DIR);
 	}
 
 	public storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
@@ -620,7 +729,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 			if (metadata == null || metadata.isEmpty())
 				file.delete();
 			else
-				metadata.serialize(file);
+				file.writeText(metadata.serialize());
 		} catch (e) {
 			// IOException
 			throw new DIDStorageException("Store credential metadata error: " + id, e);
@@ -643,7 +752,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 	public storeCredential(credential: VerifiableCredential) {
 		try {
 			let file = this.getCredentialFile(credential.getId(), true);
-			credential.serialize(file, true);
+			file.writeText(credential.serialize(true));
 		} catch (e) {
 			// IOException
 			throw new DIDStorageException("Store credential error: " + credential.getId(), e);
@@ -668,7 +777,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 		if (!dir.exists())
 			return false;
 
-		let creds = dir.listFiles((file) -> {
+		let creds = dir.listFiles((file) => {
 			return file.isDirectory();
 		});
 
@@ -678,7 +787,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 	public deleteCredential(id: DIDURL): boolean {
 		let dir = this.getCredentialDir(id);
 		if (dir.exists()) {
-			deleteFile(dir);
+			dir.delete();
 
 			// Remove the credentials directory is no credential exists.
 			dir = this.getCredentialsDir(id.getDid());
@@ -696,7 +805,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 		if (!dir.exists())
 			return [];
 
-		let children = dir.listFiles((file) -> {
+		let children = dir.listFiles((file) => {
 			return file.isDirectory();
 		});
 
@@ -712,18 +821,19 @@ TODO: if metadata file not exist or parse error then throw the exception
 
 	private getPrivateKeyFile(id: DIDURL, create: boolean): File {
 		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
-				FileSystemStorage.PRIVATEKEYS_DIR, this.toPath(id));
+				FileSystemStorage.PRIVATEKEYS_DIR, FileSystemStorage.toPath(id));
 	}
 
-	private getPrivateKeysDir(did: DID): File {
+	private getPrivateKeysDir(did: DID): Dir {
 		return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.PRIVATEKEYS_DIR);
 	}
 
 	public storePrivateKey(id: DIDURL, privateKey: string) {
 		try {
-			File file = getPrivateKeyFile(id, true);
-			writeText(file, privateKey);
-		} catch (IOException e) {
+			let file = this.getPrivateKeyFile(id, true);
+			file.writeText(privateKey);
+		} catch (e) {
+			// IOException
 			throw new DIDStorageException("Store private key error: " + id, e);
 		}
 	}
@@ -734,7 +844,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 			if (!file.exists())
 				return null;
 
-			return readText(file);
+			return file.readText();
 		} catch (e) {
 			throw new DIDStorageException("Load private key error: " + id, e);
 		}
@@ -745,7 +855,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 		if (!dir.exists())
 			return false;
 
-		let keys = dir.listFiles((file) -> {
+		let keys = dir.listFiles((file) => {
 			return file.isFile();
 		});
 
@@ -773,7 +883,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 		if (!dir.exists())
 			return [];
 
-		let keys = dir.listFiles((file) -> {
+		let keys = dir.listFiles((file) => {
 			return file.isFile();
 		});
 
@@ -835,11 +945,11 @@ TODO: if metadata file not exist or parse error then throw the exception
 	}
 
 	private postChangePassword() {
-		let dataDir = this.getDir(DATA_DIR);
-		let dataJournal = this.getDir(DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
+		let dataDir = this.getDir(FileSystemStorage.DATA_DIR);
+		let dataJournal = this.getDir(FileSystemStorage.DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
 
 		let timestamp = new Date().getTime() / 1000;
-		let dataDeprecated = this.getDir(DATA_DIR + "_" + timestamp);
+		let dataDeprecated = this.getDir(FileSystemStorage.DATA_DIR + "_" + timestamp);
 
 		let stageFile = this.getFile("postChangePassword");
 
@@ -854,14 +964,14 @@ TODO: if metadata file not exist or parse error then throw the exception
 			stageFile.delete();
 		} else {
 			if (dataJournal.exists())
-				deleteFile(dataJournal);
+				dataJournal.delete();
 		}
 	}
 
 	public changePassword(reEncryptor: ReEncryptor) {
 		try {
-			let dataDir = this.getDir(DATA_DIR);
-			let dataJournal = this.getDir(DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
+			let dataDir = this.getDir(FileSystemStorage.DATA_DIR);
+			let dataJournal = this.getDir(FileSystemStorage.DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
 
 			this.copy(dataDir, dataJournal, reEncryptor);
 
