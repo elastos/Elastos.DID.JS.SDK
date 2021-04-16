@@ -116,7 +116,7 @@ export class RootIdentity {
 		return identity;
 	}
 
-	protected static createFromPreDerivedPublicKey(preDerivedPublicKey: string, index: number): RootIdentity {
+	public /* protected */ static createFromPreDerivedPublicKey(preDerivedPublicKey: string, index: number): RootIdentity {
 		let key = preDerivedPublicKey == null ? null : HDKey.deserializeBase58(preDerivedPublicKey);
 
 		return RootIdentity.newFromPreDerivedPublicKey(key, index);

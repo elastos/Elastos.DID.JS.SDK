@@ -38,6 +38,9 @@ import { LRUCache } from "./lrucache";
 import { Aes256cbc } from "./crypto/aes256cbc";
 import { HDKey } from "./crypto/hdkey";
 import { VerifiableCredential } from "./verifiablecredential";
+import { Hashable } from "./hashable";
+import { Comparable } from "./comparable";
+import { FileSystemStorage } from "./filesystemstorage";
 
 /**
  * DIDStore is local store for all DIDs.
@@ -97,40 +100,16 @@ import { VerifiableCredential } from "./verifiablecredential";
 		 * @return the DIDStore object
 		 * @throws DIDStoreException Unsupport the specified store type.
 		 */
-		/* public static open(location: File, initialCacheCapacity: number, maxCacheCapacity: number): DIDStore {
-			checkArgument(location != null, "Invalid store location");
+		/*
+		 * NOTE: Java uses a root folder but in our case we use a "context" string to separate various
+		 * DID Stores, as we don't have a concept of "folder" isolation.
+		 */
+		public static open(context: string, initialCacheCapacity: number = DIDStore.CACHE_INITIAL_CAPACITY, maxCacheCapacity: number = DIDStore.CACHE_MAX_CAPACITY): DIDStore {
+			checkArgument(context != null, "Invalid store context");
 			checkArgument(maxCacheCapacity >= initialCacheCapacity, "Invalid cache capacity spec");
 
-			try {
-				location = location.getCanonicalFile();
-			} catch (e) {
-				throw new IllegalArgumentException("Invalid store location", e);
-			}
-
-			let storage = new FileSystemStorage(location);
+			let storage = new FileSystemStorage(context);
 			return new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
-		}
-
-		public static open(location: string, initialCacheCapacity: number, maxCacheCapacity: number): DIDStore {
-			checkArgument(location != null && !location.isEmpty(), "Invalid store location");
-
-			return open(new File(location), initialCacheCapacity, maxCacheCapacity);
-		}
-
-		public static open(location: File): DIDStore {
-			return open(location, CACHE_INITIAL_CAPACITY, CACHE_MAX_CAPACITY);
-		} */
-
-		/**
-		 * Initialize or check the DIDStore.
-		 *
-		 * @param type the type for different file system
-		 * @param location the location of DIDStore
-		 * @return the DIDStore object
-		 * @throws DIDStoreException Unsupport the specified store type.
-		 */
-		public static open(location: string): DIDStore /* throws DIDStoreException */ {
-			return this.open(location, DIDStore.CACHE_INITIAL_CAPACITY, DIDStore.CACHE_MAX_CAPACITY);
 		}
 
 		public close() {
@@ -288,9 +267,9 @@ import { VerifiableCredential } from "./verifiablecredential";
 					let identity = this.storage.loadRootIdentity(id);
 					if (identity != null) {
 						identity.setMetadata(this.loadRootIdentityMetadata(id));
-						return identity;
+						return {value: identity};
 					} else {
-						return DIDStore.NULL;
+						return {value: DIDStore.NULL};
 					}
 				});
 
@@ -348,7 +327,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 			try {
 				let value = this.cache.get(DIDStore.Key.forRootIdentityPrivateKey(id), () => {
 					let encryptedKey = this.storage.loadRootIdentityPrivateKey(id);
-					return encryptedKey != null ? encryptedKey : DIDStore.NULL;
+					return {value: encryptedKey != null ? encryptedKey : DIDStore.NULL};
 				});
 
 				if (value != DIDStore.NULL) {
@@ -440,7 +419,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 			for (let vc of doc.getCredentials())
 				this.storeCredential(vc);
 
-			this.cache.put(Key.forDidDocument(doc.getSubject()), doc);
+			this.cache.put(DIDStore.Key.forDidDocument(doc.getSubject()), doc);
 		}
 
 		/**
@@ -464,9 +443,9 @@ import { VerifiableCredential } from "./verifiablecredential";
 					let doc = this.storage.loadDid(did);
 					if (doc != null) {
 						doc.setMetadata(this.loadDidMetadata(did));
-						return doc;
+						return {value: doc};
 					} else {
-						return DIDStore.NULL;
+						return {value: DIDStore.NULL};
 					}
 				});
 
@@ -531,7 +510,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 						metadata = new DIDMetadata(did, this);
 					}
 
-					return metadata;
+					return {value: metadata};
 				});
 
 				return value == DIDStore.NULL ? null : value;
@@ -565,14 +544,10 @@ import { VerifiableCredential } from "./verifiablecredential";
 				this.cache.invalidate(DIDStore.Key.forDidDocument(did));
 				this.cache.invalidate(DIDStore.Key.forDidMetadata(did));
 
-				// invalidate every thing belongs to this did
-				for (let key of this.cache.keys()) {
-					if (key.id instanceof DIDURL) {
-						let id = key.id;
-						if (id.getDid() === did)
-							this.cache.invalidate(key);
-					}
-				}
+				// invalidate every thing that belongs to this did
+				this.cache.invalidateAll((key)=>{
+					return key.id instanceof DIDURL && key.id.getDid() === did;
+				});
 			}
 
 			return success;
@@ -644,20 +619,17 @@ import { VerifiableCredential } from "./verifiablecredential";
 			checkArgument(id != null, "Invalid credential id");
 
 			try {
-				let value = this.cache.get(DIDStore.Key.forCredential(id), new Callable<Object>() {
-					@Override
-					public Object call()  {
-						let vc = this.storage.loadCredential(id);
-						if (vc != null) {
-							vc.setMetadata(this.loadCredentialMetadata(id));
-							return vc;
-						} else {
-							return NULL;
-						}
+				let value = this.cache.get(DIDStore.Key.forCredential(id), ()=>{
+					let vc = this.storage.loadCredential(id);
+					if (vc != null) {
+						vc.setMetadata(this.loadCredentialMetadata(id));
+						return {value: vc};
+					} else {
+						return {value: DIDStore.NULL};
 					}
 				});
 
-				return value == NULL ? null : (VerifiableCredential)value;
+				return value == DIDStore.NULL ? null : value;
 			} catch (e) {
 				// ExecutionException
 				throw new DIDStoreException("Load credential failed: " + id, e);
@@ -768,7 +740,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 						metadata = new CredentialMetadata(id, this);
 					}
 
-					return metadata;
+					return {value: metadata};
 				});
 
 				return value == DIDStore.NULL ? null : value;
@@ -906,7 +878,9 @@ import { VerifiableCredential } from "./verifiablecredential";
 			if (storepass !== undefined) {
 				let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
 					let encryptedKey = this.storage.loadPrivateKey(id);
-					return encryptedKey != null ? encryptedKey : DIDStore.NULL;
+					return {
+						value: encryptedKey != null ? encryptedKey : DIDStore.NULL
+					};
 				});
 
 				encryptedKey = value == DIDStore.NULL ? null : value;
@@ -1917,6 +1891,8 @@ throws MalformedExportDataException, DIDStoreException, IOException {
 }
 
 export namespace DIDStore {
+	export interface KeyObject extends Hashable, Comparable<KeyObject> {};
+
 	export class Key {
 		private static TYPE_ROOT_IDENTITY = 0x00;
 		private static TYPE_ROOT_IDENTITY_PRIVATEKEY = 0x01;
@@ -1926,7 +1902,7 @@ export namespace DIDStore {
 		private static TYPE_CREDENTIAL = 0x20;
 		private static TYPE_CREDENTIAL_METADATA = 0x21;
 
-		private constructor(private type: number, public id: Object) {}
+		private constructor(private type: number, public id: KeyObject) {}
 
 		public hashCode(): number {
 			return this.type + this.id.hashCode();
@@ -2050,7 +2026,7 @@ export namespace DIDStore {
 		//@JsonPropertyOrder({ "content", "metadata" })
 		export class Document {
 			//@JsonProperty("content")
-			private content: DIDDocument;
+			public /* private */ content: DIDDocument;
 			//@JsonProperty("metadata")
 			private metadata: DIDMetadata;
 
@@ -2097,7 +2073,7 @@ export namespace DIDStore {
 			}
 
 			public getDocument(): DIDDocument {
-				return document.content;
+				return this.document.content;
 			}
 
 			public setDocument(doc: DIDDocument) {

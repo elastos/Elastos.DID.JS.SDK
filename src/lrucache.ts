@@ -22,10 +22,12 @@
 
 import { Hashable } from "./hashable";
 
+type Loadable<K,V> = (key: K)=>{value: V, meta?: LRUCacheMeta};
+
 export type LRUCacheOptions<K, V> = {
   maxItems?: number;
   maxAge?: number;
-  loader?: (key: K)=>{value: V, meta: LRUCacheMeta};
+  loader?: Loadable<K,V>;
 }
 
 export type LRUCacheMeta = Object;
@@ -42,7 +44,7 @@ export type LRUCacheItem<K, V> = {
 export class LRUCache<K extends Hashable | string, V> {
   private options: LRUCacheOptions<K, V>;
     private count: number = 0;
-    private items: Map<string, V> = new Map();
+    private items: Map<string, LRUCacheItem<K, V>> = new Map();
     private first: LRUCacheItem<K, V> = null;
     private last: LRUCacheItem<K, V> = null;
 
@@ -109,7 +111,7 @@ export class LRUCache<K extends Hashable | string, V> {
       return hash;
     }
 
-    public get(key: K): V {
+    public get(key: K, localLoader?: Loadable<K,V>): V {
       // fetch key and return value
       // move object to head of list
       let hash = this.getHash(key)
@@ -122,8 +124,14 @@ export class LRUCache<K extends Hashable | string, V> {
 
       if (!item) {
         // Try to load the item from the loader if there is one
-        if (this.options.loader) {
-          let {value, meta} = this.options.loader(key);
+        let loader: Loadable<K,V> = null;
+        if (localLoader)
+          loader = localLoader;
+        else if (this.options.loader)
+          loader = this.options.loader;
+
+        if (loader) {
+          let {value, meta} = loader(key);
           if (value !== undefined && value !== null) {
             item = this.putInternal(key, value, meta);
           }
@@ -138,14 +146,23 @@ export class LRUCache<K extends Hashable | string, V> {
       return item.value;
     }
 
-    public invalidateAll() {
+    public invalidateAll(invalidationFilter?: (key: K)=>boolean) {
       // Empty the cache
-      this.items.clear();
-      this.first = null;
-      this.last = null;
+      if (invalidationFilter) {
+        this.items.forEach((v, k, map)=> {
+          if (invalidationFilter(v.key))
+            this.invalidate(v.key);
+        });
+      }
+      else {
+        // Delete all
+        this.items.clear();
+        this.first = null;
+        this.last = null;
 
-      // Stats
-      this.count = 0;
+        // Stats
+        this.count = 0;
+      }
     }
 
     public invalidate(key: K) {

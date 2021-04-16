@@ -29,6 +29,8 @@ import { DIDURLBaseListener } from "./parser/DIDURLBaseListener";
 import { DIDURLParser } from "./parser/DIDURLParser";
 import { JsonStringifier } from "jackson-js";
 import { JsonStringifierContext } from "jackson-js/dist/@types"
+import { Hashable } from "./hashable";
+import { Comparable } from "./comparable";
 /**
  * DID URL defines by the did-url rule, refers to a URL that begins with a DID
  * followed by one or more additional components.
@@ -38,7 +40,7 @@ import { JsonStringifierContext } from "jackson-js/dist/@types"
  */
 //@JsonSerialize(using = DIDURL.Serializer.class)
 //@JsonDeserialize(using = DIDURL.Deserializer.class)
-export class DIDURL /* implements Comparable<DIDURL> */ {
+export class DIDURL implements Hashable, Comparable<DIDURL> {
 	//private static SEPS = ":;/?#";
 	private static SEPS = [':', ';', '/', '?', '#'];
 
@@ -49,7 +51,8 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 	private fragment: string = "";
 	private metadata?: AbstractMetadata;
 
-	private constructor() {
+	// Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
+	/* private */ constructor() {
 		//super();
 	}
 
@@ -268,7 +271,7 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 	 *
 	 * @return the path string
 	 */
-	 public getPath(): string {
+	public getPath(): string {
 		return this.path;
 	}
 
@@ -324,7 +327,7 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 	 *
 	 * @return the fragment string
 	 */
-	 public getFragment(): string {
+	public getFragment(): string {
 		return this.fragment;
 	}
 
@@ -393,29 +396,27 @@ export class DIDURL /* implements Comparable<DIDURL> */ {
 		return this.toString().compareTo(id.toString());
 	}
 
-	/*private int mapHashCode(Map<String, String> map) {
-		int hash = 0;
+	private mapHashCode(map: Map<string, string>): number {
+		let hash = 0;
 
-		for (Map.Entry<String, String> entry : map.entrySet()) {
-			hash += entry.getKey().hashCode();
-			if (entry.getValue() != null)
-				hash += entry.getValue().hashCode();
+		for (let entry of map.entries()) {
+			hash += entry[0].hashCode(); // key
+			if (entry[1] != null) // value
+				hash += entry[1].hashCode();
 		}
 
 		return hash;
 	}
 
-	@Override
-	public int hashCode() {
-		int hash = did.hashCode();
-		hash += mapHashCode(parameters);
-		hash += path == null ? 0 : path.hashCode();
-		hash += mapHashCode(query);
-		hash += fragment == null ? 0 : fragment.hashCode();
+	public hashCode(): number {
+		let hash = this.did.hashCode();
+		hash += this.mapHashCode(this.parameters);
+		hash += this.path == null ? 0 : this.path.hashCode();
+		hash += this.mapHashCode(this.query);
+		hash += this.fragment == null ? 0 : this.fragment.hashCode();
 
 		return hash;
-	} */
-
+	}
 }
 
 export namespace DIDURL {

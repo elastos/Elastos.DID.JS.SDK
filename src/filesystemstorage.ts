@@ -397,7 +397,7 @@ class Dir extends File {
  *        + ...
  *        + ixxxxxxxxxxxxxxxN
  */
-class FileSystemStorage implements DIDStorage {
+export class FileSystemStorage implements DIDStorage {
 	private static DATA_DIR = "data";
 
 	private static ROOT_IDENTITIES_DIR = "roots";
@@ -422,7 +422,7 @@ class FileSystemStorage implements DIDStorage {
 	private storeRoot: Dir;
 	private currentDataDir: string;
 
-	protected constructor(context: string) {
+	/* protected */ constructor(context: string) {
 		this.storeRoot = Dir.open(File.SEPARATOR+context+File.SEPARATOR) as Dir;
 		this.currentDataDir = FileSystemStorage.DATA_DIR;
 

@@ -122,7 +122,7 @@ export class Issuer {
 		return this.signKey;
 	}
 
-	public /* protected */ sign(storepass: string, data: string): string {
+	public /* protected */ sign(storepass: string, data: Buffer): string {
 		return this.self.sign(this.signKey, storepass, data);
 	}
 
