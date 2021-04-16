@@ -59,12 +59,39 @@ type DirEntry = StorageEntry & {
 
 /**
  * Internal class mimicing Java File class in order to reduce the divergence with Java implementation
- * for now.
+ * for now. NOTE: We could think about a totally different way to store items, and we will also need an
+ * abstraction layer to use different storages. But for now, we try to remain as close as the java
+ * implementation as we can until this SDK is totally stable.
  */
 class File {
 	public static SEPARATOR = "/";
 
-	constructor(protected path: string) {}
+	protected constructor(protected path: string) {}
+
+	public static open(path: File | string, subpath?: string): File {
+		let fullPath: string;
+		if (path instanceof File)
+			fullPath = path.getAbsolutePath();
+		else
+			fullPath = path;
+
+		if (subpath)
+			path = path + File.SEPARATOR + subpath;
+
+		return File.createFromPath(fullPath);
+	}
+
+	/**
+	 * Creates a File of the proper type according to its stored "type" information.
+	 */
+	private static createFromPath(filePath: string): File {
+		let file: File | Dir;
+		if (File.isFile(filePath))
+			file = new File(filePath);
+		else
+			file = new Dir(filePath);
+		return file;
+	}
 
 	public exists(): boolean {
 		return localStorage.getItem(File.pathWithPrefix(this.path)) != null;
@@ -82,6 +109,10 @@ class File {
 		return fileName;
 	}
 
+	protected static pathWithPrefix(path: string): string {
+		return FILESYSTEM_LOCAL_STORAGE_PREFIX + "_" + path;
+	}
+
 	/**
 	 * Returns the directory object that contains this file.
 	 */
@@ -91,19 +122,32 @@ class File {
 	}
 
 	public isDirectory(): boolean {
-		return false;
+		let storageItem: StorageEntry = JSON.parse(localStorage.getItem(File.pathWithPrefix(this.path)));
+		return storageItem.type == "dir";
 	}
 
 	public isFile(): boolean {
-		return true;
+		let storageItem: StorageEntry = JSON.parse(localStorage.getItem(File.pathWithPrefix(this.path)));
+		return storageItem.type == "file";
+	}
+
+	public static isFile(file: File | string): boolean {
+		if (typeof file === "string")
+			file = new File(file);
+
+		return file.isFile();
 	}
 
 	public writeText(text: string) {
+		// Save the file content
 		let fileEntry: FileEntry = {
 			type: "file",
 			data: text
 		};
 		localStorage.setItem(File.pathWithPrefix(this.path), JSON.stringify(fileEntry));
+
+		// Make sure the containing directory knows this file
+		this.getDirectory().addFile(this);
 	}
 
 	public readText(): string {
@@ -111,17 +155,43 @@ class File {
 		return fileEntry.data;
 	}
 
-	/**
-	 * Deletes thsis file from storage.
-	 */
-	public delete() {
-		// Ask the containing folder to handle the deletion
-		let parentDir = this.getDirectory();
-		parentDir.deleteFile(this);
+	public createNewFile() {
+		this.writeText("");
 	}
 
-	protected static pathWithPrefix(path: string): string {
-		return FILESYSTEM_LOCAL_STORAGE_PREFIX + "_" + path;
+	/**
+	 * Creates this directory and all the parent ones, if they are missing.
+	 */
+	public mkdirs() {
+		this.getDirectory().mkdirs();
+	}
+
+	/**
+	 * Deletes this file from storage.
+	 */
+	public delete() {
+		// Ask the containing folder to forget us
+		let parentDir = this.getDirectory();
+		parentDir.deleteFile(this);
+
+		// Delete ourselves
+		localStorage.removeItem(File.pathWithPrefix(this.getAbsolutePath()));
+	}
+
+	protected getStorageEntry<T>(): T {
+		return JSON.parse(localStorage.getItem(File.pathWithPrefix(this.path)));
+	}
+
+	/**
+	 * Modifies item's key in local storage.
+	 */
+	/* protected */ _changeStorageKeyPrefix(newPrefix: string) {
+		let storageEntry = this.getStorageEntry();
+		// Delete the previous key, then create a new one with the new path
+		localStorage.removeItem(this.getAbsolutePath());
+
+		let newFullPath = newPrefix + File.SEPARATOR + this.getName();
+		localStorage.setItem(newFullPath, JSON.stringify(storageEntry));
 	}
 
 	public static join(...paths: string[]): string {
@@ -130,21 +200,29 @@ class File {
 }
 
 class Dir extends File {
-	public isDirectory(): boolean {
-		return true;
-	}
-
-	private getStorageEntry(): DirEntry {
-		let dirEntry: DirEntry = JSON.parse(localStorage.getItem(File.pathWithPrefix(this.path)));
-		return dirEntry;
+	/**
+	 * Returns the directory object that contains this file.
+	 */
+	 public getDirectory(): Dir {
+		 // TODO: probably buggy
+		let rootPath = this.path.substring(0, this.path.lastIndexOf("/")-1);
+		return new Dir(rootPath);
 	}
 
 	private setStorageEntry(dirEntry: DirEntry) {
 		localStorage.setItem(File.pathWithPrefix(this.path), JSON.stringify(dirEntry));
 	}
 
-	public isFile(): boolean {
-		return false;
+	public writeText(text: string) {
+		throw new DIDStorageException("Directories are not writable");
+	}
+
+	public readText(): string {
+		throw new DIDStorageException("Directories are not redable");
+	}
+
+	public createNewFile() {
+		throw new DIDStorageException("Directories must be created with mkdir()");
 	}
 
 	/**
@@ -152,11 +230,12 @@ class Dir extends File {
 	 * An optional filter can be used to return only the target files.
 	 */
 	public listFiles(keepFilter?:(file: File)=>boolean): File[] {
-		let dirEntry = this.getStorageEntry();
+		let dirEntry = this.getStorageEntry<DirEntry>();
 
 		let files: File[] = [];
 		dirEntry.files.forEach((fileName)=>{
-			let file = new File(this.getFilePathFromName(fileName));
+			let file = File.open(this.getFilePathFromName(fileName));
+
 			if (!keepFilter || (keepFilter && keepFilter(file)))
 				files.push(file);
 		});
@@ -167,9 +246,81 @@ class Dir extends File {
 	/**
 	 * Lists all files (as file name strings) in this directory.
 	 */
-	 public list(): string[] {
-		let dirEntry = this.getStorageEntry();
+	public list(): string[] {
+		let dirEntry = this.getStorageEntry<DirEntry>();
 		return dirEntry.files;
+	}
+
+	/**
+	 * Creates the directory = saves the entry to storage.
+	 */
+	public mkdir() {
+		let dirEntry = this.getStorageEntry();
+		if (!dirEntry) {
+			/// If the entry already exists, do nothing. Otherwise, save it
+			let dirEntry: DirEntry = {
+				type: "dir",
+				files: []
+			};
+			this.setStorageEntry(dirEntry);
+		}
+	}
+
+	/**
+	 * Creates this directory and all the parent ones, if they are missing.
+	 */
+	public mkdirs() {
+		// Make parents
+		let parentDir = this.getDirectory();
+		if (parentDir) // Stop at the root
+			parentDir.mkdirs();
+
+		// Make self
+		this.mkdir();
+	}
+
+	public renameTo(dir: Dir) {
+		if (this.getDirectory().getName() !== dir.getDirectory().getName())
+			throw new DIDStorageException("Directories can be renamed only inside the same folder");
+
+		/*
+		this = /my , renamed to /my2
+		should rename:
+		/my -> /my2
+		/my/path/file1 -> /my2/path/file1
+		/my/path2/file2 -> /my2/path2/file2
+
+		Algo: from the source dir, recursively rename the storage keys of all files and folders to
+		become the same one as the destination folder.
+		*/
+		let newPrefix = dir.getAbsolutePath();
+		this._changeStorageKeyPrefix(newPrefix);
+
+		// Tell the parent to modify our name.
+		this.getDirectory().renameFile(this.getName(), dir.getName());
+	}
+
+	/**
+	 * Renames a child file entry, not recursively.
+	 */
+	protected renameFile(oldName: string, newName: string) {
+		let storageEntry = this.getStorageEntry<DirEntry>();
+		storageEntry.files.splice(storageEntry.files.indexOf(oldName), 1);
+		storageEntry.files.push(newName);
+		this.setStorageEntry(storageEntry);
+	}
+
+	/* protected */ _changeStorageKeyPrefix(newPrefix: string) {
+		// Recursively change storage key for children
+		let storageEntry = this.getStorageEntry<DirEntry>();
+		let newChildrenPrefix = newPrefix + File.SEPARATOR + this.getName();
+		storageEntry.files.forEach((fileName)=>{
+			let file = File.open(this.getFilePathFromName(fileName));
+			file._changeStorageKeyPrefix(newChildrenPrefix);
+		});
+
+		// Change for self
+		super._changeStorageKeyPrefix(newPrefix);
 	}
 
 	/**
@@ -180,17 +331,23 @@ class Dir extends File {
 	}
 
 	/**
-	 * Removes a file from this folder, meaning that we remove the file from the folder files list,
-	 * and also remove the file entry itself.
+	 * Adds a file from this folder, meaning that we add the file to the folder files list.
+	 */
+	 public addFile(file: File) {
+		// Add to the directory listing
+		let dirEntry = this.getStorageEntry<DirEntry>();
+		dirEntry.files.push(file.getName());
+		this.setStorageEntry(dirEntry);
+	}
+
+	/**
+	 * Removes a file from this folder, meaning that we remove the file from the folder files list.
 	 */
 	public deleteFile(file: File) {
 		// Delete from the directory listing
-		let dirEntry = this.getStorageEntry();
+		let dirEntry = this.getStorageEntry<DirEntry>();
 		dirEntry.files = dirEntry.files.filter((name)=>file.getName() !== name);
 		this.setStorageEntry(dirEntry);
-
-		// Delete the file entry itself
-		localStorage.removeItem(File.pathWithPrefix(file.getAbsolutePath()));
 	}
 
 	/**
@@ -198,7 +355,7 @@ class Dir extends File {
 	 */
 	 public delete() {
 		// Recursive deletion
-		let dirEntry = this.getStorageEntry();
+		let dirEntry = this.getStorageEntry<DirEntry>();
 		dirEntry.files.forEach((fileName)=>{
 			new File(this.getFilePathFromName(fileName)).delete();
 		});
@@ -262,11 +419,11 @@ class FileSystemStorage implements DIDStorage {
 
 	private static JOURNAL_SUFFIX = ".journal";
 
-	private storeRoot: File;
+	private storeRoot: Dir;
 	private currentDataDir: string;
 
-	protected constructor(dir: File) {
-		this.storeRoot = dir;
+	protected constructor(context: string) {
+		this.storeRoot = Dir.open(File.SEPARATOR+context+File.SEPARATOR) as Dir;
 		this.currentDataDir = FileSystemStorage.DATA_DIR;
 
 		if (this.storeRoot.exists())
@@ -279,12 +436,12 @@ class FileSystemStorage implements DIDStorage {
 		try {
 			log.debug("Initializing DID store at {}", this.storeRoot.getAbsolutePath());
 
-			// Java: this.storeRoot.mkdirs();
+			this.storeRoot.mkdirs();
 
 			let metadata = new DIDStore.Metadata();
 
 			let  file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
-			metadata.serialize(file);
+			file.writeText(metadata.serialize());
 		} catch (e) {
 			// IOException
 			log.error("Initialize DID store error", e);
@@ -304,49 +461,20 @@ class FileSystemStorage implements DIDStorage {
 		this.postOperations();
 
 		let file: Dir = this.getDir(this.currentDataDir);
-		if (!file.exists()) {
-			let oldMetadata = this.getFile(".meta");
-			if (oldMetadata.exists()) {
-				if (oldMetadata.isFile()) {
-
-TODO: if metadata file not exist or parse error then throw the exception
-
-
-
-
-					upgradeFromV2();
-				} else {
-					log.error("Path {} not a DID store", this.storeRoot.getAbsolutePath());
-					throw new DIDStorageException("Invalid DIDStore \"" + this.storeRoot.getAbsolutePath() + "\".");
-				}
-			} else {
-				let files: string[] = this.storeRoot.list();
-				if (files == null || files.length == 0) {
-					// if an empty folder
-					this.initializeStore();
-					return;
-				} else {
-					log.error("Path {} not a DID store", this.storeRoot.getAbsolutePath());
-					throw new DIDStorageException("Invalid DIDStore \"" + this.storeRoot.getAbsolutePath() + "\".");
-				}
-			}
-		}
-
 		if (!file.isDirectory()) {
-			log.error("Path {} not a DID store, missing data directory",
-				this.storeRoot.getAbsolutePath());
+			log.error("Path {} is not a DID store, missing data directory", this.storeRoot.getAbsolutePath());
 			throw new DIDStorageException("Invalid DIDStore \""
 					+ this.storeRoot.getAbsolutePath() + "\".");
 		}
 
-		file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
-		if (!file.exists() || !file.isFile()) {
+		let metadataFile = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
+		if (!metadataFile.exists() || !metadataFile.isFile()) {
 			log.error("Path {} not a DID store, missing store metadata", this.storeRoot.getAbsolutePath());
 			throw new DIDStorageException("Invalid DIDStore \"" + this.storeRoot.getAbsolutePath() + "\".");
 		}
 
 		try {
-			let metadata = DIDStore.Metadata.parse(file, DIDStore.Metadata.class);
+			let metadata = DIDStore.Metadata.parse(metadataFile, DIDStore.Metadata.class);
 
 			if (!metadata.getType().equals(DIDStore.DID_STORE_TYPE))
 				throw new DIDStorageException("Unknown DIDStore type");
@@ -370,52 +498,52 @@ TODO: if metadata file not exist or parse error then throw the exception
 		return DIDURL.valueOf(did, path);
 	}
 
-	/* private static void copyFile(File src, File dest) throws IOException {
-	    FileInputStream in = null;
-	    FileOutputStream out = null;
-	    try {
-	        in = new FileInputStream(src);
-	        out = new FileOutputStream(dest);
-	        out.getChannel().transferFrom(in.getChannel(), 0,
-	        		in.getChannel().size());
-		} finally {
-			if (in != null)
-				in.close();
+	private static copyFile(src: File, dest: File) {
+		// Copy content
+		dest.writeText(src.readText());
+	}
 
-			if (out != null)
-				out.close();
-		}
-	} */
+	/**
+	 * Gets a File object instance for the given path.
+	 * In "creation" mode:
+	 * - If the file already exists, it is overwritten (deleted)
+	 * - Intermediate folders are created if missing
+	 */
+	private getFile(create: boolean, ...path: string[]): File {
+		let file: File = null;
 
-	private getFile(boolean create, String ... path): File {
-		StringBuffer relPath = new StringBuffer(256);
-		File file;
-
-		relPath.append(storeRoot.getAbsolutePath());
-		int lastIndex = path.length - 1;
-		for (int i = 0; i <= lastIndex; i++) {
-			relPath.append(File.separator);
-			relPath.append(path[i]);
+		let relPath = this.storeRoot.getAbsolutePath();
+		let lastIndex = path.length - 1;
+		for (let i = 0; i <= lastIndex; i++) {
+			relPath += File.SEPARATOR;
+			relPath += path[i];
 
 			if (create) {
-				boolean isDir = (i < lastIndex);
-
-				file = new File(relPath.toString());
-				if (file.exists() && file.isDirectory() != isDir)
-					deleteFile(file);
+				if (i < lastIndex) {
+					// Directory
+					let dir = Dir.open(relPath.toString());
+					if (dir.exists())
+						dir.delete();
+				}
+				else {
+					// File
+					file = File.open(relPath.toString());
+					if (file.exists())
+						file.delete();
+				}
 			}
 		}
 
-		file = new File(relPath.toString());
+		file = File.open(relPath.toString());
 		if (create)
-			file.getParentFile().mkdirs();
+			file.getDirectory().mkdirs();
 
 		return file;
 	}
 
 	private getDir(...paths: string[]): Dir {
 		let relPath = this.storeRoot.getAbsolutePath() + File.SEPARATOR + paths.join(File.SEPARATOR);
-		return new Dir(relPath);
+		return Dir.open(relPath);
 	}
 
 	public getLocation(): string {
@@ -438,7 +566,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 
 	public loadMetadata(): DIDStore.Metadata {
 		try {
-			let file = this.getFile(this.currentDataDir, METADATA);
+			let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
 			let metadata: DIDStore.Metadata = null;
 			if (file.exists())
 				metadata = DIDStore.Metadata.parse(file, DIDStore.Metadata.class);
@@ -524,7 +652,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 			file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
 			let index = Number.parseInt(file.readText());
 
-			return RootIdentity.create(publicKey, index);
+			return RootIdentity.createFromPreDerivedPublicKey(publicKey, index);
 		} catch (e) {
 			// IOException
 			throw new DIDStorageException("Load public key for identity error: " + id, e);
@@ -614,7 +742,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 	}
 
 	private getDidMetadataFile(did: DID, create: boolean): File {
-		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), METADATA);
+		return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.METADATA);
 	}
 
 	private getDidDir(did: DID): File {
@@ -900,22 +1028,22 @@ TODO: if metadata file not exist or parse error then throw the exception
 	private needReencrypt(file: File): boolean {
 		let patterns: string[] = [
 				// Root identity's private key
-				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
-				FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.separator + "(.+)\\" +
-				File.separator + FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE,
+				"(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
+				FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.SEPARATOR + "(.+)\\" +
+				File.SEPARATOR + FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE,
 				// Root identity's mnemonic
-				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
-				FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.separator + "(.+)\\" +
-				File.separator + FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE,
+				"(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
+				FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.SEPARATOR + "(.+)\\" +
+				File.SEPARATOR + FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE,
 				// DID's private keys
-				"(.+)\\" + File.separator + DATA_DIR + "\\" + File.separator +
-				FileSystemStorage.DID_DIR + "\\" + File.separator + "(.+)\\" + File.separator +
-				FileSystemStorage.PRIVATEKEYS_DIR + "\\" + File.separator + "(.+)"
+				"(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
+				FileSystemStorage.DID_DIR + "\\" + File.SEPARATOR + "(.+)\\" + File.SEPARATOR +
+				FileSystemStorage.PRIVATEKEYS_DIR + "\\" + File.SEPARATOR + "(.+)"
 		];
 
 		let path = file.getAbsolutePath();
 		for (let pattern of patterns) {
-			if (path.matches(pattern))
+			if (path.match(pattern))
 				return true;
 		}
 
@@ -924,14 +1052,15 @@ TODO: if metadata file not exist or parse error then throw the exception
 
 	private copy(src: File, dest: File, reEncryptor: ReEncryptor) {
 		if (src.isDirectory()) {
+			let dir = src as Dir;
 			if (!dest.exists()) {
-				dest.mkdir();
+				dest.mkdirs();
 			}
 
-			let files = src.list();
+			let files = dir.list();
 			for (let file of files) {
-				let srcFile = new File(src, file);
-				let destFile = new File(dest, file);
+				let srcFile = File.open(dir, file);
+				let destFile = File.open(dest, file);
 				this.copy(srcFile, destFile, reEncryptor);
 			}
 		} else {
@@ -939,7 +1068,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 				let text = src.readText();
 				dest.writeText(reEncryptor.reEncrypt(text));
 			} else {
-			    this.copyFile(src, dest);
+			    FileSystemStorage.copyFile(src, dest);
 			}
 		}
 	}
@@ -951,7 +1080,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 		let timestamp = new Date().getTime() / 1000;
 		let dataDeprecated = this.getDir(FileSystemStorage.DATA_DIR + "_" + timestamp);
 
-		let stageFile = this.getFile("postChangePassword");
+		let stageFile = this.getFile(false, "postChangePassword");
 
 		if (stageFile.exists()) {
 			if (dataJournal.exists()) {
@@ -986,7 +1115,7 @@ TODO: if metadata file not exist or parse error then throw the exception
 	}
 
 	private postOperations() {
-		let stageFile = this.getFile("postChangePassword");
+		let stageFile = this.getFile(false, "postChangePassword");
 		if (stageFile.exists()) {
 			this.postChangePassword();
 			return;

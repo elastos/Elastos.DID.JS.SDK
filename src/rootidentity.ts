@@ -37,7 +37,7 @@ export class RootIdentity {
 		return rootIdentity;
 	}
 
-	public /* private */ static newFromPrivateKey(rootPrivateKey: HDKey): RootIdentity {
+	private static newFromPrivateKey(rootPrivateKey: HDKey): RootIdentity {
 		let rootIdentity = new RootIdentity();
 		rootIdentity.rootPrivateKey = rootPrivateKey;
 		rootIdentity.preDerivedPublicKey = rootPrivateKey.derive(HDKey.PRE_DERIVED_PUBLICKEY_PATH);
@@ -45,7 +45,7 @@ export class RootIdentity {
 		return rootIdentity;
 	}
 
-	public /* private */ static newFromPreDerivedPublicKey(preDerivedPublicKey: HDKey, index: number): RootIdentity {
+	private static newFromPreDerivedPublicKey(preDerivedPublicKey: HDKey, index: number): RootIdentity {
 		let rootIdentity = new RootIdentity();
 		rootIdentity.preDerivedPublicKey = preDerivedPublicKey;
 		rootIdentity.index = index;
@@ -62,7 +62,7 @@ export class RootIdentity {
 	 *              force = false, must not create new private identity if there is private identity.
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static create(mnemonic: string, passphrase: string, store: DIDStore, storepass: string, overwrite: boolean = false): RootIdentity {
+	public static createFromMnemonic(mnemonic: string, passphrase: string, store: DIDStore, storepass: string, overwrite: boolean = false): RootIdentity {
 		checkArgument(mnemonic != null && mnemonic !== "", "Invalid mnemonic");
 		checkArgument(store != null, "Invalid DID store");
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -97,7 +97,7 @@ export class RootIdentity {
 	 *              force = false, must not create new private identity if there is private identity.
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static create(extentedPrivateKey: string, store: DIDStore, storepass: string, overwrite: boolean = false): RootIdentity {
+	public static createFromPrivateKey(extentedPrivateKey: string, store: DIDStore, storepass: string, overwrite: boolean = false): RootIdentity {
 		checkArgument(extentedPrivateKey != null && extentedPrivateKey !== "",
 				"Invalid extended private key");
 		checkArgument(store != null, "Invalid DID store");
@@ -116,7 +116,7 @@ export class RootIdentity {
 		return identity;
 	}
 
-	protected static create(preDerivedPublicKey: string, index: number): RootIdentity {
+	protected static createFromPreDerivedPublicKey(preDerivedPublicKey: string, index: number): RootIdentity {
 		let key = preDerivedPublicKey == null ? null : HDKey.deserializeBase58(preDerivedPublicKey);
 
 		return RootIdentity.newFromPreDerivedPublicKey(key, index);
