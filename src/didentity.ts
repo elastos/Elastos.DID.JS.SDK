@@ -103,7 +103,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 		checkArgument(content && content !== "", "Invalid JSON content");
 		checkArgument(clazz && clazz !== null, "Invalid result class object");
 
-		let mapper = this.getObjectMapper();
+		let mapper = DIDEntity.getDefaultObjectMapper();
 
 		try {
 			mapper.defaultParserContext.mainCreator = () => [clazz];
