@@ -105,7 +105,7 @@ export class PublicKeyReferenceDeserializer {
 
     public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocument.PublicKeyReference {
         try {
-            let objectMapper: ObjectMapper = DIDEntity.getObjectMapper(true);
+            let objectMapper: ObjectMapper = DIDEntity.getDefaultObjectMapper();
 
             if (value && value.includes("{")) {
                 let jsonObj = JSON.parse(value);
