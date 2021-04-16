@@ -1,0 +1,25 @@
+{
+    "_comment_network": "network could be MainNet, TestNet, SimNet",
+    "network": "SimNet",
+    "mnemnoic": {
+      "passphrase": "secret"
+    },
+    "store": {
+        "pass": "passwd",
+        "_comment_root": "Default is $temp.dir/DIDStore",
+        "root": "/PATH/TO/DIDStore"
+    },
+    "wallet": {
+        "dir": "/PATH/TO/Wallet",
+        "id": "test",
+        "password": "passwd"
+    },
+    "log": {
+        "_comment_level": "error, warn, info, debug, trace",
+        "level": "error"
+    },
+    "temp": {
+        "_comment_dir": "Default is system temp dir",
+        "dir": "/PATH/TO/TEMP"
+    }
+}

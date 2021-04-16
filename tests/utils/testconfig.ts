@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,62 +20,41 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.utils;
+import testConfig from "../assets/test.config.json";
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+export class TestConfig {
+	public static network: string;
 
-import org.slf4j.LoggerFactory;
+	public static passphrase: string;
+	public static storePass: string;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
+	public static walletDir: string;
+	public static walletId: string;
+	public static walletPassword: string;
 
-public final class TestConfig {
-	public static String network;
+	public static tempDir: string;
+	public static storeRoot: string;
 
-	public static String passphrase;
-	public static String storePass;
+	//public static Level level;
 
-	public static String walletDir;
-	public static String walletId;
-	public static String walletPassword;
+	static initialize() {
+		this.network = testConfig.network
+		// Java: System.setProperty("org.elastos.did.network", network);
 
-	public static String tempDir;
-	public static String storeRoot;
+		this.passphrase = testConfig.mnemnoic.passphrase;
+		this.storePass = testConfig.store.pass;
 
-	public static Level level;
+		this.tempDir = testConfig.temp.dir;
+		this.storeRoot = testConfig.store.root || this.tempDir + "/DIDStore";
 
-	static {
-		InputStream input = TestConfig.class
-				.getClassLoader().getResourceAsStream("test.conf");
+		this.walletDir = testConfig.wallet.dir;
+		this.walletId = testConfig.wallet.id;
+		this.walletPassword = testConfig.wallet.password;
 
-		Properties config = new Properties();
-		try {
-			config.load(input);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		String sysTemp = System.getProperty("java.io.tmpdir");
-
-		network = config.getProperty("network");
-		System.setProperty("org.elastos.did.network", network);
-
-		passphrase = config.getProperty("mnemnoic.passphrase");
-		storePass = config.getProperty("store.pass");
-
-		tempDir = config.getProperty("temp.dir", sysTemp);
-		storeRoot = config.getProperty("store.root", tempDir + "/DIDStore");
-
-		walletDir = config.getProperty("wallet.dir");
-		walletId = config.getProperty("wallet.id");
-		walletPassword = config.getProperty("wallet.password");
-
-		level = Level.valueOf(config.getProperty("log.level", "info").toUpperCase());
+		//level = Level.valueOf(config.getProperty("log.level", "info").toUpperCase());
 
 		// We use logback as the logging backend
-	    Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-	    root.setLevel(level);
+	    /* Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+	    root.setLevel(level); */
 	}
 }

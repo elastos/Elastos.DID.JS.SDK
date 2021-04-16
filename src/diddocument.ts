@@ -73,6 +73,7 @@ import { SHA256 } from "./crypto/sha256";
 import { type } from "node:os";
 import { Nullable, Override } from "antlr4ts/Decorators";
 import { PropertySerializerFilter } from "./propertyfilter";
+import { JSONObject } from "./json";
 
 const log = new Logger("DIDDocument");
 
@@ -2653,7 +2654,7 @@ export namespace DIDDocument {
         private type: string;
         @JsonProperty({ value: DIDDocument.SERVICE_ENDPOINT }) @JsonClassType({ type: () => [String] })
         private endpoint: string;
-        private properties: Map<string, object>;
+        private properties: JSONObject;
 
         /**
          * Constructs Service with the given value.
@@ -2666,16 +2667,16 @@ export namespace DIDDocument {
         /* protected */ constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) id: DIDURL,
             @JsonProperty({ value: DIDDocument.TYPE, required: true }) type: string,
             @JsonProperty({ value: DIDDocument.SERVICE_ENDPOINT, required: true }) endpoint: string,
-            properties: Map<string, object> = null) {
+            properties: JSONObject = null) {
             this.id = id;
             this.type = type;
             this.endpoint = endpoint;
 
             if (properties && properties.size > 0) {
-                this.properties = new Map<string, object>(properties);
-                this.properties.delete(DIDDocument.ID);
-                this.properties.delete(DIDDocument.TYPE);
-                this.properties.delete(DIDDocument.SERVICE_ENDPOINT);
+                this.properties = properties;
+                delete this.properties[DIDDocument.ID];
+                delete this.properties[DIDDocument.TYPE];
+                delete this.properties[DIDDocument.SERVICE_ENDPOINT];
             }
         }
 
@@ -2715,7 +2716,7 @@ export namespace DIDDocument {
          */
         @JsonAnyGetter()
         @JsonPropertyOrder({ alphabetic: true })
-        private _getProperties(): Map<string, object> {
+        private _getProperties(): JSONObject {
             return this.properties;
         }
 
@@ -2731,9 +2732,9 @@ export namespace DIDDocument {
                 return;
 
             if (this.properties == null)
-                this.properties = new Map<string, object>();
+                this.properties: JSONObject = {};
 
-            this.properties.set(name, value);
+            this.properties[name] = value;
         }
 
         public getProperties(): ImmutableMap<string, object> {
@@ -3540,7 +3541,7 @@ export namespace DIDDocument {
          */
         // TODO: Use our new "Json" type instead of a map
         // Java: addCredential()
-        public createAndAddCredential(id: DIDURL, types: string[] = null, subject: Map<string, object> = null, expirationDate: Date = null, storepass: string): Builder {
+        public createAndAddCredential(id: DIDURL, types: string[] = null, subject: JSONObject = null, expirationDate: Date = null, storepass: string): Builder {
             this.checkNotSealed();
             checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
                 "Invalid publicKey id");
@@ -3647,7 +3648,7 @@ export namespace DIDDocument {
          * @return the DID Document Builder
          */
         // TODO: Use JSON object (~~ type json = {[key: string]:json}), not map, for properties?
-        public addService(id: DIDURL, type: string, endpoint: string, properties: Map<string, object>): Builder {
+        public addService(id: DIDURL, type: string, endpoint: string, properties: JSONObject = null): Builder {
             this.checkNotSealed();
             checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
                 "Invalid publicKey id");

@@ -245,7 +245,7 @@ import { FileSystemStorage } from "./filesystemstorage";
 		 * @return the HDKey object(private identity)
 		 * @throws DIDStoreException there is invalid private identity in DIDStore.
 		 */
-		public loadRootIdentity(id: string): RootIdentity {
+		public loadRootIdentity(id: string = undefined): RootIdentity {
 			if (id === undefined) {
 				id = this.metadata.getDefaultRootIdentity();
 				if (id == null || id === "") {

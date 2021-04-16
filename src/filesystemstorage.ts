@@ -63,7 +63,7 @@ type DirEntry = StorageEntry & {
  * abstraction layer to use different storages. But for now, we try to remain as close as the java
  * implementation as we can until this SDK is totally stable.
  */
-class File {
+export class File { // Exported, for test cases only
 	public static SEPARATOR = "/";
 
 	protected constructor(protected path: string) {}
@@ -199,7 +199,7 @@ class File {
 	}
 }
 
-class Dir extends File {
+export class Dir extends File { // Exported, for test cases only
 	/**
 	 * Returns the directory object that contains this file.
 	 */
@@ -543,11 +543,15 @@ export class FileSystemStorage implements DIDStorage {
 
 	private getDir(...paths: string[]): Dir {
 		let relPath = this.storeRoot.getAbsolutePath() + File.SEPARATOR + paths.join(File.SEPARATOR);
-		return Dir.open(relPath);
+		return Dir.open(relPath) as Dir;
 	}
 
 	public getLocation(): string {
 		return this.storeRoot.toString();
+	}
+
+	public getStoreRoot(): Dir {
+		return this.storeRoot;
 	}
 
 	public storeMetadata(metadata: DIDStore.Metadata) {

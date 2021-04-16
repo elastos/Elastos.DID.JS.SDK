@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,19 +20,10 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.utils;
+import { Dir, File } from "../../src/filesystemstorage";
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-public class Utils {
-	private static String[] removeIgnoredFiles(String[] names) {
+export class Utils {
+	/* private static String[] removeIgnoredFiles(String[] names) {
 		List<String> lst = new ArrayList<String>(Arrays.asList(names));
 		lst.remove(".DS_Store");
 		return lst.toArray(new String[0]);
@@ -107,23 +98,24 @@ public class Utils {
 	        	in2.close();
 	        }
 		}
-	}
+	}*/
 
-	public static void deleteFile(File file) {
+	public static deleteFile(file: File) {
 		if (file.isDirectory()) {
-			File[] children = file.listFiles();
-			for (File child : children)
-				deleteFile(child);
+			let dir = file as Dir;
+			let children = dir.listFiles();
+			for (let child of children)
+				child.delete();
 		}
 
 		file.delete();
 	}
 
-	public static void dumpHex(String prompt, byte[] bytes) {
+	/*public static void dumpHex(String prompt, byte[] bytes) {
 		System.out.print(prompt + "[" + bytes.length + "]: ");
 		for (byte b : bytes)
 			System.out.print(String.format("%02x", b));
 		System.out.println();
-	}
+	} */
 }
 
