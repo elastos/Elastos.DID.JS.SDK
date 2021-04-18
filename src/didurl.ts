@@ -22,15 +22,61 @@
 
 import { AbstractMetadata } from "./abstractmetadata";
 import { DID } from "./did";
-import { ParentException, MalformedDIDURLException } from "./exceptions/exceptions";
+import {
+	ParentException,
+	MalformedDIDURLException,
+	IllegalArgumentException
+} from "./exceptions/exceptions";
 import { ParserHelper } from "./parser/parserhelper";
 import { checkArgument, checkNotNull } from "./utils";
 import { DIDURLBaseListener } from "./parser/DIDURLBaseListener";
 import { DIDURLParser } from "./parser/DIDURLParser";
-import { JsonStringifier } from "jackson-js";
-import { JsonStringifierContext } from "jackson-js/dist/@types"
+import {
+	JsonStringifierTransformerContext,
+	JsonParserTransformerContext
+} from "jackson-js/dist/@types"
+import {
+	JsonSerialize,
+    JsonDeserialize,
+} from "jackson-js";
 import { Hashable } from "./hashable";
 import { Comparable } from "./comparable";
+import { DIDEntity } from "./didentity";
+import {
+    Serializer,
+    Deserializer
+} from "./serializers";
+
+export class URLSerializer extends Serializer {
+	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
+		let base: DID = null;
+		let serializeContext = this.context(context);
+		if (!serializeContext.isNormalized())
+			base = serializeContext.getDid() != null ? serializeContext.getDid() : id.getDid();
+
+		return this.mapper(context).stringify(id.toString(base));
+	}
+}
+
+export class NormalizedURLSerializer extends Serializer {
+	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
+
+		return this.mapper(context).stringify(id.toString());
+	}
+}
+
+export class URLDeserializer extends Deserializer {
+	public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
+		try {
+			if (value && value.includes("{"))
+				throw new IllegalArgumentException(value);
+			return DIDURL.newWithUrl(value);
+		} catch (e) {
+			throw new ParentException("Invalid public key");
+		}
+	}
+}
+
 /**
  * DID URL defines by the did-url rule, refers to a URL that begins with a DID
  * followed by one or more additional components.
@@ -38,8 +84,8 @@ import { Comparable } from "./comparable";
  * A DID URL always identifies the resource to be located.
  * DIDURL includes DID and Url fragment by user defined.
  */
-//@JsonSerialize(using = DIDURL.Serializer.class)
-//@JsonDeserialize(using = DIDURL.Deserializer.class)
+@JsonSerialize({using: URLSerializer.serialize})
+@JsonDeserialize({using: URLDeserializer.deserialize})
 export class DIDURL implements Hashable, Comparable<DIDURL> {
 	//private static SEPS = ":;/?#";
 	private static SEPS = [':', ';', '/', '?', '#'];
@@ -420,85 +466,6 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 }
 
 export namespace DIDURL {
-
-	class Serializer extends JsonStringifier<DIDURL> {
-/*
-		public constructor() {
-			super();
-		}
-
-		public Serializer() {
-			super());
-		}
-
-		public Serializer(Class<DIDURL> t) {
-			super(t);
-		}
-
-		@Override
-		public stringify(obj: DIDURL, context?: JsonStringifierContext): string {
-			let base: DID = null;
-			if (!context.features.serialization.isNormalized())
-				base = context.getDid() != null ? context.getDid() : id.getDid();
-
-			gen.writeString(id.toString(base));
-
-		}
-		public void serialize(DIDURL id, JsonGenerator gen,
-				SerializerProvider provider) throws IOException {
-			SerializeContext context = (SerializeContext)provider.getConfig()
-					.getAttributes().getAttribute(DIDEntity.CONTEXT_KEY);
-			// TODO: checkme
-			DID base = null;
-			if (!context.isNormalized())
-				base = context.getDid() != null ? context.getDid() : id.getDid();
-
-			gen.writeString(id.toString(base));
-		}
-*/
-	}
-
-	class NormalizedSerializer /* extends StdSerializer<DIDURL> */ {
-		/* private static final long serialVersionUID = -5560151545310632117L;
-
-		public NormalizedSerializer() {
-			this(null);
-		}
-
-		public NormalizedSerializer(Class<DIDURL> t) {
-			super(t);
-		}
-
-		@Override
-		public void serialize(DIDURL id, JsonGenerator gen,
-				SerializerProvider provider) throws IOException {
-			gen.writeString(id.toString());
-		} */
-	}
-
-	class Deserializer /* extends StdDeserializer<DIDURL> */ {
-		/* private static final long serialVersionUID = -3649714336670800081L;
-
-		public Deserializer() {
-			this(null);
-		}
-
-		public Deserializer(Class<Proof> t) {
-			super(t);
-		}
-
-		@Override
-		public DIDURL deserialize(JsonParser p, DeserializationContext ctxt)
-				throws IOException, JsonProcessingException {
-			JsonToken token = p.getCurrentToken();
-			if (!token.equals(JsonToken.VALUE_STRING))
-				throw ctxt.weirdStringException(p.getText(), DIDURL.class, "Invalid DIDURL");
-
-			String url = p.getText().trim();
-			return new DIDURL(null, url);
-		} */
-	}
-
 	export class Listener extends DIDURLBaseListener {
 		private name: string;
 		private value: string;

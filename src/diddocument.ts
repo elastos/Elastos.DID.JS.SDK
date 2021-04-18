@@ -21,7 +21,6 @@
  */
 
 import {
-    ObjectMapper,
     JsonClassType,
     JsonProperty,
     JsonInclude,
@@ -89,44 +88,41 @@ import { TransferTicket } from "./transferticket";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { SHA256 } from "./crypto/sha256";
 import { Override } from "antlr4ts/Decorators";
-import { PropertySerializerFilter } from "./propertyfilter";
+import {
+    PropertySerializerFilter,
+    Serializer,
+    Deserializer
+} from "./serializers";
 
 const log = new Logger("DIDDocument");
 
 export class TypeSerializerFilter extends PropertySerializerFilter<string> {
-    @Override
     public static include (type: string, context: JsonStringifierTransformerContext): boolean {
         return !(type && type.equals(Constants._DEFAULT_PUBLICKEY_TYPE));
     }
 }
 
 export class PublicKeySerializerFilter extends PropertySerializerFilter<DID> {
-    @Override
     public static include (controller: DID, context: JsonStringifierTransformerContext): boolean {
-        let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
+        let serializeContext =  this.context(context);
 
         return !(serializeContext && controller && controller.equals(serializeContext.getDid()));
     }
 }
 
-export class PublicKeyReferenceSerializer {
-
+export class PublicKeyReferenceSerializer extends Serializer {
     public static serialize(keyRef: DIDDocument.PublicKeyReference, context: JsonStringifierTransformerContext): string | null {
-        let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
 
-        return keyRef ? serializeContext.getObjectMapper().stringify(keyRef.getId()) : null;
+        return keyRef ? this.mapper(context).stringify(keyRef.getId()) : null;
     }
 }
 
-export class PublicKeyReferenceDeserializer {
-
+export class PublicKeyReferenceDeserializer extends Deserializer {
     public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocument.PublicKeyReference {
         try {
-            let objectMapper: ObjectMapper = DIDEntity.getDefaultObjectMapper();
-
             if (value && value.includes("{")) {
                 let jsonObj = JSON.parse(value);
-                return DIDDocument.PublicKeyReference.newWithKey(objectMapper.parse<DIDDocument.PublicKey>(jsonObj.key, {mainCreator: () => [DIDDocument.PublicKey]}));
+                return DIDDocument.PublicKeyReference.newWithKey(this.mapper(context).parse<DIDDocument.PublicKey>(jsonObj.key, {mainCreator: () => [DIDDocument.PublicKey]}));
             }
             return DIDDocument.PublicKeyReference.newWithURL(DIDURL.newWithUrl(value));
         } catch (e) {

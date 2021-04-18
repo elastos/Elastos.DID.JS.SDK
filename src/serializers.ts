@@ -1,8 +1,40 @@
-import { JsonStringifierTransformerContext } from "jackson-js/dist/@types";
+import {
+    JsonStringifierTransformerContext,
+    JsonParserTransformerContext
+} from "jackson-js/dist/@types";
 import { DIDEntity } from "./didentity";
+import { DID } from "./did";
+import { Constants } from "./constants";
+import { JsonStringifier, ObjectMapper } from "jackson-js";
 
-export class PropertySerializerFilter<T> {
-    public static serialize (value: T, context: JsonStringifierTransformerContext): string | null {
+export class Serializer {
+
+    public static context(context: JsonStringifierTransformerContext): DIDEntity.SerializeContext {
+        return context.attributes[DIDEntity.CONTEXT_KEY];
+    }
+
+    public static mapper(context: JsonStringifierTransformerContext): ObjectMapper {
+        return this.context(context).getObjectMapper();
+    }
+
+    public static serialize (value: any, context: JsonStringifierTransformerContext): string {
+        return this.mapper(context).stringify(value);
+    }
+}
+
+export class Deserializer {
+
+    public static mapper(context: JsonParserTransformerContext): ObjectMapper {
+        return DIDEntity.getDefaultObjectMapper();
+    }
+
+    public static deserialize(value: string, context: JsonParserTransformerContext): any {
+        return this.mapper(context).parse(value);
+    }
+}
+
+export class PropertySerializerFilter<T> extends Serializer {
+    public static serialize (value: any, context: JsonStringifierTransformerContext): string | null {
         let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
 
         if ((serializeContext && serializeContext.isNormalized()) || this.include(value, context)) {
@@ -12,7 +44,7 @@ export class PropertySerializerFilter<T> {
         return null;
     }
 
-    public static include (value: T, context: JsonStringifierTransformerContext): boolean {
+    public static include (value: any, context: JsonStringifierTransformerContext): boolean {
         return true;
     }
 
