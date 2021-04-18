@@ -20,15 +20,33 @@
  * SOFTWARE.
  */
 
-import { ObjectMapper, JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonFilter, JsonValue, JsonSerialize, JsonDeserialize, JsonAnyGetter, JsonAnySetter } from "jackson-js";
-import { JsonStringifierTransformerContext, JsonParserTransformerContext } from "jackson-js/dist/@types";
+import {
+    ObjectMapper,
+    JsonClassType,
+    JsonProperty,
+    JsonInclude,
+    JsonIncludeType,
+    JsonPropertyOrder,
+    JsonValue,
+    JsonSerialize,
+    JsonDeserialize,
+    JsonAnyGetter,
+    JsonAnySetter
+} from "jackson-js";
+import {
+    JsonStringifierTransformerContext,
+    JsonParserTransformerContext
+} from "jackson-js/dist/@types";
 import { DIDEntity } from "./didentity";
 import { DID } from "./did";
 import { DIDURL } from "./didurl";
 import { DIDObject } from "./didobject";
 import { Logger } from "./logger";
 import { checkArgument } from "./utils";
-import { List as ImmutableList, Map as ImmutableMap } from "immutable";
+import {
+    List as ImmutableList,
+    Map as ImmutableMap
+} from "immutable";
 import { VerifiableCredential } from "./verifiablecredential";
 import {
     ParentException,
@@ -57,7 +75,7 @@ import {
     DIDAlreadyExistException
 } from "./exceptions/exceptions";
 import { DIDMetadata } from "./didmetadata";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import { HDKey } from "./crypto/hdkey";
 import { Collections } from "./collections";
 import { Constants } from "./constants";
@@ -70,10 +88,8 @@ import { Issuer } from "./issuer";
 import { TransferTicket } from "./transferticket";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { SHA256 } from "./crypto/sha256";
-import { type } from "node:os";
-import { Nullable, Override } from "antlr4ts/Decorators";
+import { Override } from "antlr4ts/Decorators";
 import { PropertySerializerFilter } from "./propertyfilter";
-import { JSONObject } from "./json";
 
 const log = new Logger("DIDDocument");
 
