@@ -21,7 +21,7 @@
  */
 
 import { ObjectMapper } from "jackson-js";
-import { ClassType, JsonStringifierTransformerContext } from "jackson-js/dist/@types";
+import { ClassType, JsonStringifierTransformerContext, JsonParserTransformerContext } from "jackson-js/dist/@types";
 import { Class } from "./class";
 import { Cloneable } from "./cloneable";
 import { DID } from "./did";
@@ -70,6 +70,16 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	public static getDefaultObjectMapper(): ObjectMapper {
 		let mapper = new ObjectMapper();
 		mapper.defaultParserContext.features.deserialization.FAIL_ON_UNKNOWN_PROPERTIES = false;
+		mapper.defaultStringifierContext.serializers.push({
+			type: () => Date,
+			order: 0,
+			mapper: this.DateSerializer.serialize
+		});
+		mapper.defaultParserContext.deserializers.push({
+			type: () => Date,
+			order: 0,
+			mapper: this.DateSerializer.deserialize
+		});
 
 		return mapper;
 	}
@@ -180,11 +190,11 @@ export namespace DIDEntity {
 	}
 
 	export class DateSerializer {
-		static serialize(dateObj: Date, context: JsonStringifierTransformerContext): string {
-			return dateObj ? dateObj.toISOString() : "";
+		static serialize(key: string, dateObj: Date, context: JsonStringifierTransformerContext): string {
+			return dateObj ? dateObj.toISOString() : null;
 		}
 
-		static deserialize(dateStr: string, context: JsonStringifierTransformerContext): Date {
+		static deserialize(key: string, dateStr: string, context: JsonParserTransformerContext): Date {
 			if (dateStr && isNaN(Date.parse(dateStr)))
 				throw new InvalidDateFormat(dateStr);
 			return dateStr ? new Date(dateStr + (dateStr.slice(dateStr.length - 1) == 'Z' ? '':'Z')) : null;
