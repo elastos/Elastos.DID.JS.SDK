@@ -1839,8 +1839,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public publish(inputSignKey: DIDURL | string, force: boolean, storepass: string,
-        adapter: DIDTransactionAdapter = null) {
+    public publish(storepass: string, inputSignKey: DIDURL | string = null, force: boolean = false, adapter: DIDTransactionAdapter = null) {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         this.checkAttachedStore();
 
@@ -1939,7 +1938,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     public publishAsync(signKey: DIDURL | string, force: boolean = false, storepass: string = null, adapter: DIDTransactionAdapter = null): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                this.publish(signKey, force, storepass, adapter);
+                this.publish(storepass, signKey, force, adapter);
                 resolve();
             } catch (e) {
                 // DIDException
@@ -3012,9 +3011,17 @@ export namespace DIDDocument {
          * @param pk the public key base58 string
          * @return the DID Document Builder
          */
-        public addAuthorizationKey(id: DIDURL, controller: DID, pk: string): Builder {
+        public addAuthorizationKey(id: DIDURL | string, controller: DID | string, pk: string): Builder {
             this.checkNotSealed();
-            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (typeof id === "string")
+                id = this.canonicalId(id);
+
+            if (typeof controller === "string")
+                controller = DID.valueOf(controller);
+
+            checkArgument(id.getDid() == null || id.getDid().equals(this.getSubject()),
                 "Invalid publicKey id");
             checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
 
@@ -3031,19 +3038,6 @@ export namespace DIDDocument {
 
             return this;
         }
-
-        /**
-         * Add the PublicKey named key id to be Authorization Key.
-         * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @param pk the public key base58 string
-         * @return the DID Document Builder
-         */
-        /* public addAuthorizationKey(id: string, controller: string, pk: string): Builder {
-            return addAuthorizationKey(canonicalId(id), DID.valueOf(controller), pk);
-        } */
 
         /**
          * Add the specified key to be an Authorization key.

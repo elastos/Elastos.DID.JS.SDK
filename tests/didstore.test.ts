@@ -20,12 +20,13 @@
  * SOFTWARE.
  */
 
-import { DID } from "../src";
+import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity } from "../src";
 import { DIDStore } from "../src/didstore";
 import { File } from "../src/filesystemstorage";
 import { Logger } from "../src/logger";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
+import { Utils } from "./utils/utils";
 
 const log = new Logger("DIDStoreTest");
 
@@ -199,105 +200,102 @@ test("testStoreAndLoadDID", ()=>{
 	expect(dids.size).toEqual(2);
 });
 
-/*
-@Test
-public void testLoadCredentials() throws DIDException, IOException {
+test("testLoadCredentials", ()=>{
 	// Store test data into current store
 	testData.getInstantData().getIssuerDocument();
-	DIDDocument user = testData.getInstantData().getUser1Document();
+	let user = testData.getInstantData().getUser1Document();
 
-	VerifiableCredential vc = user.getCredential("#profile");
+	let vc = user.getCredential("#profile");
 	vc.getMetadata().setAlias("MyProfile");
 
-	File file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
+	let file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
 			"credentials", "#" + vc.getId().getFragment(), "credential");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
 			"credentials", "#" + vc.getId().getFragment(), ".metadata");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	vc = user.getCredential("#email");
 	vc.getMetadata().setAlias("Email");
 
 	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
 			"credentials", "#" + vc.getId().getFragment(), "credential");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
 			"credentials", "#" + vc.getId().getFragment(), ".metadata");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	vc = testData.getInstantData().getUser1TwitterCredential();
 	vc.getMetadata().setAlias("Twitter");
 
 	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
 			"credentials", "#" + vc.getId().getFragment(), "credential");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
 			"credentials", "#" + vc.getId().getFragment(), ".metadata");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	vc = testData.getInstantData().getUser1PassportCredential();
 	vc.getMetadata().setAlias("Passport");
 
 	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
 			"credentials", "#" + vc.getId().getFragment(), "credential");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
 			"credentials", "#" + vc.getId().getFragment(), ".metadata");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
-	DIDURL id = new DIDURL(user.getSubject(), "#profile");
+	let id = DIDURL.valueOf(user.getSubject(), "#profile");
 	vc = store.loadCredential(id);
-	assertEquals("MyProfile", vc.getMetadata().getAlias());
-	assertEquals(user.getSubject(), vc.getSubject().getId());
-	assertEquals(id, vc.getId());
-	assertTrue(vc.isValid());
+	expect("MyProfile").toStrictEqual(vc.getMetadata().getAlias());
+	expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+	expect(id.equals(vc.getId())).toBeTruthy();
+	expect(vc.isValid()).toBeTruthy();
 
 	// try with full id string
 	vc = store.loadCredential(id.toString());
-	assertNotNull(vc);
-	assertEquals("MyProfile", vc.getMetadata().getAlias());
-	assertEquals(user.getSubject(), vc.getSubject().getId());
-	assertEquals(id, vc.getId());
-	assertTrue(vc.isValid());
+	expect(vc).not.toBeNull();
+	expect("MyProfile").toStrictEqual(vc.getMetadata().getAlias());
+	expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+	expect(id.equals(vc.getId())).toBeTruthy();
+	expect(vc.isValid()).toBeTruthy();
 
-	id = new DIDURL(user.getSubject(), "#twitter");
+	id = DIDURL.valueOf(user.getSubject(), "#twitter");
 	vc = store.loadCredential(id.toString());
-	assertNotNull(vc);
-	assertEquals("Twitter", vc.getMetadata().getAlias());
-	assertEquals(user.getSubject(), vc.getSubject().getId());
-	assertEquals(id, vc.getId());
-	assertTrue(vc.isValid());
+	expect(vc).not.toBeNull();
+	expect("Twitter").toStrictEqual(vc.getMetadata().getAlias());
+	expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+	expect(id.equals(vc.getId())).toBeTruthy();
+	expect(vc.isValid()).toBeTruthy();
 
-	vc = store.loadCredential(new DIDURL(user.getSubject(), "#notExist"));
-	assertNull(vc);
+	vc = store.loadCredential(DIDURL.valueOf(user.getSubject(), "#notExist"));
+	expect(vc).toBeNull();
 
-	id = new DIDURL(user.getSubject(), "#twitter");
-	assertTrue(store.containsCredential(id));
-	assertTrue(store.containsCredential(id.toString()));
-	assertFalse(store.containsCredential(new DIDURL(user.getSubject(), "#notExists")));
-}
+	id = DIDURL.valueOf(user.getSubject(), "#twitter");
+	expect(store.containsCredential(id)).toBeTruthy();
+	expect(store.containsCredential(id.toString())).toBeTruthy();
+	expect(store.containsCredential(DIDURL.valueOf(user.getSubject(), "#notExists"))).toBeFalsy();
+});
 
-@Test
-public void testListCredentials() throws DIDException, IOException {
+test("testListCredentials", ()=>{
 	testData.getRootIdentity();
 
 	// Store test data into current store
 	testData.getInstantData().getIssuerDocument();
-	DIDDocument user = testData.getInstantData().getUser1Document();
-	VerifiableCredential vc = user.getCredential("#profile");
+	let user = testData.getInstantData().getUser1Document();
+	let vc = user.getCredential("#profile");
 	vc.getMetadata().setAlias("MyProfile");
 	vc = user.getCredential("#email");
 	vc.getMetadata().setAlias("Email");
@@ -306,28 +304,27 @@ public void testListCredentials() throws DIDException, IOException {
 	vc = testData.getInstantData().getUser1PassportCredential();
 	vc.getMetadata().setAlias("Passport");
 
-	List<DIDURL> vcs = store.listCredentials(user.getSubject());
-	assertEquals(4, vcs.size());
+	let vcs = store.listCredentials(user.getSubject());
+	expect(4).toEqual(vcs.size);
 
-	for (DIDURL id : vcs) {
-		assertTrue(id.getFragment().equals("profile")
-				|| id.getFragment().equals("email")
-				|| id.getFragment().equals("twitter")
-				|| id.getFragment().equals("passport"));
+	for (let id of vcs) {
+		expect(id.getFragment() ===  "profile"
+				|| id.getFragment() === "email"
+				|| id.getFragment() === "twitter"
+				|| id.getFragment() === "passport").toBeTruthy();
 
-		assertTrue(id.getMetadata().getAlias().equals("MyProfile")
-				|| id.getMetadata().getAlias().equals("Email")
-				|| id.getMetadata().getAlias().equals("Twitter")
-				|| id.getMetadata().getAlias().equals("Passport"));
+		expect(id.getMetadata().getAlias() === "MyProfile"
+				|| id.getMetadata().getAlias() === "Email"
+				|| id.getMetadata().getAlias() === "Twitter"
+				|| id.getMetadata().getAlias() === "Passport").toBeTruthy();
 	}
-}
+});
 
-@Test
-public void testDeleteCredential() throws DIDException, IOException {
+test("testDeleteCredential", ()=>{
 	// Store test data into current store
 	testData.getInstantData().getIssuerDocument();
-	DIDDocument user = testData.getInstantData().getUser1Document();
-	VerifiableCredential vc = user.getCredential("#profile");
+	let user = testData.getInstantData().getUser1Document();
+	let vc = user.getCredential("#profile");
 	vc.getMetadata().setAlias("MyProfile");
 	vc = user.getCredential("#email");
 	vc.getMetadata().setAlias("Email");
@@ -337,239 +334,230 @@ public void testDeleteCredential() throws DIDException, IOException {
 	vc.getMetadata().setAlias("Passport");
 
 
-	File file = getFile("ids", user.getSubject().getMethodSpecificId(),
+	let file = getFile("ids", user.getSubject().getMethodSpecificId(),
 			"credentials", "#twitter", "credential");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	file = getFile("ids", user.getSubject().getMethodSpecificId(),
 			"credentials", "#twitter", ".metadata");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	file = getFile("ids", user.getSubject().getMethodSpecificId(),
 			"credentials", "#passport", "credential");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
 	file = getFile("ids", user.getSubject().getMethodSpecificId(),
 			"credentials", "#passport", ".metadata");
-	assertTrue(file.exists());
-	assertTrue(file.isFile());
+	expect(file.exists()).toBeTruthy();
+	expect(file.isFile()).toBeTruthy();
 
-	boolean deleted = store.deleteCredential(new DIDURL(user.getSubject(), "#twitter"));
-	assertTrue(deleted);
+	let deleted = store.deleteCredential(new DIDURL(user.getSubject(), "#twitter"));
+	expect(deleted).toBeTruthy();
 
 	deleted = store.deleteCredential(new DIDURL(user.getSubject(), "#passport").toString());
-	assertTrue(deleted);
+	expect(deleted).toBeTruthy();
 
 	deleted = store.deleteCredential(user.getSubject().toString() + "#notExist");
-	assertFalse(deleted);
+	expect(deleted).toBeFalsy();
 
 	file = getFile("ids", user.getSubject().getMethodSpecificId(),
 			"credentials", "#twitter");
-	assertFalse(file.exists());
+	expect(file.exists()).toBeFalsy();
 
 	file = getFile("ids", user.getSubject().getMethodSpecificId(),
 			"credentials", "#passport");
-	assertFalse(file.exists());
+	expect(file.exists()).toBeFalsy();
 
-	assertTrue(store.containsCredential(new DIDURL(user.getSubject(), "#email")));
-	assertTrue(store.containsCredential(user.getSubject().toString() + "#profile"));
+	expect(store.containsCredential(new DIDURL(user.getSubject(), "#email"))).toBeTruthy();
+	expect(store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
 
-	assertFalse(store.containsCredential(new DIDURL(user.getSubject(), "#twitter")));
-	assertFalse(store.containsCredential(user.getSubject().toString() + "#passport"));
-}
+	expect(store.containsCredential(new DIDURL(user.getSubject(), "#twitter"))).toBeFalsy();
+	expect(store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
+});
 
-@Test
-public void testChangePassword() throws DIDException {
-	RootIdentity identity = testData.getRootIdentity();
+test("testChangePassword", ()=>{
+	let identity = testData.getRootIdentity();
 
-	for (int i = 0; i < 10; i++) {
-		String alias = "my did " + i;
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
+	for (let i = 0; i < 10; i++) {
+		let alias = "my did " + i;
+		let doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias(alias);
-		assertTrue(doc.isValid());
+		expect(doc.isValid()).toBeTruthy();
 
-		DIDDocument resolved = doc.getSubject().resolve();
-		assertNull(resolved);
+		let resolved = doc.getSubject().resolve();
+		expect(resolved).toBeNull();
 
 		doc.publish(TestConfig.storePass);
 
-		File file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
-		assertTrue(file.exists());
-		assertTrue(file.isFile());
+		let file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
+		expect(file.exists()).toBeTruthy();
+		expect(file.isFile()).toBeTruthy();
 
 		file = getFile("ids", doc.getSubject().getMethodSpecificId(), ".metadata");
-		assertTrue(file.exists());
-		assertTrue(file.isFile());
+		expect(file.exists()).toBeTruthy();
+		expect(file.isFile()).toBeTruthy();
 
 		file = getFile("ids", doc.getSubject().getMethodSpecificId(), "privatekeys", "#primary");
-		assertTrue(file.exists());
-		assertTrue(file.isFile());
+		expect(file.exists()).toBeTruthy();
+		expect(file.isFile()).toBeTruthy();
 
 		resolved = doc.getSubject().resolve();
-		assertNotNull(resolved);
+		expect(resolved).not.toBeNull();
 		store.storeDid(resolved);
-		assertEquals(alias, resolved.getMetadata().getAlias());
-		assertEquals(doc.getSubject(), resolved.getSubject());
-		assertEquals(doc.getProof().getSignature(),
+		expect(alias).toStrictEqual(resolved.getMetadata().getAlias());
+		expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
+		expect(doc.getProof().getSignature()).toStrictEqual(
 				resolved.getProof().getSignature());
 
-		assertTrue(resolved.isValid());
+		expect(resolved.isValid()).toBeTruthy();
 	}
 
-	List<DID> dids = store.listDids();
-	assertEquals(10, dids.size());
+	let dids = store.listDids();
+	expect(10).toEqual(dids.size);
 
 	store.changePassword(TestConfig.storePass, "newpasswd");
 
 	dids = store.listDids();
-	assertEquals(10, dids.size());
+	expect(10).toEqual(dids.size);
 
-	for (int i = 0; i < 10; i++) {
-		String alias = "my did " + i;
-		DID did = identity.getDid(i);
-		DIDDocument doc = store.loadDid(did);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+	for (let i = 0; i < 10; i++) {
+		let alias = "my did " + i;
+		let did = identity.getDid(i);
+		let doc = store.loadDid(did);
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy();
 
-		File file = getFile("ids", did.getMethodSpecificId(), "document");
-		assertTrue(file.exists());
-		assertTrue(file.isFile());
+		let file = getFile("ids", did.getMethodSpecificId(), "document");
+		expect(file.exists()).toBeTruthy();
+		expect(file.isFile()).toBeTruthy();
 
 		file = getFile("ids", did.getMethodSpecificId(), ".metadata");
-		assertTrue(file.exists());
-		assertTrue(file.isFile());
+		expect(file.exists()).toBeTruthy();
+		expect(file.isFile()).toBeTruthy();
 
 		file = getFile("ids", did.getMethodSpecificId(), "privatekeys", "#primary");
-		assertTrue(file.exists());
-		assertTrue(file.isFile());
+		expect(file.exists()).toBeTruthy();
+		expect(file.isFile()).toBeTruthy();
 
-		assertEquals(alias, doc.getMetadata().getAlias());
+		expect(alias).toStrictEqual(doc.getMetadata().getAlias());
 	}
 
-	DIDDocument doc = identity.newDid("newpasswd");
-	assertNotNull(doc);
-}
+	let doc = identity.newDid("newpasswd");
+	expect(doc).not.toBeNull();
+});
 
-@Test
-public void testChangePasswordWithWrongPassword() throws DIDException {
-	RootIdentity identity = testData.getRootIdentity();
+test("testChangePasswordWithWrongPassword", ()=>{
+	let identity = testData.getRootIdentity();
 
-	for (int i = 0; i < 10; i++) {
-		String alias = "my did " + i;
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
+	for (let i = 0; i < 10; i++) {
+		let alias = "my did " + i;
+		let doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias(alias);
-		assertTrue(doc.isValid());
+		expect(doc.isValid()).toBeTruthy();
 	}
 
-	List<DID> dids = store.listDids();
-	assertEquals(10, dids.size());
+	let dids = store.listDids();
+	expect(10).toEqual(dids.size);
 
-	assertThrows(DIDStoreException.class, () -> {
+	expect(() => {
 		store.changePassword("wrongpasswd", "newpasswd");
-	});
-}
+	}).toThrow(/*DIDStoreException*/);
+});
 
-@ParameterizedTest
-@ValueSource(ints = {1, 2})
-public void testCompatibility(int version) throws DIDException, IOException {
-	byte[] data = "Hello World".getBytes();
+test.each([1, 2])("testCompatibility(%i)", (version: number)=>{
+	let data = Buffer.from("Hello World");
 
-	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	let cd = testData.getCompatibleData(version);
 	cd.loadAll();
 
-	DIDStore store = DIDStore.open(cd.getStoreDir());
+	let store = DIDStore.open(cd.getStoreDir().getAbsolutePath());
 
-	List<DID> dids = store.listDids();
-	assertEquals(version == 2 ? 10 : 4, dids.size());
+	let dids = store.listDids();
+	expect(version == 2 ? 10 : 4).toEqual(dids.size);
 
-	for (DID did : dids) {
-		String alias = String.valueOf(did.getMetadata().getAlias());
+	for (let did of dids) {
+		let alias = did.getMetadata().getAlias();
 
-		if (alias.equals("Issuer")) {
-			List<DIDURL> vcs = store.listCredentials(did);
-			assertEquals(1, vcs.size());
+		if (alias === "Issuer") {
+			let vcs = store.listCredentials(did);
+			expect(1).toEqual(vcs.size);
 
-			for (DIDURL id : vcs)
-				assertNotNull(store.loadCredential(id));
-		} else if (alias.equals("User1")) {
-			List<DIDURL> vcs = store.listCredentials(did);
-			assertEquals(version == 2 ? 5 : 4, vcs.size());
+			for (let id of vcs)
+				expect(store.loadCredential(id)).not.toBeNull();
+		} else if (alias === "User1") {
+			let vcs = store.listCredentials(did);
+			expect(version == 2 ? 5 : 4).toEqual(vcs.size);
 
-			for (DIDURL id : vcs)
-				assertNotNull(store.loadCredential(id));
-		} else if (alias.equals("User2")) {
-			List<DIDURL> vcs = store.listCredentials(did);
-			assertEquals(1, vcs.size());
+			for (let id of vcs)
+				expect(store.loadCredential(id)).not.toBeNull();
+		} else if (alias === "User2") {
+			let vcs = store.listCredentials(did);
+			expect(1).toEqual(vcs.size);
 
-			for (DIDURL id : vcs)
-				assertNotNull(store.loadCredential(id));
-		} else if (alias.equals("User3")) {
-			List<DIDURL> vcs = store.listCredentials(did);
-			assertEquals(0, vcs.size());
+			for (let id of vcs)
+				expect(store.loadCredential(id)).not.toBeNull();
+		} else if (alias === "User3") {
+			let vcs = store.listCredentials(did);
+			expect(0).toEqual(vcs.size);
 		}
 
-		DIDDocument doc = store.loadDid(did);
+		let doc = store.loadDid(did);
 		if (!doc.isCustomizedDid() || doc.getControllerCount() <= 1) {
-			String sig = doc.sign(TestConfig.storePass, data);
-			assertTrue(doc.verify(sig, data));
+			let sig = doc.signWithStorePass(TestConfig.storePass, data);
+			expect(doc.verify(null, sig, data)).toBeTruthy();
 		}
 	}
-}
+});
 
-@ParameterizedTest
-@ValueSource(ints = {1, 2})
-public void testCompatibilityNewDIDWithWrongPass(int version) throws DIDException {
-	DIDStore store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
-	RootIdentity idenitty = store.loadRootIdentity();
+test.each([1,2])("testCompatibilityNewDIDWithWrongPass(%i)", (version: number)=>{
+	let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir().getAbsolutePath());
+	let identity = store.loadRootIdentity();
 
-	assertThrows(WrongPasswordException.class, () -> {
-		idenitty.newDid("wrongpass");
-	});
-}
+	expect(()=>{
+		identity.newDid("wrongpass");
+	}).toThrow(/*WrongPasswordException*/);
+});
 
-@ParameterizedTest
-@ValueSource(ints = {1, 2})
-public void testCompatibilityNewDIDandGetDID(int version) throws DIDException {
-	DIDStore store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
-	RootIdentity identity = store.loadRootIdentity();
+test.each([1,2])("testCompatibilityNewDIDandGetDID(%i)", (version: number)=>{
+	let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir().getAbsolutePath());
+	let identity = store.loadRootIdentity();
 
-	DIDDocument doc = identity.newDid(TestConfig.storePass);
-	assertNotNull(doc);
+	let doc = identity.newDid(TestConfig.storePass);
+	expect(doc).not.toBeNull();
 
 	store.deleteDid(doc.getSubject());
 
-	DID did = identity.getDid(1000);
+	let did = identity.getDid(1000);
 
-	doc = identity.newDid(1000, TestConfig.storePass);
-	assertNotNull(doc);
-	assertEquals(doc.getSubject(), did);
+	doc = identity.newDid(TestConfig.storePass, 1000);
+	expect(doc).not.toBeNull();
+	expect(doc.getSubject().equals(did)).toBeTruthy();
 
 	store.deleteDid(doc.getSubject());
+});
 
-}
+function createDataForPerformanceTest(store: DIDStore) {
+	let props = {
+		"name": "John",
+		"gender": "Male",
+		"nation": "Singapore",
+		"language": "English",
+		"email": "ohn@example.com",
+		"twitter": "@john"
+	};
 
-private void createDataForPerformanceTest(DIDStore store)
-		throws DIDException {
-	Map<String, Object> props= new HashMap<String, Object>();
-	props.put("name", "John");
-	props.put("gender", "Male");
-	props.put("nation", "Singapore");
-	props.put("language", "English");
-	props.put("email", "john@example.com");
-	props.put("twitter", "@john");
+	let identity = store.loadRootIdentity();
 
-	RootIdentity identity = store.loadRootIdentity();
-
-	for (int i = 0; i < 10; i++) {
-		String alias = "my did " + i;
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
+	for (let i = 0; i < 10; i++) {
+		let alias = "my did " + i;
+		let doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias(alias);
-		Issuer issuer = new Issuer(doc);
-		VerifiableCredential.Builder cb = issuer.issueFor(doc.getSubject());
-		VerifiableCredential vc = cb.id("#cred-1")
+		let issuer = new Issuer(doc);
+		let cb = issuer.issueFor(doc.getSubject());
+		let vc = cb.id("#cred-1")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")
 				.properties(props)
 				.seal(TestConfig.storePass);
@@ -578,151 +566,143 @@ private void createDataForPerformanceTest(DIDStore store)
 	}
 }
 
-@ParameterizedTest
-@ValueSource(booleans = {false, true})
-public void testStoreCachePerformance(boolean cached) throws DIDException {
-	Utils.deleteFile(new File(TestConfig.storeRoot));
-	DIDStore store = null;
+test.each([false, true])("testStoreCachePerformance", (cached: boolean)=>{
+	Utils.deleteFile(File.open(TestConfig.storeRoot));
+	let store: DIDStore = null;
 	if (cached)
 		store = DIDStore.open(TestConfig.storeRoot);
 	else
 		store = DIDStore.open(TestConfig.storeRoot, 0, 0);
 
-	String mnemonic =  Mnemonic.getInstance().generate();
-	RootIdentity.create(mnemonic, TestConfig.passphrase,
-			true, store, TestConfig.storePass);
+	let mnemonic = Mnemonic.getInstance().generate();
+	RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
+			store, TestConfig.storePass, true);
 
 	createDataForPerformanceTest(store);
 
-	List<DID> dids = store.listDids();
-	assertEquals(10, dids.size());
+	let dids = store.listDids();
+	expect(10).toEqual(dids.size);
 
-	long start = System.currentTimeMillis();
+	let start = new Date().getTime();
 
-	for (int i = 0; i < 1000; i++) {
-		for (DID did : dids) {
-			DIDDocument doc = store.loadDid(did);
-			assertEquals(did, doc.getSubject());
+	for (let i = 0; i < 1000; i++) {
+		for (let did of dids) {
+			let doc = store.loadDid(did);
+			expect(did.equals(doc.getSubject())).toBeTruthy();
 
-			DIDURL id = new DIDURL(did, "#cred-1");
-			VerifiableCredential vc = store.loadCredential(id);
-			assertEquals(id, vc.getId());
+			let id = new DIDURL(did, "#cred-1");
+			let vc = store.loadCredential(id);
+			expect(id.equals(vc.getId())).toBeTruthy();
 		}
 	}
 
-	long end = System.currentTimeMillis();
+	let end = new Date().getTime();
 
-	log.info("Store loading {} cache took {} milliseconds.",
-			(cached ? "with" : "without"), end - start);
-}
+	log.info("Store loading {} cache took {} milliseconds.", (cached ? "with" : "without"), end - start);
+});
 
-@Test
-public void testMultipleStore() throws DIDException {
-	DIDStore[] stores = new DIDStore[10];
-	DIDDocument[] docs = new DIDDocument[10];
+test("testMultipleStore", ()=>{
+	let stores: DIDStore[] = [];
+	let docs: DIDDocument[] = [];
 
-	for (int i = 0; i < stores.length; i++) {
-		Utils.deleteFile(new File(TestConfig.storeRoot + i));
+	for (let i = 0; i < stores.length; i++) {
+		Utils.deleteFile(File.open(TestConfig.storeRoot + i));
 		stores[i] = DIDStore.open(TestConfig.storeRoot + i);
-		assertNotNull(stores[i]);
-		String mnemonic = Mnemonic.getInstance().generate();
-		RootIdentity.create(mnemonic, "", stores[i], TestConfig.storePass);
+		expect(stores[i]).not.toBeNull();
+		let mnemonic = Mnemonic.getInstance().generate();
+		RootIdentity.createFromMnemonic(mnemonic, "", stores[i], TestConfig.storePass);
 	}
 
-	for (int i = 0; i < stores.length; i++) {
+	for (let i = 0; i < stores.length; i++) {
 		docs[i] = stores[i].loadRootIdentity().newDid(TestConfig.storePass);
-		assertNotNull(docs[i]);
+		expect(docs[i]).not.toBeNull();
 	}
 
-	for (int i = 0; i < stores.length; i++) {
-		DIDDocument doc = stores[i].loadDid(docs[i].getSubject());
-		assertNotNull(doc);
-		assertEquals(docs[i].toString(true), doc.toString(true));
+	for (let i = 0; i < stores.length; i++) {
+		let doc = stores[i].loadDid(docs[i].getSubject());
+		expect(doc).not.toBeNull();
+		expect(docs[i].toString(true)).toStrictEqual(doc.toString(true));
 	}
-}
+});
 
-@Test
-public void testOpenStoreOnExistEmptyFolder() throws DIDException {
-	File emptyFolder = new File(TestConfig.tempDir + File.separator + "DIDTest-EmptyStore");
+test("testOpenStoreOnExistEmptyFolder", ()=>{
+	let emptyFolder = File.open(TestConfig.tempDir + File.SEPARATOR + "DIDTest-EmptyStore");
 	if (emptyFolder.exists())
 		Utils.deleteFile(emptyFolder);
 
 	emptyFolder.mkdirs();
 
-	DIDStore store = DIDStore.open(emptyFolder);
-	assertNotNull(store);
+	let store = DIDStore.open(emptyFolder.getAbsolutePath());
+	expect(store).not.toBeNull();
 
 	store.close();
-}
+});
 
-@Test
-public void testExportAndImportDid() throws DIDException, IOException {
-	File storeDir = new File(TestConfig.storeRoot);
+/*test("testExportAndImportDid", ()=>{
+	let storeDir = File.open(TestConfig.storeRoot);
 
 	testData.getInstantData().getIssuerDocument();
 	testData.getInstantData().getUser1Document();
 	testData.getInstantData().getUser1PassportCredential();
 	testData.getInstantData().getUser1TwitterCredential();
 
-	DID did = store.listDids().get(0);
+	let did = store.listDids().get(0);
 
-	File tempDir = new File(TestConfig.tempDir);
+	let tempDir = File.open(TestConfig.tempDir);
 	tempDir.mkdirs();
-	File exportFile = new File(tempDir, "didexport.json");
+	let exportFile = File.open(tempDir, "didexport.json");
 
-	store.exportDid(did, exportFile, "password", TestConfig.storePass);
+	exportFile.writeText(store.exportDid(did, "password", TestConfig.storePass).serialize(true));
 
-	File restoreDir = new File(tempDir, "restore");
+	let restoreDir = File.open(tempDir, "restore");
 	Utils.deleteFile(restoreDir);
-	DIDStore store2 = DIDStore.open(restoreDir.getAbsolutePath());
+	let store2 = DIDStore.open(restoreDir.getAbsolutePath());
 	store2.importDid(exportFile, "password", TestConfig.storePass);
 
-	String path = "data" + File.separator + "ids" + File.separator + did.getMethodSpecificId();
-	File didDir = new File(storeDir, path);
-	File reDidDir = new File(restoreDir, path);
-	assertTrue(didDir.exists());
-	assertTrue(reDidDir.exists());
-	assertTrue(Utils.equals(reDidDir, didDir));
-}
+	let path = "data" + File.SEPARATOR + "ids" + File.SEPARATOR + did.getMethodSpecificId();
+	let didDir = File.open(storeDir, path);
+	let reDidDir = File.open(restoreDir, path);
+	expect(didDir.exists()).toBeTruthy();
+	expect(reDidDir.exists()).toBeTruthy();
+	expect(Utils.equals(reDidDir, didDir)).toBeTruthy();
+});*/
 
-@Test
-public void testExportAndImportRootIdentity() throws DIDException, IOException {
-	File storeDir = new File(TestConfig.storeRoot);
+/*test("testExportAndImportRootIdentity", ()=>{
+	let storeDir = File.open(TestConfig.storeRoot);
 
 	testData.getInstantData().getIssuerDocument();
 	testData.getInstantData().getUser1Document();
 	testData.getInstantData().getUser1PassportCredential();
 	testData.getInstantData().getUser1TwitterCredential();
 
-	String id = store.loadRootIdentity().getId();
+	let id = store.loadRootIdentity().getId();
 
-	File tempDir = new File(TestConfig.tempDir);
+	let tempDir = File.open(TestConfig.tempDir);
 	tempDir.mkdirs();
-	File exportFile = new File(tempDir, "idexport.json");
+	let exportFile = File.open(tempDir, "idexport.json");
 
 	store.exportRootIdentity(id, exportFile, "password", TestConfig.storePass);
 
-	File restoreDir = new File(tempDir, "restore");
+	let restoreDir = File.open(tempDir, "restore");
 	Utils.deleteFile(restoreDir);
-	DIDStore store2 = DIDStore.open(restoreDir.getAbsolutePath());
+	let store2 = DIDStore.open(restoreDir.getAbsolutePath());
 	store2.importRootIdentity(exportFile, "password", TestConfig.storePass);
 
-	String path = "data" + File.separator + "roots" + File.separator + id;
-	File privateDir = new File(storeDir, path);
-	File rePrivateDir = new File(restoreDir, path);
-	assertTrue(privateDir.exists());
-	assertTrue(rePrivateDir.exists());
-	assertTrue(Utils.equals(rePrivateDir, privateDir));
-}
+	let path = "data" + File.SEPARATOR + "roots" + File.SEPARATOR + id;
+	let privateDir = File.open(storeDir, path);
+	let rePrivateDir = File.open(restoreDir, path);
+	expect(privateDir.exists()).toBeTruthy();
+	expect(rePrivateDir.exists()).toBeTruthy();
+	expect(Utils.equals(rePrivateDir, privateDir)).toBeTruthy();
+});*/
 
-@Test
-public void testExportAndImportStore() throws DIDException, IOException {
+/*test("testExportAndImportStore", ()=>{
 	testData.getRootIdentity();
 
 	// Store test data into current store
 	testData.getInstantData().getIssuerDocument();
-	DIDDocument user = testData.getInstantData().getUser1Document();
-	VerifiableCredential vc = user.getCredential("#profile");
+	let user = testData.getInstantData().getUser1Document();
+	let vc = user.getCredential("#profile");
 	vc.getMetadata().setAlias("MyProfile");
 	vc = user.getCredential("#email");
 	vc.getMetadata().setAlias("Email");
@@ -731,20 +711,20 @@ public void testExportAndImportStore() throws DIDException, IOException {
 	vc = testData.getInstantData().getUser1PassportCredential();
 	vc.getMetadata().setAlias("Passport");
 
-	File tempDir = new File(TestConfig.tempDir);
+	let tempDir = File.open(TestConfig.tempDir);
 	tempDir.mkdirs();
-	File exportFile = new File(tempDir, "storeexport.zip");
+	let exportFile = File.open(tempDir, "storeexport.zip");
 
 	store.exportStore(exportFile, "password", TestConfig.storePass);
 
-	File restoreDir = new File(tempDir, "restore");
+	let restoreDir = File.open(tempDir, "restore");
 	Utils.deleteFile(restoreDir);
-	DIDStore store2 = DIDStore.open(restoreDir.getAbsolutePath());
+	let store2 = DIDStore.open(restoreDir.getAbsolutePath());
 	store2.importStore(exportFile, "password", TestConfig.storePass);
 
-	File storeDir = new File(TestConfig.storeRoot);
+	let storeDir = new File(TestConfig.storeRoot);
 
-	assertTrue(storeDir.exists());
-	assertTrue(restoreDir.exists());
-	assertTrue(Utils.equals(restoreDir, storeDir));
-} */
+	expect(storeDir.exists()).toBeTruthy();
+	expect(restoreDir.exists()).toBeTruthy();
+	expect(Utils.equals(restoreDir, storeDir)).toBeTruthy();
+});*/

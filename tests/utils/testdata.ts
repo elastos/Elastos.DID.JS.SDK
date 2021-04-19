@@ -22,23 +22,24 @@
 
 import {
 	DIDDocument, DIDStore, Mnemonic, RootIdentity,
-	VerifiableCredential, VerifiablePresentation, TransferTicket, Issuer, DIDURL, DID
+	VerifiableCredential, VerifiablePresentation, TransferTicket, Issuer, DIDURL, DID, Exceptions
 } from "../../src/index";
-import { File } from "../../src/filesystemstorage";
+import { Dir, File } from "../../src/filesystemstorage";
 import { TestConfig } from "./testconfig";
 import { Utils } from "./utils";
+import { HDKey } from "../../src/crypto/hdkey";
 
 export class TestData {
 	// HDKey for temporary key generation
-	/* private static HDKey rootKey;
-	private static int index;*/
+	private static rootKey: HDKey;
+	private static index: number;
 
 	store: DIDStore;
 	mnemonic: string;
 	identity: RootIdentity;
 
-	/*private CompatibleData v1;
-	private CompatibleData v2;*/
+	private v1: CompatibleData;
+	private v2: CompatibleData;
 	private instantData: InstantData;
 
 	public constructor() {
@@ -54,16 +55,15 @@ export class TestData {
 		DIDBackend.getInstance().clearCache(); */
 	}
 
-	/* public static synchronized HDKey generateKeypair()
-			throws DIDException {
-		if (rootKey == null) {
-	    	String mnemonic =  Mnemonic.getInstance().generate();
-	    	rootKey = new HDKey(mnemonic, "");
-	    	index = 0;
+	public static generateKeypair(): HDKey {
+		if (this.rootKey == null) {
+	    	let mnemonic =  new Mnemonic().generate();
+	    	this.rootKey = HDKey.newWithMnemonic(mnemonic, "");
+	    	this.index = 0;
 		}
 
-		return rootKey.derive(HDKey.DERIVE_PATH_PREFIX + index++);
-	}*/
+		return this.rootKey.derive(HDKey.DERIVE_PATH_PREFIX + this.index++);
+	}
 
 	public getStore(): DIDStore {
     	return this.store;
@@ -83,22 +83,22 @@ export class TestData {
 		return this.mnemonic;
 	}
 
-	/*public CompatibleData getCompatibleData(int version) {
+	public getCompatibleData(version: number): CompatibleData {
 		switch (version) {
 		case 1:
-			if (v1 == null)
-				v1 = new CompatibleData(version);
-			return v1;
+			if (this.v1 == null)
+				this.v1 = new CompatibleData(this, version);
+			return this.v1;
 
 		case 2:
-			if (v2 == null)
-				v2 = new CompatibleData(version);
-			return v2;
+			if (this.v2 == null)
+				this.v2 = new CompatibleData(this, version);
+			return this.v2;
 
 		default:
-			throw new IllegalArgumentException("Unsupported version");
+			throw new Exceptions.IllegalArgumentException("Unsupported version");
 		}
-	}*/
+	}
 
 	public getInstantData(): InstantData {
 		if (this.instantData == null)
@@ -127,231 +127,215 @@ export class TestData {
 				}
 			}
 		}
+	}*/
+}
+
+class CompatibleData {
+	private dataPath: Dir;
+	private storePath: Dir;
+	private data = {};
+	private version: number;
+
+	public constructor(private testData: TestData, version: number) {
+		this.data = {};
+
+		URL url = this.getClass().getResource("/v" + version);
+		let root = File.open(url.getPath());
+
+		this.dataPath = File.open(root, "/testdata") as Dir;
+		this.storePath = File.open(root, "/teststore") as Dir;
+		this.version = version;
 	}
 
-	public class CompatibleData {
-		private File dataPath;
-		private File storePath;
-		private Map<String, Object> data;
-		private int version;
+	public isLatestVersion(): boolean {
+		return this.version == 2;
+	}
 
-		public CompatibleData(int version) {
-			this.data = new HashMap<String, Object>();
+	private getDidFile(name: string, type: string): File {
+		let fileName = name + ".id";
+		if (type != null)
+			fileName += "." + type;
+		fileName += ".json";
 
-			URL url = this.getClass().getResource("/v" + version);
-			File root = new File(url.getPath());
+		return File.open(this.dataPath, fileName.toString());
+	}
 
-			this.dataPath = new File(root, "/testdata");
-			this.storePath = new File(root, "/teststore");
-			this.version = version;
-		}
+	/*private File getCredentialFile(String did, String vc, String type) {
+		StringBuffer fileName = new StringBuffer();
+		fileName.append(did).append(".vc.").append(vc);
+		if (type != null)
+			fileName.append(".").append(type);
+		fileName.append(".json");
 
-		public boolean isLatestVersion() {
-			return version == 2;
-		}
+		return new File(dataPath, fileName.toString());
+	}
 
-		private File getDidFile(String name, String type) {
-			StringBuffer fileName = new StringBuffer();
-			fileName.append(name).append(".id");
-			if (type != null)
-				fileName.append(".").append(type);
-			fileName.append(".json");
+	private File getPresentationFile(String did, String vp, String type) {
+		StringBuffer fileName = new StringBuffer();
+		fileName.append(did).append(".vp.").append(vp);
+		if (type != null)
+			fileName.append(".").append(type);
+		fileName.append(".json");
 
-			return new File(dataPath, fileName.toString());
-		}
+		return new File(dataPath, fileName.toString());
+	}
+*/
+	private loadText(file: File): string {
+		return file.readText();
+	}
 
-		private File getCredentialFile(String did, String vc, String type) {
-			StringBuffer fileName = new StringBuffer();
-			fileName.append(did).append(".vc.").append(vc);
-			if (type != null)
-				fileName.append(".").append(type);
-			fileName.append(".json");
+	public getDocument(did: string, type: string = null): DIDDocument {
+		let baseKey = "res:did:" + did;
+		let key = type != null ? baseKey + ":" + type : baseKey;
+		if (key in this.data)
+			return this.data[key];
 
-			return new File(dataPath, fileName.toString());
-		}
+		// load the document
+		let doc = DIDDocument.parseContent(this.getDidFile(did, type).readText());
 
-		private File getPresentationFile(String did, String vp, String type) {
-			StringBuffer fileName = new StringBuffer();
-			fileName.append(did).append(".vp.").append(vp);
-			if (type != null)
-				fileName.append(".").append(type);
-			fileName.append(".json");
+		if (!(baseKey in this.data)) {
+			// If not stored before, store it and load private keys
+			this.testData.store.storeDid(doc);
+			let kfs = this.dataPath.listFiles((f) => {
+				return (f.getName().startsWith(did + ".id.") && f.getName().endsWith(".sk"));
+			});
 
-			return new File(dataPath, fileName.toString());
-		}
+			for (let kf of kfs) {
+				let start = did.length + 4;
+				let end = kf.getName().length - 3;
+				let fragment = kf.getName().substring(start, end);
+				let id = new DIDURL(doc.getSubject(), "#" + fragment);
 
-		private String loadText(File file) throws IOException {
-			StringBuilder text = new StringBuilder();
-			char[] buffer = new char[1024];
-			int len;
-
-			BufferedReader input = new BufferedReader(new FileReader(file));
-			while ((len = input.read(buffer)) >= 0)
-				text.append(buffer, 0, len);
-
-			input.close();
-
-			return text.toString();
-		}
-
-		public synchronized DIDDocument getDocument(String did, String type)
-				throws DIDException, IOException {
-			String baseKey = "res:did:" + did;
-			String key = type != null ? baseKey + ":" + type : baseKey;
-			if (data.containsKey(key))
-				return (DIDDocument)data.get(key);
-
-			// load the document
-			DIDDocument doc = DIDDocument.parse(getDidFile(did, type));
-
-			if (!data.containsKey(baseKey)) {
-				// If not stored before, store it and load private keys
-				store.storeDid(doc);
-				File[] kfs = dataPath.listFiles((d, f) -> {
-					return (f.startsWith(did + ".id.") && f.endsWith(".sk"));
-				});
-
-				for (File kf : kfs) {
-					int start = did.length() + 4;
-					int end = kf.getName().length() - 3;
-					String fragment = kf.getName().substring(start, end);
-					DIDURL id = new DIDURL(doc.getSubject(), "#" + fragment);
-
-					byte[] sk = HDKey.deserializeBase58(loadText(kf)).serialize();
-					store.storePrivateKey(id, sk, TestConfig.storePass);
-				}
-
-				switch (did) {
-				case "foobar":
-				case "foo":
-				case "bar":
-				case "baz":
-					doc.publish(getDocument("user1").getDefaultPublicKeyId(), TestConfig.storePass);
-					break;
-
-				default:
-					doc.publish(TestConfig.storePass);
-				}
+				let sk = HDKey.deserializeBase58(this.loadText(kf)).serialize();
+				this.testData.store.storePrivateKey(id, sk, TestConfig.storePass);
 			}
 
-			data.put(key, doc);
-			return doc;
-		}
+			switch (did) {
+			case "foobar":
+			case "foo":
+			case "bar":
+			case "baz":
+				doc.publish(TestConfig.storePass, this.getDocument("user1").getDefaultPublicKeyId());
+				break;
 
-		public DIDDocument getDocument(String did)
-				throws DIDException, IOException {
-			return getDocument(did, null);
-		}
-
-		public synchronized String getDocumentJson(String did, String type)
-				throws IOException {
-			File file = getDidFile(did, type);
-			String key = "res:json:" + file.getName();
-			if (data.containsKey(key))
-				return (String)data.get(key);
-
-			// load the document
-			String text = loadText(file);
-			data.put(key, text);
-			return text;
-		}
-
-		public synchronized VerifiableCredential getCredential(String did, String vc, String type)
-				throws DIDException, IOException {
-			// Load DID document first for verification
-			getDocument(did);
-
-			String baseKey = "res:vc:" + did + ":" + vc;
-			String key = type != null ? baseKey + ":" + type : baseKey;
-			if (data.containsKey(key))
-				return (VerifiableCredential)data.get(key);
-
-			// load the credential
-			VerifiableCredential credential = VerifiableCredential.parse(
-					getCredentialFile(did, vc, type));
-
-			// If not stored before, store it
-			if (!data.containsKey(baseKey))
-				store.storeCredential(credential);
-
-			data.put(key, credential);
-			return credential;
-		}
-
-		public VerifiableCredential getCredential(String did, String vc)
-				throws DIDException, IOException {
-			return getCredential(did, vc, null);
-		}
-
-		public synchronized String getCredentialJson(String did, String vc, String type)
-				throws IOException {
-			File file = getCredentialFile(did, vc, type);
-			String key = "res:json:" + file.getName();
-			if (data.containsKey(key))
-				return (String)data.get(key);
-
-			// load the document
-			String text = loadText(file);
-			data.put(key, text);
-			return text;
-		}
-
-		public synchronized VerifiablePresentation getPresentation(String did, String vp, String type)
-				throws DIDException, IOException {
-			// Load DID document first for verification
-			getDocument(did);
-
-			String baseKey = "res:vp:" + did + ":" + vp;
-			String key = type != null ? baseKey + ":" + type : baseKey;
-			if (data.containsKey(key))
-				return (VerifiablePresentation)data.get(key);
-
-			// load the presentation
-			VerifiablePresentation presentation = VerifiablePresentation.parse(
-					getPresentationFile(did, vp, type));
-
-			data.put(key, presentation);
-			return presentation;
-		}
-
-		public VerifiablePresentation getPresentation(String did, String vp)
-				throws DIDException, IOException {
-			return getPresentation(did, vp, null);
-		}
-
-		public synchronized String getPresentationJson(String did, String vp, String type)
-				throws IOException {
-			File file = getPresentationFile(did, vp, type);
-			String key = "res:json:" + file.getName();
-			if (data.containsKey(key))
-				return (String)data.get(key);
-
-			// load the document
-			String text = loadText(file);
-			data.put(key, text);
-			return text;
-		}
-
-		public File getStoreDir() {
-			return storePath;
-		}
-
-		public void loadAll() throws DIDException, IOException {
-			getDocument("issuer");
-			getDocument("user1");
-			getDocument("user2");
-			getDocument("user3");
-
-			if (version == 2) {
-				getDocument("user4");
-				getDocument("examplecorp");
-				getDocument("foobar");
-				getDocument("foo");
-				getDocument("bar");
-				getDocument("baz");
+			default:
+				doc.publish(TestConfig.storePass);
 			}
 		}
-	}*/
+
+		this.data[key] = doc;
+		return doc;
+	}
+
+/*
+	public synchronized String getDocumentJson(String did, String type)
+			throws IOException {
+		File file = getDidFile(did, type);
+		String key = "res:json:" + file.getName();
+		if (data.containsKey(key))
+			return (String)data.get(key);
+
+		// load the document
+		String text = loadText(file);
+		data.put(key, text);
+		return text;
+	}
+
+	public synchronized VerifiableCredential getCredential(String did, String vc, String type)
+			throws DIDException, IOException {
+		// Load DID document first for verification
+		getDocument(did);
+
+		String baseKey = "res:vc:" + did + ":" + vc;
+		String key = type != null ? baseKey + ":" + type : baseKey;
+		if (data.containsKey(key))
+			return (VerifiableCredential)data.get(key);
+
+		// load the credential
+		VerifiableCredential credential = VerifiableCredential.parse(
+				getCredentialFile(did, vc, type));
+
+		// If not stored before, store it
+		if (!data.containsKey(baseKey))
+			store.storeCredential(credential);
+
+		data.put(key, credential);
+		return credential;
+	}
+
+	public VerifiableCredential getCredential(String did, String vc)
+			throws DIDException, IOException {
+		return getCredential(did, vc, null);
+	}
+
+	public synchronized String getCredentialJson(String did, String vc, String type)
+			throws IOException {
+		File file = getCredentialFile(did, vc, type);
+		String key = "res:json:" + file.getName();
+		if (data.containsKey(key))
+			return (String)data.get(key);
+
+		// load the document
+		String text = loadText(file);
+		data.put(key, text);
+		return text;
+	}
+
+	public synchronized VerifiablePresentation getPresentation(String did, String vp, String type)
+			throws DIDException, IOException {
+		// Load DID document first for verification
+		getDocument(did);
+
+		String baseKey = "res:vp:" + did + ":" + vp;
+		String key = type != null ? baseKey + ":" + type : baseKey;
+		if (data.containsKey(key))
+			return (VerifiablePresentation)data.get(key);
+
+		// load the presentation
+		VerifiablePresentation presentation = VerifiablePresentation.parse(
+				getPresentationFile(did, vp, type));
+
+		data.put(key, presentation);
+		return presentation;
+	}
+
+	public VerifiablePresentation getPresentation(String did, String vp)
+			throws DIDException, IOException {
+		return getPresentation(did, vp, null);
+	}
+
+	public synchronized String getPresentationJson(String did, String vp, String type)
+			throws IOException {
+		File file = getPresentationFile(did, vp, type);
+		String key = "res:json:" + file.getName();
+		if (data.containsKey(key))
+			return (String)data.get(key);
+
+		// load the document
+		String text = loadText(file);
+		data.put(key, text);
+		return text;
+	}
+*/
+	public getStoreDir(): File {
+		return this.storePath;
+	}
+
+	public loadAll() {
+		this.getDocument("issuer");
+		this.getDocument("user1");
+		this.getDocument("user2");
+		this.getDocument("user3");
+
+		if (this.version == 2) {
+			this.getDocument("user4");
+			this.getDocument("examplecorp");
+			this.getDocument("foobar");
+			this.getDocument("foo");
+			this.getDocument("bar");
+			this.getDocument("baz");
+		}
+	}
 }
 
 export class InstantData {
@@ -529,7 +513,7 @@ export class InstantData {
 			db.addCredential(vcEmail);
 			doc = db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
-			doc.publish(null, TestConfig.storePass);
+			doc.publish(TestConfig.storePass);
 
 			this.idUser1 = doc;
 		}
@@ -537,57 +521,59 @@ export class InstantData {
 		return this.idUser1;
 	}
 
-/*	public synchronized VerifiableCredential getUser1PassportCredential() throws DIDException {
-		if (vcUser1Passport == null) {
-			DIDDocument doc = getUser1Document();
+	public getUser1PassportCredential(): VerifiableCredential {
+		if (this.vcUser1Passport == null) {
+			let doc = this.getUser1Document();
 
-			DIDURL id = new DIDURL(doc.getSubject(), "#passport");
+			let id = new DIDURL(doc.getSubject(), "#passport");
 
-			Issuer selfIssuer = new Issuer(doc);
-			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(doc.getSubject());
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("nation", "Singapore");
-			props.put("passport", "S653258Z07");
+			let props = {
+				"nation": "Singapore",
+				"passpord": "S653258Z07"
+			}
 
-			VerifiableCredential vcPassport = cb.id(id)
+			let vcPassport = cb.id(id)
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
 			vcPassport.getMetadata().setAlias("Passport");
-			store.storeCredential(vcPassport);
+			this.testData.store.storeCredential(vcPassport);
 
-			vcUser1Passport = vcPassport;
+			this.vcUser1Passport = vcPassport;
 		}
 
-		return vcUser1Passport;
+		return this.vcUser1Passport;
 	}
 
-	public synchronized VerifiableCredential getUser1TwitterCredential() throws DIDException {
-		if (vcUser1Twitter == null) {
-			DIDDocument doc = getUser1Document();
+	public getUser1TwitterCredential(): VerifiableCredential{
+		if (this.vcUser1Twitter == null) {
+			let doc = this.getUser1Document();
 
-			DIDURL id = new DIDURL(doc.getSubject(), "#twitter");
+			let id = new DIDURL(doc.getSubject(), "#twitter");
 
-			Issuer kycIssuer = new Issuer(idIssuer);
-			VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+			let kycIssuer = new Issuer(this.idIssuer);
+			let cb = kycIssuer.issueFor(doc.getSubject());
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("twitter", "@john");
+			let props = {
+				"twitter": "@john"
+			}
 
-			VerifiableCredential vcTwitter = cb.id(id)
+			let vcTwitter = cb.id(id)
 					.type("InternetAccountCredential", "TwitterCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
 			vcTwitter.getMetadata().setAlias("Twitter");
-			store.storeCredential(vcTwitter);
+			this.testData.store.storeCredential(vcTwitter);
 
-			vcUser1Twitter = vcTwitter;
+			this.vcUser1Twitter = vcTwitter;
 		}
 
-		return vcUser1Twitter;
+		return this.vcUser1Twitter;
 	}
-
+/*
 	public synchronized VerifiableCredential getUser1JsonCredential() throws DIDException {
 		if (vcUser1Json == null) {
 			DIDDocument doc = getUser1Document();

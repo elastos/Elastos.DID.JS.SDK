@@ -98,8 +98,14 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	private metadata?: AbstractMetadata;
 
 	// Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
-	/* private */ constructor() {
-		//super();
+	/* private */ constructor(baseRef: DID | string | null = null, didUrlOrString: DIDURL | string | null = null) {
+		if (baseRef === null && didUrlOrString === null) {
+			// Equivalent of the internal empty constructor "new DIDURL()" - does nothing
+		}
+		else {
+			// Equivalent of DIDURL.valueOf()
+			return DIDURL.valueOf(baseRef, didUrlOrString);
+		}
 	}
 
 	public static newWithDID(did: DID): DIDURL {
@@ -174,6 +180,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	}
 
 	// Deep-copy constructor
+	// Equivalent to new DIDURL(did, didurl)
 	public static valueOf(baseRef: DID | string | null, didUrlOrString: DIDURL | string | null = null): DIDURL {
 		checkArgument(didUrlOrString != null, "Invalid url");
 

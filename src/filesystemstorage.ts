@@ -48,6 +48,7 @@ type StorageEntry = {
  */
 type FileEntry = StorageEntry & {
 	data: string;
+	size: number; // file size in bytes
 }
 
 /**
@@ -97,6 +98,12 @@ export class File { // Exported, for test cases only
 		return localStorage.getItem(File.pathWithPrefix(this.path)) != null;
 	}
 
+	// Entry size in bytes
+	public length(): number {
+		let entry = this.getStorageEntry<FileEntry>();
+		return entry.size;
+	}
+
 	public getAbsolutePath(): string {
 		return this.path;
 	}
@@ -142,7 +149,8 @@ export class File { // Exported, for test cases only
 		// Save the file content
 		let fileEntry: FileEntry = {
 			type: "file",
-			data: text
+			data: text,
+			size: text.length
 		};
 		localStorage.setItem(File.pathWithPrefix(this.path), JSON.stringify(fileEntry));
 
@@ -223,6 +231,10 @@ export class Dir extends File { // Exported, for test cases only
 
 	public createNewFile() {
 		throw new DIDStorageException("Directories must be created with mkdir()");
+	}
+
+	public length(): number {
+		throw new DIDStorageException("Directories don't have a length()");
 	}
 
 	/**

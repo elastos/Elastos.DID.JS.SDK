@@ -9,6 +9,7 @@ import { Mnemonic } from "./mnemonic";
 import { TransferTicket } from "./transferticket";
 import { Issuer } from "./issuer";
 import { DIDURL } from "./didurl";
+import * as Exceptions from "./exceptions/exceptions";
 
 export {
 	DID,
@@ -20,7 +21,8 @@ export {
 	Mnemonic,
 	TransferTicket,
 	Issuer,
-	DIDURL
+	DIDURL,
+	Exceptions
 
 	// TODO
 }

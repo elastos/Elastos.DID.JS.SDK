@@ -91,6 +91,10 @@ export class Mnemonic {
 		"korean": wordlists.korean
     }
 
+	public static getInstance(language: string = Mnemonic.ENGLISH): Mnemonic {
+		return new Mnemonic(language);
+	}
+
 	public /* private */ constructor(private language: string = Mnemonic.ENGLISH) {
 		if (!(language in Mnemonic.WORDLISTS))
 			throw new MnemonicException("Unsupported language for mnemonic "+language);

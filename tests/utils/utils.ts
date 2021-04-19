@@ -20,55 +20,100 @@
  * SOFTWARE.
  */
 
+import { Comparable } from "../../src/comparable";
 import { Dir, File } from "../../src/filesystemstorage";
 
-export class Utils {
-	/* private static String[] removeIgnoredFiles(String[] names) {
-		List<String> lst = new ArrayList<String>(Arrays.asList(names));
-		lst.remove(".DS_Store");
-		return lst.toArray(new String[0]);
+/* declare global {
+    interface Array<T> {
+        remove(obj: T extends Comparable<T>): boolean;
+    }
+}
+
+Array.prototype.remove = function(obj: Comparable<any>) {
+    if (obj.equals === undefined)
+        throw new Error("Array remove() can be called only on Comparable objects");
+
+    let foundIndex = this.findIndex(item => item.equals(obj));
+    if (foundIndex < 0)
+        return false;
+
+    this.splice(foundIndex, 1);
+    return true;
+};*/
+
+class Arrays {
+	public static remove(array: string[], entry: string) {
+		let idx = array.indexOf(entry);
+		if (idx >= 0)
+			array.splice(idx, 1);
 	}
 
-	public static boolean equals(File file1, File file2) throws IOException {
+	public static equals(array1: string[], array2: string[]): boolean {
+		let workArray1 = Array.from(array1);
+		let workArray2 = Array.from(array2);
+
+		if (workArray1.length !== workArray2.length)
+			return false;
+
+		workArray1.sort();
+		workArray2.sort();
+
+		for (let i=0; i<workArray1.length; i++) {
+			if (workArray1[i] !== workArray2[i])
+				return false;
+		}
+
+		return true;
+	}
+}
+
+export class Utils {
+	private static removeIgnoredFiles(names: string[]): string[] {
+		let list = Array.from(names);
+		Arrays.remove(list, ".DS_Store");
+		return list;
+	}
+
+	public static equals(file1: File, file2: File): boolean {
 		if (file1 == null && file2 == null)
 			return true;
 
-		if (file1 == null ^ file2 == null)
-			return false;
+		/* if (file1 == null ^ file2 == null)
+			return false; */
 
-		if (file1.compareTo(file2) == 0)
-			return true;
+		/* if (file1.compareTo(file2) == 0) // TODO TS: IF THE FILES HAVE THE SAME NAME WE RETURN TRUE?
+			return true; */
 
-		if (file1.exists() ^ file2.exists())
+		if (file1.exists() !== file2.exists())
 			return false;
 
 		if (!file1.exists())
 			return true;
 
-		if (file1.isDirectory() ^ file2.isDirectory())
+		if (file1.isDirectory() !== file2.isDirectory())
 			return false;
 
 		if (file1.isDirectory()) {
-			File dir1 = file1;
-			File dir2 = file2;
+			let dir1 = file1 as Dir;
+			let dir2 = file2 as Dir;
 
-			String[] files1 = removeIgnoredFiles(dir1.list());
-			String[] files2 = removeIgnoredFiles(dir2.list());
+			let files1 = this.removeIgnoredFiles(dir1.list());
+			let files2 = this.removeIgnoredFiles(dir2.list());
 
 			if (files1.length != files2.length)
 				return false;
 
-			Arrays.sort(files1);
-			Arrays.sort(files2);
+			files1.sort();
+			files2.sort();
 			if (!Arrays.equals(files1, files2))
 				return false;
 
-			String[] files = files1;
-			for (int i = 0; i < files.length; i++) {
-				File f1 = new File(dir1, files[i]);
-				File f2 = new File(dir2, files[i]);
+			let files = files1;
+			for (let i = 0; i < files.length; i++) {
+				let f1 = File.open(dir1, files[i]);
+				let f2 = File.open(dir2, files[i]);
 
-				if (!equals(f1, f2))
+				if (!this.equals(f1, f2))
 					return false;
 			}
 
@@ -77,28 +122,9 @@ export class Utils {
 			if (file1.length() != file2.length())
 				return false;
 
-			// BufferedInputStream for better performance
-	        InputStream in1 = new BufferedInputStream(new FileInputStream(file1));
-	        InputStream in2 = new BufferedInputStream(new FileInputStream(file2));
-
-	        try {
-		        int ch1 = in1.read();
-		        int ch2;
-		        while (-1 != ch1) {
-		            ch2 = in2.read();
-		            if (ch1 != ch2)
-		                return false;
-
-		            ch1 = in1.read();
-		        }
-
-		        return in2.read() == -1;
-	        } finally {
-	        	in1.close();
-	        	in2.close();
-	        }
+	        return file1.readText() === file2.readText(); // BAD PERF
 		}
-	}*/
+	}
 
 	public static deleteFile(file: File) {
 		if (file.isDirectory()) {
