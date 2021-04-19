@@ -5,4 +5,9 @@ export class SHA256 {
         let fullInput = inputs.reduce((acc, curr) => Buffer.concat([acc, curr]), Buffer.from(""));
         return crypto.Hash.sha256(fullInput).toString();
     }
+
+    public static encodeToBuffer(...inputs: Buffer[]): Buffer {
+        let fullInput = inputs.reduce((acc, curr) => Buffer.concat([acc, curr]), Buffer.from(""));
+        return crypto.Hash.sha256(fullInput);
+    }
 }

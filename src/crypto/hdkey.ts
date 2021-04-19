@@ -55,16 +55,16 @@ export class HDKey {
 
 	private constructor(private key: DeterministicKey) {}
 
-	public getPrivateKeyBytes(): string {
-		return this.key.privateKey.toString();
+	public getPrivateKeyBytes(): Buffer {
+		return this.key.privateKey;
 	}
 
 	public getPrivateKeyBase58(): string {
 		return encodeBase58(this.getPrivateKeyBytes());
 	}
 
-	public getPublicKeyBytes(): string {
-		return this.key.publicKey.toString();
+	public getPublicKeyBytes(): Buffer {
+		return this.key.publicKey;
 	}
 
 	public getPublicKeyBase58(): string {

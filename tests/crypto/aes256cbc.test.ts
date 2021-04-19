@@ -20,60 +20,52 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.crypto;
+import {Aes256cbc} from "../../src/crypto/aes256cbc"
+import {BASE64} from "../../src/crypto/base64"
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.jupiter.api.Test;
 
-public class Aes256cbcTest {
-	private static final String passwd = "secret";
-	private static final String plain = "The quick brown fox jumps over the lazy dog.";
-	private static final String cipherBase64 = "TBimuq42IyD6FsoZK0AoCOt75uiL_gEepZTpgu59RYSV-NR-fqxsYfx0cyyzGacX";
+describe('Aes256cbc Encryption Tests', () => {
+	const passwd: string = "secret";
+	const plain: string = "The quick brown fox jumps over the lazy dog."
+	const cipherBase64u: string = "TBimuq42IyD6FsoZK0AoCOt75uiL_gEepZTpgu59RYSV-NR-fqxsYfx0cyyzGacX";
 
-	@Test
-	public void testEncrypt() throws Exception {
-		byte[] cipher = Aes256cbc.encrypt(plain.getBytes(), passwd);
-		byte[] expected = Base64.decode(cipherBase64,
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+	test('encrypt method', () => {
+		let cipherResult: Buffer = Aes256cbc.encrypt(plain, passwd)
+		let base64: string = BASE64.fromUrlFormat(cipherBase64u)
+		let base64Buffer: Buffer = Buffer.from(base64, "base64")
+		
+		expect(cipherResult)
+		.toStrictEqual(base64Buffer)
+	});
+	
+	test('decrypt method', () => {
+		let base64: string = BASE64.fromUrlFormat(cipherBase64u)
+		let base64Buffer: Buffer = Buffer.from(base64, "base64")
+		let expectedBuffer: Buffer = Buffer.from(plain, "utf-8")
+		let decipherResult: Buffer = Aes256cbc.decrypt(base64Buffer, passwd)
+		
+		
+		expect(decipherResult)
+		.toStrictEqual(expectedBuffer)
+	});
+	
+	test('encryptToBase64 method', () => {
+		let cipherResult = Aes256cbc.encryptToBase64(plain, passwd)
+		expect(cipherResult)
+		.toBe(cipherBase64u);
+	});
+	
+	test('decryptFromBase64 method', () => {
+		let decipherResult = Aes256cbc.decryptFromBase64(cipherBase64u, passwd)
+		expect(decipherResult)
+		.toBe(plain);
+	});
+	
+	test('Compatibility', () => {
+		let cipherResult = Aes256cbc.encryptToBase64("brown bear what do you see", "password")
+		expect(cipherResult)
+		.toBe("uK7mHw5JHRD2WS-BmA2b_4mUPD9WhttY9uAC_aw9Tdc");
+	});
+})
 
-		assertArrayEquals(expected, cipher);
-	}
-
-	@Test
-	public void testDecrypt() throws Exception {
-		byte[] cipher = Base64.decode(cipherBase64,
-				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-		byte[] plainBytes = Aes256cbc.decrypt(cipher, passwd);
-		byte[] expected = plain.getBytes();
-
-		assertArrayEquals(expected, plainBytes);
-	}
-
-	@Test
-	public void testEncryptToBase64() throws Exception {
-		String cipher = Aes256cbc.encryptToBase64(plain.getBytes(), passwd);
-
-		assertEquals(cipherBase64, cipher);
-	}
-
-	@Test
-	public void testDecryptFromBase64() throws Exception {
-		byte[] plainBytes = Aes256cbc.decryptFromBase64(cipherBase64, passwd);
-		byte[] expected = plain.getBytes();
-
-		assertArrayEquals(expected, plainBytes);
-	}
-
-	@Test
-	public void testCompatibility() throws Exception {
-		String plain = "brown bear what do you see";
-		String passwd = "password";
-		String base64 = "uK7mHw5JHRD2WS-BmA2b_4mUPD9WhttY9uAC_aw9Tdc";
-
-		String cipher = Aes256cbc.encryptToBase64(plain.getBytes(), passwd);
-
-		assertEquals(base64, cipher);
-	}
-}

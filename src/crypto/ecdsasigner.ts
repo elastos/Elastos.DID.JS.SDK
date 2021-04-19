@@ -20,24 +20,42 @@
  * SOFTWARE.
  */
 
-import { KJUR, hextob64u, BAtohex, ArrayBuffertohex, b64toBA, b64utob64 } from "jsrsasign";
-import { crypto, PublicKey } from "bitcore-lib";
+import jsrsasign from "jsrsasign";
+import { crypto, PrivateKey, PublicKey } from "bitcore-lib";
 import BN from "bn.js";
-import { uint8ArrayCopy } from "../utils";
+import { SHA256 } from "./sha256";
+// import { uint8ArrayCopy } from "../utils";
 
-crypto.Point.setCurve('p256');
+
 
 export class EcdsaSigner {
+
+
+
+	private static uint8ArrayCopy(src: Uint8Array, srcIndex: number, dest: Uint8Array, destIndex: number, length: number): void {
+		let values = [...src.slice(srcIndex, srcIndex + length)];
+		dest.set(values, destIndex);
+	}
+
+
+
 	// NOTE: Ned to convert bitcoin spec private key to ECDSA spec key before signing.
-	public static sign(privateKey: string, digest: string): string {
-		let ec = new KJUR.crypto.ECDSA({curve: "secp256r1"});
-        ec.setPrivateKeyHex(privateKey);
-        let dataSigner = new KJUR.crypto.Signature({ alg: "SHA256withECDSA" });
+	public static sign(privateKey: Buffer | string, digest: Buffer): string {
+
+		let ec = new jsrsasign.KJUR.crypto.ECDSA({curve: "secp256r1"});
+
+		if (privateKey instanceof Buffer){
+			ec.setPrivateKeyHex(privateKey.toString("hex"));
+		} else {
+			ec.setPrivateKeyHex(privateKey);
+		}
+        
+        let dataSigner = new jsrsasign.KJUR.crypto.Signature({ alg: "SHA256withECDSA" });
         dataSigner.init(ec);
-        dataSigner.updateHex(digest);
+        dataSigner.updateHex(digest.toString("hex"));
 
         let signed = dataSigner.sign();
-        let compact = KJUR.crypto.ECDSA.asn1SigToConcatSig(signed);
+        let compact = jsrsasign.KJUR.crypto.ECDSA.asn1SigToConcatSig(signed);
         let r = new BN(compact.slice(0, compact.length / 2), "hex", "le");
         let s = new BN(compact.slice(compact.length / 2), "hex", "le");
 
@@ -45,10 +63,11 @@ export class EcdsaSigner {
         if (s.isNeg()) s = s.ineg();
 
         let buffer64 = new Uint8Array(64);
-        uint8ArrayCopy(r.toArrayLike(Buffer, "le"), 0, buffer64, 0, 32);
-        uint8ArrayCopy(s.toArrayLike(Buffer, "le"), 0, buffer64, 32, 32);
-
-        const signedData = hextob64u(ArrayBuffertohex(buffer64));
+        EcdsaSigner.uint8ArrayCopy(r.toArrayLike(Buffer, "le"), 0, buffer64, 0, 32);
+        EcdsaSigner.uint8ArrayCopy(s.toArrayLike(Buffer, "le"), 0, buffer64, 32, 32);
+		
+		let hexBuffer = jsrsasign.ArrayBuffertohex(buffer64.buffer)
+        let signedData = jsrsasign.hextob64u(hexBuffer);
         return signedData;
 
 		/* Java:
@@ -70,29 +89,30 @@ export class EcdsaSigner {
 		System.arraycopy(r, 0, sig, 0, r.length);
 		System.arraycopy(s, 0, sig, r.length, s.length);
 
+
 		return sig.toString();*/
 	}
 
-	public static signData(privateKey: string, ...data: Buffer[]): string {
-		return this.sign(privateKey, this.sha256Digest(...data));
+	public static signData(privateKey: Buffer | string, ...data: Buffer[]): string {
+		return this.sign(privateKey, SHA256.encodeToBuffer(...data));
 	}
 
-	public static verify(publicKey: Buffer | string, signature: string, data: string): boolean {
+	public static verify(publicKey: Buffer | string, signature: string, data: Buffer): boolean {
 		if (publicKey instanceof Buffer)
 			publicKey = publicKey.toString();
 
-		let pubKeyObj = PublicKey.fromString(publicKey);
-        let signer = new KJUR.crypto.Signature({ alg: 'SHA256withECDSA' });
+		
+        let signer = new jsrsasign.KJUR.crypto.Signature({ alg: 'SHA256withECDSA' });
 		//new KJUR.crypto.Signature()
 
-		signer.init(new KJUR.crypto.ECDSA({ pub: publicKey, curve: 'secp256r1' }));
+		signer.init(new jsrsasign.KJUR.crypto.ECDSA({ pub: publicKey, curve: 'secp256r1' }));
         // Java: signer.init( { xy: this.uncompress(pubKeyObj).toString('hex'), curve: 'secp256r1' });
-        signer.updateHex(data);
-        let signatureBA = b64toBA(b64utob64(signature))
+        signer.updateHex(data.toString("hex"));
+        let signatureBA = jsrsasign.b64toBA(jsrsasign.b64utob64(signature))
 
         let r = new BN(signatureBA.slice(0, 32), 'hex', "le");
         let s = new BN(signatureBA.slice(32), 'hex', "le");
-        let asn1 = KJUR.crypto.ECDSA.hexRSSigToASN1Sig(BAtohex(r.toArray("le")), BAtohex(s.toArray("le")));
+        let asn1 = jsrsasign.KJUR.crypto.ECDSA.hexRSSigToASN1Sig(jsrsasign.BAtohex(r.toArray("le")), jsrsasign.BAtohex(s.toArray("le")));
 
         return signer.verify(asn1);
 
@@ -138,30 +158,11 @@ export class EcdsaSigner {
         return Buffer.concat([Buffer.from([0x04]), xbuf, ybuf]);
     } */
 
-	public static verifyData(publicKey: string, sig: string, ...data: Buffer[]): boolean {
-		return this.verify(publicKey, sig, this.sha256Digest(...data));
+	public static verifyData(publicKey: Buffer | string, sig: string, ...data: Buffer[]): boolean {
+		return this.verify(publicKey, sig, SHA256.encodeToBuffer(...data));
 	}
-
-	public static sha256Digest(...inputs: Buffer[]): string {
-		// Flatten inputs into a big string - NOT good for memory - to be improved
-		let fullInput = inputs.reduce((prev, curr) => prev + curr, "");
-		return crypto.Hash.sha256(Buffer.from(fullInput)).toString();
-
-		/* Java:
-		crypto.Hash.sha256()
-		byte digest[] = new byte[32];
-
-		SHA256Digest sha256 = new SHA256Digest();
-
-		for (byte[] input : inputs)
-			sha256.update(input, 0, input.length);
-
-		sha256.doFinal(digest, 0);
-
-		return digest;
-		*/
-	}
-
+	
+	
 	/* private static BigInteger parseBigIntegerPositive(BigInteger b, int bitlen) {
 		if (b.compareTo(BigInteger.ZERO) < 0)
 			b = b.add(BigInteger.ONE.shiftLeft(bitlen));
