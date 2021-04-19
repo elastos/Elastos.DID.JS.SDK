@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,29 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.exception.InvalidKeyException;
-import org.elastos.did.utils.DIDTestExtension;
-import org.elastos.did.utils.TestConfig;
-import org.elastos.did.utils.TestData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-@ExtendWith(DIDTestExtension.class)
+/* @ExtendWith(DIDTestExtension.class)
 public class IssuerTest {
 	private TestData testData;
 	private DIDStore store;
@@ -340,3 +318,4 @@ public class IssuerTest {
 		assertTrue(vc.isValid());
 	}
 }
+ */

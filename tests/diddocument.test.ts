@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,49 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.elastos.did.DIDDocument.PublicKey;
-import org.elastos.did.DIDDocument.Service;
-import org.elastos.did.crypto.Base58;
-import org.elastos.did.crypto.HDKey;
-import org.elastos.did.exception.AlreadySignedException;
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.exception.DIDNotUpToDateException;
-import org.elastos.did.exception.DIDObjectAlreadyExistException;
-import org.elastos.did.exception.DIDObjectNotExistException;
-import org.elastos.did.exception.IllegalUsage;
-import org.elastos.did.exception.NotPrimitiveDIDException;
-import org.elastos.did.utils.DIDTestExtension;
-import org.elastos.did.utils.TestConfig;
-import org.elastos.did.utils.TestData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
-
-@ExtendWith(DIDTestExtension.class)
+/* @ExtendWith(DIDTestExtension.class)
 public class DIDDocumentTest {
 	private TestData testData;
 	private DIDStore store;
@@ -1396,47 +1354,6 @@ public class DIDDocumentTest {
 		assertEquals(3, doc.getAuthenticationKeyCount());
 		assertEquals(1, doc.getAuthorizationKeyCount());
 	}
-
-    /*
-	@Test
-	public void testGetJceKeyPair() throws DIDException, IOException {
-		testData.getRootIdentity();
-
-		DIDDocument doc = testData.loadTestDocument();
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		KeyPair keypair = doc.getKeyPair(doc.getDefaultPublicKey());
-		assertNotNull(keypair);
-		assertNotNull(keypair.getPublic());
-		assertNull(keypair.getPrivate());
-
-		keypair = doc.getKeyPair(doc.getDefaultPublicKey(), TestConfig.storePass);
-		assertNotNull(keypair);
-		assertNotNull(keypair.getPublic());
-		assertNotNull(keypair.getPrivate());
-
-		keypair = doc.getKeyPair("key2");
-		assertNotNull(keypair);
-		assertNotNull(keypair.getPublic());
-		assertNull(keypair.getPrivate());
-
-		keypair = doc.getKeyPair("key2", TestConfig.storePass);
-		assertNotNull(keypair);
-		assertNotNull(keypair.getPublic());
-		assertNotNull(keypair.getPrivate());
-
-		keypair = doc.getKeyPair("recovery");
-		assertNotNull(keypair);
-		assertNotNull(keypair.getPublic());
-		assertNull(keypair.getPrivate());
-
-		Exception e = assertThrows(InvalidKeyException.class, () -> {
-			doc.getKeyPair("recovery", TestConfig.storePass);
-		});
-		assertEquals("Don't have private key", e.getMessage());
-	}
-	*/
 
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
@@ -4264,3 +4181,4 @@ public class DIDDocumentTest {
     	assertFalse(doc.isDeactivated());
 	}
 }
+ */

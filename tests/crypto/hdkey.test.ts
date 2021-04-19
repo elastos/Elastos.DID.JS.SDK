@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,26 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.crypto;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.security.GeneralSecurityException;
-import java.security.KeyPair;
-import java.security.Signature;
-
-import org.bitcoinj.core.Sha256Hash;
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.utils.TestData;
-import org.junit.jupiter.api.Test;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-
-public class HDKeyTest {
+/* public class HDKeyTest {
 	// Test HD key algorithm, keep compatible with SPV.
 
 	@Test
@@ -166,3 +147,4 @@ public class HDKeyTest {
 		}
 	}
 }
+ */

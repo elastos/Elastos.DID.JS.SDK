@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,37 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.crypto;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.Security;
-import java.security.Signature;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.RSAKeyGenParameterSpec;
-import java.security.spec.X509EncodedKeySpec;
-
-import org.bitcoinj.core.Sha256Hash;
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.utils.TestData;
-import org.elastos.did.utils.Utils;
-import org.spongycastle.asn1.pkcs.PrivateKeyInfo;
-import org.spongycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.spongycastle.crypto.AsymmetricCipherKeyPair;
-import org.spongycastle.crypto.generators.RSAKeyPairGenerator;
-import org.spongycastle.crypto.params.RSAKeyGenerationParameters;
-import org.spongycastle.crypto.util.PrivateKeyInfoFactory;
-import org.spongycastle.crypto.util.SubjectPublicKeyInfoFactory;
-
-public class KeyPairTest {
+/* public class KeyPairTest {
 	final static int KEY_SIZE = 1024;
 
 	static {
@@ -113,3 +83,4 @@ public class KeyPairTest {
 		}
 	}
 }
+ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,46 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-
-import org.elastos.did.DIDStore.ConflictHandle;
-import org.elastos.did.backend.DIDBiography;
-import org.elastos.did.backend.DIDTransaction;
-import org.elastos.did.backend.IDChainRequest;
-import org.elastos.did.crypto.HDKey;
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.utils.DIDTestExtension;
-import org.elastos.did.utils.TestConfig;
-import org.elastos.did.utils.TestData;
-import org.elastos.did.utils.Utils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-@TestMethodOrder(OrderAnnotation.class)
+/* @TestMethodOrder(OrderAnnotation.class)
 @ExtendWith(DIDTestExtension.class)
 public class IDChainOperationsTest {
 	private static TestData testData;
@@ -1131,3 +1092,4 @@ public class IDChainOperationsTest {
 	//@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
 
 }
+ */

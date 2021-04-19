@@ -1,23 +1,5 @@
-package org.elastos.did;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import org.elastos.did.exception.DIDAlreadyExistException;
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.utils.DIDTestExtension;
-import org.elastos.did.utils.TestConfig;
-import org.elastos.did.utils.TestData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-@ExtendWith(DIDTestExtension.class)
+/* @ExtendWith(DIDTestExtension.class)
 public class RootIdentityTest {
 	private TestData testData;
 	private DIDStore store;
@@ -177,3 +159,4 @@ public class RootIdentityTest {
 	}
 
 }
+ */

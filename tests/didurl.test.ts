@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,20 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import org.elastos.did.exception.MalformedDIDURLException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-public class DIDURLTest {
+/* public class DIDURLTest {
 	private static final String testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
 	private static final String params = ";elastos:foo=testvalue;bar=123;keyonly;elastos:foobar=12345";
 	private static final String path = "/path/to/the/resource";
@@ -338,3 +325,4 @@ public class DIDURLTest {
 		assertFalse(url.equals("did:elastos:1234567890#test"));
 	}
 }
+ */

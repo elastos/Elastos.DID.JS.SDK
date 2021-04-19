@@ -20,13 +20,7 @@
  * SOFTWARE.
  */
 
-package org.elastos.did.crypto;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.junit.jupiter.api.Test;
-
-public class Base64Test {
+/* public class Base64Test {
 	private static String base64output[] = {
 	    "AA",
 	    "AAE",
@@ -318,3 +312,4 @@ public class Base64Test {
 		}
 	}
 }
+ */
