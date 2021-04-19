@@ -93,6 +93,7 @@ import {
     Serializer,
     Deserializer
 } from "./serializers";
+import { JSONObject, JSONValue } from "./json";
 
 const log = new Logger("DIDDocument");
 
@@ -1208,7 +1209,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         // Find default key
         for (let pk of this.publicKeys.values()) {
             if (pk.getController().equals(this.getSubject())) {
-                let address = HDKey.toAddress(pk.getPublicKeyBytes().toString());
+                let address = HDKey.toAddress(pk.getPublicKeyBytes());
                 if (address.equals(this.getSubject().getMethodSpecificId())) {
                     this.defaultPublicKey = pk;
                     if (!pk.isAuthenticationKey()) {
@@ -1758,7 +1759,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         if (from) {
             this.checkIsPrimitive();
-            this.checkAttachedStore();    
+            this.checkAttachedStore();
             if (!source)
                 throw new DIDNotFoundException(from.toString());
             if (source.isDeactivated())
@@ -2393,7 +2394,7 @@ export namespace DIDDocument {
         private type: string;
         @JsonProperty({ value: DIDDocument.SERVICE_ENDPOINT }) @JsonClassType({ type: () => [String] })
         private endpoint: string;
-        private properties: Map<string, any>;
+        private properties: JSONObject;
 
         /**
          * Constructs Service with the given value.
@@ -2405,16 +2406,16 @@ export namespace DIDDocument {
         constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) id: DIDURL,
             @JsonProperty({ value: DIDDocument.TYPE, required: true }) type: string,
             @JsonProperty({ value: DIDDocument.SERVICE_ENDPOINT, required: true }) endpoint: string,
-            properties: Map<string, any> = null) {
+            properties: JSONObject = null) {
             this.id = id;
             this.type = type;
             this.endpoint = endpoint;
-            this.properties = properties ? properties : new Map<string, any>();
+            this.properties = properties ? properties : {};
 
             if (properties.size > 0) {
-                this.properties.delete(DIDDocument.ID);
-                this.properties.delete(DIDDocument.TYPE);
-                this.properties.delete(DIDDocument.SERVICE_ENDPOINT);
+                delete this.properties[DIDDocument.ID];
+                delete this.properties[DIDDocument.TYPE];
+                delete this.properties[DIDDocument.SERVICE_ENDPOINT];
             }
         }
 
@@ -2454,7 +2455,7 @@ export namespace DIDDocument {
          */
         @JsonAnyGetter()
         @JsonPropertyOrder({ alphabetic: true })
-        private _getProperties(): Map<string, any> {
+        private _getProperties(): JSONObject {
             return this.properties;
         }
 
@@ -2465,19 +2466,19 @@ export namespace DIDDocument {
          * @param value the property value
          */
         @JsonAnySetter()
-        private setProperty(name: string, value: object) {
+        private setProperty(name: string, value: JSONValue) {
             if (name.equals(DIDDocument.ID) || name.equals(DIDDocument.TYPE) || name.equals(DIDDocument.SERVICE_ENDPOINT))
                 return;
 
             if (this.properties == null)
-                this.properties = new Map<string, any>();
+                this.properties = {};
 
             this.properties[name] = value;
         }
 
-        public getProperties(): ImmutableMap<string, object> {
+        public getProperties(): ImmutableMap<string, JSONValue> { // TODO: JSONObject instead of immutablemap?
             // TODO: make it unmodifiable recursively
-            return ImmutableMap(this.properties != null ? this.properties : new Map());
+            return ImmutableMap(this.properties != null ? this.properties : {});
         }
     }
 
@@ -2783,7 +2784,7 @@ export namespace DIDDocument {
 
             this.document.publicKeys.set(key.getId(), key);
             if (this.document.defaultPublicKey == null) {
-                let address = HDKey.toAddress(key.getPublicKeyBytes().toString());
+                let address = HDKey.toAddress(key.getPublicKeyBytes());
                 if (address.equals(this.getSubject().getMethodSpecificId())) {
                     this.document.defaultPublicKey = key;
                     key.setAuthenticationKey(true);
@@ -2830,7 +2831,7 @@ export namespace DIDDocument {
          * @param force the owner of public key
          * @return the DID Document Builder object
          */
-        public removePublicKey(id: DIDURL, force: boolean): Builder {
+        public removePublicKey(id: DIDURL | string, force: boolean = false): Builder {
             this.checkNotSealed();
             checkArgument(id != null, "Invalid publicKey id");
 
@@ -2867,39 +2868,6 @@ export namespace DIDDocument {
             return this;
         }
 
-        /**
-         * Remove PublicKey matched the specified key id.
-         *
-         * @param id the key id
-         * @param force force = true, the matched key must be removed.
-         *              force = false, the matched key must not be removed if this key is authentiacation
-         *              or authorization key.
-         * @return the DID Document Builder object
-         */
-        /* public removePublicKey(id: string, force: boolean): Builder {
-            return removePublicKey(canonicalId(id), force);
-        } */
-
-        /**
-         * Remove PublicKey matched the specified key id without force module.
-         *
-         * @param id the key id
-         * @return the DID Document Builder object
-         */
-        /* public removePublicKey(id: DIDURL): Builder {
-            return removePublicKey(id, false);
-        } */
-
-        /**
-         * Remove PublicKey matched the specified key id without force module.
-         *
-         * @param id the key id
-         * @return the DID Document Builder object
-         */
-        /* public removePublicKey(id: string): Builder {
-            return removePublicKey(id, false);
-        } */
-
         // Java: addAuthenticationKey()
         public addExistingAuthenticationKey(id: DIDURL): Builder {
             checkArgument(id != null, "Invalid publicKey id");
@@ -2930,8 +2898,12 @@ export namespace DIDDocument {
          * @param id the key id
          * @return the DID Document Builder object
          */
-        public addAuthenticationKey(id: DIDURL, pk: string): Builder {
+        public addAuthenticationKey(id: DIDURL | string, pk: string): Builder {
             this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (typeof id === "string")
+                id = this.canonicalId(id);
 
             checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
                 "Invalid publicKey id");
@@ -2943,28 +2915,6 @@ export namespace DIDDocument {
 
             return this;
         }
-
-        /**
-         * Add the exist Public Key matched the key id to be Authentication key.
-         *
-         * @param id the key id string
-         * @return the DID Document Builder object
-         */
-        /* public addAuthenticationKey(id: string): Builder {
-            return addAuthenticationKey(canonicalId(id));
-        } */
-
-        /**
-         * Add the PublicKey named the key id to be an authentication key.
-         * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
-         *
-         * @param id the key id string
-         * @param pk the public key base58 string
-         * @return the DID Document Builder
-         */
-        /* public addAuthenticationKey(id: string, pk: string): Builder {
-            return addAuthenticationKey(canonicalId(id), pk);
-        } */
 
         /**
          * Remove Authentication Key matched the given id.
@@ -3279,7 +3229,7 @@ export namespace DIDDocument {
          */
         // TODO: Use our new "Json" type instead of a map
         // Java: addCredential()
-        public createAndAddCredential(id: DIDURL, types: string[] = null, subject: Map<string, any> = null, expirationDate: Date = null, storepass: string): Builder {
+        public createAndAddCredential(id: DIDURL, types: string[] = null, subject: JSONObject = null, expirationDate: Date = null, storepass: string): Builder {
             this.checkNotSealed();
             checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
                 "Invalid publicKey id");
@@ -3385,9 +3335,13 @@ export namespace DIDDocument {
          * @param endpoint the service point's adderss
          * @return the DID Document Builder
          */
-        // TODO: Use JSON object (~~ type json = {[key: string]:json}), not map, for properties?
-        public addService(id: DIDURL, type: string, endpoint: string, properties: Map<string, null> = null): Builder {
+        public addService(id: DIDURL | string, type: string, endpoint: string, properties: JSONObject = null): Builder {
             this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (typeof id === "string")
+                id = this.canonicalId(id);
+
             checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
                 "Invalid publicKey id");
             checkArgument(type != null && !type.isEmpty(), "Invalid type");
@@ -3407,14 +3361,6 @@ export namespace DIDDocument {
 
             return this;
         }
-
-        /* public addService(id: string, type: string, endpoint: string, properties: Map<string, Object>): Builder {
-            return addService(canonicalId(id), type, endpoint, properties);
-        }
-
-        public addService(id: DIDURL, type: string, endpoint: string): Builder {
-            return addService(id, type, endpoint, null);
-        } */
 
         /**
          * Add Service.

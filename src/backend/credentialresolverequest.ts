@@ -32,7 +32,7 @@ export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 
 	public static METHOD_NAME = "resolvecredential";
 
-	@JsonCreator
+	// TODO Java - @JsonCreator
 	public constructor(
 		@JsonProperty({value: CredentialResolveRequest.ID}) requestId: string
 	) {
@@ -70,7 +70,7 @@ class Parameters implements Hashable {
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	public /* private */ issuer: DID;
 
-	@JsonCreator
+	// TODO Java - @JsonCreator
 	public constructor(
 		@JsonProperty({value: CredentialResolveRequest.PARAMETER_ID, required: true})id: DIDURL,
 		issuer: DID = null

@@ -277,11 +277,16 @@ export class DIDBackend {
 				throw new DIDResolveException("Invalid DID biography, invalid trancations.");
 
 			// Avoid resolve current DID recursively
-			let request = new DIDRequest(tx.getRequest(), {
+			let request = new class extends DIDRequest {
+				constructor(request: DIDRequest) {
+					super();
+					this.constructWithIDChainRequest(request);
+				}
+
 				getSignerDocument() {
 					return this.getDocument() == null ? doc : this.getDocument();
 				}
-			});
+			}(tx.getRequest());
 
 			if (!request.isValid())
 				throw new DIDResolveException("Invalid DID biography, transaction signature mismatch.");
@@ -355,11 +360,15 @@ export class DIDBackend {
 				let vc = bio.getTransaction(1).getRequest().getCredential();
 
 				// Avoid resolve current credential recursively
-				let request = CredentialRequest.newWithCredentialRequest(tx.getRequest(), {
+				let request = new class extends CredentialRequest {
+					constructor(request: CredentialRequest) {
+						super();
+						this.constructWithIDChainRequest(request);
+					}
 					getCredential() {
 						return vc;
 					}
-				});
+				}(tx.getRequest());
 
 				if (!request.isValid())
 					throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");

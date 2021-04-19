@@ -26,7 +26,7 @@ import { DIDDocument } from "../diddocument";
 import { DIDURL } from "../didurl";
 import { InvalidKeyException, MalformedIDChainRequestException, UnknownInternalException } from "../exceptions/exceptions";
 import { TransferTicket } from "../transferticket";
-import { IDChainRequest, Operation, Proof } from "./idchaindrequest";
+import { IDChainRequest } from "./idchaindrequest";
 
 /**
  * The DID request class.
@@ -36,19 +36,19 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	private did: DID;
 	private doc: DIDDocument;
 
-	private static newWithOperation(operation: Operation): DIDRequest {
+	private static newWithOperation(operation: IDChainRequest.Operation): DIDRequest {
 		let didRequest = new DIDRequest();
 		didRequest.constructWithOperation(operation);
 		return didRequest;
 	}
 
-	private static newWithPreviousTxId(operation: Operation, previousTxid: string): DIDRequest {
+	private static newWithPreviousTxId(operation: IDChainRequest.Operation, previousTxid: string): DIDRequest {
 		let didRequest = new DIDRequest();
 		didRequest.constructWithPreviousTxId(operation, previousTxid);
 		return didRequest;
 	}
 
-	private static newWithTransferTicket(operation: Operation, ticket: TransferTicket): DIDRequest {
+	private static newWithTransferTicket(operation: IDChainRequest.Operation, ticket: TransferTicket): DIDRequest {
 		let didRequest = new DIDRequest();
 		didRequest.constructWithTransferTicket(operation, ticket);
 		return didRequest;
@@ -71,7 +71,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static create(doc: DIDDocument, signKey: DIDURL, storepass: string): DIDRequest {
-		let request = DIDRequest.newWithOperation(Operation.CREATE);
+		let request = DIDRequest.newWithOperation(IDChainRequest.Operation.CREATE);
 		request.setPayload(doc);
 		try {
 			request.seal(signKey, storepass);
@@ -94,7 +94,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static update(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string): DIDRequest {
-		let request = DIDRequest.newWithPreviousTxId(Operation.UPDATE, previousTxid);
+		let request = DIDRequest.newWithPreviousTxId(IDChainRequest.Operation.UPDATE, previousTxid);
 		request.setPayload(doc);
 		try {
 			request.seal(signKey, storepass);
@@ -117,7 +117,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static transfer(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string): DIDRequest {
-		let request = DIDRequest.newWithTransferTicket(Operation.TRANSFER, ticket);
+		let request = DIDRequest.newWithTransferTicket(IDChainRequest.Operation.TRANSFER, ticket);
 		request.setPayload(doc);
 		try {
 			request.seal(signKey, storepass);
@@ -140,7 +140,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static deactivate(doc: DIDDocument, signKey: DIDURL, storepass: string): DIDRequest {
-		let request = DIDRequest.newWithOperation(Operation.DEACTIVATE);
+		let request = DIDRequest.newWithOperation(IDChainRequest.Operation.DEACTIVATE);
 		request.setPayload(doc);
 		try {
 			request.seal(signKey, storepass);
@@ -165,7 +165,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 */
 	// NOTE: Also deactivate() in Java
 	public static deactivateTarget(target: DIDDocument, targetSignKey: DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): DIDRequest {
-		let request = DIDRequest.newWithOperation(Operation.DEACTIVATE);
+		let request = DIDRequest.newWithOperation(IDChainRequest.Operation.DEACTIVATE);
 		request.setPayload(target);
 		try {
 			request.sealTarget(targetSignKey, doc, signKey, storepass);
@@ -218,7 +218,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 			this.did = this.doc.getSubject();
 			this.doc = this.doc;
 
-			if (!this.getHeader().getOperation().equals(Operation.DEACTIVATE)) {
+			if (!this.getHeader().getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
 				let json = this.doc.toString(true);
 
 				this.setPayload(CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(json)));
@@ -244,16 +244,16 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 			throw new MalformedIDChainRequestException("Unsupported specification");
 
 		let operation = header.getOperation();
-		if (operation.equals(Operation.CREATE)) {}
-		else if (operation.equals(Operation.UPDATE)) {
+		if (operation.equals(IDChainRequest.Operation.CREATE)) {}
+		else if (operation.equals(IDChainRequest.Operation.UPDATE)) {
 			if (header.getPreviousTxid() == null || header.getPreviousTxid() === "")
 				throw new MalformedIDChainRequestException("Missing previousTxid");
 		}
-		else if (operation.equals(Operation.TRANSFER)) {
+		else if (operation.equals(IDChainRequest.Operation.TRANSFER)) {
 			if (header.getTicket() == null || header.getTicket() === "")
 				throw new MalformedIDChainRequestException("Missing ticket");
 		}
-		else if (operation.equals(Operation.DEACTIVATE)) {
+		else if (operation.equals(IDChainRequest.Operation.DEACTIVATE)) {
 		}
 		else {
 			throw new MalformedIDChainRequestException("Invalid operation " + header.getOperation().toString());
@@ -268,9 +268,9 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 			throw new MalformedIDChainRequestException("Missing proof");
 
 		try {
-			if (!header.getOperation().equals(Operation.DEACTIVATE)) {
+			if (!header.getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
 				let json = CryptoJS.enc.Base64.parse(payload).toString();
-				this.doc = DIDDocument.parse(json);
+				this.doc = DIDDocument.parse(json, DIDDocument);
 				this.did = this.doc.getSubject();
 			} else {
 				this.did = new DID(payload);
@@ -290,8 +290,8 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		if (this.getPayload() == null || this.getPayload() === "")
 			throw new MalformedIDChainRequestException("Missing payload");
 
-		let signature = this.doc.sign(signKey, storepass, this.getSigningInputs());
-		this.setProof(new Proof(signKey, signature));
+		let signature = this.doc.signWithId(signKey, storepass, ...this.getSigningInputs());
+		this.setProof(new DIDRequest.Proof(signKey, signature));
 	}
 
 	// NOTE: Also seal() in Java
@@ -305,8 +305,8 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		if (this.getPayload() == null || this.getPayload().isEmpty())
 			throw new MalformedIDChainRequestException("Missing payload");
 
-		let signature = doc.sign(signKey, storepass, this.getSigningInputs());
-		this.setProof(new Proof(targetSignKey, signature));
+		let signature = doc.signWithId(signKey, storepass, ...this.getSigningInputs());
+		this.setProof(new DIDRequest.Proof(targetSignKey, signature));
 	}
 
 	protected getSignerDocument(): DIDDocument {

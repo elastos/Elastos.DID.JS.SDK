@@ -474,7 +474,8 @@ export class FileSystemStorage implements DIDStorage {
 		}
 
 		try {
-			let metadata = DIDStore.Metadata.parse(metadataFile, DIDStore.Metadata.class);
+			let metadataContent = metadataFile.readText();
+			let metadata = DIDStore.Metadata.parse<DIDStore.Metadata>(metadataContent, DIDStore.Metadata);
 
 			if (!metadata.getType().equals(DIDStore.DID_STORE_TYPE))
 				throw new DIDStorageException("Unknown DIDStore type");
@@ -573,7 +574,7 @@ export class FileSystemStorage implements DIDStorage {
 			let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
 			let metadata: DIDStore.Metadata = null;
 			if (file.exists())
-				metadata = DIDStore.Metadata.parse(file, DIDStore.Metadata.class);
+				metadata = DIDStore.Metadata.parse<DIDStore.Metadata>(file.readText(), DIDStore.Metadata);
 
 			return metadata;
 		} catch (e) {
@@ -609,7 +610,7 @@ export class FileSystemStorage implements DIDStorage {
 			let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
 			let metadata: RootIdentity.Metadata = null;
 			if (file.exists())
-				metadata = RootIdentity.Metadata.parse(file, RootIdentity.Metadata.class);
+				metadata = RootIdentity.Metadata.parse<RootIdentity.Metadata>(file.readText(), RootIdentity.Metadata);
 
 			return metadata;
 		} catch (e) {
@@ -772,7 +773,7 @@ export class FileSystemStorage implements DIDStorage {
 			let file = this.getDidMetadataFile(did, false);
 			let metadata: DIDMetadata = null;
 			if (file.exists())
-				metadata = DIDMetadata.parse(file, DIDMetadata.class);
+				metadata = DIDMetadata.parse<DIDMetadata>(file.readText(), DIDMetadata);
 
 			return metadata;
 		} catch (e) {
@@ -797,7 +798,7 @@ export class FileSystemStorage implements DIDStorage {
 			if (!file.exists())
 				return null;
 
-			return DIDDocument.parse(file);
+			return DIDDocument.parse<DIDDocument>(file.readText(), DIDDocument);
 		} catch (e) {
 			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load DID document error: " + did, e);
@@ -874,7 +875,7 @@ export class FileSystemStorage implements DIDStorage {
 			if (!file.exists())
 				return null;
 
-			return CredentialMetadata.parse(file, CredentialMetadata.class);
+			return CredentialMetadata.parse<CredentialMetadata>(file.readText(), CredentialMetadata);
 		} catch (e) {
 			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load credential metadata error: " + id, e);
@@ -897,7 +898,7 @@ export class FileSystemStorage implements DIDStorage {
 			if (!file.exists())
 				return null;
 
-			return VerifiableCredential.parse(file);
+			return VerifiableCredential.parseContent(file.readText());
 		} catch (e) {
 			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load credential error: " + id, e);

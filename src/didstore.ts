@@ -1961,7 +1961,7 @@ export namespace DIDStore {
 			this.put(Metadata.VERSION, DIDStore.DID_STORE_VERSION);
 		}
 
-		protected getType(): string {
+		public /* protected */ getType(): string {
 			return this.get(Metadata.TYPE);
 		}
 

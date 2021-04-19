@@ -57,7 +57,7 @@ export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Paramet
 
 	public toString(): string {
 		let builder = new DIDURL.Builder(this.getParameters().did);
-		builder.setQueryParameter(DIDResolveRequest.PARAMETER_ALL, String.valueOf(this.getParameters().all));
+		builder.setQueryParameter(DIDResolveRequest.PARAMETER_ALL, this.getParameters().all ? "true":"false");
 		return builder.build().toString();
 	}
 }

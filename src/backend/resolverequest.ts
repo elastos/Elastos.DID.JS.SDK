@@ -80,7 +80,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
 		return this.params === rr.params;
 	}
 
-	public static parse<T extends DIDEntity<any>>(content: JsonNode, clazz: Class<T>): T {
+	public static parse<T extends DIDEntity<any>>(content: string, clazz: Class<T>): T {
 		return DIDEntity.parse(content, clazz);
 	}
 }

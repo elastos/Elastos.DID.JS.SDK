@@ -72,7 +72,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 	private proofs: Map<DID, Proof>;
 
-	protected constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
+	public /* protected */ constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
 			@JsonProperty({value: TransferTicket.TO, required: true}) to: DID,
 			@JsonProperty({value: TransferTicket.TXID, required: true}) txid: string) {
 		super();
@@ -319,8 +319,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		this._proofs = null;
 
 		let json = this.serialize(true);
-		let sig = controller.sign(storepass, json.getBytes());
-		let proof = new Proof(signKey, sig);
+		let sig = controller.signWithStorePass(storepass, json.getBytes());
+		let proof = Proof.newWithDIDURL(signKey, sig);
 		this.proofs.set(proof.getVerificationMethod().getDid(), proof);
 
 		this._proofs = Array.from(this.proofs).map(([k, v]) => v);
@@ -334,9 +334,9 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @return the TransferTicket object.
 	 * @throws DIDSyntaxException if a parse error occurs.
 	 */
-	public static parse(content: string): TransferTicket {
+	public static parseContent(content: string): TransferTicket {
 		try {
-			return DIDEntity.parse(content, TransferTicket.class);
+			return DIDEntity.parse<TransferTicket>(content, TransferTicket);
 		} catch (e) {
 			// DIDSyntaxException
 			if (e instanceof MalformedTransferTicketException)
@@ -444,11 +444,11 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		 this.signature = signature;
 	 }
 
-	 protected static newWithDIDURL(method: DIDURL, signature: string): Proof {
+	 public /* protected */ static newWithDIDURL(method: DIDURL, signature: string): Proof {
 		 let proof = new Proof(
 			Constants.DEFAULT_PUBLICKEY_TYPE,
 			method,
-			Calendar.getInstance(Constants.UTC).getTime(),
+			new Date(),
 			signature);
 
 		 return proof;
@@ -490,8 +490,12 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		 return this.signature;
 	 }
 
+	 public equals(proof: Proof): boolean {
+		return this.compareTo(proof) === 0;
+	 }
+
 	 public compareTo(proof: Proof): number {
-		 let rc = (int)(this.created.getTime() - proof.created.getTime());
+		 let rc = (this.created.getTime() - proof.created.getTime());
 		 if (rc == 0)
 			 rc = this.verificationMethod.compareTo(proof.verificationMethod);
 		 return rc;

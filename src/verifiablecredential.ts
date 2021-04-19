@@ -41,7 +41,7 @@ import { AlreadySealedException, CredentialAlreadyExistException, CredentialExpi
 import { Issuer } from "./issuer";
 import { Logger } from "./logger";
 import { checkArgument } from "./utils";
-import { JSONValue } from "./json";
+import { JSONObject, JSONValue } from "./json";
 
 const log = new Logger("VerifiableCredential");
 
@@ -1021,9 +1021,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return the VerifiableCredential object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public static parse(content: string): VerifiableCredential {
+	public static parseContent(content: string): VerifiableCredential {
 		try {
-			return parse(content, VerifiableCredential.class);
+			return this.parse(content, VerifiableCredential);
 		} catch (e) {
 			// DIDSyntaxException
 			if (e instanceof MalformedCredentialException)
@@ -1413,7 +1413,7 @@ export namespace VerifiableCredential {
 		 * @param properties the subject content
 		 * @return the Builder object
 		 */
-		public properties(properties: Map<string, Object>): Builder {
+		public properties(properties: JSONObject): Builder {
 			this.checkNotSealed();
 
 			this.credential.subject.properties.clear();
@@ -1421,8 +1421,8 @@ export namespace VerifiableCredential {
 			if (properties == null || properties.size == 0)
 				return this;
 
-				properties.forEach((v, k) => this.credential.subject.properties.set(k, v));
-				this.credential.subject.properties.delete(VerifiableCredential.ID);
+			Object.entries(properties).forEach((e) => this.credential.subject.properties.set(e[0], e[1]));
+			this.credential.subject.properties.delete(VerifiableCredential.ID);
 			return this;
 		}
 
@@ -1492,7 +1492,7 @@ export namespace VerifiableCredential {
 			this.sanitize();
 
 			let json = this.credential.serialize(true);
-			let sig = this.issuer.sign(storepass, json);
+			let sig = this.issuer.sign(storepass, json.getBytes());
 			let proof = new VerifiableCredential.Proof(this.issuer.getSignKey(), sig);
 			this.credential.proof = proof;
 

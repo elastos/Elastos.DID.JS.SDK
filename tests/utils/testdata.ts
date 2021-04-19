@@ -20,7 +20,10 @@
  * SOFTWARE.
  */
 
-import { DIDDocument, DIDStore, Mnemonic, RootIdentity } from "../../src/index";
+import {
+	DIDDocument, DIDStore, Mnemonic, RootIdentity,
+	VerifiableCredential, VerifiablePresentation, TransferTicket, Issuer, DIDURL, DID
+} from "../../src/index";
 import { File } from "../../src/filesystemstorage";
 import { TestConfig } from "./testconfig";
 import { Utils } from "./utils";
@@ -30,9 +33,9 @@ export class TestData {
 	/* private static HDKey rootKey;
 	private static int index;*/
 
-	private store: DIDStore;
-	private mnemonic: string;
-	private identity: RootIdentity;
+	store: DIDStore;
+	mnemonic: string;
+	identity: RootIdentity;
 
 	/*private CompatibleData v1;
 	private CompatibleData v2;*/
@@ -99,7 +102,7 @@ export class TestData {
 
 	public getInstantData(): InstantData {
 		if (this.instantData == null)
-			this.instantData = new InstantData();
+			this.instantData = new InstantData(this);
 
 		return this.instantData;
 	}
@@ -352,104 +355,107 @@ export class TestData {
 }
 
 export class InstantData {
-	/*private DIDDocument idIssuer;
-	private DIDDocument idUser1;
-	private DIDDocument idUser2;
-	private DIDDocument idUser3;
-	private DIDDocument idUser4;
+	private idIssuer: DIDDocument;
+	private idUser1: DIDDocument;
+	private idUser2: DIDDocument;
+	private idUser3: DIDDocument;
+	private idUser4: DIDDocument;
 
-	private VerifiableCredential vcUser1Passport;	// Issued by idIssuer
-	private VerifiableCredential vcUser1Twitter;	// Self-proclaimed
-	private VerifiableCredential vcUser1Json;		// Issued by idIssuer with complex JSON subject
-	private VerifiablePresentation vpUser1Nonempty;
-	private VerifiablePresentation vpUser1Empty;
+	private vcUser1Passport: VerifiableCredential;	// Issued by idIssuer
+	private vcUser1Twitter: VerifiableCredential;	// Self-proclaimed
+	private vcUser1Json: VerifiableCredential;		// Issued by idIssuer with complex JSON subject
+	private vpUser1Nonempty: VerifiablePresentation;
+	private vpUser1Empty: VerifiablePresentation;
 
-	private DIDDocument idExampleCorp; 	// Controlled by idIssuer
-	private DIDDocument idFooBar; 		// Controlled by User1, User2, User3 (2/3)
-	private DIDDocument idFoo; 			// Controlled by User1, User2 (2/2)
-	private DIDDocument idBar;			// Controlled by User1, User2, User3 (3/3)
-	private DIDDocument idBaz;			// Controlled by User1, User2, User3 (1/3)
+	private idExampleCorp: DIDDocument; 	// Controlled by idIssuer
+	private idFooBar: DIDDocument; 		// Controlled by User1, User2, User3 (2/3)
+	private idFoo: DIDDocument; 			// Controlled by User1, User2 (2/2)
+	private idBar: DIDDocument;			// Controlled by User1, User2, User3 (3/3)
+	private idBaz: DIDDocument;			// Controlled by User1, User2, User3 (1/3)
 
-	private VerifiableCredential vcFooBarServices;	// Self-proclaimed
-	private VerifiableCredential vcFooBarLicense;	// Issued by idExampleCorp
-	private VerifiableCredential vcFooEmail;		// Issued by idIssuer
+	private vcFooBarServices: VerifiableCredential;	// Self-proclaimed
+	private vcFooBarLicense: VerifiableCredential;	// Issued by idExampleCorp
+	private vcFooEmail: VerifiableCredential;		// Issued by idIssuer
 
-	private VerifiablePresentation vpFooBarNonempty;
-	private VerifiablePresentation vpFooBarEmpty;
+	private vpFooBarNonempty: VerifiablePresentation;
+	private vpFooBarEmpty: VerifiablePresentation;
 
-	private VerifiableCredential vcUser1JobPosition;// Issued by idExampleCorp
+	private vcUser1JobPosition: VerifiableCredential;// Issued by idExampleCorp
 
-	private TransferTicket ttFooBar;
-	private TransferTicket ttBaz;*/
+	private ttFooBar: TransferTicket;
+	private ttBaz: TransferTicket;
+
+	constructor(private testData: TestData) {}
 
 	public getIssuerDocument(): DIDDocument {
 		if (this.idIssuer == null) {
-			this.getRootIdentity();
+			this.testData.getRootIdentity();
 
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("Issuer");
 
-			Issuer selfIssuer = new Issuer(doc);
-			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(doc.getSubject());
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("name", "Test Issuer");
-			props.put("nation", "Singapore");
-			props.put("language", "English");
-			props.put("email", "issuer@example.com");
+			let props = {
+				name: "Test Issuer",
+				nation: "Singapore",
+				language: "English",
+				email: "issuer@example.com"
+			}
 
-			VerifiableCredential vc = cb.id("#profile")
+			let vc = cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
 
-			DIDDocument.Builder db = doc.edit();
+			let db = doc.edit();
 			db.addCredential(vc);
 
-			HDKey key = TestData.generateKeypair();
-			DIDURL id = new DIDURL(doc.getSubject(), "#key2");
+			let key = TestData.generateKeypair();
+			let id = DIDURL.valueOf(doc.getSubject(), "#key2");
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
-			store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+			this.testData.store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 
 			// No private key for testKey
 			key = TestData.generateKeypair();
-			id = new DIDURL(doc.getSubject(), "#testKey");
+			id = DIDURL.valueOf(doc.getSubject(), "#testKey");
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 
 			// No private key for recovery
 			key = TestData.generateKeypair();
-			id = new DIDURL(doc.getSubject(), "#recovery");
+			id = DIDURL.valueOf(doc.getSubject(), "#recovery");
 			db.addAuthorizationKey(id, new DID("did:elastos:" + key.getAddress()),
 					key.getPublicKeyBase58());
 
 			doc = db.seal(TestConfig.storePass);
-			store.storeDid(doc);
+			this.testData.store.storeDid(doc);
 			doc.publish(TestConfig.storePass);
 
-			idIssuer = doc;
+			this.idIssuer = doc;
 		}
 
-		return idIssuer;
+		return this.idIssuer;
 	}
-/*
-	public synchronized DIDDocument getUser1Document() throws DIDException {
-		if (idUser1 == null) {
-			getIssuerDocument();
 
-			DIDDocument doc = identity.newDid(TestConfig.storePass);
+	public getUser1Document(): DIDDocument {
+		if (this.idUser1 == null) {
+			this.getIssuerDocument();
+
+			let doc = this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User1");
 
 			// Test document with two embedded credentials
-			DIDDocument.Builder db = doc.edit();
+			let db = doc.edit();
 
-			HDKey temp = TestData.generateKeypair();
+			let temp = TestData.generateKeypair();
 			db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
-			store.storePrivateKey(new DIDURL(doc.getSubject(), "#key2"),
+			this.testData.store.storePrivateKey(DIDURL.valueOf(doc.getSubject(), "#key2"),
 					temp.serialize(), TestConfig.storePass);
 
 			temp = TestData.generateKeypair();
 			db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
-			store.storePrivateKey(new DIDURL(doc.getSubject(), "#key3"),
+			this.testData.store.storePrivateKey(DIDURL.valueOf(doc.getSubject(), "#key3"),
 					temp.serialize(), TestConfig.storePass);
 
 			temp = TestData.generateKeypair();
@@ -462,58 +468,58 @@ export class InstantData {
 			db.addService("#vcr", "CredentialRepositoryService",
 					"https://did.example.com/credentials");
 
-			Map<String, Object> map = new HashMap<String, Object>();
-			map.put("abc", "helloworld");
-			map.put("foo", 123);
-			map.put("bar", "foobar");
-			map.put("foobar", "lalala...");
-			map.put("date", Calendar.getInstance().getTime());
-			map.put("ABC", "Helloworld");
-			map.put("FOO", 678);
-			map.put("BAR", "Foobar");
-			map.put("FOOBAR", "Lalala...");
-			map.put("DATE", Calendar.getInstance().getTime());
+			let map = {
+				abc: "helloworld",
+				foo: 123,
+				bar: "foobar",
+				date: new Date(),
+				ABC: "Helloworld",
+				FOO: 678,
+				BAR: "Foobar",
+				FOOBAR: "Lalala...",
+				DATE: new Date()
+			};
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("abc", "helloworld");
-			props.put("foo", 123);
-			props.put("bar", "foobar");
-			props.put("foobar", "lalala...");
-			props.put("date", Calendar.getInstance().getTime());
-			props.put("map", map);
-			props.put("ABC", "Helloworld");
-			props.put("FOO", 678);
-			props.put("BAR", "Foobar");
-			props.put("FOOBAR", "Lalala...");
-			props.put("DATE", Calendar.getInstance().getTime());
-			props.put("MAP", map);
+			let props: any = {
+				abc: "helloworld",
+				foo: 123,
+				bar: "foobar",
+				date: new Date(),
+				ABC: "Helloworld",
+				FOO: 678,
+				BAR: "Foobar",
+				FOOBAR: "Lalala...",
+				DATE: new Date(),
+				MAP: map
+			};
 
 			db.addService("#carrier", "CarrierAddress",
 					"carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d", map);
 
-			Issuer selfIssuer = new Issuer(doc);
-			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(doc.getSubject());
 
-			props = new HashMap<String, Object>();
-			props.put("name", "John");
-			props.put("gender", "Male");
-			props.put("nation", "Singapore");
-			props.put("language", "English");
-			props.put("email", "john@example.com");
-			props.put("twitter", "@john");
+			props = {
+				"name": "John",
+				"gender": "Male",
+				"nation": "Singapore",
+				"language": "English",
+				"email": "john@example.com",
+				"twitter": "@john"
+			}
 
-			VerifiableCredential vcProfile = cb.id("#profile")
+			let vcProfile = cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
 
-			Issuer kycIssuer = new Issuer(idIssuer);
+			let kycIssuer = new Issuer(this.idIssuer);
 			cb = kycIssuer.issueFor(doc.getSubject());
 
 			props.clear();
 			props.put("email", "john@example.com");
 
-			VerifiableCredential vcEmail = cb.id("#email")
+			let vcEmail = cb.id("#email")
 					.type("BasicProfileCredential",
 							"InternetAccountCredential", "EmailCredential")
 					.properties(props)
@@ -522,16 +528,16 @@ export class InstantData {
 			db.addCredential(vcProfile);
 			db.addCredential(vcEmail);
 			doc = db.seal(TestConfig.storePass);
-			store.storeDid(doc);
-			doc.publish(TestConfig.storePass);
+			this.testData.store.storeDid(doc);
+			doc.publish(null, TestConfig.storePass);
 
-			idUser1 = doc;
+			this.idUser1 = doc;
 		}
 
-		return idUser1;
+		return this.idUser1;
 	}
 
-	public synchronized VerifiableCredential getUser1PassportCredential() throws DIDException {
+/*	public synchronized VerifiableCredential getUser1PassportCredential() throws DIDException {
 		if (vcUser1Passport == null) {
 			DIDDocument doc = getUser1Document();
 

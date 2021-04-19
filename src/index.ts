@@ -8,6 +8,7 @@ import { VerifiablePresentation } from "./verifiablepresentation";
 import { Mnemonic } from "./mnemonic";
 import { TransferTicket } from "./transferticket";
 import { Issuer } from "./issuer";
+import { DIDURL } from "./didurl";
 
 export {
 	DID,
@@ -18,7 +19,8 @@ export {
 	VerifiablePresentation,
 	Mnemonic,
 	TransferTicket,
-	Issuer
+	Issuer,
+	DIDURL
 
 	// TODO
 }

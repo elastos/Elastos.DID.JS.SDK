@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+import { DID } from "../src";
 import { DIDStore } from "../src/didstore";
 import { File } from "../src/filesystemstorage";
 import { Logger } from "../src/logger";
@@ -129,40 +130,38 @@ test("testLoadRootIdentityFromEmptyStore", ()=>{
 	expect(dids.size).toEqual(100);
 });
 
-/*@Test
-public void testDeleteDID() throws DIDException {
-	RootIdentity identity = testData.getRootIdentity();
+test("testDeleteDID", ()=>{
+	let identity = testData.getRootIdentity();
 
 	// Create test DIDs
-	LinkedList<DID> dids = new LinkedList<DID>();
-	for (int i = 0; i < 100; i++) {
-		String alias = "my did " + i;
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
+	let dids: DID[] = [];
+	for (let i = 0; i < 100; i++) {
+		let alias = "my did " + i;
+		let doc = identity.newDid(TestConfig.storePass);
 		doc.getMetadata().setAlias(alias);
 		doc.publish(TestConfig.storePass);
-		dids.add(doc.getSubject());
+		dids.push(doc.getSubject());
 	}
 
-	for (int i = 0; i < 100; i++) {
+	for (let i = 0; i < 100; i++) {
 		if (i % 5 != 0)
 			continue;
 
-		DID did = dids.get(i);
+		let did = dids[i];
 
-		boolean deleted = store.deleteDid(did);
-		assertTrue(deleted);
+		let deleted = store.deleteDid(did);
+		expect(deleted).toBeTruthy();
 
-		File file = getFile("ids", did.getMethodSpecificId());
-		assertFalse(file.exists());
+		let file = getFile("ids", did.getMethodSpecificId());
+		expect(file.exists()).toBeFalsy();
 
 		deleted = store.deleteDid(did);
-		assertFalse(deleted);
+		expect(deleted).toBeFalsy();
 	}
 
-	List<DID> remains = store.listDids();
-	assertEquals(80, remains.size());
-}
-*/
+	let remains = store.listDids();
+	expect(80).toEqual(remains.size);
+});
 
 test("testStoreAndLoadDID", ()=>{
 	// Store test data into current store

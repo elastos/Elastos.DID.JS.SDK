@@ -25,7 +25,7 @@ import { DIDDocument } from "../diddocument";
 import { DIDURL } from "../didurl";
 import { InvalidKeyException, MalformedIDChainRequestException, UnknownInternalException } from "../exceptions/exceptions";
 import { VerifiableCredential } from "../verifiablecredential";
-import { IDChainRequest, Operation } from "./idchaindrequest";
+import { IDChainRequest } from "./idchaindrequest";
 
 /**
  * The credential request class.
@@ -36,22 +36,23 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	private vc: VerifiableCredential;
 	private signer: DIDDocument;
 
-	private constructor() {
+	protected /* private */ constructor() {
 		super();
 	}
 
-	private static newWithOperation(operation: Operation): CredentialRequest {
+	private static newWithOperation(operation: IDChainRequest.Operation): CredentialRequest {
 		let credentialRequest = new CredentialRequest();
 		credentialRequest.constructWithOperation(operation);
 		return credentialRequest;
 	}
 
-	public /* protected */ static newWithCredentialRequest(request: CredentialRequest): CredentialRequest {
+	public /* protected */ static newWithCredentialRequest(): CredentialRequest {
 		let credentialRequest = new CredentialRequest();
 		credentialRequest.constructWithIDChainRequest(request);
 		credentialRequest.id = request.id;
 		credentialRequest.vc = request.vc;
 		credentialRequest.signer = request.signer;
+		return credentialRequest;
 	}
 
 	/**
@@ -65,7 +66,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static declare(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string): CredentialRequest {
-		let request = CredentialRequest.newWithOperation(Operation.DECLARE);
+		let request = CredentialRequest.newWithOperation(IDChainRequest.Operation.DECLARE);
 		request.setPayload(vc);
 		request.setSigner(signer);
 
@@ -90,7 +91,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @throws DIDStoreException there is no store to attach.
 	 */
 	public static revoke(vc: VerifiableCredential | DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): CredentialRequest {
-		let request = CredentialRequest.newWithOperation(Operation.REVOKE);
+		let request = CredentialRequest.newWithOperation(IDChainRequest.Operation.REVOKE);
 		request.setPayload(vc);
 		request.setSigner(doc);
 
@@ -122,11 +123,11 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			this.id = vc.getId();
 			this.vc = vc;
 
-			if (this.getHeader().getOperation().equals(Operation.DECLARE)) {
+			if (this.getHeader().getOperation().equals(IDChainRequest.Operation.DECLARE)) {
 				let json = vc.toString(true);
 
 				this.setPayload(json.base64Encode());
-			} else if (this.getHeader().getOperation().equals(Operation.REVOKE)) {
+			} else if (this.getHeader().getOperation().equals(IDChainRequest.Operation.REVOKE)) {
 				this.setPayload(vc.getId().toString());
 			}
 		}
@@ -153,7 +154,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		if (header.getSpecification() !== CredentialRequest.CREDENTIAL_SPECIFICATION)
 			throw new MalformedIDChainRequestException("Unsupported specification");
 
-		if (!header.getOperation().equals(Operation.DECLARE) && !header.getOperation().equals(Operation.REVOKE)) {
+		if (!header.getOperation().equals(IDChainRequest.Operation.DECLARE) && !header.getOperation().equals(IDChainRequest.Operation.REVOKE)) {
 			throw new MalformedIDChainRequestException("Invalid operation " + header.getOperation());
 		}
 
@@ -166,7 +167,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			throw new MalformedIDChainRequestException("Missing proof");
 
 		try {
-			if (header.getOperation().equals(Operation.DECLARE)) {
+			if (header.getOperation().equals(IDChainRequest.Operation.DECLARE)) {
 				let json = payload.base64Decode();
 
 				this.vc = VerifiableCredential.parse(json);
@@ -189,7 +190,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		if (this.getPayload() == null || this.getPayload() === "")
 			throw new MalformedIDChainRequestException("Missing payload");
 
-		let signature = doc.sign(signKey, storepass, this.getSigningInputs());
+		let signature = doc.signWithId(signKey, storepass, ...this.getSigningInputs());
 		this.setProof(new IDChainRequest.Proof(signKey, signature));
 	}
 
@@ -197,7 +198,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		if (this.signer != null)
 			return this.signer;
 
-		if (this.getOperation().equals(Operation.DECLARE))
+		if (this.getOperation().equals(IDChainRequest.Operation.DECLARE))
 			this.signer = this.getCredential().getSubject().getId().resolve();
 		else {
 			if (this.getCredential() != null)

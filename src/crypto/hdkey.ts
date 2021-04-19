@@ -224,7 +224,7 @@ export class HDKey {
 		return Base58.encode(getBinAddress());
 	} */
 
-	public static toAddress(pk: string): string {
+	public static toAddress(pk: Buffer): string {
 		return encodeBase58(this.getBinAddress(pk));
 	}
 

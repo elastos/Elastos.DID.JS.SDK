@@ -35,8 +35,8 @@ import { VerifiableCredential } from "./verifiablecredential";
  * issuer's sign key.
  */
 export class Issuer {
-	private self: DIDDocument ;
-	private signKey: DIDURL ;
+	private self: DIDDocument;
+	private signKey: DIDURL;
 
 	/* private */ constructor(doc: DIDDocument, signKey?: DIDURL) {
 		this.self = doc;
@@ -123,7 +123,7 @@ export class Issuer {
 	}
 
 	public /* protected */ sign(storepass: string, data: Buffer): string {
-		return this.self.sign(this.signKey, storepass, data);
+		return this.self.signWithId(this.signKey, storepass, data);
 	}
 
 	/**

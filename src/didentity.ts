@@ -95,7 +95,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 		let serializeContext = new DIDEntity.SerializeContext(normalized, mapper, this.getSerializeContextDid());
 
 		mapper.defaultStringifierContext.attributes[DIDEntity.CONTEXT_KEY] = serializeContext;
-        
+
 		return mapper;
 	}
 
@@ -109,9 +109,12 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public static parse <T extends DIDEntity<any>>(content: string, clazz: Class<T>): T {
+	public static parse <T extends DIDEntity<any>>(content: JSONObject | string, clazz: Class<T>): T {
 		checkArgument(content && content !== "", "Invalid JSON content");
 		checkArgument(clazz && clazz !== null, "Invalid result class object");
+
+		if (typeof content !== "string")
+			content = JSON.stringify(content);
 
 		let mapper = DIDEntity.getDefaultObjectMapper();
 

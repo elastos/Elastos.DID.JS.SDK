@@ -587,7 +587,7 @@ export namespace VerifiablePresentation {
 			this.presentation._credentials = Array.from(this.presentation.credentials.values());
 
 			let json = this.presentation.serialize(true);
-			let sig = this.holder.sign(this.signKey, storepass, json.getBytes(),
+			let sig = this.holder.signWithId(this.signKey, storepass, json.getBytes(),
 					this._realm.getBytes(), this._nonce.getBytes());
 			let proof = new Proof(this.signKey, this._realm, this._nonce, sig);
 			this.presentation.proof = proof;
