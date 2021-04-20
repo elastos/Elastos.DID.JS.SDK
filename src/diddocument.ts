@@ -1638,7 +1638,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the returned value is true if verifing digest is successfully;
      *         the returned value is false if verifing digest is not successfully.
      */
-    public verifyDigest(id: DIDURL | string | null, signature: string, digest: string): boolean {
+    public verifyDigest(id: DIDURL | string | null, signature: string, digest: Buffer): boolean {
         checkArgument(signature != null && !signature.isEmpty(), "Invalid signature");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
