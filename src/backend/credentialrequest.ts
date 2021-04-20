@@ -23,7 +23,11 @@
 import { JsonCreator } from "jackson-js";
 import { DIDDocument } from "../diddocument";
 import { DIDURL } from "../didurl";
-import { InvalidKeyException, MalformedIDChainRequestException, UnknownInternalException } from "../exceptions/exceptions";
+import {
+	InvalidKeyException,
+	MalformedIDChainRequestException,
+	UnknownInternalException
+} from "../exceptions/exceptions";
 import { VerifiableCredential } from "../verifiablecredential";
 import { IDChainRequest } from "./idchaindrequest";
 
@@ -36,19 +40,23 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	private vc: VerifiableCredential;
 	private signer: DIDDocument;
 
-	protected /* private */ constructor() {
+	private constructor(source: CredentialRequest | IDChainRequest.Operation) {
 		super();
+		if (source instanceof CredentialRequest) {
+			this.constructWithIDChainRequest(source);
+		} else {
+			this.constructWithOperation(source);
+		}
 	}
 
 	private static newWithOperation(operation: IDChainRequest.Operation): CredentialRequest {
-		let credentialRequest = new CredentialRequest();
+		let credentialRequest = new CredentialRequest(operation);
 		credentialRequest.constructWithOperation(operation);
 		return credentialRequest;
 	}
 
-	public /* protected */ static newWithCredentialRequest(): CredentialRequest {
-		let credentialRequest = new CredentialRequest();
-		credentialRequest.constructWithIDChainRequest(request);
+	public static newWithCredentialRequest(request: CredentialRequest): CredentialRequest {
+		let credentialRequest = new CredentialRequest(request);
 		credentialRequest.id = request.id;
 		credentialRequest.vc = request.vc;
 		credentialRequest.signer = request.signer;
@@ -170,7 +178,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			if (header.getOperation().equals(IDChainRequest.Operation.DECLARE)) {
 				let json = payload.base64Decode();
 
-				this.vc = VerifiableCredential.parse(json);
+				this.vc = VerifiableCredential.parseContent(json);
 				this.id = this.vc.getId();
 			} else {
 				this.id = DIDURL.valueOfUrl(payload);

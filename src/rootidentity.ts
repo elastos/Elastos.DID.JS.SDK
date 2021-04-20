@@ -3,12 +3,22 @@ import { AbstractMetadata } from "./abstractmetadata";
 import { HDKey } from "./crypto/hdkey";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
-import { DIDStore } from "./DIDStore";
+import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
-import { DIDAlreadyExistException, DIDDeactivatedException, DIDStoreException, IllegalArgumentException, RootIdentityAlreadyExistException, UnknownInternalException } from "./exceptions/exceptions";
+import {
+	DIDAlreadyExistException,
+	DIDDeactivatedException,
+	DIDStoreException,
+	IllegalArgumentException,
+	RootIdentityAlreadyExistException,
+	UnknownInternalException
+} from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { Mnemonic } from "./mnemonic";
-import { checkArgument, promisify } from "./utils";
+import {
+	checkArgument,
+	promisify
+} from "./utils";
 
 const log = new Logger("RootIdentity");
 

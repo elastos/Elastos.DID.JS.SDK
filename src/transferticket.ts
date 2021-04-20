@@ -345,66 +345,6 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 				throw new MalformedTransferTicketException(e);
 		}
 	}
-
-	/**
-	 * Parse a TransferTicket object from from a Reader object.
-	 *
-	 * @param src Reader object used to read JSON content for building the object
-	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static parse(src: Reader): TransferTicket {
-		try {
-			return parse(src, TransferTicket.class);
-		} catch (e) {
-			// DIDSyntaxException
-			if (e instanceof MalformedTransferTicketException)
-				throw e;
-			else
-				throw new MalformedTransferTicketException(e);
-		}
-	} */
-
-	/**
-	 * Parse a TransferTicket object from from a InputStream object.
-	 *
-	 * @param src InputStream object used to read JSON content for building the object
-	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static parse(src: InputStream): TransferTicket {
-		try {
-			return parse(src, TransferTicket.class);
-		} catch (e) {
-			// DIDSyntaxException
-			if (e instanceof MalformedTransferTicketException)
-				throw e;
-			else
-				throw new MalformedTransferTicketException(e);
-		}
-	} */
-
-	/**
-	 * Parse a TransferTicket object from from a File object.
-	 *
-	 * @param src File object used to read JSON content for building the object
-	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static parse(src: File): TransferTicket {
-		try {
-			return parse(src, TransferTicket.class);
-		} catch (e) {
-			// DIDSyntaxException
-			if (e instanceof MalformedTransferTicketException)
-				throw e;
-			else
-				throw new MalformedTransferTicketException(e);
-		}
-	} */
 }
 
 /**

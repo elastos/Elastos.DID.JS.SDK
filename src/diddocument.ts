@@ -70,7 +70,6 @@ import {
     AlreadySignedException,
     CanNotRemoveEffectiveController,
     DIDObjectHasReference,
-    DIDStoreException,
     DIDAlreadyExistException
 } from "./exceptions/exceptions";
 import { DIDMetadata } from "./didmetadata";
@@ -87,27 +86,21 @@ import { Issuer } from "./issuer";
 import { TransferTicket } from "./transferticket";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { SHA256 } from "./crypto/sha256";
-import { Override } from "antlr4ts/Decorators";
 import {
     PropertySerializerFilter,
     Serializer,
     Deserializer
 } from "./serializers";
+import { TypeSerializerFilter } from "./filters";
 import { JSONObject, JSONValue } from "./json";
 
 const log = new Logger("DIDDocument");
-
-export class TypeSerializerFilter extends PropertySerializerFilter<string> {
-    public static include (type: string, context: JsonStringifierTransformerContext): boolean {
-        return !(type && type.equals(Constants._DEFAULT_PUBLICKEY_TYPE));
-    }
-}
 
 export class PublicKeySerializerFilter extends PropertySerializerFilter<DID> {
     public static include (controller: DID, context: JsonStringifierTransformerContext): boolean {
         let serializeContext =  this.context(context);
 
-        return !(serializeContext && controller && controller.equals(serializeContext.getDid()));
+        return serializeContext.isNormalized() || (!(serializeContext && controller && controller.equals(serializeContext.getDid())));
     }
 }
 
@@ -2193,10 +2186,10 @@ export namespace DIDDocument {
     export class PublicKey implements DIDObject<string>, Comparable<PublicKey> {
         @JsonProperty({ value: DIDDocument.ID })
         public /* private */ id: DIDURL;
-        @JsonSerialize({using: TypeSerializerFilter.serialize})
+        @JsonSerialize({using: TypeSerializerFilter.filter})
         @JsonProperty({ value: DIDDocument.TYPE })
         public /* private */ type: string;
-        @JsonSerialize({using: PublicKeySerializerFilter.serialize})
+        @JsonSerialize({using: PublicKeySerializerFilter.filter})
         @JsonProperty({ value: DIDDocument.CONTROLLER })
         public /* private */ controller: DID;
         @JsonProperty({ value: DIDDocument.PUBLICKEY_BASE58 })

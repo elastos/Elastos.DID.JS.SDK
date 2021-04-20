@@ -2,24 +2,7 @@
 
 
 import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
-
-import { DidurlContext } from "./DIDURLParser";
-import { DidContext } from "./DIDURLParser";
-import { MethodContext } from "./DIDURLParser";
-import { MethodSpecificStringContext } from "./DIDURLParser";
-import { ParamsContext } from "./DIDURLParser";
-import { ParamContext } from "./DIDURLParser";
-import { ParamQNameContext } from "./DIDURLParser";
-import { ParamMethodContext } from "./DIDURLParser";
-import { ParamNameContext } from "./DIDURLParser";
-import { ParamValueContext } from "./DIDURLParser";
-import { PathContext } from "./DIDURLParser";
-import { QueryContext } from "./DIDURLParser";
-import { QueryParamContext } from "./DIDURLParser";
-import { QueryParamNameContext } from "./DIDURLParser";
-import { QueryParamValueContext } from "./DIDURLParser";
-import { FragContext } from "./DIDURLParser";
-
+import { DIDURLParser } from "./DIDURLParser";
 
 /**
  * This interface defines a complete generic visitor for a parse tree produced
@@ -34,111 +17,111 @@ export interface DIDURLVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitDidurl?: (ctx: DidurlContext) => Result;
+	visitDidurl?: (ctx: DIDURLParser.DidurlContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.did`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitDid?: (ctx: DidContext) => Result;
+	visitDid?: (ctx: DIDURLParser.DidContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.method`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitMethod?: (ctx: MethodContext) => Result;
+	visitMethod?: (ctx: DIDURLParser.MethodContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.methodSpecificString`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitMethodSpecificString?: (ctx: MethodSpecificStringContext) => Result;
+	visitMethodSpecificString?: (ctx: DIDURLParser.MethodSpecificStringContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.params`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParams?: (ctx: ParamsContext) => Result;
+	visitParams?: (ctx: DIDURLParser.ParamsContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.param`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParam?: (ctx: ParamContext) => Result;
+	visitParam?: (ctx: DIDURLParser.ParamContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.paramQName`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParamQName?: (ctx: ParamQNameContext) => Result;
+	visitParamQName?: (ctx: DIDURLParser.ParamQNameContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.paramMethod`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParamMethod?: (ctx: ParamMethodContext) => Result;
+	visitParamMethod?: (ctx: DIDURLParser.ParamMethodContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.paramName`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParamName?: (ctx: ParamNameContext) => Result;
+	visitParamName?: (ctx: DIDURLParser.ParamNameContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.paramValue`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParamValue?: (ctx: ParamValueContext) => Result;
+	visitParamValue?: (ctx: DIDURLParser.ParamValueContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.path`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitPath?: (ctx: PathContext) => Result;
+	visitPath?: (ctx: DIDURLParser.PathContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.query`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitQuery?: (ctx: QueryContext) => Result;
+	visitQuery?: (ctx: DIDURLParser.QueryContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.queryParam`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitQueryParam?: (ctx: QueryParamContext) => Result;
+	visitQueryParam?: (ctx: DIDURLParser.QueryParamContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.queryParamName`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitQueryParamName?: (ctx: QueryParamNameContext) => Result;
+	visitQueryParamName?: (ctx: DIDURLParser.QueryParamNameContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.queryParamValue`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitQueryParamValue?: (ctx: QueryParamValueContext) => Result;
+	visitQueryParamValue?: (ctx: DIDURLParser.QueryParamValueContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `DIDURLParser.frag`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitFrag?: (ctx: FragContext) => Result;
+	visitFrag?: (ctx: DIDURLParser.FragContext) => Result;
 }
 

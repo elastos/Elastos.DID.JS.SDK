@@ -34,6 +34,11 @@ export class Deserializer {
 }
 
 export class PropertySerializerFilter<T> extends Serializer {
+
+    public static filter (value: any, context: JsonStringifierTransformerContext): string | null {
+        return this.serialize(value, context);
+    }
+
     public static serialize (value: any, context: JsonStringifierTransformerContext): string | null {
         let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
 

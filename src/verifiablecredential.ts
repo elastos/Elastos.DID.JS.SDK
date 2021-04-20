@@ -21,8 +21,21 @@
  */
 
 import dayjs, { Dayjs } from "dayjs";
-import { List as ImmutableList, Map as ImmutableMap } from "immutable";
-import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, JsonIncludeType, JsonGetter, JsonAnyGetter, JsonAnySetter, JsonFilter } from "jackson-js";
+import {
+	List as ImmutableList,
+	Map as ImmutableMap
+} from "immutable";
+import {
+	JsonPropertyOrder,
+	JsonProperty,
+	JsonSerialize,
+	JsonInclude,
+	JsonIncludeType,
+	JsonGetter,
+	JsonAnyGetter,
+	JsonAnySetter,
+	JsonFilter
+} from "jackson-js";
 import { CredentialBiography } from "./backend/credentialbiography";
 import { IDChainRequest } from "./backend/idchaindrequest";
 import { Status as CredentialBiographyStatus} from "./backend/credentialbiography";
@@ -37,13 +50,46 @@ import { DIDObject } from "./didobject";
 import { DIDStore } from "./didstore";
 import { DIDTransactionAdapter } from "./didtransactionadapter";
 import { DIDURL } from "./didurl";
-import { AlreadySealedException, CredentialAlreadyExistException, CredentialExpiredException, CredentialNotGenuineException, CredentialRevokedException, DIDNotFoundException, IllegalArgumentException, InvalidKeyException, MalformedCredentialException, NotAttachedWithStoreException, UnknownInternalException } from "./exceptions/exceptions";
+import {
+	AlreadySealedException,
+	CredentialAlreadyExistException,
+	CredentialExpiredException,
+	CredentialNotGenuineException,
+	CredentialRevokedException,
+	DIDNotFoundException,
+	IllegalArgumentException,
+	InvalidKeyException,
+	MalformedCredentialException,
+	NotAttachedWithStoreException,
+	UnknownInternalException
+} from "./exceptions/exceptions";
 import { Issuer } from "./issuer";
 import { Logger } from "./logger";
 import { checkArgument } from "./utils";
-import { JSONObject, JSONValue } from "./json";
+import {
+	JSONObject,
+	JSONValue
+} from "./json";
+import {
+    JsonStringifierTransformerContext,
+    JsonParserTransformerContext
+} from "jackson-js/dist/@types";
+import {
+    PropertySerializerFilter,
+    Serializer,
+    Deserializer
+} from "./serializers";
+import { TypeSerializerFilter } from "./filters";
 
 const log = new Logger("VerifiableCredential");
+
+export class IssuerSerializerFilter extends PropertySerializerFilter<DID> {
+    public static include (issuer: DID, context: JsonStringifierTransformerContext): boolean {
+        let serializeContext =  this.context(context);
+
+        return serializeContext.isNormalized() || (!(serializeContext && issuer && issuer.equals(serializeContext.getDid())));
+    }
+}
 
 /**
  * VerifiableCredential is a set of one or more claims made by the same entity.
@@ -78,6 +124,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	@JsonProperty({value:VerifiableCredential.TYPE})
 	// TODO: migrate from java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY})
 	public /*private*/ type: string[];
+	@JsonSerialize({using: IssuerSerializerFilter.filter})
 	@JsonProperty({value:VerifiableCredential.ISSUER})
 	public /*private*/ issuer: DID;
 	@JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
@@ -260,25 +307,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	protected getSerializeContextDid(): DID {
 		return this.getSubject().getId();
 	}
-
-	/* protected static PropertyFilter getFilter() {
-		return new DIDPropertyFilter() {
-			@Override
-			protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
-				if (context.isNormalized())
-					return true;
-
-				VerifiableCredential vc = (VerifiableCredential)pojo;
-				switch (writer.getName()) {
-				case ISSUER:
-					return !(vc.getIssuer().equals(context.getDid()));
-
-				default:
-					return true;
-				}
-			}
-		};
-	} */
 
 	/**
 	 * Set meta data for Credential.
@@ -1032,63 +1060,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 				throw new MalformedCredentialException(e);
 		}
 	}
-
-	/**
-	 * Parse a VerifiableCredential object from from a Reader object.
-	 *
-	 * @param src Reader object used to read JSON content for building the object
-	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static VerifiableCredential parse(Reader src) {
-		try {
-			return parse(src, VerifiableCredential.class);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedCredentialException)
-				throw (MalformedCredentialException)e;
-			else
-				throw new MalformedCredentialException(e);
-		}
-	} */
-
-	/**
-	 * Parse a VerifiableCredential object from from a InputStream object.
-	 *
-	 * @param src InputStream object used to read JSON content for building the object
-	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static VerifiableCredential parse(InputStream src) {
-		try {
-			return parse(src, VerifiableCredential.class);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedCredentialException)
-				throw (MalformedCredentialException)e;
-			else
-				throw new MalformedCredentialException(e);
-		}
-	} */
-
-	/**
-	 * Parse a VerifiableCredential object from from a File object.
-	 *
-	 * @param src File object used to read JSON content for building the object
-	 * @return the VerifiableCredential object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static VerifiableCredential parse(File src) {
-		try {
-			return parse(src, VerifiableCredential.class);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedCredentialException)
-				throw (MalformedCredentialException)e;
-			else
-				throw new MalformedCredentialException(e);
-		}
-	} */
 }
 
 
@@ -1199,7 +1170,7 @@ export namespace VerifiableCredential {
 		  */
 		 public getPropertiesAsString(): string {
 			 try {
-				 return DIDEntity.getObjectMapper().writeValueAsString(this.properties);
+				 return DIDEntity.getDefaultObjectMapper().stringify(this.properties);
 			 } catch (ignore) {
 				 // JsonProcessingException
 				 throw new UnknownInternalException(ignore);
@@ -1215,6 +1186,7 @@ export namespace VerifiableCredential {
 	 @JsonPropertyOrder({value: [VerifiableCredential.TYPE, VerifiableCredential.CREATED, VerifiableCredential.VERIFICATION_METHOD, VerifiableCredential.SIGNATURE ]})
 	 @JsonFilter({value: "credentialProofFilter"})
 	 export class Proof {
+		 @JsonSerialize({using: TypeSerializerFilter.filter})
 		 @JsonProperty({value: VerifiableCredential.TYPE})
 		 public /* private */ type: string;
 		 @JsonProperty({value: VerifiableCredential.CREATED})
@@ -1280,25 +1252,6 @@ export namespace VerifiableCredential {
 		 public getSignature(): string {
 			 return this.signature;
 		 }
-
-		 /* protected static PropertyFilter getFilter() {
-			 return new DIDPropertyFilter() {
-				 @Override
-				 protected boolean include(PropertyWriter writer, Object pojo, SerializeContext context) {
-					 if (context.isNormalized())
-						 return true;
-
-					 Proof proof = (Proof)pojo;
-					 switch (writer.getName()) {
-					 case TYPE:
-						 return !(proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE));
-
-					 default:
-						 return true;
-					 }
-				 }
-			 };
-		 } */
 	 }
 
 	 /**

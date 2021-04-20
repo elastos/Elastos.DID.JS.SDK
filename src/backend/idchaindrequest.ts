@@ -252,7 +252,7 @@ export namespace IDChainRequest {
 
 			let json = CryptoJS.enc.Base64.parse(ticket).toString();
 			try {
-				this.transferTicket = TransferTicket.parse(json);
+				this.transferTicket = TransferTicket.parseContent(json);
 			} catch (e) {
 				// MalformedTransferTicketException
 				throw new IllegalArgumentException("Invalid ticket", e);
