@@ -34,14 +34,13 @@ import { DIDURLParser } from "./parser/DIDURLParser";
 import {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types"
+} from "jackson-js/dist/@types";
 import {
 	JsonSerialize,
     JsonDeserialize,
 } from "jackson-js";
 import { Hashable } from "./hashable";
 import { Comparable } from "./comparable";
-import { DIDEntity } from "./didentity";
 import {
     Serializer,
     Deserializer

@@ -22,13 +22,49 @@
 
 import { DIDMetadata } from "./didmetadata";
 import { ParserHelper } from "./parser/parserhelper"
-import { checkEmpty, checkNotNull, isEmpty } from "./utils";
+import {
+    checkEmpty,
+    checkNotNull,
+    isEmpty
+} from "./utils";
 import { DIDDocument } from "./diddocument";
-import { DIDResolveException } from "./exceptions/exceptions";
-import { rejects } from "node:assert";
 import { DIDBackend } from "./didbackend";
-import { Class } from "./class";
 import { DIDBiography } from "./backend/didbiography";
+import { DIDURLBaseListener } from "./parser/DIDURLBaseListener";
+import { DIDURLParser } from './parser/DIDURLParser';
+
+import {
+    Serializer,
+    Deserializer
+} from "./serializers";
+import {
+	JsonStringifierTransformerContext,
+	JsonParserTransformerContext
+} from "jackson-js/dist/@types";
+import {
+	ParentException,
+	MalformedDIDURLException,
+	IllegalArgumentException
+} from "./exceptions/exceptions";
+
+
+export class DIDSerializer extends Serializer {
+    public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
+		return did ? did.toString() : null;
+	}
+}
+
+export class DIDDeserializer extends Deserializer {
+	public static deserialize(value: string, context: JsonParserTransformerContext): DID {
+		try {
+			if (value && value.includes("{"))
+				throw new IllegalArgumentException("Invalid DIDURL");
+			return new DID(value);
+		} catch (e) {
+			throw new IllegalArgumentException("Invalid DID");
+		}
+	}
+}
 
 /**
  * DID is a globally unique identifier that does not require
@@ -38,7 +74,7 @@ import { DIDBiography } from "./backend/didbiography";
 //@JsonDeserialize(using = DID.Deserializer.class)
 export class DID {
 
-    public const static METHOD: string = "elastos";
+    public static METHOD: string = "elastos";
 
     private method: string | null;
     private methodSpecificId: string | null;
@@ -58,7 +94,7 @@ export class DID {
             checkEmpty(did, "Invalid DID string");
             this.method = null;
             this.methodSpecificId = null;
-            ParserHelper.parse(did, true, new Listener());
+            ParserHelper.parse(did, true, new DID.Listener(this));
         }
     }
 
@@ -83,7 +119,7 @@ export class DID {
             try {
                 let resolved: DIDDocument = this.resolve();
                 this.metadata = resolved != null ? resolved.getMetadata() : new DIDMetadata(this);
-            } catch (e: DIDResolveException) {
+            } catch (e) {
                 this.metadata = new DIDMetadata(this);
             }
         }
@@ -192,58 +228,26 @@ export class DID {
 }
 
 export namespace DID {
-    export class Serializer extends StdSerializer<DID> {
-        // Java: private static final long serialVersionUID = -5048323762128760963L;
+    export class Listener extends DIDURLBaseListener {
+        private methodSpecificId: string;
+        private method: string;
+		private parent: DID;
 
-        public constructor(t: Class<DID> = null) {
-            super(t);
-        }
+        public constructor (parent: DID) {
+			super();
+			this.parent = parent;
+		}
 
-        public serialize(did: DID, JsonGenerator gen, SerializerProvider provider) {
-            gen.writeString(did.toString());
-        }
-    }
-
-    export class Deserializer extends StdDeserializer<DID> {
-        // Java: private static final long serialVersionUID = -306953602840919050L;
-
-        public Deserializer() {
-            this(null);
-        }
-
-        public Deserializer(Class<?> vc) {
-            super(vc);
-        }
-
-        public deserialize(JsonParser p, DeserializationContext ctxt): DID {
-            let token: JsonToken = p.getCurrentToken();
-            if (!token.equals(JsonToken.VALUE_STRING))
-                throw ctxt.weirdStringException(p.getText(), DID.class, "Invalid DIDURL");
-
-            String did = p.getText().trim();
-
-            try {
-                return new DID(did);
-            } catch (MalformedDIDException e) {
-                throw ctxt.weirdStringException(did, DID.class, "Invalid DID");
-            }
-        }
-    }
-
-    export Listener extends DIDURLBaseListener {
-        @Override
-        public void exitMethod(DIDURLParser.MethodContext ctx) {
-            String method = ctx.getText();
+        public exitMethod(ctx: DIDURLParser.MethodContext): void {
+            let method: string = ctx.text;
             if (!method.equals(DID.METHOD))
                 throw new IllegalArgumentException("Unknown method: " + method);
 
-            DID.this.method = method;
+            this.method = method;
         }
 
-        @Override
-        public void exitMethodSpecificString(
-                DIDURLParser.MethodSpecificStringContext ctx) {
-            DID.this.methodSpecificId = ctx.getText();
+        public exitMethodSpecificString(ctx: DIDURLParser.MethodSpecificStringContext): void {
+            this.methodSpecificId = ctx.text;
         }
     }
 }
