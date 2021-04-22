@@ -40,7 +40,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	private vc: VerifiableCredential;
 	private signer: DIDDocument;
 
-	private constructor(source: CredentialRequest | IDChainRequest.Operation) {
+	public constructor(source: CredentialRequest | IDChainRequest.Operation) {
 		super();
 		if (source instanceof CredentialRequest) {
 			this.constructWithIDChainRequest(source);
