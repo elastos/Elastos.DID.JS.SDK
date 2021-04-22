@@ -32,7 +32,10 @@ import { DIDBackend } from "./didbackend";
 import { DIDBiography } from "./backend/didbiography";
 import { DIDURLBaseListener } from "./parser/DIDURLBaseListener";
 import { DIDURLParser } from './parser/DIDURLParser';
-
+import {
+    JsonSerialize,
+    JsonDeserialize
+} from "jackson-js";
 import {
     Serializer,
     Deserializer
@@ -41,11 +44,7 @@ import {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
-import {
-	ParentException,
-	MalformedDIDURLException,
-	IllegalArgumentException
-} from "./exceptions/exceptions";
+import { IllegalArgumentException } from "./exceptions/exceptions";
 
 
 export class DIDSerializer extends Serializer {
@@ -70,8 +69,8 @@ export class DIDDeserializer extends Deserializer {
  * DID is a globally unique identifier that does not require
  * a centralized registration authority.
  */
-//@JsonSerialize(using = DID.Serializer.class)
-//@JsonDeserialize(using = DID.Deserializer.class)
+@JsonSerialize({using:  DIDSerializer.serialize})
+@JsonDeserialize({using:  DIDDeserializer.deserialize})
 export class DID {
 
     public static METHOD: string = "elastos";

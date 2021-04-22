@@ -193,7 +193,7 @@ export class File { // Exported, for test cases only
 	/**
 	 * Modifies item's key in local storage.
 	 */
-	/* protected */ _changeStorageKeyPrefix(newPrefix: string) {
+	_changeStorageKeyPrefix(newPrefix: string) {
 		let storageEntry = this.getStorageEntry();
 		// Delete the previous key, then create a new one with the new path
 		localStorage.removeItem(this.getAbsolutePath());
@@ -322,7 +322,7 @@ export class Dir extends File { // Exported, for test cases only
 		this.setStorageEntry(storageEntry);
 	}
 
-	/* protected */ _changeStorageKeyPrefix(newPrefix: string) {
+	_changeStorageKeyPrefix(newPrefix: string) {
 		// Recursively change storage key for children
 		let storageEntry = this.getStorageEntry<DirEntry>();
 		let newChildrenPrefix = newPrefix + File.SEPARATOR + this.getName();
@@ -434,7 +434,7 @@ export class FileSystemStorage implements DIDStorage {
 	private storeRoot: Dir;
 	private currentDataDir: string;
 
-	/* protected */ constructor(context: string) {
+	constructor(context: string) {
 		this.storeRoot = Dir.open(File.SEPARATOR+context+File.SEPARATOR) as Dir;
 		this.currentDataDir = FileSystemStorage.DATA_DIR;
 
@@ -904,7 +904,7 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	public  loadCredential(id: DIDURL): VerifiableCredential {
+	public loadCredential(id: DIDURL): VerifiableCredential {
 		try {
 			let file = this.getCredentialFile(id, false);
 			if (!file.exists())

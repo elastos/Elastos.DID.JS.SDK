@@ -151,7 +151,7 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 		this.txs.push(tx);
 	}
 
-	public /* protected */ sanitize() {
+	public sanitize() {
 		if (this.id == null)
 			throw new MalformedResolveResultException("Missing id");
 

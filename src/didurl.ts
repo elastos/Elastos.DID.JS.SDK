@@ -28,7 +28,10 @@ import {
 	IllegalArgumentException
 } from "./exceptions/exceptions";
 import { ParserHelper } from "./parser/parserhelper";
-import { checkArgument, checkNotNull } from "./utils";
+import {
+	checkArgument,
+	checkNotNull
+} from "./utils";
 import { DIDURLBaseListener } from "./parser/DIDURLBaseListener";
 import { DIDURLParser } from "./parser/DIDURLParser";
 import {
@@ -97,70 +100,69 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	private metadata?: AbstractMetadata;
 
 	// Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
-	/* private */ constructor(baseRef: DID | string | null = null, didUrlOrString: DIDURL | string | null = null) {
-		if (baseRef === null && didUrlOrString === null) {
-			// Equivalent of the internal empty constructor "new DIDURL()" - does nothing
-		}
-		else {
-			// Equivalent of DIDURL.valueOf()
-			return DIDURL.valueOf(baseRef, didUrlOrString);
-		}
-	}
+	public constructor() {}
 
-	public static newWithDID(did: DID): DIDURL {
-		let newInstance: DIDURL = new DIDURL();
-		newInstance.did = did;
-
-		return newInstance;
-	}
-
-	public static newWithUrl(url: string): DIDURL {
-		return DIDURL.newWithBaseRef(url);
-	}
-
-	public static newWithBaseRef(url: DIDURL | string, baseRef?: DID) {
-		let newInstance: DIDURL = new DIDURL();
-
-		if (url instanceof DIDURL) {
-			newInstance.did = url.did == null ? baseRef : url.did;
-			newInstance.parameters = url.parameters;
+	public static newWithUrl(url: DIDURL | string): DIDURL {
+		if (url && url instanceof DIDURL) {
+			let newInstance = new DIDURL();
+			let urlParameters = url.parameters;
+			let urlQuery = url.query;
+			newInstance.parameters = urlParameters.size == 0 ? new Map() : new Map(urlParameters);
+			newInstance.query = urlQuery.size == 0 ? new Map() : new Map(urlQuery);
+			newInstance.did =  url.did;
 			newInstance.path = url.path;
-			newInstance.query = url.query;
 			newInstance.fragment = url.fragment;
-			newInstance.metadata = url.metadata;
+			return newInstance;
+		}
+		return DIDURL.newWithDID(null, url as string)
+	}
+
+	public static newWithDID(did: DID, url?: DIDURL | string) {
+		let newInstance: DIDURL = new DIDURL();
+
+		if (!url){
+			newInstance.did = did;
 		} else {
-			// Compatible with v1, support fragment without leading '#'
-			if (!url.startsWith("did:")) {
-				let noSep: boolean = true;
-				let chars: string[] = url.split("");
-				for (var ch of chars) {
-					if (DIDURL.SEPS.indexOf(ch) >= 0) {
-						noSep = false;
-						break;
+			if (url instanceof DIDURL) {
+				newInstance.did = !url.did || url.did == null ? did : url.did;
+				newInstance.parameters = url.parameters;
+				newInstance.path = url.path;
+				newInstance.query = url.query;
+				newInstance.fragment = url.fragment;
+				newInstance.metadata = url.metadata;
+			} else {
+				// Compatible with v1, support fragment without leading '#'
+				if (!url.startsWith("did:")) {
+					let noSep: boolean = true;
+					let chars: string[] = url.split("");
+					for (var ch of chars) {
+						if (DIDURL.SEPS.indexOf(ch) >= 0) {
+							noSep = false;
+							break;
+						}
 					}
+
+					if (noSep) // fragment only
+						url = "#" + url;
 				}
 
-				if (noSep) // fragment only
-					url = "#" + url;
+				try {
+					ParserHelper.parse(url, false, new DIDURL.Listener(newInstance));
+
+					if (!newInstance.parameters)
+						newInstance.parameters = new Map();
+
+					if (!newInstance)
+						newInstance.query = new Map();
+
+				} catch (e) {
+					throw new MalformedDIDURLException(url, e);
+				}
+
+				if ((!newInstance.did || newInstance.did == null) && did)
+					newInstance.did = did;
 			}
-
-			try {
-				ParserHelper.parse(url, false, new DIDURL.Listener(newInstance));
-
-				if (!newInstance.parameters)
-					newInstance.parameters = new Map();
-
-				if (!newInstance)
-					newInstance.query = new Map();
-
-			} catch (e) {
-				throw new MalformedDIDURLException(url, e);
-			}
-
-			if (!newInstance.did && baseRef)
-				newInstance.did = baseRef;
 		}
-
 		return newInstance;
 	}
 
@@ -178,61 +180,15 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 		return newInstance;
 	}
 
-	// Deep-copy constructor
-	// Equivalent to new DIDURL(did, didurl)
-	public static valueOf(baseRef: DID | string | null, didUrlOrString: DIDURL | string | null = null): DIDURL {
-		checkArgument(didUrlOrString != null, "Invalid url");
-
-		if (typeof baseRef === "string")
-			baseRef = DID.valueOf(baseRef);
-
-		let didUrl = new DIDURL();
-		if (typeof didUrlOrString === "string") {
-			checkArgument(didUrlOrString !== "", "Invalid url");
-
-			// Compatible with v1, support fragment without leading '#'
-			if (!didUrlOrString.startsWith("did:")) {
-				/* JAVA: let noSep = true;
-				char[] chars = didUrlOrString.toCharArray();
-				for (char ch : chars) {
-					if (DIDURL.SEPS.indexOf(ch) >= 0) {
-						noSep = false;
-						break;
-					}
-				}*/
-
-				let url: string = didUrlOrString;
-				let noSep = !DIDURL.SEPS.some(c => url.includes(c));
-
-				if (noSep) // fragment only
-					didUrlOrString = "#" + didUrlOrString;
-			}
-
-			try {
-				ParserHelper.parse(didUrlOrString, false, new DIDURL.Listener(didUrl));
-
-				if (didUrl.parameters == null || didUrl.parameters.size == 0)
-					didUrl.parameters = new Map();
-
-				if (didUrl.query == null || didUrl.query.size == 0)
-					didUrl.query = new Map();
-
-			} catch (e) {
-				throw new MalformedDIDURLException(didUrlOrString, e);
-			}
-
-			if (didUrl.did == null && baseRef != null)
-				didUrl.did = baseRef;
+	public static valueOf(inputBaseRefOrUrl: DID | string | null, url?: DIDURL | string): DIDURL {
+		if (!url) {
+			if (typeof inputBaseRefOrUrl === "string")
+				return inputBaseRefOrUrl ? DIDURL.newWithUrl(inputBaseRefOrUrl) : null;
+			else
+				throw new IllegalArgumentException("DID is mandatory without an URL");
 		}
-		else {
-			// url is a string
-			didUrl.did = didUrlOrString.did == null ? baseRef : didUrlOrString.did;
-			didUrl.parameters = didUrlOrString.parameters.size == 0 ? new Map() : new Map<String, String>(didUrlOrString.parameters);
-			didUrl.path = didUrlOrString.path;
-			didUrl.query = didUrlOrString.query.size == 0 ? new Map() : new Map<String, String>(didUrlOrString.query);
-			didUrl.fragment = didUrlOrString.fragment;
-			return didUrl;
-		}
+		let baseRef: DID = typeof inputBaseRefOrUrl === "string" ? DID.valueOf(inputBaseRefOrUrl) : inputBaseRefOrUrl as DID;
+		return url ? DIDURL.newWithDID(baseRef, url) : null;
 	}
 
 	// Note: in java this was also a valueOf().

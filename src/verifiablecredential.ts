@@ -108,16 +108,16 @@ export class IssuerSerializerFilter extends PropertySerializerFilter<DID> {
 ]})
 // TODO: convert from java - @JsonFilter("credentialFilter")
 export class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject<string> {
-	public /* protected */ static ID = "id";
-	public /* protected */ static TYPE = "type";
-	public /* protected */ static ISSUER = "issuer";
-	public /* protected */ static ISSUANCE_DATE = "issuanceDate";
-	public /* protected */ static EXPIRATION_DATE = "expirationDate";
-	public /* protected */ static CREDENTIAL_SUBJECT = "credentialSubject";
-	public /* protected */ static PROOF = "proof";
-	public /* protected */ static VERIFICATION_METHOD = "verificationMethod";
-	public /* protected */ static CREATED = "created";
-	public /* protected */ static SIGNATURE = "signature";
+	public static ID = "id";
+	public static TYPE = "type";
+	public static ISSUER = "issuer";
+	public static ISSUANCE_DATE = "issuanceDate";
+	public static EXPIRATION_DATE = "expirationDate";
+	public static CREDENTIAL_SUBJECT = "credentialSubject";
+	public static PROOF = "proof";
+	public static VERIFICATION_METHOD = "verificationMethod";
+	public static CREATED = "created";
+	public static SIGNATURE = "signature";
 
 	@JsonProperty({value:VerifiableCredential.ID})
 	public /*private*/ id: DIDURL;
@@ -208,7 +208,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @return whether the credential has expiration time
 	 */
-	public /* protected */ hasExpirationDate(): boolean {
+	public hasExpirationDate(): boolean {
 		return this.expirationDate != null;
 	}
 
@@ -267,7 +267,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param withProof check the proof object or not
 	 * @throws MalformedCredentialException if the credential object is invalid
 	 */
-	public /* protected */ sanitize() {
+	public sanitize() {
 		if (this.id == null)
 			throw new MalformedCredentialException("Missing credential id");
 
@@ -313,7 +313,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @param metadata the meta data object
 	 */
-	public /* protected */ setMetadata(metadata: CredentialMetadata) {
+	public setMetadata(metadata: CredentialMetadata) {
 		this.metadata = metadata;
 		this.getId().setMetadata(metadata);
 	}
@@ -1083,7 +1083,7 @@ export namespace VerifiableCredential {
 		  * @param id the controller of Credential Subject
 		  */
 		 // Java: @JsonCreator()
-		 /* protected */ constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
+		 constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
 			 this.id = id;
 			 this.properties = new Map<string, Object>();
 		 }
@@ -1103,7 +1103,7 @@ export namespace VerifiableCredential {
 		  *
 		  * @param did the controller's DID
 		  */
-		 public /* protected */ setId(did: DID) {
+		 public setId(did: DID) {
 			 this.id = did;
 		 }
 
@@ -1127,7 +1127,7 @@ export namespace VerifiableCredential {
 		  * @param value the property value
 		  */
 		 @JsonAnySetter()
-		 public /* private */ setProperty(name: string, value: JSONValue) {
+		 public setProperty(name: string, value: JSONValue) {
 			 if (name === VerifiableCredential.ID)
 				 return;
 
@@ -1188,14 +1188,14 @@ export namespace VerifiableCredential {
 	 export class Proof {
 		 @JsonSerialize({using: TypeSerializerFilter.filter})
 		 @JsonProperty({value: VerifiableCredential.TYPE})
-		 public /* private */ type: string;
+		 public type: string;
 		 @JsonProperty({value: VerifiableCredential.CREATED})
 		 @JsonInclude({value: JsonIncludeType.NON_NULL})
-		 public /* private */ created: Date;
+		 public created: Date;
 		 @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD})
-		 public /* private */ verificationMethod: DIDURL;
+		 public verificationMethod: DIDURL;
 		 @JsonProperty({value: VerifiableCredential.SIGNATURE})
-		 public /* private */ signature: string;
+		 public signature: string;
 
 		 /**
 		  * Constructs the Proof object with the given values.
@@ -1205,7 +1205,7 @@ export namespace VerifiableCredential {
 		  * @param signature the signature encoded in base64 URL safe format
 		  */
 		 // Java: @JsonCreator()
-		 /* protected */ constructor(
+		 constructor(
 				 @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD, required: true}) method: DIDURL,
 				 @JsonProperty({value: VerifiableCredential.SIGNATURE, required: true}) signature: string,
 				 @JsonProperty({value: VerifiableCredential.CREATED}) created: Date = new Date(),
@@ -1271,7 +1271,7 @@ export namespace VerifiableCredential {
 		 *
 		 * @param target the owner of Credential
 		 */
-		/* protected */ constructor(issuer: Issuer, target: DID) {
+		constructor(issuer: Issuer, target: DID) {
 			this.issuer = issuer;
 			this.target = target;
 

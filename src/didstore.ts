@@ -50,7 +50,7 @@ import dayjs from "dayjs";
 
  export class DIDStore {
 	static DID_STORE_TYPE: string = "did:elastos:store";
-	/* protected */ static DID_STORE_VERSION = 3;
+	static DID_STORE_VERSION = 3;
 
 	private static CACHE_INITIAL_CAPACITY = 16;
 	private static CACHE_MAX_CAPACITY = 128;
@@ -169,7 +169,7 @@ import dayjs from "dayjs";
 			}
 		}
 
-		public /* private */ static reEncrypt(secret: string, oldpass: string, newpass: string): string {
+		public static reEncrypt(secret: string, oldpass: string, newpass: string): string {
 			let plain = this.decryptFromBase64(secret, oldpass);
 			let newSecret = this.encryptToBase64(plain, newpass);
 			return newSecret;
@@ -860,7 +860,7 @@ import dayjs from "dayjs";
 		 * @return the original private key
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		 public /* protected */ loadPrivateKey(id: DIDURL, storepass: string = undefined): string {
+		 public loadPrivateKey(id: DIDURL, storepass: string = undefined): string {
 			checkArgument(id != null, "Invalid private key id");
 
 			let encryptedKey: string = null;
@@ -956,7 +956,7 @@ import dayjs from "dayjs";
 		 * @return the signature string
 		 * @throws DIDStoreException can not get DID Document if no specified sign key.
 		 */
-		public /* protected */ sign(id: DIDURL, storepass: string, digest: string): string {
+		public sign(id: DIDURL, storepass: string, digest: string): string {
 			checkArgument(id != null, "Invalid private key id");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 			checkArgument(digest != null && digest.length > 0, "Invalid digest");
@@ -1059,7 +1059,7 @@ import dayjs from "dayjs";
 			});
 		}
 
-		public /* private */ exportDid(did: DID | string, password: string, storepass: string): DIDStore.DIDExport {
+		public exportDid(did: DID | string, password: string, storepass: string): DIDStore.DIDExport {
 			if (typeof did === "string")
 				did = DID.valueOf(did);
 
@@ -1944,13 +1944,13 @@ export namespace DIDStore {
 		private static FINGERPRINT = "fingerprint";
 		private static DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
 
-		/* protected */ constructor(store: DIDStore | null = null) {
+		constructor(store: DIDStore | null = null) {
 			super(store);
 			this.put(Metadata.TYPE, DIDStore.DID_STORE_TYPE);
 			this.put(Metadata.VERSION, DIDStore.DID_STORE_VERSION);
 		}
 
-		public /* protected */ getType(): string {
+		public getType(): string {
 			return this.get(Metadata.TYPE);
 		}
 
@@ -2031,7 +2031,7 @@ export namespace DIDStore {
 		private fingerprint: String | null = null;
 
 		//@JsonCreator
-		public /* protected */ constructor(/* @JsonProperty(value = "type", required = true) */ type: string,
+		public constructor(/* @JsonProperty(value = "type", required = true) */ type: string,
 					/* @JsonProperty(value = "id", required = true) */ id: DID) {
 						super();
 			if (type == null)
@@ -2198,12 +2198,12 @@ export namespace DIDStore {
 		//@JsonPropertyOrder({ "content", "metadata" })
 		export class Document {
 			//@JsonProperty("content")
-			public /* private */ content: DIDDocument;
+			public content: DIDDocument;
 			//@JsonProperty("metadata")
 			private metadata: DIDMetadata;
 
 			//@JsonCreator
-			/* protected */ constructor(/* @JsonProperty(value = "content", required = true) */ content: DIDDocument,
+			constructor(/* @JsonProperty(value = "content", required = true) */ content: DIDDocument,
 					/* @JsonProperty(value = "metadata") */ metadata: DIDMetadata) {
 				this.content = content;
 				this.metadata = metadata;
@@ -2213,12 +2213,12 @@ export namespace DIDStore {
 		//@JsonPropertyOrder({ "content", "metadata" })
 		export class Credential {
 			@JsonProperty({value:"content"}) @JsonClassType({type: () => [VerifiableCredential]})
-			public /* private */ content: VerifiableCredential;
+			public content: VerifiableCredential;
 			@JsonProperty({value:"metadata"}) @JsonClassType({type: () => [CredentialMetadata]})
 			private metadata: CredentialMetadata;
 
 			// Java: @JsonCreator
-			/* protected */ constructor(@JsonProperty({value:"content", required: true}) content: VerifiableCredential,
+			constructor(@JsonProperty({value:"content", required: true}) content: VerifiableCredential,
 				@JsonProperty({value:"metadata"}) metadata: CredentialMetadata) {
 				this.content = content;
 				this.metadata = metadata;

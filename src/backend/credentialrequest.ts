@@ -125,7 +125,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		return this.vc;
 	}
 
-	/* private */ setPayload(id: DIDURL | VerifiableCredential | string) {
+	 setPayload(id: DIDURL | VerifiableCredential | string) {
 		if (id instanceof VerifiableCredential) {
 			let vc: VerifiableCredential = id;
 			this.id = vc.getId();
@@ -150,7 +150,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		}
 	}
 
-	public /* protected */ sanitize() {
+	public sanitize() {
 		let header = this.getHeader();
 
 		if (header == null)
