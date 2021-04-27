@@ -38,7 +38,7 @@ export class Issuer {
 	private self: DIDDocument;
 	private signKey: DIDURL;
 
-	/* private */ constructor(doc: DIDDocument, signKey?: DIDURL) {
+	 constructor(doc: DIDDocument, signKey?: DIDURL) {
 		this.self = doc;
 
 		if (signKey) {
@@ -122,7 +122,7 @@ export class Issuer {
 		return this.signKey;
 	}
 
-	public /* protected */ sign(storepass: string, data: Buffer): string {
+	public sign(storepass: string, data: Buffer): string {
 		return this.self.signWithId(this.signKey, storepass, data);
 	}
 

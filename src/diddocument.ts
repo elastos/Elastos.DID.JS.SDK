@@ -70,7 +70,6 @@ import {
     AlreadySignedException,
     CanNotRemoveEffectiveController,
     DIDObjectHasReference,
-    DIDStoreException,
     DIDAlreadyExistException
 } from "./exceptions/exceptions";
 import { DIDMetadata } from "./didmetadata";
@@ -87,27 +86,21 @@ import { Issuer } from "./issuer";
 import { TransferTicket } from "./transferticket";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { SHA256 } from "./crypto/sha256";
-import { Override } from "antlr4ts/Decorators";
 import {
     PropertySerializerFilter,
     Serializer,
     Deserializer
 } from "./serializers";
+import { TypeSerializerFilter } from "./filters";
 import { JSONObject, JSONValue } from "./json";
 
 const log = new Logger("DIDDocument");
-
-export class TypeSerializerFilter extends PropertySerializerFilter<string> {
-    public static include (type: string, context: JsonStringifierTransformerContext): boolean {
-        return !(type && type.equals(Constants._DEFAULT_PUBLICKEY_TYPE));
-    }
-}
 
 export class PublicKeySerializerFilter extends PropertySerializerFilter<DID> {
     public static include (controller: DID, context: JsonStringifierTransformerContext): boolean {
         let serializeContext =  this.context(context);
 
-        return !(serializeContext && controller && controller.equals(serializeContext.getDid()));
+        return serializeContext.isNormalized() || (!(serializeContext && controller && controller.equals(serializeContext.getDid())));
     }
 }
 
@@ -166,51 +159,51 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     // TODO: Convert from java - @JsonFormat(with:{JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
     @JsonProperty({ value: DIDDocument.CONTROLLER })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
-    public /* private */ controllers?: DID[];
+    public controllers?: DID[];
 
     @JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
-    public /* private */ multisig?: DIDDocument.MultiSignature;
+    public multisig?: DIDDocument.MultiSignature;
 
     @JsonProperty({ value: DIDDocument.PUBLICKEY })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
-    public /* private */ _publickeys?: DIDDocument.PublicKey[];
+    public _publickeys?: DIDDocument.PublicKey[];
 
     @JsonProperty({ value: DIDDocument.AUTHENTICATION })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
-    public /* private */ _authentications?: DIDDocument.PublicKeyReference[];
+    public _authentications?: DIDDocument.PublicKeyReference[];
 
     @JsonProperty({ value: DIDDocument.AUTHORIZATION })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
-    public /* private */ _authorizations?: DIDDocument.PublicKeyReference[];
+    public _authorizations?: DIDDocument.PublicKeyReference[];
 
     @JsonProperty({ value: DIDDocument.VERIFIABLE_CREDENTIAL })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
-    public /* private */ _credentials?: VerifiableCredential[];
+    public _credentials?: VerifiableCredential[];
 
     @JsonProperty({ value: DIDDocument.SERVICE })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
-    public /* private */ _services?: DIDDocument.Service[];
+    public _services?: DIDDocument.Service[];
 
     @JsonProperty({ value: DIDDocument.EXPIRES })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
-    public /* private */ expires?: Date;
+    public expires?: Date;
 
     @JsonProperty({ value: DIDDocument.PROOF })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     // TODO - Convert from Java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
-    public /* private */ _proofs?: DIDDocument.Proof[];
+    public _proofs?: DIDDocument.Proof[];
 
-    public /* private */ controllerDocs?: Map<DID, DIDDocument>;
-    public /* private */ publicKeys?: Map<DIDURL, DIDDocument.PublicKey>;
-    public /* private */ credentials?: Map<DIDURL, VerifiableCredential>;
-    public /* private */ services?: Map<DIDURL, DIDDocument.Service>;
-    public /* private */ proofs?: Map<DID, DIDDocument.Proof>;
+    public controllerDocs?: Map<DID, DIDDocument>;
+    public publicKeys?: Map<DIDURL, DIDDocument.PublicKey>;
+    public credentials?: Map<DIDURL, VerifiableCredential>;
+    public services?: Map<DIDURL, DIDDocument.Service>;
+    public proofs?: Map<DID, DIDDocument.Proof>;
 
-    public /* private */ effectiveController?: DID;
-    public /* private */ defaultPublicKey?: DIDDocument.PublicKey;
+    public effectiveController?: DID;
+    public defaultPublicKey?: DIDDocument.PublicKey;
 
-    public /* private */ metadata?: DIDMetadata;
+    public metadata?: DIDMetadata;
 
     /**
      * Set the DIDDocument subject.
@@ -228,7 +221,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @param doc the document be copied
      */
-    public /* private */ static clone(doc: DIDDocument, withProof: boolean) {
+    public static clone(doc: DIDDocument, withProof: boolean) {
         let newInstance: DIDDocument = new DIDDocument();
         newInstance.subject = doc.subject;
         newInstance.controllers = doc.controllers;
@@ -342,7 +335,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the DIDDocument object or null if no controller
      */
-    public /* protected */ getControllerDocument(did: DID): DIDDocument {
+    public getControllerDocument(did: DID): DIDDocument {
         return this.controllerDocs.get(did);
     }
 
@@ -1471,7 +1464,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return true;
     }
 
-    public /* private */ copy(): DIDDocument {
+    public copy(): DIDDocument {
         let doc = new DIDDocument(this.subject);
 
         doc.controllers = Array.from(this.controllers);
@@ -1645,7 +1638,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the returned value is true if verifing digest is successfully;
      *         the returned value is false if verifing digest is not successfully.
      */
-    public verifyDigest(id: DIDURL | string | null, signature: string, digest: string): boolean {
+    public verifyDigest(id: DIDURL | string | null, signature: string, digest: Buffer): boolean {
         checkArgument(signature != null && !signature.isEmpty(), "Invalid signature");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
@@ -2135,7 +2128,7 @@ export namespace DIDDocument {
             this.apply(m, n);
         }
 
-        public /* private */ static newFromMultiSignature(ms: MultiSignature): MultiSignature {
+        public static newFromMultiSignature(ms: MultiSignature): MultiSignature {
             return new MultiSignature(ms.m(), ms.n());
         }
 
@@ -2192,15 +2185,15 @@ export namespace DIDDocument {
     })
     export class PublicKey implements DIDObject<string>, Comparable<PublicKey> {
         @JsonProperty({ value: DIDDocument.ID })
-        public /* private */ id: DIDURL;
-        @JsonSerialize({using: TypeSerializerFilter.serialize})
+        public id: DIDURL;
+        @JsonSerialize({using: TypeSerializerFilter.filter})
         @JsonProperty({ value: DIDDocument.TYPE })
-        public /* private */ type: string;
-        @JsonSerialize({using: PublicKeySerializerFilter.serialize})
+        public type: string;
+        @JsonSerialize({using: PublicKeySerializerFilter.filter})
         @JsonProperty({ value: DIDDocument.CONTROLLER })
-        public /* private */ controller: DID;
+        public controller: DID;
         @JsonProperty({ value: DIDDocument.PUBLICKEY_BASE58 })
-        public /* private */ keyBase58: string;
+        public keyBase58: string;
         private authenticationKey: boolean;
         private authorizationKey: boolean;
 
@@ -2213,7 +2206,7 @@ export namespace DIDDocument {
          * @param keyBase58 the string from encoded base58 of public key
          */
         // Java: @JsonCreator
-        /* protected */ constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) id: DIDURL,
+        constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) id: DIDURL,
             @JsonProperty({ value: DIDDocument.TYPE }) type: string,
             @JsonProperty({ value: DIDDocument.CONTROLLER }) controller: DID,
             @JsonProperty({ value: DIDDocument.PUBLICKEY_BASE58, required: true }) keyBase58: string) {
@@ -2277,7 +2270,7 @@ export namespace DIDDocument {
             return this.authenticationKey;
         }
 
-        public /* private */ setAuthenticationKey(authenticationKey: boolean) {
+        public setAuthenticationKey(authenticationKey: boolean) {
             this.authenticationKey = authenticationKey;
         }
 
@@ -2290,7 +2283,7 @@ export namespace DIDDocument {
             return this.authorizationKey;
         }
 
-        public /* private */ setAuthorizationKey(authorizationKey: boolean) {
+        public setAuthorizationKey(authorizationKey: boolean) {
             this.authorizationKey = authorizationKey;
         }
 
@@ -2498,7 +2491,7 @@ export namespace DIDDocument {
         private created: Date;
         @JsonInclude({ value: JsonIncludeType.NON_NULL })
         @JsonProperty({ value: DIDDocument.CREATOR })
-        public /* private */ creator: DIDURL;
+        public creator: DIDURL;
         @JsonProperty({ value: DIDDocument.SIGNATURE_VALUE })
         private signature: string;
 
@@ -2511,7 +2504,7 @@ export namespace DIDDocument {
          * @param signature the signature string
          */
         // Java: @JsonCreator
-        /* protected */ constructor(@JsonProperty({ value: DIDDocument.CREATOR }) creator: DIDURL,
+        constructor(@JsonProperty({ value: DIDDocument.CREATOR }) creator: DIDURL,
             @JsonProperty({ value: DIDDocument.SIGNATURE_VALUE, required: true }) signature: string,
             @JsonProperty({ value: DIDDocument.TYPE }) type?: string,
             @JsonProperty({ value: DIDDocument.CREATED, required: true }) created?: Date) {

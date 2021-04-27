@@ -27,8 +27,8 @@ import { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
 
 export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRequest, Parameters> {
-	public /* protected */ static PARAMETER_ID = "id";
-	public /* protected */ static PARAMETER_ISSUER = "issuer";
+	public static PARAMETER_ID = "id";
+	public static PARAMETER_ISSUER = "issuer";
 
 	public static METHOD_NAME = "resolvecredential";
 
@@ -65,10 +65,10 @@ export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 
 class Parameters implements Hashable {
 	@JsonProperty({value: CredentialResolveRequest.PARAMETER_ID})
-	public /* private */ id: DIDURL;
+	public id: DIDURL;
 	@JsonProperty({value: CredentialResolveRequest.PARAMETER_ISSUER})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	public /* private */ issuer: DID;
+	public issuer: DID;
 
 	// TODO Java - @JsonCreator
 	public constructor(

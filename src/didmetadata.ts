@@ -54,19 +54,19 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 		this.did = did;
 	}
 
-	public /* protected */ setRootIdentityId(id: string) {
+	public setRootIdentityId(id: string) {
 		this.put(DIDMetadata.ROOT_IDENTITY, id);
 	}
 
-	public /* protected */ getRootIdentityId(): string {
+	public getRootIdentityId(): string {
 		return this.get(DIDMetadata.ROOT_IDENTITY);
 	}
 
-	public /* protected */ setIndex(index: number) {
+	public setIndex(index: number) {
 		this.put(DIDMetadata.INDEX, index);
 	}
 
-	public /* protected */ getIndex(): number {
+	public getIndex(): number {
 		return this.getInteger(DIDMetadata.INDEX);
 	}
 
@@ -93,7 +93,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 *
 	 * @param signature the signature string
 	 */
-	public /* protected */ setPreviousSignature(signature: string) {
+	public setPreviousSignature(signature: string) {
 		this.put(DIDMetadata.PREV_SIGNATURE, signature);
 	}
 

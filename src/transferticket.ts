@@ -72,7 +72,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 	private proofs: Map<DID, Proof>;
 
-	public /* protected */ constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
+	public constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
 			@JsonProperty({value: TransferTicket.TO, required: true}) to: DID,
 			@JsonProperty({value: TransferTicket.TXID, required: true}) txid: string) {
 		super();
@@ -88,7 +88,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @param to (one of ) the new owner's DID
 	 * @throws DIDResolveException if failed resolve the subject DID
 	 */
-	public /* protected */ static newForDIDDocument(target: DIDDocument, to: DID): TransferTicket {
+	public static newForDIDDocument(target: DIDDocument, to: DID): TransferTicket {
 		checkArgument(target != null, "Invalid target DID document");
 		checkArgument(to != null, "Invalid to DID");
 
@@ -103,7 +103,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		return newTicket;
 	}
 
-	public /* private */ static newWithTicket(ticket: TransferTicket, withProof: boolean): TransferTicket {
+	public static newWithTicket(ticket: TransferTicket, withProof: boolean): TransferTicket {
 		let newTicket = new TransferTicket(ticket.id, ticket.to, ticket.txid);
 		newTicket.doc = ticket.doc;
 		if (withProof) {
@@ -285,7 +285,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		Collections.sort(this._proofs);
 	}
 
-	public /* protected */ seal(controller: DIDDocument, storepass: string) {
+	public seal(controller: DIDDocument, storepass: string) {
 		try {
 			if (this.isQualified())
 				return;
@@ -345,66 +345,6 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 				throw new MalformedTransferTicketException(e);
 		}
 	}
-
-	/**
-	 * Parse a TransferTicket object from from a Reader object.
-	 *
-	 * @param src Reader object used to read JSON content for building the object
-	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static parse(src: Reader): TransferTicket {
-		try {
-			return parse(src, TransferTicket.class);
-		} catch (e) {
-			// DIDSyntaxException
-			if (e instanceof MalformedTransferTicketException)
-				throw e;
-			else
-				throw new MalformedTransferTicketException(e);
-		}
-	} */
-
-	/**
-	 * Parse a TransferTicket object from from a InputStream object.
-	 *
-	 * @param src InputStream object used to read JSON content for building the object
-	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static parse(src: InputStream): TransferTicket {
-		try {
-			return parse(src, TransferTicket.class);
-		} catch (e) {
-			// DIDSyntaxException
-			if (e instanceof MalformedTransferTicketException)
-				throw e;
-			else
-				throw new MalformedTransferTicketException(e);
-		}
-	} */
-
-	/**
-	 * Parse a TransferTicket object from from a File object.
-	 *
-	 * @param src File object used to read JSON content for building the object
-	 * @return the TransferTicket object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static parse(src: File): TransferTicket {
-		try {
-			return parse(src, TransferTicket.class);
-		} catch (e) {
-			// DIDSyntaxException
-			if (e instanceof MalformedTransferTicketException)
-				throw e;
-			else
-				throw new MalformedTransferTicketException(e);
-		}
-	} */
 }
 
 /**
@@ -444,7 +384,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		 this.signature = signature;
 	 }
 
-	 public /* protected */ static newWithDIDURL(method: DIDURL, signature: string): Proof {
+	 public static newWithDIDURL(method: DIDURL, signature: string): Proof {
 		 let proof = new Proof(
 			Constants.DEFAULT_PUBLICKEY_TYPE,
 			method,

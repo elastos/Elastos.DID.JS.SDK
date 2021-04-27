@@ -179,7 +179,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 		return doc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), ...this.getSigningInputs());
 	}
 
-	public /* protected */ static parse<T extends DIDEntity<unknown>>(content: JSONObject, clazz: Class<T>): T {
+	public static parse<T extends DIDEntity<unknown>>(content: JSONObject, clazz: Class<T>): T {
 		return DIDEntity.parse(content, clazz);
 	}
 }
@@ -252,7 +252,7 @@ export namespace IDChainRequest {
 
 			let json = CryptoJS.enc.Base64.parse(ticket).toString();
 			try {
-				this.transferTicket = TransferTicket.parse(json);
+				this.transferTicket = TransferTicket.parseContent(json);
 			} catch (e) {
 				// MalformedTransferTicketException
 				throw new IllegalArgumentException("Invalid ticket", e);

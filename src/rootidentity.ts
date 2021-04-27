@@ -3,12 +3,22 @@ import { AbstractMetadata } from "./abstractmetadata";
 import { HDKey } from "./crypto/hdkey";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
-import { DIDStore } from "./DIDStore";
+import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
-import { DIDAlreadyExistException, DIDDeactivatedException, DIDStoreException, IllegalArgumentException, RootIdentityAlreadyExistException, UnknownInternalException } from "./exceptions/exceptions";
+import {
+	DIDAlreadyExistException,
+	DIDDeactivatedException,
+	DIDStoreException,
+	IllegalArgumentException,
+	RootIdentityAlreadyExistException,
+	UnknownInternalException
+} from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { Mnemonic } from "./mnemonic";
-import { checkArgument, promisify } from "./utils";
+import {
+	checkArgument,
+	promisify
+} from "./utils";
 
 const log = new Logger("RootIdentity");
 
@@ -24,7 +34,7 @@ export class RootIdentity {
 
 	private constructor() {}
 
-	public /* private */ static newFromMnemonic(mnemonic: string, passphrase: string): RootIdentity {
+	public static newFromMnemonic(mnemonic: string, passphrase: string): RootIdentity {
 		let rootIdentity = new RootIdentity();
 		rootIdentity.mnemonic = mnemonic;
 
@@ -116,7 +126,7 @@ export class RootIdentity {
 		return identity;
 	}
 
-	public /* protected */ static createFromPreDerivedPublicKey(preDerivedPublicKey: string, index: number): RootIdentity {
+	public static createFromPreDerivedPublicKey(preDerivedPublicKey: string, index: number): RootIdentity {
 		let key = preDerivedPublicKey == null ? null : HDKey.deserializeBase58(preDerivedPublicKey);
 
 		return RootIdentity.newFromPreDerivedPublicKey(key, index);

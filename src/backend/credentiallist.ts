@@ -74,7 +74,7 @@ export class CredentialList extends ResolveResult<CredentialList> {
 		this.credentialIds.push(id);
 	}
 
-	public /* protected */ sanitize() {
+	public sanitize() {
 		if (this.did == null)
 			throw new MalformedResolveResultException("Missing did");
 	}

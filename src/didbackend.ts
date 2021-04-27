@@ -223,7 +223,7 @@ export class DIDBackend {
 					+ "): " + response.getErrorMessage());
 	}
 
-	public /* private */ resolveDidBiography(did: DID, all: boolean= true, force: boolean = false): DIDBiography {
+	public resolveDidBiography(did: DID, all: boolean= true, force: boolean = false): DIDBiography {
 		log.info("Resolving DID {}, all={}...", did.toString(), all);
 
 		let request = new DIDResolveRequest(this.generateRequestId());
@@ -249,7 +249,7 @@ export class DIDBackend {
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	public /* protected */ resolveDid(did: DID, force: boolean = false): DIDDocument {
+	public resolveDid(did: DID, force: boolean = false): DIDDocument {
 		log.debug("Resolving DID {}...", did.toString());
 
 		if (this.resolveHandle != null) {
@@ -316,7 +316,7 @@ export class DIDBackend {
 		return doc;
 	}
 
-	public /* private */ resolveCredentialBiography(id: DIDURL, issuer: DID = null, force: boolean = false): CredentialBiography {
+	public resolveCredentialBiography(id: DIDURL, issuer: DID = null, force: boolean = false): CredentialBiography {
 		log.info("Resolving credential {}, issuer={}...", id, issuer);
 
 		let request = new CredentialResolveRequest(this.generateRequestId());
@@ -333,7 +333,7 @@ export class DIDBackend {
 		}
 	}
 
-	public /* protected */ resolveCredential(id: DIDURL, issuer: DID = null, force: boolean= false): VerifiableCredential {
+	public resolveCredential(id: DIDURL, issuer: DID = null, force: boolean= false): VerifiableCredential {
 		log.debug("Resolving credential {}...", id);
 
 		let bio = this.resolveCredentialBiography(id, issuer, force);
@@ -357,18 +357,14 @@ export class DIDBackend {
 
 				return null;
 			} else {
-				let vc = bio.getTransaction(1).getRequest().getCredential();
+				const vc = bio.getTransaction(1).getRequest().getCredential();
 
 				// Avoid resolve current credential recursively
-				let request = new class extends CredentialRequest {
-					constructor(request: CredentialRequest) {
-						super();
-						this.constructWithIDChainRequest(request);
-					}
+				let request = new (class extends CredentialRequest {
 					getCredential() {
 						return vc;
 					}
-				}(tx.getRequest());
+				})(tx.getRequest());
 
 				if (!request.isValid())
 					throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
@@ -396,7 +392,7 @@ export class DIDBackend {
 		return vc;
 	}
 
-	public /* protected */ listCredentials(did: DID, skip: number, limit: number): ImmutableList<DIDURL> {
+	public listCredentials(did: DID, skip: number, limit: number): ImmutableList<DIDURL> {
 		log.info("List credentials for {}", did);
 
 		let request = new CredentialListRequest(this.generateRequestId());
@@ -456,7 +452,7 @@ export class DIDBackend {
 	 * @throws DIDTransactionException publishing did failed because of did transaction error.
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	public /* protected */ createDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public createDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.create(doc, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
@@ -472,13 +468,13 @@ export class DIDBackend {
 	 * @throws DIDTransactionException publishing did failed because of did transaction error.
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	public /* protected */ updateDid(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public updateDid(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.update(doc, previousTxid, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
 
-	public /* protected */ transferDid(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public transferDid(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.transfer(doc, ticket, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
@@ -493,7 +489,7 @@ export class DIDBackend {
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
      */
-	public /* protected */ deactivateDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public deactivateDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.deactivate(doc, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
@@ -510,7 +506,7 @@ export class DIDBackend {
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	public /* protected */ deactivateTargetDid(target: DIDDocument, targetSignKey: DIDURL,
+	public deactivateTargetDid(target: DIDDocument, targetSignKey: DIDURL,
 			signer: DIDDocument, signKey: DIDURL, storepass: string,
 			adapter: DIDTransactionAdapter) {
 		let request = DIDRequest.deactivateTarget(target, targetSignKey, signer, signKey, storepass);
@@ -518,7 +514,7 @@ export class DIDBackend {
 		this.invalidDidCache(target.getSubject());
 	}
 
-	public /* protected */ declareCredential(vc: VerifiableCredential, signer: DIDDocument,
+	public declareCredential(vc: VerifiableCredential, signer: DIDDocument,
 			signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		let request = CredentialRequest.declare(vc, signer, signKey, storepass);
 		this.createTransaction(request, adapter);
@@ -526,7 +522,7 @@ export class DIDBackend {
 		this.invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
-	public /* protected */ revokeCredential(vc: VerifiableCredential | DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public revokeCredential(vc: VerifiableCredential | DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		if (vc instanceof VerifiableCredential) {
 			let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
 			this.createTransaction(request, adapter);

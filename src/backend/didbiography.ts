@@ -157,7 +157,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 		this.txs.push(tx);
 	}
 
-	public /* protected */ sanitize() {
+	public sanitize() {
 		if (this.did == null)
 			throw new MalformedResolveResultException("Missing did");
 

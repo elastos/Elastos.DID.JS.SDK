@@ -95,7 +95,7 @@ export class Mnemonic {
 		return new Mnemonic(language);
 	}
 
-	public /* private */ constructor(private language: string = Mnemonic.ENGLISH) {
+	public constructor(private language: string = Mnemonic.ENGLISH) {
 		if (!(language in Mnemonic.WORDLISTS))
 			throw new MnemonicException("Unsupported language for mnemonic "+language);
 	}

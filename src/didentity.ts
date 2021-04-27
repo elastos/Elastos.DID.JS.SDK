@@ -21,12 +21,17 @@
  */
 
 import { ObjectMapper } from "jackson-js";
-import { ClassType, JsonStringifierTransformerContext, JsonParserTransformerContext } from "jackson-js/dist/@types";
+import {
+	JsonStringifierTransformerContext,
+	JsonParserTransformerContext
+} from "jackson-js/dist/@types";
 import { Class } from "./class";
-import { Cloneable } from "./cloneable";
 import { DID } from "./did";
-import { DIDDocument } from "./diddocument";
-import { DIDSyntaxException, UnknownInternalException, InvalidDateFormat } from "./exceptions/exceptions";
+import {
+	DIDSyntaxException,
+	UnknownInternalException,
+	InvalidDateFormat
+} from "./exceptions/exceptions";
 import { JSONObject } from "./json";
 import { checkArgument } from "./utils";
 

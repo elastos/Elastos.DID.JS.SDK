@@ -29,8 +29,8 @@ import { ResolveRequest } from "./resolverequest";
 
 @JsonCreator()
 export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Parameters> {
-	public /* protected */ static PARAMETER_DID = "did";
-	public /* protected */ static PARAMETER_ALL = "all";
+	public static PARAMETER_DID = "did";
+	public static PARAMETER_ALL = "all";
 
 	public static METHOD_NAME = "resolvedid";
 
@@ -65,11 +65,11 @@ export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Paramet
 @JsonCreator()
 export class Parameters implements Hashable {
 	@JsonProperty({value: DIDResolveRequest.PARAMETER_DID})
-	public /* private */ did: DID;
+	public did: DID;
 
 	@JsonProperty({value: DIDResolveRequest.PARAMETER_ALL})
 	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
-	public /* private */ all: boolean;
+	public all: boolean;
 
 	public constructor(@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: DID, all: boolean = false) {
 		this.did = did;

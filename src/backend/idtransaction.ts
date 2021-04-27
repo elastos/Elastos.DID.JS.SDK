@@ -74,7 +74,7 @@ export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 		return this.request;
 	}
 
-	public /* protected */ sanitize() {
+	public sanitize() {
 		if (this.txId == null || this.txId === "")
 			throw new MalformedIDChainTransactionException("Missing txid");
 

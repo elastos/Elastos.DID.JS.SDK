@@ -29,9 +29,9 @@ import { ResolveRequest } from "./resolverequest";
 
 @JsonCreator()
 export class CredentialListRequest extends ResolveRequest<CredentialListRequest, Parameters> {
-	public /* protected */ static PARAMETER_DID = "did";
-	public /* protected */ static PARAMETER_SKIP = "skip";
-	public /* protected */ static PARAMETER_LIMIT = "limit";
+	public static PARAMETER_DID = "did";
+	public static PARAMETER_SKIP = "skip";
+	public static PARAMETER_LIMIT = "limit";
 
 	public static METHOD_NAME = "listcredential";
 
@@ -71,15 +71,15 @@ export class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 @JsonCreator()
 class Parameters implements Hashable {
 	@JsonProperty({value: CredentialListRequest.PARAMETER_DID})
-	public /* private */ did: DID;
+	public did: DID;
 
 	@JsonProperty({value: CredentialListRequest.PARAMETER_SKIP})
 	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
-	public /* private */ skip: number;
+	public skip: number;
 
 	@JsonProperty({value: CredentialListRequest.PARAMETER_LIMIT})
 	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
-	public /* private */ limit: number;
+	public limit: number;
 
 	public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip: number = 0, limit: number = 0) {
 		this.did = did;

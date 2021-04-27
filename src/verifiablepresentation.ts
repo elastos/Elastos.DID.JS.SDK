@@ -32,6 +32,7 @@ import { DIDURL } from "./didurl";
 import { DIDResolveException, DIDStoreException, DIDNotFoundException, InvalidKeyException, AlreadySealedException, IllegalUsage, DIDObjectAlreadyExistException, MalformedPresentationException } from "./exceptions/exceptions";
 import { checkArgument, promisify } from "./utils";
 import { VerifiableCredential } from "./verifiablecredential";
+import { NormalizedURLSerializer } from "./didurl";
 
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
@@ -54,40 +55,40 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 */
 	public static DEFAULT_PRESENTATION_TYPE = "VerifiablePresentation";
 
-	public /* protected */ static ID = "id";
-	public /* protected */ static TYPE = "type";
-	public /* protected */ static HOLDER = "holder";
-	public /* protected */ static VERIFIABLE_CREDENTIAL = "verifiableCredential";
-	public /* protected */ static CREATED = "created";
-	public /* protected */ static PROOF = "proof";
-	public /* protected */ static NONCE = "nonce";
-	public /* protected */ static REALM = "realm";
-	public /* protected */ static VERIFICATION_METHOD = "verificationMethod";
-	public /* protected */ static SIGNATURE = "signature";
+	public static ID = "id";
+	public static TYPE = "type";
+	public static HOLDER = "holder";
+	public static VERIFIABLE_CREDENTIAL = "verifiableCredential";
+	public static CREATED = "created";
+	public static PROOF = "proof";
+	public static NONCE = "nonce";
+	public static REALM = "realm";
+	public static VERIFICATION_METHOD = "verificationMethod";
+	public static SIGNATURE = "signature";
 
 	@JsonProperty({value: VerifiablePresentation.ID})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	public /* private */ id: DIDURL;
+	public id: DIDURL;
 	@JsonProperty({value: VerifiablePresentation.TYPE})
 	// TODO JAVA: @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
-	public /* private */ type: string[];
+	public type: string[];
 	@JsonProperty({value: VerifiablePresentation.HOLDER})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	public /* private */ holder: DID;
+	public holder: DID;
 	@JsonProperty({value: VerifiablePresentation.CREATED})
-	public /* private */ created: Date;
+	public created: Date;
 	@JsonProperty({value: VerifiablePresentation.VERIFIABLE_CREDENTIAL})
-	public /* private */ _credentials: VerifiableCredential[];
+	public _credentials: VerifiableCredential[];
 	@JsonProperty({value: VerifiablePresentation.PROOF})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	public /* private */ proof: VerifiablePresentation.Proof;
+	public proof: VerifiablePresentation.Proof;
 
-	public /* private */ credentials: Map<DIDURL, VerifiableCredential>;
+	public credentials: Map<DIDURL, VerifiableCredential>;
 
 	/**
 	 * Constructs the simplest Presentation.
 	 */
-	/* protected */ constructor(holder?: DID) {
+	constructor(holder?: DID) {
 		super();
 		this.holder = holder;
 		this.credentials = new Map<DIDURL, VerifiableCredential>();
@@ -98,7 +99,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @param vp the source VerifiablePresentation object.
 	 */
-	/* private */ static newFromPresentation(vp: VerifiablePresentation, withProof: boolean): VerifiablePresentation {
+	 static newFromPresentation(vp: VerifiablePresentation, withProof: boolean): VerifiablePresentation {
 		let presentation = new VerifiablePresentation();
 		presentation.id = vp.id;
 		presentation.type = vp.type;
@@ -342,77 +343,16 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return the VerifiablePresentation object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	/* public static parse(content: string) {
+	public static parseContent(content: string): VerifiablePresentation {
 		try {
-			return parse(content, VerifiablePresentation.class);
+			return this.parse(content, VerifiablePresentation);
 		} catch (e) {
-			// DIDSyntaxException
 			if (e instanceof MalformedPresentationException)
 				throw e;
 			else
 				throw new MalformedPresentationException(e);
 		}
-	} */
-
-	/**
-	 * Parse a VerifiablePresentation object from from a Reader object.
-	 *
-	 * @param src Reader object used to read JSON content for building the object
-	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static VerifiablePresentation parse(Reader src)
-			throws MalformedPresentationException, IOException {
-		try {
-			return parse(src, VerifiablePresentation.class);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedPresentationException)
-				throw (MalformedPresentationException)e;
-			else
-				throw new MalformedPresentationException(e);
-		}
-	} */
-
-	/**
-	 * Parse a VerifiablePresentation object from from a InputStream object.
-	 *
-	 * @param src InputStream object used to read JSON content for building the object
-	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static VerifiablePresentation parse(InputStream src)
-			throws MalformedPresentationException, IOException {
-		try {
-			return parse(src, VerifiablePresentation.class);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedPresentationException)
-				throw (MalformedPresentationException)e;
-			else
-				throw new MalformedPresentationException(e);
-		}
-	} */
-
-	/**
-	 * Parse a VerifiablePresentation object from from a File object.
-	 *
-	 * @param src File object used to read JSON content for building the object
-	 * @return the VerifiablePresentation object
-	 * @throws DIDSyntaxException if a parse error occurs
-	 * @throws IOException if an IO error occurs
-	 */
-	/* public static VerifiablePresentation parse(File src)
-			throws MalformedPresentationException, IOException {
-		try {
-			return parse(src, VerifiablePresentation.class);
-		} catch (DIDSyntaxException e) {
-			if (e instanceof MalformedPresentationException)
-				throw (MalformedPresentationException)e;
-			else
-				throw new MalformedPresentationException(e);
-		}
-	} */
+	}
 
 	/**
 	 * Get the Builder object to create presentation for DID.
@@ -469,7 +409,7 @@ export namespace VerifiablePresentation {
 		 * @param holder the Presentation's holder
 		 * @param signKey the key to sign Presentation
 		 */
-		/* protected */ constructor(holder: DIDDocument, signKey: DIDURL) {
+		constructor(holder: DIDDocument, signKey: DIDURL) {
 			this.holder = holder;
 			this.signKey = signKey;
 			this.presentation = new VerifiablePresentation(holder.getSubject());
@@ -616,7 +556,7 @@ export namespace VerifiablePresentation {
 		 @JsonProperty({value: VerifiablePresentation.TYPE})
 		 private type: string;
 		 @JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD})
-		 // TODO JAVA: @JsonSerialize(using = DIDURL.NormalizedSerializer.class)
+		 @JsonSerialize({using: NormalizedURLSerializer.serialize})
 		 private verificationMethod: DIDURL;
 		 @JsonProperty({value: VerifiablePresentation.REALM})
 		 private realm: string;
@@ -635,7 +575,7 @@ export namespace VerifiablePresentation {
 		  * @param signature the signature string
 		  */
 		 // TODO java: @JsonCreator
-		 /* protected */ constructor(
+		 constructor(
 				 @JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD, required: true}) method: DIDURL,
 				 @JsonProperty({value: VerifiablePresentation.REALM, required: true}) realm: string,
 				 @JsonProperty({value: VerifiablePresentation.NONCE, required: true}) nonce: string,
