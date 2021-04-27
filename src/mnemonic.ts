@@ -150,7 +150,7 @@ export class Mnemonic {
 	 * @param passphrase the password combine with mnemonic
 	 * @return the original seed
 	 */
-	public static toSeed(mnemonic: string, passphrase: string): string {
+	public static toSeed(mnemonic: string, passphrase: string): Buffer {
 		checkArgument(mnemonic != null && mnemonic !== "", "Invalid menmonic");
 
 		if (passphrase == null)
@@ -159,6 +159,6 @@ export class Mnemonic {
 		// TODO - CONVERT FROM JAVA NEEDED? - mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
     	// TODO - CONVERT FROM JAVA NEEDED? - passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
 
-		return mnemonicToSeedSync(mnemonic, passphrase).toString();
+		return mnemonicToSeedSync(mnemonic, passphrase)
 	}
 }

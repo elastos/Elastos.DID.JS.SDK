@@ -164,9 +164,16 @@ declare module 'bitcore-lib' {
         deriveChild(arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveNonCompliantChild(arg: string | number, hardened?: boolean): HDPrivateKey;
 
+        publicKey: PublicKey;
+        privateKey: PrivateKey;
+        xprivkey: string;
+        network: Networks.Network;
+        depth: number;
+
         toString(): string;
         toObject(): object;
         toJSON(): object;
+        static fromSeed(hexa: string | Buffer, network?: Networks.Network) : HDPrivateKey;
     }
 
     export class HDPublicKey {

@@ -24,6 +24,7 @@ import jsrsasign from "jsrsasign";
 import { crypto, PrivateKey, PublicKey } from "bitcore-lib";
 import BN from "bn.js";
 import { SHA256 } from "./sha256";
+import { BASE64 } from "./base64";
 // import { uint8ArrayCopy } from "../utils";
 
 
@@ -55,18 +56,17 @@ export class EcdsaSigner {
         dataSigner.updateHex(digest.toString("hex"));
 
         let signed = dataSigner.sign();
-        let compact = jsrsasign.KJUR.crypto.ECDSA.asn1SigToConcatSig(signed);
+
+		let compact = jsrsasign.KJUR.crypto.ECDSA.asn1SigToConcatSig(signed);
         let r = new BN(compact.slice(0, compact.length / 2), "hex", "le");
         let s = new BN(compact.slice(compact.length / 2), "hex", "le");
 
         if (r.isNeg()) r = r.ineg();
         if (s.isNeg()) s = s.ineg();
 
-        let buffer64 = new Uint8Array(64);
-        EcdsaSigner.uint8ArrayCopy(r.toArrayLike(Buffer, "le"), 0, buffer64, 0, 32);
-        EcdsaSigner.uint8ArrayCopy(s.toArrayLike(Buffer, "le"), 0, buffer64, 32, 32);
-		
-		let hexBuffer = jsrsasign.ArrayBuffertohex(buffer64.buffer)
+		let a= new Array<number>();
+		let hexBuffer = BASE64.fromByteArray(a.concat(r.toArray("le"), s.toArray("le")), true)
+		console.log("compacted sig", hexBuffer)
         let signedData = jsrsasign.hextob64u(hexBuffer);
         return signedData;
 
@@ -93,26 +93,36 @@ export class EcdsaSigner {
 		return sig.toString();*/
 	}
 
+	
+
 	public static signData(privateKey: Buffer | string, ...data: Buffer[]): string {
 		return this.sign(privateKey, SHA256.encodeToBuffer(...data));
 	}
 
 	public static verify(publicKey: Buffer | string, signature: string, data: Buffer): boolean {
-		if (publicKey instanceof Buffer)
-			publicKey = publicKey.toString();
-
+	
+		let ec = new jsrsasign.KJUR.crypto.ECDSA({curve: "secp256r1"});
+		console.log("pk", publicKey.toString("hex"))
+			ec.setPublicKeyHex(publicKey.toString("hex"))	
+		// if (publicKey instanceof Buffer){
+		// 	console.log("pk", publicKey.toString("hex"))
+		// 	ec.setPublicKeyHex(publicKey.toString("hex"))
+		// } else {
+		// 	ec.setPublicKeyHex(publicKey)
+		// }
 		
         let signer = new jsrsasign.KJUR.crypto.Signature({ alg: 'SHA256withECDSA' });
-		//new KJUR.crypto.Signature()
-
-		signer.init(new jsrsasign.KJUR.crypto.ECDSA({ pub: publicKey, curve: 'secp256r1' }));
-        // Java: signer.init( { xy: this.uncompress(pubKeyObj).toString('hex'), curve: 'secp256r1' });
+		signer.init(ec);
         signer.updateHex(data.toString("hex"));
-        let signatureBA = jsrsasign.b64toBA(jsrsasign.b64utob64(signature))
+
+        let signatureBA = BASE64.toByteArray(signature) 
 
         let r = new BN(signatureBA.slice(0, 32), 'hex', "le");
         let s = new BN(signatureBA.slice(32), 'hex', "le");
+
         let asn1 = jsrsasign.KJUR.crypto.ECDSA.hexRSSigToASN1Sig(jsrsasign.BAtohex(r.toArray("le")), jsrsasign.BAtohex(s.toArray("le")));
+
+		console.log("ASN1", asn1)
 
         return signer.verify(asn1);
 
@@ -139,24 +149,24 @@ export class EcdsaSigner {
 		return signer.verifySignature(digest, r, s); */
 	}
 
-	/* private static uncompress (key: PublicKey): Buffer  {
-        if (!key.compressed) {
-            throw new Error('Public key is not compressed.');
-        }
+	// private static uncompress (key: PublicKey): Buffer  {
+    //     if (!key.compressed) {
+    //         throw new Error('Public key is not compressed.');
+    //     }
 
-        const x = key.point.getX();
-        const y = key.point.getY();
+    //     const x = key.point.getX();
+    //     const y = key.point.getY();
 
-        const xbuf = x.toBuffer({
-            size: 32,
-        });
+    //     const xbuf = x.toBuffer({
+    //         size: 32,
+    //     });
 
-        const ybuf = y.toBuffer({
-            size: 32,
-        });
+    //     const ybuf = y.toBuffer({
+    //         size: 32,
+    //     });
 
-        return Buffer.concat([Buffer.from([0x04]), xbuf, ybuf]);
-    } */
+    //     return Buffer.concat([Buffer.from([0x04]), xbuf, ybuf]);
+    // } 
 
 	public static verifyData(publicKey: Buffer | string, sig: string, ...data: Buffer[]): boolean {
 		return this.verify(publicKey, sig, SHA256.encodeToBuffer(...data));

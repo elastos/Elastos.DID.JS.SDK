@@ -25,4 +25,14 @@ export class BASE64 {
         return jsrsasign.b64toutf8(this.getB64(base64String))
     }
 
+    public static toByteArray(base64String: string): number[]{
+        return jsrsasign.b64toBA(this.getB64(base64String))
+    }
+
+    public static fromByteArray(byteArray: number[], useURLFormat: boolean = false): string{
+        let hexValue = jsrsasign.BAtohex(byteArray);
+        if (useURLFormat) return jsrsasign.hextob64u(hexValue);
+        return jsrsasign.hextob64(hexValue);
+    }
+
 }

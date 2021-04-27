@@ -1,9 +1,9 @@
 import * as assert from 'assert';
-import * as bs58check from 'bs58check';
+import * as bs58check from 'bs58'
 import * as crypto from 'crypto';
 import * as secp256r1 from './secp256r1';
 
-const MASTER_SECRET = Buffer.from('Nist256p1 seed', 'utf8');
+const MASTER_SECRET = Buffer.from('Bitcoin seed', 'utf8');
 const LEN = 78;
 
 interface Version {
@@ -59,7 +59,7 @@ export class HDKey {
         if (key.readUInt8(0) === 0) {
             // private
             assert.ok(version === versions.private, 'Version mismatch: version does not match private');
-            hdkey.privateKey = key.slice(1); // cut off first 0x0 byte
+            hdkey.privateKey = key.slice(1, 33); // cut off first 0x0 byte
         } else {
             assert.ok(version === versions.public, 'Version mismatch: version does not match public');
             hdkey.publicKey = key;
