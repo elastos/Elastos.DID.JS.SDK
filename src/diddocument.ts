@@ -87,6 +87,7 @@ import { HDKey } from "./crypto/hdkey";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { SHA256 } from "./crypto/sha256";
 import { KeyPair } from "./crypto/keypair";
+import { ByteBuffer } from "./crypto/bytebuffer";
 import {
     PropertySerializerFilter,
     Serializer,
@@ -583,36 +584,27 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     // TODO: check with jingyu what is this "identifier" and if we have a better way (existing libs)
     // than using raw bytes manipulation here.
-    /*
     private mapToDerivePath(identifier: string, securityCode: number): string {
-        byte digest[] = new byte[32];
-        let sha256 = new SHA256Digest();
-        byte[] in = identifier.getBytes();
-        sha256.update(in, 0, in.length);
-        sha256.doFinal(digest, 0);
-
-        let digest = identifier.sha256();
-
+        let digest = SHA256.encodeToBuffer(Buffer.from(identifier, "utf-8"));
         let path = "";
-        ByteBuffer bb = ByteBuffer.wrap(digest);
+        let bb = ByteBuffer.wrap(digest);
         while (bb.hasRemaining()) {
-            int idx = bb.getInt();
+            let idx = bb.readInt();
             if (idx >= 0)
-                path.append(idx);
-            else
-                path.append(idx & 0x7FFFFFFF).append('H');
+                path = path.concat(idx.toString());
+            else 
+                path = path.concat((idx & 0x7FFFFFFF).toString()).concat("H");
 
-            path.append('/');
+            path = path.concat("/");
         }
 
         if (securityCode >= 0)
-            path.append(securityCode);
+            path = path.concat(securityCode.toString());
         else
-            path.append(securityCode & 0x7FFFFFFF).append('H');
+            path = path.concat((securityCode & 0x7FFFFFFF).toString()).concat('H');
 
-        return path.toString();
+        return path;
     }
-    */
 
     /**
      * Derive the extended private key according to identifier string and security code.
