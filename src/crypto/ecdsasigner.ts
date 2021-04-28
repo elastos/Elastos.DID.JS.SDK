@@ -31,16 +31,12 @@ import { BASE64 } from "./base64";
 
 export class EcdsaSigner {
 
-
-
 	private static uint8ArrayCopy(src: Uint8Array, srcIndex: number, dest: Uint8Array, destIndex: number, length: number): void {
 		let values = [...src.slice(srcIndex, srcIndex + length)];
 		dest.set(values, destIndex);
 	}
 
-
-
-	// NOTE: Ned to convert bitcoin spec private key to ECDSA spec key before signing.
+	// NOTE: Need to convert bitcoin spec private key to ECDSA spec key before signing.
 	public static sign(privateKey: Buffer | string, digest: Buffer): string {
 
 		let ec = new jsrsasign.KJUR.crypto.ECDSA({curve: "secp256r1"});
@@ -93,7 +89,9 @@ export class EcdsaSigner {
 		return sig.toString();*/
 	}
 
-	
+	public static sha256Digest(...data: Buffer[]): Buffer {
+		return SHA256.encodeToBuffer(...data);
+	}
 
 	public static signData(privateKey: Buffer | string, ...data: Buffer[]): string {
 		return this.sign(privateKey, SHA256.encodeToBuffer(...data));

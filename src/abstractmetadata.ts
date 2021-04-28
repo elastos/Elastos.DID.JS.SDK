@@ -50,7 +50,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 * Set store for Abstract Metadata.
 	 * @param store the DIDStore
 	 */
-	public /*protected*/ attachStore(store: DIDStore) {
+	public attachStore(store: DIDStore) {
 		checkArgument(store != null, "Invalid store");
 		this.store = store;
 	}
@@ -64,7 +64,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 *
 	 * @return the DIDStore object
 	 */
-	public /*protected*/ getStore(): DIDStore | null {
+	public getStore(): DIDStore | null {
 		return this.store;
 	}
 

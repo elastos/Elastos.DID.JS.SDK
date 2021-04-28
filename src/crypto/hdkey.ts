@@ -23,8 +23,9 @@
 import { Mnemonic } from "../mnemonic";
 import { crypto } from "bitcore-lib";
 import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
-import { Base58 } from './base58'
+import { Base58 } from './base58';
 import { SHA256 } from "./sha256";
+import { KeyPair } from "./keypair";
 
 export class HDKey {
 	public static PUBLICKEY_BYTES = 33;
@@ -47,9 +48,6 @@ export class HDKey {
 
 	// Pre-derive publickey path: m/44'/0'/0'
 	public static PRE_DERIVED_PUBLICKEY_PATH = "m/44'/0'/0'" //"44H/0H/0H";
-
-
-	
 
 	public static newWithMnemonic(mnemonic: string, passphrase: string): HDKey {
 		let seed = Mnemonic.toSeed(mnemonic, passphrase)
@@ -157,7 +155,8 @@ export class HDKey {
 		return new HDKey(this.root.deriveChild(index));	
 	}
 
-    /*public getJCEKeyPair(): KeyPair {
+	/*
+    public getJCEKeyPair(): KeyPair {
     	let paramSpec = new ECNamedCurveSpec(
         		"secp256r1", CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(),
         		CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
@@ -189,7 +188,8 @@ export class HDKey {
 			throw new UnknownInternalException(e);
 		}
     	return new KeyPair(pub, priv);
-    }*/
+    }
+	*/
 
 	private static getRedeemScript(pk: Buffer): Buffer {
 		let script = Buffer.alloc(35)

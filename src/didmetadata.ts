@@ -50,7 +50,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 		this.did = did;
 	}
 
-	public /*protected*/ setDid(did: DID) {
+	public setDid(did: DID) {
 		this.did = did;
 	}
 
@@ -75,7 +75,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 *
 	 * @param txid the transaction id string
 	 */
-	public /*protected*/ setTransactionId(txid: string) {
+	public setTransactionId(txid: string) {
 		this.put(DIDMetadata.TXID, txid);
 	}
 
@@ -111,7 +111,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 *
 	 * @param signature the signature string
 	 */
-	public /*protected*/ setSignature(signature: string) {
+	public setSignature(signature: string) {
 		this.put(DIDMetadata.SIGNATURE, signature);
 	}
 
@@ -129,7 +129,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 *
 	 * @param timestamp the time published
 	 */
-	 public /*protected*/ setPublished(timestamp: Date) {
+	 public setPublished(timestamp: Date) {
 		this.put(DIDMetadata.PUBLISHED, timestamp);
 	}
 
@@ -151,7 +151,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 *
 	 * @param deactivated the deactivate status
 	 */
-	 public /*protected*/ setDeactivated(deactivated: boolean) {
+	 public setDeactivated(deactivated: boolean) {
 		this.put(DIDMetadata.DEACTIVATED, deactivated);
 	}
 

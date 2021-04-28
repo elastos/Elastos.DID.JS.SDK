@@ -53,11 +53,11 @@ export class Aes256cbc {
 		
 	}
 
-	public static encrypt(plain: string, passwd: string): Buffer {
+	public static encrypt(plain: Buffer, passwd: string): Buffer {
 		let { key, iv } = Aes256cbc.generateKeyAndIv(passwd);
 
 		let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
-		let encrypted = cipher.update(plain, 'utf8', 'base64');
+		let encrypted = cipher.update(plain.toString("utf-8"), 'utf8', 'base64');
 		encrypted += cipher.final('base64');
 		return Buffer.from(encrypted, "base64")
 	}
@@ -74,13 +74,13 @@ export class Aes256cbc {
 	
 	}
 
-	public static encryptToBase64(plain: string, passwd: string): string {
+	public static encryptToBase64(plain: Buffer, passwd: string): string {
 		let secret = this.encrypt(plain, passwd);
 		return BASE64.toUrlFormat(secret.toString("base64"))
 	}
 
-	public static decryptFromBase64(base64Secret: string, passwd: string): string {
+	public static decryptFromBase64(base64Secret: string, passwd: string): Buffer {
 		let secret = Buffer.from(BASE64.fromUrlFormat(base64Secret), "base64")
-		return Aes256cbc.decrypt(secret, passwd).toString("utf-8");
+		return Aes256cbc.decrypt(secret, passwd);
 	}
 }

@@ -51,18 +51,18 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	 */
 	public static CREDENTIAL_SPECIFICATION = "elastos/credential/1.0";
 
-	public /*protected*/ static HEADER = "header";
-	public /*protected*/ static PAYLOAD = "payload";
-	public /*protected*/ static PROOF = "proof";
+	public static HEADER = "header";
+	public static PAYLOAD = "payload";
+	public static PROOF = "proof";
 
-	public /*protected*/ static SPECIFICATION = "specification";
-	public /*private*/ static OPERATION = "operation";
-	public /*private*/ static PREVIOUS_TXID = "previousTxid";
-	public /*private*/ static TICKET = "ticket";
+	public static SPECIFICATION = "specification";
+	public static OPERATION = "operation";
+	public static PREVIOUS_TXID = "previousTxid";
+	public static TICKET = "ticket";
 
-	public /*private*/ static TYPE = "type";
-	public /*private*/ static VERIFICATION_METHOD = "verificationMethod";
-	public /*private*/ static SIGNATURE = "signature";
+	public static TYPE = "type";
+	public static VERIFICATION_METHOD = "verificationMethod";
+	public static SIGNATURE = "signature";
 
 	@JsonProperty({value: IDChainRequest.HEADER})
 	private header: IDChainRequest.Header;
@@ -147,7 +147,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 
 	protected abstract getSignerDocument(): DIDDocument;
 
-	public /*protected*/ sanitize() {
+	public sanitize() {
 	}
 
 	/**
@@ -280,7 +280,7 @@ export namespace IDChainRequest {
 		private signature: string;
 
 		// Java: @JsonCreator()
-		public /*private*/ constructor(
+		public constructor(
 				@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD, required: true}) verificationMethod: DIDURL,
 				@JsonProperty({value: IDChainRequest.SIGNATURE, required: true}) signature: string,
 				@JsonProperty({value: IDChainRequest.TYPE}) type: string = null
@@ -298,7 +298,7 @@ export namespace IDChainRequest {
 			return this.verificationMethod;
 		}
 
-		public /*protected*/ qualifyVerificationMethod(ref: DID) {
+		public qualifyVerificationMethod(ref: DID) {
 			// TODO: need improve the impl
 			if (this.verificationMethod.getDid() == null)
 				this.verificationMethod = DIDURL.valueOf(ref, this.verificationMethod);

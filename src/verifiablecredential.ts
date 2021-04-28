@@ -120,25 +120,25 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public static SIGNATURE = "signature";
 
 	@JsonProperty({value:VerifiableCredential.ID})
-	public /*private*/ id: DIDURL;
+	public id: DIDURL;
 	@JsonProperty({value:VerifiableCredential.TYPE})
 	// TODO: migrate from java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY})
-	public /*private*/ type: string[];
+	public type: string[];
 	@JsonSerialize({using: IssuerSerializerFilter.filter})
 	@JsonProperty({value:VerifiableCredential.ISSUER})
-	public /*private*/ issuer: DID;
+	public issuer: DID;
 	@JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
-	public /*private*/ issuanceDate: Date;
+	public issuanceDate: Date;
 	@JsonProperty({value:VerifiableCredential.EXPIRATION_DATE})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	public /*private*/ expirationDate: Date;
+	public expirationDate: Date;
 	@JsonProperty({value:VerifiableCredential.CREDENTIAL_SUBJECT})
-	public /*private*/ subject: VerifiableCredential.Subject;
+	public subject: VerifiableCredential.Subject;
 	@JsonProperty({value:VerifiableCredential.PROOF})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	public /*private*/ proof: VerifiableCredential.Proof;
+	public proof: VerifiableCredential.Proof;
 
-	public /*private*/ metadata: CredentialMetadata;
+	public metadata: CredentialMetadata;
 
 	constructor() {
 		super();
@@ -1074,8 +1074,8 @@ export namespace VerifiableCredential {
 	 */
 	 @JsonPropertyOrder({value: [VerifiableCredential.ID]})
 	 export class Subject {
-		public /*private*/ id: DID;
-		public /*private*/ properties: Map<string, Object>;
+		public id: DID;
+		public properties: Map<string, Object>;
 
 		 /**
 		  * Constructs the CredentialSubject object with given controller.

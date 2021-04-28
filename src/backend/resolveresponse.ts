@@ -36,13 +36,13 @@ import { ResolveResult } from "./resolveresult";
 export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
 	private static JSON_RPC_VERSION = "2.0";
 
-	public /*protected*/ static ID = "id";
-	public /*protected*/ static JSON_RPC = "jsonrpc";
-	public /*protected*/ static RESULT = "result";
-	public /*protected*/ static ERROR = "error";
-	public /*protected*/ static ERROR_CODE = "code";
-	public /*protected*/ static ERROR_MESSAGE = "message";
-	public /*protected*/ static ERROR_DATA = "data";
+	public static ID = "id";
+	public static JSON_RPC = "jsonrpc";
+	public static RESULT = "result";
+	public static ERROR = "error";
+	public static ERROR_CODE = "code";
+	public static ERROR_MESSAGE = "message";
+	public static ERROR_DATA = "data";
 
 	@JsonProperty({value: ResolveResponse.ID})
 	private responseId: string;

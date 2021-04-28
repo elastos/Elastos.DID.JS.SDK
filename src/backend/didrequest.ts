@@ -213,7 +213,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		return this.doc;
 	}
 
-	public /*private*/ setPayload(docOrString: DIDDocument | string) {
+	public setPayload(docOrString: DIDDocument | string) {
 		if (docOrString instanceof DIDDocument) {
 			this.did = this.doc.getSubject();
 			this.doc = this.doc;
@@ -231,7 +231,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		}
 	}
 
-	public /*protected*/ sanitize() {
+	public sanitize() {
 		let header = this.getHeader();
 
 		if (header == null)

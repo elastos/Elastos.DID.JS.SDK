@@ -19,30 +19,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-package org.elastos.did.utils;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.elastos.did.DID;
-import org.elastos.did.DIDBackend;
-import org.elastos.did.DIDDocument;
-import org.elastos.did.DIDStore;
-import org.elastos.did.DIDURL;
-import org.elastos.did.Issuer;
-import org.elastos.did.RootIdentity;
-import org.elastos.did.TransferTicket;
-import org.elastos.did.VerifiableCredential;
-import org.elastos.did.VerifiablePresentation;
-import org.elastos.did.backend.SimulatedIDChain;
-import org.elastos.did.crypto.HDKey;
-import org.elastos.did.exception.DIDException;
+/*
+import { DID } from "../../src/did";
+import { DIDBackend } from "../../src/didbackend";
+import { DIDDocument } from "../../src/diddocument";
+import { DIDStore } from "../../src/didstore";
+import { DIDURL } from "../../src/didurl";
+import { Issuer } from "../../src/issuer";
+import { RootIdentity } from "../../src/rootidentity";
+import { TransferTicket } from "../../src/transferticket";
+import { VerifiableCredential } from "../../src/verifiablecredential";
+import { VerifiablePresentation } from "../../src/verifiablepresentation";
+import { SimulatedIDChain } from "../../src/backend/sim";
+import { crypto.HDKey } from "../../src/did";
+import { exception.DIDException } from "../../src/did";
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -883,3 +873,4 @@ public class TestDataGenerator {
 		tdc.createTestFiles();
 	}
 }
+*/

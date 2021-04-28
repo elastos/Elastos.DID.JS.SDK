@@ -42,7 +42,7 @@ export class RootIdentity {
 			passphrase = "";
 
 		rootIdentity.rootPrivateKey = HDKey.newWithMnemonic(mnemonic, passphrase);
-		rootIdentity.preDerivedPublicKey = rootIdentity.rootPrivateKey.derive(HDKey.PRE_DERIVED_PUBLICKEY_PATH);
+		rootIdentity.preDerivedPublicKey = rootIdentity.rootPrivateKey.deriveWithPath(HDKey.PRE_DERIVED_PUBLICKEY_PATH);
 		rootIdentity.index = 0;
 		return rootIdentity;
 	}
@@ -50,7 +50,7 @@ export class RootIdentity {
 	private static newFromPrivateKey(rootPrivateKey: HDKey): RootIdentity {
 		let rootIdentity = new RootIdentity();
 		rootIdentity.rootPrivateKey = rootPrivateKey;
-		rootIdentity.preDerivedPublicKey = rootPrivateKey.derive(HDKey.PRE_DERIVED_PUBLICKEY_PATH);
+		rootIdentity.preDerivedPublicKey = rootPrivateKey.deriveWithPath(HDKey.PRE_DERIVED_PUBLICKEY_PATH);
 		rootIdentity.index = 0;
 		return rootIdentity;
 	}
@@ -143,13 +143,13 @@ export class RootIdentity {
 		return this.metadata.getStore();
 	}
 
-	public /*protected*/ setMetadata(metadata: RootIdentity.Metadata) {
+	public setMetadata(metadata: RootIdentity.Metadata) {
 		this.metadata = metadata;
 	}
 
-	protected static getId(key: string): string {
+	protected static getId(key: Buffer): string {
 		checkArgument(key != null && key.length > 0, "Invalid key bytes");
-		return MD5(key).toString(CryptoJS.enc.Hex);
+		return MD5(key.toString("utf-8")).toString(CryptoJS.enc.Hex);
 	}
 
 	public getId(): string {
@@ -188,19 +188,19 @@ export class RootIdentity {
 		this.metadata.setDefaultDid(this.getDid(index));
 	}
 
-	public /*protected*/ getMnemonic(): string {
+	public getMnemonic(): string {
 		return this.mnemonic;
 	}
 
-	public /*protected*/ getRootPrivateKey(): HDKey {
+	public getRootPrivateKey(): HDKey {
 		return this.rootPrivateKey;
 	}
 
-	public /*protected*/ getPreDerivedPublicKey(): HDKey {
+	public getPreDerivedPublicKey(): HDKey {
 		return this.preDerivedPublicKey;
 	}
 
-	public /*protected*/ getIndex(): number {
+	public getIndex(): number {
 		return this.index;
 	}
 
@@ -224,12 +224,12 @@ export class RootIdentity {
 	public getDid(index: number): DID {
 		checkArgument(index >= 0, "Invalid index");
 
-		let key = this.preDerivedPublicKey.derive("0/" + index);
+		let key = this.preDerivedPublicKey.deriveWithPath("0/" + index);
 		let did = new DID(DID.METHOD, key.getAddress());
 		return did;
 	}
 
-	public /*protected*/ static lazyCreateDidPrivateKey(id: DIDURL, store: DIDStore, storepass: string): string {
+	public static lazyCreateDidPrivateKey(id: DIDURL, store: DIDStore, storepass: string): Buffer {
 		let doc = store.loadDid(id.getDid());
 		if (doc == null) {
 			log.error("INTERNAL - Missing document for DID: {}", id.getDid());
@@ -254,8 +254,8 @@ export class RootIdentity {
 			throw new DIDStoreException("Invalid DID metadata: " + id.getDid());
 		}
 
-		store.storePrivateKey(id, key.privateExtendedKey, storepass);
-		let sk = key.privateExtendedKey;
+		let sk = key.serialize();
+		store.storePrivateKey(id, sk, storepass);
 		// JAVA: store.storePrivateKey(id, key.serialize(), storepass);
 		// JAVA: let sk = key.serialize();
 		return sk;
@@ -452,7 +452,7 @@ export namespace RootIdentity {
 			this.id = id;
 		}
 
-		public /*protected*/ setId(id: string) {
+		public setId(id: string) {
 			this.id = id;
 		}
 
@@ -461,7 +461,7 @@ export namespace RootIdentity {
 		 *
 		 * @param txid the transaction id string
 		 */
-		public /*protected*/ setDefaultDid(did: DID) {
+		public setDefaultDid(did: DID) {
 			this.put(Metadata.DEFAULT_DID, did.toString());
 		}
 

@@ -53,7 +53,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 		this.id = id;
 	}
 
-	public /*protected*/ setId(id: DIDURL) {
+	public setId(id: DIDURL) {
 		this.id = id;
 	}
 
@@ -62,7 +62,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 	 *
 	 * @param txid the transaction id string
 	 */
-	public /*protected*/ setTransactionId(txid: string) {
+	public setTransactionId(txid: string) {
 		this.put(CredentialMetadata.TXID, txid);
 	}
 
@@ -80,7 +80,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 	 *
 	 * @param timestamp the time published
 	 */
-	public /*protected*/ setPublished(timestamp: Date) {
+	public setPublished(timestamp: Date) {
 		checkArgument(timestamp != null, "Invalid timestamp");
 
 		this.put(CredentialMetadata.PUBLISHED, timestamp);
@@ -105,7 +105,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 	 *
 	 * @param revoked the revocation status
 	 */
-	public /*protected*/ setRevoked(revoked: boolean) {
+	public setRevoked(revoked: boolean) {
 		this.put(CredentialMetadata.REVOKED, revoked);
 	}
 

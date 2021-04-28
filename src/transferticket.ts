@@ -46,14 +46,14 @@ import { checkArgument } from "./utils";
 @JsonPropertyOrder({value:[TransferTicket.ID, TransferTicket.TO, TransferTicket.TXID, TransferTicket.PROOF]})
 @JsonCreator()
 export class TransferTicket extends DIDEntity<TransferTicket> {
-	public /*protected*/ static ID = "id";
-	public /*protected*/ static TO = "to";
-	public /*protected*/ static TXID = "txid";
-	public /*protected*/ static PROOF = "proof";
-	public /*protected*/ static TYPE = "type";
-	public /*protected*/ static VERIFICATION_METHOD = "verificationMethod";
-	public /*protected*/ static CREATED = "created";
-	public /*protected*/ static SIGNATURE = "signature";
+	public static ID = "id";
+	public static TO = "to";
+	public static TXID = "txid";
+	public static PROOF = "proof";
+	public static TYPE = "type";
+	public static VERIFICATION_METHOD = "verificationMethod";
+	public static CREATED = "created";
+	public static SIGNATURE = "signature";
 
 	@JsonProperty({value:TransferTicket.ID})
 	private id: DID;

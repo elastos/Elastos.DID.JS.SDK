@@ -41,6 +41,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 import { Hashable } from "./hashable";
 import { Comparable } from "./comparable";
 import { FileSystemStorage } from "./filesystemstorage";
+import { EcdsaSigner } from "./crypto/ecdsasigner";
 import dayjs from "dayjs";
 
 /**
@@ -61,10 +62,10 @@ import dayjs from "dayjs";
 
 	private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
-	public /*private*/ storage: DIDStorage;
+	public storage: DIDStorage;
 	private metadata: DIDStore.Metadata;
 
-	public /*protected*/ static defaultConflictHandle: DIDStore.ConflictHandle = {
+	public static defaultConflictHandle: DIDStore.ConflictHandle = {
 		merge: (chainDoc, localDoc) => {
 			localDoc.getMetadata().setPublished(chainDoc.getMetadata().getPublished());
 			localDoc.getMetadata().setSignature(chainDoc.getMetadata().getSignature());
@@ -125,8 +126,8 @@ import dayjs from "dayjs";
 			let passwordDigest = CryptoJS.MD5(password).toString();
 
 			try {
-				let cipher = Aes256cbc.encrypt(passwordDigest, password);
-				let digest = CryptoJS.MD5(cipher);
+				let cipher = Aes256cbc.encrypt(Buffer.from(passwordDigest, "utf-8"), password);
+				let digest = CryptoJS.MD5(cipher.toString("utf-8"));
 				return CryptoJS.enc.Hex.stringify(digest);
 			} catch (e) {
 				// CryptoException
@@ -142,7 +143,7 @@ import dayjs from "dayjs";
 		 * @return the encrypt result
 		 * @throws DIDStoreException Encrypt data error.
 		 */
-		private static encryptToBase64(input: string, passwd: string): string {
+		private static encryptToBase64(input: Buffer, passwd: string): string {
 			try {
 				return Aes256cbc.encryptToBase64(input, passwd);
 				// TODO: CHECK IF CRYPTOJS HANDLE THOSE OPTIONS return Base64.encodeToString(cipher, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
@@ -160,7 +161,7 @@ import dayjs from "dayjs";
 		 * @return the original data before encrpting
 		 * @throws DIDStoreException Decrypt private key error.
 		 */
-		private static decryptFromBase64(input: string, passwd: string): string {
+		private static decryptFromBase64(input: string, passwd: string): Buffer {
 			try {
 				return Aes256cbc.decryptFromBase64(input, passwd);
 			} catch (e) {
@@ -175,7 +176,7 @@ import dayjs from "dayjs";
 			return newSecret;
 		}
 
-		private encrypt(input: string, passwd: string): string {
+		private encrypt(input: Buffer, passwd: string): string {
 			let fingerprint = this.metadata.getFingerprint();
 			let currentFingerprint = DIDStore.calcFingerprint(passwd);
 
@@ -190,7 +191,7 @@ import dayjs from "dayjs";
 			return result;
 		}
 
-		private decrypt(input: string, passwd: string): string {
+		private decrypt(input: string, passwd: string): Buffer {
 			let fingerprint = this.metadata.getFingerprint();
 			let currentFingerprint = DIDStore.calcFingerprint(passwd);
 
@@ -202,7 +203,7 @@ import dayjs from "dayjs";
 			return result;
 		}
 
-		public /*protected*/ storeRootIdentity(identity: RootIdentity, storepass: string = undefined) {
+		public storeRootIdentity(identity: RootIdentity, storepass: string = undefined) {
 			checkArgument(identity != null, "Invalid identity");
 
 			if (storepass !== undefined) {
@@ -210,7 +211,7 @@ import dayjs from "dayjs";
 
 				let encryptedMnemonic = null;
 				if (identity.getMnemonic() != null)
-					encryptedMnemonic = this.encrypt(identity.getMnemonic(), storepass);
+					encryptedMnemonic = this.encrypt(Buffer.from(identity.getMnemonic(), 'utf8'), storepass);
 
 				let encryptedPrivateKey = this.encrypt(identity.getRootPrivateKey().serialize(), storepass);
 
@@ -230,7 +231,7 @@ import dayjs from "dayjs";
 			}
 		}
 
-		public /*protected*/ setDefaultRootIdentity(identity: RootIdentity) {
+		public setDefaultRootIdentity(identity: RootIdentity) {
 			checkArgument(identity != null, "Invalid identity");
 
 			if (!this.containsRootIdentity(identity.getId()))
@@ -299,7 +300,7 @@ import dayjs from "dayjs";
 		 * @return the mnemonic string
 		 * @throws DIDStoreException there is no mnemonic in DID Store.
 		 */
-		public /*protected*/ exportRootIdentityMnemonic(id: string, storepass: string): string | null {
+		public exportRootIdentityMnemonic(id: string, storepass: string): string | null {
 			checkArgument(id != null && id !== "", "Invalid id");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
@@ -310,7 +311,7 @@ import dayjs from "dayjs";
 				return null;
 		}
 
-		public /*protected*/ containsRootIdentityMnemonic(id: string): boolean {
+		public containsRootIdentityMnemonic(id: string): boolean {
 			checkArgument(id != null && id !== "", "Invalid id");
 
 			let encryptedMnemonic = this.storage.loadRootIdentityMnemonic(id);
@@ -343,7 +344,7 @@ import dayjs from "dayjs";
 			}
 		}
 
-		public /*protected*/ derive(id: string, path: string, storepass: string): HDKey {
+		public derive(id: string, path: string, storepass: string): HDKey {
 			checkArgument(id != null && id !== "", "Invalid identity");
 			checkArgument(path != null && path !== "", "Invalid path");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -378,7 +379,7 @@ import dayjs from "dayjs";
 			return this.storage.containsRootIdenities();
 		}
 
-		public /*protected*/ storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata ) {
+		public storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata ) {
 			checkArgument(id != null && id !== "", "Invalid id");
 			checkArgument(metadata != null, "Invalid metadata");
 
@@ -698,7 +699,7 @@ import dayjs from "dayjs";
 		 * @param metadata the meta data for Credential
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public /*protected*/ storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
+		public storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
 			checkArgument(id != null, "Invalid credential id");
 			checkArgument(metadata != null, "Invalid credential metadata");
 
@@ -833,7 +834,7 @@ import dayjs from "dayjs";
 		 * @param storepass the password for DIDStore
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		 public storePrivateKey(idOrString: DIDURL | string, privateKey: string, storepass: string) {
+		 public storePrivateKey(idOrString: DIDURL | string, privateKey: Buffer, storepass: string) {
 			checkArgument(idOrString != null, "Invalid private key id");
 
 			let id: DIDURL;
@@ -860,7 +861,7 @@ import dayjs from "dayjs";
 		 * @return the original private key
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		 public loadPrivateKey(id: DIDURL, storepass: string = undefined): string {
+		 public loadPrivateKey(id: DIDURL, storepass?: string): Buffer {
 			checkArgument(id != null, "Invalid private key id");
 
 			let encryptedKey: string = null;
@@ -875,7 +876,7 @@ import dayjs from "dayjs";
 				encryptedKey = value == DIDStore.NULL ? null : value;
 			}
 			else {
-				checkArgument(storepass != null && storepass !== "", "Invalid storepass");
+				checkArgument(storepass && storepass != null, "Invalid storepass");
 			}
 
 			if (encryptedKey == null) {
@@ -956,13 +957,13 @@ import dayjs from "dayjs";
 		 * @return the signature string
 		 * @throws DIDStoreException can not get DID Document if no specified sign key.
 		 */
-		public sign(id: DIDURL, storepass: string, digest: string): string {
+		public sign(id: DIDURL, storepass: string, digest: Buffer): string {
 			checkArgument(id != null, "Invalid private key id");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 			checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
-			let key = HDKey.fromExtendedKey(this.loadPrivateKey(id, storepass));
-			let sig = key.sign(Buffer.from(digest));
+			let key = HDKey.deserialize(this.loadPrivateKey(id, storepass));
+			let sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
 			key = null;
 
 			// TODO: check this! not sure buffer.toString() is what we need here, beware the encodings...
@@ -1078,7 +1079,7 @@ import dayjs from "dayjs";
 
 			if (this.storage.containsCredentials(did)) {
 				let ids = Array.from(this.listCredentials(did));
-				Array.sort(ids); // TODO: custom sort() to use didurl's toString()
+				ids.sort();
 				for (let id of ids) {
 					log.debug("Exporting credential {}...", id.toString());
 
@@ -1925,15 +1926,15 @@ export namespace DIDStore {
 			return new Key(DIDStore.Key.TYPE_DID_METADATA, did);
 		}
 
-		public /*private*/ static forDidPrivateKey(id: DIDURL): Key {
+		public static forDidPrivateKey(id: DIDURL): Key {
 			return new Key(DIDStore.Key.TYPE_DID_PRIVATEKEY, id);
 		}
 
-		public /*private*/ static forCredential(id: DIDURL): Key {
+		public static forCredential(id: DIDURL): Key {
 			return new Key(DIDStore.Key.TYPE_CREDENTIAL, id);
 		}
 
-		public /*private*/ static forCredentialMetadata(id: DIDURL): Key {
+		public static forCredentialMetadata(id: DIDURL): Key {
 			return new Key(DIDStore.Key.TYPE_CREDENTIAL_METADATA, id);
 		}
 	}
@@ -1958,7 +1959,7 @@ export namespace DIDStore {
 			return this.getInteger(Metadata.VERSION);
 		}
 
-		public /*private*/ setFingerprint(fingerprint: string) {
+		public setFingerprint(fingerprint: string) {
 			checkArgument(fingerprint != null && fingerprint != "", "Invalid fingerprint");
 
 			this.put(Metadata.FINGERPRINT, fingerprint);
@@ -1968,7 +1969,7 @@ export namespace DIDStore {
 			return this.get(Metadata.FINGERPRINT);
 		}
 
-		public /*protected*/ setDefaultRootIdentity(id: string) {
+		public setDefaultRootIdentity(id: string) {
 			this.put(Metadata.DEFAULT_ROOT_IDENTITY, id);
 		}
 

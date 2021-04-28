@@ -74,7 +74,6 @@ import {
 } from "./exceptions/exceptions";
 import { DIDMetadata } from "./didmetadata";
 import dayjs from "dayjs";
-import { HDKey } from "./crypto/hdkey";
 import { Collections } from "./collections";
 import { Constants } from "./constants";
 import { Comparable } from "./comparable";
@@ -84,8 +83,10 @@ import { DIDTransactionAdapter } from "./didtransactionadapter";
 import { Base58 } from "./crypto/base58";
 import { Issuer } from "./issuer";
 import { TransferTicket } from "./transferticket";
+import { HDKey } from "./crypto/hdkey";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { SHA256 } from "./crypto/sha256";
+import { KeyPair } from "./crypto/keypair";
 import {
     PropertySerializerFilter,
     Serializer,
@@ -137,22 +138,22 @@ export class PublicKeyReferenceDeserializer extends Deserializer {
  * key.
  */
 export class DIDDocument extends DIDEntity<DIDDocument> {
-    public /*protected*/ static ID: string = "id";
-    public /*protected*/ static PUBLICKEY: string = "publicKey";
-    public /*protected*/ static TYPE: string = "type";
-    public /*protected*/ static CONTROLLER: string = "controller";
-    public /*protected*/ static MULTI_SIGNATURE: string = "multisig";
-    public /*protected*/ static PUBLICKEY_BASE58: string = "publicKeyBase58";
-    public /*protected*/ static AUTHENTICATION: string = "authentication";
-    public /*protected*/ static AUTHORIZATION: string = "authorization";
-    public /*protected*/ static SERVICE: string = "service";
-    public /*protected*/ static VERIFIABLE_CREDENTIAL: string = "verifiableCredential";
-    public /*protected*/ static SERVICE_ENDPOINT: string = "serviceEndpoint";
-    public /*protected*/ static EXPIRES: string = "expires";
-    public /*protected*/ static PROOF: string = "proof";
-    public /*protected*/ static CREATOR: string = "creator";
-    public /*protected*/ static CREATED: string = "created";
-    public /*protected*/ static SIGNATURE_VALUE: string = "signatureValue";
+    public static ID: string = "id";
+    public static PUBLICKEY: string = "publicKey";
+    public static TYPE: string = "type";
+    public static CONTROLLER: string = "controller";
+    public static MULTI_SIGNATURE: string = "multisig";
+    public static PUBLICKEY_BASE58: string = "publicKeyBase58";
+    public static AUTHENTICATION: string = "authentication";
+    public static AUTHORIZATION: string = "authorization";
+    public static SERVICE: string = "service";
+    public static VERIFIABLE_CREDENTIAL: string = "verifiableCredential";
+    public static SERVICE_ENDPOINT: string = "serviceEndpoint";
+    public static EXPIRES: string = "expires";
+    public static PROOF: string = "proof";
+    public static CREATOR: string = "creator";
+    public static CREATED: string = "created";
+    public static SIGNATURE_VALUE: string = "signatureValue";
 
     private subject: DID;
 
@@ -519,8 +520,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the KeyPair object
      * @throws InvalidKeyException there is no the matched key
      */
-    public getKeyPair(id: DIDURL): KeyPair {
+    public getKeyPair(inputId: DIDURL | string): KeyPair {
         let pk: DIDDocument.PublicKey;
+        let id = typeof inputId === "string" ? this.canonicalId(inputId) : inputId;
 
         if (id == null) {
             pk = this.getDefaultPublicKey();
@@ -537,29 +539,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return key.getJCEKeyPair();
     }
 
-    /**
-     * Get KeyPair object according to the given key id.
-     *
-     * @param id the key id string
-     * @return the KeyPair object
-     * @throws InvalidKeyException there is no matched key
-     */
-    public getKeyPair(id: string): KeyPair {
-        return this.getKeyPair(this.canonicalId(id));
-    }
-
-    /**
-     * Get KeyPair object according to the given key id.
-     *
-     * @return the KeyPair object
-     * @throws InvalidKeyException there is no the matched key
-     */
-    /* public getKeyPair(): KeyPair {
-        return this.getKeyPair(null as DIDURL);
-    }
-
-    private getKeyPair(id: DIDURL, storepass: string): KeyPair {
-        checkArgument(storepass != null && storepass !== "", "Invalid storepass");
+    private getKeyPairWithPass(id: DIDURL, storepass: string): KeyPair {
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
         if (id == null) {
@@ -578,7 +559,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 id, storepass));
 
         return key.getJCEKeyPair();
-    } */
+    }
 
     /**
      * Derive the index private key.
@@ -597,13 +578,14 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let key = HDKey.deserialize(this.getMetadata().getStore().loadPrivateKey(
             this.getDefaultPublicKeyId(), storepass));
 
-        return key.derive(index).serializeBase58();
+        return key.deriveWithIndex(index).serializeBase58();
     }
 
     // TODO: check with jingyu what is this "identifier" and if we have a better way (existing libs)
     // than using raw bytes manipulation here.
+    /*
     private mapToDerivePath(identifier: string, securityCode: number): string {
-        /*byte digest[] = new byte[32];
+        byte digest[] = new byte[32];
         let sha256 = new SHA256Digest();
         byte[] in = identifier.getBytes();
         sha256.update(in, 0, in.length);
@@ -628,9 +610,10 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         else
             path.append(securityCode & 0x7FFFFFFF).append('H');
 
-        return path.toString();*/
+        return path.toString();
     }
-
+    */
+   
     /**
      * Derive the extended private key according to identifier string and security code.
      *
@@ -649,7 +632,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             this.getDefaultPublicKeyId(), storepass));
 
         let path = this.mapToDerivePath(identifier, securityCode);
-        return key.derive(path).serializeBase58();
+        return key.deriveWithPath(path).serializeBase58();
     }
 
     /**
@@ -976,7 +959,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the Proof object
      */
-    public /*protected*/ getProof(): DIDDocument.Proof {
+    public getProof(): DIDDocument.Proof {
         return this._proofs[0];
     }
 
@@ -1336,7 +1319,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @param metadata the DIDMetadataImpl object
      */
-    public /*protected*/ setMetadata(metadata: DIDMetadata) {
+    public setMetadata(metadata: DIDMetadata) {
         this.metadata = metadata;
         this.subject.setMetadata(metadata);
     }
@@ -1354,7 +1337,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return this.metadata;
     }
 
-    public /*protected*/ getStore(): DIDStore {
+    public getStore(): DIDStore {
         return this.getMetadata().getStore();
     }
 
@@ -1535,7 +1518,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         else
             signId = id;
 
-        let digest = SHA256.encodeToString(...data);
+        let digest = SHA256.encodeToBuffer(...data);
         return this.signDigest(signId, storepass, digest);
     }
 
@@ -1593,7 +1576,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key
      */
-    public signDigest(id: DIDURL | string | null, storepass: string, digest: string): string {
+    public signDigest(id: DIDURL | string | null, storepass: string, digest: Buffer): string {
         checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
         this.checkAttachedStore();

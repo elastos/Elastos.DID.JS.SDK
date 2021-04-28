@@ -210,7 +210,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	 *
 	 * @param did the DID Object
 	 */
-	public /*protected*/ setDid(did: DID) {
+	public setDid(did: DID) {
 		this.did = did;
 	}
 
@@ -348,7 +348,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	 *
 	 * @param metadata the meta data
 	 */
-	public /*protected*/ setMetadata(metadata: AbstractMetadata) {
+	public setMetadata(metadata: AbstractMetadata) {
 		this.metadata = metadata;
 	}
 
