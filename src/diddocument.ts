@@ -613,7 +613,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return path.toString();
     }
     */
-   
+
     /**
      * Derive the extended private key according to identifier string and security code.
      *
@@ -2115,18 +2115,6 @@ export namespace DIDDocument {
             return new MultiSignature(ms.m(), ms.n());
         }
 
-        /* @JsonCreator
-        public MultiSignature(mOfN: string) {
-            if (mOfN == null || mOfN.isEmpty())
-                throw new IllegalArgumentException("Invalid multisig spec");
-
-            let mn: string[] = mOfN.split(":");
-            if (mn == null || mn.length != 2)
-                throw new IllegalArgumentException("Invalid multisig spec");
-
-            apply(Integer.valueOf(mn[0]), Integer.valueOf(mn[1]));
-        } */
-
         protected apply(m: number, n: number) {
             checkArgument(n > 1, "Invalid multisig spec: n should > 1");
             checkArgument(m > 0 && m <= n, "Invalid multisig spec: m should > 0 and <= n");
@@ -3071,64 +3059,16 @@ export namespace DIDDocument {
         }
 
         /**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @return the DID Document Builder
-         * @throws DIDResolveException resolve controller failed.
-         * @throws InvalidKeyException the key is not an authentication key.
-         */
-        /* public authorizationDid(id: DIDURL, controller: DID): Builder {
-            return authorizationDid(id, controller, null);
-        } */
-
-        /**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @param key the key of controller to be an Authorization key.
-         * @return the DID Document Builder
-         * @throws DIDResolveException resolve controller failed.
-         * @throws InvalidKeyException the key is not an authentication key.
-         */
-        /* public authorizationDid(id: string, controller: string, key: string): Builder {
-            return authorizationDid(canonicalId(id),
-                    DID.valueOf(controller), DIDURL.valueOf(controller, key));
-        } */
-
-        /**
-         * Add Authorization key to Authentication array according to DID.
-         * Authentication is the mechanism by which the controller(s) of a DID can
-         * cryptographically prove that they are associated with that DID.
-         * A DID Document must include authentication key.
-         *
-         * @param id the key id string
-         * @param controller the owner of public key
-         * @return the DID Document Builder
-         * @throws DIDResolveException resolve controller failed.
-         * @throws InvalidKeyException the key is not an authentication key.
-         */
-        /* public authorizationDid(id: string, controller: string): Builder {
-            return authorizationDid(id, controller, null);
-        } */
-
-        /**
          * Remove the Authorization Key matched the given id.
          *
          * @param id the key id
          * @return the DID Document Builder
          */
-        public removeAuthorizationKey(id: DIDURL): Builder {
+        public removeAuthorizationKey(inputId: DIDURL | string): Builder {
             this.checkNotSealed();
-            checkArgument(id != null, "Invalid publicKey id");
+            checkArgument(inputId != null, "Invalid publicKey id");
+
+            let id = typeof inputId === "string" ? this.canonicalId(inputId) : inputId;
 
             if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
                 throw new DIDObjectNotExistException(id.toString());
@@ -3147,16 +3087,6 @@ export namespace DIDDocument {
 
             return this;
         }
-
-        /**
-         * Remove the Authorization Key matched the given id.
-         *
-         * @param id the key id string
-         * @return the DID Document Builder
-         */
-        /* public removeAuthorizationKey(id: string): Builder {
-            return removeAuthorizationKey(canonicalId(id));
-        } */
 
         /**
          * Add Credentail to DID Document Builder.
