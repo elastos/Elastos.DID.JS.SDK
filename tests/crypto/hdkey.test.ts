@@ -149,7 +149,10 @@
 }
  */
 
+import { BN } from "bn.js";
 import { HDKey } from "../../src/crypto/hdkey"
+import { SHA256 } from "../../src/crypto/sha256";
+import { Mnemonic } from "../../src/mnemonic";
 
 describe('HDKey Tests', () => {
 	
@@ -200,6 +203,59 @@ describe('HDKey Tests', () => {
 
 		expect(rk.getPrivateKeyBase58()).toBe(root.getPrivateKeyBase58())
 		expect(rk.getPublicKeyBase58()).toBe(root.getPublicKeyBase58())
+	});
+
+
+	test('Test Derive Public Only', () => {
+		let mnemonic = "pact reject sick voyage foster fence warm luggage cabbage any subject carbon";
+		let root = HDKey.newWithMnemonic(mnemonic, "helloworld");
+		let preDerivedKey = root.deriveWithPath(HDKey.PRE_DERIVED_PUBLICKEY_PATH);
+		let preDerivedPubBase58 = preDerivedKey.serializePublicKeyBase58();
+		let preDerivedPub = HDKey.deserializeBase58(preDerivedPubBase58);
+
+		for (let index = 0; index < 1000; index++) {
+			console.log("starting index", index)
+			let key = root.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + index);
+			let keyPubOnly = preDerivedPub.deriveWithPath("m/44/0/" + index);
+
+			expect(key.getPrivateKeyBase58()).toBe(keyPubOnly.getPrivateKeyBase58())
+			expect(key.getPublicKeyBase58()).toBe(keyPubOnly.getPublicKeyBase58())
+		}
+	});
+
+	test('Test JWT Compatible', () => {
+		let input = Buffer.from("The quick brown fox jumps over the lazy dog.");
+		let mnemonic =  Mnemonic.getInstance().generate();
+		let rootKey = HDKey.newWithMnemonic(mnemonic, "");
+		for (let i = 0; i < 1000; i++) {
+			let key = rootKey.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + i)
+
+			// to JCE KeyPair
+			let jceKeyPair = key.getJCEKeyPair();
+			let ec = new jsrsasign.KJUR.crypto.ECDSA({curve: "secp256r1"});
+			ec.setPrivateKeyHex(jceKeyPair.getPrivate().toString("hex"));
+
+			let didSig = key.sign(SHA256.encodeToBuffer(input));
+
+			let jceSigner = new jsrsasign.KJUR.crypto.Signature({ alg: "SHA256withECDSA" });
+        	jceSigner.init(ec);
+        	jceSigner.updateHex(input.toString("hex"));
+			let signed = Buffer.from(jceSigner.sign());
+
+			expect(key.verify(SHA256.encodeToBuffer(input), signed))
+
+			jceSigner = new jsrsasign.KJUR.crypto.Signature({ alg: "SHA256withECDSA" });
+			ec = new jsrsasign.KJUR.crypto.ECDSA({curve: "secp256r1"});
+			ec.setPublicKeyHex(jceKeyPair.getPublic())
+			jceSigner.init(ec);
+        	jceSigner.updateHex(input.toString("hex"));
+
+			let r = new BN(signed.slice(0, 32), 64, "le");
+			let s = new BN(signed.slice(32), 64, "le");
+			let asn1 = jsrsasign.KJUR.crypto.ECDSA.hexRSSigToASN1Sig(jsrsasign.BAtohex(r.toArray("le")),jsrsasign.BAtohex(s.toArray("le")));
+
+			expect(jceSigner.verify(asn1)).toBeTruthy()
+		}
 	});
 	
 

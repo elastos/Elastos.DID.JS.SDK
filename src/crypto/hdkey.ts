@@ -23,9 +23,12 @@
 import { Mnemonic } from "../mnemonic";
 import { crypto } from "bitcore-lib";
 import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
-import { Base58 } from './base58';
+import { Base58 } from './base58'
 import { SHA256 } from "./sha256";
 import { KeyPair } from "./keypair";
+import { SIGFPE } from "node:constants";
+
+
 
 export class HDKey {
 	public static PUBLICKEY_BYTES = 33;
@@ -49,9 +52,11 @@ export class HDKey {
 	// Pre-derive publickey path: m/44'/0'/0'
 	public static PRE_DERIVED_PUBLICKEY_PATH = "m/44'/0'/0'" //"44H/0H/0H";
 
+
+
+
 	public static newWithMnemonic(mnemonic: string, passphrase: string): HDKey {
 		let seed = Mnemonic.toSeed(mnemonic, passphrase)
-		
 		return HDKey.newWithSeed(seed);
 	}
 
@@ -63,23 +68,23 @@ export class HDKey {
 		return new HDKey(key)
 	}
 
-	private constructor(private root: DeterministicKey) {
+	private constructor(private key: DeterministicKey) {
  }
 
 	public getPrivateKeyBytes(): Buffer {
-		return this.root.privateKey;
+		return this.key.privateKey;
 	}
 
 	public getPrivateKeyBase58(): string {
-		return Base58.encode(this.root.privateKey)
+		return Base58.encode(this.getPrivateKeyBytes())
 	}
 
 	public getPublicKeyBytes(): Buffer {
-		return this.root.publicKey
+		return this.key.publicKey
 	}
 
 	public getPublicKeyBase58(): string {
-		return Base58.encode(this.root.publicKey)
+		return Base58.encode(this.getPublicKeyBytes())
 	}
 
 	public serialize(): Buffer {
@@ -87,7 +92,12 @@ export class HDKey {
 	}
 
 	public serializeBase58(): string {
-		return Base58.encode(HDKey.paddingToExtendedPrivateKey(this.getPrivateKeyBytes()));
+		let buffer = Base58.decode(this.key.privateExtendedKey)
+		let base58Buffer = Buffer.alloc(82)
+		buffer.copy(base58Buffer)
+		let hash = SHA256.hashTwice(buffer)
+		hash.copy(base58Buffer, 78, 0, 4)
+		return Base58.encode(base58Buffer);
 	}
 
 	public serializePublicKey(): Buffer {
@@ -95,7 +105,7 @@ export class HDKey {
 	}
 
     public serializePublicKeyBase58(): string {
-		return Base58.encode(this.root.publicKey);
+		return this.key.publicExtendedKey;
     }
 
 	public static deserialize(keyData: Buffer): HDKey {
@@ -106,14 +116,24 @@ export class HDKey {
 		return new HDKey(DeterministicKey.fromExtendedKey(keyData));
 	}
 
+
+
+
+
+	private static transformBip32HeaderToBuffer(bip32HeaderValue: number) : Buffer{
+		let buffer = Buffer.alloc(4)
+		buffer[0] = ((bip32HeaderValue >> 24) & 0xFF)
+		buffer[1] = ((bip32HeaderValue >> 16) & 0xFF)
+		buffer[2] = ((bip32HeaderValue >> 8) & 0xFF)
+		buffer[3] = (bip32HeaderValue & 0xFF)
+		return buffer
+	}
+
 	public static paddingToExtendedPrivateKey(pk: Buffer): Buffer {
 
 		let extendedPrivateKeyBytes = Buffer.alloc(HDKey.EXTENDED_PRIVATEKEY_BYTES)
-		let version = this.bip32HeaderP2PKHpriv;
-		extendedPrivateKeyBytes[0] = ((version >> 24) & 0xFF)
-		extendedPrivateKeyBytes[1] = ((version >> 16) & 0xFF)
-		extendedPrivateKeyBytes[2] = ((version >> 8) & 0xFF)
-		extendedPrivateKeyBytes[3] = (version & 0xFF)
+		let bip32Header = HDKey.transformBip32HeaderToBuffer(this.bip32HeaderP2PKHpriv);
+		bip32Header.copy(extendedPrivateKeyBytes)
 
 		pk.copy(extendedPrivateKeyBytes, 46, 0, 32)
 
@@ -122,17 +142,15 @@ export class HDKey {
 		let hash = SHA256.hashTwice(buftoHash)
 		hash.copy(extendedPrivateKeyBytes, 78, 0, 4)
 
+
 		return extendedPrivateKeyBytes
 
 	}
 
 	public static paddingToExtendedPublicKey(pk: Buffer): Buffer{
 		let extendedPublicKeyBytes = Buffer.alloc(HDKey.EXTENDED_PUBLICKEY_BYTES)
-		let version = this.bip32HeaderP2PKHpub;
-		extendedPublicKeyBytes[0] = ((version >> 24) & 0xFF)
-		extendedPublicKeyBytes[1] = ((version >> 16) & 0xFF)
-		extendedPublicKeyBytes[2] = ((version >> 8) & 0xFF)
-		extendedPublicKeyBytes[3] = (version & 0xFF)
+		let bip32Header = HDKey.transformBip32HeaderToBuffer(this.bip32HeaderP2PKHpub);
+		bip32Header.copy(extendedPublicKeyBytes)
 
 		pk.copy(extendedPublicKeyBytes, 45, 0, 33)
 
@@ -144,19 +162,24 @@ export class HDKey {
 		return extendedPublicKeyBytes
 	}
 
-	
+
 
 	public deriveWithPath(path: string): HDKey {
-		return new HDKey(this.root.derive(path));
+		return new HDKey(this.key.derive(path));
 	}
 
 	public deriveWithIndex(index: number, hardened: boolean = false): HDKey {
 		if (hardened) index += HDKey.HARDENED_BIT;
-		return new HDKey(this.root.deriveChild(index));	
+		return new HDKey(this.key.deriveChild(index));
 	}
 
-	/*
-    public getJCEKeyPair(): KeyPair {
+	public getJCEKeyPair(): KeyPair{
+
+
+		return new KeyPair("", "")
+	}
+
+    /*public getJCEKeyPair(): KeyPair {
     	let paramSpec = new ECNamedCurveSpec(
         		"secp256r1", CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(),
         		CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
@@ -188,8 +211,7 @@ export class HDKey {
 			throw new UnknownInternalException(e);
 		}
     	return new KeyPair(pub, priv);
-    }
-	*/
+    }*/
 
 	private static getRedeemScript(pk: Buffer): Buffer {
 		let script = Buffer.alloc(35)
@@ -199,7 +221,7 @@ export class HDKey {
 		return script;
 	}
 
-	
+
 
 	private static getBinAddressFromBuffer(pk: Buffer): Buffer {
 		let script = this.getRedeemScript(pk);
@@ -219,7 +241,7 @@ export class HDKey {
 
 	public getBinAddress(): Buffer {
 		return HDKey.getBinAddressFromBuffer(this.getPublicKeyBytes());
-	} 
+	}
 
 	public getAddress(): string {
 
@@ -228,7 +250,7 @@ export class HDKey {
 		let binAddress = this.getBinAddress()
 
 		return Base58.encode(binAddress);
-	} 
+	}
 
 	public static toAddress(pk: Buffer): string {
 		return Base58.encode(this.getBinAddressFromBuffer(pk));
@@ -250,43 +272,33 @@ export class HDKey {
 				&& hash[2] == binAddress[23] && hash[3] == binAddress[24]);
 	}
 
-	/*public sign(sha256Hash: string): string {
-		let sig = this.key.sign(Sha256Hash.wrap(sha256Hash));
-		return sig.encodeToDER();
+	public sign(sha25Hash: Buffer): Buffer{
+		let sig = this.key.sign(sha25Hash)
+
+		//TODO: Find to EncodeToDER
+		return Buffer.alloc(0)
 	}
 
-	public signData(...inputs: string[]): string {
-		let hash = this.sha256Digest(inputs);
-
-		return this.sign(hash);
+	public signData(...inputs: Buffer[]) : Buffer{
+		let hash = SHA256.encodeToBuffer(...inputs);
+		return this.sign(hash)
 	}
 
-	public verify(sha256Hash: string, signature: string): boolean {
+	public verify(sha256Hash: Buffer, signature: Buffer): boolean {
 		try {
 			return this.key.verify(sha256Hash, signature);
 		} catch (e) {
-			// SignatureDecodeException
 			return false;
 		}
 	}
 
-	public verifyData(signature: string, byte[] ... inputs): boolean {
-		let hash = this.sha256Digest(inputs);
+	public verifyData(signature: Buffer, ...inputs:Buffer[]): boolean {
+		let hash = SHA256.encodeToBuffer(...inputs);
 		return this.verify(hash, signature);
 	}
 
-	private static sha256Digest(byte[] ... inputs): string {
-		byte digest[] = new byte[32];
 
-		SHA256Digest sha256 = new SHA256Digest();
-
-		for (byte[] input : inputs)
-			sha256.update(input, 0, input.length);
-
-		sha256.doFinal(digest, 0);
-
-		return digest;
-	} */
+	
 
 	public wipe() {
 		// TODO

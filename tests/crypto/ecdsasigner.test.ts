@@ -132,19 +132,19 @@ describe('ECSDA Signer Tests', () => {
 	var key: HDKey;
 	var sig: string;
 	beforeAll(() => {
-		// let root = HDKey.newWithMnemonic(mnemonic, "");
-		// key = root.deriveWithIndex(0)
-		// console.log("key", key.getPrivateKeyBytes().toString("hex"))
-		// sig = EcdsaSigner.signData(key.getPrivateKeyBytes(), Buffer.from(plain, "utf-8"), Buffer.from(nonce, "utf-8"))
-		// expect(sig).toBeDefined()
+		let root = HDKey.newWithMnemonic(mnemonic, "");
+		key = root.deriveWithIndex(0)
+		console.log("key", key.getPrivateKeyBytes().toString("hex"))
+		sig = EcdsaSigner.signData(key.getPrivateKeyBytes(), Buffer.from(plain, "utf-8"), Buffer.from(nonce, "utf-8"))
+		expect(sig).toBeDefined()
 	});
 
 	
 	
 	test('Verify signature is correct', () => {
-		// let response = EcdsaSigner.verifyData(key.getPublicKeyBytes(), sig, Buffer.from(plain, "utf-8"), Buffer.from(nonce, "utf-8"))
+		let response = EcdsaSigner.verifyData(key.getPublicKeyBytes(), sig, Buffer.from(plain, "utf-8"), Buffer.from(nonce, "utf-8"))
 
-		// expect(response).toBeTruthy()
+		expect(response).toBeTruthy()
 	});
 
 	test('Compatibility', () =>{

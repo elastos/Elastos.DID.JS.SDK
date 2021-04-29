@@ -51,7 +51,7 @@ describe('Aes256cbc Encryption Tests', () => {
 	});
 	
 	test('encryptToBase64 method', () => {
-		let cipherResult = Aes256cbc.encryptToBase64(plain, passwd)
+		let cipherResult = Aes256cbc.encryptToBase64( Buffer.from(plain, "utf-8"), passwd)
 		expect(cipherResult)
 		.toBe(cipherBase64u);
 	});
@@ -63,7 +63,8 @@ describe('Aes256cbc Encryption Tests', () => {
 	});
 	
 	test('Compatibility', () => {
-		let cipherResult = Aes256cbc.encryptToBase64("brown bear what do you see", "password")
+		
+		let cipherResult = Aes256cbc.encryptToBase64(Buffer.from("brown bear what do you see", "utf-8"), "password")
 		expect(cipherResult)
 		.toBe("uK7mHw5JHRD2WS-BmA2b_4mUPD9WhttY9uAC_aw9Tdc");
 	});
