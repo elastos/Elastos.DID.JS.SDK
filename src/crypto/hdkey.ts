@@ -25,6 +25,7 @@ import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
 import { Base58 } from './base58'
 import { SHA256 } from "./sha256";
 import { KeyPair } from "./keypair";
+import crypto from "crypto";
 
 export class HDKey {
 	public static PUBLICKEY_BYTES = 33;
@@ -294,7 +295,7 @@ export class HDKey {
 	}
 
 
-	
+
 
 	public wipe() {
 		// TODO

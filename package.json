@@ -21,6 +21,7 @@
     "bs58": "^4.0.1",
     "bs58check": "^2.1.2",
     "buffer": "^5.6.0",
+    "crypto-browserify": "^3.12.0",
     "crypto-js": "^4.0.0",
     "dayjs": "^1.10.4",
     "ecdh-crypto": "^1.0.5",
@@ -58,6 +59,9 @@
     "rollup-plugin-terser": "^7.0.2",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
+  },
+  "browser": {
+    "crypto":"crypto-browserify"
   },
   "repository": {
     "type": "git",
