@@ -60,3 +60,4 @@ export class NetworkException extends ParentException {}
 export class ResolveException extends ParentException {}
 export class DIDStorageException extends ParentException {}
 export class InvalidDateFormat extends ParentException {}
+export class OutOfBoundException extends ParentException {}
