@@ -6,6 +6,7 @@ import typescript from "@rollup/plugin-typescript";
 //import path from "path";
 //import copy from "rollup-plugin-copy-assets";
 //import analyze from 'rollup-plugin-analyzer';
+import json from "@rollup/plugin-json";
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -27,6 +28,7 @@ export default {
 		postcss({
             extract: 'bundle.css'
         }),
+		json(),
 
 		// If you have external dependencies installed from
 		// npm, you'll most likely need these plugins. In
@@ -35,7 +37,8 @@ export default {
 		// https://github.com/rollup/plugins/tree/master/packages/commonjs
 		resolve({
 			browser: true,
-			dedupe: ['svelte']
+			dedupe: ['svelte'],
+			preferBuiltins: true
 		}),
 		commonjs(),
         typescript({
