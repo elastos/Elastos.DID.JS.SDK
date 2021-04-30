@@ -14,15 +14,14 @@
   "main": "dist/index.js",
   "module": "dist.esm/index.js",
   "dependencies": {
-    "@types/bitcore-lib": "^0.15.2",
     "@types/jsrsasign": "^8.0.10",
     "antlr4ts": "^0.5.0-alpha.4",
     "bip32": "^2.0.6",
     "bip39": "^3.0.2",
-    "bitcore-lib": "^8.25.7",
     "bs58": "^4.0.1",
     "bs58check": "^2.1.2",
     "buffer": "^5.6.0",
+    "crypto-browserify": "^3.12.0",
     "crypto-js": "^4.0.0",
     "dayjs": "^1.10.4",
     "ecdh-crypto": "^1.0.5",
@@ -60,6 +59,9 @@
     "rollup-plugin-terser": "^7.0.2",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
+  },
+  "browser": {
+    "crypto":"crypto-browserify"
   },
   "repository": {
     "type": "git",

@@ -354,10 +354,10 @@ test("testDeleteCredential", ()=>{
 	expect(file.exists()).toBeTruthy();
 	expect(file.isFile()).toBeTruthy();
 
-	let deleted = store.deleteCredential(new DIDURL(user.getSubject(), "#twitter"));
+	let deleted = store.deleteCredential(DIDURL.valueOf(user.getSubject(), "#twitter"));
 	expect(deleted).toBeTruthy();
 
-	deleted = store.deleteCredential(new DIDURL(user.getSubject(), "#passport").toString());
+	deleted = store.deleteCredential(DIDURL.valueOf(user.getSubject(), "#passport").toString());
 	expect(deleted).toBeTruthy();
 
 	deleted = store.deleteCredential(user.getSubject().toString() + "#notExist");
@@ -371,10 +371,10 @@ test("testDeleteCredential", ()=>{
 			"credentials", "#passport");
 	expect(file.exists()).toBeFalsy();
 
-	expect(store.containsCredential(new DIDURL(user.getSubject(), "#email"))).toBeTruthy();
+	expect(store.containsCredential(DIDURL.valueOf(user.getSubject(), "#email"))).toBeTruthy();
 	expect(store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
 
-	expect(store.containsCredential(new DIDURL(user.getSubject(), "#twitter"))).toBeFalsy();
+	expect(store.containsCredential(DIDURL.valueOf(user.getSubject(), "#twitter"))).toBeFalsy();
 	expect(store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
 });
 
@@ -590,7 +590,7 @@ test.each([false, true])("testStoreCachePerformance", (cached: boolean)=>{
 			let doc = store.loadDid(did);
 			expect(did.equals(doc.getSubject())).toBeTruthy();
 
-			let id = new DIDURL(did, "#cred-1");
+			let id = DIDURL.valueOf(did, "#cred-1");
 			let vc = store.loadCredential(id);
 			expect(id.equals(vc.getId())).toBeTruthy();
 		}

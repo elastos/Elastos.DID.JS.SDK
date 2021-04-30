@@ -1,4 +1,3 @@
-import { crypto, PublicKey } from "bitcore-lib";
 import createHash  from 'create-hash';
 export class SHA256 {
 

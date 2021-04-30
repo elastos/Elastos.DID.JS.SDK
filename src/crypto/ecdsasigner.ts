@@ -21,7 +21,6 @@
  */
 
 import jsrsasign from "jsrsasign";
-import { crypto, PrivateKey, PublicKey } from "bitcore-lib";
 import BN from "bn.js";
 import { SHA256 } from "./sha256";
 import { BASE64 } from "./base64";
