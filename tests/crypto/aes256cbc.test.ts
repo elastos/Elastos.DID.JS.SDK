@@ -31,7 +31,7 @@ describe('Aes256cbc Encryption Tests', () => {
 	const cipherBase64u: string = "TBimuq42IyD6FsoZK0AoCOt75uiL_gEepZTpgu59RYSV-NR-fqxsYfx0cyyzGacX";
 
 	test('encrypt method', () => {
-		let cipherResult: Buffer = Aes256cbc.encrypt(plain, passwd)
+		let cipherResult: Buffer = Aes256cbc.encrypt(Buffer.from(plain, "utf-8"), passwd)
 		let base64: string = BASE64.fromUrlFormat(cipherBase64u)
 		let base64Buffer: Buffer = Buffer.from(base64, "base64")
 		

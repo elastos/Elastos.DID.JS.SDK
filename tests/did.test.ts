@@ -20,153 +20,52 @@
  * SOFTWARE.
  */
 
-/* @ExtendWith(DIDTestExtension.class)
-public class DIDTest {
-	private static final String testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-	private static final String testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+import { DID } from "../src/did";
 
-	private DID did;
-	private TestData testData;
+describe('DID Tests', () => {
+	const testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+	const testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+	let did:DID;
+	beforeAll(() => {
+		did = new DID(testDID);
+	});
 
-    @BeforeEach
-    public void beforeEach() throws DIDException {
-    	testData = new TestData();
-    	did = new DID(testDID);
-    }
-
-    @AfterEach
-    public void afterEach() {
-    	testData.cleanup();
-    }
-
-	@Test
-	public void testConstructor() throws MalformedDIDException {
-		DID did = new DID(testDID);
-		assertEquals(testDID, did.toString());
+	test('Test Constructor', () => {
+		expect(did.toString()).toEqual(testDID);
 
 		did = new DID("did:elastos:1234567890");
-		assertEquals("did:elastos:1234567890", did.toString());
-	}
+		expect(did.toString()).toEqual("did:elastos:1234567890");
+	});
 
-	@Test
-	public void testConstructorError1() {
-		assertThrows(MalformedDIDException.class, () -> {
-			new DID("id:elastos:1234567890");
-		});
-	}
+	test('Test Constructor with invalid did string', () => {
+		expect(new DID("id:elastos:1234567890")).toThrowError();
+		expect(new DID("did:example:1234567890")).toThrowError();
+		expect(new DID("did:elastos:")).toThrowError();
+	});
 
-	@Test
-	public void testConstructorError2() {
-		assertThrows(MalformedDIDException.class, () -> {
-			new DID("did:example:1234567890");
-		});
-	}
+	test('Test Get Method', () => {
+		expect(did.getMethod()).toEqual(DID.METHOD);
+	});
 
-	@Test
-	public void testConstructorError3() {
-		assertThrows(MalformedDIDException.class, () -> {
-			new DID("did:elastos:");
-		});
-	}
+	test('Test Get Specific Id', () => {
+		expect(did.getMethodSpecificId()).toEqual(testMethodSpecificID);
+	});
 
-	@Test
-	public void testGetMethod()  {
-		assertEquals(DID.METHOD, did.getMethod());
-	}
+	test('Test hashcode', () => {
+		let otherDID = new DID(testDID);
+		expect(otherDID.hashCode()).toEqual(did.hashCode);
 
-	@Test
-	public void testGetMethodSpecificId() {
-		assertEquals(testMethodSpecificID, did.getMethodSpecificId());
-	}
+		otherDID = new DID("did:elastos:1234567890");
+		expect(otherDID.hashCode()).toEqual(did.hashCode);
+	});
 
-	@Test
-	public void testToString() {
-		assertEquals(testDID, did.toString());
-	}
+	test('Test Equals', () => {
+		let otherDID = new DID(testDID);
+		expect(did.equals(otherDID)).toBeTruthy();
+		expect(did.equals(testDID)).toBeTruthy();
 
-	@Test
-	public void testHashCode() throws MalformedDIDException {
-		DID other = new DID(testDID);
-		assertEquals(did.hashCode(), other.hashCode());
-
-		other = new DID("did:elastos:1234567890");
-		assertNotEquals(did.hashCode(), other.hashCode());
-	}
-
-	@SuppressWarnings("unlikely-arg-type")
-	@Test
-	public void testEquals() throws MalformedDIDException {
-		DID other = new DID(testDID);
-		assertTrue(did.equals(other));
-		assertTrue(did.equals(testDID));
-
-		other = new DID("did:elastos:1234567890");
-		assertFalse(did.equals(other));
-		assertFalse(did.equals("did:elastos:1234567890"));
-	}
-
-	@Test
-	@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
-	public void testResolve() throws DIDException, IOException {
-		ArrayList<DID> dids = new ArrayList<DID>(16);
-
-		BufferedReader input = new BufferedReader(new InputStreamReader(
-				getClass().getClassLoader().getResourceAsStream("testdata/dids.restore")));
-		input.lines().forEach((didstr) -> {
-			try {
-				DID did = new DID(didstr);
-				dids.add(did);
-			} catch (MalformedDIDException ignore) {
-			}
-		});
-		input.close();
-
-		long start = System.currentTimeMillis();
-		for (DID did : dids) {
-			DIDDocument doc = did.resolve();
-			assertNotNull(doc);
-		}
-		long end = System.currentTimeMillis();
-
-		System.out.println(String.format("First time resovle %d DIDs took %d Milliseconds",
-				dids.size(), (end-start)));
-
-		start = System.currentTimeMillis();
-		for (DID did : dids) {
-			DIDDocument doc = did.resolve();
-			assertNotNull(doc);
-		}
-		end = System.currentTimeMillis();
-
-		System.out.println(String.format("Second time resovle %d DIDs took %d Milliseconds",
-				dids.size(), (end-start)));
-	}
-
-	@Test
-	public void testResolveLocal()  throws DIDException, IOException {
-		String json = "{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKey\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"type\":\"ECDSAsecp256r1\",\"controller\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKeyBase58\":\"21YM84C9hbap4GfFSB3QbjauUfhAN4ETKg2mn4bSqx4Kp\"}],\"authentication\":[\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\"],\"verifiableCredential\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#name\",\"type\":[\"BasicProfileCredential\",\"SelfProclaimedCredential\"],\"issuer\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"issuanceDate\":\"2020-07-01T00:46:40Z\",\"expirationDate\":\"2025-06-30T00:46:40Z\",\"credentialSubject\":{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"name\":\"KP Test\"},\"proof\":{\"type\":\"ECDSAsecp256r1\",\"verificationMethod\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signature\":\"jQ1OGwpkYqjxooyaPseqyr_1MncOZDrMS_SvwYzqkCHVrRfjv_b7qfGCjxy7Gbx-LS3bvxZKeMxU1B-k3Ysb3A\"}}],\"expires\":\"2025-07-01T00:46:40Z\",\"proof\":{\"type\":\"ECDSAsecp256r1\",\"created\":\"2020-07-01T00:47:20Z\",\"creator\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signatureValue\":\"TOpNt-pWeQDJFaS5EkpMOuCqnZKhPCizf7LYQQDBrNLVIZ_7AR73m-KJk7Aja0wmZWXd7S4n7SC2W4ZQayJlMA\"}}";
-		DID did = new DID("did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab");
-
-		DIDDocument doc = did.resolve();
-		assertNull(doc);
-
-		DIDBackend.getInstance().setResolveHandle((d) -> {
-			try {
-				if (d.equals(did))
-					return DIDDocument.parse(json);
-			} catch (Exception e) {
-			}
-
-			return null;
-		});
-
-		doc = did.resolve();
-		assertNotNull(doc);
-		assertEquals(did, doc.getSubject());
-
-		DIDBackend.getInstance().setResolveHandle(null);
-		doc = did.resolve();
-		assertNull(doc);
-	}
-}
- */
+		otherDID = new DID("did:elastos:1234567890");
+		expect(did.equals(otherDID)).toBeTruthy();
+		expect(did.equals("did:elastos:1234567890")).toBeTruthy();
+	});
+});
