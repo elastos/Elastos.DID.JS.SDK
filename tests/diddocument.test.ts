@@ -20,149 +20,104 @@
  * SOFTWARE.
  */
 
-/* @ExtendWith(DIDTestExtension.class)
-public class DIDDocumentTest {
-	private TestData testData;
-	private DIDStore store;
+import { Constants } from "../src/constants";
+import { DIDDocument } from "../src";
+import { DIDURL } from "../src/didurl";
+import { DIDStore } from "../src/didstore";
+import { TestData } from "./utils/testdata";
+import {
+    List as ImmutableList,
+    Map as ImmutableMap
+} from "immutable";
 
-	// private static final Logger log = LoggerFactory.getLogger(DIDDocumentTest.class);
+function testGetPublicKey(version: number, testData: TestData) {
+	let doc: DIDDocument = testData.getCompatibleData(version).getDocument("user1");
+	expect(doc).not.toBeNull();
+	expect(doc.isValid()).toBeTruthy();
 
-    @BeforeEach
-    public void beforeEach() throws DIDException {
-    	testData = new TestData();
-    	store = testData.getStore();
-    }
+	// Count and list.
+	expect(doc.getPublicKeyCount()).toEqual(4);
 
-    @AfterEach
-    public void afterEach() {
-    	testData.cleanup();
-    }
+	let pks: ImmutableList<DIDDocument.PublicKey> = doc.getPublicKeys();
+	expect(pks.size).toEqual(4);
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testGetPublicKey(int version) throws IOException, DIDException {
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+	for (let pk of pks) {
+		expect(pk.getId().getDid()).toEqual(doc.getSubject());
+		expect(pk.getType()).toEqual(Constants.DEFAULT_PUBLICKEY_TYPE);
 
-		// Count and list.
-		assertEquals(4, doc.getPublicKeyCount());
-
-		List<PublicKey> pks = doc.getPublicKeys();
-		assertEquals(4, pks.size());
-
-		for (PublicKey pk : pks) {
-			assertEquals(doc.getSubject(), pk.getId().getDid());
-			assertEquals(Constants.DEFAULT_PUBLICKEY_TYPE, pk.getType());
-
-			if (pk.getId().getFragment().equals("recovery"))
-				assertNotEquals(doc.getSubject(), pk.getController());
-			else
-				assertEquals(doc.getSubject(), pk.getController());
-
-			assertTrue(pk.getId().getFragment().equals("primary")
-					|| pk.getId().getFragment().equals("key2")
-					|| pk.getId().getFragment().equals("key3")
-					|| pk.getId().getFragment().equals("recovery"));
-		}
-
-		// PublicKey getter.
-		PublicKey pk = doc.getPublicKey("#primary");
-		assertNotNull(pk);
-		assertEquals(new DIDURL(doc.getSubject(), "#primary"), pk.getId());
-
-		DIDURL id = new DIDURL(doc.getSubject(), "#key2");
-		pk = doc.getPublicKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
-
-		id = doc.getDefaultPublicKeyId();
-		assertNotNull(id);
-		assertEquals(new DIDURL(doc.getSubject(), "#primary"), id);
-
-		// Key not exist, should fail.
-		pk = doc.getPublicKey("#notExist");
-		assertNull(pk);
-
-		id = new DIDURL(doc.getSubject(), "#notExist");
-		pk = doc.getPublicKey(id);
-		assertNull(pk);
-
-		// Selector
-		id = doc.getDefaultPublicKeyId();
-		pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "#primary"), pks.get(0).getId());
-
-		pks = doc.selectPublicKeys(id, null);
-		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "#primary"), pks.get(0).getId());
-
-		pks = doc.selectPublicKeys((DIDURL) null,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(4, pks.size());
-
-		pks = doc.selectPublicKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "#key2"), pks.get(0).getId());
-
-		pks = doc.selectPublicKeys("#key3", null);
-		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getSubject(), "#key3"), pks.get(0).getId());
+		if (pk.getId().getFragment() == "recovery")
+			expect(pk.getController()).not.toEqual(doc.getSubject());
+		else
+			expect(pk.getController()).toEqual(doc.getSubject());
+		
+		expect(pk.getId().getFragment() == "primary"
+		|| pk.getId().getFragment() == "key2"
+		|| pk.getId().getFragment() == "key3"
+		|| pk.getId().getFragment() == "recovery").toBeTruthy();
 	}
 
-	@Test
-	public void testGetPublicKeyWithCid() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	// PublicKey getter.
+	let pk: DIDDocument.PublicKey = doc.getPublicKey("#primary");
+	expect(pk).not.toBeNull();
+	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pk.getId());
 
-		DIDDocument issuer = cd.getDocument("issuer");
-		DIDDocument doc = cd.getDocument("examplecorp");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+	let id:DIDURL  = DIDURL.newWithDID(doc.getSubject(), "#key2");
+	pk = doc.getPublicKey(id);
+	expect(pk).not.toBeNull();
+	expect(pk.getId()).toEqual(id);
 
-		// Count and list.
-		assertEquals(1, doc.getPublicKeyCount());
+	id = doc.getDefaultPublicKeyId();
+	expect(id).not.toBeNull();
+	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(id);
 
-		List<PublicKey> pks = doc.getPublicKeys();
-		assertEquals(1, pks.size());
+	// Key not exist, should fail.
+	pk = doc.getPublicKey("#notExist");
+	expect(pk).toBeNull();
 
-		assertEquals(issuer.getDefaultPublicKeyId(), pks.get(0).getId());
+	id = DIDURL.newWithDID(doc.getSubject(), "#notExist");
+	pk = doc.getPublicKey(id);
+	expect(pk).toBeNull();
 
-		// PublicKey getter.
-		PublicKey pk = doc.getPublicKey("#primary");
-		assertNull(pk);
+	// Selector
+	id = doc.getDefaultPublicKeyId();
+	pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
+	expect(pks.size).toEqual(1);
+	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pks.get(0).getId());
 
-		DIDURL id = new DIDURL(doc.getController(), "#primary");
-		pk = doc.getPublicKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+	pks = doc.selectPublicKeys(id, null);
+	expect(pks.size).toEqual(1);
+	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pks.get(0).getId());
 
-		id = doc.getDefaultPublicKeyId();
-		assertNotNull(id);
-		assertEquals(issuer.getDefaultPublicKeyId(), id);
+	pks = doc.selectPublicKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
+	expect(pks.size).toEqual(4);
 
-		// Key not exist, should fail.
-		pk = doc.getPublicKey("#notExist");
-		assertNull(pk);
+	pks = doc.selectPublicKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
+	expect(pks.size).toEqual(1);
+	expect(DIDURL.newWithDID(doc.getSubject(), "#key2")).toEqual(pks.get(0).getId());
 
-		id = new DIDURL(doc.getController(), "#notExist");
-		pk = doc.getPublicKey(id);
-		assertNull(pk);
+	pks = doc.selectPublicKeys("#key3", null);
+	expect(pks.size).toEqual(1);
+	expect(DIDURL.newWithDID(doc.getSubject(), "#key3")).toEqual(pks.get(0).getId());
+}
 
-		// Selector
-		id = doc.getDefaultPublicKeyId();
-		pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getController(), "#primary"), pks.get(0).getId());
+describe('DIDDocument Tests', () => {
+	let testData:TestData;
+	let store:DIDStore;
+	beforeAll(() => {
+		testData = new TestData();
+		store = testData.getStore();
+	});
 
-		pks = doc.selectPublicKeys(id, null);
-		assertEquals(1, pks.size());
-		assertEquals(new DIDURL(doc.getController(), "#primary"), pks.get(0).getId());
+	afterAll(() => {
+		testData.cleanup();
+	});
 
-		pks = doc.selectPublicKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-	}
+	test('Test Get Public Key', () => {
+		testGetPublicKey(1, testData);
+		testGetPublicKey(2, testData);
+	});
 
+	/*
 	@Test
 	public void testGetPublicKeyWithMultiControllerCid1() throws IOException, DIDException {
 		TestData.CompatibleData cd = testData.getCompatibleData(2);
@@ -4182,3 +4137,4 @@ public class DIDDocumentTest {
 	}
 }
  */
+});
