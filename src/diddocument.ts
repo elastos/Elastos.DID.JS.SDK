@@ -1631,7 +1631,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let binkey = pk.getPublicKeyBytes();
         let sig = signature.base64Decode();
 
-        return EcdsaSigner.verify(binkey, sig, digest);
+        return EcdsaSigner.verify(binkey, Buffer.from(sig), digest);
     }
 
     /* public JwtBuilder jwtBuilder() {

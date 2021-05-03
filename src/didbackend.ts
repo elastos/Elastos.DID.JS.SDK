@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { randomInt } from "crypto";
+
 import { List as ImmutableList } from "immutable";
 import { randomBytes } from "node:crypto";
 import { CredentialBiography, Status as CredentialBiographyStatus } from "./backend/credentialbiography";

@@ -24,6 +24,7 @@ import { Mnemonic } from "../mnemonic";
 import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
 import { Base58 } from './base58'
 import { SHA256 } from "./sha256";
+import { KeyPair } from "./keypair";
 
 export class HDKey {
 	public static PUBLICKEY_BYTES = 33;
@@ -256,7 +257,9 @@ export class HDKey {
 	// 	return this.verify(hash, signature);
 	// }
 
-
+    public getJCEKeyPair(): KeyPair{
+		return new KeyPair(this.key.publicKey, this.key.privateKey)
+	}
 
 
 	public wipe() {

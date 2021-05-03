@@ -22,6 +22,7 @@
 
 import { SHA256 } from "./sha256";
 import {ec as EC} from "elliptic"
+import { KeyPair } from "./keypair";
 
 export class EcdsaSigner {
 	
@@ -51,4 +52,10 @@ export class EcdsaSigner {
 	public static verifyData(publicKey: Buffer | string, sig: Buffer, ...data: Buffer[]): boolean {
 		return this.verify(publicKey, sig, SHA256.encodeToBuffer(...data));
 	}
+
+	public static sha256Digest(...inputs: Buffer[]): Buffer{
+		return SHA256.encodeToBuffer(...inputs)
+	}
+
+	
 }
