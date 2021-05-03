@@ -1,8 +1,10 @@
-export class KeyPair {
-    private privateKey: any;
-    private publicKey: any;
+import { PublicKey, PrivateKey } from "bitcore-lib";
 
-    public constructor (publicKey: any, privateKey: any) {
+export class KeyPair {
+    private privateKey: PrivateKey;
+    private publicKey: PublicKey;
+
+    public constructor (publicKey: PublicKey, privateKey: PrivateKey) {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
     }

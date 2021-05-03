@@ -24,7 +24,6 @@ import { Mnemonic } from "../mnemonic";
 import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
 import { Base58 } from './base58'
 import { SHA256 } from "./sha256";
-import { KeyPair } from "./keypair";
 import crypto from "crypto";
 
 export class HDKey {
@@ -170,45 +169,13 @@ export class HDKey {
 		return new HDKey(this.key.deriveChild(index));
 	}
 
-	public getJCEKeyPair(): KeyPair{
+	// public getJCEKeyPair(): KeyPair{
+		
 
+	// 	return new KeyPair("", "")
+	// }
 
-		return new KeyPair("", "")
-	}
-
-    /*public getJCEKeyPair(): KeyPair {
-    	let paramSpec = new ECNamedCurveSpec(
-        		"secp256r1", CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(),
-        		CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
-
-        KeyFactory keyFactory = null;
-		try {
-			keyFactory = KeyFactory.getInstance("EC");
-		} catch (NoSuchAlgorithmException ignore) {
-			// never happen
-		}
-
-    	PublicKey pub = null;
-    	PrivateKey priv = null;
-
-    	try {
-    		ECPublicKeyParameters pubParams = new ECPublicKeyParameters(
-    				CURVE_PARAMS.getCurve().decodePoint(getPublicKeyBytes()), CURVE);
-    		ECPublicKeySpec pubSpec = new ECPublicKeySpec(new java.security.spec.ECPoint(
-    				pubParams.getQ().getXCoord().toBigInteger(),
-    				pubParams.getQ().getYCoord().toBigInteger()), paramSpec);
-    		pub = keyFactory.generatePublic(pubSpec);
-
-	    	if (key.hasPrivKey()) {
-	    		BigInteger keyInt = new BigInteger(1, getPrivateKeyBytes());
-	    		ECPrivateKeySpec privSpec = new ECPrivateKeySpec(keyInt, paramSpec);
-	    		priv = keyFactory.generatePrivate(privSpec);
-	    	}
-		} catch (InvalidKeySpecException e) {
-			throw new UnknownInternalException(e);
-		}
-    	return new KeyPair(pub, priv);
-    }*/
+  
 
 	private static getRedeemScript(pk: Buffer): Buffer {
 		let script = Buffer.alloc(35)
@@ -223,12 +190,12 @@ export class HDKey {
 	private static getBinAddressFromBuffer(pk: Buffer): Buffer {
 		let script = this.getRedeemScript(pk);
 
-		let hash = crypto.Hash.sha256ripemd160(script);
+		let hash =  SHA256.sha256ripemd160(script);
 		let programHash = Buffer.alloc(hash.length + 1);
 		programHash[0] = HDKey.PADDING_IDENTITY;
 		hash.copy(programHash,1);
 
-		hash = crypto.Hash.sha256sha256(programHash)
+		hash =  SHA256.hashTwice(programHash)
 		let binAddress = Buffer.alloc(programHash.length + 4);
 		programHash.copy(binAddress, 0)
 		hash.copy(binAddress, programHash.length, 0, 4)
@@ -269,30 +236,30 @@ export class HDKey {
 				&& hash[2] == binAddress[23] && hash[3] == binAddress[24]);
 	}
 
-	public sign(sha25Hash: Buffer): Buffer{
-		let sig = this.key.sign(sha25Hash)
+	// public sign(sha25Hash: Buffer): Buffer{
+	// 	let sig = this.key.sign(sha25Hash)
 
-		//TODO: Find to EncodeToDER
-		return Buffer.alloc(0)
-	}
+	// 	//TODO: Find to EncodeToDER
+	// 	return Buffer.alloc(0)
+	// }
 
-	public signData(...inputs: Buffer[]) : Buffer{
-		let hash = SHA256.encodeToBuffer(...inputs);
-		return this.sign(hash)
-	}
+	// public signData(...inputs: Buffer[]) : Buffer{
+	// 	let hash = SHA256.encodeToBuffer(...inputs);
+	// 	return this.sign(hash)
+	// }
 
-	public verify(sha256Hash: Buffer, signature: Buffer): boolean {
-		try {
-			return this.key.verify(sha256Hash, signature);
-		} catch (e) {
-			return false;
-		}
-	}
+	// public verify(sha256Hash: Buffer, signature: Buffer): boolean {
+	// 	try {
+	// 		return this.key.verify(sha256Hash, signature);
+	// 	} catch (e) {
+	// 		return false;
+	// 	}
+	// }
 
-	public verifyData(signature: Buffer, ...inputs:Buffer[]): boolean {
-		let hash = SHA256.encodeToBuffer(...inputs);
-		return this.verify(hash, signature);
-	}
+	// public verifyData(signature: Buffer, ...inputs:Buffer[]): boolean {
+	// 	let hash = SHA256.encodeToBuffer(...inputs);
+	// 	return this.verify(hash, signature);
+	// }
 
 
 

@@ -42,6 +42,7 @@ export class HDKey {
         versions = versions || BITCOIN_VERSIONS;
         var hdkey = new HDKey(versions);
 
+        console.log("base58Key", base58key)
         var keyBuffer = bs58check.decode(base58key);
 
         var version = keyBuffer.readUInt32BE(0);

@@ -119,33 +119,55 @@
 
 //practice pigeon diagram jeans piano abstract tape cause lounge raise index spy
 
+import { BASE64 } from "../../src/crypto/base64";
 import {EcdsaSigner} from "../../src/crypto/ecdsasigner"
 import { HDKey } from "../../src/crypto/hdkey"
-import { Base58 } from "../../src/crypto/base58"
+import { Mnemonic } from "../../src/mnemonic";
 
 
 
 describe('ECSDA Signer Tests', () => {
-	var mnemonic: string = "practice pigeon diagram jeans piano abstract tape cause lounge raise index spy";
 	let plain: string = "The quick brown fox jumps over the lazy dog.";
 	let nonce: string = "testcase";
 	var key: HDKey;
-	var sig: string;
+	var sig: Buffer;
+
 	beforeAll(() => {
+		let mnemonic = "practice pigeon diagram jeans piano abstract tape cause lounge raise index spy"; //Mnemonic.getInstance().generate();
 		let root = HDKey.newWithMnemonic(mnemonic, "");
-		key = root.deriveWithIndex(0)
-		console.log("key", key.getPrivateKeyBytes().toString("hex"))
+		key = root.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + 0)
 		sig = EcdsaSigner.signData(key.getPrivateKeyBytes(), Buffer.from(plain, "utf-8"), Buffer.from(nonce, "utf-8"))
 		expect(sig).toBeDefined()
 	});
-
-	
-	
 	test('Verify signature is correct', () => {
 		let response = EcdsaSigner.verifyData(key.getPublicKeyBytes(), sig, Buffer.from(plain, "utf-8"), Buffer.from(nonce, "utf-8"))
 
 		expect(response).toBeTruthy()
 	});
+	
+	
+	test('Verify signature is not valid', () => {
+
+		let modSig = Buffer.from(sig);
+		modSig[8] +=1;
+		let response = EcdsaSigner.verifyData(key.getPublicKeyBytes(), modSig, Buffer.from(plain, "utf-8"), Buffer.from(nonce, "utf-8"))
+
+		expect(response).toBeFalsy();
+	});
+
+
+	test('Verify signature is not valid when change nonce', () => {
+		let response = EcdsaSigner.verifyData(key.getPublicKeyBytes(), sig, Buffer.from(plain, "utf-8"), Buffer.from("testcase0", "utf-8"))
+
+		expect(response).toBeFalsy()
+	});
+
+	test('Verify signature is not valid with different digest value', () => {
+		let response = EcdsaSigner.verifyData(key.getPublicKeyBytes(), sig, Buffer.from(plain, "utf-8"))
+
+		expect(response).toBeFalsy()
+	});
+	
 
 	test('Compatibility', () =>{
 		let input = 'abcdefghijklmnopqrstuvwxyz';
@@ -153,27 +175,18 @@ describe('ECSDA Signer Tests', () => {
 		let expectedSig1 = "SlDq9rsEQJgS83ydi2cPMiwXm6SgJCuwYwx_NqpOwf5IQcbfUM574GHThnvJ5lgTeyeOwVcxbWyQxehlK3MO-A";
 		let expectedSig2 = "gm4Bx8ijQjBEFsf1Cm1mHcqSzFHquoQe235uzL3OUDJiIuFnJ49lEWn0RueIfgCZbrDEhLdxKSaNYqnBpjiR6A";
 		
-		let pk = '031F56955CC005122F11CEC5264EA5968240A90F01434FB0A1B7429BE4B9157D46';
 
-		let root = HDKey.deserialize(Buffer.from(pk, "hex"))
-		console.log("root", root)
-		let isSig1Valid = EcdsaSigner.verifyData(root.getPublicKeyBytes() ,expectedSig1, Buffer.from(input, "utf-8"))
+		let root = HDKey.deserialize(Buffer.from("031F56955CC005122F11CEC5264EA5968240A90F01434FB0A1B7429BE4B9157D46", "hex"))
+
+		var sigToTest = Buffer.from(BASE64.toHex(expectedSig1), "hex")
+		
+		let isSig1Valid = EcdsaSigner.verifyData(root.getPublicKeyBytes() , sigToTest, Buffer.from(input, "utf-8"))
 		expect(isSig1Valid).toBeTruthy()
 
-		// let isSig2Valid = EcdsaSigner.verifyData(pk,expectedSig2, Buffer.from(input, "utf-8"))
-		// expect(isSig2Valid).toBeTruthy()
+		var sigToTest2 = Buffer.from(BASE64.toHex(expectedSig2), "hex")
 
-// 		byte[] pk = Base58.decode(pkBase58);
-
-// 		byte[] sig = Base64.decode(expectedSig1,
-// 				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-// 		boolean result = EcdsaSigner.verifyData(pk, sig, input.getBytes());
-// 		assertTrue(result);
-
-// 		sig = Base64.decode(expectedSig2,
-// 				Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
-// 		result = EcdsaSigner.verifyData(pk, sig, input.getBytes());
-// 		assertTrue(result);
+		let isSig2Valid = EcdsaSigner.verifyData(root.getPublicKeyBytes(), sigToTest2, Buffer.from(input, "utf-8"))
+		expect(isSig2Valid).toBeTruthy()
 	})
   });
 

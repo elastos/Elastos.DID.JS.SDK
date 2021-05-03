@@ -214,49 +214,18 @@ describe('HDKey Tests', () => {
 		let preDerivedPub = HDKey.deserializeBase58(preDerivedPubBase58);
 
 		for (let index = 0; index < 1000; index++) {
-			console.log("starting index", index)
 			let key = root.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + index);
-			let keyPubOnly = preDerivedPub.deriveWithPath("m/44/0/" + index);
+			let keyPubOnly = preDerivedPub.deriveWithPath("m/0/" + index);
+			console.log("he", keyPubOnly)
 
 			expect(key.getPrivateKeyBase58()).toBe(keyPubOnly.getPrivateKeyBase58())
 			expect(key.getPublicKeyBase58()).toBe(keyPubOnly.getPublicKeyBase58())
 		}
 	});
 
-	test('Test JWT Compatible', () => {
-		let input = Buffer.from("The quick brown fox jumps over the lazy dog.");
-		let mnemonic =  Mnemonic.getInstance().generate();
-		let rootKey = HDKey.newWithMnemonic(mnemonic, "");
-		for (let i = 0; i < 1000; i++) {
-			let key = rootKey.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + i)
-
-			// to JCE KeyPair
-			let jceKeyPair = key.getJCEKeyPair();
-			let ec = new jsrsasign.KJUR.crypto.ECDSA({curve: "secp256r1"});
-			ec.setPrivateKeyHex(jceKeyPair.getPrivate().toString("hex"));
-
-			let didSig = key.sign(SHA256.encodeToBuffer(input));
-
-			let jceSigner = new jsrsasign.KJUR.crypto.Signature({ alg: "SHA256withECDSA" });
-        	jceSigner.init(ec);
-        	jceSigner.updateHex(input.toString("hex"));
-			let signed = Buffer.from(jceSigner.sign());
-
-			expect(key.verify(SHA256.encodeToBuffer(input), signed))
-
-			jceSigner = new jsrsasign.KJUR.crypto.Signature({ alg: "SHA256withECDSA" });
-			ec = new jsrsasign.KJUR.crypto.ECDSA({curve: "secp256r1"});
-			ec.setPublicKeyHex(jceKeyPair.getPublic())
-			jceSigner.init(ec);
-        	jceSigner.updateHex(input.toString("hex"));
-
-			let r = new BN(signed.slice(0, 32), 64, "le");
-			let s = new BN(signed.slice(32), 64, "le");
-			let asn1 = jsrsasign.KJUR.crypto.ECDSA.hexRSSigToASN1Sig(jsrsasign.BAtohex(r.toArray("le")),jsrsasign.BAtohex(s.toArray("le")));
-
-			expect(jceSigner.verify(asn1)).toBeTruthy()
-		}
-	});
 	
+	
+
+
 
 })

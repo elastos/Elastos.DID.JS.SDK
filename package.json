@@ -14,6 +14,7 @@
   "main": "dist/index.js",
   "module": "dist.esm/index.js",
   "dependencies": {
+    "@types/elliptic": "^6.4.12",
     "@types/jsrsasign": "^8.0.10",
     "antlr4ts": "^0.5.0-alpha.4",
     "bip32": "^2.0.6",
@@ -25,6 +26,7 @@
     "crypto-js": "^4.0.0",
     "dayjs": "^1.10.4",
     "ecdh-crypto": "^1.0.5",
+    "elliptic": "^6.5.4",
     "immutable": "^4.0.0-rc.12",
     "jackson-js": "^1.1.0",
     "jose": "^3.2.0",
@@ -61,7 +63,7 @@
     "typescript": "^4.2.3"
   },
   "browser": {
-    "crypto":"crypto-browserify"
+    "crypto": "crypto-browserify"
   },
   "repository": {
     "type": "git",
