@@ -20,7 +20,7 @@ export function privateKeyExport(privateKey: Buffer, compressed: boolean) {
   var d = new BN(privateKey);
   if (d.cmp(ecparams.n) >= 0 || d.isZero()) throw new Error(messages.EC_PRIVATE_KEY_EXPORT_DER_FAIL);
 
-  return Buffer.from(ec.keyFromPrivate(privateKey).getPublic(compressed, 'hex'));
+  return Buffer.from(ec.keyFromPrivate(privateKey).getPublic(compressed, 'true'));
 }
 
 export function privateKeyNegate(privateKey: Buffer) {
@@ -65,14 +65,14 @@ export function publicKeyCreate(privateKey: Buffer, compressed: boolean) {
   var d = new BN(privateKey);
   if (d.cmp(ecparams.n) >= 0 || d.isZero()) throw new Error(messages.EC_PUBLIC_KEY_CREATE_FAIL);
 
-  return Buffer.from(ec.keyFromPrivate(privateKey).getPublic(compressed, 'hex'));
+  return Buffer.from(ec.keyFromPrivate(privateKey).getPublic(compressed, 'true'));
 }
 
 export function publicKeyConvert(publicKey: Buffer, compressed: boolean) {
   var pair = loadPublicKey(publicKey);
   if (pair === null) throw new Error(messages.EC_PUBLIC_KEY_PARSE_FAIL);
 
-  return Buffer.from(pair.getPublic(compressed, 'hex'));
+  return Buffer.from(pair.getPublic(compressed, 'true'));
 }
 
 export function publicKeyVerify(publicKey: Buffer) {
@@ -105,7 +105,7 @@ export function publicKeyTweakMul(publicKey: Buffer, tweak: Buffer | BN, compres
     pair
       .getPublic()
       .mul(tweak)
-      .encode("hex", compressed)
+      .encode(true, compressed)
   );
 }
 
@@ -193,7 +193,7 @@ export function verify(message: Buffer, signature: Buffer, publicKey: Buffer) {
   var pair = loadPublicKey(publicKey);
   if (pair === null) throw new Error(messages.EC_PUBLIC_KEY_PARSE_FAIL);
 
-  return ec.verify(message, sigObj as any, { x: pair.getPublic().getX(), y: pair.getPublic().getY() } as any);
+  return ec.verify(message, sigObj as any, { x: pair.getPublic().x, y: pair.getPublic().y } as any);
 }
 
 export function recover(message: Buffer, signature: Buffer, recovery: number, compressed: boolean) {
@@ -231,6 +231,6 @@ export function ecdhUnsafe(publicKey: Buffer, privateKey: Buffer, compressed: bo
     pair
       .getPublic()
       .mul(scalar)
-      .encode("hex", compressed)
+      .encode(true, compressed)
   );
 }

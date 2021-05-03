@@ -213,9 +213,7 @@ describe('HDKey Tests', () => {
 		for (let index = 0; index < 1000; index++) {
 			let key = root.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + index);
 			let keyPubOnly = preDerivedPub.deriveWithPath("m/0/" + index);
-			console.log("he", keyPubOnly)
-
-			expect(key.getPrivateKeyBase58()).toBe(keyPubOnly.getPrivateKeyBase58())
+			//expect(key.getPrivateKeyBase58()).toBe(keyPubOnly.getPrivateKeyBase58())
 			expect(key.getPublicKeyBase58()).toBe(keyPubOnly.getPublicKeyBase58())
 		}
 	});
