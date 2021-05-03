@@ -149,10 +149,7 @@
 }
  */
 
-import { BN } from "bn.js";
 import { HDKey } from "../../src/crypto/hdkey"
-import { SHA256 } from "../../src/crypto/sha256";
-import { Mnemonic } from "../../src/mnemonic";
 
 describe('HDKey Tests', () => {
 	

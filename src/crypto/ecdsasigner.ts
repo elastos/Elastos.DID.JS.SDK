@@ -20,18 +20,11 @@
  * SOFTWARE.
  */
 
-import jsrsasign from "jsrsasign";
-import BN from "bn.js";
 import { SHA256 } from "./sha256";
-import { BASE64 } from "./base64";
-// import { uint8ArrayCopy } from "../utils";
-
 import {ec as EC} from "elliptic"
 
 export class EcdsaSigner {
-
-
-	// NOTE: Need to convert bitcoin spec private key to ECDSA spec key before signing.
+	
 	public static sign(privateKey: Buffer | string, digest: Buffer): Buffer {
 		var ec = new EC('p256');
 		var key = ec.keyFromPrivate(privateKey, 'hex')

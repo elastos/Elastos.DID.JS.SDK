@@ -24,7 +24,6 @@ import { Mnemonic } from "../mnemonic";
 import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
 import { Base58 } from './base58'
 import { SHA256 } from "./sha256";
-import crypto from "crypto";
 
 export class HDKey {
 	public static PUBLICKEY_BYTES = 33;
@@ -111,10 +110,6 @@ export class HDKey {
 	public static deserializeBase58(keyData: string): HDKey {
 		return new HDKey(DeterministicKey.fromExtendedKey(keyData));
 	}
-
-
-
-
 
 	private static transformBip32HeaderToBuffer(bip32HeaderValue: number) : Buffer{
 		let buffer = Buffer.alloc(4)
