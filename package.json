@@ -1,7 +1,7 @@
 {
-  "name": "@elastosfoundation/elastos-js-sdk",
-  "version": "2.0.0",
-  "description": "Elastos JS SDK",
+  "name": "@elastosfoundation/elastos-did-js-sdk",
+  "version": "1.0.0",
+  "description": "Elastos DID JS SDK",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
