@@ -72,7 +72,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 	 * @return the transaction string
 	 */
 	public getTransactionId(): string {
-		return this.get(CredentialMetadata.TXID);
+		return this.get(CredentialMetadata.TXID) as string;
 	}
 
 	/**

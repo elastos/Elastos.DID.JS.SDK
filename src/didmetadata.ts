@@ -59,7 +59,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	}
 
 	public getRootIdentityId(): string {
-		return this.get(DIDMetadata.ROOT_IDENTITY);
+		return this.get(DIDMetadata.ROOT_IDENTITY) as string;
 	}
 
 	public setIndex(index: number) {
@@ -85,7 +85,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 * @return the transaction string
 	 */
 	public getTransactionId(): string {
-		return this.get(DIDMetadata.TXID);
+		return this.get(DIDMetadata.TXID) as string;
 	}
 
 	/**
@@ -103,7 +103,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 * @return the signature string
 	 */
 	public getPreviousSignature(): string {
-		return this.get(DIDMetadata.PREV_SIGNATURE);
+		return this.get(DIDMetadata.PREV_SIGNATURE) as string;
 	}
 
 	/**
@@ -121,7 +121,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 * @return the signature string
 	 */
 	public getSignature(): string {
-		return this.get(DIDMetadata.SIGNATURE);
+		return this.get(DIDMetadata.SIGNATURE) as string;
 	}
 
 	/**

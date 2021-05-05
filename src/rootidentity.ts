@@ -471,7 +471,7 @@ export namespace RootIdentity {
 		 * @return the transaction string
 		 */
 		public getDefaultDid(): DID {
-			return DID.valueOf(this.get(Metadata.DEFAULT_DID));
+			return DID.valueOf(this.get(Metadata.DEFAULT_DID) as string);
 		}
 
 		protected save() {
