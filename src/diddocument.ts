@@ -316,7 +316,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the Controller's DID if only has one controller, other wise null
      */
-    protected getController(): DID {
+    public getController(): DID {
         return this.controllers.length == 1 ? this.controllers[0] : null;
     }
 

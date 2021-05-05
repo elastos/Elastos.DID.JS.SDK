@@ -145,3 +145,39 @@ export class Utils {
 	} */
 }
 
+export function assertArrayEquals(array1: any[], array2: any[]) {
+	let error = new Error("Arrays should be equal");
+	if (!array1) {
+		if (array2) throw error;
+		return;
+	}
+	if (!array2) {
+		if (array1) throw error;
+		return;
+	}
+	checkArgument(array1.length == array2.length, error.message);
+	for (let element in array1) {
+		checkArgument(array2.includes(element), error.message);
+	}
+}
+
+export function assertNotNull(obj: any) {
+	checkArgument(obj != null, "Should not be null");	
+}
+
+export function assertNull(obj: any) {
+	checkArgument(!obj || obj == null, "Should be null");	
+}
+
+export function assertTrue(equality: boolean) {
+	checkArgument(equality, "Should be true");	
+}
+
+export function assertEquals(expected: any, value: any) {
+	checkArgument(expected == value, "Should be equal");	
+}
+
+function checkArgument(condition: boolean, errorMessage: string) {
+    if (!condition)
+        throw new Error(errorMessage);
+}

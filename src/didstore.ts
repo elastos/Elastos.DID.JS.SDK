@@ -1952,7 +1952,7 @@ export namespace DIDStore {
 		}
 
 		public getType(): string {
-			return this.get(Metadata.TYPE);
+			return this.get(Metadata.TYPE) as string;
 		}
 
 		public getVersion(): number {
@@ -1966,7 +1966,7 @@ export namespace DIDStore {
 		}
 
 		public getFingerprint(): string {
-			return this.get(Metadata.FINGERPRINT);
+			return this.get(Metadata.FINGERPRINT) as string;
 		}
 
 		public setDefaultRootIdentity(id: string) {
@@ -1974,7 +1974,7 @@ export namespace DIDStore {
 		}
 
 		public getDefaultRootIdentity(): string {
-			return this.get(Metadata.DEFAULT_ROOT_IDENTITY);
+			return this.get(Metadata.DEFAULT_ROOT_IDENTITY) as string;
 		}
 
 		protected save() {
