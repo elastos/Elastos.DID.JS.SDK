@@ -28,6 +28,9 @@ import { Dir, File } from "../../src/filesystemstorage";
 import { TestConfig } from "./testconfig";
 import { Utils } from "./utils";
 import { HDKey } from "../../src/crypto/hdkey";
+import { readdir } from "fs";
+import { JSONObject, JSONValue } from "../../src/json";
+import { List } from "immutable";
 
 export class TestData {
 	// HDKey for temporary key generation
@@ -62,7 +65,7 @@ export class TestData {
 	    	this.index = 0;
 		}
 
-		return this.rootKey.derive(HDKey.DERIVE_PATH_PREFIX + this.index++);
+		return this.rootKey.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + this.index++);
 	}
 
 	public getStore(): DIDStore {
@@ -130,20 +133,17 @@ export class TestData {
 	}*/
 }
 
-class CompatibleData {
-	private dataPath: Dir;
-	private storePath: Dir;
+export class CompatibleData {
+	private dataPath: string;
+	private storePath: string;
 	private data = {};
 	private version: number;
 
 	public constructor(private testData: TestData, version: number) {
 		this.data = {};
 
-		URL url = this.getClass().getResource("/v" + version);
-		let root = File.open(url.getPath());
-
-		this.dataPath = File.open(root, "/testdata") as Dir;
-		this.storePath = File.open(root, "/teststore") as Dir;
+		this.dataPath = "data/v" + version.toString() + "/testdata/";
+		this.storePath = "data/v" + version.toString() + "/teststore/";
 		this.version = version;
 	}
 
@@ -151,37 +151,50 @@ class CompatibleData {
 		return this.version == 2;
 	}
 
-	private getDidFile(name: string, type: string): File {
+	private fileContent(path: string): string {
+		let content = "";
+		fetch(path)
+		.then(response => response.text())
+		.then(data => {
+			content = data;
+		});
+
+		return content;
+	}
+
+	private dirContent(path: string): string[] {
+		let files: string[];
+		readdir(path, (err: Error, list: string[]) => {
+			files = list;
+		});
+		return files;
+	}
+
+	private getDidFile(name: string, type: string): string {
 		let fileName = name + ".id";
 		if (type != null)
 			fileName += "." + type;
 		fileName += ".json";
 
-		return File.open(this.dataPath, fileName.toString());
+		return this.fileContent(this.dataPath + fileName);
 	}
 
-	/*private File getCredentialFile(String did, String vc, String type) {
-		StringBuffer fileName = new StringBuffer();
-		fileName.append(did).append(".vc.").append(vc);
+	private getCredentialFile(did: string, vc: string, type: string): string {
+		let fileName = did + ".vc." + vc;
 		if (type != null)
-			fileName.append(".").append(type);
-		fileName.append(".json");
+			fileName += "." + type;
+		fileName += ".json";
 
-		return new File(dataPath, fileName.toString());
+		return this.fileContent(this.dataPath + fileName);
 	}
 
-	private File getPresentationFile(String did, String vp, String type) {
-		StringBuffer fileName = new StringBuffer();
-		fileName.append(did).append(".vp.").append(vp);
+	private getPresentationFile(did: string, vp: string, type: string): string {
+		let fileName = did + ".vp." + vp;
 		if (type != null)
-			fileName.append(".").append(type);
-		fileName.append(".json");
+			fileName += "." + type;
+		fileName += ".json";
 
-		return new File(dataPath, fileName.toString());
-	}
-*/
-	private loadText(file: File): string {
-		return file.readText();
+		return this.fileContent(this.dataPath + fileName);
 	}
 
 	public getDocument(did: string, type: string = null): DIDDocument {
@@ -191,22 +204,22 @@ class CompatibleData {
 			return this.data[key];
 
 		// load the document
-		let doc = DIDDocument.parseContent(this.getDidFile(did, type).readText());
+		let doc = DIDDocument.parseContent(this.getDidFile(did, type));
 
 		if (!(baseKey in this.data)) {
 			// If not stored before, store it and load private keys
 			this.testData.store.storeDid(doc);
-			let kfs = this.dataPath.listFiles((f) => {
-				return (f.getName().startsWith(did + ".id.") && f.getName().endsWith(".sk"));
+			let kfs = this.dirContent(this.dataPath).filter((fileName: string, index: number, array: string []) => {
+				return fileName.startsWith(did + ".id.") && fileName.endsWith(".sk");
 			});
-
+			
 			for (let kf of kfs) {
 				let start = did.length + 4;
-				let end = kf.getName().length - 3;
-				let fragment = kf.getName().substring(start, end);
-				let id = new DIDURL(doc.getSubject(), "#" + fragment);
+				let end = kf.length - 3;
+				let fragment = kf.substring(start, end);
+				let id = DIDURL.newWithDID(doc.getSubject(), "#" + fragment);
 
-				let sk = HDKey.deserializeBase58(this.loadText(kf)).serialize();
+				let sk = HDKey.deserializeBase58(this.fileContent(kf)).serialize();
 				this.testData.store.storePrivateKey(id, sk, TestConfig.storePass);
 			}
 
@@ -317,7 +330,7 @@ class CompatibleData {
 		return text;
 	}
 */
-	public getStoreDir(): File {
+	public getStoreDir(): string {
 		return this.storePath;
 	}
 
@@ -452,28 +465,28 @@ export class InstantData {
 			db.addService("#vcr", "CredentialRepositoryService",
 					"https://did.example.com/credentials");
 
-			let map = {
+			let map: JSONValue = {
 				abc: "helloworld",
 				foo: 123,
 				bar: "foobar",
-				date: new Date(),
+				date: (new Date()).toISOString(),
 				ABC: "Helloworld",
 				FOO: 678,
 				BAR: "Foobar",
 				FOOBAR: "Lalala...",
-				DATE: new Date()
+				DATE: (new Date()).toISOString()
 			};
 
-			let props: any = {
+			let props: JSONObject = {
 				abc: "helloworld",
 				foo: 123,
 				bar: "foobar",
-				date: new Date(),
+				date: (new Date()).toISOString(),
 				ABC: "Helloworld",
 				FOO: 678,
 				BAR: "Foobar",
 				FOOBAR: "Lalala...",
-				DATE: new Date(),
+				DATE: (new Date()).toISOString(),
 				MAP: map
 			};
 
@@ -500,8 +513,9 @@ export class InstantData {
 			let kycIssuer = new Issuer(this.idIssuer);
 			cb = kycIssuer.issueFor(doc.getSubject());
 
-			props.clear();
-			props.put("email", "john@example.com");
+			props = {
+				"email": "john@example.com"
+			};
 
 			let vcEmail = cb.id("#email")
 					.type("BasicProfileCredential",
@@ -525,7 +539,7 @@ export class InstantData {
 		if (this.vcUser1Passport == null) {
 			let doc = this.getUser1Document();
 
-			let id = new DIDURL(doc.getSubject(), "#passport");
+			let id = DIDURL.newWithDID(doc.getSubject(), "#passport");
 
 			let selfIssuer = new Issuer(doc);
 			let cb = selfIssuer.issueFor(doc.getSubject());
@@ -552,7 +566,7 @@ export class InstantData {
 		if (this.vcUser1Twitter == null) {
 			let doc = this.getUser1Document();
 
-			let id = new DIDURL(doc.getSubject(), "#twitter");
+			let id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
 
 			let kycIssuer = new Issuer(this.idIssuer);
 			let cb = kycIssuer.issueFor(doc.getSubject());

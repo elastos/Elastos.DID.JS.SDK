@@ -222,7 +222,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return this.expirationDate;
 		else {
 			try {
-				let controllerDoc = this.subject.id.resolve();
+				let controllerDoc = this.subject.getId().resolve();
 				if (controllerDoc != null)
 					return controllerDoc.getExpires();
 			} catch (e) {
@@ -280,7 +280,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (this.subject == null)
 			throw new MalformedCredentialException("Missing credential subject");
 
-		if (this.subject.id == null)
+		if (this.subject.getId() == null)
 			throw new MalformedCredentialException("Missing credential subject id");
 
 		if (this.proof == null)
@@ -290,10 +290,10 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		// Update id references
 		if (this.issuer == null)
-			this.issuer = this.subject.id;
+			this.issuer = this.subject.getId();
 
 		if (this.id.getDid() == null)
-			this.id.setDid(this.subject.id);
+			this.id.setDid(this.subject.getId());
 
 		if (this.proof.verificationMethod.getDid() == null)
 			this.proof.verificationMethod.setDid(this.issuer);
@@ -350,7 +350,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return whether the credential is self proclaimed
 	 */
 	public isSelfProclaimed(): boolean {
-		return this.issuer.equals(this.subject.id);
+		return this.issuer.equals(this.subject.getId());
 	}
 
 	/**
@@ -365,7 +365,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 				return true;
 		}
 
-		let controllerDoc = this.subject.id.resolve();
+		let controllerDoc = this.subject.getId().resolve();
 		if (controllerDoc != null && controllerDoc.isExpired())
 			return true;
 
@@ -426,7 +426,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return false;
 
 		if (!this.isSelfProclaimed()) {
-			let controllerDoc = this.subject.id.resolve();
+			let controllerDoc = this.subject.getId().resolve();
 			if (controllerDoc != null && !controllerDoc.isGenuine())
 				return false;
 		}
@@ -510,7 +510,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 
 		if (!this.isSelfProclaimed()) {
-			let controllerDoc = this.subject.id.resolve();
+			let controllerDoc = this.subject.getId().resolve();
 			if (controllerDoc != null && !controllerDoc.isValid())
 				return false;
 		}
@@ -1074,8 +1074,8 @@ export namespace VerifiableCredential {
 	 */
 	 @JsonPropertyOrder({value: [VerifiableCredential.ID]})
 	 export class Subject {
-		public id: DID;
-		public properties: Map<string, Object>;
+		private id: DID;
+		private properties: JSONObject;
 
 		 /**
 		  * Constructs the CredentialSubject object with given controller.
@@ -1085,7 +1085,7 @@ export namespace VerifiableCredential {
 		 // Java: @JsonCreator()
 		 constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
 			 this.id = id;
-			 this.properties = new Map<string, Object>();
+			 this.properties = {};
 		 }
 
 		 /**
@@ -1116,7 +1116,7 @@ export namespace VerifiableCredential {
 		  */
 		 @JsonAnyGetter()
 		 @JsonPropertyOrder({alphabetic: true})
-		 private _getProperties(): Map<string, Object> {
+		 private _getProperties(): JSONObject {
 			 return this.properties;
 		 }
 
@@ -1131,7 +1131,7 @@ export namespace VerifiableCredential {
 			 if (name === VerifiableCredential.ID)
 				 return;
 
-			 this.properties.set(name, value);
+			 this.properties[name] = value;
 		 }
 
 		 /**
@@ -1139,9 +1139,12 @@ export namespace VerifiableCredential {
 		  *
 		  * @return the properties in String to Object map. It's a read-only map
 		  */
-		 public getProperties(): ImmutableMap<string, Object> {
-			 // TODO: make it unmodifiable recursively
-			  return ImmutableMap(this.properties);
+		 public getProperties(): JSONObject {
+			return JSON.parse(JSON.stringify(this.properties));
+		 }
+
+		 public setProperties(newProperties: JSONObject): JSONObject {
+			return this.properties = newProperties;
 		 }
 
 		 /**
@@ -1150,7 +1153,7 @@ export namespace VerifiableCredential {
 		  * @return the fields count
 		  */
 		 public getPropertyCount(): number {
-			 return this.properties.size;
+			 return Object.keys(this.properties).length;
 		 }
 
 		 /**
@@ -1160,7 +1163,7 @@ export namespace VerifiableCredential {
 		  * @return the property value
 		  */
 		 public getProperty(name: string): Object {
-			 return this.properties.get(name);
+			 return this.properties[name];
 		 }
 
 		 /**
@@ -1366,38 +1369,22 @@ export namespace VerifiableCredential {
 		 * @param properties the subject content
 		 * @return the Builder object
 		 */
-		public properties(properties: JSONObject): Builder {
+		public properties(newProperties: JSONObject): Builder {
 			this.checkNotSealed();
 
-			this.credential.subject.properties.clear();
+			this.credential.subject.setProperties({});
 
-			if (properties == null || properties.size == 0)
+			if (newProperties == null || Object.keys(newProperties).length == 0)
 				return this;
 
-			Object.entries(properties).forEach((e) => this.credential.subject.properties.set(e[0], e[1]));
-			this.credential.subject.properties.delete(VerifiableCredential.ID);
+			let properties = this.credential.subject.getProperties();
+			for (let key in newProperties) {
+				properties[key] = newProperties[key];
+			}
+			delete properties.id;
+			this.credential.subject.setProperties(properties);
 			return this;
 		}
-
-		/**
-		 * Set Credential's subject.
-		 *
-		 * @param json the subject subject with json format
-		 * @return the Builder object
-		 */
-		/* public properties(json: string): Builder {
-			this.checkNotSealed();
-			checkArgument(json != null && json !== "", "Invalid json");
-
-			let mapper = this.getObjectMapper();
-			try {
-				let props: Map<String, Object> = mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
-				return this.properties(props);
-			} catch (e) {
-				// JsonProcessingException
-				throw new IllegalArgumentException("Invalid json", e);
-			}
-		} */
 
 		/**
 		 * Set Credential's subject.

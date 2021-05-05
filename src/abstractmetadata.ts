@@ -24,6 +24,7 @@ import { Cloneable } from "./cloneable";
 import { DIDEntity } from "./didentity";
 import { DIDStore } from "./didstore";
 import { checkArgument } from "./utils";
+import { JSONObject, JSONValue } from "./json";
 
 /**
  * The class defines the base interface of Meta data.
@@ -33,7 +34,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 
 	protected static USER_EXTRA_PREFIX = "UX-";
 
-	public props: Map<string, string> = new Map();
+	public props: JSONObject;
 	protected store: DIDStore | null = null;
 
 	/**
@@ -79,22 +80,17 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	}
 
 	//@JsonAnyGetter
-	protected getProperties(): Map<string, string> | null {
+	protected getProperties(): JSONObject | null {
 		return this.props;
 	}
 
-	protected get(name: string): any | undefined {
-		return this.props.get(name);
+	protected get(name: string): JSONValue | null {
+		return this.props[name];
 	}
 
 	//@JsonAnySetter
-	protected put(name: string, value: boolean | string | Date | number ) {
-		if (typeof value === "boolean")
-			this.props.set(name, new String(value).valueOf());
-		else if (typeof value === "string")
-			this.props.set(name, value);
-		else if (value instanceof Date)
-			this.props.set(name, (value as Date).toISOString());
+	protected put(name: string, value: JSONValue | Date ) {
+		this.props[name] = value instanceof Date ? value.toISOString() : value;
 
 		this.save();
 	}
@@ -108,12 +104,12 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	}
 
 	protected getDate(name: string): Date /* throws ParseException */ {
-		return new Date(this.get(name));
+		return new Date(this.get(name).toString());
 	}
 
 	protected remove(name: string): any {
-		let value = this.props.get(name);
-		this.props.delete(name);
+		let value = this.props[name];
+		delete this.props[name];
 		this.save();
 		return value;
 	}
@@ -137,7 +133,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 * @return alias string
 	 */
 	public getAlias(): string {
-		return this.get(AbstractMetadata.ALIAS);
+		return this.get(AbstractMetadata.ALIAS).toString();
 	}
 
 	/**
@@ -159,7 +155,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 */
 	public getExtra(key: string): string {
 		checkArgument(key != null && key !== "", "Invalid key");
-		return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key);
+		return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key).toString();
 	}
 
 	public getExtraBoolean(key: string): boolean {
@@ -191,15 +187,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 		if (metadata == this || metadata == null)
 			return;
 
-		metadata.props.forEach((k, v) => {
-			if (this.props.has(k)) {
-				if (this.props.get(k) == null)
-					this.props.delete(k);
-			} else {
-				if (v != null)
-					this.props.set(k, v);
-			}
-		});
+		this.props = {...metadata.props, ...this.props};
 	}
 
 
@@ -212,7 +200,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 public clone(): any {
 		let result = super.clone() as AbstractMetadata;
 		result.store = this.store;
-		result.props = new Map(this.props);
+		result.props = this.props;
 
 		return result;
 	 }

@@ -1459,7 +1459,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return doc;
     }
 
-    public edit(controller: DIDDocument = undefined): DIDDocument.Builder {
+    public edit(controller?: DIDDocument): DIDDocument.Builder {
         if (controller !== undefined) {
             this.checkIsCustomized();
 
@@ -2361,7 +2361,7 @@ export namespace DIDDocument {
         constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) id: DIDURL,
             @JsonProperty({ value: DIDDocument.TYPE, required: true }) type: string,
             @JsonProperty({ value: DIDDocument.SERVICE_ENDPOINT, required: true }) endpoint: string,
-            properties: JSONObject = null) {
+            properties?: JSONObject) {
             this.id = id;
             this.type = type;
             this.endpoint = endpoint;
@@ -2576,7 +2576,7 @@ export namespace DIDDocument {
          *
          * @param doc the DID Document object
          */
-        public static newFromDocument(doc: DIDDocument, controller: DIDDocument = undefined): Builder {
+        public static newFromDocument(doc: DIDDocument, controller?: DIDDocument): Builder {
             let builder = new Builder();
             builder.document = doc.copy();
             if (controller !== undefined) {
@@ -2758,7 +2758,7 @@ export namespace DIDDocument {
          * @return the DID Document Builder object
          */
         // Java: addPublicKey()
-        public createAndAddPublicKey(id: DIDURL | string, type: string, controller: DID | string | undefined, pk: string): Builder {
+        public createAndAddPublicKey(id: DIDURL | string, type: string, pk: string, controller?: DID | string): Builder {
             this.checkNotSealed();
 
             if (typeof id === "string")
@@ -3227,7 +3227,7 @@ export namespace DIDDocument {
          * @param endpoint the service point's adderss
          * @return the DID Document Builder
          */
-        public addService(id: DIDURL | string, type: string, endpoint: string, properties: JSONObject = null): Builder {
+        public addService(id: DIDURL | string, type: string, endpoint: string, properties?: JSONObject): Builder {
             this.checkNotSealed();
             checkArgument(id != null, "Invalid publicKey id");
 

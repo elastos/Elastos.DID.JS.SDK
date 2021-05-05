@@ -22,7 +22,7 @@
 
 
 import { List as ImmutableList } from "immutable";
-import { randomBytes } from "node:crypto";
+import { randomBytes } from "randombytes";
 import { CredentialBiography, Status as CredentialBiographyStatus } from "./backend/credentialbiography";
 import { CredentialList } from "./backend/credentiallist";
 import { CredentialListRequest } from "./backend/credentiallistrequest";
