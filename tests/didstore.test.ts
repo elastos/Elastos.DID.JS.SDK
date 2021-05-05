@@ -473,7 +473,7 @@ test.each([1, 2])("testCompatibility(%i)", (version: number)=>{
 	let cd = testData.getCompatibleData(version);
 	cd.loadAll();
 
-	let store = DIDStore.open(cd.getStoreDir().getAbsolutePath());
+	let store = DIDStore.open(cd.getStoreDir());
 
 	let dids = store.listDids();
 	expect(version == 2 ? 10 : 4).toEqual(dids.size);
@@ -513,7 +513,7 @@ test.each([1, 2])("testCompatibility(%i)", (version: number)=>{
 });
 
 test.each([1,2])("testCompatibilityNewDIDWithWrongPass(%i)", (version: number)=>{
-	let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir().getAbsolutePath());
+	let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
 	let identity = store.loadRootIdentity();
 
 	expect(()=>{
@@ -522,7 +522,7 @@ test.each([1,2])("testCompatibilityNewDIDWithWrongPass(%i)", (version: number)=>
 });
 
 test.each([1,2])("testCompatibilityNewDIDandGetDID(%i)", (version: number)=>{
-	let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir().getAbsolutePath());
+	let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
 	let identity = store.loadRootIdentity();
 
 	let doc = identity.newDid(TestConfig.storePass);
