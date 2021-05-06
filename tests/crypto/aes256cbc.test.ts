@@ -58,7 +58,7 @@ describe('Aes256cbc Encryption Tests', () => {
 	
 	test('decryptFromBase64 method', () => {
 		let decipherResult = Aes256cbc.decryptFromBase64(cipherBase64u, passwd)
-		expect(decipherResult)
+		expect(decipherResult.toString("utf-8"))
 		.toBe(plain);
 	});
 	
