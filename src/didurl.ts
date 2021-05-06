@@ -284,6 +284,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	}
 
 	public setPath(path: string): void {
+		
 		this.path = path;
 	}
 
