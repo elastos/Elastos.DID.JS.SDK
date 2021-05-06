@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+test("stub", ()=> Promise.resolve(true));
+
 /* @TestMethodOrder(OrderAnnotation.class)
 @ExtendWith(DIDTestExtension.class)
 public class IDChainOperationsTest {

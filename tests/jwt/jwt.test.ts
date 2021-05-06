@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+test("stub", ()=> Promise.resolve(true));
+
+/*
 package org.elastos.did.jwt;
 
 import static org.junit.Assert.assertEquals;
@@ -829,3 +832,4 @@ public class JwtTest {
 		}
 	}
 }
+ */

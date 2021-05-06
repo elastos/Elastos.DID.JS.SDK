@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+test("stub", ()=> Promise.resolve(true));
+
 /* public class Base64Test {
 	private static String base64output[] = {
 	    "AA",

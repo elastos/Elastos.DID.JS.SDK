@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+test("stub", ()=> Promise.resolve(true));
+
 /* public class KeyPairTest {
 	final static int KEY_SIZE = 1024;
 

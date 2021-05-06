@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+test("stub", ()=> Promise.resolve(true));
+
 /* @ExtendWith(DIDTestExtension.class)
 public class MnemonicTest {
 	private TestData testData;

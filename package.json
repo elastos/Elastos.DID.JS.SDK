@@ -65,6 +65,7 @@
   "browser": {
     "crypto": "crypto-browserify"
   },
+  "browserslist": "> 0.25%, not dead",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/elastos/Elastos.DID.JS.SDK.git"

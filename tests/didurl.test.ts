@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+test("stub", ()=> Promise.resolve(true));
+
 /* public class DIDURLTest {
 	private static final String testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
 	private static final String params = ";elastos:foo=testvalue;bar=123;keyonly;elastos:foobar=12345";
