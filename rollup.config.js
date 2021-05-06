@@ -8,7 +8,7 @@ import typescript from "@rollup/plugin-typescript";
 //import analyze from 'rollup-plugin-analyzer';
 import json from "@rollup/plugin-json";
 
-const production = !process.env.ROLLUP_WATCH;
+const production = false; //!process.env.ROLLUP_WATCH;
 
 export default {
 	input: 'src/index.ts',
@@ -37,7 +37,7 @@ export default {
 		// https://github.com/rollup/plugins/tree/master/packages/commonjs
 		resolve({
 			browser: true,
-			dedupe: ['svelte'],
+			dedupe: [],
 			preferBuiltins: true
 		}),
 		commonjs(),

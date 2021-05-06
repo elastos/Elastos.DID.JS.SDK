@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+test("stub", ()=> Promise.resolve(true));
+
 /* @ExtendWith(DIDTestExtension.class)
 public class IssuerTest {
 	private TestData testData;
