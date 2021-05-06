@@ -210,11 +210,12 @@ describe('HDKey Tests', () => {
 		let preDerivedPubBase58 = preDerivedKey.serializePublicKeyBase58();
 		let preDerivedPub = HDKey.deserializeBase58(preDerivedPubBase58);
 
-		for (let index = 0; index < 1000; index++) {
+		for (let index = 0; index < 5; index++) {
 			let key = root.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + index);
 			let keyPubOnly = preDerivedPub.deriveWithPath("m/0/" + index);
-			//expect(key.getPrivateKeyBase58()).toBe(keyPubOnly.getPrivateKeyBase58())
+			
 			expect(key.getPublicKeyBase58()).toBe(keyPubOnly.getPublicKeyBase58())
+			expect(key.getAddress()).toBe(keyPubOnly.getAddress())
 		}
 	});
 

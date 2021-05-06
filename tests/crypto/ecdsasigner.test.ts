@@ -119,6 +119,7 @@
 
 //practice pigeon diagram jeans piano abstract tape cause lounge raise index spy
 
+import { Base58 } from "../../src/crypto/base58";
 import { BASE64 } from "../../src/crypto/base64";
 import {EcdsaSigner} from "../../src/crypto/ecdsasigner"
 import { HDKey } from "../../src/crypto/hdkey"
@@ -133,7 +134,8 @@ describe('ECSDA Signer Tests', () => {
 	var sig: Buffer;
 
 	beforeAll(() => {
-		let mnemonic = "practice pigeon diagram jeans piano abstract tape cause lounge raise index spy"; //Mnemonic.getInstance().generate();
+		let mc= Mnemonic.getInstance();
+		let mnemonic = mc.generate();
 		let root = HDKey.newWithMnemonic(mnemonic, "");
 		key = root.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + 0)
 		sig = EcdsaSigner.signData(key.getPrivateKeyBytes(), Buffer.from(plain, "utf-8"), Buffer.from(nonce, "utf-8"))
@@ -176,16 +178,16 @@ describe('ECSDA Signer Tests', () => {
 		let expectedSig2 = "gm4Bx8ijQjBEFsf1Cm1mHcqSzFHquoQe235uzL3OUDJiIuFnJ49lEWn0RueIfgCZbrDEhLdxKSaNYqnBpjiR6A";
 		
 
-		let root = HDKey.deserialize(Buffer.from("031F56955CC005122F11CEC5264EA5968240A90F01434FB0A1B7429BE4B9157D46", "hex"))
+		let pkBytes = Base58.decode(pkBase58);
 
 		var sigToTest = Buffer.from(BASE64.toHex(expectedSig1), "hex")
 		
-		let isSig1Valid = EcdsaSigner.verifyData(root.getPublicKeyBytes() , sigToTest, Buffer.from(input, "utf-8"))
+		let isSig1Valid = EcdsaSigner.verifyData(pkBytes , sigToTest, Buffer.from(input, "utf-8"))
 		expect(isSig1Valid).toBeTruthy()
 
 		var sigToTest2 = Buffer.from(BASE64.toHex(expectedSig2), "hex")
 
-		let isSig2Valid = EcdsaSigner.verifyData(root.getPublicKeyBytes(), sigToTest2, Buffer.from(input, "utf-8"))
+		let isSig2Valid = EcdsaSigner.verifyData(pkBytes, sigToTest2, Buffer.from(input, "utf-8"))
 		expect(isSig2Valid).toBeTruthy()
 	})
   });

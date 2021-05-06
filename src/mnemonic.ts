@@ -78,10 +78,11 @@ export class Mnemonic {
 	 */
 	public static SPANISH = "spanish";
 
-	private static TWELVE_WORDS_ENTROPY = 16;
+	private static TWELVE_WORDS_ENTROPY = 128;
 
 	private static WORDLISTS:{[index: string]: string[]} = {
         "english": wordlists.english,
+		"czech": wordlists.czech,
         "chinese_simplified": wordlists.chinese_simplified,
 		"chinese_traditional": wordlists.chinese_traditional,
         "french": wordlists.french,
@@ -92,6 +93,7 @@ export class Mnemonic {
     }
 
 	public static getInstance(language: string = Mnemonic.ENGLISH): Mnemonic {
+		if (language === null || language === "") language = Mnemonic.ENGLISH;
 		return new Mnemonic(language);
 	}
 
