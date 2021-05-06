@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-test("stub", ()=> Promise.resolve(true));
+
 import { RootIdentity } from "../src";
 import { Mnemonic } from "../src/mnemonic";
 import { TestConfig } from "./utils/testconfig";
@@ -31,11 +31,11 @@ describe('Mnemonic Tests', () => {
 	let testData: TestData;
 
 	beforeEach(()=>{
-		testData = new TestData();
+		//testData = new TestData();
 	})
 	
 	afterEach(()=>{
-		testData.cleanup();
+		//testData.cleanup();
 	});
 
 
