@@ -46,6 +46,7 @@ export class TestData {
 	private instantData: InstantData;
 
 	public constructor() {
+		TestConfig.initialize();
     	Utils.deleteFile(File.open(TestConfig.storeRoot));
 		this.store = DIDStore.open(TestConfig.storeRoot);
 	}
