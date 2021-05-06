@@ -185,6 +185,56 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 }
 
 export namespace IDChainRequest {
+
+	/**
+	 * The IDChain Request Operation
+	 */
+	 export class Operation {
+		/**
+		 * Create a new DID
+		 */
+		public static CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
+		/**
+		 * Update an exist DID
+		 */
+		public static UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
+		/**
+		 * Transfer the DID' ownership
+		 */
+		public static TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
+		/**
+		 * Deactivate a DID
+		 */
+		public static DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
+		/**
+		 * Declare a credential
+		 */
+		public static DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
+		/**
+		 * Revoke a credential
+		 */
+		public static REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
+
+		constructor(private name: string, private specification: string) {}
+
+		public getSpecification(): string {
+			return this.specification;
+		}
+
+		@JsonValue()
+		public toString(): string {
+			return this.name;
+		}
+
+		@JsonCreator()
+		public static fromString(name: string): Operation {
+			return Operation[name.toUpperCase()];
+		}
+
+		public equals(operation: Operation): boolean {
+			return this.name === operation.name;
+		}
+	}
 	@JsonPropertyOrder({value: [
 		IDChainRequest.SPECIFICATION,
 		IDChainRequest.OPERATION,
@@ -306,56 +356,6 @@ export namespace IDChainRequest {
 
 		public getSignature(): string {
 			return this.signature;
-		}
-	}
-
-	/**
-	 * The IDChain Request Operation
-	 */
-	export class Operation {
-		/**
-		 * Create a new DID
-		 */
-		public static CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
-		/**
-		 * Update an exist DID
-		 */
-		public static UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
-		/**
-		 * Transfer the DID' ownership
-		 */
-		public static TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
-		/**
-		 * Deactivate a DID
-		 */
-		public static DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
-		/**
-		 * Declare a credential
-		 */
-		public static DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
-		/**
-		 * Revoke a credential
-		 */
-		public static REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
-
-		constructor(private name: string, private specification: string) {}
-
-		public getSpecification(): string {
-			return this.specification;
-		}
-
-		@JsonValue()
-		public toString(): string {
-			return this.name;
-		}
-
-		@JsonCreator()
-		public static fromString(name: string): Operation {
-			return Operation[name.toUpperCase()];
-		}
-
-		public equals(operation: Operation): boolean {
-			return this.name === operation.name;
 		}
 	}
 }

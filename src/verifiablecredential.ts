@@ -1114,7 +1114,6 @@ export namespace VerifiableCredential {
 		  * @return a String to Object map include all application defined
 		  *         properties
 		  */
-		 @JsonAnyGetter()
 		 @JsonPropertyOrder({alphabetic: true})
 		 private _getProperties(): JSONObject {
 			 return this.properties;

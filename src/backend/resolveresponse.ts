@@ -26,16 +26,7 @@ import { MalformedResolveResponseException } from "../exceptions/exceptions";
 import { ResolveError } from "./resolveerror";
 import { ResolveResult } from "./resolveresult";
 
-@JsonPropertyOrder({value: [
-	ResolveResponse.ID,
-	ResolveResponse.JSON_RPC,
-	ResolveResponse.RESULT,
-	ResolveResponse.ERROR
-]})
-@JsonInclude({value: JsonIncludeType.NON_NULL})
-export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
-	private static JSON_RPC_VERSION = "2.0";
-
+class RpcConstants {
 	public static ID = "id";
 	public static JSON_RPC = "jsonrpc";
 	public static RESULT = "result";
@@ -43,14 +34,53 @@ export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DID
 	public static ERROR_CODE = "code";
 	public static ERROR_MESSAGE = "message";
 	public static ERROR_DATA = "data";
+}
 
-	@JsonProperty({value: ResolveResponse.ID})
+@JsonPropertyOrder({value: [RpcConstants.ERROR_CODE, RpcConstants.ERROR_MESSAGE, RpcConstants.ERROR_DATA ]})
+@JsonCreator()
+class JsonRpcError {
+	@JsonProperty({value: RpcConstants.ERROR_CODE})
+	private code: number;
+	@JsonProperty({value: RpcConstants.ERROR_MESSAGE})
+	private message: string;
+	@JsonProperty({value: RpcConstants.ERROR_DATA})
+	private data: string;
+
+	constructor(code: number, message: string) {
+		this.code = code;
+		this.message = message;
+	}
+
+	public getCode(): number {
+		return this.code;
+	}
+
+	public getMessage(): string {
+		return this.message;
+	}
+
+	public getData(): string {
+		return this.data;
+	}
+}
+
+@JsonPropertyOrder({value: [
+	RpcConstants.ID,
+	RpcConstants.JSON_RPC,
+	RpcConstants.RESULT,
+	RpcConstants.ERROR
+]})
+@JsonInclude({value: JsonIncludeType.NON_NULL})
+export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
+	private static JSON_RPC_VERSION = "2.0";
+
+	@JsonProperty({value: RpcConstants.ID})
 	private responseId: string;
-	@JsonProperty({value: ResolveResponse.JSON_RPC})
+	@JsonProperty({value: RpcConstants.JSON_RPC})
 	private jsonRpcVersion: string;
-	@JsonProperty({value: ResolveResponse.RESULT})
+	@JsonProperty({value: RpcConstants.RESULT})
 	private result: R;
-	@JsonProperty({value: ResolveResponse.ERROR})
+	@JsonProperty({value: RpcConstants.ERROR})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	private error: JsonRpcError;
 
@@ -100,33 +130,5 @@ export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DID
 				throw new MalformedResolveResponseException("Invalid result", e);
 			}
 		}
-	}
-}
-
-@JsonPropertyOrder({value: [ResolveResponse.ERROR_CODE, ResolveResponse.ERROR_MESSAGE, ResolveResponse.ERROR_DATA ]})
-@JsonCreator()
-class JsonRpcError {
-	@JsonProperty({value: ResolveResponse.ERROR_CODE})
-	private code: number;
-	@JsonProperty({value: ResolveResponse.ERROR_MESSAGE})
-	private message: string;
-	@JsonProperty({value: ResolveResponse.ERROR_DATA})
-	private data: string;
-
-	constructor(code: number, message: string) {
-		this.code = code;
-		this.message = message;
-	}
-
-	public getCode(): number {
-		return this.code;
-	}
-
-	public getMessage(): string {
-		return this.message;
-	}
-
-	public getData(): string {
-		return this.data;
 	}
 }

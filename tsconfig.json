@@ -1,6 +1,6 @@
 {
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "tests", "dist", "dist.esm"],
+  "exclude": ["node_modules", "tests", "data", "dist", "dist.esm"],
   "compilerOptions": {
     "target": "es6",
     "lib": ["es2017", "es7", "es6", "dom"],

@@ -2408,7 +2408,6 @@ export namespace DIDDocument {
          * @return a String to object map include all application defined
          *         properties
          */
-        @JsonAnyGetter()
         @JsonPropertyOrder({ alphabetic: true })
         private _getProperties(): JSONObject {
             return this.properties;
