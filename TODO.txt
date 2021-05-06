@@ -10,3 +10,8 @@ List of things to consider while migrating:
 NOTE:
 - extensions.ts contains helper methods for classes like string, arrays. This is inherited from Swift behaviour and
 this is quite convenient. We may keep adding helpers there in that way.
+
+TEST:
+- Should we test the different bundles instead of source files directly with jest?
+    -> https://stackoverflow.com/questions/51799300/run-tests-against-compiled-bundles
+    -> https://stackoverflow.com/questions/63056412/how-should-i-test-my-different-rollup-bundles
