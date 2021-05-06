@@ -21,6 +21,65 @@
  */
 
 test("stub", ()=> Promise.resolve(true));
+import { RootIdentity } from "../src";
+import { Mnemonic } from "../src/mnemonic";
+import { TestConfig } from "./utils/testconfig";
+import { TestData } from "./utils/testdata";
+
+
+describe('Mnemonic Tests', () => {
+	let testData: TestData;
+
+	beforeEach(()=>{
+		testData = new TestData();
+	})
+	
+	afterEach(()=>{
+		testData.cleanup();
+	});
+
+
+	test('Test builtin wordlist', () => {
+		let languages = [
+			Mnemonic.DEFAULT,
+			Mnemonic.CHINESE_SIMPLIFIED,
+			Mnemonic.CHINESE_TRADITIONAL,
+			Mnemonic.CZECH,
+			Mnemonic.ENGLISH,
+			Mnemonic.FRENCH,
+			Mnemonic.ITALIAN,
+			Mnemonic.JAPANESE,
+			Mnemonic.KOREAN,
+			Mnemonic.SPANISH
+		];
+
+		languages.forEach(lang => {
+			let mc = Mnemonic.getInstance(lang);
+			let mnemonic = mc.generate();
+
+			expect(mc.isValid(mnemonic)).toBeTruthy()
+		    expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy()
+
+			//let store = testData.getStore();
+			//RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
+
+			expect(mc.isValid(mnemonic + "z")).toBeFalsy()
+			expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy()
+		});
+	})
+
+	test('Test french mnemonic', () => {
+		let mnemonic = "remarque séduire massif boire horde céleste exact dribbler pulpe prouesse vagabond opale";
+		let mc = Mnemonic.getInstance(Mnemonic.FRENCH)
+
+		expect(mc.isValid(mnemonic)).toBeTruthy()
+		expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy()
+	});
+
+
+})
+
+
 
 /* @ExtendWith(DIDTestExtension.class)
 public class MnemonicTest {
