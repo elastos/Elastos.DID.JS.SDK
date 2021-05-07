@@ -21,7 +21,6 @@
  */
 
 import { DID, DIDURL } from "../src";
-import { NewDIDURLParser } from "../src/parser/newDIDURLParser"
 
 describe('DIDURL Tests', () => {
 	let testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
@@ -31,39 +30,19 @@ describe('DIDURL Tests', () => {
 	let fragment = "#testfragment";
 	let testURL = testDID + params + path + query + fragment;
 
-	
+	let did: DID;
+	let url: DIDURL;
 	
 
 	beforeEach(()=>{
-		// did = new DID(testDID);
-		// url = DIDURL.newWithUrl(testURL);
+		did = new DID(testDID);
+		url = DIDURL.newWithUrl(testURL);
 	})
 
 	test('Test Constructor with Canonical URL', () => {
 		
-		// let url: DIDURL = DIDURL.newWithDID(null, testDID);
-		// expect(url.toString()).toBe(testURL);
-
-		let urlParsed = NewDIDURLParser.NewFromURL(testURL)
-		
-
-		expect(urlParsed.did).toBe(testDID)
-		expect(urlParsed.params.has("elastos:foo")).toBeTruthy()
-		expect(urlParsed.params.has("bar")).toBeTruthy()
-		expect(urlParsed.params.has("keyonly")).toBeTruthy()
-		expect(urlParsed.params.has("elastos:foobar")).toBeTruthy()
-		expect(urlParsed.params.get("elastos:foo")).toBe("testvalue")
-		expect(urlParsed.params.get("keyonly")).toBe("")
-		expect(urlParsed.path).toBe(path)
-		expect(urlParsed.query.has("qkey")).toBeTruthy()
-		expect(urlParsed.query.has("qkeyonly")).toBeTruthy()
-		expect(urlParsed.query.has("test")).toBeTruthy()
-		expect(urlParsed.query.get("qkey")).toBe("qvalue")
-		expect(urlParsed.query.get("qkeyonly")).toBe("")
-		expect(urlParsed.fragment).toBe(fragment)
-
-		let test = NewDIDURLParser.NewFromURL(testDID + fragment)
-		console.log(test)
+		let url: DIDURL = DIDURL.newWithDID(null, testURL);
+		expect(url.toString()).toBe(testURL);
 
 	});
 

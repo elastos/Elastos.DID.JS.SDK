@@ -21,7 +21,6 @@
  */
 
 import { DIDMetadata } from "./didmetadata";
-import { ParserHelper } from "./parser/parserhelper"
 import {
     checkEmpty,
     checkNotNull,
@@ -30,8 +29,6 @@ import {
 import { DIDDocument } from "./diddocument";
 import { DIDBackend } from "./didbackend";
 import { DIDBiography } from "./backend/didbiography";
-import { DIDURLBaseListener } from "./parser/DIDURLBaseListener";
-import { DIDURLParser } from './parser/DIDURLParser';
 import {
     JsonSerialize,
     JsonDeserialize
@@ -45,6 +42,7 @@ import {
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
 import { IllegalArgumentException } from "./exceptions/exceptions";
+import { DIDURLParser } from "./parser/DIDURLParser";
 
 
 export class DIDSerializer extends Serializer {
@@ -93,7 +91,11 @@ export class DID {
             checkEmpty(did, "Invalid DID string");
             this.method = null;
             this.methodSpecificId = null;
-            ParserHelper.parse(did, true, new DID.Listener(this));
+            
+            
+            let didParsed = DIDURLParser.NewFromURL(methodOrDID)
+            this.method = didParsed.did.method;
+            this.methodSpecificId = didParsed.did.methodSpecificId;
         }
     }
 
@@ -226,30 +228,7 @@ export class DID {
     }
 }
 
-export namespace DID {
-    export class Listener extends DIDURLBaseListener {
-        private methodSpecificId: string;
-        private method: string;
-		private parent: DID;
 
-        public constructor (parent: DID) {
-			super();
-			this.parent = parent;
-		}
-
-        public exitMethod(ctx: DIDURLParser.MethodContext): void {
-            let method: string = ctx.text;
-            if (!method.equals(DID.METHOD))
-                throw new IllegalArgumentException("Unknown method: " + method);
-
-            this.method = method;
-        }
-
-        public exitMethodSpecificString(ctx: DIDURLParser.MethodSpecificStringContext): void {
-            this.methodSpecificId = ctx.text;
-        }
-    }
-}
 
 /*
 import { CoinType, ChangeChain, SignType } from './constants'

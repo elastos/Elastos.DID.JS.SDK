@@ -27,13 +27,10 @@ import {
 	MalformedDIDURLException,
 	IllegalArgumentException
 } from "./exceptions/exceptions";
-import { ParserHelper } from "./parser/parserhelper";
 import {
 	checkArgument,
 	checkNotNull
 } from "./utils";
-import { DIDURLBaseListener } from "./parser/DIDURLBaseListener";
-import { DIDURLParser } from "./parser/DIDURLParser";
 import {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
@@ -48,6 +45,7 @@ import {
     Serializer,
     Deserializer
 } from "./serializers";
+import { DIDURLParser } from "./parser/DIDURLParser";
 
 export class URLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
@@ -147,7 +145,13 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 				}
 
 				try {
-					ParserHelper.parse(url, false, new DIDURL.Listener(newInstance));
+					let urlParsed = DIDURLParser.NewFromURL(url);
+					newInstance.setDid(new DID(urlParsed.did.value));
+					newInstance.setFragment(urlParsed.fragment);
+					newInstance.setPath(urlParsed.path);
+					newInstance.setParameters(urlParsed.params);
+					newInstance.setQuery(urlParsed.query);
+
 
 					if (!newInstance.parameters)
 						newInstance.parameters = new Map();
@@ -163,6 +167,8 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 					newInstance.did = did;
 			}
 		}
+
+		
 		return newInstance;
 	}
 
@@ -370,13 +376,13 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 		if (this.parameters != null && this.parameters.size != 0)
 			output += ";" + this.getParametersString();
 
-		if (this.path != null && !this.path.isEmpty())
+		if (this.path !== null && this.path !== "")
 			output += this.path;
 
 		if (this.query != null && this.query.size != 0)
 			output += "?" + this.getQueryString();
 
-		if (this.fragment != null && !this.fragment.isEmpty())
+		if (this.fragment != null && this.fragment !== "")
 			output += "#" + this.getFragment();
 
 		return output;
@@ -429,92 +435,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 }
 
 export namespace DIDURL {
-	export class Listener extends DIDURLBaseListener {
-		private name: string;
-		private value: string;
-		private parent: DIDURL;
 
-		public constructor (parent: DIDURL) {
-			super();
-			this.parent = parent;
-		}
-
-		public exitMethod(ctx: DIDURLParser.MethodContext): void {
-			let method: string = ctx.text;
-			if (method != DID.METHOD)
-				throw new ParentException("Unknown method: " + method);
-
-			this.name = method;
-		}
-
-		public exitMethodSpecificString(ctx: DIDURLParser.MethodSpecificStringContext): void {
-			this.value = ctx.text;
-		}
-
-		public exitDid(ctx: DIDURLParser.DidContext): void {
-			this.parent.setDid(new DID(this.name, this.value));
-			this.name = null;
-			this.value = null;
-		}
-
-		public exitParamMethod(ctx: DIDURLParser.ParamMethodContext): void {
-			let method: string = ctx.text;
-			if (method != DID.METHOD)
-				throw new ParentException(
-						"Unknown parameter method: " + method);
-		}
-
-		public exitParamQName(ctx: DIDURLParser.ParamQNameContext): void  {
-			this.name = ctx.text;
-		}
-
-		public exitParamValue(ctx: DIDURLParser.ParamValueContext): void {
-			this.value = ctx.text;
-		}
-
-		public exitParam(ctx: DIDURLParser.ParamContext): void {
-			let parameters: Map<string, string>;
-			if (!this.parent.getParameters()) {
-				parameters = new Map<string, string>();
-			} else {
-				parameters = this.parent.getParameters();
-			}
-			parameters.set(this.name, this.value);
-			this.parent.setParameters(parameters);
-			this.name = null;
-			this.value = null;
-		}
-
-		public exitPath(ctx: DIDURLParser.PathContext): void {
-			this.parent.setPath("/" + ctx.text);
-		}
-
-		public exitQueryParamName(ctx: DIDURLParser.QueryParamNameContext): void {
-			this.name = ctx.text;
-		}
-
-		public exitQueryParamValue(ctx: DIDURLParser.QueryParamValueContext): void  {
-			this.value = ctx.text;
-		}
-
-		public exitQueryParam(ctx: DIDURLParser.QueryParamContext): void {
-			let query: Map<string, string>;
-			if (!this.parent.getQuery()) {
-				query = new Map<string, string>();
-			} else {
-				query = this.parent.getQuery();
-			}
-			query.set(this.name, this.value);
-
-			this.parent.setQuery(query);
-			this.name = null;
-			this.value = null;
-		}
-
-		public exitFrag(ctx: DIDURLParser.FragContext): void {
-			this.parent.setFragment(ctx.text);
-		}
-	}
 
 	export class Builder {
 		private url: DIDURL;
