@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <script type="module">
+            console.log("Starting / imports");
+            import { DIDStore } from "http://localhost:10001/did.browser.js";
+
+            console.log("Calling DID methods")
+            let store = DIDStore.open("root-path");
+            console.log("Store: ", store);
+        </script>
+    </head>
+    <body>
+        <h1>Browser usage attempt</h1>
+    </body>
+</html>

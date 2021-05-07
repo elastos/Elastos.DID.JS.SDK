@@ -5,6 +5,8 @@
     "target": "es6",
     "lib": ["es2017", "es7", "es6", "dom"],
     "moduleResolution": "node",
+    "outDir": "dist",
+    "declaration": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "emitDeclarationOnly": false,

@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+/*
 package org.elastos.did.utils;
 
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
@@ -93,3 +94,4 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 		return adapter;
 	}
 }
+*/
