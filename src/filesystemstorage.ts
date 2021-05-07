@@ -300,7 +300,7 @@ export class FileSystemStorage implements DIDStorage {
 			log.debug("Initializing DID store at {}", this.storeRoot.getAbsolutePath());
 			this.storeRoot.createDirectory();
 			let metadata = new DIDStore.Metadata();
-			let  file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
+			let file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
 			file.writeText(metadata.serialize());
 		} catch (e) {
 			// IOException
@@ -321,6 +321,20 @@ export class FileSystemStorage implements DIDStorage {
 		this.postOperations();
 
 		let file: File = this.getDir(this.currentDataDir);
+		if (!file.exists()) {
+			let files = this.storeRoot.list();
+			if (files == null || files.length == 0) {
+				// if an empty folder
+				this.initializeStore();
+				return;
+			} else {
+				log.error("Path {} not a DID store", this.storeRoot.getAbsolutePath());
+				throw new DIDStorageException("Invalid DIDStore \""
+						+ this.storeRoot.getAbsolutePath() + "\".");
+			}
+		}
+
+
 		if (!file.isDirectory()) {
 			log.error("Path {} is not a DID store, missing data directory", this.storeRoot.getAbsolutePath());
 			throw new DIDStorageException("Invalid DIDStore \""
@@ -374,28 +388,10 @@ export class FileSystemStorage implements DIDStorage {
 		let file: File = null;
 
 		let relPath = this.storeRoot.getAbsolutePath();
-		let lastIndex = path.length - 1;
-		for (let i = 0; i <= lastIndex; i++) {
-			relPath += File.SEPARATOR;
-			relPath += path[i];
-
-			if (create) {
-				if (i < lastIndex) {
-					// Directory
-					let dir = new File(relPath.toString());
-					if (dir.exists())
-						dir.delete();
-				}
-				else {
-					// File
-					file = new File(relPath.toString());
-					if (file.exists())
-						file.delete();
-				}
-			}
+		for (let p in path) {
+			relPath += (File.SEPARATOR + p);
 		}
-
-		file = new File(relPath.toString());
+		file = new File(relPath);
 		if (create)
 			file.getParentDirectory().createDirectory();
 

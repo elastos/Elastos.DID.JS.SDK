@@ -124,12 +124,6 @@ export class Utils {
 	}
 
 	public static deleteFile(file: File) {
-		if (file.isDirectory()) {
-			let children = file.listFiles();
-			for (let child of children)
-				child.delete();
-		}
-
 		file.delete();
 	}
 

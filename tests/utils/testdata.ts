@@ -45,7 +45,7 @@ export class TestData {
 
 	public constructor() {
 		TestConfig.initialize();
-    	Utils.deleteFile(new File(TestConfig.storeRoot));
+    	(new File(TestConfig.storeRoot)).delete();
 		this.store = DIDStore.open(TestConfig.storeRoot);
 	}
 
@@ -151,22 +151,11 @@ export class CompatibleData {
 	}
 
 	private fileContent(path: string): string {
-		let content = "";
-		fetch(path)
-		.then(response => response.text())
-		.then(data => {
-			content = data;
-		});
-
-		return content;
+		return (new File(path)).readText();
 	}
 
 	private dirContent(path: string): string[] {
-		let files: string[];
-		readdir(path, (err: Error, list: string[]) => {
-			files = list;
-		});
-		return files;
+		return (new File(path)).list();
 	}
 
 	private getDidFile(name: string, type: string): string {

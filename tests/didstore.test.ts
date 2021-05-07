@@ -628,7 +628,7 @@ test("testMultipleStore", ()=>{
 test("testOpenStoreOnExistEmptyFolder", ()=>{
 	let emptyFolder = new File(TestConfig.tempDir + File.SEPARATOR + "DIDTest-EmptyStore");
 	if (emptyFolder.exists())
-		Utils.deleteFile(emptyFolder);
+		emptyFolder.delete();
 
 	emptyFolder.createDirectory();
 
