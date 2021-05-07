@@ -24,14 +24,12 @@ import {
 	DIDDocument, DIDStore, Mnemonic, RootIdentity,
 	VerifiableCredential, VerifiablePresentation, TransferTicket, Issuer, DIDURL, DID, Exceptions
 } from "../../src/index";
-import { Dir, File } from "../../src/filesystemstorage";
+import { File } from "../../src/filesystemstorage";
 import { TestConfig } from "./testconfig";
 import { Utils } from "./utils";
 import { HDKey } from "../../src/crypto/hdkey";
 import { readdir } from "fs";
 import { JSONObject, JSONValue } from "../../src/json";
-import { List } from "immutable";
-
 export class TestData {
 	// HDKey for temporary key generation
 	private static rootKey: HDKey;
@@ -47,7 +45,7 @@ export class TestData {
 
 	public constructor() {
 		TestConfig.initialize();
-    	Utils.deleteFile(File.open(TestConfig.storeRoot));
+    	Utils.deleteFile(new File(TestConfig.storeRoot));
 		this.store = DIDStore.open(TestConfig.storeRoot);
 	}
 

@@ -20,8 +20,7 @@
  * SOFTWARE.
  */
 
-import { Comparable } from "../../src/comparable";
-import { Dir, File } from "../../src/filesystemstorage";
+import { File } from "../../src/filesystemstorage";
 
 /* declare global {
     interface Array<T> {
@@ -94,11 +93,9 @@ export class Utils {
 			return false;
 
 		if (file1.isDirectory()) {
-			let dir1 = file1 as Dir;
-			let dir2 = file2 as Dir;
 
-			let files1 = this.removeIgnoredFiles(dir1.list());
-			let files2 = this.removeIgnoredFiles(dir2.list());
+			let files1 = this.removeIgnoredFiles(file1.list());
+			let files2 = this.removeIgnoredFiles(file2.list());
 
 			if (files1.length != files2.length)
 				return false;
@@ -110,8 +107,8 @@ export class Utils {
 
 			let files = files1;
 			for (let i = 0; i < files.length; i++) {
-				let f1 = File.open(dir1, files[i]);
-				let f2 = File.open(dir2, files[i]);
+				let f1 = new File(file1, files[i]);
+				let f2 = new File(file2, files[i]);
 
 				if (!this.equals(f1, f2))
 					return false;
@@ -128,8 +125,7 @@ export class Utils {
 
 	public static deleteFile(file: File) {
 		if (file.isDirectory()) {
-			let dir = file as Dir;
-			let children = dir.listFiles();
+			let children = file.listFiles();
 			for (let child of children)
 				child.delete();
 		}

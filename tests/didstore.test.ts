@@ -54,7 +54,7 @@ function getFile(...path: string[]): File {
 		relPath += p;
 	}
 
-	return File.open(relPath);
+	return new File(relPath);
 }
 
 test("testLoadRootIdentityFromEmptyStore", ()=>{
@@ -567,7 +567,7 @@ function createDataForPerformanceTest(store: DIDStore) {
 }
 
 test.each([false, true])("testStoreCachePerformance", (cached: boolean)=>{
-	Utils.deleteFile(File.open(TestConfig.storeRoot));
+	Utils.deleteFile(new File(TestConfig.storeRoot));
 	let store: DIDStore = null;
 	if (cached)
 		store = DIDStore.open(TestConfig.storeRoot);
@@ -606,7 +606,7 @@ test("testMultipleStore", ()=>{
 	let docs: DIDDocument[] = [];
 
 	for (let i = 0; i < stores.length; i++) {
-		Utils.deleteFile(File.open(TestConfig.storeRoot + i));
+		Utils.deleteFile(new File(TestConfig.storeRoot + i));
 		stores[i] = DIDStore.open(TestConfig.storeRoot + i);
 		expect(stores[i]).not.toBeNull();
 		let mnemonic = Mnemonic.getInstance().generate();
@@ -626,11 +626,11 @@ test("testMultipleStore", ()=>{
 });
 
 test("testOpenStoreOnExistEmptyFolder", ()=>{
-	let emptyFolder = File.open(TestConfig.tempDir + File.SEPARATOR + "DIDTest-EmptyStore");
+	let emptyFolder = new File(TestConfig.tempDir + File.SEPARATOR + "DIDTest-EmptyStore");
 	if (emptyFolder.exists())
 		Utils.deleteFile(emptyFolder);
 
-	emptyFolder.mkdirs();
+	emptyFolder.createDirectory();
 
 	let store = DIDStore.open(emptyFolder.getAbsolutePath());
 	expect(store).not.toBeNull();

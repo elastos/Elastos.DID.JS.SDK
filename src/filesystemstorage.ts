@@ -103,7 +103,7 @@ export class File { // Exported, for test cases only
 	private getStats(): Stats {
 		if (this.fileStats)
 			return this.fileStats;
-		return fs.statSync(this.fullPath);
+		return this.exists() ? fs.statSync(this.fullPath) : null;
 	}
 
 	public exists(): boolean {
@@ -112,7 +112,7 @@ export class File { // Exported, for test cases only
 
 	// Entry size in bytes
 	public length(): number {
-		return this.getStats().size
+		return this.exists() ? this.getStats().size : 0;
 	}
 
 	public getAbsolutePath(): string {
@@ -132,40 +132,39 @@ export class File { // Exported, for test cases only
 	public getParentDirectory(): File {
 		let directoryName = this.getParentDirectoryName();
 		if (directoryName) {
-			let directory = new File(directoryName);	
-			return directory.isDirectory() ? directory : null;
+			return new File(directoryName);	
 		}
 		return null;
 	}
 
 	public getParentDirectoryName(): string {
 		if (this.fullPath.includes(File.SEPARATOR))
-			return this.fullPath.substring(0, this.fullPath.lastIndexOf(File.SEPARATOR)-1);
+			return this.fullPath.substring(0, this.fullPath.lastIndexOf(File.SEPARATOR));
 		if (this.isDirectory)
 			return this.fullPath;
 		return "";
 	}
 
 	public isDirectory(): boolean {
-		return this.getStats().isDirectory();
+		return this.exists() ? this.getStats().isDirectory() : false;
 	}
 
 	public isFile(): boolean {
-		return this.getStats().isFile();
+		return this.exists() ? this.getStats().isFile() : false;
 	}
 
 	/**
 	 * Lists all file names in this directory.
 	 */
 	public list(): string[] {
-		return this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
+		return this.exists() && this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
 	}
 
 	/**
 	 * Lists all files (as File) in this directory.
 	 */
 	public listFiles(): File[] {
-		if (!this.getStats().isDirectory()) {
+		if (!this.exists() || !this.getStats().isDirectory()) {
 			return null;
 		}
 		let files: File[] = [];
@@ -177,13 +176,13 @@ export class File { // Exported, for test cases only
 	}
 
 	public writeText(content: string) {
-		if (this.getStats().isFile()) {
+		if (!this.exists() || this.getStats().isFile()) {
 			fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
 		}
 	}
 
 	public readText(): string {
-		return fs.readFileSync(this.fullPath, { encoding: "utf-8" });
+		return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
 	}
 
 	public rename(newName: string) {
@@ -216,9 +215,16 @@ export class File { // Exported, for test cases only
 	 */
 	public delete() {
 		if (this.exists()) {
-			fs.rmSync(this.fullPath, { recursive: true, force: true });
+			if (this.isDirectory())
+				fs.rmdirSync(this.fullPath, { recursive: true });
+			else
+				fs.rmSync(this.fullPath, { recursive: true, force: true });
 			this.fileStats = undefined;
 		}
+	}
+
+	public toString() {
+		return this.fullPath;
 	}
 }
 
@@ -280,7 +286,7 @@ export class FileSystemStorage implements DIDStorage {
 	private currentDataDir: string;
 
 	constructor(context: string) {
-		this.storeRoot = new File(File.SEPARATOR+context+File.SEPARATOR);
+		this.storeRoot = new File(context);
 		this.currentDataDir = FileSystemStorage.DATA_DIR;
 
 		if (this.storeRoot.exists())
@@ -292,11 +298,8 @@ export class FileSystemStorage implements DIDStorage {
 	private initializeStore() {
 		try {
 			log.debug("Initializing DID store at {}", this.storeRoot.getAbsolutePath());
-
 			this.storeRoot.createDirectory();
-
 			let metadata = new DIDStore.Metadata();
-
 			let  file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
 			file.writeText(metadata.serialize());
 		} catch (e) {

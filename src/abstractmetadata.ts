@@ -45,6 +45,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	protected constructor(store: DIDStore | null = null) {
 		super();
 		this.store = store;
+		this.props = {};
 	}
 
 	/**

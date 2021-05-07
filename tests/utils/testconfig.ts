@@ -20,9 +20,13 @@
  * SOFTWARE.
  */
 
-import testConfig from "../assets/test.config.json";
-
+//import testConfig from "../assets/test.config.json";
+import { File } from "../../src/filesystemstorage";
+import { ParentException } from "../../src/exceptions/exceptions";
 export class TestConfig {
+
+	private static TEST_CONFIG_FILE = "tests/assets/test.config.json";
+
 	public static network: string;
 
 	public static passphrase: string;
@@ -38,6 +42,9 @@ export class TestConfig {
 	//public static Level level;
 
 	static initialize() {
+
+		let testConfig = this.loadConfiguration(this.TEST_CONFIG_FILE);
+
 		this.network = testConfig.network
 		// Java: System.setProperty("org.elastos.did.network", network);
 
@@ -56,5 +63,13 @@ export class TestConfig {
 		// We use logback as the logging backend
 	    /* Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 	    root.setLevel(level); */
+	}
+
+	private static loadConfiguration(configFile: string): any {
+		let testConfigFile = new File(TestConfig.TEST_CONFIG_FILE);
+		if (!testConfigFile.exists()) {
+			throw new ParentException("Cannot load test configuration file '" + TestConfig.TEST_CONFIG_FILE + "'");
+		}
+		return JSON.parse(testConfigFile.readText());
 	}
 }

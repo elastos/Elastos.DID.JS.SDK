@@ -1,27 +1,43 @@
 export class Logger {
-    constructor(private context: string) {}
 
-    log(...args: any) {
-        console.log.apply(console, args);
+    private context: string;
+
+    constructor(context: string) {
+        this.context = context ? context : "";
     }
 
-	info(...args: any) {
-        console.log.apply(console, args);
+    log(...data: any) {
+        console.log(this.format("info", data));
     }
 
-    debug(...args: any) {
-        console.log.apply(console, args);
+	info(...data: any) {
+        console.log(this.format("info", data));
     }
 
-    trace(...args: any) {
-        console.log.apply(console, args);
+    debug(...data: any) {
+        console.log(this.format("debug", data));
     }
 
-    warn(...args: any) {
-        console.warn.apply(console, args);
+    trace(...data: any) {
+        console.log(this.format("trace", data));
     }
 
-    error(...args: any) {
-        console.error.apply(console, args);
+    warn(...data: any) {
+        console.log(this.format("warn", data));
+    }
+
+    error(...data: any) {
+        console.log(this.format("error", data));
+    }
+
+    private format(level: string, data: any[]): string {
+        let logLine = (new Date()).toISOString() + " " + level.toUpperCase() + " " + this.context + " ";
+        if (!data || data.length < 1)
+            return logLine;
+        let content:string = data[0].toString();
+        for (let i = 1; i < data.length; i++) {
+            content = content.replace(/\{\}/, data[i] ? data[i] as string: "null");
+        }
+        return logLine + " " + content;
     }
 }

@@ -7,7 +7,7 @@
     "store": {
         "pass": "passwd",
         "_comment_root": "Default is $temp.dir/DIDStore",
-        "root": "/PATH/TO/DIDStore"
+        "rootDISABLED": "/PATH/TO/DIDStore"
     },
     "wallet": {
         "dir": "/PATH/TO/Wallet",
@@ -20,6 +20,6 @@
     },
     "temp": {
         "_comment_dir": "Default is system temp dir",
-        "dir": "/PATH/TO/TEMP"
+        "dir": "/home/carlduranleau/temp"
     }
 }
