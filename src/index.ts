@@ -1,4 +1,5 @@
 'use strict';
+
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDStore } from "./didstore";

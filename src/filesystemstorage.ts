@@ -31,8 +31,9 @@ import { DIDStorageException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { RootIdentity } from "./rootidentity";
 import { VerifiableCredential } from "./verifiablecredential";
-import { Stats } from "fs";
-import fs from 'fs';
+//import { Stats } from "fs";
+//import fs from 'fs';
+//import fs from "browserify-fs";
 
 // Root prefix to distinguish this file's storage from other data in local storage.
 const FILESYSTEM_LOCAL_STORAGE_PREFIX = "DID_FS_STORAGE";
@@ -68,7 +69,7 @@ export class File { // Exported, for test cases only
 	public static SEPARATOR = "/";
 
 	private fullPath: string;
-	private fileStats?: Stats;
+	// TODO REMOVED FS private fileStats?: Stats;
 
 	public constructor(path: File | string, subpath?: string) {
 		let fullPath: string = path instanceof File ? path.getAbsolutePath() : path as string;
@@ -100,14 +101,18 @@ export class File { // Exported, for test cases only
 		return file.isDirectory();
 	}
 
-	private getStats(): Stats {
+	private getStats(): any /* Stats */ {
+		/* // TODO REMOVED FS
 		if (this.fileStats)
 			return this.fileStats;
 		return this.exists() ? fs.statSync(this.fullPath) : null;
+		*/
+		return null;
 	}
 
 	public exists(): boolean {
-		return fs.existsSync(this.fullPath);
+		// TODO REMOVED FS return fs.existsSync(this.fullPath);
+		return false;
 	}
 
 	// Entry size in bytes
@@ -132,7 +137,7 @@ export class File { // Exported, for test cases only
 	public getParentDirectory(): File {
 		let directoryName = this.getParentDirectoryName();
 		if (directoryName) {
-			return new File(directoryName);	
+			return new File(directoryName);
 		}
 		return null;
 	}
@@ -157,7 +162,8 @@ export class File { // Exported, for test cases only
 	 * Lists all file names in this directory.
 	 */
 	public list(): string[] {
-		return this.exists() && this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
+		// TODO REMOVE FS return this.exists() && this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
+		return [];
 	}
 
 	/**
@@ -177,36 +183,37 @@ export class File { // Exported, for test cases only
 
 	public writeText(content: string) {
 		if (!this.exists() || this.getStats().isFile()) {
-			fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
+			// TODO REMOVED FS fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
 		}
 	}
 
 	public readText(): string {
-		return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
+		// TODO REMOVED FS return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
+		return null;
 	}
 
 	public rename(newName: string) {
 		if (this.exists()) {
 			let targetName = this.fullPath.includes(File.SEPARATOR) && !newName.includes(File.SEPARATOR) ? this.getParentDirectoryName + File.SEPARATOR + newName : newName;
-			fs.renameSync(this.fullPath, targetName);
-			this.fullPath = targetName;
-			this.fileStats = undefined;
+			// TODO REMOVED FS fs.renameSync(this.fullPath, targetName);
+			// TODO REMOVED FS this.fullPath = targetName;
+			// TODO REMOVED FS this.fileStats = undefined;
 		}
 	}
 
 	public createFile(overwrite?: boolean) {
 		let replace = overwrite ? overwrite : false;
 		if (!this.exists() || replace) {
-			fs.writeFileSync(this.fullPath, "", { encoding: "utf-8" });
-			this.fileStats = undefined;
+			// TODO REMOVED FS fs.writeFileSync(this.fullPath, "", { encoding: "utf-8" });
+			// TODO REMOVED FS this.fileStats = undefined;
 		}
 	}
 
 	public createDirectory(overwrite?: boolean) {
 		let replace = overwrite ? overwrite : false;
 		if (!this.exists() || replace) {
-			fs.mkdirSync(this.fullPath, { "recursive": true });
-			this.fileStats = undefined;
+			// TODO REMOVED FS fs.mkdirSync(this.fullPath, { "recursive": true });
+			// TODO REMOVED FS this.fileStats = undefined;
 		}
 	}
 
@@ -215,11 +222,11 @@ export class File { // Exported, for test cases only
 	 */
 	public delete() {
 		if (this.exists()) {
-			if (this.isDirectory())
-				fs.rmdirSync(this.fullPath, { recursive: true });
-			else
-				fs.rmSync(this.fullPath, { recursive: true, force: true });
-			this.fileStats = undefined;
+			// TODO REMOVED FS if (this.isDirectory())
+				// TODO REMOVED FS fs.rmdirSync(this.fullPath, { recursive: true });
+			// TODO REMOVED FS else
+				// TODO REMOVED FS fs.rmSync(this.fullPath, { recursive: true, force: true });
+			// TODO REMOVED FS this.fileStats = undefined;
 		}
 	}
 

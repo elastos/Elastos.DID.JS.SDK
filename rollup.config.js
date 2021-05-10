@@ -85,8 +85,10 @@ import replaceBrowserModules from './build-plugins/replace-browser-modules.js';
 import pkg from './package.json';
 import serve from 'rollup-plugin-serve';
 //import nodePolyfills from 'rollup-plugin-node-polyfills';
-import nodePolyfills from 'rollup-plugin-polyfill-node';
-
+import nodePolyfills from 'rollup-plugin-polyfill-node'; // Latest maintained version with fixes for the FS polyfills and others, from snowpackjs team.
+import replace from '@rollup/plugin-replace';
+import globals from 'rollup-plugin-node-globals';
+import builtins from 'rollup-plugin-node-builtins';
 
 const commitHash = (function () {
 	try {
@@ -114,8 +116,8 @@ const onwarn = warning => {
 		'Building the DID SDK produced warnings that need to be resolved. ' +
 			'Please keep in mind that the browser build may never have external dependencies!'
 	); */
-	if (warning.code && warning.code === "CIRCULAR_DEPENDENCY")
-		return; // TMP: don't get flooded by circular dependencies for now
+	//if (warning.code && warning.code === "CIRCULAR_DEPENDENCY")
+	//	return; // TMP: don't get flooded by circular dependencies for now
 
 	if (warning.code && warning.code === "THIS_IS_UNDEFINED")
 		return; // TMP: don't get flooded by this for now
@@ -228,31 +230,81 @@ export default command => {
 	const browserBuilds = {
 		input: 'src/index.ts',
 		onwarn,
+		external: [
+			'readable-stream',
+			'readable-stream/transform'
+		],
 		plugins: [
+			// IMPORTANT: DON'T CHANGE THE ORDER OF THINGS BELOW TOO MUCH! OTHERWISE YOU'LL GET
+			// GOOD HEADACHES WITH RESOLVE ERROR, UNEXPORTED CLASSES AND SO ON...
+
 			//replaceBrowserModules(),
 			//alias(moduleAliases),
-			resolve({
-				browser: true,
-				preferBuiltins: false
-			}),
+			//builtins(),
 			json(),
-			// TMP BPI: ADDING POLYFILLS REMOVES UNRESOLVED IMPORTS BUT CREATES [!] Error: 'Parser' is not exported by node_modules/antlr4ts/Parser.js, imported by src/parser/DIDURLParser.ts
-			// NOTE!! FOR THIS TO WORK ROLLUP-PLUGIN-POLYFILLS WAS PATCHED MANUALLY FOR NOW TO REMOVE THE
-			// TRANSFORM() METHOD - FIND SOMETHING
-			nodePolyfills({
-				crypto:true
-			}),  // To let some modules import stream, util, fs ... in browser
-			typescript(),
-			commonjs(),
-			// LATER terser({ module: true, output: { comments: 'some' } }),
 			//collectLicenses(),
 			//writeLicense(),
-			serve({
-				contentBase:'dist/es/',
+
+			typescript(),
+			// Circular dependencies tips: https://github.com/rollup/rollup/issues/3816
+			replace({
+				delimiters: ['', ''],
+				preventAssignment: true,
+				exclude: [
+					'/node_modules/rollup-plugin-node-polyfills/**/*.js',
+					'/node_modules/rollup-plugin-polyfill-node/**/*.js',
+				],
+				values: {
+					// Replace readable-stream with stream (polyfilled) because it uses dynamic requires and this doesn't work well at runtime
+					// even if trying to add "readable-stream" to "dynamicRequireTargets" in commonJs().
+					// https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
+					'require(\'readable-stream\')': 'require(\'stream\')',
+					'require("readable-stream")': 'require("stream")',
+					'require(\'readable-stream/writable\')': 'require(\'stream\').Writable',
+					'require("readable-stream/writable")': 'require("stream").Writable',
+					'require(\'readable-stream/readable\')': 'require(\'stream\').Readable',
+					'require("readable-stream/readable")': 'require("stream").Readable',
+					'LegacyTransportStream = require(\'./legacy\')': 'LegacyTransportStream = null',
+					'LegacyTransportStream = require(\'winston-transport/legacy\')': 'LegacyTransportStream = null'
+				}
+			}),
+			resolve({
+				browser: true,
+				preferBuiltins: false,
+				//dedupe: ['readable-stream']
+			}),
+			commonjs({
+				esmExternals: true,
+				//requireReturnsDefault: "true", // "true" will generate build error: TypeError: Cannot read property 'deoptimizePath' of undefined
+				//requireReturnsDefault: "auto", // namespace, true, false, auto, preferred
+				transformMixedEsModules: true, // TMP trying to solve commonjs "circular dependency" errors at runtime
+				dynamicRequireTargets: [
+					//'node_modules/rollup-plugin-node-builtins',
+					//'node_modules/rollup-plugin-node-polyfills',
+					'node_modules/readable-stream',
+/* 					'node_modules/rollup-plugin-node-polyfills/polyfills/readable-stream',
+					'node_modules/bl/node_modules/readable-stream',
+					'node_modules/level-blobs/node_modules/readable-stream',
+					'node_modules/rollup-plugin-node-builtins/src/es6/readable-stream',
+					'node_modules/levelup/node_modules/readable-stream',
+					'node_modules/fwd-stream/node_modules/readable-stream',
+					'node_modules/concat-stream/node_modules/readable-stream' */
+				],
+				//ignore: ['leveldown', 'leveldown/package']
+			}),
+			globals(),
+
+			nodePolyfills({
+				//fs: true // For now, we need to polyfill FS because our "filesystemstorage" uses it (not sure if some dependency libraries need it)
+				// crypto:true // Broken, the polyfill just doesn't work. We have to use crypto-browserify directly in our TS code instead.
+			}), // To let some modules bundle NodeJS stream, util, fs ... in browser
+			// LATER terser({ module: true, output: { comments: 'some' } }),
+			serve({ // For temporary local html debug in browser
+				contentBase:'',
 				headers: {
 					'Access-Control-Allow-Origin': '*'
 				}
-			})
+			}),
 		],
 		treeshake,
 		strictDeprecations: true,
@@ -263,7 +315,7 @@ export default command => {
 				format: 'es',
 				banner,
 				sourcemap: true,
-				intro: 'var global = typeof self !== undefined ? self : this;' // Fix "global is not defined"
+				//intro: 'var global = typeof self !== undefined ? self : this;' // Fix "global is not defined"
 			},
 		]
 	};

@@ -126,7 +126,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public type: string[];
 	@JsonSerialize({using: IssuerSerializerFilter.filter})
 	@JsonProperty({value:VerifiableCredential.ISSUER})
-	public issuer: DID;
+	public issuer: any // DID;
 	@JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
 	public issuanceDate: Date;
 	@JsonProperty({value:VerifiableCredential.EXPIRATION_DATE})
@@ -1083,7 +1083,7 @@ export namespace VerifiableCredential {
 		  * @param id the controller of Credential Subject
 		  */
 		 // Java: @JsonCreator()
-		 constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
+		 constructor(@JsonProperty({value: VerifiableCredential.ID}) id: any /* DID */) {
 			 this.id = id;
 			 this.properties = {};
 		 }
@@ -1094,7 +1094,7 @@ export namespace VerifiableCredential {
 		  * @return the controller's DID
 		  */
 		 @JsonGetter({value: VerifiableCredential.ID})
-		 public getId(): DID {
+		 public getId(): any /* DID */ {
 			 return this.id;
 		 }
 

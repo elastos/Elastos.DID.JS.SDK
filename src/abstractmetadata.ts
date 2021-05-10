@@ -34,7 +34,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 
 	protected static USER_EXTRA_PREFIX = "UX-";
 
-	public props: JSONObject;
+	public props: JSONObject = {};
 	protected store: DIDStore | null = null;
 
 	/**

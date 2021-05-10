@@ -89,7 +89,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 	protected static TRANSACTION = "transaction";
 
 	@JsonProperty({value: DIDBiography.DID})
-	private did: DID;
+	private did: any; //DID;
 	@JsonProperty({value: DIDBiography.STATUS})
 	private status: Status;
 	@JsonProperty({value: DIDBiography.TRANSACTION})
@@ -103,7 +103,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 	 */
 	@JsonCreator()
 	protected static toDIDBiography(
-		@JsonProperty({value: DIDBiography.DID, required: true}) did: DID,
+		@JsonProperty({value: DIDBiography.DID, required: true}) did: any /* DID */,
 		@JsonProperty({value: DIDBiography.STATUS, required: true}) status: Status
 	) {
 			let didBiography = new DIDBiography(did);
@@ -111,7 +111,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 			return didBiography;
 	}
 
-	protected constructor(did: DID) {
+	protected constructor(did: any /* DID */) {
 		super();
 		this.did = did;
 	}

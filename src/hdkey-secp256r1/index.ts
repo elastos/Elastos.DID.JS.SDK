@@ -1,7 +1,9 @@
 import * as assert from 'assert';
 import * as bs58check from 'bs58'
-import * as crypto from 'crypto';
+// import * as crypto from 'crypto';
+import * as crypto from 'crypto-browserify';
 import * as secp256r1 from './secp256r1';
+import { Buffer as Buffer } from "../buffer";
 
 const MASTER_SECRET = Buffer.from('Bitcoin seed', 'utf8');
 const LEN = 78;

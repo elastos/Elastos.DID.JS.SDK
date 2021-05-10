@@ -68,12 +68,12 @@ class Parameters implements Hashable {
 	public id: DIDURL;
 	@JsonProperty({value: CredentialResolveRequest.PARAMETER_ISSUER})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	public issuer: DID;
+	public issuer: any // DID;
 
 	// TODO Java - @JsonCreator
 	public constructor(
 		@JsonProperty({value: CredentialResolveRequest.PARAMETER_ID, required: true})id: DIDURL,
-		issuer: DID = null
+		issuer: any /* DID */ = null
 	) {
 		this.id = id;
 		this.issuer = issuer;

@@ -1,5 +1,6 @@
 import BN from 'bn.js';
-import { createHash } from 'crypto';
+//import { createHash } from 'crypto';
+import { createHash } from 'crypto-browserify';
 import * as elliptic from 'elliptic';
 
 import * as messages from './messages.json';

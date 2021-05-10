@@ -213,7 +213,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param subject the owner of DIDDocument
      */
     // Java: @JsonCreator()
-    public constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) subject?: DID) {
+    public constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) subject?: any /* DID */) {
         super();
         this.subject = subject;
     }
@@ -592,7 +592,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             let idx = bb.readInt();
             if (idx >= 0)
                 path = path.concat(idx.toString());
-            else 
+            else
                 path = path.concat((idx & 0x7FFFFFFF).toString()).concat("H");
 
             path = path.concat("/");
@@ -2154,7 +2154,7 @@ export namespace DIDDocument {
         public type: string;
         @JsonSerialize({using: PublicKeySerializerFilter.filter})
         @JsonProperty({ value: DIDDocument.CONTROLLER })
-        public controller: DID;
+        public controller: any /* DID */;
         @JsonProperty({ value: DIDDocument.PUBLICKEY_BASE58 })
         public keyBase58: string;
         private authenticationKey: boolean;
@@ -2171,7 +2171,7 @@ export namespace DIDDocument {
         // Java: @JsonCreator
         constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) id: DIDURL,
             @JsonProperty({ value: DIDDocument.TYPE }) type: string,
-            @JsonProperty({ value: DIDDocument.CONTROLLER }) controller: DID,
+            @JsonProperty({ value: DIDDocument.CONTROLLER }) controller: any /* DID */,
             @JsonProperty({ value: DIDDocument.PUBLICKEY_BASE58, required: true }) keyBase58: string) {
             this.id = id;
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;

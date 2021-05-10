@@ -56,11 +56,11 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	public static SIGNATURE = "signature";
 
 	@JsonProperty({value:TransferTicket.ID})
-	private id: DID;
+	private id: any; // DID;
 	private doc: DIDDocument;
 
 	@JsonProperty({value:TransferTicket.TO})
-	private to: DID;
+	private to: any; // DID;
 
 	@JsonProperty({value:TransferTicket.TXID})
 	private txid: string;
@@ -68,12 +68,12 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	@JsonProperty({value:TransferTicket.PROOF})
 	@JsonInclude({value: JsonIncludeType.NON_EMPTY})
 	// TODO - Convert from java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
-	private _proofs: Proof[];
+	private _proofs: any[]; // Proof[];
 
 	private proofs: Map<DID, Proof>;
 
-	public constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
-			@JsonProperty({value: TransferTicket.TO, required: true}) to: DID,
+	public constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: any/* DID */,
+			@JsonProperty({value: TransferTicket.TO, required: true}) to: any/* DID */,
 			@JsonProperty({value: TransferTicket.TXID, required: true}) txid: string) {
 		super();
 		this.id = did;
