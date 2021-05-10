@@ -65,7 +65,6 @@ export default {
  * Configuration originaly migrated from the rollup tool config itself at https://github.com/rollup/rollup/blob/master/rollup.config.js
  */
 
-import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
@@ -89,6 +88,8 @@ import nodePolyfills from 'rollup-plugin-polyfill-node'; // Latest maintained ve
 import replace from '@rollup/plugin-replace';
 import globals from 'rollup-plugin-node-globals';
 import builtins from 'rollup-plugin-node-builtins';
+import alias from "@rollup/plugin-alias";
+import inject from "@rollup/plugin-inject";
 
 const commitHash = (function () {
 	try {
@@ -245,6 +246,13 @@ export default command => {
 			//collectLicenses(),
 			//writeLicense(),
 
+			alias({
+				"entries": [
+					{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
+					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
+					{ "find": "path", "replacement": "browserfs/dist/shims/path" }
+				]
+			}),
 			typescript(),
 			// Circular dependencies tips: https://github.com/rollup/rollup/issues/3816
 			replace({
@@ -298,6 +306,9 @@ export default command => {
 				//fs: true // For now, we need to polyfill FS because our "filesystemstorage" uses it (not sure if some dependency libraries need it)
 				// crypto:true // Broken, the polyfill just doesn't work. We have to use crypto-browserify directly in our TS code instead.
 			}), // To let some modules bundle NodeJS stream, util, fs ... in browser
+			inject({
+				"BrowserFS": "browserfs"
+			}),
 			// LATER terser({ module: true, output: { comments: 'some' } }),
 			serve({ // For temporary local html debug in browser
 				contentBase:'',
@@ -320,5 +331,5 @@ export default command => {
 		]
 	};
 
-	return [ commonJSBuild, esmBuild, browserBuilds];
+	return [ /* commonJSBuild, esmBuild, */ browserBuilds];
 };

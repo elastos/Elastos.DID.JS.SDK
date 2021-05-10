@@ -34,6 +34,17 @@ import { VerifiableCredential } from "./verifiablecredential";
 //import { Stats } from "fs";
 //import fs from 'fs';
 //import fs from "browserify-fs";
+import BrowserFS from "browserfs";
+import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, rmSync, statSync, writeFileSync } from "fs";
+
+BrowserFS.configure({
+	fs: "LocalStorage",
+	options: {}
+}, function(e) {
+	if (e) {
+		throw e;
+	}
+});
 
 // Root prefix to distinguish this file's storage from other data in local storage.
 const FILESYSTEM_LOCAL_STORAGE_PREFIX = "DID_FS_STORAGE";
@@ -69,7 +80,7 @@ export class File { // Exported, for test cases only
 	public static SEPARATOR = "/";
 
 	private fullPath: string;
-	// TODO REMOVED FS private fileStats?: Stats;
+	private fileStats?: Stats;
 
 	public constructor(path: File | string, subpath?: string) {
 		let fullPath: string = path instanceof File ? path.getAbsolutePath() : path as string;
@@ -102,17 +113,14 @@ export class File { // Exported, for test cases only
 	}
 
 	private getStats(): any /* Stats */ {
-		/* // TODO REMOVED FS
 		if (this.fileStats)
 			return this.fileStats;
-		return this.exists() ? fs.statSync(this.fullPath) : null;
-		*/
+		return this.exists() ? statSync(this.fullPath) : null;
 		return null;
 	}
 
 	public exists(): boolean {
-		// TODO REMOVED FS return fs.existsSync(this.fullPath);
-		return false;
+		return existsSync(this.fullPath);
 	}
 
 	// Entry size in bytes
@@ -162,8 +170,7 @@ export class File { // Exported, for test cases only
 	 * Lists all file names in this directory.
 	 */
 	public list(): string[] {
-		// TODO REMOVE FS return this.exists() && this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
-		return [];
+		return this.exists() && this.getStats().isDirectory() ? readdirSync(this.fullPath) : null;
 	}
 
 	/**
@@ -183,37 +190,37 @@ export class File { // Exported, for test cases only
 
 	public writeText(content: string) {
 		if (!this.exists() || this.getStats().isFile()) {
-			// TODO REMOVED FS fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
+			writeFileSync(this.fullPath, content, { encoding: "utf-8" });
 		}
 	}
 
 	public readText(): string {
-		// TODO REMOVED FS return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
+		return this.exists() ? readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
 		return null;
 	}
 
 	public rename(newName: string) {
 		if (this.exists()) {
 			let targetName = this.fullPath.includes(File.SEPARATOR) && !newName.includes(File.SEPARATOR) ? this.getParentDirectoryName + File.SEPARATOR + newName : newName;
-			// TODO REMOVED FS fs.renameSync(this.fullPath, targetName);
-			// TODO REMOVED FS this.fullPath = targetName;
-			// TODO REMOVED FS this.fileStats = undefined;
+			renameSync(this.fullPath, targetName);
+			this.fullPath = targetName;
+			this.fileStats = undefined;
 		}
 	}
 
 	public createFile(overwrite?: boolean) {
 		let replace = overwrite ? overwrite : false;
 		if (!this.exists() || replace) {
-			// TODO REMOVED FS fs.writeFileSync(this.fullPath, "", { encoding: "utf-8" });
-			// TODO REMOVED FS this.fileStats = undefined;
+			writeFileSync(this.fullPath, "", { encoding: "utf-8" });
+			this.fileStats = undefined;
 		}
 	}
 
 	public createDirectory(overwrite?: boolean) {
 		let replace = overwrite ? overwrite : false;
 		if (!this.exists() || replace) {
-			// TODO REMOVED FS fs.mkdirSync(this.fullPath, { "recursive": true });
-			// TODO REMOVED FS this.fileStats = undefined;
+			mkdirSync(this.fullPath, { "recursive": true });
+			this.fileStats = undefined;
 		}
 	}
 
@@ -222,11 +229,11 @@ export class File { // Exported, for test cases only
 	 */
 	public delete() {
 		if (this.exists()) {
-			// TODO REMOVED FS if (this.isDirectory())
-				// TODO REMOVED FS fs.rmdirSync(this.fullPath, { recursive: true });
-			// TODO REMOVED FS else
-				// TODO REMOVED FS fs.rmSync(this.fullPath, { recursive: true, force: true });
-			// TODO REMOVED FS this.fileStats = undefined;
+			if (this.isDirectory())
+				rmdirSync(this.fullPath, { recursive: true });
+			else
+				rmSync(this.fullPath, { recursive: true, force: true });
+			this.fileStats = undefined;
 		}
 	}
 
@@ -395,7 +402,7 @@ export class FileSystemStorage implements DIDStorage {
 		let file: File = null;
 
 		let relPath = this.storeRoot.getAbsolutePath();
-		for (let p in path) {
+		for (let p of path) {
 			relPath += (File.SEPARATOR + p);
 		}
 		file = new File(relPath);
