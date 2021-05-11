@@ -5,7 +5,7 @@ import {
 import { DIDEntity } from "./didentity";
 import { DID } from "./did";
 import { Constants } from "./constants";
-import { JsonStringifier, ObjectMapper } from "jackson-js";
+import { ObjectMapper } from "jackson-js";
 
 export class Serializer {
 

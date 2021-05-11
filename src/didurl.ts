@@ -48,7 +48,7 @@ import {
 import { DIDURLParser } from "./parser/DIDURLParser";
 import { StringUtil } from "./stringutil";
 
-export class URLSerializer extends Serializer {
+class URLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
 		let base: DID = null;
 		let serializeContext = this.context(context);
@@ -66,7 +66,7 @@ export class NormalizedURLSerializer extends Serializer {
 	}
 }
 
-export class URLDeserializer extends Deserializer {
+class URLDeserializer extends Deserializer {
 	public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
 		try {
 			if (value && value.includes("{"))

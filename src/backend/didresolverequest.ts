@@ -63,7 +63,7 @@ export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Paramet
 }
 
 @JsonCreator()
-export class Parameters implements Hashable {
+class Parameters implements Hashable {
 	@JsonProperty({value: DIDResolveRequest.PARAMETER_DID})
 	public did: any /* DID */;
 

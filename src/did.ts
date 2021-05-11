@@ -46,13 +46,13 @@ import { DIDURLParser } from "./parser/DIDURLParser";
 import { StringUtil } from "./stringutil";
 
 
-export class DIDSerializer extends Serializer {
+class DIDSerializer extends Serializer {
     public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
 		return did ? did.toString() : null;
 	}
 }
 
-export class DIDDeserializer extends Deserializer {
+class DIDDeserializer extends Deserializer {
 	public static deserialize(value: string, context: JsonParserTransformerContext): DID {
 		try {
 			if (value && value.includes("{"))

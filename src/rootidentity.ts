@@ -21,6 +21,7 @@ import {
 } from "./utils";
 import { DefaultConflictHandle } from "./defaultconflicthandle";
 import { ConflictHandle } from "./conflicthandle";
+import { DIDDocumentBuilder } from "./diddocumentbuilder";
 
 const log = new Logger("RootIdentity");
 
@@ -308,7 +309,7 @@ export class RootIdentity {
 			let id = DIDURL.valueOf(did, "#primary");
 			this.getStore().storePrivateKey(id, key.serialize(), storepass);
 
-			let db = DIDDocument.Builder.newFromDID(did, this.getStore());
+			let db = DIDDocumentBuilder.newFromDID(did, this.getStore());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 			doc = db.seal(storepass);
 			this.getStore().storeDid(doc);
