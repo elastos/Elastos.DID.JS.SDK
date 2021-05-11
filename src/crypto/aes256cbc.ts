@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-
 import crypto from "crypto"
 import { BASE64 } from "./base64";
 
@@ -32,14 +31,14 @@ export class Aes256cbc {
 		let first16KeyBytesInHex = crypto
 		.createHash('md5')
 		.update(bufferPassword)
-		.digest("hex");	
+		.digest("hex");
 
 		let last16KeyBytesInHex = crypto
 		.createHash('md5')
 		.update(Buffer.from(first16KeyBytesInHex, "hex"))
 		.update(bufferPassword)
 		.digest("hex")
-		
+
 		let iv = crypto
 		.createHash('md5')
 		.update(Buffer.from(last16KeyBytesInHex, "hex"))
@@ -50,7 +49,7 @@ export class Aes256cbc {
 			key: first16KeyBytesInHex + last16KeyBytesInHex,
 			iv
 		};
-		
+
 	}
 
 	public static encrypt(plain: Buffer, passwd: string): Buffer {
@@ -71,7 +70,7 @@ export class Aes256cbc {
 		decrypted = Buffer.concat([decrypted, decipher.final()]);
 
 		return decrypted
-	
+
 	}
 
 	public static encryptToBase64(plain: Buffer, passwd: string): string {

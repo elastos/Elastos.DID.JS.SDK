@@ -21,7 +21,7 @@
  */
 
 //import { DID, DIDURL } from "../src";
-import { DID, DIDURL } from "../dist/did";
+import { DID, DIDURL, DIDStore } from "../dist/did";
 
 
 const verifyNewDidCreation = (valueToValidate: string) =>{

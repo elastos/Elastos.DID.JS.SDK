@@ -46,6 +46,8 @@ import { AdvancedString } from "./advancedstring";
 import { ConflictHandle } from "./conflicthandle";
 import { DefaultConflictHandle } from "./defaultconflicthandle";
 import { DIDStoreMetadata } from "./didstoremetadata";
+import { Buffer } from "./buffer";
+
 /**
  * DIDStore is local store for all DIDs.
  */

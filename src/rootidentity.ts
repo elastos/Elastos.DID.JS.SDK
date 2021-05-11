@@ -1,4 +1,4 @@
-import { MD5 } from "crypto-js";
+import crypto from "crypto"
 import { AbstractMetadata } from "./abstractmetadata";
 import { HDKey } from "./crypto/hdkey";
 import { DID } from "./did";
@@ -151,7 +151,7 @@ export class RootIdentity {
 
 	protected static getId(key: Buffer): string {
 		checkArgument(key != null && key.length > 0, "Invalid key bytes");
-		return MD5(key.toString("utf-8")).toString(CryptoJS.enc.Hex);
+		return crypto.createHash('md5').update(key.toString('utf-8')).digest("hex");
 	}
 
 	public getId(): string {

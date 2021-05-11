@@ -83,11 +83,11 @@ import getLicenseHandler from './build-plugins/generate-license-file';*/
 import replaceBrowserModules from './build-plugins/replace-browser-modules.js';
 import pkg from './package.json';
 import serve from 'rollup-plugin-serve';
-//import nodePolyfills from 'rollup-plugin-node-polyfills';
-import nodePolyfills from 'rollup-plugin-polyfill-node'; // Latest maintained version with fixes for the FS polyfills and others, from snowpackjs team.
+import nodePolyfills from 'rollup-plugin-node-polyfills';
+//import nodePolyfills from 'rollup-plugin-polyfill-node'; // Latest maintained version with fixes for the FS polyfills and others, from snowpackjs team.
 import replace from '@rollup/plugin-replace';
 import globals from 'rollup-plugin-node-globals';
-import builtins from 'rollup-plugin-node-builtins';
+//import builtins from 'rollup-plugin-node-builtins';
 import alias from "@rollup/plugin-alias";
 import inject from "@rollup/plugin-inject";
 
@@ -117,8 +117,8 @@ const onwarn = warning => {
 		'Building the DID SDK produced warnings that need to be resolved. ' +
 			'Please keep in mind that the browser build may never have external dependencies!'
 	); */
-	//if (warning.code && warning.code === "CIRCULAR_DEPENDENCY")
-	//	return; // TMP: don't get flooded by circular dependencies for now
+	if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && warning.importer.indexOf('node_modules') < 0)
+		return; // TMP: don't get flooded by circular dependencies for now
 
 	if (warning.code && warning.code === "THIS_IS_UNDEFINED")
 		return; // TMP: don't get flooded by this for now
@@ -254,8 +254,8 @@ export default command => {
 		input: 'src/index.ts',
 		onwarn,
 		external: [
-			//'readable-stream',
-			//'readable-stream/transform'
+			/* 'readable-stream',
+			'readable-stream/transform' */
 		],
 		plugins: [
 			// IMPORTANT: DON'T CHANGE THE ORDER OF THINGS BELOW TOO MUCH! OTHERWISE YOU'LL GET
@@ -267,90 +267,93 @@ export default command => {
 			json(),
 			//collectLicenses(),
 			//writeLicense(),
-
+			replace({
+				delimiters: ['', ''],
+				preventAssignment: true,
+				include: [
+					'node_modules/assert/build/internal/errors.js'
+				],
+				values: {
+					'require(\'../assert\')': 'null',
+				}
+			}),
+			// Dirty hack to remove circular deps between brorand and crypto-browserify as in browser,
+			// brorand doesn't use 'crypto' even if its source code includes it.
+			replace({
+				delimiters: ['', ''],
+				preventAssignment: true,
+				include: [
+					'node_modules/brorand/**/*.js'
+				],
+				values: {
+					'require(\'crypto\')': 'null',
+				}
+			}),
 			// Circular dependencies tips: https://github.com/rollup/rollup/issues/3816
 			replace({
 				delimiters: ['', ''],
 				preventAssignment: true,
-				exclude: [
-					'/node_modules/rollup-plugin-node-polyfills/**/*.js',
-					'/node_modules/rollup-plugin-polyfill-node/**/*.js',
-				],
 				values: {
 					// Replace readable-stream with stream (polyfilled) because it uses dynamic requires and this doesn't work well at runtime
 					// even if trying to add "readable-stream" to "dynamicRequireTargets" in commonJs().
 					// https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
-					/* 'require(\'readable-stream\')': 'require(\'stream\')',
+					'require(\'readable-stream\')': 'require(\'stream\')',
 					'require("readable-stream")': 'require("stream")',
 					'require(\'readable-stream/writable\')': 'require(\'stream\').Writable',
 					'require("readable-stream/writable")': 'require("stream").Writable',
 					'require(\'readable-stream/readable\')': 'require(\'stream\').Readable',
 					'require("readable-stream/readable")': 'require("stream").Readable',
 					'LegacyTransportStream = require(\'./legacy\')': 'LegacyTransportStream = null',
-					'LegacyTransportStream = require(\'winston-transport/legacy\')': 'LegacyTransportStream = null' */
+					'LegacyTransportStream = require(\'winston-transport/legacy\')': 'LegacyTransportStream = null'
 				}
 			}),
 			alias({
 				"entries": [
 					{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
+					{ "find": "process", "replacement": "process-es6" },
 					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
 					{ "find": "path", "replacement": "browserfs/dist/shims/path" },
 					{ "find": "crypto", "replacement": "crypto-browserify" },
 					{ "find": "util/", "replacement": "node_modules/util/util.js" },
 					{ "find": "util", "replacement": "node_modules/util/util.js" },
-					{ "find": "stream", "replacement": "stream-browserify" },
+					{ "find": "stream", "replacement": "./src/browser/stream.js" },
+					//{ "find": "stream", "replacement": "./src/browser/stream-browserify.js" },
+					//{ "find": "readable-stream", "replacement": "./src/browser/readable-stream" },
+
+					/* {
+						"find": "readable-stream",
+						"replacement": "rollup-plugin-node-polyfills/polyfills/readable-stream"
+					}, */
+					//{ "find": "stream", "replacement": "stream-browserify" },
 					{ "find": "string_decoder/", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
 					{ "find": "string_decoder", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
 					{ "find": "events", "replacement": "node_modules/events/events.js" },
 					{ "find": "assert", "replacement": "node_modules/assert/build/assert.js" }
 				]
 			}),
+
 			resolve({
-				mainFields: ['browser', 'main'],
+				mainFields: ['browser', 'jsnext:main', 'main'],
 				browser: true,
-				preferBuiltins: true,
-				//dedupe: ['readable-stream']
+				preferBuiltins: false,
+				//dedupe: []
 			}),
+
+			// Polyfills needed to replace readable-stream with stream (circular dep)
 			commonjs({
 				//esmExternals: true,
 				//requireReturnsDefault: "true", // "true" will generate build error: TypeError: Cannot read property 'deoptimizePath' of undefined
 				//requireReturnsDefault: "auto", // namespace, true, false, auto, preferred
 				transformMixedEsModules: true, // TMP trying to solve commonjs "circular dependency" errors at runtime
-				dynamicRequireTargets: [
-					//'node_modules/diffie-hellman/*.js',
-					/* 'node_modules/browserify-sign/*.js',
-					'node_modules/randomfill/*.js',
-					'node_modules/public-encrypt/*.js',
-					'node_modules/create-ecdh/*.js',
-					'node_modules/browserify-cipher/*.js',
-					'node_modules/pbkdf2/*.js',
-					'node_modules/create-hmac/*.js',
-					'node_modules/elliptic/*.js',
-					'node_modules/elliptic/lib/elliptic/utils.js',
-					'src/crypto/sha256.ts' */
-					//'node_modules/crypto-browserify/*.js'
-					//'node_modules/brorand',
-					//'node_modules/crypto-browserify',
-					//'node_modules/rollup-plugin-node-builtins',
-					//'node_modules/rollup-plugin-node-polyfills',
-					//'node_modules/readable-stream',
-/* 					'node_modules/rollup-plugin-node-polyfills/polyfills/readable-stream',
-					'node_modules/bl/node_modules/readable-stream',
-					'node_modules/level-blobs/node_modules/readable-stream',
-					'node_modules/rollup-plugin-node-builtins/src/es6/readable-stream',
-					'node_modules/levelup/node_modules/readable-stream',
-					'node_modules/fwd-stream/node_modules/readable-stream',
-					'node_modules/concat-stream/node_modules/readable-stream' */
-				],
-				//ignore: ['leveldown', 'leveldown/package']
+				dynamicRequireTargets: [],
 			}),
-			globals(), // Defines fake values for nodejs' "process", etc.
 			typescript(),
-
 			/* nodePolyfills({
-				//fs: true // For now, we need to polyfill FS because our "filesystemstorage" uses it (not sure if some dependency libraries need it)
+				stream: true
 				// crypto:true // Broken, the polyfill just doesn't work. We have to use crypto-browserify directly in our TS code instead.
 			}), */ // To let some modules bundle NodeJS stream, util, fs ... in browser
+			globals(), // Defines fake values for nodejs' "process", etc.
+
 			inject({
 				"BrowserFS": "browserfs"
 			}),
@@ -371,10 +374,11 @@ export default command => {
 				format: 'es',
 				banner,
 				sourcemap: true,
+				//intro: 'var process: { env: {}};'
 				//intro: 'var global = typeof self !== undefined ? self : this;' // Fix "global is not defined"
 			},
 		]
 	};
 
-	return [  commonJSBuild, /* esmBuild,  */ /* browserBuilds */];
+	return [   commonJSBuild, /* esmBuild,  */ browserBuilds];
 };
