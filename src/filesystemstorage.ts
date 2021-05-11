@@ -25,7 +25,6 @@ import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDMetadata } from "./didmetadata";
 import { DIDStorage, ReEncryptor } from "./didstorage";
-import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
 import { DIDStorageException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
@@ -36,6 +35,7 @@ import { VerifiableCredential } from "./verifiablecredential";
 //import fs from "browserify-fs";
 import BrowserFS from "browserfs";
 import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, rmSync, statSync, writeFileSync } from "fs";
+import { DIDStoreMetadata } from "./didstoremetadata";
 
 BrowserFS.configure({
 	fs: "LocalStorage",
@@ -313,7 +313,7 @@ export class FileSystemStorage implements DIDStorage {
 		try {
 			log.debug("Initializing DID store at {}", this.storeRoot.getAbsolutePath());
 			this.storeRoot.createDirectory();
-			let metadata = new DIDStore.Metadata();
+			let metadata = new DIDStoreMetadata();
 			let file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
 			file.writeText(metadata.serialize());
 		} catch (e) {
@@ -363,12 +363,12 @@ export class FileSystemStorage implements DIDStorage {
 
 		try {
 			let metadataContent = metadataFile.readText();
-			let metadata = DIDStore.Metadata.parse<DIDStore.Metadata>(metadataContent, DIDStore.Metadata);
+			let metadata = DIDStoreMetadata.parse<DIDStoreMetadata>(metadataContent, DIDStoreMetadata);
 
-			if (metadata.getType() !== DIDStore.DID_STORE_TYPE)
+			if (metadata.getType() !== DIDStoreMetadata.DID_STORE_TYPE)
 				throw new DIDStorageException("Unknown DIDStore type");
 
-			if (metadata.getVersion() != DIDStore.DID_STORE_VERSION)
+			if (metadata.getVersion() != DIDStoreMetadata.DID_STORE_VERSION)
 				throw new DIDStorageException("Unsupported DIDStore version");
 		} catch (e) {
 			// DIDSyntaxException | IOException
@@ -425,7 +425,7 @@ export class FileSystemStorage implements DIDStorage {
 		return this.storeRoot;
 	}
 
-	public storeMetadata(metadata: DIDStore.Metadata) {
+	public storeMetadata(metadata: DIDStoreMetadata) {
 		try {
 			let file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
 
@@ -439,12 +439,12 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	public loadMetadata(): DIDStore.Metadata {
+	public loadMetadata(): DIDStoreMetadata {
 		try {
 			let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
-			let metadata: DIDStore.Metadata = null;
+			let metadata: DIDStoreMetadata = null;
 			if (file.exists())
-				metadata = DIDStore.Metadata.parse<DIDStore.Metadata>(file.readText(), DIDStore.Metadata);
+				metadata = DIDStoreMetadata.parse<DIDStoreMetadata>(file.readText(), DIDStoreMetadata);
 
 			return metadata;
 		} catch (e) {

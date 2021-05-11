@@ -22,7 +22,6 @@
 
 import { List as ImmutableList } from "immutable";
 import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
-import { AbstractMetadata } from "./abstractmetadata";
 import { CredentialMetadata } from "./credentialmetadata";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
@@ -44,15 +43,15 @@ import { FileSystemStorage } from "./filesystemstorage";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import dayjs from "dayjs";
 import { AdvancedString } from "./advancedstring";
-
+import { ConflictHandle } from "./conflicthandle";
+import { DefaultConflictHandle } from "./defaultconflicthandle";
+import { DIDStoreMetadata } from "./didstoremetadata";
 /**
  * DIDStore is local store for all DIDs.
  */
  const log = new Logger("DIDStore");
 
  export class DIDStore {
-	static DID_STORE_TYPE: string = "did:elastos:store";
-	static DID_STORE_VERSION = 3;
 
 	private static CACHE_INITIAL_CAPACITY = 16;
 	private static CACHE_MAX_CAPACITY = 128;
@@ -64,15 +63,7 @@ import { AdvancedString } from "./advancedstring";
 	private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
 	public storage: DIDStorage;
-	private metadata: DIDStore.Metadata;
-
-	public static defaultConflictHandle: DIDStore.ConflictHandle = {
-		merge: (chainDoc, localDoc) => {
-			localDoc.getMetadata().setPublished(chainDoc.getMetadata().getPublished());
-			localDoc.getMetadata().setSignature(chainDoc.getMetadata().getSignature());
-			return localDoc;
-		}
-	};
+	private metadata: DIDStoreMetadata;
 
 	private constructor(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage) {
 		if (initialCacheCapacity < 0)
@@ -992,9 +983,9 @@ import { AdvancedString } from "./advancedstring";
 			this.cache.invalidateAll();
 		}
 
-		public synchronize(handle: DIDStore.ConflictHandle = null) {
+		public synchronize(handle: ConflictHandle = null) {
 			if (handle == null)
-				handle = DIDStore.defaultConflictHandle;
+				handle = DefaultConflictHandle.getInstance();
 
 			let identities = this.storage.listRootIdentities();
 			for (let identity of identities) {
@@ -1049,7 +1040,7 @@ import { AdvancedString } from "./advancedstring";
 			}
 		}
 
-		public synchronizeAsync(handle: DIDStore.ConflictHandle = null): Promise<void> {
+		public synchronizeAsync(handle: ConflictHandle = null): Promise<void> {
 			return new Promise((resolve, reject)=>{
 				try {
 					this.synchronize(handle);
@@ -1938,71 +1929,6 @@ export namespace DIDStore {
 		public static forCredentialMetadata(id: DIDURL): Key {
 			return new Key(DIDStore.Key.TYPE_CREDENTIAL_METADATA, id);
 		}
-	}
-
-	export class Metadata extends AbstractMetadata {
-		private static TYPE = "type";
-		private static VERSION = "version";
-		private static FINGERPRINT = "fingerprint";
-		private static DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
-
-		constructor(store: DIDStore | null = null) {
-			super(store);
-			this.put(Metadata.TYPE, DIDStore.DID_STORE_TYPE);
-			this.put(Metadata.VERSION, DIDStore.DID_STORE_VERSION);
-		}
-
-		public getType(): string {
-			return this.get(Metadata.TYPE) as string;
-		}
-
-		public getVersion(): number {
-			return this.getInteger(Metadata.VERSION);
-		}
-
-		public setFingerprint(fingerprint: string) {
-			checkArgument(fingerprint != null && fingerprint != "", "Invalid fingerprint");
-
-			this.put(Metadata.FINGERPRINT, fingerprint);
-		}
-
-		public getFingerprint(): string {
-			return this.get(Metadata.FINGERPRINT) as string;
-		}
-
-		public setDefaultRootIdentity(id: string) {
-			this.put(Metadata.DEFAULT_ROOT_IDENTITY, id);
-		}
-
-		public getDefaultRootIdentity(): string {
-			return this.get(Metadata.DEFAULT_ROOT_IDENTITY) as string;
-		}
-
-		protected save() {
-			if (this.attachedStore()) {
-				try {
-					this.getStore().storage.storeMetadata(this);
-				} catch (ignore) {
-					if (ignore instanceof DIDStoreException)
-					log.error("INTERNAL - error store metadata for DIDStore");
-				}
-			}
-		}
-	}
-
-	/**
-	 * The interface for ConflictHandle to indicate how to resolve the conflict,
-	 * if the local document is different with the one resolved from chain.
-	 */
-	export interface ConflictHandle {
-		/**
-		 * The method to merge two did document.
-		 *
-		 * @param chainCopy the document from chain
-		 * @param localCopy the document from local device
-		 * @return the merged DIDDocument object
-		 */
-		merge(chainCopy: DIDDocument, localCopy: DIDDocument): DIDDocument;
 	}
 
 	export interface DIDFilter {

@@ -24,11 +24,10 @@ import { CredentialMetadata } from "./credentialmetadata";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
 import { DIDMetadata } from "./didmetadata";
-import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
 import { RootIdentity } from "./rootidentity";
 import { VerifiableCredential } from "./verifiablecredential";
-
+import { DIDStoreMetadata } from "./didstoremetadata";
 /**
  * The inferface to change password.
  */
@@ -49,9 +48,9 @@ export interface ReEncryptor {
 export interface DIDStorage {
 	getLocation(): string;
 
-	storeMetadata(metadata: DIDStore.Metadata);
+	storeMetadata(metadata: DIDStoreMetadata);
 
-	loadMetadata(): DIDStore.Metadata;
+	loadMetadata(): DIDStoreMetadata;
 
 	storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata);
 

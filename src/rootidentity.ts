@@ -19,6 +19,8 @@ import {
 	checkArgument,
 	promisify
 } from "./utils";
+import { DefaultConflictHandle } from "./defaultconflicthandle";
+import { ConflictHandle } from "./conflicthandle";
 
 const log = new Logger("RootIdentity");
 
@@ -341,11 +343,11 @@ export class RootIdentity {
 	}
 
 	// Java: synchronize()
-	public synchronizeIndex(index: number, handle: DIDStore.ConflictHandle = null): boolean {
+	public synchronizeIndex(index: number, handle: ConflictHandle = null): boolean {
 		checkArgument(index >= 0, "Invalid index");
 
 		if (handle == null)
-			handle = DIDStore.defaultConflictHandle;
+			handle = DefaultConflictHandle.getInstance();
 
 		let did = this.getDid(index);
 		log.info("Synchronize {}/{}...", did.toString(), index);
@@ -391,7 +393,7 @@ export class RootIdentity {
 		return true;
 	}
 
-	public synchronizeIndexAsync(index: number, handle: DIDStore.ConflictHandle = null): Promise<boolean>  {
+	public synchronizeIndexAsync(index: number, handle: ConflictHandle = null): Promise<boolean>  {
 		return promisify(()=>this.synchronizeIndex(index, handle));
 	}
 
@@ -402,7 +404,7 @@ export class RootIdentity {
 	 * @throws DIDResolveException synchronize did faile with resolve error.
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
-	public synchronize(handle: DIDStore.ConflictHandle = null) {
+	public synchronize(handle: ConflictHandle = null) {
 		log.info("Synchronize root identity {}...", this.getId());
 
 		let lastIndex = this.getIndex() - 1;
@@ -436,7 +438,7 @@ export class RootIdentity {
 	 * @return the new CompletableStage, the result is the DIDDocument interface for
 	 *         resolved DIDDocument if success; null otherwise.
      */
-	public synchronizeAsync(handle: DIDStore.ConflictHandle = null): Promise<void> {
+	public synchronizeAsync(handle: ConflictHandle = null): Promise<void> {
 		return promisify(()=>this.synchronize(handle));
 	}
 }
