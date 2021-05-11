@@ -417,7 +417,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return false;
 
 		// Unsupported public key type;
-		if (!this.proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
 			return false; // TODO: should throw an exception?
 
 		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
@@ -500,7 +500,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return false;
 
 		// Unsupported public key type;
-		if (!this.proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
 			return false; // TODO: should throw an exception.
 
 		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
@@ -1394,7 +1394,7 @@ export namespace VerifiableCredential {
 		 */
 		public property(name: string, value: JSONValue): Builder {
 			this.checkNotSealed();
-			checkArgument(name != null && name !== "" && !name.equals(VerifiableCredential.ID), "Invalid name");
+			checkArgument(name != null && name !== "" && name !== VerifiableCredential.ID, "Invalid name");
 
 			this.credential.subject.setProperty(name, value);
 			return this;

@@ -365,7 +365,7 @@ export class FileSystemStorage implements DIDStorage {
 			let metadataContent = metadataFile.readText();
 			let metadata = DIDStore.Metadata.parse<DIDStore.Metadata>(metadataContent, DIDStore.Metadata);
 
-			if (!metadata.getType().equals(DIDStore.DID_STORE_TYPE))
+			if (metadata.getType() !== DIDStore.DID_STORE_TYPE)
 				throw new DIDStorageException("Unknown DIDStore type");
 
 			if (metadata.getVersion() != DIDStore.DID_STORE_VERSION)

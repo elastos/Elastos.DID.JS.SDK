@@ -150,10 +150,32 @@ const nodePlugins = [
 	json(),
 	//conditionalFsEventsImport(),
 	//string({ include: '**/*.md' }),
-	commonjs({ include: 'node_modules/**' }),
-	typescript({
+	replace({
+		delimiters: ['', ''],
+		preventAssignment: true,
+		exclude: [
+			'/node_modules/rollup-plugin-node-polyfills/**/*.js',
+			'/node_modules/rollup-plugin-polyfill-node/**/*.js',
+		],
+		values: {
+			// Replace readable-stream with stream (polyfilled) because it uses dynamic requires and this doesn't work well at runtime
+			// even if trying to add "readable-stream" to "dynamicRequireTargets" in commonJs().
+			// https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
+			'require(\'readable-stream\')': 'require(\'stream\')',
+			'require("readable-stream")': 'require("stream")',
+			'require(\'readable-stream/writable\')': 'require(\'stream\').Writable',
+			'require("readable-stream/writable")': 'require("stream").Writable',
+			'require(\'readable-stream/readable\')': 'require(\'stream\').Readable',
+			'require("readable-stream/readable")': 'require("stream").Readable',
+			'LegacyTransportStream = require(\'./legacy\')': 'LegacyTransportStream = null',
+			'LegacyTransportStream = require(\'winston-transport/legacy\')': 'LegacyTransportStream = null'
+		}
+	}),
+	commonjs({
+		include: 'node_modules/**',
 
-	})
+	}),
+	typescript({})
 ];
 
 export default command => {
@@ -232,8 +254,8 @@ export default command => {
 		input: 'src/index.ts',
 		onwarn,
 		external: [
-			'readable-stream',
-			'readable-stream/transform'
+			//'readable-stream',
+			//'readable-stream/transform'
 		],
 		plugins: [
 			// IMPORTANT: DON'T CHANGE THE ORDER OF THINGS BELOW TOO MUCH! OTHERWISE YOU'LL GET
@@ -246,14 +268,6 @@ export default command => {
 			//collectLicenses(),
 			//writeLicense(),
 
-			alias({
-				"entries": [
-					{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
-					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
-					{ "find": "path", "replacement": "browserfs/dist/shims/path" }
-				]
-			}),
-			typescript(),
 			// Circular dependencies tips: https://github.com/rollup/rollup/issues/3816
 			replace({
 				delimiters: ['', ''],
@@ -266,30 +280,60 @@ export default command => {
 					// Replace readable-stream with stream (polyfilled) because it uses dynamic requires and this doesn't work well at runtime
 					// even if trying to add "readable-stream" to "dynamicRequireTargets" in commonJs().
 					// https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
-					'require(\'readable-stream\')': 'require(\'stream\')',
+					/* 'require(\'readable-stream\')': 'require(\'stream\')',
 					'require("readable-stream")': 'require("stream")',
 					'require(\'readable-stream/writable\')': 'require(\'stream\').Writable',
 					'require("readable-stream/writable")': 'require("stream").Writable',
 					'require(\'readable-stream/readable\')': 'require(\'stream\').Readable',
 					'require("readable-stream/readable")': 'require("stream").Readable',
 					'LegacyTransportStream = require(\'./legacy\')': 'LegacyTransportStream = null',
-					'LegacyTransportStream = require(\'winston-transport/legacy\')': 'LegacyTransportStream = null'
+					'LegacyTransportStream = require(\'winston-transport/legacy\')': 'LegacyTransportStream = null' */
 				}
 			}),
+			alias({
+				"entries": [
+					{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
+					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
+					{ "find": "path", "replacement": "browserfs/dist/shims/path" },
+					{ "find": "crypto", "replacement": "crypto-browserify" },
+					{ "find": "util/", "replacement": "node_modules/util/util.js" },
+					{ "find": "util", "replacement": "node_modules/util/util.js" },
+					{ "find": "stream", "replacement": "stream-browserify" },
+					{ "find": "string_decoder/", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
+					{ "find": "string_decoder", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
+					{ "find": "events", "replacement": "node_modules/events/events.js" },
+					{ "find": "assert", "replacement": "node_modules/assert/build/assert.js" }
+				]
+			}),
 			resolve({
+				mainFields: ['browser', 'main'],
 				browser: true,
-				preferBuiltins: false,
+				preferBuiltins: true,
 				//dedupe: ['readable-stream']
 			}),
 			commonjs({
-				esmExternals: true,
+				//esmExternals: true,
 				//requireReturnsDefault: "true", // "true" will generate build error: TypeError: Cannot read property 'deoptimizePath' of undefined
 				//requireReturnsDefault: "auto", // namespace, true, false, auto, preferred
 				transformMixedEsModules: true, // TMP trying to solve commonjs "circular dependency" errors at runtime
 				dynamicRequireTargets: [
+					//'node_modules/diffie-hellman/*.js',
+					/* 'node_modules/browserify-sign/*.js',
+					'node_modules/randomfill/*.js',
+					'node_modules/public-encrypt/*.js',
+					'node_modules/create-ecdh/*.js',
+					'node_modules/browserify-cipher/*.js',
+					'node_modules/pbkdf2/*.js',
+					'node_modules/create-hmac/*.js',
+					'node_modules/elliptic/*.js',
+					'node_modules/elliptic/lib/elliptic/utils.js',
+					'src/crypto/sha256.ts' */
+					//'node_modules/crypto-browserify/*.js'
+					//'node_modules/brorand',
+					//'node_modules/crypto-browserify',
 					//'node_modules/rollup-plugin-node-builtins',
 					//'node_modules/rollup-plugin-node-polyfills',
-					'node_modules/readable-stream',
+					//'node_modules/readable-stream',
 /* 					'node_modules/rollup-plugin-node-polyfills/polyfills/readable-stream',
 					'node_modules/bl/node_modules/readable-stream',
 					'node_modules/level-blobs/node_modules/readable-stream',
@@ -300,12 +344,13 @@ export default command => {
 				],
 				//ignore: ['leveldown', 'leveldown/package']
 			}),
-			globals(),
+			globals(), // Defines fake values for nodejs' "process", etc.
+			typescript(),
 
-			nodePolyfills({
+			/* nodePolyfills({
 				//fs: true // For now, we need to polyfill FS because our "filesystemstorage" uses it (not sure if some dependency libraries need it)
 				// crypto:true // Broken, the polyfill just doesn't work. We have to use crypto-browserify directly in our TS code instead.
-			}), // To let some modules bundle NodeJS stream, util, fs ... in browser
+			}), */ // To let some modules bundle NodeJS stream, util, fs ... in browser
 			inject({
 				"BrowserFS": "browserfs"
 			}),
@@ -331,5 +376,5 @@ export default command => {
 		]
 	};
 
-	return [ /* commonJSBuild, esmBuild, */ browserBuilds];
+	return [  commonJSBuild, /* esmBuild,  */ /* browserBuilds */];
 };

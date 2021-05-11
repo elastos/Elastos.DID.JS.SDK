@@ -43,6 +43,7 @@ import {
 } from "jackson-js/dist/@types";
 import { IllegalArgumentException } from "./exceptions/exceptions";
 import { DIDURLParser } from "./parser/DIDURLParser";
+import { StringUtil } from "./stringutil";
 
 
 export class DIDSerializer extends Serializer {
@@ -91,8 +92,8 @@ export class DID {
             checkEmpty(did, "Invalid DID string");
             this.method = null;
             this.methodSpecificId = null;
-            
-            
+
+
             let didParsed = DIDURLParser.NewFromURL(methodOrDID)
             this.method = didParsed.did.method;
             this.methodSpecificId = didParsed.did.methodSpecificId;
@@ -208,13 +209,13 @@ export class DID {
 
         if (obj instanceof DID) {
             let did = obj;
-            let eq = this.method.equals(did.method);
-            return eq ? this.methodSpecificId.equals(did.methodSpecificId) : eq;
+            let eq = this.method === did.method;
+            return eq ? this.methodSpecificId === did.methodSpecificId : eq;
         }
 
         if (typeof obj === "string") {
             let did = obj;
-            return this.toString().equals(did);
+            return this.toString() === did;
         }
 
         return false;
@@ -223,8 +224,8 @@ export class DID {
     public compareTo(did: DID): number {
         checkNotNull(did, "did is null");
 
-        let rc = this.method.compareTo(did.method);
-        return rc == 0 ? this.methodSpecificId.compareTo(did.methodSpecificId) : rc;
+        let rc = StringUtil.compareTo(this.method, did.method);
+        return rc == 0 ? StringUtil.compareTo(this.methodSpecificId, did.methodSpecificId) : rc;
     }
 }
 

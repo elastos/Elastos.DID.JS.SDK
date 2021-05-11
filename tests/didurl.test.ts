@@ -20,7 +20,8 @@
  * SOFTWARE.
  */
 
-import { DID, DIDURL } from "../src";
+//import { DID, DIDURL } from "../src";
+import { DID, DIDURL } from "../dist/did";
 
 describe('DIDURL Tests', () => {
 	let testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
@@ -32,7 +33,7 @@ describe('DIDURL Tests', () => {
 
 	let did: DID;
 	let url: DIDURL;
-	
+
 
 	beforeEach(()=>{
 		did = new DID(testDID);
@@ -40,7 +41,7 @@ describe('DIDURL Tests', () => {
 	})
 
 	test('Test Constructor with Canonical URL', () => {
-		
+
 		let url: DIDURL = DIDURL.newWithDID(null, testURL);
 		expect(url.toString()).toBe(testURL);
 

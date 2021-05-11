@@ -2,11 +2,28 @@
     <head>
         <script type="module">
             console.log("Starting / imports");
-            import { DIDStore } from "http://localhost:10001/dist/es/did.browser.js";
+            import { DIDStore, Mnemonic, RootIdentity } from "http://localhost:10001/dist/es/did.browser.js";
 
             console.log("Calling DID methods")
             let store = DIDStore.open("root-path");
             console.log("Store: ", store);
+
+            let passphrase = "mypassphrase";
+            let storepass = "mystorepass";
+            let mnemonic = new Mnemonic().generate();
+	    	let identity = RootIdentity.createFromMnemonic(mnemonic, passphrase, store, storepass, true);
+
+            let alias = "myalias";
+            let doc = identity.newDid(storepass);
+		    doc.getMetadata().setAlias(alias);
+		    let issuer = new Issuer(doc);
+		    let cb = issuer.issueFor(doc.getSubject());
+		    let vc = cb.id("#cred-1")
+				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.properties(props)
+				.seal(TestConfig.storePass);
+
+		    store.storeCredential(vc);
         </script>
     </head>
     <body>

@@ -95,6 +95,7 @@ import {
 } from "./serializers";
 import { TypeSerializerFilter } from "./filters";
 import { JSONObject, JSONValue } from "./json";
+import { StringUtil } from "./stringutil";
 
 const log = new Logger("DIDDocument");
 
@@ -425,7 +426,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (id != null && !pk.getId().equals(id))
                 continue;
 
-            if (type != null && !pk.getType().equals(type))
+            if (type != null && pk.getType() !== type)
                 continue;
 
             pks.push(pk);
@@ -689,7 +690,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (id != null && !pk.getId().equals(id))
                 continue;
 
-            if (type != null && !pk.getType().equals(type))
+            if (type != null && pk.getType() !== type)
                 continue;
 
             pks.push(pk);
@@ -777,7 +778,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (idOrString != null && !pk.getId().equals(idOrString))
                 continue;
 
-            if (type != null && !pk.getType().equals(type))
+            if (type != null && pk.getType() !== type)
                 continue;
 
             pks.push(pk);
@@ -899,7 +900,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (id != null && !svc.getId().equals(id))
                 continue;
 
-            if (type != null && !svc.getType().equals(type))
+            if (type != null && svc.getType() !== type)
                 continue;
 
             svcs.push(svc);
@@ -1178,7 +1179,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         for (let pk of this.publicKeys.values()) {
             if (pk.getController().equals(this.getSubject())) {
                 let address = HDKey.toAddress(pk.getPublicKeyBytes());
-                if (address.equals(this.getSubject().getMethodSpecificId())) {
+                if (address === this.getSubject().getMethodSpecificId()) {
                     this.defaultPublicKey = pk;
                     if (!pk.isAuthenticationKey()) {
                         pk.setAuthenticationKey(true);
@@ -1364,7 +1365,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             let proof = this.getProof();
 
             // Unsupported public key type;
-            if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+            if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
                 return false;
 
             if (!proof.getCreator().equals(this.getDefaultPublicKeyId()))
@@ -1374,7 +1375,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         } else {
             for (let proof of this._proofs) {
                 // Unsupported public key type;
-                if (!proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+                if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
                     return false;
 
                 let controllerDoc = this.getControllerDocument(proof.getCreator().getDid());
@@ -1858,13 +1859,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     throw new DIDNotUpToDateException(this.getSubject().toString());
                 } else if (localPrevSignature == null || localSignature == null) {
                     let ls = localPrevSignature != null ? localPrevSignature : localSignature;
-                    if (!ls.equals(reolvedSignautre)) {
+                    if (ls !== reolvedSignautre) {
                         log.error("Current copy not based on the lastest on-chain copy, signature mismatch.");
                         throw new DIDNotUpToDateException(this.getSubject().toString());
                     }
                 } else {
-                    if (!localSignature.equals(reolvedSignautre) &&
-                        !localPrevSignature.equals(reolvedSignautre)) {
+                    if (localSignature !== reolvedSignautre &&
+                        localPrevSignature !== reolvedSignautre) {
                         log.error("Current copy not based on the lastest on-chain copy, signature mismatch.");
                         throw new DIDNotUpToDateException(this.getSubject().toString());
                     }
@@ -1949,7 +1950,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
 
-        if (!this.getSignature().equals(doc.getSignature()))
+        if (this.getSignature() !== doc.getSignature())
             this.getStore().storeDid(doc);
     }
 
@@ -2022,7 +2023,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     if (!pk.getController().equals(this.getSubject()))
                         continue;
 
-                    if (pk.getPublicKeyBase58().equals(candidatePk.getPublicKeyBase58())) {
+                    if (pk.getPublicKeyBase58() === candidatePk.getPublicKeyBase58()) {
                         realSignKey = candidatePk.getId();
                         targetSignKey = pk.getId();
                         break lookup;
@@ -2255,9 +2256,9 @@ export namespace DIDDocument {
                 return true;
 
             return (this.getId().equals(ref.getId()) &&
-                this.getType().equals(ref.getType()) &&
+                this.getType() === ref.getType() &&
                 this.getController().equals(ref.getController()) &&
-                this.getPublicKeyBase58().equals(ref.getPublicKeyBase58()))
+                this.getPublicKeyBase58() === ref.getPublicKeyBase58())
         }
 
         public compareTo(key: PublicKey): number {
@@ -2266,12 +2267,12 @@ export namespace DIDDocument {
             if (rc != 0)
                 return rc;
             else
-                rc = this.keyBase58.compareTo(key.keyBase58);
+                rc = StringUtil.compareTo(this.keyBase58, key.keyBase58);
 
             if (rc != 0)
                 return rc;
             else
-                rc = this.type.compareTo(key.type);
+                rc = StringUtil.compareTo(this.type, key.type);
 
             if (rc != 0)
                 return rc;
@@ -2421,7 +2422,7 @@ export namespace DIDDocument {
          */
         @JsonAnySetter()
         private setProperty(name: string, value: JSONValue) {
-            if (name.equals(DIDDocument.ID) || name.equals(DIDDocument.TYPE) || name.equals(DIDDocument.SERVICE_ENDPOINT))
+            if (name === DIDDocument.ID || name === DIDDocument.TYPE || name === DIDDocument.SERVICE_ENDPOINT)
                 return;
 
             if (this.properties == null)
@@ -2730,7 +2731,7 @@ export namespace DIDDocument {
                         throw new DIDObjectAlreadyExistException("PublicKey id '"
                             + key.getId() + "' already exist.");
 
-                    if (pk.getPublicKeyBase58().equals(key.getPublicKeyBase58()))
+                    if (pk.getPublicKeyBase58() === key.getPublicKeyBase58())
                         throw new DIDObjectAlreadyExistException("PublicKey '"
                             + key.getPublicKeyBase58() + "' already exist.");
                 }
@@ -2739,7 +2740,7 @@ export namespace DIDDocument {
             this.document.publicKeys.set(key.getId(), key);
             if (this.document.defaultPublicKey == null) {
                 let address = HDKey.toAddress(key.getPublicKeyBytes());
-                if (address.equals(this.getSubject().getMethodSpecificId())) {
+                if (address === this.getSubject().getMethodSpecificId()) {
                     this.document.defaultPublicKey = key;
                     key.setAuthenticationKey(true);
                 }

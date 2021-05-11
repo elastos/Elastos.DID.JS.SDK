@@ -8,6 +8,9 @@ const config: InitialOptionsTsJest = {
   transform: {
     ...tsjPreset.transform,
     // [...]
-  }
+  },
+  transformIgnorePatterns: [
+      "node_modules/(?!(buffer-es6)/)"
+   ]
 }
 export default config

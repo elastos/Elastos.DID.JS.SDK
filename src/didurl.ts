@@ -46,6 +46,7 @@ import {
     Deserializer
 } from "./serializers";
 import { DIDURLParser } from "./parser/DIDURLParser";
+import { StringUtil } from "./stringutil";
 
 export class URLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
@@ -168,7 +169,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 			}
 		}
 
-		
+
 		return newInstance;
 	}
 
@@ -290,7 +291,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	}
 
 	public setPath(path: string): void {
-		
+
 		this.path = path;
 	}
 
@@ -394,12 +395,12 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 
 		if (obj instanceof DIDURL) {
 			let id = obj as DIDURL;
-			return this.toString().equals(id.toString());
+			return this.toString() === id.toString();
 		}
 
 		if (typeof obj === "string") {
 			let url = obj as string;
-			return this.toString().equals(url);
+			return this.toString() === url;
 		}
 
 		return false;
@@ -408,7 +409,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	public compareTo(id: DIDURL): number {
 		checkNotNull(id, "id is null");
 
-		return this.toString().compareTo(id.toString());
+		return StringUtil.compareTo(this.toString(), id.toString());
 	}
 
 	private mapHashCode(map: Map<string, string>): number {

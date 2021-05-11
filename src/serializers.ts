@@ -60,7 +60,7 @@ export class PropertySerializerFilter<T> extends Serializer {
             return serializeContext.getObjectMapper().stringify(type);
         }
 
-        if (type && type.equals(Constants._DEFAULT_PUBLICKEY_TYPE)) {
+        if (type && type === Constants._DEFAULT_PUBLICKEY_TYPE) {
             return null;
         }
         return serializeContext.getObjectMapper().stringify(type);

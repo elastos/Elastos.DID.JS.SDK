@@ -251,7 +251,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return false;
 
 		// Unsupported public key type;
-		if (!this.proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
 			return false;
 
 		// Credential should signed by authentication key.
@@ -301,7 +301,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			return false;
 
 		// Unsupported public key type;
-		if (!this.proof.getType().equals(Constants.DEFAULT_PUBLICKEY_TYPE))
+		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
 			return false;
 
 		// Credential should signed by authentication key.

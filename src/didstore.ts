@@ -43,6 +43,7 @@ import { Comparable } from "./comparable";
 import { FileSystemStorage } from "./filesystemstorage";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import dayjs from "dayjs";
+import { AdvancedString } from "./advancedstring";
 
 /**
  * DIDStore is local store for all DIDs.
@@ -1012,10 +1013,10 @@ import dayjs from "dayjs";
 
 					localDoc.getMetadata().detachStore();
 
-					if (localDoc.getSignature().equals(resolvedDoc.getSignature()) ||
+					if (localDoc.getSignature() === resolvedDoc.getSignature() ||
 							(localDoc.getMetadata().getSignature() != null &&
-							localDoc.getProof().getSignature().equals(
-									localDoc.getMetadata().getSignature()))) {
+							localDoc.getProof().getSignature() ===
+									localDoc.getMetadata().getSignature())) {
 						finalDoc.getMetadata().merge(localDoc.getMetadata());
 					} else {
 						log.debug("{} on-chain copy conflict with local copy.",
@@ -1911,11 +1912,11 @@ export namespace DIDStore {
 		}
 
 		public static forRootIdentity(id: string): Key {
-			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY, id);
+			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY, new AdvancedString(id));
 		}
 
 		public static forRootIdentityPrivateKey(id: string): Key {
-			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY_PRIVATEKEY, id);
+			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY_PRIVATEKEY, new AdvancedString(id));
 		}
 
 		public static forDidDocument(did: DID): Key {

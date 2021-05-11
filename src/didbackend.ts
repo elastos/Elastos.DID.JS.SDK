@@ -213,7 +213,7 @@ export class DIDBackend {
 			}
 		}
 
-		if (response.getResponseId() == null || !response.getResponseId().equals(request.getRequestId()))
+		if (response.getResponseId() == null || response.getResponseId() !== request.getRequestId())
 			throw new DIDResolveException("Mismatched resolve result with request.");
 
 		if (response.getResult() != null)

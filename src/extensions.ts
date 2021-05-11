@@ -11,8 +11,8 @@ declare global {
          */
         getBytes(): Buffer;
         isEmpty(): boolean;
-        equals(otherString: string): boolean;
-        compareTo(otherString: string): number;
+        //equals(otherString: string): boolean;
+        //compareTo(otherString: string): number;
         /**
          * Decodes current Base64 string into a non-Base64 string.
          */
@@ -62,15 +62,15 @@ String.prototype.getBytes = function() {
     return Buffer.from(this);
 }
 
-String.prototype.equals = function(otherString: string) {
+/* String.prototype.equals = function(otherString: string) {
     return this === otherString;
-}
+} */
 
-String.prototype.compareTo = function(otherString: string) {
+/* String.prototype.compareTo = function(otherString: string) {
     if (this > otherString) return 1;
     else if (this < otherString) return -1;
     else return 0;
-}
+} */
 
 String.prototype.base64Decode = function() {
     return CryptoJS.enc.Base64.parse(this).toString();

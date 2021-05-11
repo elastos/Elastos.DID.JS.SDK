@@ -249,7 +249,7 @@ export class RootIdentity {
 			throw new DIDStoreException("Invalid public key: " + id);
 		}
 
-		if (!key.getPublicKeyBase58().equals(pk.getPublicKeyBase58())) {
+		if (key.getPublicKeyBase58() !== pk.getPublicKeyBase58()) {
 			log.error("INTERNAL - Invalid DID metadata: {}", id.getDid());
 			throw new DIDStoreException("Invalid DID metadata: " + id.getDid());
 		}
@@ -363,10 +363,10 @@ export class RootIdentity {
 			// Update metadata off-store, then store back
 			localDoc.getMetadata().detachStore();
 
-			if (localDoc.getSignature().equals(resolvedDoc.getSignature()) ||
+			if (localDoc.getSignature() === resolvedDoc.getSignature() ||
 					(localDoc.getMetadata().getSignature() != null &&
-					localDoc.getProof().getSignature().equals(
-							localDoc.getMetadata().getSignature()))) {
+					localDoc.getProof().getSignature() ===
+							localDoc.getMetadata().getSignature())) {
 				finalDoc.getMetadata().merge(localDoc.getMetadata());
 			} else {
 				log.debug("{} on-chain copy conflict with local copy.",
