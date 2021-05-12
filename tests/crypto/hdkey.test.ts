@@ -149,10 +149,10 @@
 }
  */
 
-import { HDKey } from "../../dist/did";
+import { HDKey, Buffer } from "../../dist/did";
 
 describe('HDKey Tests', () => {
-	
+
 
 	test('Test 0', () => {
 		let expectedIDString = "iY4Ghz9tCuWvB5rNwvn4ngWvthZMNzEA7U";
@@ -170,7 +170,7 @@ describe('HDKey Tests', () => {
 		expect(key.getPrivateKeyBase58()).toBe(rk.getPrivateKeyBase58())
 		expect(key.getPublicKeyBase58()).toBe(rk.getPublicKeyBase58())
 	});
-	
+
 
 	test('Test 1', () => {
 		let expectedIDString = "iW3HU8fTmwkENeVT9UCEvvg3ddUD5oCxYA";
@@ -213,14 +213,14 @@ describe('HDKey Tests', () => {
 		for (let index = 0; index < 5; index++) {
 			let key = root.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + index);
 			let keyPubOnly = preDerivedPub.deriveWithPath("m/0/" + index);
-			
+
 			expect(key.getPublicKeyBase58()).toBe(keyPubOnly.getPublicKeyBase58())
 			expect(key.getAddress()).toBe(keyPubOnly.getAddress())
 		}
 	});
 
-	
-	
+
+
 
 
 

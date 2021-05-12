@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { Aes256cbcBASE64,  } from "../../dist/did"
+import { Aes256cbc, BASE64, Buffer } from "../../dist/did"
 
 describe('Aes256cbc Encryption Tests', () => {
 	const passwd: string = "secret";

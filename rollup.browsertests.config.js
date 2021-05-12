@@ -3,7 +3,7 @@ import typescript from '@rollup/plugin-typescript';
 import serve from 'rollup-plugin-serve';
 import replace from '@rollup/plugin-replace';
 import alias from "@rollup/plugin-alias";
-import commonJs from "@rollup/plugin-commonjs";
+//import commonJs from "@rollup/plugin-commonjs";
 import multiInput from 'rollup-plugin-multi-input';
 import json from '@rollup/plugin-json';
 import globals from 'rollup-plugin-node-globals';
@@ -11,7 +11,7 @@ import globals from 'rollup-plugin-node-globals';
 export default [
     {
         //input: 'tests/didstore.test.ts',
-        input: ['tests/*.ts'],
+        input: ['tests/**/*.ts'],
         output: {
             //file: 'public/tests/did.browser.tests.js',
             dir: 'public/tests',
