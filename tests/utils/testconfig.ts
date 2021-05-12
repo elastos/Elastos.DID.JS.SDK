@@ -21,8 +21,9 @@
  */
 
 //import testConfig from "../assets/test.config.json";
-import { File } from "../../src/filesystemstorage";
-import { ParentException } from "../../src/exceptions/exceptions";
+import { File, Exceptions } from "../../dist/did";
+const ParentException = Exceptions.ParentException;
+
 export class TestConfig {
 
 	private static TEST_CONFIG_FILE = "tests/assets/test.config.json";

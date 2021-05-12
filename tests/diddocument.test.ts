@@ -21,15 +21,13 @@
  */
 
 import { Constants } from "../src/constants";
-import { DIDDocument } from "../src";
-import { DIDURL } from "../src/didurl";
-import { DIDStore } from "../src/didstore";
+import { DIDDocument, DIDURL, DIDStore } from "../dist/did";
 import {
 	TestData,
 	CompatibleData
 } from "./utils/testdata";
 import {
-    List, 
+    List,
     Map
 } from "immutable";
 import {
@@ -59,7 +57,7 @@ function testGetPublicKey(version: number, testData: TestData) {
 			expect(pk.getController()).not.toEqual(doc.getSubject());
 		else
 			expect(pk.getController()).toEqual(doc.getSubject());
-		
+
 		expect(pk.getId().getFragment() == "primary"
 		|| pk.getId().getFragment() == "key2"
 		|| pk.getId().getFragment() == "key3"
@@ -127,7 +125,7 @@ describe('DIDDocument Tests', () => {
 		testGetPublicKey(2, testData);
 	});
 
-	
+
 	test('testGetPublicKeyWithMultiControllerCid1', () => {
 		let cd: CompatibleData = testData.getCompatibleData(2);
 
@@ -147,7 +145,7 @@ describe('DIDDocument Tests', () => {
 		let ids = List<DIDURL>();
 		for (let i = 0; i < pks.size; i++) {
 			let pk:DIDDocument.PublicKey = pks.get(i);
-			ids.push(pk.getId());	
+			ids.push(pk.getId());
 		}
 		ids.sort((e1, e2) => {
 			return e1.compareTo(e2);
@@ -216,7 +214,7 @@ describe('DIDDocument Tests', () => {
 		pks = doc.selectPublicKeys(null,
 				Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(7, pks.size);
-		
+
 		pks = doc.selectPublicKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
 				Constants.DEFAULT_PUBLICKEY_TYPE);
 		assertEquals(1, pks.size);

@@ -119,13 +119,7 @@
 
 //practice pigeon diagram jeans piano abstract tape cause lounge raise index spy
 
-import { Base58 } from "../../src/crypto/base58";
-import { BASE64 } from "../../src/crypto/base64";
-import {EcdsaSigner} from "../../src/crypto/ecdsasigner"
-import { HDKey } from "../../src/crypto/hdkey"
-import { Mnemonic } from "../../src/mnemonic";
-
-
+import { Base58, BASE64, EcdsaSigner, HDKey, Mnemonic } from "../../dist/did";
 
 describe('ECSDA Signer Tests', () => {
 	let plain: string = "The quick brown fox jumps over the lazy dog.";
@@ -146,8 +140,8 @@ describe('ECSDA Signer Tests', () => {
 
 		expect(response).toBeTruthy()
 	});
-	
-	
+
+
 	test('Verify signature is not valid', () => {
 
 		let modSig = Buffer.from(sig);
@@ -169,19 +163,19 @@ describe('ECSDA Signer Tests', () => {
 
 		expect(response).toBeFalsy()
 	});
-	
+
 
 	test('Compatibility', () =>{
 		let input = 'abcdefghijklmnopqrstuvwxyz';
 		let pkBase58 = 'voHKsUjoPSJSQKWLJHWYzUfEv3NEaRUyJReoZVS6XCYM';
 		let expectedSig1 = "SlDq9rsEQJgS83ydi2cPMiwXm6SgJCuwYwx_NqpOwf5IQcbfUM574GHThnvJ5lgTeyeOwVcxbWyQxehlK3MO-A";
 		let expectedSig2 = "gm4Bx8ijQjBEFsf1Cm1mHcqSzFHquoQe235uzL3OUDJiIuFnJ49lEWn0RueIfgCZbrDEhLdxKSaNYqnBpjiR6A";
-		
+
 
 		let pkBytes = Base58.decode(pkBase58);
 
 		var sigToTest = Buffer.from(BASE64.toHex(expectedSig1), "hex")
-		
+
 		let isSig1Valid = EcdsaSigner.verifyData(pkBytes , sigToTest, Buffer.from(input, "utf-8"))
 		expect(isSig1Valid).toBeTruthy()
 

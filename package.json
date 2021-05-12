@@ -6,11 +6,12 @@
     "build": "npm run clean && npm run types && rollup -c",
     "dev": "rollup -c -w",
     "clean": "rm -rf dist/ typings/",
+    "clean:tests": "rm -rf public/tests",
     "types": "npm run clean && tsc --emitDeclarationOnly --outDir typings/ --project tsconfig.types.json",
     "tsc:build": "rollup -c",
     "tsc:w": "tsc -w",
     "test:node": "jest --config jest.node.config.ts",
-    "test:browser": "rollup -c rollup.browsertests.config.js"
+    "test:browser": "npm run clean:tests && rollup -c rollup.browsertests.config.js"
   },
   "main": "dist/index.js",
   "module": "todo",
@@ -73,6 +74,7 @@
     "rollup-plugin-analyzer": "^4.0.0",
     "rollup-plugin-copy-assets": "^2.0.3",
     "rollup-plugin-css-only": "^3.1.0",
+    "rollup-plugin-multi-input": "^1.2.0",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "rollup-plugin-polyfill-node": "^0.6.2",

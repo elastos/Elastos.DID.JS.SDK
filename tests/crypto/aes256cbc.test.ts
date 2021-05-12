@@ -20,10 +20,7 @@
  * SOFTWARE.
  */
 
-import {Aes256cbc} from "../../src/crypto/aes256cbc"
-import {BASE64} from "../../src/crypto/base64"
-
-
+import { Aes256cbcBASE64,  } from "../../dist/did"
 
 describe('Aes256cbc Encryption Tests', () => {
 	const passwd: string = "secret";
@@ -34,36 +31,36 @@ describe('Aes256cbc Encryption Tests', () => {
 		let cipherResult: Buffer = Aes256cbc.encrypt(Buffer.from(plain, "utf-8"), passwd)
 		let base64: string = BASE64.fromUrlFormat(cipherBase64u)
 		let base64Buffer: Buffer = Buffer.from(base64, "base64")
-		
+
 		expect(cipherResult)
 		.toStrictEqual(base64Buffer)
 	});
-	
+
 	test('decrypt method', () => {
 		let base64: string = BASE64.fromUrlFormat(cipherBase64u)
 		let base64Buffer: Buffer = Buffer.from(base64, "base64")
 		let expectedBuffer: Buffer = Buffer.from(plain, "utf-8")
 		let decipherResult: Buffer = Aes256cbc.decrypt(base64Buffer, passwd)
-		
-		
+
+
 		expect(decipherResult)
 		.toStrictEqual(expectedBuffer)
 	});
-	
+
 	test('encryptToBase64 method', () => {
 		let cipherResult = Aes256cbc.encryptToBase64( Buffer.from(plain, "utf-8"), passwd)
 		expect(cipherResult)
 		.toBe(cipherBase64u);
 	});
-	
+
 	test('decryptFromBase64 method', () => {
 		let decipherResult = Aes256cbc.decryptFromBase64(cipherBase64u, passwd)
 		expect(decipherResult.toString("utf-8"))
 		.toBe(plain);
 	});
-	
+
 	test('Compatibility', () => {
-		
+
 		let cipherResult = Aes256cbc.encryptToBase64(Buffer.from("brown bear what do you see", "utf-8"), "password")
 		expect(cipherResult)
 		.toBe("uK7mHw5JHRD2WS-BmA2b_4mUPD9WhttY9uAC_aw9Tdc");

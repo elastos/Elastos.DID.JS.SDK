@@ -149,7 +149,7 @@
 }
  */
 
-import { HDKey } from "../../src/crypto/hdkey"
+import { HDKey } from "../../dist/did";
 
 describe('HDKey Tests', () => {
 	

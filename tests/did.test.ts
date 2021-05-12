@@ -20,12 +20,13 @@
  * SOFTWARE.
  */
 
-import { DID } from "../src/did";
+import { DID } from "../dist/did";
 
 describe('DID Tests', () => {
 	const testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
 	const testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-	let did:DID;
+	let did: DID;
+
 	beforeAll(() => {
 		did = new DID(testDID);
 	});

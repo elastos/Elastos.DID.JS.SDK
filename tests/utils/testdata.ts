@@ -20,16 +20,15 @@
  * SOFTWARE.
  */
 
+//import type { JSONObject, JSONValue } from "../../dist/did";
 import {
 	DIDDocument, DIDStore, Mnemonic, RootIdentity,
-	VerifiableCredential, VerifiablePresentation, TransferTicket, Issuer, DIDURL, DID, Exceptions
-} from "../../src/index";
-import { File } from "../../src/filesystemstorage";
+	VerifiableCredential, VerifiablePresentation,
+	TransferTicket, Issuer, DIDURL, DID, Exceptions,
+	File, HDKey, JSONObject, JSONValue
+} from "../../dist/did";
 import { TestConfig } from "./testconfig";
-import { Utils } from "./utils";
-import { HDKey } from "../../src/crypto/hdkey";
-import { readdir } from "fs";
-import { JSONObject, JSONValue } from "../../src/json";
+
 export class TestData {
 	// HDKey for temporary key generation
 	private static rootKey: HDKey;
@@ -200,7 +199,7 @@ export class CompatibleData {
 			let kfs = this.dirContent(this.dataPath).filter((fileName: string, index: number, array: string []) => {
 				return fileName.startsWith(did + ".id.") && fileName.endsWith(".sk");
 			});
-			
+
 			for (let kf of kfs) {
 				let start = did.length + 4;
 				let end = kf.length - 3;

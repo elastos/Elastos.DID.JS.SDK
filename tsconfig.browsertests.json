@@ -1,6 +1,5 @@
 {
-  "include": ["./didurl.test.ts"],
-  "exclude": ["node_modules", "tests", "data", "dist", "dist.esm"],
+  "include": ["./tests/*.ts"],
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
@@ -21,7 +20,7 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "rootDirs": ["."],
-    "typeRoots": ["../node_modules/@types"],
+    "typeRoots": ["./node_modules/@types"],
     "types": [
       "jest"
     ]

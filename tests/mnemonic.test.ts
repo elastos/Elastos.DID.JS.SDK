@@ -21,8 +21,8 @@
  */
 
 
-import { RootIdentity } from "../src";
-import { Mnemonic } from "../src/mnemonic";
+import { RootIdentity, Mnemonic } from "../dist/did";
+
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
 
@@ -33,7 +33,7 @@ describe('Mnemonic Tests', () => {
 	beforeEach(()=>{
 		//testData = new TestData();
 	})
-	
+
 	afterEach(()=>{
 		//testData.cleanup();
 	});

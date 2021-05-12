@@ -1,4 +1,4 @@
-import { DIDURLParser, DIDURLValues } from "../src/parser/DIDURLParser"
+import { DIDURLParser, DIDURLValues } from "../dist/did"
 
 describe('DIDURL Tests', () => {
 	let testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";

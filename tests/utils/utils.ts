@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { File } from "../../src/filesystemstorage";
+import { File } from "../../dist/did";
 
 /* declare global {
     interface Array<T> {
@@ -152,19 +152,19 @@ export function assertArrayEquals(array1: any[], array2: any[]) {
 }
 
 export function assertNotNull(obj: any) {
-	checkArgument(obj != null, "Should not be null");	
+	checkArgument(obj != null, "Should not be null");
 }
 
 export function assertNull(obj: any) {
-	checkArgument(!obj || obj == null, "Should be null");	
+	checkArgument(!obj || obj == null, "Should be null");
 }
 
 export function assertTrue(equality: boolean) {
-	checkArgument(equality, "Should be true");	
+	checkArgument(equality, "Should be true");
 }
 
 export function assertEquals(expected: any, value: any) {
-	checkArgument(expected == value, "Should be equal");	
+	checkArgument(expected == value, "Should be equal");
 }
 
 function checkArgument(condition: boolean, errorMessage: string) {

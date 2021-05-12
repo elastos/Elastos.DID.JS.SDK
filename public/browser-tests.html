@@ -1,5 +1,6 @@
 <html>
     <head>
+        <base href="http://localhost:10001/"/>
           <link rel="stylesheet" href="http://unpkg.com/jest-lite@1.0.0-alpha.4/dist/prettify.css"/>
           <style>
             html, body {
@@ -53,11 +54,21 @@
     <script src="http://unpkg.com/jest-lite@1.0.0-alpha.4/dist/prettify.js"></script>
     <script>
       // Define jest methods needed by our tests here, before loading the tests file.
-      const {describe, it, expect, run, beforeEach, test } = window.jestLite.core;
+      const {describe, it, expect, run, beforeAll, afterAll, beforeEach, afterEach, test } = window.jestLite.core;
     </script>
     <!-- Load our test library -->
-    <script src="http://localhost:10001/public/tests/did.browser.tests.js"></script>
-    <script>
+    <!-- <script src="http://localhost:10001/public/tests/did.browser.tests.js"></script> -->
+    <script type="module" src="public/tests/tests/rootidentity.test.js"></script>
+    <script type="module" src="public/tests/tests/didurl.test.js"></script>
+    <script type="module" src="public/tests/tests/diddocument.test.js"></script>
+    <script type="module" src="public/tests/tests/didurlparser.test.js"></script>
+    <script type="module" src="public/tests/tests/did.test.js"></script>
+    <script type="module" src="public/tests/tests/didstore.test.js"></script>
+    <script type="module" src="public/tests/tests/mnemonic.test.js"></script>
+    <script type="module" src="public/tests/tests/issuer.test.js"></script>
+    <script type="module" src="public/tests/tests/verifiablecredential.test.js"></script>
+    <script type="module" src="public/tests/tests/verifiablepresentation.test.js"></script>
+    <script type="module">
       // Run the tests, gather and display the output in the browser.
       let result = run();
       window.jestLite.prettify.toHTML(result, document.body);
