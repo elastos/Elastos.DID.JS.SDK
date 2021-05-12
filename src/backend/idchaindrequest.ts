@@ -23,6 +23,7 @@
 import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonValue, JsonSetter } from "jackson-js";
 import { Class } from "../class";
 import { Constants } from "../constants";
+import { BASE64 } from "../crypto/base64";
 import { DID } from "../did";
 import { DIDDocument } from "../diddocument";
 import { DIDEntity } from "../didentity";
@@ -273,7 +274,7 @@ export namespace IDChainRequest {
 
 			if (ticket) {
 				let json = ticket.toString(true);
-				header.ticket = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(json));
+				header.ticket = BASE64.fromString(json);
 				header.transferTicket = ticket;
 			}
 
@@ -300,7 +301,7 @@ export namespace IDChainRequest {
 		private setTicket(ticket: string) {
 			checkArgument(ticket != null && ticket !== "", "Invalid ticket");
 
-			let json = CryptoJS.enc.Base64.parse(ticket).toString();
+			let json = BASE64.toString(ticket)
 			try {
 				this.transferTicket = TransferTicket.parseContent(json);
 			} catch (e) {

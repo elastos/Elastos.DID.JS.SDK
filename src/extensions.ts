@@ -1,4 +1,6 @@
 import { Comparable } from "./comparable";
+import { BASE64 } from "./crypto/base64";
+import { SHA256 } from "./crypto/sha256";
 
 /*
  * All classes extensions for the project are listed here.
@@ -73,17 +75,17 @@ String.prototype.getBytes = function() {
 } */
 
 String.prototype.base64Decode = function() {
-    return CryptoJS.enc.Base64.parse(this).toString();
+    return BASE64.toString(this);
 }
 
 String.prototype.base64Encode = function() {
     // TODO: check this, I have the feeling this will not work. Why parse as "utf8"? we don't know what the string is
     // ... Maybe need to find something better than CryptoJS for this
-    return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(this));
+    return BASE64.fromString(this)
 }
 
 String.prototype.sha256 = function() {
-    return CryptoJS.SHA256(this).toString();
+    return SHA256.encodeToString(Buffer.from(this, "utf-8"))
 }
 
 Boolean.prototype.hashCode = function() {

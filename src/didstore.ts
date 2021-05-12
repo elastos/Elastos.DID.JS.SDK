@@ -47,6 +47,8 @@ import { ConflictHandle } from "./conflicthandle";
 import { DefaultConflictHandle } from "./defaultconflicthandle";
 import { DIDStoreMetadata } from "./didstoremetadata";
 import { Buffer } from "./buffer";
+import { md5 } from "./crypto/md5";
+import { BASE64 } from "./crypto/base64";
 
 /**
  * DIDStore is local store for all DIDs.
@@ -117,12 +119,12 @@ import { Buffer } from "./buffer";
 		}
 
 		private static calcFingerprint(password: string): string {
-			let passwordDigest = CryptoJS.MD5(password).toString();
+			let passwordDigest = md5(Buffer.from(password)).toString()
 
 			try {
 				let cipher = Aes256cbc.encrypt(Buffer.from(passwordDigest, "utf-8"), password);
-				let digest = CryptoJS.MD5(cipher.toString("utf-8"));
-				return CryptoJS.enc.Hex.stringify(digest);
+				let digest =  Buffer.from(md5(cipher));
+				return digest.toString("hex");
 			} catch (e) {
 				// CryptoException
 				throw new DIDStoreCryptoException("Calculate fingerprint error.", e);
@@ -961,7 +963,7 @@ import { Buffer } from "./buffer";
 			key = null;
 
 			// TODO: check this! not sure buffer.toString() is what we need here, beware the encodings...
-			return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Hex.parse(sig.toString()));
+			return BASE64.fromHex(sig.toString("hex"))
 		}
 
 		/**

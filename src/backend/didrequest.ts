@@ -21,6 +21,7 @@
  */
 
 import { JsonCreator } from "jackson-js";
+import { BASE64 } from "../crypto/base64";
 import { DID } from "../did";
 import { DIDDocument } from "../diddocument";
 import { DIDURL } from "../didurl";
@@ -220,8 +221,8 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 
 			if (!this.getHeader().getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
 				let json = this.doc.toString(true);
-
-				this.setPayload(CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(json)));
+				let jsonBuffer = Buffer.from(json, "utf-8")
+				this.setPayload(BASE64.fromString(jsonBuffer.toString()));
 			} else {
 				super.setPayload(this.doc.getSubject().toString());
 			}
@@ -269,7 +270,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 
 		try {
 			if (!header.getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
-				let json = CryptoJS.enc.Base64.parse(payload).toString();
+				let json = BASE64.toString(payload)
 				this.doc = DIDDocument.parse(json, DIDDocument);
 				this.did = this.doc.getSubject();
 			} else {
