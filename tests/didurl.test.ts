@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+console.log("window", window)
+
+
 //import { DID, DIDURL } from "../src";
 import { DID, DIDURL, DIDStore } from "../dist/did";
 
@@ -47,7 +50,7 @@ describe('DIDURL Tests', () => {
 	})
 
 
-	 
+
 
 
 	test('Test Constructor with Canonical URL', () => {
@@ -124,7 +127,7 @@ describe('DIDURL Tests', () => {
 
 
 	test('Test Constructor Error 1', () => {
-		
+
 		expect(DIDURL.newWithUrl("did:elastos:1234567890;" + params + path + query + fragment)).toThrow("");
 	})
 
