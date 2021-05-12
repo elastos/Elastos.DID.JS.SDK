@@ -1,0 +1,68 @@
+<html>
+    <head>
+          <link rel="stylesheet" href="http://unpkg.com/jest-lite@1.0.0-alpha.4/dist/prettify.css"/>
+          <style>
+            html, body {
+              margin: 0;
+              height: 100%;
+              background: #222;
+            }
+            h1 {
+              color:white;
+            }
+            .jest-lite-report {
+                height:auto;
+                min-height:100%;
+                font-size: 12px;
+            }
+            .jest-lite-report__status--pass {
+                background: var(--color-pass);
+            }
+          </style>
+        <!-- <script type="module">
+            console.log("Starting / imports");
+            import { DIDStore, Mnemonic, RootIdentity } from "http://localhost:10001/dist/es/did.browser.js";
+
+            console.log("Calling DID methods")
+            let store = DIDStore.open("root-path");
+            console.log("Store: ", store);
+
+            let passphrase = "mypassphrase";
+            let storepass = "mystorepass";
+            let mnemonic = new Mnemonic().generate();
+	    	let identity = RootIdentity.createFromMnemonic(mnemonic, passphrase, store, storepass, true);
+
+            let alias = "myalias";
+            let doc = identity.newDid(storepass);
+		    doc.getMetadata().setAlias(alias);
+		    let issuer = new Issuer(doc);
+		    let cb = issuer.issueFor(doc.getSubject());
+		    let vc = cb.id("#cred-1")
+				.type("BasicProfileCredential", "SelfProclaimedCredential")
+				.properties(props)
+				.seal(TestConfig.storePass);
+
+		    store.storeCredential(vc);
+        </script> -->
+    </head>
+    <body>
+      <h1>DID SDK - Browser tests</h1>
+    </body>
+
+    <script src="http://unpkg.com/jest-lite@1.0.0-alpha.4/dist/core.js"></script>
+    <script src="http://unpkg.com/jest-lite@1.0.0-alpha.4/dist/prettify.js"></script>
+    <script>
+      // Define jest methods needed by our tests here, before loading the tests file.
+      const {describe, it, expect, run, beforeEach, test } = window.jestLite.core;
+    </script>
+    <!-- Load our test library -->
+    <script src="http://localhost:10001/public/tests/did.browser.tests.js"></script>
+    <script>
+      // Run the tests, gather and display the output in the browser.
+      let result = run();
+      window.jestLite.prettify.toHTML(result, document.body);
+
+      // Display results in the console.
+      result.then((r)=>{console.log("Raw test results:", r);});
+    </script>
+</html>

@@ -39,3 +39,4 @@ package-lock.json
 
 .jscramblerrc
 appdid
+public/tests/

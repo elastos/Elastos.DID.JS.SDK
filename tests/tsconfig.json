@@ -1,6 +1,29 @@
 {
-    "extends": "../tsconfig.json",
-    "compilerOptions": {
-      "isolatedModules": false
-    },
+  "include": ["./didurl.test.ts"],
+  "exclude": ["node_modules", "tests", "data", "dist", "dist.esm"],
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "lib": ["es2017", "es7", "es6", "dom"],
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "emitDeclarationOnly": false,
+    "sourceMap": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "emitDecoratorMetadata": true,
+    "removeComments": true,
+    "isolatedModules": false,
+    "preserveConstEnums": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "rootDirs": ["."],
+    "typeRoots": ["../node_modules/@types"],
+    "types": [
+      "jest"
+    ]
   }
+}

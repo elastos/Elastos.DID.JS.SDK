@@ -20,12 +20,7 @@
  * SOFTWARE.
  */
 
-console.log("window", window)
-
-
-//import { DID, DIDURL } from "../src";
 import { DID, DIDURL, DIDStore } from "../dist/did";
-
 
 const verifyNewDidCreation = (valueToValidate: string) =>{
 	let url: DIDURL = DIDURL.newWithDID(null, valueToValidate);
@@ -43,15 +38,10 @@ describe('DIDURL Tests', () => {
 	let did: DID;
 	let url: DIDURL;
 
-
 	beforeEach(()=>{
 		did = new DID(testDID);
 		url = DIDURL.newWithUrl(testURL);
 	})
-
-
-
-
 
 	test('Test Constructor with Canonical URL', () => {
 
