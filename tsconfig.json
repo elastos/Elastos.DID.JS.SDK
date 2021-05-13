@@ -16,7 +16,7 @@
     "strictNullChecks": false,
     "emitDecoratorMetadata": true,
     "removeComments": true,
-    "isolatedModules": true,
+    "isolatedModules": false,
     "preserveConstEnums": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,

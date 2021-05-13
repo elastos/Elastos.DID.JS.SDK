@@ -44,7 +44,8 @@ export class TestData {
 
 	public constructor() {
 		TestConfig.initialize();
-    	(new File(TestConfig.storeRoot)).delete();
+		if (File.exists(TestConfig.storeRoot))
+    		(new File(TestConfig.storeRoot)).delete();
 		this.store = DIDStore.open(TestConfig.storeRoot);
 	}
 

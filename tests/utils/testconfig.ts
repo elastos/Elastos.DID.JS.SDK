@@ -22,9 +22,11 @@
 
 //import testConfig from "../assets/test.config.json";
 
-import {join} from "path";
+import { join } from "path";
 import { File, Exceptions } from "../../dist/did";
 const ParentException = Exceptions.ParentException;
+
+import testConfigFile from "../assets/test.config.json";
 
 export class TestConfig {
 
@@ -53,7 +55,11 @@ export class TestConfig {
 		this.passphrase = testConfig.mnemnoic.passphrase;
 		this.storePass = testConfig.store.pass;
 
-		this.tempDir = join(__dirname, "../..", "generated", "tmp");  //testConfig.temp.dir;
+		if (window) // browser
+			this.tempDir = "/generated/tmp"; // TODO: does this actually work in browser ?
+		else // nodejs
+			this.tempDir = join(__dirname, "../..", "generated", "tmp");
+
 		this.storeRoot = testConfig.store.root || this.tempDir + "/DIDStore";
 
 		this.walletDir = testConfig.wallet.dir;
@@ -68,10 +74,6 @@ export class TestConfig {
 	}
 
 	private static loadConfiguration(configFile: string): any {
-		let testConfigFile = new File(TestConfig.TEST_CONFIG_FILE);
-		if (!testConfigFile.exists()) {
-			throw new ParentException("Cannot load test configuration file '" + TestConfig.TEST_CONFIG_FILE + "'");
-		}
-		return JSON.parse(testConfigFile.readText());
+		return testConfigFile;
 	}
 }

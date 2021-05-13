@@ -1,4 +1,7 @@
+import BrowserFS from "browserfs";
 import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, writeFileSync } from "fs";
+import fs from "fs";
+import path from "path";
 
 /**
  * Internal class mimicing Java File class in order to reduce the divergence with Java implementation
@@ -7,7 +10,6 @@ import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rm
  * implementation as we can until this SDK is totally stable.
  */
 
- import BrowserFS from "browserfs";
  BrowserFS.configure({
 	fs: "LocalStorage",
 	options: {}
@@ -15,8 +17,10 @@ import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rm
 	if (e) {
 		throw e;
 	}
+	else {
+		console.log("BrowserFS initialization complete");
+	}
 });
-
 
  export class File { // Exported, for test cases only
 	public static SEPARATOR = "/";
@@ -161,8 +165,28 @@ import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rm
 	public createDirectory(overwrite?: boolean) {
 		let replace = overwrite ? overwrite : false;
 		if (!this.exists() || replace) {
-			mkdirSync(this.fullPath, { "recursive": true });
+			//mkdirSync(this.fullPath, { "recursive": true });
+			this.mkdirpath(this.fullPath);
 			this.fileStats = undefined;
+		}
+	}
+
+	/**
+	 * Internal reimplementation of mkdir because even if nodejs now has a "resursive" option,
+	 * browserfs localstorage driver doesn't.
+	 */
+	private mkdirpath(dirPath: string)
+	{
+		if(!fs.existsSync(dirPath)){
+			try
+			{
+				fs.mkdirSync(dirPath);
+			}
+			catch(e)
+			{
+				this.mkdirpath(path.dirname(dirPath));
+				this.mkdirpath(dirPath);
+			}
 		}
 	}
 
@@ -172,12 +196,33 @@ import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rm
 	public delete() {
 		if (this.exists()) {
 			if (this.isDirectory())
-				rmdirSync(this.fullPath, { recursive: true });
+				this.deleteDirectory(this.fullPath);
+				//rmdirSync(this.fullPath, { recursive: true });
 			else
 				console.error("TODO NOT IMPLEMENTED FROM JAVA - rmSync"); //rmSync(this.fullPath, { recursive: true, force: true });
 			this.fileStats = undefined;
 		}
 	}
+
+	/**
+	 * Internal reimplementation of rmdir because even if nodejs now has a "resursive" option,
+	 * browserfs localstorage driver doesn't.
+	 */
+	private deleteDirectory(directoryPath: string) {
+		if (fs.existsSync(directoryPath)) {
+			fs.readdirSync(directoryPath).forEach((file, index) => {
+			  const curPath = path.join(directoryPath, file);
+			  if (fs.lstatSync(curPath).isDirectory()) {
+			   	// recurse
+				this.deleteDirectory(curPath);
+			  } else {
+				// delete file
+				fs.unlinkSync(curPath);
+			  }
+			});
+			fs.rmdirSync(directoryPath);
+		  }
+		};
 
 	public toString() {
 		return this.fullPath;

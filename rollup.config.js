@@ -18,6 +18,7 @@ import replace from '@rollup/plugin-replace';
 import globals from 'rollup-plugin-node-globals';
 import alias from "@rollup/plugin-alias";
 import inject from "@rollup/plugin-inject";
+import size from 'rollup-plugin-size';
 
 const commitHash = (function () {
 	try {
@@ -86,7 +87,8 @@ const nodePlugins = [
 		include: 'node_modules/**',
 
 	}),
-	typescript({})
+	typescript({}),
+	size()
 ];
 
 export default command => {
@@ -249,6 +251,7 @@ export default command => {
 			inject({
 				"BrowserFS": "browserfs"
 			}),
+			size()
 			// LATER terser({ module: true, output: { comments: 'some' } }),
 			/* serve({ // For temporary local html debug in browser
 				contentBase:'',
