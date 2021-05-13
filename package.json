@@ -11,6 +11,7 @@
     "tsc:build": "rollup -c",
     "tsc:w": "tsc -w",
     "test:node": "jest --config jest.node.config.ts",
+    "test:node:debug": "node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
     "test:browser": "npm run clean:tests && rollup -c rollup.browsertests.config.js"
   },
   "main": "dist/index.js",
