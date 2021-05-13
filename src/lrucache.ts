@@ -43,7 +43,7 @@ export type LRUCacheItem<K, V> = {
   meta?: LRUCacheMeta
 }
 
-export class LRUCache<K, V> {
+export class LRUCache<K extends Hashable | string, V> {
   private options: LRUCacheOptions<K, V>;
     private count: number = 0;
     private items: Map<string, LRUCacheItem<K, V>> = new Map();
@@ -103,14 +103,12 @@ export class LRUCache<K, V> {
       return item;
     }
 
-    private getHash(key: K): string {
+    // TODO : K should be of a single interface. Having both string and Hashable as possible types
+    private getHash(key: string | Hashable): string {
       if (typeof key === "string"){
         return key;
       }
-      if (key.hasOwnProperty('hashCode')) {
-        return (key as unknown as Hashable).hashCode().toString();
-      }
-      throw new IllegalArgumentException("Argument type is not hashable: " + typeof key);
+      return key.hashCode().toString();
     }
 
     public get(key: K, localLoader?: Loadable<K,V>): V {
