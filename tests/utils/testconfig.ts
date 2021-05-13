@@ -22,7 +22,7 @@
 
 //import testConfig from "../assets/test.config.json";
 
-import path from "path";
+import {join} from "path";
 import { File, Exceptions } from "../../dist/did";
 const ParentException = Exceptions.ParentException;
 
@@ -53,7 +53,7 @@ export class TestConfig {
 		this.passphrase = testConfig.mnemnoic.passphrase;
 		this.storePass = testConfig.store.pass;
 
-		this.tempDir = path.join(__dirname, "../..", "generated", "tmp");  //testConfig.temp.dir;
+		this.tempDir = join(__dirname, "../..", "generated", "tmp");  //testConfig.temp.dir;
 		this.storeRoot = testConfig.store.root || this.tempDir + "/DIDStore";
 
 		this.walletDir = testConfig.wallet.dir;

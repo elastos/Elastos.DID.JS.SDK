@@ -3,7 +3,7 @@ import typescript from '@rollup/plugin-typescript';
 import serve from 'rollup-plugin-serve';
 import replace from '@rollup/plugin-replace';
 import alias from "@rollup/plugin-alias";
-//import commonJs from "@rollup/plugin-commonjs";
+import commonJs from "@rollup/plugin-commonjs";
 import multiInput from 'rollup-plugin-multi-input';
 import json from '@rollup/plugin-json';
 import globals from 'rollup-plugin-node-globals';
@@ -17,6 +17,7 @@ export default [
             dir: 'public/tests',
             format: 'es',
             sourcemap: true,
+            intro: "var __dirname = '/';"
         },
         //inlineDynamicImports: true
         //external: [],
@@ -40,7 +41,9 @@ export default [
                 preferBuiltins: false
             }),
             alias({
-				"entries": [
+                include: [".js, *.ts"],
+				entries: [
+                    { find: "path", replacement: "path-browserify" },
                     /* { "find": "process", "replacement": "process-es6" },
                     { "find": "fs", "replacement": "./tests/empty.ts" },
                     { "find": "stream", "replacement": "./tests/empty.ts" } */
@@ -63,10 +66,10 @@ export default [
             typescript({
                 tsconfig: "./tsconfig.browsertests.json" // Custom config to build only tests/ files
             }),
-            /* commonJs({
+            commonJs({
                 esmExternals: true,
                 transformMixedEsModules: true
-            }), */
+            }),
             globals({
                 include: 'tests/**/*.ts'
             }), // Defines fake values for nodejs' "process", etc.

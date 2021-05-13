@@ -69,6 +69,7 @@
     "jest": "^26.6.3",
     "jest-environment-node": "^26.6.2",
     "jest-lite": "^1.0.0-alpha.4",
+    "path-browserify": "^1.0.1",
     "rollup": "^2.47.0",
     "rollup-plugin-analyzer": "^4.0.0",
     "rollup-plugin-copy-assets": "^2.0.3",

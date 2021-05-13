@@ -11,7 +11,7 @@ import typescript from "@rollup/plugin-typescript";
 import emitModulePackageFile from './build-plugins/emit-module-package-file.js';
 //import replaceBrowserModules from './build-plugins/replace-browser-modules.js';
 import pkg from './package.json';
-import serve from 'rollup-plugin-serve';
+//import serve from 'rollup-plugin-serve';
 //import nodePolyfills from 'rollup-plugin-node-polyfills';
 //import nodePolyfills from 'rollup-plugin-polyfill-node'; // Latest maintained version with fixes for the FS polyfills and others, from snowpackjs team.
 import replace from '@rollup/plugin-replace';
@@ -213,7 +213,7 @@ export default command => {
 			}),
 			alias({
 				"entries": [
-					{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
+					//{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
 					{ "find": "process", "replacement": "process-es6" },
 					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
 					{ "find": "path", "replacement": "browserfs/dist/shims/path" },
