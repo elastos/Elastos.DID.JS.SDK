@@ -480,7 +480,7 @@ export namespace RootIdentity {
 		protected save() {
 			if (this.attachedStore()) {
 				try {
-					this.getStore()?.storeRootIdentityMetadata(this.id, this);
+					this.getStore().storeRootIdentityMetadata(this.id, this);
 				} catch (e) {
 					if (e instanceof DIDStoreException)
 						log.error("INTERNAL - error store metadata for credential {}", this.id);

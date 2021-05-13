@@ -63,16 +63,16 @@ export default [
 					{ "find": "assert", "replacement": "node_modules/assert/build/assert.js" } */
 				]
 			}),
-            typescript({
-                tsconfig: "./tsconfig.browsertests.json" // Custom config to build only tests/ files
-            }),
             commonJs({
-                esmExternals: true,
+                //esmExternals: true,
                 transformMixedEsModules: true
             }),
             globals({
-                include: 'tests/**/*.ts'
+                //include: 'tests/**/*.ts'
             }), // Defines fake values for nodejs' "process", etc.
+            typescript({
+                tsconfig: "./tsconfig.browsertests.json" // Custom config to build only tests/ files
+            }),
             // Serve the generated tests JS file to be ran from the browser
             serve({
                 contentBase: '',

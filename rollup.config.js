@@ -167,10 +167,10 @@ export default command => {
 		plugins: [
 			// IMPORTANT: DON'T CHANGE THE ORDER OF THINGS BELOW TOO MUCH! OTHERWISE YOU'LL GET
 			// GOOD HEADACHES WITH RESOLVE ERROR, UNEXPORTED CLASSES AND SO ON...
-
 			json(),
 			//collectLicenses(),
 			//writeLicense(),
+			// Dirty circular dependency removal atttempt
 			replace({
 				delimiters: ['', ''],
 				preventAssignment: true,
@@ -213,7 +213,7 @@ export default command => {
 			}),
 			alias({
 				"entries": [
-					{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
+					{ "find": "buffer", "replacement": "buffer-es6" },
 					{ "find": "process", "replacement": "process-es6" },
 					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
 					{ "find": "path", "replacement": "browserfs/dist/shims/path" },
@@ -224,28 +224,28 @@ export default command => {
 					{ "find": "string_decoder/", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
 					{ "find": "string_decoder", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
 					{ "find": "events", "replacement": "node_modules/events/events.js" },
-					{ "find": "assert", "replacement": "node_modules/assert/build/assert.js" }
+					{ "find": "asse	rt", "replacement": "node_modules/assert/build/assert.js" }
 				]
 			}),
 			resolve({
 				mainFields: ['browser', 'jsnext:main', 'main'],
 				browser: true,
-				preferBuiltins: false,
+				preferBuiltins: true,
 			}),
 			// Polyfills needed to replace readable-stream with stream (circular dep)
 			commonjs({
-				//esmExternals: true,
+				esmExternals: true,
 				//requireReturnsDefault: "true", // "true" will generate build error: TypeError: Cannot read property 'deoptimizePath' of undefined
 				//requireReturnsDefault: "auto", // namespace, true, false, auto, preferred
 				transformMixedEsModules: true, // TMP trying to solve commonjs "circular dependency" errors at runtime
 				dynamicRequireTargets: [],
 			}),
+			globals(), // Defines process, Buffer, etc
 			typescript(),
 			/* nodePolyfills({
 				stream: true
 				// crypto:true // Broken, the polyfill just doesn't work. We have to use crypto-browserify directly in our TS code instead.
 			}), */ // To let some modules bundle NodeJS stream, util, fs ... in browser
-			globals(), // Defines fake values for nodejs' "process", etc.
 			inject({
 				"BrowserFS": "browserfs"
 			}),
@@ -272,5 +272,5 @@ export default command => {
 		]
 	};
 
-	return [   commonJSBuild, /* esmBuild,  */ browserBuilds];
+	return [    commonJSBuild,  /* esmBuild,  */ browserBuilds];
 };
