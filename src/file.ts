@@ -1,4 +1,4 @@
-import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, rmSync, statSync, writeFileSync } from "fs";
+import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, writeFileSync } from "fs";
 
 /**
  * Internal class mimicing Java File class in order to reduce the divergence with Java implementation
@@ -172,9 +172,9 @@ import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rm
 	public delete() {
 		if (this.exists()) {
 			if (this.isDirectory())
-				rmdirSync(this.fullPath, { recursive: true });
+				rmdirSync(this.fullPath, /* Java: { recursive: true } */);
 			else
-				rmSync(this.fullPath, { recursive: true, force: true });
+				console.error("TODO NOT IMPLEMENTED FROM JAVA - rmSync"); //rmSync(this.fullPath, { recursive: true, force: true });
 			this.fileStats = undefined;
 		}
 	}

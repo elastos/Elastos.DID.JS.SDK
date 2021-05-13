@@ -25,6 +25,7 @@ import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
 import { Base58 } from './base58'
 import { SHA256 } from "./sha256";
 import { KeyPair } from "./keypair";
+import { Buffer } from "../buffer";
 
 export class HDKey {
 	public static PUBLICKEY_BYTES = 33;
@@ -166,12 +167,12 @@ export class HDKey {
 	}
 
 	// public getJCEKeyPair(): KeyPair{
-		
+
 
 	// 	return new KeyPair("", "")
 	// }
 
-  
+
 
 	private static getRedeemScript(pk: Buffer): Buffer {
 		let script = Buffer.alloc(35)
