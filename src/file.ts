@@ -172,7 +172,7 @@ import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rm
 	public delete() {
 		if (this.exists()) {
 			if (this.isDirectory())
-				rmdirSync(this.fullPath, /* Java: { recursive: true } */);
+				rmdirSync(this.fullPath, { recursive: true });
 			else
 				console.error("TODO NOT IMPLEMENTED FROM JAVA - rmSync"); //rmSync(this.fullPath, { recursive: true, force: true });
 			this.fileStats = undefined;

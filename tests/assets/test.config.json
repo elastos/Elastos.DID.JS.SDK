@@ -19,7 +19,6 @@
         "level": "error"
     },
     "temp": {
-        "_comment_dir": "Default is system temp dir",
-        "dir": "/home/carlduranleau/temp"
+        "_comment_dir": "Default is system temp dir"
     }
 }

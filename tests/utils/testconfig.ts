@@ -21,6 +21,8 @@
  */
 
 //import testConfig from "../assets/test.config.json";
+
+import path from "path";
 import { File, Exceptions } from "../../dist/did";
 const ParentException = Exceptions.ParentException;
 
@@ -43,7 +45,6 @@ export class TestConfig {
 	//public static Level level;
 
 	static initialize() {
-
 		let testConfig = this.loadConfiguration(this.TEST_CONFIG_FILE);
 
 		this.network = testConfig.network
@@ -52,7 +53,7 @@ export class TestConfig {
 		this.passphrase = testConfig.mnemnoic.passphrase;
 		this.storePass = testConfig.store.pass;
 
-		this.tempDir = testConfig.temp.dir;
+		this.tempDir = path.join(__dirname, "../..", "generated", "tmp");  //testConfig.temp.dir;
 		this.storeRoot = testConfig.store.root || this.tempDir + "/DIDStore";
 
 		this.walletDir = testConfig.wallet.dir;
