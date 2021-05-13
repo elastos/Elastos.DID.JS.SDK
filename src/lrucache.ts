@@ -103,7 +103,6 @@ export class LRUCache<K extends Hashable | string, V> {
       return item;
     }
 
-    // TODO : K should be of a single interface. Having both string and Hashable as possible types
     private getHash(key: string | Hashable): string {
       if (typeof key === "string"){
         return key;
