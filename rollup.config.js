@@ -224,7 +224,7 @@ export default command => {
 					{ "find": "string_decoder/", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
 					{ "find": "string_decoder", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
 					{ "find": "events", "replacement": "node_modules/events/events.js" },
-					{ "find": "asse	rt", "replacement": "node_modules/assert/build/assert.js" }
+					{ "find": "assert", "replacement": "node_modules/assert/build/assert.js" }
 				]
 			}),
 			resolve({

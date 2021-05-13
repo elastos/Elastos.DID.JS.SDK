@@ -56,8 +56,16 @@
       // Define jest methods needed by our tests here, before loading the tests file.
       const {describe, it, expect, run, beforeAll, afterAll, beforeEach, afterEach, test } = window.jestLite.core;
     </script>
-    <!-- Load our test library -->
-    <!-- <script src="http://localhost:10001/public/tests/did.browser.tests.js"></script> -->
+
+    <!-- Hack because rollup doesn't seem to be able to use alias() and multiInputs(),
+    resulting in our individual test scripts to not replace Buffer with its browser version.
+    So we use the browserified version of Buffer here with a hack to define globally, for now... -->
+    <script src="https://wzrd.in/standalone/buffer@latest"></script>
+    <script>
+      var Buffer = window.buffer.Buffer
+    </script>
+
+    <!-- Load our tests -->
     <script type="module" src="public/tests/tests/rootidentity.test.js"></script>
     <script type="module" src="public/tests/tests/didurl.test.js"></script>
     <script type="module" src="public/tests/tests/diddocument.test.js"></script>

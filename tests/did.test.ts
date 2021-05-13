@@ -27,7 +27,7 @@ describe('DID Tests', () => {
 	const testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
 	let did: DID;
 
-	beforeAll(() => {
+	beforeEach(() => {
 		did = new DID(testDID);
 	});
 

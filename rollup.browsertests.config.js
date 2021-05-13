@@ -12,18 +12,30 @@ export default [
     {
         //input: 'tests/didstore.test.ts',
         input: ['tests/**/*.ts'],
+        //input: 'tests/crypto/ecdsasigner.test.ts',
         output: {
             //file: 'public/tests/did.browser.tests.js',
             dir: 'public/tests',
             format: 'es',
             sourcemap: true,
-            intro: "var __dirname = '/';"
+            //intro: "var __dirname = '/';"
         },
         //inlineDynamicImports: true
         //external: [],
         plugins: [
             multiInput(),
             json(),
+            // Dirty circular dependency removal atttempt
+			replace({
+				delimiters: ['', ''],
+				preventAssignment: true,
+				include: [
+					'node_modules/assert/build/internal/errors.js'
+				],
+				values: {
+					'require(\'../assert\')': 'null',
+				}
+			}),
             // Replace imports of nodejs DID library in tests, with the browser version
             replace({
                 delimiters: ['', ''],
@@ -37,39 +49,22 @@ export default [
                 }
             }),
             resolve({
+                mainFields: ['browser', 'jsnext:main', 'main'],
                 browser: true,
                 preferBuiltins: false
             }),
-            alias({
-                include: [".js, *.ts"],
-				entries: [
-                    { find: "path", replacement: "path-browserify" },
-                    /* { "find": "process", "replacement": "process-es6" },
-                    { "find": "fs", "replacement": "./tests/empty.ts" },
-                    { "find": "stream", "replacement": "./tests/empty.ts" } */
-					//{ "find": "fs", "replacement": "browserfs/dist/shims/fs" }
-
-                   /*  { "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
-					{ "find": "process", "replacement": "process-es6" },
-					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
-					{ "find": "path", "replacement": "browserfs/dist/shims/path" },
-					{ "find": "crypto", "replacement": "crypto-browserify" },
-					{ "find": "util/", "replacement": "node_modules/util/util.js" },
-					{ "find": "util", "replacement": "node_modules/util/util.js" },
-					{ "find": "stream", "replacement": "./src/browser/stream.js" },
-					{ "find": "string_decoder/", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
-					{ "find": "string_decoder", "replacement": "node_modules/string_decoder/lib/string_decoder.js" },
-					{ "find": "events", "replacement": "node_modules/events/events.js" },
-					{ "find": "assert", "replacement": "node_modules/assert/build/assert.js" } */
-				]
-			}),
             commonJs({
-                //esmExternals: true,
+                esmExternals: true,
                 transformMixedEsModules: true
             }),
-            globals({
-                //include: 'tests/**/*.ts'
-            }), // Defines fake values for nodejs' "process", etc.
+            globals(), // Defines fake values for nodejs' "process", etc.
+            alias({
+                include: [".js",".ts"],
+				entries: [
+                    { find: "buffer", replacement: "buffer-es6" },
+                    { find: "path", replacement: "path-browserify" }
+				]
+			}),
             typescript({
                 tsconfig: "./tsconfig.browsertests.json" // Custom config to build only tests/ files
             }),
@@ -83,20 +78,5 @@ export default [
                 }
             }),
         ]
-    },
-
-    // CommonJS (for Node) and ES module (for bundlers) build.
-    // (We could have three entries in the configuration array
-    // instead of two, but it's quicker to generate multiple
-    // builds from a single configuration where possible, using
-    // an array for the `output` option, where we can specify
-    // `file` and `format` for each target)
-    /* {
-      input: 'src/main.js',
-      external: [],
-      output: [
-        { file: pkg.main, format: 'cjs' },
-        { file: pkg.module, format: 'es' },
-      ],
-    }, */
+    }
 ];
