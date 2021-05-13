@@ -149,7 +149,7 @@
 }
  */
 
-import { HDKey, Buffer } from "../../dist/did";
+import { HDKey } from "../../dist/did";
 
 describe('HDKey Tests', () => {
 

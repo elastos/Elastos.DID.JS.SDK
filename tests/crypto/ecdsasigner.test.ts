@@ -119,7 +119,7 @@
 
 //practice pigeon diagram jeans piano abstract tape cause lounge raise index spy
 
-import { Base58, BASE64, EcdsaSigner, HDKey, Mnemonic, Buffer } from "../../dist/did";
+import { Base58, BASE64, EcdsaSigner, HDKey, Mnemonic } from "../../dist/did";
 
 describe('ECSDA Signer Tests', () => {
 	let plain: string = "The quick brown fox jumps over the lazy dog.";

@@ -19,7 +19,6 @@ import { BASE64 } from "./crypto/base64";
 import { HDKey } from "./crypto/hdkey";
 import { Base58 } from "./crypto/base58";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
-import { Buffer } from "./buffer";
 
 import { JSONObject, JSONValue } from "./json";
 
@@ -52,6 +51,5 @@ export {
 	BASE64,
 	HDKey,
 	Base58,
-	EcdsaSigner,
-	Buffer
+	EcdsaSigner
 }

@@ -87,7 +87,6 @@ import {
 import { TypeSerializerFilter } from "./filters";
 import { JSONObject, JSONValue } from "./json";
 import { StringUtil } from "./stringutil";
-import { Buffer } from "./buffer";
 import { DIDDocumentBuilder } from "./diddocumentbuilder";
 
 class PublicKeySerializerFilter extends PropertySerializerFilter<DID> {

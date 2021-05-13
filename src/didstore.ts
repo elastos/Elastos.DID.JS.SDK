@@ -46,7 +46,6 @@ import { AdvancedString } from "./advancedstring";
 import { ConflictHandle } from "./conflicthandle";
 import { DefaultConflictHandle } from "./defaultconflicthandle";
 import { DIDStoreMetadata } from "./didstoremetadata";
-import { Buffer } from "./buffer";
 import { md5 } from "./crypto/md5";
 import { BASE64 } from "./crypto/base64";
 

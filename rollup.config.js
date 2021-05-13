@@ -213,7 +213,7 @@ export default command => {
 			}),
 			alias({
 				"entries": [
-					//{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
+					{ "find": "buffer", "replacement": "browserfs/dist/shims/buffer" },
 					{ "find": "process", "replacement": "process-es6" },
 					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
 					{ "find": "path", "replacement": "browserfs/dist/shims/path" },
