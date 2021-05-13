@@ -24,7 +24,8 @@ import { DIDMetadata } from "./didmetadata";
 import {
     checkEmpty,
     checkNotNull,
-    isEmpty
+    isEmpty,
+    hashCode
 } from "./utils";
 import { DIDDocument } from "./diddocument";
 import { DIDBackend } from "./didbackend";
@@ -43,8 +44,6 @@ import {
 } from "jackson-js/dist/@types";
 import { IllegalArgumentException } from "./exceptions/exceptions";
 import { DIDURLParser } from "./parser/DIDURLParser";
-import { StringUtil } from "./stringutil";
-
 
 class DIDSerializer extends Serializer {
     public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
@@ -200,7 +199,7 @@ export class DID {
     }
 
     public hashCode(): number {
-        return DID.METHOD.hashCode() + this.methodSpecificId.hashCode();
+        return hashCode(DID.METHOD) + hashCode(this.methodSpecificId);
     }
 
     public equals(obj: Object): boolean {
@@ -224,8 +223,8 @@ export class DID {
     public compareTo(did: DID): number {
         checkNotNull(did, "did is null");
 
-        let rc = StringUtil.compareTo(this.method, did.method);
-        return rc == 0 ? StringUtil.compareTo(this.methodSpecificId, did.methodSpecificId) : rc;
+        let rc = this.method.localeCompare(did.method);
+        return rc == 0 ? this.methodSpecificId.localeCompare(did.methodSpecificId) : rc;
     }
 }
 

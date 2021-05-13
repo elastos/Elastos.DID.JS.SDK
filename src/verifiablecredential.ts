@@ -422,7 +422,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
 		let json = vc.serialize(true);
-		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), json.getBytes()))
+		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json)))
 			return false;
 
 		if (!this.isSelfProclaimed()) {
@@ -505,7 +505,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
 		let json = vc.serialize(true);
-		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), json.getBytes()))
+		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json)))
 			return false;
 
 
@@ -765,7 +765,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public static revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		checkArgument(id != null, "Invalid credential id");
 		checkArgument(signer != null, "Invalid issuer's document");
-		checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+		checkArgument(storepass && storepass != null, "Invalid storepass");
 
 		if (!signer.getMetadata().attachedStore())
 			throw new NotAttachedWithStoreException(signer.getSubject().toString());
@@ -1431,7 +1431,7 @@ export namespace VerifiableCredential {
 			this.sanitize();
 
 			let json = this.credential.serialize(true);
-			let sig = this.issuer.sign(storepass, json.getBytes());
+			let sig = this.issuer.sign(storepass, Buffer.from(json));
 			let proof = new VerifiableCredential.Proof(this.issuer.getSignKey(), sig);
 			this.credential.proof = proof;
 

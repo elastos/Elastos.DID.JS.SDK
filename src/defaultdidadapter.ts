@@ -41,7 +41,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	 * @throws IllegalArgumentException throw this exception if setting resolver url failed.
 	 */
 	public constructor(resolver: string) {
-		checkArgument(resolver != null && !resolver.isEmpty(), "Invalid resolver URL");
+		checkArgument(resolver && resolver != null, "Invalid resolver URL");
 
 		switch (resolver.toLowerCase()) {
 		case "mainnet":
@@ -88,7 +88,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	}
 
 	public resolve(request: string): JSONObject {
-		checkArgument(request != null && !request.isEmpty(), "Invalid request");
+		checkArgument(request && request != null, "Invalid request");
 
 		try {
 			return this.performRequest(this.resolver, request);

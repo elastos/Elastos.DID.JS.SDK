@@ -271,8 +271,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		let json = vp.serialize(true);
 
 		return holderDoc.verify(this.proof.getVerificationMethod(),
-			this.proof.getSignature(), json.getBytes(),
-			this.proof.getRealm().getBytes(), this.proof.getNonce().getBytes());
+			this.proof.getSignature(), Buffer.from(json),
+			Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
 	}
 
 	/**
@@ -321,8 +321,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		let json = vp.serialize(true);
 
 		return holderDoc.verify(this.proof.getVerificationMethod(),
-			this.proof.getSignature(), json.getBytes(),
-			this.proof.getRealm().getBytes(), this.proof.getNonce().getBytes());
+			this.proof.getSignature(), Buffer.from(json),
+			Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
 	}
 
 	/**
@@ -482,7 +482,7 @@ export namespace VerifiablePresentation {
 		 */
 		public realm(realm: string): Builder {
 			this.checkNotSealed();
-			checkArgument(realm != null && !realm.isEmpty(), "Invalid realm");
+			checkArgument(realm && realm != null, "Invalid realm");
 
 			this._realm = realm;
 			return this;
@@ -496,7 +496,7 @@ export namespace VerifiablePresentation {
 		 */
 		public nonce(nonce: string): Builder {
 			this.checkNotSealed();
-			checkArgument(nonce != null && !nonce.isEmpty(), "Invalid nonce");
+			checkArgument(nonce && nonce != null, "Invalid nonce");
 
 			this._nonce = nonce;
 			return this;
@@ -513,7 +513,7 @@ export namespace VerifiablePresentation {
 		 */
 		public seal(storepass: string): VerifiablePresentation  {
 			this.checkNotSealed();
-			checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+			checkArgument(storepass && storepass != null, "Invalid storepass");
 
 			if (this.presentation.type == null || this.presentation.type.length == 0) {
 				this.presentation.type = [];
@@ -527,8 +527,8 @@ export namespace VerifiablePresentation {
 			this.presentation._credentials = Array.from(this.presentation.credentials.values());
 
 			let json = this.presentation.serialize(true);
-			let sig = this.holder.signWithId(this.signKey, storepass, json.getBytes(),
-					this._realm.getBytes(), this._nonce.getBytes());
+			let sig = this.holder.signWithId(this.signKey, storepass, Buffer.from(json),
+					Buffer.from(this._realm), Buffer.from(this._nonce));
 			let proof = new Proof(this.signKey, this._realm, this._nonce, sig);
 			this.presentation.proof = proof;
 

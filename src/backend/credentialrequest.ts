@@ -23,6 +23,7 @@
 import { JsonCreator } from "jackson-js";
 import { DIDDocument } from "../diddocument";
 import { DIDURL } from "../didurl";
+import { base64Decode } from "../utils";
 import {
 	InvalidKeyException,
 	MalformedIDChainRequestException,
@@ -134,7 +135,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			if (this.getHeader().getOperation().equals(IDChainRequest.Operation.DECLARE)) {
 				let json = vc.toString(true);
 
-				this.setPayload(json.base64Encode());
+				this.setPayload(base64Decode(json));
 			} else if (this.getHeader().getOperation().equals(IDChainRequest.Operation.REVOKE)) {
 				this.setPayload(vc.getId().toString());
 			}
@@ -176,7 +177,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 
 		try {
 			if (header.getOperation().equals(IDChainRequest.Operation.DECLARE)) {
-				let json = payload.base64Decode();
+				let json = base64Decode(payload);
 
 				this.vc = VerifiableCredential.parseContent(json);
 				this.id = this.vc.getId();

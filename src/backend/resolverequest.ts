@@ -22,6 +22,7 @@
 
 import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonValue, JsonSetter } from "jackson-js";
 import { Class } from "../class";
+import { hashCode } from "../utils";
 import { DIDEntity } from "../didentity";
 import { Hashable } from "../hashable";
 
@@ -65,7 +66,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
 	}
 
 	public hashCode(): number {
-		return this.method.hashCode() + this.params.hashCode();
+		return hashCode(this.method) + this.params.hashCode();
 	}
 
 	public equals(o: Object): boolean {

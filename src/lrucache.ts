@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+import { is } from "immutable";
+import { IllegalArgumentException } from "./exceptions/exceptions";
 import { Hashable } from "./hashable";
 
 type Loadable<K,V> = (key: K)=>{value: V, meta?: LRUCacheMeta};
@@ -41,7 +43,7 @@ export type LRUCacheItem<K, V> = {
   meta?: LRUCacheMeta
 }
 
-export class LRUCache<K extends Hashable | string, V> {
+export class LRUCache<K, V> {
   private options: LRUCacheOptions<K, V>;
     private count: number = 0;
     private items: Map<string, LRUCacheItem<K, V>> = new Map();
@@ -102,13 +104,13 @@ export class LRUCache<K extends Hashable | string, V> {
     }
 
     private getHash(key: K): string {
-      let hash: string;
-      if (typeof key === "string")
-        hash = key;
-      else
-        hash = ""+key.hashCode();
-
-      return hash;
+      if (typeof key === "string"){
+        return key;
+      }
+      if (key.hasOwnProperty('hashCode')) {
+        return (key as unknown as Hashable).hashCode().toString();
+      }
+      throw new IllegalArgumentException("Argument type is not hashable: " + typeof key);
     }
 
     public get(key: K, localLoader?: Loadable<K,V>): V {

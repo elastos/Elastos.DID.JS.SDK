@@ -303,7 +303,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key: " + signKey);
 
-		if (this.getPayload() == null || this.getPayload().isEmpty())
+		if (!this.getPayload() || this.getPayload() == null)
 			throw new MalformedIDChainRequestException("Missing payload");
 
 		let signature = doc.signWithId(signKey, storepass, ...this.getSigningInputs());

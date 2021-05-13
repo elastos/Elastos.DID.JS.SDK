@@ -26,6 +26,7 @@ import { DID } from "../did";
 import { DIDURL } from "../didurl";
 import { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
+import { hashCode } from "../utils";
 
 @JsonCreator()
 export class CredentialListRequest extends ResolveRequest<CredentialListRequest, Parameters> {
@@ -89,8 +90,8 @@ class Parameters implements Hashable {
 
 	public hashCode(): number {
 		let hash = this.did.hashCode();
-		hash += this.skip.hashCode();
-		hash += this.limit.hashCode();
+		hash += hashCode(this.skip);
+		hash += hashCode(this.limit);
 		return hash;
 	}
 

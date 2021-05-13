@@ -40,7 +40,7 @@ import { DID } from "./did";
 import { DIDURL } from "./didurl";
 import { DIDObject } from "./didobject";
 import { Logger } from "./logger";
-import { checkArgument } from "./utils";
+import { checkArgument, base64Decode } from "./utils";
 import {
     List as ImmutableList,
     Map as ImmutableMap
@@ -86,7 +86,6 @@ import {
 } from "./serializers";
 import { TypeSerializerFilter } from "./filters";
 import { JSONObject, JSONValue } from "./json";
-import { StringUtil } from "./stringutil";
 import { DIDDocumentBuilder } from "./diddocumentbuilder";
 
 class PublicKeySerializerFilter extends PropertySerializerFilter<DID> {
@@ -610,7 +609,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no DID store to get root private key
      */
     public deriveFromIdentifier(identifier: string, securityCode: number, storepass: string): string {
-        checkArgument(identifier != null && !identifier.isEmpty(), "Invalid identifier");
+        checkArgument(identifier && identifier != null, "Invalid identifier");
         this.checkAttachedStore();
         this.checkIsPrimitive();
 
@@ -1042,7 +1041,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 if (pks.has(pk.getId()))
                     throw new MalformedDocumentException("Public key already exists: " + pk.getId());
 
-                if (pk.getPublicKeyBase58().isEmpty())
+                if (!pk.getPublicKeyBase58())
                     throw new MalformedDocumentException("Invalid public key base58 value.");
 
                 if (pk.getType() == null)
@@ -1085,7 +1084,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     if (pks.has(pk.getId()))
                         throw new MalformedDocumentException("Public key already exists: " + pk.getId());
 
-                    if (pk.getPublicKeyBase58().isEmpty())
+                    if (!pk.getPublicKeyBase58())
                         throw new MalformedDocumentException("Invalid public key base58 value.");
 
                     if (pk.getType() == null)
@@ -1135,7 +1134,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     if (pks.has(pk.getId()))
                         throw new MalformedDocumentException("Public key already exists: " + pk.getId());
 
-                    if (pk.getPublicKeyBase58().isEmpty())
+                    if (!pk.getPublicKeyBase58())
                         throw new MalformedDocumentException("Invalid public key base58 value.");
 
                     if (pk.getType() == null)
@@ -1249,10 +1248,10 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     throw new MalformedDocumentException("Invalid crdential id: " + svc.getId());
             }
 
-            if (svc.getType().isEmpty())
+            if (!svc.getType())
                 throw new MalformedDocumentException("Invalid service type.");
 
-            if (svc.getServiceEndpoint() == null || svc.getServiceEndpoint().isEmpty())
+            if (!svc.getServiceEndpoint() || svc.getServiceEndpoint() == null)
                 throw new MalformedDocumentException("Missing service endpoint.");
 
             if (svcs.has(svc.getId()))
@@ -1464,7 +1463,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no DIDStore to get private key
      */
     public signWithId(id: DIDURL | string | null, storepass: string, ...data: Buffer[]): string {
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         checkArgument(data != null && data.length > 0, "Invalid input data");
         this.checkAttachedStore();
 
@@ -1485,7 +1484,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     public signWithTicket(ticket: TransferTicket, storepass: string): TransferTicket {
         checkArgument(ticket != null, "Invalid ticket");
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
         ticket.seal(this, storepass);
@@ -1494,7 +1493,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     public signWithDocument(doc: DIDDocument, storepass: string): DIDDocument {
         checkArgument(doc != null, "Invalid document");
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
         if (!doc.isCustomizedDid())
@@ -1534,7 +1533,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDStoreException there is no DIDStore to get private key
      */
     public signDigest(id: DIDURL | string | null, storepass: string, digest: Buffer): string {
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
         this.checkAttachedStore();
 
@@ -1562,7 +1561,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *         the returned value is false if verifing data is not successfully.
      */
     public verify(id: DIDURL | string | null, signature: string, ...data: Buffer[]): boolean {
-        checkArgument(signature != null && !signature.isEmpty(), "Invalid signature");
+        checkArgument(signature && signature != null, "Invalid signature");
         checkArgument(data != null && data.length > 0, "Invalid digest");
 
         let digest = EcdsaSigner.sha256Digest(...data);
@@ -1579,7 +1578,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *         the returned value is false if verifing digest is not successfully.
      */
     public verifyDigest(id: DIDURL | string | null, signature: string, digest: Buffer): boolean {
-        checkArgument(signature != null && !signature.isEmpty(), "Invalid signature");
+        checkArgument(signature && signature != null, "Invalid signature");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
         if (typeof id === "string")
@@ -1594,7 +1593,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         }
 
         let binkey = pk.getPublicKeyBytes();
-        let sig = signature.base64Decode();
+        let sig = base64Decode(signature);
 
         return EcdsaSigner.verify(binkey, Buffer.from(sig), digest);
     }
@@ -1644,12 +1643,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this.checkAttachedStore();
 
         let did = inputDID instanceof DID ? inputDID : DID.valueOf(inputDID);
-        let controllers: Array<DID | string> = [];
+        let controllers = [];
 
         if (inputControllers && inputControllers.length ) {
             inputControllers.forEach(function (ctrl) {
                 let controller: DID = typeof ctrl === "string" ? new DID(ctrl) : ctrl;
-                if (!controller.equals(this.getSubject()) && !controllers.contains(ctrl))
+                if (!controller.equals(this.getSubject()) && !controllers.includes(ctrl))
                     controllers.push (controller);
 
             });
@@ -1686,7 +1685,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     public createTransferTicket(to: DID, storepass: string, from?: DID): TransferTicket {
         checkArgument(to && to != null, "Invalid to");
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
 
         let source:DIDDocument = !from ? this : from.resolve(true);
 
@@ -1719,7 +1718,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     public publishWithTicket(ticket: TransferTicket, inputSignKey: DIDURL | string | null, storepass: string, adapter: DIDTransactionAdapter = null) {
         checkArgument(ticket.isValid(), "Invalid ticket");
         checkArgument(ticket.getSubject().equals(this.getSubject()), "Ticket mismatch with current DID");
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkIsCustomized();
         checkArgument(this.proofs.has(ticket.getTo()), "Document not signed by: " + ticket.getTo());
         this.checkAttachedStore();
@@ -1773,7 +1772,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws InvalidKeyException there is no an authentication key.
      */
     public publish(storepass: string, inputSignKey: DIDURL | string = null, force: boolean = false, adapter: DIDTransactionAdapter = null) {
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
         let signKey: DIDURL = typeof inputSignKey === "string" ? this.canonicalId(inputSignKey) : inputSignKey;
@@ -1846,7 +1845,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 throw new InvalidKeyException(signKey.toString());
         }
 
-        if (lastTxid == null || lastTxid.isEmpty()) {
+        if (!lastTxid || lastTxid == null) {
             DIDDocument.log.info("Try to publish[create] {}...", this.getSubject());
             DIDBackend.getInstance().createDid(this, signKey, storepass, adapter);
         } else {
@@ -1890,7 +1889,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
     public deactivate(signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
         if (signKey == null && this.getDefaultPublicKeyId() == null)
@@ -1950,7 +1949,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     // NOTE: Was deactivate() in java
     public deactivateTargetDID(target: DID, signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
         checkArgument(target != null, "Invalid target DID");
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
         if (signKey == null && this.getDefaultPublicKeyId() == null)
@@ -2231,12 +2230,12 @@ export namespace DIDDocument {
             if (rc != 0)
                 return rc;
             else
-                rc = StringUtil.compareTo(this.keyBase58, key.keyBase58);
+                rc = this.keyBase58.localeCompare(key.keyBase58);
 
             if (rc != 0)
                 return rc;
             else
-                rc = StringUtil.compareTo(this.type, key.type);
+                rc = this.type.localeCompare(key.type);
 
             if (rc != 0)
                 return rc;

@@ -29,7 +29,8 @@ import {
 } from "./exceptions/exceptions";
 import {
 	checkArgument,
-	checkNotNull
+	checkNotNull,
+	hashCode
 } from "./utils";
 import {
 	JsonStringifierTransformerContext,
@@ -46,7 +47,6 @@ import {
     Deserializer
 } from "./serializers";
 import { DIDURLParser } from "./parser/DIDURLParser";
-import { StringUtil } from "./stringutil";
 
 class URLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
@@ -409,16 +409,16 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	public compareTo(id: DIDURL): number {
 		checkNotNull(id, "id is null");
 
-		return StringUtil.compareTo(this.toString(), id.toString());
+		return this.toString().localeCompare(id.toString());
 	}
 
 	private mapHashCode(map: Map<string, string>): number {
 		let hash = 0;
 
 		for (let entry of map.entries()) {
-			hash += entry[0].hashCode(); // key
+			hash += hashCode(entry[0]); // key
 			if (entry[1] != null) // value
-				hash += entry[1].hashCode();
+				hash += hashCode(entry[1]);
 		}
 
 		return hash;
@@ -427,9 +427,9 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	public hashCode(): number {
 		let hash = this.did.hashCode();
 		hash += this.mapHashCode(this.parameters);
-		hash += this.path == null ? 0 : this.path.hashCode();
+		hash += this.path == null ? 0 : hashCode(this.path);
 		hash += this.mapHashCode(this.query);
-		hash += this.fragment == null ? 0 : this.fragment.hashCode();
+		hash += this.fragment == null ? 0 : hashCode(this.fragment);
 
 		return hash;
 	}

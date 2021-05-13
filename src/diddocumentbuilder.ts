@@ -174,7 +174,7 @@ export class DIDDocumentBuilder {
 
         this.checkNotSealed();
         this.checkIsCustomized();
-        checkArgument(!this.document.controllers.contains(controller), "Controller already exists");
+        checkArgument(!this.document.controllers.includes(controller), "Controller already exists");
         let controllerDoc = controller.resolve(true);
         if (controllerDoc == null)
             throw new DIDNotFoundException(controller.toString());
@@ -218,7 +218,8 @@ export class DIDDocumentBuilder {
         if (controller.equals(this.controllerDoc.getSubject()))
             throw new CanNotRemoveEffectiveController(controller.toString());
 
-        if (this.document.controllers.remove(controller)) {
+        if (this.document.controllers.includes(controller)) {
+            this.document.controllers.splice(this.document.controllers.indexOf(controller), 1);
             this.document.controllerDocs.delete(controller);
             this.invalidateProof();
         }
@@ -306,7 +307,7 @@ export class DIDDocumentBuilder {
             controller = DID.valueOf(controller);
 
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())), "Invalid publicKey id");
-        checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
+        checkArgument(pk && pk != null, "Invalid publicKey");
 
         if (controller == null)
             controller = this.getSubject();
@@ -398,7 +399,7 @@ export class DIDDocumentBuilder {
 
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
             "Invalid publicKey id");
-        checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
+        checkArgument(pk && pk != null, "Invalid publicKey");
 
         let key: DIDDocument.PublicKey = new DIDDocument.PublicKey(this.canonicalId(id), null, this.getSubject(), pk);
         key.setAuthenticationKey(true);
@@ -515,7 +516,7 @@ export class DIDDocumentBuilder {
 
         checkArgument(id.getDid() == null || id.getDid().equals(this.getSubject()),
             "Invalid publicKey id");
-        checkArgument(pk != null && !pk.isEmpty(), "Invalid publicKey");
+        checkArgument(pk && pk != null, "Invalid publicKey");
 
         if (this.document.isCustomizedDid())
             throw new NotPrimitiveDIDException(this.getSubject().toString());
@@ -661,7 +662,7 @@ export class DIDDocumentBuilder {
         this.checkNotSealed();
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
             "Invalid publicKey id");
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
 
         let issuer = new Issuer(this.document);
         let cb = issuer.issueFor(this.document.getSubject());
@@ -772,8 +773,8 @@ export class DIDDocumentBuilder {
 
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
             "Invalid publicKey id");
-        checkArgument(type != null && !type.isEmpty(), "Invalid type");
-        checkArgument(endpoint != null && !endpoint.isEmpty(), "Invalid endpoint");
+        checkArgument(type && type != null, "Invalid type");
+        checkArgument(endpoint && endpoint != null, "Invalid endpoint");
 
         let svc = new DIDDocument.Service(this.canonicalId(id), type, endpoint, properties);
         if (this.document.services == null)
@@ -970,7 +971,7 @@ export class DIDDocumentBuilder {
      */
     public seal(storepass: string): DIDDocument {
         this.checkNotSealed();
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
+        checkArgument(storepass && storepass != null, "Invalid storepass");
 
         this.sanitize();
 
@@ -981,7 +982,7 @@ export class DIDDocumentBuilder {
             throw new AlreadySignedException(signerDoc.getSubject().toString());
 
         let json = this.document.serialize(true);
-        let sig = this.document.signWithId(signKey, storepass, json.getBytes());
+        let sig = this.document.signWithId(signKey, storepass, Buffer.from(json));
         let proof = new DIDDocument.Proof(signKey, sig);
         this.document.proofs.set(proof.getCreator().getDid(), proof);
         this.document._proofs = Array.from(this.document.proofs.values());

@@ -25,8 +25,7 @@ import { DID } from "../did";
 import { DIDURL } from "../didurl";
 import { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
-
-
+import { hashCode } from "../utils";
 @JsonCreator()
 export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Parameters> {
 	public static PARAMETER_DID = "did";
@@ -65,20 +64,20 @@ export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Paramet
 @JsonCreator()
 class Parameters implements Hashable {
 	@JsonProperty({value: DIDResolveRequest.PARAMETER_DID})
-	public did: any /* DID */;
+	public did: DID;
 
 	@JsonProperty({value: DIDResolveRequest.PARAMETER_ALL})
 	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
 	public all: boolean;
 
-	public constructor(@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: any /* DID */, all: boolean = false) {
+	public constructor(@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: DID, all: boolean = false) {
 		this.did = did;
 		this.all = all;
 	}
 
 	public hashCode(): number {
 		let hash = this.did.hashCode();
-		hash += this.all.hashCode();
+		hash += hashCode(this.all);
 		return hash;
 	}
 

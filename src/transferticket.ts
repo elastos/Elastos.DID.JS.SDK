@@ -200,7 +200,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 				return false;
 
 			// if already checked this controller
-			if (checkedControllers.contains(proof.getVerificationMethod().getDid()))
+			if (checkedControllers.includes(proof.getVerificationMethod().getDid()))
 				return false;
 
 			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId()))
@@ -319,7 +319,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		this._proofs = null;
 
 		let json = this.serialize(true);
-		let sig = controller.signWithStorePass(storepass, json.getBytes());
+		let sig = controller.signWithStorePass(storepass, Buffer.from(json));
 		let proof = Proof.newWithDIDURL(signKey, sig);
 		this.proofs.set(proof.getVerificationMethod().getDid(), proof);
 

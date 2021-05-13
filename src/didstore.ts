@@ -32,7 +32,7 @@ import { DIDURL } from "./didurl";
 import { DIDStoreCryptoException, DIDStoreException, IllegalArgumentException, WrongPasswordException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { RootIdentity } from "./rootidentity";
-import { checkArgument } from "./utils";
+import { checkArgument, hashCode } from "./utils";
 import { LRUCache } from "./lrucache";
 import { Aes256cbc } from "./crypto/aes256cbc";
 import { HDKey } from "./crypto/hdkey";
@@ -42,7 +42,6 @@ import { Comparable } from "./comparable";
 import { FileSystemStorage } from "./filesystemstorage";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import dayjs from "dayjs";
-import { AdvancedString } from "./advancedstring";
 import { ConflictHandle } from "./conflicthandle";
 import { DefaultConflictHandle } from "./defaultconflicthandle";
 import { DIDStoreMetadata } from "./didstoremetadata";
@@ -1878,7 +1877,7 @@ throws MalformedExportDataException, DIDStoreException, IOException {
 export namespace DIDStore {
 	export interface KeyObject extends Hashable, Comparable<KeyObject> {};
 
-	export class Key {
+	export class Key implements Hashable {
 		private static TYPE_ROOT_IDENTITY = 0x00;
 		private static TYPE_ROOT_IDENTITY_PRIVATEKEY = 0x01;
 		private static TYPE_DID_DOCUMENT = 0x10;
@@ -1906,11 +1905,19 @@ export namespace DIDStore {
 		}
 
 		public static forRootIdentity(id: string): Key {
-			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY, new AdvancedString(id));
+			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY, new class implements KeyObject {
+				equals(o) {return o === id;}
+				compareTo(o) {return id.localeCompare(o);}
+				hashCode() {return hashCode(id);}
+			});
 		}
 
 		public static forRootIdentityPrivateKey(id: string): Key {
-			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY_PRIVATEKEY, new AdvancedString(id));
+			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY_PRIVATEKEY, new class implements KeyObject {
+				equals(o) {return o === id;}
+				compareTo(o) {return id.localeCompare(o);}
+				hashCode() {return hashCode(id);}
+			});
 		}
 
 		public static forDidDocument(did: DID): Key {

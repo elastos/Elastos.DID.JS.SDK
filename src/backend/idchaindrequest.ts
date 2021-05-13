@@ -136,11 +136,11 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 		let ticket = this.getOperation().equals(IDChainRequest.Operation.TRANSFER) ? this.header.getTicket() : "";
 
 		let inputs: Buffer[] = [
-			this.header.getSpecification().getBytes(),
-			this.header.getOperation().toString().getBytes(),
-			prevtxid.getBytes(),
-			ticket.getBytes(),
-			this.payload.getBytes()
+			Buffer.from(this.header.getSpecification()),
+			Buffer.from(this.header.getOperation().toString()),
+			Buffer.from(prevtxid),
+			Buffer.from(ticket),
+			Buffer.from(this.payload)
 		];
 
 		return inputs;
