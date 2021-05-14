@@ -21,7 +21,7 @@
  */
 
 
-import { RootIdentity, Mnemonic } from "../dist/did";
+import { RootIdentity, Mnemonic, runningInBrowser } from "../dist/did";
 
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
@@ -30,8 +30,10 @@ import { TestData } from "./utils/testdata";
 describe('Mnemonic Tests', () => {
 	let testData: TestData;
 
-	beforeEach(()=>{
+	beforeEach(async ()=>{
 		//testData = new TestData();
+		if (runningInBrowser())
+			await testData.loadBundledTestData();
 	})
 
 	afterEach(()=>{
@@ -88,6 +90,8 @@ public class MnemonicTest {
     @BeforeEach
     public void beforeEach() throws DIDException {
     	testData = new TestData();
+		if (runningInBrowser())
+			await testData.loadBundledTestData();
     }
 
     @AfterEach

@@ -8,6 +8,8 @@ public class RootIdentityTest {
     @BeforeEach
     public void beforeEach() throws DIDException {
     	testData = new TestData();
+		if (runningInBrowser())
+			await testData.loadBundledTestData();
     	store = testData.getStore();
     }
 

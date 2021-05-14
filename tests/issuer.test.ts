@@ -33,6 +33,8 @@ public class IssuerTest {
     @BeforeEach
     public void beforeEach() throws Exception {
     	testData = new TestData();
+		if (runningInBrowser())
+			await testData.loadBundledTestData();
     	store = testData.getStore();
     	testData.getRootIdentity();
 

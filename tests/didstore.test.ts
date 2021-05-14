@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity } from "../dist/did";
+import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity, runningInBrowser } from "../dist/did";
 import { DIDStore, File, Logger } from "../dist/did";
 
 import { TestConfig } from "./utils/testconfig";
@@ -33,8 +33,10 @@ let testData: TestData;
 let store: DIDStore;
 
 describe("DIDStore Tests", ()=>{
-	beforeEach(()=>{
+	beforeEach(async ()=>{
 		testData = new TestData();
+		if (runningInBrowser())
+			await testData.loadBundledTestData();
 		store = testData.getStore();
 	})
 

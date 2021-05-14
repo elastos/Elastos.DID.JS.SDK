@@ -7,6 +7,38 @@ import commonJs from "@rollup/plugin-commonjs";
 import multiInput from 'rollup-plugin-multi-input';
 import json from '@rollup/plugin-json';
 import globals from 'rollup-plugin-node-globals';
+import { resolve as pathResolve } from "path";
+import { readdirSync, writeFileSync, lstatSync, readFileSync } from 'fs';
+
+async function populateDataContent(folder, entry) {
+    let folderFiles = readdirSync(folder);
+    for (let file of folderFiles) {
+        let fullPath = folder+"/"+file;
+        const stat = lstatSync(fullPath);
+        if (stat.isDirectory()) {
+            // Folder - recurse
+            entry[file] = {};
+            populateDataContent(fullPath, entry[file]);
+        }
+        else {
+            // File
+            entry[file] = {
+                _content: readFileSync(fullPath).toString()
+            }
+        }
+    }
+}
+
+// As the browser cannot access data files directly (load files, list files in folder...) we generate
+// a temporary file that mimics the data/ folder structure so that the tests can load all the data from a bundled
+// object instead. NodeJS keeps loading this from disk.
+let rootDataFolder = pathResolve(__dirname+"/tests/data");
+let dataBundle = {
+    data: {}
+};
+populateDataContent(rootDataFolder, dataBundle.data);
+//console.log(dataBundle)
+writeFileSync("./generated/browserdata.json", JSON.stringify(dataBundle, null, "  "));
 
 export default [
     {

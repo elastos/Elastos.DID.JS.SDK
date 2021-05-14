@@ -44,7 +44,6 @@ describe('DIDURL Tests', () => {
 	})
 
 	test('Test Constructor with Canonical URL', () => {
-
 		verifyNewDidCreation(testDID)
 
 		verifyNewDidCreation(testDID + params)

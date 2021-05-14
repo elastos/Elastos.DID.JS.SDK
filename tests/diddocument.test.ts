@@ -21,7 +21,7 @@
  */
 
 import { Constants } from "../src/constants";
-import { DIDDocument, DIDURL, DIDStore } from "../dist/did";
+import { DIDDocument, DIDURL, DIDStore, runningInBrowser } from "../dist/did";
 import {
 	TestData,
 	CompatibleData
@@ -111,8 +111,10 @@ function testGetPublicKey(version: number, testData: TestData) {
 describe('DIDDocument Tests', () => {
 	let testData:TestData;
 	let store:DIDStore;
-	beforeAll(() => {
+	beforeAll(async () => {
 		testData = new TestData();
+		if (runningInBrowser())
+			await testData.loadBundledTestData();
 		store = testData.getStore();
 	});
 

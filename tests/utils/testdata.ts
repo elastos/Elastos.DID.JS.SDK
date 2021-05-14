@@ -21,13 +21,16 @@
  */
 
 //import type { JSONObject, JSONValue } from "../../dist/did";
+import { join } from "path";
 import {
 	DIDDocument, DIDStore, Mnemonic, RootIdentity,
 	VerifiableCredential, VerifiablePresentation,
 	TransferTicket, Issuer, DIDURL, DID, Exceptions,
-	File, HDKey, JSONObject, JSONValue
+	File, HDKey, JSONObject, JSONValue, runningInBrowser
 } from "../../dist/did";
 import { TestConfig } from "./testconfig";
+
+let browserBundledData: any; // data/ folder bundled only for the browser at compilation time.
 
 export class TestData {
 	// HDKey for temporary key generation
@@ -47,6 +50,15 @@ export class TestData {
 		if (File.exists(TestConfig.storeRoot))
     		(new File(TestConfig.storeRoot)).delete();
 		this.store = DIDStore.open(TestConfig.storeRoot);
+	}
+
+	private async conditionalImport(moduleName: string): Promise<any> {
+		return import(moduleName);
+	}
+
+	public async loadBundledTestData(): Promise<void> {
+		if (!browserBundledData)
+			browserBundledData = await this.conditionalImport("../../generated/browserdata.json");
 	}
 
 	public cleanup() {
@@ -141,8 +153,16 @@ export class CompatibleData {
 	public constructor(private testData: TestData, version: number) {
 		this.data = {};
 
-		this.dataPath = "data/v" + version.toString() + "/testdata/";
-		this.storePath = "data/v" + version.toString() + "/teststore/";
+		if (!runningInBrowser()) {
+			// NodeJS
+			this.dataPath = join(__dirname, "..", "data/v" + version.toString() + "/testdata/");
+			this.storePath = join(__dirname, "..", "data/v" + version.toString() + "/teststore/");
+		}
+		else {
+			// Browser
+			this.dataPath = "data/v" + version.toString() + "/testdata/";
+			this.storePath = "data/v" + version.toString() + "/teststore/";
+		}
 		this.version = version;
 	}
 
@@ -151,11 +171,35 @@ export class CompatibleData {
 	}
 
 	private fileContent(path: string): string {
-		return (new File(path)).readText();
+		if (!runningInBrowser()) {
+			// NodeJS: directly return from filesystem
+			return (new File(path)).readText();
+		}
+		else {
+			// Browser: get bundled data
+			let parts = path.split('/');
+			let entry = browserBundledData;
+			for (let part of parts) {
+				entry = entry[part];
+			}
+			return entry["_content"];
+		}
 	}
 
 	private dirContent(path: string): string[] {
-		return (new File(path)).list();
+		if (!runningInBrowser()) {
+			// NodeJS: directly return from filesystem
+			return (new File(path)).list();
+		}
+		else {
+			// Browser: get bundled data
+			let parts = path.split('/');
+			let entry = browserBundledData;
+			for (let part of parts) {
+				entry = entry[part];
+			}
+			return Object.keys(entry);
+		}
 	}
 
 	private getDidFile(name: string, type: string): string {
