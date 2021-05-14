@@ -21,7 +21,7 @@
  */
 
 import { List as ImmutableList } from "immutable";
-import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
+import { JsonClassType, JsonIgnoreType, JsonProperty } from "jackson-js";
 import { CredentialMetadata } from "./credentialmetadata";
 import { DID } from "./did";
 import { DIDDocument } from "./diddocument";
@@ -53,6 +53,7 @@ import { BASE64 } from "./crypto/base64";
  */
  const log = new Logger("DIDStore");
 
+@JsonIgnoreType()
  export class DIDStore {
 
 	private static CACHE_INITIAL_CAPACITY = 16;
