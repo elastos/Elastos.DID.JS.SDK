@@ -23,7 +23,7 @@
 //import testConfig from "../assets/test.config.json";
 
 import { join } from "path";
-import { File, Exceptions } from "../../dist/did";
+import { File, Exceptions, runningInBrowser } from "../../dist/did";
 const ParentException = Exceptions.ParentException;
 
 import testConfigFile from "../assets/test.config.json";
@@ -55,7 +55,7 @@ export class TestConfig {
 		this.passphrase = testConfig.mnemnoic.passphrase;
 		this.storePass = testConfig.store.pass;
 
-		if (window) // browser
+		if (runningInBrowser()) // browser
 			this.tempDir = "/generated/tmp"; // TODO: does this actually work in browser ?
 		else // nodejs
 			this.tempDir = join(__dirname, "../..", "generated", "tmp");

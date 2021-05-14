@@ -18,7 +18,7 @@ import path from "path";
 		throw e;
 	}
 	else {
-		console.log("BrowserFS initialization complete");
+		//console.log("BrowserFS initialization complete");
 	}
 });
 

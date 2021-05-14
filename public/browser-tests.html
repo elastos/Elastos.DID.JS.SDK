@@ -86,7 +86,7 @@
     <script type="module">
       // Run the tests, gather and display the output in the browser.
       // TODO: Nothing better found for now with jest-lite in order to not run the tests until DID
-      // initiallize() is ready (async). Without doing this, we get "0 results" here.
+      // initialize() is ready (async). Without doing this, we get "0 results" here.
       setTimeout(() => {
         let result = run();
         window.jestLite.prettify.toHTML(result, document.body);

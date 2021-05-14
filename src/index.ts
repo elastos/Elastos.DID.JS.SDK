@@ -19,19 +19,19 @@ import { BASE64 } from "./crypto/base64";
 import { HDKey } from "./crypto/hdkey";
 import { Base58 } from "./crypto/base58";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
-import BrowserFS from "browserfs";
 import { JSONObject, JSONValue } from "./json";
+import { runningInBrowser } from "./utils";
 
 /**
  * Global initializer. For now, needed by the browser to initialize BrowserFS before running anything else.
  * TODO: Make sure this can't be called twice - possibly replace with a "promisifiable" subscriber event.
  */
-async function initialize() {
+/* async function initialize() {
 	return new Promise<void>((resolve, reject)=>{
 		console.log("BrowserFS initialization");
 
 		if (window) {
-			/* BrowserFS.configure({
+			BrowserFS.configure({
 				fs: "LocalStorage",
 				options: {}
 			}, function(e) {
@@ -42,7 +42,7 @@ async function initialize() {
 				else {
 					resolve();
 				}
-			}); */
+			});
 			resolve();
 		}
 		else {
@@ -50,7 +50,7 @@ async function initialize() {
 			resolve();
 		}
 	});
-}
+} */
 
 export type {
 	DIDURLValues,
@@ -59,7 +59,7 @@ export type {
 }
 
 export {
-	initialize,
+	//initialize,
 
 	DID,
 	DIDDocument,
@@ -75,6 +75,9 @@ export {
 	Exceptions,
 
 	// TODO - others
+
+	// Utilities
+	runningInBrowser,
 
 	// Internal - for tests only
 	File,
