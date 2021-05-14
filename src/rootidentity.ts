@@ -274,7 +274,6 @@ export class RootIdentity {
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
 	public newDid(storepass: string, index: number = undefined, overwrite: boolean = false): DIDDocument {
-		checkArgument(index >= 0, "Invalid index");
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 		let shouldIncrementIndexAfterCompletion = false;
@@ -282,6 +281,8 @@ export class RootIdentity {
 			index = this.getIndex();
 			shouldIncrementIndexAfterCompletion = true;
 		}
+
+		checkArgument(index >= 0, "Invalid index");
 
 		let did = this.getDid(index);
 		let doc = this.getStore().loadDid(did);
