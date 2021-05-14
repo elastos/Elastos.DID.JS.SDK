@@ -121,9 +121,9 @@ initialize().then(()=>{
 				resolved = doc.getSubject().resolve();
 				expect(resolved).not.toBeNull();
 				store.storeDid(resolved);
-				expect(alias).toStrictEqual(resolved.getMetadata().getAlias());
-				expect(doc.getSubject()).toStrictEqual(resolved.getSubject());
-				expect(doc.getProof().getSignature()).toStrictEqual(resolved.getProof().getSignature());
+				expect(alias).toEqual(resolved.getMetadata().getAlias());
+				expect(doc.getSubject()).toEqual(resolved.getSubject());
+				expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
 
 				expect(resolved.isValid()).toBeTruthy();
 			}
@@ -189,12 +189,12 @@ initialize().then(()=>{
 
 			let doc = store.loadDid(issuer.getSubject());
 			expect(issuer.getSubject().equals(doc.getSubject())).toBeTruthy();
-			expect(issuer.getProof().getSignature()).toStrictEqual(doc.getProof().getSignature());
+			expect(issuer.getProof().getSignature()).toEqual(doc.getProof().getSignature());
 			expect(doc.isValid()).toBeTruthy();
 
 			doc = store.loadDid(test.getSubject().toString());
 			expect(issuer.getSubject().equals(doc.getSubject())).toBeTruthy();
-			expect(issuer.getProof().getSignature()).toStrictEqual(doc.getProof().getSignature());
+			expect(issuer.getProof().getSignature()).toEqual(doc.getProof().getSignature());
 			expect(doc.isValid()).toBeTruthy();
 
 			let dids = store.listDids();
@@ -260,7 +260,7 @@ initialize().then(()=>{
 
 			let id = DIDURL.valueOf(user.getSubject(), "#profile");
 			vc = store.loadCredential(id);
-			expect("MyProfile").toStrictEqual(vc.getMetadata().getAlias());
+			expect("MyProfile").toEqual(vc.getMetadata().getAlias());
 			expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 			expect(id.equals(vc.getId())).toBeTruthy();
 			expect(vc.isValid()).toBeTruthy();
@@ -268,7 +268,7 @@ initialize().then(()=>{
 			// try with full id string
 			vc = store.loadCredential(id.toString());
 			expect(vc).not.toBeNull();
-			expect("MyProfile").toStrictEqual(vc.getMetadata().getAlias());
+			expect("MyProfile").toEqual(vc.getMetadata().getAlias());
 			expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 			expect(id.equals(vc.getId())).toBeTruthy();
 			expect(vc.isValid()).toBeTruthy();
@@ -276,7 +276,7 @@ initialize().then(()=>{
 			id = DIDURL.valueOf(user.getSubject(), "#twitter");
 			vc = store.loadCredential(id.toString());
 			expect(vc).not.toBeNull();
-			expect("Twitter").toStrictEqual(vc.getMetadata().getAlias());
+			expect("Twitter").toEqual(vc.getMetadata().getAlias());
 			expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 			expect(id.equals(vc.getId())).toBeTruthy();
 			expect(vc.isValid()).toBeTruthy();
@@ -408,9 +408,9 @@ initialize().then(()=>{
 				resolved = doc.getSubject().resolve();
 				expect(resolved).not.toBeNull();
 				store.storeDid(resolved);
-				expect(alias).toStrictEqual(resolved.getMetadata().getAlias());
+				expect(alias).toEqual(resolved.getMetadata().getAlias());
 				expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
-				expect(doc.getProof().getSignature()).toStrictEqual(
+				expect(doc.getProof().getSignature()).toEqual(
 						resolved.getProof().getSignature());
 
 				expect(resolved.isValid()).toBeTruthy();
@@ -443,7 +443,7 @@ initialize().then(()=>{
 				expect(file.exists()).toBeTruthy();
 				expect(file.isFile()).toBeTruthy();
 
-				expect(alias).toStrictEqual(doc.getMetadata().getAlias());
+				expect(alias).toEqual(doc.getMetadata().getAlias());
 			}
 
 			let doc = identity.newDid("newpasswd");
@@ -623,7 +623,7 @@ initialize().then(()=>{
 			for (let i = 0; i < stores.length; i++) {
 				let doc = stores[i].loadDid(docs[i].getSubject());
 				expect(doc).not.toBeNull();
-				expect(docs[i].toString(true)).toStrictEqual(doc.toString(true));
+				expect(docs[i].toString(true)).toEqual(doc.toString(true));
 			}
 		});
 

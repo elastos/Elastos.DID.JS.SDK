@@ -33,7 +33,7 @@ describe('Aes256cbc Encryption Tests', () => {
 		let base64Buffer: Buffer = Buffer.from(base64, "base64")
 
 		expect(cipherResult)
-		.toStrictEqual(base64Buffer)
+		.toEqual(base64Buffer)
 	});
 
 	test('decrypt method', () => {
@@ -42,9 +42,8 @@ describe('Aes256cbc Encryption Tests', () => {
 		let expectedBuffer: Buffer = Buffer.from(plain, "utf-8")
 		let decipherResult: Buffer = Aes256cbc.decrypt(base64Buffer, passwd)
 
-
 		expect(decipherResult)
-		.toStrictEqual(expectedBuffer)
+		.toEqual(expectedBuffer)
 	});
 
 	test('encryptToBase64 method', () => {
