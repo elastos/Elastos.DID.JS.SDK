@@ -233,6 +233,7 @@ export default command => {
 				mainFields: ['browser', 'jsnext:main', 'main'],
 				browser: true,
 				preferBuiltins: true,
+				dedupe: ['bn.js']
 			}),
 			// Polyfills needed to replace readable-stream with stream (circular dep)
 			commonjs({
