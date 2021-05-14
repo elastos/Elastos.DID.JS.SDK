@@ -9,7 +9,7 @@
           "--inspect-brk",
           "${workspaceRoot}/node_modules/.bin/jest",
           "--runInBand",
-          "didstore.test"
+          "did.test"
         ],
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen",

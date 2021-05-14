@@ -54,10 +54,10 @@ describe('DID Tests', () => {
 
 	test('Test hashcode', () => {
 		let otherDID = new DID(testDID);
-		expect(otherDID.hashCode()).toEqual(did.hashCode);
+		expect(otherDID.hashCode()).toEqual(did.hashCode());
 
 		otherDID = new DID("did:elastos:1234567890");
-		expect(otherDID.hashCode()).toEqual(did.hashCode);
+		expect(otherDID.hashCode()).not.toEqual(did.hashCode());
 	});
 
 	test('Test Equals', () => {
@@ -66,7 +66,7 @@ describe('DID Tests', () => {
 		expect(did.equals(testDID)).toBeTruthy();
 
 		otherDID = new DID("did:elastos:1234567890");
-		expect(did.equals(otherDID)).toBeTruthy();
-		expect(did.equals("did:elastos:1234567890")).toBeTruthy();
+		expect(did.equals(otherDID)).toBeFalsy();
+		expect(did.equals("did:elastos:1234567890")).toBeFalsy();
 	});
 });
