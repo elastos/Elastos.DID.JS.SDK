@@ -1,38 +1,28 @@
+import dayjs from "dayjs";
+import { Collections } from "./collections";
 import { Constants } from "./constants";
-import { DIDDocument } from "./diddocument";
+import { HDKey } from "./crypto/hdkey";
 import { DID } from "./did";
+import { DIDDocument } from "./diddocument";
+import { DIDDocumentMultiSignature } from "./diddocumentmultisignature";
+import { DIDDocumentProof } from "./diddocumentproof";
+import { DIDDocumentPublicKey } from "./diddocumentpublickey";
+import { DIDDocumentPublicKeyReference } from "./diddocumentpublickeyreference";
+import { DIDDocumentService } from "./diddocumentservice";
 import { DIDMetadata } from "./didmetadata";
 import { DIDStore } from "./didstore";
 import { DIDURL } from "./didurl";
-import { 
-    IllegalArgumentException,
-    AlreadySealedException,
-    DIDObjectAlreadyExistException,
-    IllegalUsage,
-    UnknownInternalException,
-    DIDObjectNotExistException,
-    AlreadySignedException,
-    CanNotRemoveEffectiveController,
-    DIDObjectHasReference,
-    DIDNotFoundException,
-    DIDDeactivatedException,
-    DIDExpiredException,
-    DIDNotGenuineException,
-    NotPrimitiveDIDException,
-    NotCustomizedDIDException,
-    MalformedDocumentException,
-    NotAttachedWithStoreException,
-    NotControllerException,
-    NoEffectiveControllerException
+import {
+    AlreadySealedException, AlreadySignedException,
+    CanNotRemoveEffectiveController, DIDDeactivatedException,
+    DIDExpiredException, DIDNotFoundException, DIDNotGenuineException, DIDObjectAlreadyExistException, DIDObjectHasReference, DIDObjectNotExistException, IllegalArgumentException, IllegalUsage, MalformedDocumentException, NoEffectiveControllerException, NotAttachedWithStoreException,
+    NotControllerException, NotCustomizedDIDException, NotPrimitiveDIDException, UnknownInternalException
 } from "./exceptions/exceptions";
-import { checkArgument } from "./utils";
-import { HDKey } from "./crypto/hdkey";
-import { Logger } from "./logger";
-import { VerifiableCredential } from "./verifiablecredential";
 import { Issuer } from "./issuer";
 import { JSONObject } from "./json";
-import { Collections } from "./collections";
-import dayjs from "dayjs";
+import { Logger } from "./logger";
+import { checkArgument } from "./utils";
+import { VerifiableCredential } from "./verifiablecredential";
 
 /**
 * Builder object to create or modify the DIDDocument.
@@ -241,9 +231,9 @@ export class DIDDocumentBuilder {
         let n = this.document.controllers.length;
         checkArgument(m <= n, "Signature count exceeds the upper limit");
 
-        let multisig: DIDDocument.MultiSignature = null;
+        let multisig: DIDDocumentMultiSignature = null;
         if (n > 1)
-            multisig = new DIDDocument.MultiSignature(m, n);
+            multisig = new DIDDocumentMultiSignature(m, n);
 
         if (this.document.multisig == null && multisig == null)
             return this;
@@ -252,15 +242,15 @@ export class DIDDocumentBuilder {
             this.document.multisig.equals(multisig))
             return this;
 
-        this.document.multisig = new DIDDocument.MultiSignature(m, n);
+        this.document.multisig = new DIDDocumentMultiSignature(m, n);
 
         this.invalidateProof();
         return this;
     }
 
-    private addPublicKey(key: DIDDocument.PublicKey) {
+    private addPublicKey(key: DIDDocumentPublicKey) {
         if (this.document.publicKeys == null) {
-            this.document.publicKeys = new Map<DIDURL, DIDDocument.PublicKey>();
+            this.document.publicKeys = new Map<DIDURL, DIDDocumentPublicKey>();
         } else {
             // Check the existence, both id and keyBase58
             for (let pk of this.document.publicKeys.values()) {
@@ -312,7 +302,7 @@ export class DIDDocumentBuilder {
         if (controller == null)
             controller = this.getSubject();
 
-        this.addPublicKey(new DIDDocument.PublicKey(this.canonicalId(id), type, controller, pk));
+        this.addPublicKey(new DIDDocumentPublicKey(this.canonicalId(id), type, controller, pk));
         return this;
     }
 
@@ -368,7 +358,7 @@ export class DIDDocumentBuilder {
             throw new DIDObjectNotExistException(id.toString());
 
         id = this.canonicalId(id);
-        let key: DIDDocument.PublicKey = this.document.publicKeys.get(id);
+        let key: DIDDocumentPublicKey = this.document.publicKeys.get(id);
         if (key == null)
             throw new DIDObjectNotExistException(id.toString());
 
@@ -401,7 +391,7 @@ export class DIDDocumentBuilder {
             "Invalid publicKey id");
         checkArgument(pk && pk != null, "Invalid publicKey");
 
-        let key: DIDDocument.PublicKey = new DIDDocument.PublicKey(this.canonicalId(id), null, this.getSubject(), pk);
+        let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), null, this.getSubject(), pk);
         key.setAuthenticationKey(true);
         this.addPublicKey(key);
 
@@ -469,7 +459,7 @@ export class DIDDocumentBuilder {
             throw new DIDObjectNotExistException(id.toString());
 
         id = this.canonicalId(id);
-        let key: DIDDocument.PublicKey = this.document.publicKeys.get(id);
+        let key: DIDDocumentPublicKey = this.document.publicKeys.get(id);
         if (key == null)
             throw new DIDObjectNotExistException(id.toString());
 
@@ -525,7 +515,7 @@ export class DIDDocumentBuilder {
         if (controller.equals(this.getSubject()))
             throw new IllegalUsage("Key's controller is self.");
 
-        let key: DIDDocument.PublicKey = new DIDDocument.PublicKey(this.canonicalId(id), null, controller, pk);
+        let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), null, controller, pk);
         key.setAuthorizationKey(true);
         this.addPublicKey(key);
 
@@ -579,7 +569,7 @@ export class DIDDocumentBuilder {
         if (targetPk == null)
             throw new DIDObjectNotExistException(key.toString());
 
-        let pk = new DIDDocument.PublicKey(this.canonicalId(id), targetPk.getType(),
+        let pk = new DIDDocumentPublicKey(this.canonicalId(id), targetPk.getType(),
             controller, targetPk.getPublicKeyBase58());
         pk.setAuthorizationKey(true);
         this.addPublicKey(pk);
@@ -603,7 +593,7 @@ export class DIDDocumentBuilder {
             throw new DIDObjectNotExistException(id.toString());
 
         id = this.canonicalId(id);
-        let key: DIDDocument.PublicKey = this.document.publicKeys.get(id);
+        let key: DIDDocumentPublicKey = this.document.publicKeys.get(id);
         if (key == null)
             throw new DIDObjectNotExistException(id.toString());
 
@@ -776,9 +766,9 @@ export class DIDDocumentBuilder {
         checkArgument(type && type != null, "Invalid type");
         checkArgument(endpoint && endpoint != null, "Invalid endpoint");
 
-        let svc = new DIDDocument.Service(this.canonicalId(id), type, endpoint, properties);
+        let svc = new DIDDocumentService(this.canonicalId(id), type, endpoint, properties);
         if (this.document.services == null)
-            this.document.services = new Map<DIDURL, DIDDocument.Service>();
+            this.document.services = new Map<DIDURL, DIDDocumentService>();
         else {
             if (this.document.services.has(svc.getId()))
                 throw new DIDObjectAlreadyExistException("Service '"
@@ -921,10 +911,10 @@ export class DIDDocumentBuilder {
 
             for (let pk of this.document.publicKeys.values()) {
                 if (pk.isAuthenticationKey())
-                    this.document._authentications.push(DIDDocument.PublicKeyReference.newWithKey(pk));
+                    this.document._authentications.push(DIDDocumentPublicKeyReference.newWithKey(pk));
 
                 if (pk.isAuthorizationKey())
-                    this.document._authorizations.push(DIDDocument.PublicKeyReference.newWithKey(pk));
+                    this.document._authorizations.push(DIDDocumentPublicKeyReference.newWithKey(pk));
             }
 
             if (this.document._authentications.length == 0)
@@ -954,7 +944,7 @@ export class DIDDocumentBuilder {
         }
 
         if (this.document.proofs == null)
-            this.document.proofs = new Map<DID, DIDDocument.Proof>();
+            this.document.proofs = new Map<DID, DIDDocumentProof>();
 
         this.document._proofs = null;
     }
@@ -983,7 +973,7 @@ export class DIDDocumentBuilder {
 
         let json = this.document.serialize(true);
         let sig = this.document.signWithId(signKey, storepass, Buffer.from(json));
-        let proof = new DIDDocument.Proof(signKey, sig);
+        let proof = new DIDDocumentProof(signKey, sig);
         this.document.proofs.set(proof.getCreator().getDid(), proof);
         this.document._proofs = Array.from(this.document.proofs.values());
         Collections.sort(this.document._proofs);

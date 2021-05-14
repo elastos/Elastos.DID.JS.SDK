@@ -21,7 +21,13 @@
  */
 
 import { Constants } from "../src/constants";
-import { DIDDocument, DIDURL, DIDStore, runningInBrowser } from "../dist/did";
+import {
+	DIDDocument,
+	DIDDocumentPublicKey,
+	DIDURL,
+	DIDStore,
+	runningInBrowser
+} from "../dist/did";
 import {
 	TestData,
 	CompatibleData
@@ -46,7 +52,7 @@ function testGetPublicKey(version: number, testData: TestData) {
 	// Count and list.
 	expect(doc.getPublicKeyCount()).toEqual(4);
 
-	let pks: List<DIDDocument.PublicKey> = doc.getPublicKeys();
+	let pks: List<DIDDocumentPublicKey> = doc.getPublicKeys();
 	expect(pks.size).toEqual(4);
 
 	for (let pk of pks) {
@@ -65,7 +71,7 @@ function testGetPublicKey(version: number, testData: TestData) {
 	}
 
 	// PublicKey getter.
-	let pk: DIDDocument.PublicKey = doc.getPublicKey("#primary");
+	let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");
 	expect(pk).not.toBeNull();
 	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pk.getId());
 
@@ -141,12 +147,12 @@ describe('DIDDocument Tests', () => {
 		// Count and list.
 		assertEquals(7, doc.getPublicKeyCount());
 
-		let pks:List<DIDDocument.PublicKey> = doc.getPublicKeys();
+		let pks:List<DIDDocumentPublicKey> = doc.getPublicKeys();
 		assertEquals(7, pks.size);
 
 		let ids = List<DIDURL>();
 		for (let i = 0; i < pks.size; i++) {
-			let pk:DIDDocument.PublicKey = pks.get(i);
+			let pk:DIDDocumentPublicKey = pks.get(i);
 			ids.push(pk.getId());
 		}
 		ids.sort((e1, e2) => {
@@ -169,7 +175,7 @@ describe('DIDDocument Tests', () => {
 		assertArrayEquals(refs.toArray(), ids.toArray());
 
 		// PublicKey getter.
-		let pk: DIDDocument.PublicKey = doc.getPublicKey("#primary");
+		let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");
 		assertNull(pk);
 
 		let id: DIDURL = DIDURL.newWithDID(user1.getSubject(), "#primary");
@@ -319,7 +325,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add 2 public keys
 		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
@@ -363,7 +369,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user1);
+		DIDDocumentBuilder db = doc.edit(user1);
 
 		// Add 2 public keys
 		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
@@ -402,7 +408,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// recovery used by authorization, should failed.
 		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
@@ -458,7 +464,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user2);
+		DIDDocumentBuilder db = doc.edit(user2);
 
 		// Can not remove the controller's key
 		DIDURL key2 = DIDURL.newWithDID(user1.getSubject(), "#key2");
@@ -796,7 +802,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add 2 public keys for test.
 		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
@@ -867,7 +873,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user1);
+		DIDDocumentBuilder db = doc.edit(user1);
 
 		// Add 2 public keys for test.
 		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
@@ -944,7 +950,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add 2 public keys for test
 		HDKey key = TestData.generateKeypair();
@@ -1010,7 +1016,7 @@ describe('DIDDocument Tests', () => {
 		assertEquals(7, doc.getAuthenticationKeyCount());
 		assertEquals(0, doc.getAuthorizationKeyCount());
 
-		DIDDocument.Builder db = doc.edit(user1);
+		DIDDocumentBuilder db = doc.edit(user1);
 
 		// Remote keys
 		db.removeAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#key2"))
@@ -1134,7 +1140,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add 2 public keys for test.
 		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
@@ -1216,7 +1222,7 @@ describe('DIDDocument Tests', () => {
 		assertTrue(doc.isValid());
 
 		DID did = doc.getSubject();
-		DIDDocument.Builder db = doc.edit(user1);
+		DIDDocumentBuilder db = doc.edit(user1);
 
 		// Add 2 public keys for test.
 		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
@@ -1281,7 +1287,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add 2 keys for test.
 		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
@@ -1448,7 +1454,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add credentials.
 		VerifiableCredential vc = cd.getCredential("user1", "passport");
@@ -1496,7 +1502,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user1);
+		DIDDocumentBuilder db = doc.edit(user1);
 
 		// Add credentials.
 		VerifiableCredential vc = cd.getCredential("foobar", "license");
@@ -1543,7 +1549,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add credentials.
 		Map<String, Object> subject = new HashMap<String, Object>();
@@ -1596,7 +1602,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user2);
+		DIDDocumentBuilder db = doc.edit(user2);
 
 		// Add credentials.
 		Map<String, Object> subject = new HashMap<String, Object>();
@@ -1645,7 +1651,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add test credentials.
 		VerifiableCredential vc = cd.getCredential("user1", "passport");
@@ -1699,7 +1705,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user1);
+		DIDDocumentBuilder db = doc.edit(user1);
 
 		// Remove credentials
 		db.removeCredential("#profile");
@@ -1878,7 +1884,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add services
 		db.addService("#test-svc-1", "Service.Testing",
@@ -1941,7 +1947,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// Add services
 		db.addService("#test-svc-1", "Service.Testing",
@@ -1991,7 +1997,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user3);
+		DIDDocumentBuilder db = doc.edit(user3);
 
 		// Add services
 		db.addService("#test-svc-1", "Service.Testing",
@@ -2035,7 +2041,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user3);
+		DIDDocumentBuilder db = doc.edit(user3);
 
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("abc", "helloworld");
@@ -2106,7 +2112,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit();
+		DIDDocumentBuilder db = doc.edit();
 
 		// remove services
 		db.removeService("#openid");
@@ -2147,7 +2153,7 @@ describe('DIDDocument Tests', () => {
 		assertNotNull(doc);
 		assertTrue(doc.isValid());
 
-		DIDDocument.Builder db = doc.edit(user1);
+		DIDDocumentBuilder db = doc.edit(user1);
 
 		// remove services
 		db.removeService("#vault");
@@ -2192,12 +2198,12 @@ describe('DIDDocument Tests', () => {
     	cd.loadAll();
 
     	String compactJson = cd.getDocumentJson(did, "compact");
-		DIDDocument compact = DIDDocument.parse(compactJson);
+		DIDDocument compact = DIDDocumentparse(compactJson);
 		assertNotNull(compact);
 		assertTrue(compact.isValid());
 
 	   	String normalizedJson = cd.getDocumentJson(did, "normalized");
-		DIDDocument normalized = DIDDocument.parse(normalizedJson);
+		DIDDocument normalized = DIDDocumentparse(normalizedJson);
 		assertNotNull(normalized);
 		assertTrue(normalized.isValid());
 
@@ -2425,7 +2431,7 @@ describe('DIDDocument Tests', () => {
     	assertEquals(doc.toString(), resolved.toString());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -2499,7 +2505,7 @@ describe('DIDDocument Tests', () => {
     	assertTrue(resolved.isValid());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -2608,7 +2614,7 @@ describe('DIDDocument Tests', () => {
     	assertTrue(resolved.isValid());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit(ctrl2);
+    	DIDDocumentBuilder db = doc.edit(ctrl2);
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -2769,7 +2775,7 @@ describe('DIDDocument Tests', () => {
     	assertTrue(resolved.isValid());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3017,7 +3023,7 @@ describe('DIDDocument Tests', () => {
     	assertTrue(resolved.isValid());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit(ctrl2);
+    	DIDDocumentBuilder db = doc.edit(ctrl2);
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3083,7 +3089,7 @@ describe('DIDDocument Tests', () => {
     	assertEquals(doc.toString(), resolved.toString());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3129,7 +3135,7 @@ describe('DIDDocument Tests', () => {
     	assertEquals(doc.toString(), resolved.toString());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3178,7 +3184,7 @@ describe('DIDDocument Tests', () => {
     	doc.getMetadata().setSignature(null);
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3210,7 +3216,7 @@ describe('DIDDocument Tests', () => {
     	doc.getMetadata().setSignature(null);
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3239,7 +3245,7 @@ describe('DIDDocument Tests', () => {
     	assertEquals(doc.toString(), resolved.toString());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3285,7 +3291,7 @@ describe('DIDDocument Tests', () => {
     	assertEquals(doc.toString(), resolved.toString());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3332,7 +3338,7 @@ describe('DIDDocument Tests', () => {
 
     	doc.getMetadata().setPreviousSignature("1234567890");
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3363,7 +3369,7 @@ describe('DIDDocument Tests', () => {
     	doc.getMetadata().setSignature("1234567890");
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3411,7 +3417,7 @@ describe('DIDDocument Tests', () => {
     	assertEquals(doc.toString(), resolved.toString());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3523,7 +3529,7 @@ describe('DIDDocument Tests', () => {
     	assertTrue(resolved.isValid());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3636,7 +3642,7 @@ describe('DIDDocument Tests', () => {
     	assertTrue(resolved.isValid());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -3819,7 +3825,7 @@ describe('DIDDocument Tests', () => {
     	assertTrue(resolved.isValid());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit(ctrl2);
+    	DIDDocumentBuilder db = doc.edit(ctrl2);
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -4003,7 +4009,7 @@ describe('DIDDocument Tests', () => {
     	assertTrue(resolved.isValid());
 
     	// Update
-    	DIDDocument.Builder db = doc.edit(ctrl2);
+    	DIDDocumentBuilder db = doc.edit(ctrl2);
     	HDKey key = TestData.generateKeypair();
     	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
     	doc = db.seal(TestConfig.storePass);
@@ -4038,7 +4044,7 @@ describe('DIDDocument Tests', () => {
     	assertEquals(doc.toString(), resolved.toString());
 
     	DIDDocument target = identity.newDid(TestConfig.storePass);
-    	DIDDocument.Builder db = target.edit();
+    	DIDDocumentBuilder db = target.edit();
     	db.authorizationDid("#recovery", doc.getSubject().toString());
     	target = db.seal(TestConfig.storePass);
     	assertNotNull(target);
@@ -4065,7 +4071,7 @@ describe('DIDDocument Tests', () => {
 		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
     	db.addAuthenticationKey(id, key.getPublicKeyBase58());
@@ -4110,7 +4116,7 @@ describe('DIDDocument Tests', () => {
 		RootIdentity identity = testData.getRootIdentity();
 
     	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	DIDDocument.Builder db = doc.edit();
+    	DIDDocumentBuilder db = doc.edit();
     	HDKey key = TestData.generateKeypair();
     	DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
     	db.addAuthenticationKey(id, key.getPublicKeyBase58());
