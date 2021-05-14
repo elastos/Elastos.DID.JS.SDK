@@ -21,7 +21,7 @@
  */
 
 import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity } from "../dist/did";
-import { DIDStore, File, Logger, Buffer } from "../dist/did";
+import { DIDStore, File, Logger } from "../dist/did";
 
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
@@ -467,78 +467,83 @@ describe("DIDStore Tests", ()=>{
 		}).toThrow(/*DIDStoreException*/);
 	});
 
-	/*  TODO: JEST-LITE DOESN4T SEEM TO HAVE test.each() ... find a solution for this
-	test.each([1, 2])("testCompatibility(%i)", (version: number)=>{
-		let data = Buffer.from("Hello World");
+	[1,2].forEach((version)=>{
+		test("testCompatibility("+version+")", ()=>{
+			let data = Buffer.from("Hello World");
 
-		let cd = testData.getCompatibleData(version);
-		cd.loadAll();
+			let cd = testData.getCompatibleData(version);
+			cd.loadAll();
 
-		let store = DIDStore.open(cd.getStoreDir());
+			let store = DIDStore.open(cd.getStoreDir());
 
-		let dids = store.listDids();
-		expect(version == 2 ? 10 : 4).toEqual(dids.size);
+			let dids = store.listDids();
+			expect(version == 2 ? 10 : 4).toEqual(dids.size);
 
-		for (let did of dids) {
-			let alias = did.getMetadata().getAlias();
+			for (let did of dids) {
+				let alias = did.getMetadata().getAlias();
 
-			if (alias === "Issuer") {
-				let vcs = store.listCredentials(did);
-				expect(1).toEqual(vcs.size);
+				if (alias === "Issuer") {
+					let vcs = store.listCredentials(did);
+					expect(1).toEqual(vcs.size);
 
-				for (let id of vcs)
-					expect(store.loadCredential(id)).not.toBeNull();
-			} else if (alias === "User1") {
-				let vcs = store.listCredentials(did);
-				expect(version == 2 ? 5 : 4).toEqual(vcs.size);
+					for (let id of vcs)
+						expect(store.loadCredential(id)).not.toBeNull();
+				} else if (alias === "User1") {
+					let vcs = store.listCredentials(did);
+					expect(version == 2 ? 5 : 4).toEqual(vcs.size);
 
-				for (let id of vcs)
-					expect(store.loadCredential(id)).not.toBeNull();
-			} else if (alias === "User2") {
-				let vcs = store.listCredentials(did);
-				expect(1).toEqual(vcs.size);
+					for (let id of vcs)
+						expect(store.loadCredential(id)).not.toBeNull();
+				} else if (alias === "User2") {
+					let vcs = store.listCredentials(did);
+					expect(1).toEqual(vcs.size);
 
-				for (let id of vcs)
-					expect(store.loadCredential(id)).not.toBeNull();
-			} else if (alias === "User3") {
-				let vcs = store.listCredentials(did);
-				expect(0).toEqual(vcs.size);
+					for (let id of vcs)
+						expect(store.loadCredential(id)).not.toBeNull();
+				} else if (alias === "User3") {
+					let vcs = store.listCredentials(did);
+					expect(0).toEqual(vcs.size);
+				}
+
+				let doc = store.loadDid(did);
+				if (!doc.isCustomizedDid() || doc.getControllerCount() <= 1) {
+					let sig = doc.signWithStorePass(TestConfig.storePass, data);
+					expect(doc.verify(null, sig, data)).toBeTruthy();
+				}
 			}
-
-			let doc = store.loadDid(did);
-			if (!doc.isCustomizedDid() || doc.getControllerCount() <= 1) {
-				let sig = doc.signWithStorePass(TestConfig.storePass, data);
-				expect(doc.verify(null, sig, data)).toBeTruthy();
-			}
-		}
+		});
 	});
 
-	test.each([1,2])("testCompatibilityNewDIDWithWrongPass(%i)", (version: number)=>{
-		let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
-		let identity = store.loadRootIdentity();
+	[1,2].forEach((version)=>{
+		test("testCompatibilityNewDIDWithWrongPass("+version+")", ()=>{
+			let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
+			let identity = store.loadRootIdentity();
 
-		expect(()=>{
-			identity.newDid("wrongpass");
-		}).toThrow(); //WrongPasswordException
+			expect(()=>{
+				identity.newDid("wrongpass");
+			}).toThrow(); //WrongPasswordException
+		});
 	});
 
-	test.each([1,2])("testCompatibilityNewDIDandGetDID(%i)", (version: number)=>{
-		let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
-		let identity = store.loadRootIdentity();
+	[1,2].forEach((version)=>{
+		test("testCompatibilityNewDIDandGetDID("+version+")", ()=>{
+			let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
+			let identity = store.loadRootIdentity();
 
-		let doc = identity.newDid(TestConfig.storePass);
-		expect(doc).not.toBeNull();
+			let doc = identity.newDid(TestConfig.storePass);
+			expect(doc).not.toBeNull();
 
-		store.deleteDid(doc.getSubject());
+			store.deleteDid(doc.getSubject());
 
-		let did = identity.getDid(1000);
+			let did = identity.getDid(1000);
 
-		doc = identity.newDid(TestConfig.storePass, 1000);
-		expect(doc).not.toBeNull();
-		expect(doc.getSubject().equals(did)).toBeTruthy();
+			doc = identity.newDid(TestConfig.storePass, 1000);
+			expect(doc).not.toBeNull();
+			expect(doc.getSubject().equals(did)).toBeTruthy();
 
-		store.deleteDid(doc.getSubject());
-	}); */
+			store.deleteDid(doc.getSubject());
+		});
+	});
 
 	function createDataForPerformanceTest(store: DIDStore) {
 		let props = {
@@ -567,40 +572,42 @@ describe("DIDStore Tests", ()=>{
 		}
 	}
 
-	/* test.each([false, true])("testStoreCachePerformance", (cached: boolean)=>{
-		Utils.deleteFile(new File(TestConfig.storeRoot));
-		let store: DIDStore = null;
-		if (cached)
-			store = DIDStore.open(TestConfig.storeRoot);
-		else
-			store = DIDStore.open(TestConfig.storeRoot, 0, 0);
+	[false, true].forEach((cached)=>{
+		test("testStoreCachePerformance", ()=>{
+			Utils.deleteFile(new File(TestConfig.storeRoot));
+			let store: DIDStore = null;
+			if (cached)
+				store = DIDStore.open(TestConfig.storeRoot);
+			else
+				store = DIDStore.open(TestConfig.storeRoot, 0, 0);
 
-		let mnemonic = Mnemonic.getInstance().generate();
-		RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
-				store, TestConfig.storePass, true);
+			let mnemonic = Mnemonic.getInstance().generate();
+			RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
+					store, TestConfig.storePass, true);
 
-		createDataForPerformanceTest(store);
+			createDataForPerformanceTest(store);
 
-		let dids = store.listDids();
-		expect(10).toEqual(dids.size);
+			let dids = store.listDids();
+			expect(10).toEqual(dids.size);
 
-		let start = new Date().getTime();
+			let start = new Date().getTime();
 
-		for (let i = 0; i < 1000; i++) {
-			for (let did of dids) {
-				let doc = store.loadDid(did);
-				expect(did.equals(doc.getSubject())).toBeTruthy();
+			for (let i = 0; i < 1000; i++) {
+				for (let did of dids) {
+					let doc = store.loadDid(did);
+					expect(did.equals(doc.getSubject())).toBeTruthy();
 
-				let id = DIDURL.valueOf(did, "#cred-1");
-				let vc = store.loadCredential(id);
-				expect(id.equals(vc.getId())).toBeTruthy();
+					let id = DIDURL.valueOf(did, "#cred-1");
+					let vc = store.loadCredential(id);
+					expect(id.equals(vc.getId())).toBeTruthy();
+				}
 			}
-		}
 
-		let end = new Date().getTime();
+			let end = new Date().getTime();
 
-		log.info("Store loading {} cache took {} milliseconds.", (cached ? "with" : "without"), end - start);
-	}); */
+			log.info("Store loading {} cache took {} milliseconds.", (cached ? "with" : "without"), end - start);
+		});
+	});
 
 	test("testMultipleStore", ()=>{
 		let stores: DIDStore[] = [];
