@@ -116,9 +116,30 @@ describe('DIDURL Tests', () => {
 
 
 	test('Test Constructor Error 1', () => {
-
-		expect(DIDURL.newWithUrl("did:elastos:1234567890;" + params + path + query + fragment)).toThrow("");
+		expect(() => {DIDURL.newWithUrl("did:elastos:1234567890;" + params + path + query + fragment)}).toThrowError();
 	})
+
+	test('Test Constructor Error 2', () => {
+
+		expect(() => {DIDURL.newWithUrl("did:example:1234567890" + params + path + query + fragment)}).toThrowError();
+	})
+
+	test('Test Constructor Error 3', () => {
+
+		expect(() => {DIDURL.newWithUrl("did:elastos::1234567890" + params + path + query + fragment)}).toThrowError();
+	})
+
+	test('Test Constructor Error 4', () => {
+
+		expect(() => {DIDURL.newWithUrl("did:example:1234567890" + params + path + "?" + "#" + fragment)}).toThrowError();
+	})
+
+	test('Test Constructor Error 5', () => {
+
+		expect(() => {DIDURL.newWithUrl("did:example:1234567890" + params + path + query + "#")}).toThrowError();
+	})
+
+	
 
 	test('Test GetDID', () => {
 		expect(url.getDid().toString()).toBe(testDID);

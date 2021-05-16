@@ -1,10 +1,21 @@
 
 
 
-export interface DIDValues {
-    value: string;
-    method: string;
-    methodSpecificId: string;
+export class DIDValues {
+
+    constructor(readonly value: string, readonly method: string, readonly methodSpecificId: string) {
+        
+    }
+
+    
+    public get isEmpty() : boolean {
+        return this.value === "" && this.method === "" && this.methodSpecificId === ""
+    }
+
+    public static CreateEmpty(): DIDValues{
+        return new DIDValues("", "", "")
+    }
+    
 }
 
 export interface DIDURLValues{
@@ -32,13 +43,7 @@ export class DIDURLParser{
 
 
     private static extractDID(url: string): DIDValues{
-        if (!url.startsWith("did")){
-            return {
-                value: "",
-                method: "",
-                methodSpecificId: ""
-            };
-        }
+        
 
         let did = url;
         let match = url.match(/[?#\/;]/g)
@@ -48,14 +53,29 @@ export class DIDURLParser{
             did = did.substring(0, indexOf)
         }
 
+        if (did.length === 0) return DIDValues.CreateEmpty()
+
+        if (!did.startsWith("did")){
+            throw new Error("Invalid DID")
+        }
+
+
+
         let didValues = did.split(":")
 
-
-        return {
-            value: did,
-            method: didValues[1],
-            methodSpecificId: didValues[2]
+        if (!did.startsWith("did") || didValues.length !== 3){
+            throw new Error("Invalid DID")
         }
+
+        if (didValues[1].toLowerCase() !== "elastos"){
+            throw new Error("Invalid DID method")
+        }
+
+        if (didValues[2].length <= 0){
+            throw new Error("Invalid DID method")
+        }
+
+        return new DIDValues(did, didValues[1], didValues[2])
     }
 
     private static extractParams(url: string): Map<string, string>{
@@ -64,6 +84,8 @@ export class DIDURLParser{
 
         let parameters = url.substring(startIn + 1)
 
+
+        
         let match = parameters.match(/[?#\/]/g)
         if (match && match.length > 0) {
             parameters = parameters.substring(0, parameters.indexOf(match[0]))
@@ -108,6 +130,7 @@ export class DIDURLParser{
         let response = new Map<string, string>();
 
         values.forEach(value => {
+            if (value== null || value=="") throw new Error("Invalid DID Parameter or query")
             let splitValue = value.split("=")
             if (splitValue.length === 1){
                 response.set(splitValue[0], null)

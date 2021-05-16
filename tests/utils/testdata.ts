@@ -619,6 +619,10 @@ export class InstantData {
 
 		return this.vcUser1Twitter;
 	}
+
+
+	
+
 /*
 	public synchronized VerifiableCredential getUser1JsonCredential() throws DIDException {
 		if (vcUser1Json == null) {

@@ -39,9 +39,9 @@ describe('DID Tests', () => {
 	});
 
 	test('Test Constructor with invalid did string', () => {
-		expect(new DID("id:elastos:1234567890")).toThrowError();
-		expect(new DID("did:example:1234567890")).toThrowError();
-		expect(new DID("did:elastos:")).toThrowError();
+		expect(() =>{ new DID("id:elastos:1234567890")}).toThrowError()
+		expect(() =>{ new DID("did:example:1234567890")}).toThrowError()
+		expect(() =>{ new DID("did:elastos:")}).toThrowError()
 	});
 
 	test('Test Get Method', () => {

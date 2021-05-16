@@ -147,7 +147,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 
 				try {
 					let urlParsed = DIDURLParser.NewFromURL(url);
-					newInstance.setDid(new DID(urlParsed.did.value));
+					if (!urlParsed.did.isEmpty)	newInstance.setDid(new DID(urlParsed.did.value));
 					newInstance.setFragment(urlParsed.fragment);
 					newInstance.setPath(urlParsed.path);
 					newInstance.setParameters(urlParsed.params);
