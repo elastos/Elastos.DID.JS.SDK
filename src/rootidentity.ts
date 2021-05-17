@@ -454,7 +454,6 @@ export namespace RootIdentity {
 		constructor(id: string, store: DIDStore | null = null) {
 			super(store);
 			this.id = id;
-			this.save(); // TMP BPI TO SAVE THE .metadata
 		}
 
 		public setId(id: string) {
