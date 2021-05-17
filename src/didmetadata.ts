@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-import { AbstractMetadata } from "./abstractmetadata";
+import { AbstractMetadata } from "./internals";
 import { Cloneable } from "./cloneable";
-import { DID } from "./did";
-import { DIDStore } from "./didstore";
+import { DID } from "./internals";
+import { DIDStore } from "./internals";
 import { DIDStoreException } from "./exceptions/exceptions";
 
 /**

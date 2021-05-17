@@ -22,7 +22,7 @@
 
 import { mnemonicToSeedSync, generateMnemonic, wordlists, validateMnemonic } from "bip39";
 import { MnemonicException } from "./exceptions/exceptions";
-import { checkArgument } from "./utils";
+import { checkArgument } from "./internals";
 
 /**
  * The class represents the mnemonic content.

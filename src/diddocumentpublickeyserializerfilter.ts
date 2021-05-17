@@ -1,10 +1,10 @@
 import {
     JsonStringifierTransformerContext,
 } from "jackson-js/dist/@types";
-import { DID } from "./did";
+import { DID } from "./internals";
 import {
     PropertySerializerFilter,
-} from "./serializers";
+} from "./internals";
 
 export class DIDDocumentPublicKeySerializerFilter extends PropertySerializerFilter<DID> {
     public static include (controller: DID, context: JsonStringifierTransformerContext): boolean {

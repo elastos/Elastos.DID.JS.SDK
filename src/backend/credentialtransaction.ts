@@ -21,7 +21,7 @@
  */
 
 import { JsonCreator } from "jackson-js";
-import { DIDURL } from "../didurl";
+import { DIDURL } from "../internals";
 import { CredentialRequest } from "./credentialrequest";
 import { IDTransaction } from "./idtransaction";
 

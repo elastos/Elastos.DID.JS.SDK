@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-import { AbstractMetadata } from "./abstractmetadata";
-import { DID } from "./did";
+import { AbstractMetadata } from "./internals";
+import { DID } from "./internals";
 import {
 	ParentException,
 	MalformedDIDURLException,
@@ -31,7 +31,7 @@ import {
 	checkArgument,
 	checkNotNull,
 	hashCode
-} from "./utils";
+} from "./internals";
 import {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
@@ -45,7 +45,7 @@ import { Comparable } from "./comparable";
 import {
     Serializer,
     Deserializer
-} from "./serializers";
+} from "./internals";
 import { DIDURLParser } from "./parser/DIDURLParser";
 
 class URLSerializer extends Serializer {

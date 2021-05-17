@@ -1,10 +1,10 @@
 import crypto from "crypto"
-import { AbstractMetadata } from "./abstractmetadata";
-import { HDKey } from "./crypto/hdkey";
-import { DID } from "./did";
-import { DIDDocument } from "./diddocument";
-import { DIDStore } from "./didstore";
-import { DIDURL } from "./didurl";
+import { AbstractMetadata } from "./internals";
+import { HDKey } from "./internals";
+import { DID } from "./internals";
+import { DIDDocument } from "./internals";
+import { DIDStore } from "./internals";
+import { DIDURL } from "./internals";
 import {
 	DIDAlreadyExistException,
 	DIDDeactivatedException,
@@ -14,14 +14,14 @@ import {
 	UnknownInternalException
 } from "./exceptions/exceptions";
 import { Logger } from "./logger";
-import { Mnemonic } from "./mnemonic";
+import { Mnemonic } from "./internals";
 import {
 	checkArgument,
 	promisify
-} from "./utils";
-import { DefaultConflictHandle } from "./defaultconflicthandle";
-import { ConflictHandle } from "./conflicthandle";
-import { DIDDocumentBuilder } from "./diddocumentbuilder";
+} from "./internals";
+import { DefaultConflictHandle } from "./internals";
+import { ConflictHandle } from "./internals";
+import { DIDDocumentBuilder } from "./internals";
 
 const log = new Logger("RootIdentity");
 

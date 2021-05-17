@@ -21,8 +21,8 @@
  */
 
 import { JsonCreator, JsonInclude, JsonIncludeType, JsonProperty } from "jackson-js";
-import { DID } from "../did";
-import { DIDURL } from "../didurl";
+import { DID } from "../internals";
+import { DIDURL } from "../internals";
 import { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
 

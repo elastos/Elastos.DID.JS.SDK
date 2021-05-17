@@ -21,7 +21,7 @@
  */
 
 import { JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder } from "jackson-js";
-import { DIDEntity } from "../didentity";
+import { DIDEntity } from "../internals";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 import { ResolveError } from "./resolveerror";
 import { ResolveResult } from "./resolveresult";

@@ -1,35 +1,40 @@
 import {
-    JsonProperty, JsonPropertyOrder, JsonSerialize
+    JsonProperty,
+    JsonPropertyOrder,
+    JsonSerialize,
+    JsonClassType
 } from "jackson-js";
 import { Comparable } from "./comparable";
 import { Constants } from "./constants";
-import { Base58 } from "./crypto/base58";
-import { DID } from "./did";
+import { Base58 } from "./internals";
+import { DID } from "./internals";
 import { DIDDocumentConstants } from "./diddocumentconstants";
-import { DIDDocumentPublicKeySerializerFilter } from "./diddocumentpublickeyserializerfilter";
-import { DIDObject } from "./didobject";
-import { DIDURL } from "./didurl";
-import { TypeSerializerFilter } from "./filters";
+import { DIDDocumentPublicKeySerializerFilter } from "./internals";
+import { DIDObject } from "./internals";
+import { DIDURL } from "./internals";
+import { TypeSerializerFilter } from "./internals";
 
 /**
  * Publickey is used for digital signatures, encryption and
  * other cryptographic operations, which are the basis for purposes such as
  * authentication or establishing secure communication with service endpoints.
  */
-    @JsonPropertyOrder({
+@JsonPropertyOrder({
     value: [
         DIDDocumentConstants.ID, DIDDocumentConstants.TYPE, DIDDocumentConstants.CONTROLLER, DIDDocumentConstants.PUBLICKEY_BASE58
     ]
 })
 export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDocumentPublicKey> {
     @JsonProperty({ value: DIDDocumentConstants.ID })
+    @JsonClassType({type: () => [DIDURL]})
     public id: DIDURL;
     @JsonSerialize({using: TypeSerializerFilter.filter})
     @JsonProperty({ value: DIDDocumentConstants.TYPE })
     public type: string;
     @JsonSerialize({using: DIDDocumentPublicKeySerializerFilter.filter})
     @JsonProperty({ value: DIDDocumentConstants.CONTROLLER })
-    public controller: any /* DID */;
+    @JsonClassType({type: () => [DID]})
+    public controller: DID;
     @JsonProperty({ value: DIDDocumentConstants.PUBLICKEY_BASE58 })
     public keyBase58: string;
     private authenticationKey: boolean;

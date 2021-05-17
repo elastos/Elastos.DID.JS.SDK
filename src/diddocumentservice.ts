@@ -4,8 +4,8 @@ import {
     JsonPropertyOrder,
     JsonAnySetter
 } from "jackson-js";
-import { DIDURL } from "./didurl";
-import { DIDObject } from "./didobject";
+import { DIDURL } from "./internals";
+import { DIDObject } from "./internals";
 import {
     Map as ImmutableMap
 } from "immutable";
@@ -24,6 +24,7 @@ import { DIDDocumentConstants } from "./diddocumentconstants";
 })
 export class DIDDocumentService implements DIDObject<string> {
     @JsonProperty({ value: DIDDocumentConstants.ID })
+    @JsonClassType({type: () => [DIDURL]})
     private id: DIDURL;
     @JsonProperty({ value: DIDDocumentConstants.TYPE }) @JsonClassType({ type: () => [String] })
     private type: string;

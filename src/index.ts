@@ -1,15 +1,15 @@
 'use strict';
 
 import { DID } from "./did";
-import { DIDDocument } from "./diddocument";
-import { DIDStore } from "./didstore";
+import { DIDDocument } from "./internals";
+import { DIDStore } from "./internals";
 import { RootIdentity } from "./rootidentity";
 import { VerifiableCredential } from "./verifiablecredential";
 import { VerifiablePresentation } from "./verifiablepresentation";
 import { Mnemonic } from "./mnemonic";
 import { TransferTicket } from "./transferticket";
 import { Issuer } from "./issuer";
-import { DIDURL,  } from "./didurl";
+import { DIDURL,  } from "./internals";
 import { DIDURLParser, DIDURLValues } from "./parser/DIDURLParser";
 import * as Exceptions from "./exceptions/exceptions";
 import { File } from "./file";

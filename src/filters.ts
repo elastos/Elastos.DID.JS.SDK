@@ -1,10 +1,5 @@
-import {
-    PropertySerializerFilter,
-} from "./serializers";
-import {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+import { PropertySerializerFilter } from "./internals";
+import { JsonStringifierTransformerContext } from "jackson-js/dist/@types";
 import { Constants } from "./constants";
 
 export class TypeSerializerFilter extends PropertySerializerFilter<string> {

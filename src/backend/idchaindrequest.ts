@@ -23,15 +23,15 @@
 import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonValue, JsonSetter } from "jackson-js";
 import { Class } from "../class";
 import { Constants } from "../constants";
-import { BASE64 } from "../crypto/base64";
-import { DID } from "../did";
-import { DIDDocument } from "../diddocument";
-import { DIDEntity } from "../didentity";
-import { DIDURL } from "../didurl";
+import { BASE64 } from "../internals";
+import { DID } from "../internals";
+import { DIDDocument } from "../internals";
+import { DIDEntity } from "../internals";
+import { DIDURL } from "../internals";
 import { IllegalArgumentException } from "../exceptions/exceptions";
 import { JSONObject } from "../json";
-import { TransferTicket } from "../transferticket";
-import { checkArgument } from "../utils";
+import { TransferTicket } from "../internals";
+import { checkArgument } from "../internals";
 
 /**
  * The class records the information of IDChain Request.

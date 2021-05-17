@@ -21,7 +21,7 @@
  */
 
 import { JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
-import { DIDEntity } from "../didentity";
+import { DIDEntity } from "../internals";
 import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
 import { IDChainRequest } from "./idchaindrequest";
 

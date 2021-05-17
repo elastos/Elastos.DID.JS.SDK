@@ -1,13 +1,13 @@
 import {
     JsonParserTransformerContext
 } from "jackson-js/dist/@types";
-import { DIDDocumentPublicKey } from "./diddocumentpublickey";
-import { DIDDocumentPublicKeyReference } from "./diddocumentpublickeyreference";
-import { DIDURL } from "./didurl";
+import { DIDDocumentPublicKey } from "./internals";
+import { DIDDocumentPublicKeyReference } from "./internals";
+import { DIDURL } from "./internals";
 import {
     ParentException
 } from "./exceptions/exceptions";
-import { Deserializer } from "./serializers";
+import { Deserializer } from "./internals";
 
 export class DIDDocumentPublicKeyReferenceDeserializer extends Deserializer {
     public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocumentPublicKeyReference {

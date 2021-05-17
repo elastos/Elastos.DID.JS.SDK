@@ -22,8 +22,8 @@
 
 import { List as ImmutableList } from "immutable";
 import { JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
-import { DID } from "../did";
-import { DIDURL } from "../didurl";
+import { DID } from "../internals";
+import { DIDURL } from "../internals";
 import { MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
 

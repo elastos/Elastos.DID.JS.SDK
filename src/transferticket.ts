@@ -22,16 +22,16 @@
 
 import { List as ImmutableList } from "immutable";
 import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "jackson-js";
-import { Collections } from "./collections";
+import { Collections } from "./internals";
 import { Comparable } from "./comparable";
 import { Constants } from "./constants";
-import { EcdsaSigner } from "./crypto/ecdsasigner";
-import { DID } from "./did";
-import { DIDDocument } from "./diddocument";
-import { DIDEntity } from "./didentity";
-import { DIDURL } from "./didurl";
+import { EcdsaSigner } from "./internals";
+import { DID } from "./internals";
+import { DIDDocument } from "./internals";
+import { DIDEntity } from "./internals";
+import { DIDURL } from "./internals";
 import { DIDResolveException, NotCustomizedDIDException, DIDStoreException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";
-import { checkArgument } from "./utils";
+import { checkArgument } from "./internals";
 
 /**
  * Transfer ticket class.

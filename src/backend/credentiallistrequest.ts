@@ -22,11 +22,11 @@
 
 import { hash } from "immutable";
 import { JsonClassType, JsonCreator, JsonIdentityInfo, JsonInclude, JsonIncludeType, JsonProperty, ObjectIdGenerator } from "jackson-js";
-import { DID } from "../did";
-import { DIDURL } from "../didurl";
+import { DID } from "../internals";
+import { DIDURL } from "../internals";
 import { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
-import { hashCode } from "../utils";
+import { hashCode } from "../internals";
 
 @JsonCreator()
 export class CredentialListRequest extends ResolveRequest<CredentialListRequest, Parameters> {

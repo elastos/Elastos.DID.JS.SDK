@@ -21,7 +21,7 @@
  */
 
 import { List as ImmutableList } from "immutable";
-import { DIDURL } from "./didurl";
+import { DIDURL } from "./internals";
 
 /**
  * The class is the base object for PublicKey and Credential.

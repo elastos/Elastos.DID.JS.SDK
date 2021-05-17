@@ -20,18 +20,18 @@
  * SOFTWARE.
  */
 
-import { CredentialMetadata } from "./credentialmetadata";
-import { DID } from "./did";
-import { DIDDocument } from "./diddocument";
-import { DIDMetadata } from "./didmetadata";
-import { DIDStorage, ReEncryptor } from "./didstorage";
-import { DIDURL } from "./didurl";
+import { CredentialMetadata } from "./internals";
+import { DID } from "./internals";
+import { DIDDocument } from "./internals";
+import { DIDMetadata } from "./internals";
+import { DIDStorage, ReEncryptor } from "./internals";
+import { DIDURL } from "./internals";
 import { DIDStorageException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
-import { RootIdentity } from "./rootidentity";
-import { VerifiableCredential } from "./verifiablecredential";
-import { DIDStoreMetadata } from "./didstoremetadata";
-import { File } from "./file";
+import { RootIdentity } from "./internals";
+import { VerifiableCredential } from "./internals";
+import { DIDStoreMetadata } from "./internals";
+import { File } from "./internals";
 
 // Root prefix to distinguish this file's storage from other data in local storage.
 const FILESYSTEM_LOCAL_STORAGE_PREFIX = "DID_FS_STORAGE";

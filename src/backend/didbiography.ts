@@ -22,24 +22,24 @@
 
 import { JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonValue } from "jackson-js";
 import { List as ImmutableList } from "immutable";
-import { DID } from "../did";
+import { DID } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
 import { DIDTransaction } from "./didtransaction";
 
-export class Status {
+export class DIDBiographyStatus {
 	/**
 	 * The credential is valid.
 	 */
-	public static VALID = new Status("valid", 0);
+	public static VALID = new DIDBiographyStatus("valid", 0);
 	/**
 	 * The credential is deactivated.
 	 */
-	public static DEACTIVATED = new Status("deactivated", 2);
+	public static DEACTIVATED = new DIDBiographyStatus("deactivated", 2);
 	/**
 	 * The credential is not published.
 	 */
-	public static NOT_FOUND = new Status("not_found", 3);
+	public static NOT_FOUND = new DIDBiographyStatus("not_found", 3);
 
 	private constructor(private name: string, private value: number) {}
 
@@ -49,16 +49,16 @@ export class Status {
 	}
 
 	@JsonCreator()
-	public static fromJson(value: number): Status {
+	public static fromJson(value: number): DIDBiographyStatus {
 		switch (value) {
 		case 0:
-			return Status.VALID;
+			return DIDBiographyStatus.VALID;
 
 		case 2:
-			return Status.DEACTIVATED;
+			return DIDBiographyStatus.DEACTIVATED;
 
 		case 3:
-			return Status.NOT_FOUND;
+			return DIDBiographyStatus.NOT_FOUND;
 
 		default:
 			throw new IllegalArgumentException("Invalid status value: " + value);
@@ -69,7 +69,7 @@ export class Status {
 		return this.name.toLowerCase();
 	}
 
-	public equals(status: Status): boolean {
+	public equals(status: DIDBiographyStatus): boolean {
 		return this.value == status.value;
 	}
 }
@@ -91,7 +91,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 	@JsonProperty({value: DIDBiography.DID})
 	private did: any; //DID;
 	@JsonProperty({value: DIDBiography.STATUS})
-	private status: Status;
+	private status: DIDBiographyStatus;
 	@JsonProperty({value: DIDBiography.TRANSACTION})
 	private txs: DIDTransaction[];
 
@@ -104,7 +104,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 	@JsonCreator()
 	protected static toDIDBiography(
 		@JsonProperty({value: DIDBiography.DID, required: true}) did: any /* DID */,
-		@JsonProperty({value: DIDBiography.STATUS, required: true}) status: Status
+		@JsonProperty({value: DIDBiography.STATUS, required: true}) status: DIDBiographyStatus
 	) {
 			let didBiography = new DIDBiography(did);
 			didBiography.status = status;
@@ -120,11 +120,11 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 		return this.did;
 	}
 
-	protected setStatus(status: Status) {
+	protected setStatus(status: DIDBiographyStatus) {
 		this.status = status;
 	}
 
-	public getStatus(): Status {
+	public getStatus(): DIDBiographyStatus {
 		return this.status;
 	}
 
@@ -161,7 +161,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 		if (this.did == null)
 			throw new MalformedResolveResultException("Missing did");
 
-		if (!this.status.equals(Status.NOT_FOUND)) {
+		if (!this.status.equals(DIDBiographyStatus.NOT_FOUND)) {
 			if (this.txs == null || this.txs.length == 0)
 				throw new MalformedResolveResultException("Missing transaction");
 

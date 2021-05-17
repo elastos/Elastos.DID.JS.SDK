@@ -22,9 +22,9 @@
 /*
 import { DID } from "../../src/did";
 import { DIDBackend } from "../../src/didbackend";
-import { DIDDocument } from "../../src/diddocument";
+import { DIDDocument } from "../../src/internals";
 import { DIDStore } from "../../src/didstore";
-import { DIDURL } from "../../src/didurl";
+import { DIDURL } from "../../src/internals";
 import { Issuer } from "../../src/issuer";
 import { RootIdentity } from "../../src/rootidentity";
 import { TransferTicket } from "../../src/transferticket";

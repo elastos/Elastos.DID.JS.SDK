@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { Mnemonic } from "../mnemonic";
+import { Mnemonic } from "../internals";
 import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
 import { Base58 } from './base58'
 import { SHA256 } from "./sha256";

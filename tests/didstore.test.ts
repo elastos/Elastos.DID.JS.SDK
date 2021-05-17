@@ -469,8 +469,9 @@ describe("DIDStore Tests", ()=>{
 		}).toThrow(/*DIDStoreException*/);
 	});
 
-	[1,2].forEach((version)=>{
-		test("testCompatibility("+version+")", ()=>{
+	//[1,2].forEach((version)=>{
+		test("testCompatibility", ()=>{
+			let version = 1;
 			let data = Buffer.from("Hello World");
 
 			let cd = testData.getCompatibleData(version);
@@ -514,7 +515,7 @@ describe("DIDStore Tests", ()=>{
 				}
 			}
 		});
-	});
+	//});
 
 	[1,2].forEach((version)=>{
 		test("testCompatibilityNewDIDWithWrongPass("+version+")", ()=>{

@@ -1,9 +1,11 @@
-import { AbstractMetadata } from "./abstractmetadata";
-import { DIDStore } from "./didstore";
-import { checkArgument } from "./utils";
+import { JsonInclude, JsonIncludeType } from "jackson-js";
+import { AbstractMetadata } from "./internals";
+import { DIDStore } from "./internals";
 import { DIDStoreException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
+import { checkArgument } from "./internals";
 
+@JsonInclude({value: JsonIncludeType.NON_NULL})
 export class DIDStoreMetadata extends AbstractMetadata {
     static DID_STORE_TYPE: string = "did:elastos:store";
 	static DID_STORE_VERSION = 3;
@@ -14,7 +16,7 @@ export class DIDStoreMetadata extends AbstractMetadata {
     private static DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
     private static log = new Logger("DIDStoreMetadata");
 
-    constructor(store: DIDStore | null = null) {
+    constructor(store: DIDStore = null) {
         super(store);
         this.put(DIDStoreMetadata.TYPE, DIDStoreMetadata.DID_STORE_TYPE);
         this.put(DIDStoreMetadata.VERSION, DIDStoreMetadata.DID_STORE_VERSION);

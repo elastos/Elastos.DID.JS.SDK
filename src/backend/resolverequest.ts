@@ -20,11 +20,11 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonValue, JsonSetter } from "jackson-js";
+import { JsonProperty, JsonPropertyOrder } from "jackson-js";
 import { Class } from "../class";
-import { hashCode } from "../utils";
-import { DIDEntity } from "../didentity";
+import { DIDEntity } from "../internals";
 import { Hashable } from "../hashable";
+import { hashCode } from "../internals";
 
 @JsonPropertyOrder({value: [
 	ResolveRequest.ID,
@@ -81,7 +81,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
 		return this.params === rr.params;
 	}
 
-	public static parse<T extends DIDEntity<any>>(content: string, clazz: Class<T>): T {
+	public static parse<T extends DIDEntity<T>>(content: string, clazz: Class<T>): T {
 		return DIDEntity.parse(content, clazz);
 	}
 }

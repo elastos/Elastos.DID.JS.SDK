@@ -21,15 +21,15 @@
  */
 
 import { JsonCreator } from "jackson-js";
-import { DIDDocument } from "../diddocument";
-import { DIDURL } from "../didurl";
-import { base64Decode } from "../utils";
+import { DIDDocument } from "../internals";
+import { DIDURL } from "../internals";
+import { base64Decode } from "../internals";
 import {
 	InvalidKeyException,
 	MalformedIDChainRequestException,
 	UnknownInternalException
 } from "../exceptions/exceptions";
-import { VerifiableCredential } from "../verifiablecredential";
+import { VerifiableCredential } from "../internals";
 import { IDChainRequest } from "./idchaindrequest";
 
 /**
