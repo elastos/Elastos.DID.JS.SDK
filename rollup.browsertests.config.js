@@ -8,7 +8,7 @@ import multiInput from 'rollup-plugin-multi-input';
 import json from '@rollup/plugin-json';
 import globals from 'rollup-plugin-node-globals';
 import { resolve as pathResolve } from "path";
-import { readdirSync, writeFileSync, lstatSync, readFileSync } from 'fs';
+import { readdirSync, writeFileSync, lstatSync, readFileSync, mkdirSync, existsSync } from 'fs';
 
 async function populateDataContent(folder, entry) {
     let folderFiles = readdirSync(folder);
@@ -23,7 +23,7 @@ async function populateDataContent(folder, entry) {
         else {
             // File
             entry[file] = {
-                _content: readFileSync(fullPath).toString()
+                _content: readFileSync(fullPath).toString("utf-8").replace(/\n|\r/g, "")
             }
         }
     }
@@ -38,6 +38,8 @@ let dataBundle = {
 };
 populateDataContent(rootDataFolder, dataBundle.data);
 //console.log(dataBundle)
+if (!existsSync("./generated"))
+    mkdirSync("./generated");
 writeFileSync("./generated/browserdata.json", JSON.stringify(dataBundle, null, "  "));
 
 export default [

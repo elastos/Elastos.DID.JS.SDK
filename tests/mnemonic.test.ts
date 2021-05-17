@@ -32,8 +32,6 @@ describe('Mnemonic Tests', () => {
 
 	beforeEach(async ()=>{
 		//testData = new TestData();
-		if (runningInBrowser())
-			await testData.loadBundledTestData();
 	})
 
 	afterEach(()=>{
@@ -90,8 +88,6 @@ public class MnemonicTest {
     @BeforeEach
     public void beforeEach() throws DIDException {
     	testData = new TestData();
-		if (runningInBrowser())
-			await testData.loadBundledTestData();
     }
 
     @AfterEach

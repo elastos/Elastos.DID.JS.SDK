@@ -65,6 +65,9 @@
       var Buffer = window.buffer.Buffer
     </script>
 
+    <!-- Browser tests requirement: import test data to browser file system -->
+    <!-- <script type="module" src="public/tests/tests/utils/browserdataimport.js"></script> -->
+
     <!-- Load our tests -->
     <script type="module" src="public/tests/tests/rootidentity.test.js"></script>
     <script type="module" src="public/tests/tests/didurl.test.js"></script>
@@ -87,6 +90,7 @@
       // Run the tests, gather and display the output in the browser.
       // TODO: Nothing better found for now with jest-lite in order to not run the tests until DID
       // initialize() is ready (async). Without doing this, we get "0 results" here.
+      // TODO: this timeout is also used because browser bundled data is async and jest-lite does not await beforeAll() (where we tried to initialize this data).
       setTimeout(() => {
         let result = run();
         window.jestLite.prettify.toHTML(result, document.body);

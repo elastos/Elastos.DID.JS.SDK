@@ -29,8 +29,7 @@ import {
 	File, HDKey, JSONObject, JSONValue, runningInBrowser
 } from "../../dist/did";
 import { TestConfig } from "./testconfig";
-
-let browserBundledData: any; // data/ folder bundled only for the browser at compilation time.
+import { importBundledBrowserData } from "./browserdataimport";
 
 export class TestData {
 	// HDKey for temporary key generation
@@ -49,40 +48,8 @@ export class TestData {
 		TestConfig.initialize();
 		if (File.exists(TestConfig.storeRoot))
     		(new File(TestConfig.storeRoot)).delete();
+		importBundledBrowserData();
 		this.store = DIDStore.open(TestConfig.storeRoot);
-	}
-
-	private async conditionalImport(moduleName: string): Promise<any> {
-		return import(moduleName);
-	}
-
-	public async loadBundledTestData(): Promise<void> {
-		if (!browserBundledData) {
-			browserBundledData = await this.conditionalImport("../../generated/browserdata.json");
-
-			// We have to really append those files into browser's file system for methods such as DIDStore.open()
-			// work from the SDK. So we recursively import all entries
-			this.importBundledBrowserDataToFS(TestConfig.storeRoot, browserBundledData);
-		}
-	}
-
-	/**
-	 * Converts a bundle entry into a real folder or file in browserfs file system.
-	 */
-	private importBundledBrowserDataToFS(rootFolderPath, folder) {
-		Object.keys(folder).forEach((file: string)=>{
-			if ("_content" in folder[file]) {
-				// File
-				let fullPath = rootFolderPath+"/"+file;
-				new File(fullPath).writeText(folder[file]["_content"]);
-			}
-			else {
-				// Folder
-				let fullPath = rootFolderPath+"/"+file
-				new File(fullPath).createDirectory();
-				this.importBundledBrowserDataToFS(rootFolderPath+"/"+file, folder[file]);
-			}
-		});
 	}
 
 	public cleanup() {
@@ -184,8 +151,8 @@ export class CompatibleData {
 		}
 		else {
 			// Browser
-			this.dataPath = "data/v" + version.toString() + "/testdata/";
-			this.storePath = "data/v" + version.toString() + "/teststore/";
+			this.dataPath = "/testresources/data/v" + version.toString() + "/testdata/";
+			this.storePath = "/testresources/data/v" + version.toString() + "/teststore/";
 		}
 		this.version = version;
 	}
@@ -195,35 +162,15 @@ export class CompatibleData {
 	}
 
 	private fileContent(path: string): string {
-		if (!runningInBrowser()) {
-			// NodeJS: directly return from filesystem
-			return (new File(path)).readText();
-		}
-		else {
-			// Browser: get bundled data
-			let parts = path.split('/');
-			let entry = browserBundledData;
-			for (let part of parts) {
-				entry = entry[part];
-			}
-			return entry["_content"];
-		}
+		let file = new File(path);
+		if (!file.exists())
+			throw new Error("No file exists at "+path);
+
+		return file.readText();
 	}
 
 	private dirContent(path: string): string[] {
-		if (!runningInBrowser()) {
-			// NodeJS: directly return from filesystem
-			return (new File(path)).list();
-		}
-		else {
-			// Browser: get bundled data
-			let parts = path.split('/');
-			let entry = browserBundledData;
-			for (let part of parts) {
-				entry = entry[part];
-			}
-			return Object.keys(entry);
-		}
+		return (new File(path)).list();
 	}
 
 	private getDidFile(name: string, type: string): string {
@@ -645,7 +592,7 @@ export class InstantData {
 	}
 
 
-	
+
 
 /*
 	public synchronized VerifiableCredential getUser1JsonCredential() throws DIDException {

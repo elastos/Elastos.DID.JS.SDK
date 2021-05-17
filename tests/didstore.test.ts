@@ -35,8 +35,6 @@ let store: DIDStore;
 describe("DIDStore Tests", ()=>{
 	beforeEach(async ()=>{
 		testData = new TestData();
-		if (runningInBrowser())
-			await testData.loadBundledTestData();
 		store = testData.getStore();
 	})
 

@@ -31,8 +31,6 @@ public class VerifiableCredentialTest {
     @BeforeEach
     public void beforeEach() throws DIDException {
     	testData = new TestData();
-		if (runningInBrowser())
-			await testData.loadBundledTestData();
     }
 
     @AfterEach

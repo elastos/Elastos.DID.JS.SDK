@@ -68,8 +68,6 @@ public class JwtTest {
     @BeforeEach
     public void beforeEach() throws DIDException {
     	testData = new TestData();
-		if (runningInBrowser())
-			await testData.loadBundledTestData();
  		RootIdentity identity = testData.getRootIdentity();
  		doc = identity.newDid(TestConfig.storePass);
 

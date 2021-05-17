@@ -119,8 +119,6 @@ describe('DIDDocument Tests', () => {
 	let store:DIDStore;
 	beforeAll(async () => {
 		testData = new TestData();
-		if (runningInBrowser())
-			await testData.loadBundledTestData();
 		store = testData.getStore();
 	});
 

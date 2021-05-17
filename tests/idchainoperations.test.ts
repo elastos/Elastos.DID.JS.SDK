@@ -37,8 +37,6 @@ public class IDChainOperationsTest {
     @BeforeAll
     public static void beforeAll() throws DIDException {
     	testData = new TestData();
-		if (runningInBrowser())
-			await testData.loadBundledTestData();
     	testData.getRootIdentity();
     	dids = new ArrayList<DID>();
     }

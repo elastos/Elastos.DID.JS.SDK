@@ -42,8 +42,8 @@ const banner = `/*
 
 const onwarn = warning => {
 	// eslint-disable-next-line no-console
-	if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && warning.importer.indexOf('node_modules') < 0)
-		return; // TMP: don't get flooded by circular dependencies for now
+	//if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && warning.importer.indexOf('node_modules') < 0)
+	//	return; // TMP: don't get flooded by circular dependencies for now
 
 	if (warning.code && warning.code === "THIS_IS_UNDEFINED")
 		return; // TMP: don't get flooded by this for now
@@ -276,5 +276,5 @@ export default command => {
 		]
 	};
 
-	return [    commonJSBuild,  /* esmBuild,  */ browserBuilds];
+	return [    commonJSBuild,  /* esmBuild,  */ /* browserBuilds */];
 };
