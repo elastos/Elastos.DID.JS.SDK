@@ -25,7 +25,7 @@ import { DIDEntity } from "./internals";
 import { DIDStore } from "./internals";
 import { JSONObject, JSONValue } from "./json";
 import { checkArgument } from "./internals";
-import { JsonIgnore, JsonInclude, JsonIncludeType, JsonClassType } from "jackson-js";
+import { JsonIgnore, JsonInclude, JsonIncludeType, JsonClassType, JsonAnySetter, JsonAnyGetter } from "jackson-js";
 
 /**
  * The class defines the base interface of Meta data.
@@ -35,7 +35,11 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 
 	protected static USER_EXTRA_PREFIX = "UX-";
 
-	@JsonClassType({type: () => [Map, [String, String]]})
+	// TODO @carl (BPI): I temporarily remplace this Map/String/String type with a raw Object, because
+	// this throws a "incompatible receiver 'size' or #Map" runtime error. Not sure how to fix this correctly
+	// but for now i want to keep validating the "internals" fix and Object does the job for now.
+	//@JsonClassType({type: () => [Map, [String, String]]})
+	@JsonClassType({type: ()=>[Object]})
 	public props: JSONObject = {};
 
 	//@JsonInclude({value: JsonIncludeType.NON_NULL})
@@ -86,7 +90,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 		return this.store != null;
 	}
 
-	//@JsonAnyGetter
+	@JsonAnyGetter()
 	protected getProperties(): JSONObject {
 		return this.props;
 	}
@@ -95,7 +99,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 		return this.props[name];
 	}
 
-	//@JsonAnySetter
+	@JsonAnySetter()
 	protected put(name: string, value: JSONValue | Date ) {
 		this.props[name] = value instanceof Date ? value.toISOString() : value;
 

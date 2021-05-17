@@ -218,7 +218,7 @@ import { BASE64 } from "./internals";
 					encryptedPrivateKey, publicKey, identity.getIndex());
 
 				if (this.metadata.getDefaultRootIdentity() == null)
-				this.metadata.setDefaultRootIdentity(identity.getId());
+					this.metadata.setDefaultRootIdentity(identity.getId());
 
 				this.cache.invalidate(DIDStore.Key.forRootIdentity(identity.getId()));
 				this.cache.invalidate(DIDStore.Key.forRootIdentityPrivateKey(identity.getId()));

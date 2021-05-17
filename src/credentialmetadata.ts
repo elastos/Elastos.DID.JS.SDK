@@ -144,6 +144,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 			} catch (e) {
 				// DIDStoreException
 				CredentialMetadata.log.error("INTERNAL - error store metadata for credential {}", this.id);
+				throw e;
 			}
 		}
 	}

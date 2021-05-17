@@ -52,9 +52,10 @@ export class DIDStoreMetadata extends AbstractMetadata {
         if (this.attachedStore()) {
             try {
                 this.getStore().storage.storeMetadata(this);
-            } catch (ignore) {
-                if (ignore instanceof DIDStoreException)
-                DIDStoreMetadata.log.error("INTERNAL - error store metadata for DIDStore");
+            } catch (e) {
+                if (e instanceof DIDStoreException)
+                    DIDStoreMetadata.log.error("INTERNAL - error store metadata for DIDStore");
+                throw e;
             }
         }
     }

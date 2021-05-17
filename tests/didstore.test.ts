@@ -34,10 +34,15 @@ let store: DIDStore;
 
 describe("DIDStore Tests", ()=>{
 	beforeEach(async ()=>{
-		testData = new TestData();
-		if (runningInBrowser())
-			await testData.loadBundledTestData();
-		store = testData.getStore();
+		try {
+			testData = new TestData();
+			if (runningInBrowser())
+				await testData.loadBundledTestData();
+			store = testData.getStore();
+		}
+		catch (e) {
+			console.error("DIDStoreTest error catched inside beforeEach:", e);
+		}
 	})
 
 	afterEach(()=>{

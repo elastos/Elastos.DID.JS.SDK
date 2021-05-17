@@ -188,6 +188,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 		} catch (e) {
 			if (e instanceof DIDStoreException)
 				console.log("INTERNAL - error store metadata for DID {}", this.did);
+			throw e;
 		}
 	}
 }
