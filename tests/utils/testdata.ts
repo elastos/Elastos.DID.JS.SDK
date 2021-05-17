@@ -57,8 +57,32 @@ export class TestData {
 	}
 
 	public async loadBundledTestData(): Promise<void> {
-		if (!browserBundledData)
+		if (!browserBundledData) {
 			browserBundledData = await this.conditionalImport("../../generated/browserdata.json");
+
+			// We have to really append those files into browser's file system for methods such as DIDStore.open()
+			// work from the SDK. So we recursively import all entries
+			this.importBundledBrowserDataToFS(TestConfig.storeRoot, browserBundledData);
+		}
+	}
+
+	/**
+	 * Converts a bundle entry into a real folder or file in browserfs file system.
+	 */
+	private importBundledBrowserDataToFS(rootFolderPath, folder) {
+		Object.keys(folder).forEach((file: string)=>{
+			if ("_content" in folder[file]) {
+				// File
+				let fullPath = rootFolderPath+"/"+file;
+				new File(fullPath).writeText(folder[file]["_content"]);
+			}
+			else {
+				// Folder
+				let fullPath = rootFolderPath+"/"+file
+				new File(fullPath).createDirectory();
+				this.importBundledBrowserDataToFS(rootFolderPath+"/"+file, folder[file]);
+			}
+		});
 	}
 
 	public cleanup() {
