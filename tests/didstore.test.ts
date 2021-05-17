@@ -98,7 +98,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.isFile()).toBeTruthy();
 
 		file = getFile("roots", identity.getId(), ".metadata");;
-		expect(file.exists()).toBeTruthy();
+		expect(file.exists()).toBeFalsy();
 
 		identity.setAlias("default");
 		file = getFile("roots", identity.getId(), ".metadata");;
