@@ -183,7 +183,7 @@ export class CompatibleData {
 			fileName += "." + type;
 		fileName += ".json";
 
-		return this.fileContent(this.dataPath + fileName);
+		return this.fileContent(this.dataPath + "/" + fileName);
 	}
 
 	private getCredentialFile(did: string, vc: string, type: string): string {
@@ -192,7 +192,7 @@ export class CompatibleData {
 			fileName += "." + type;
 		fileName += ".json";
 
-		return this.fileContent(this.dataPath + fileName);
+		return this.fileContent(this.dataPath + "/" + fileName);
 	}
 
 	private getPresentationFile(did: string, vp: string, type: string): string {
@@ -201,7 +201,7 @@ export class CompatibleData {
 			fileName += "." + type;
 		fileName += ".json";
 
-		return this.fileContent(this.dataPath + fileName);
+		return this.fileContent(this.dataPath + "/" + fileName);
 	}
 
 	public getDocument(did: string, type: string = null): DIDDocument {
