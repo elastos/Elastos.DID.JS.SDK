@@ -191,6 +191,8 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 		if (!url) {
 			if (typeof inputBaseRefOrUrl === "string")
 				return inputBaseRefOrUrl ? DIDURL.newWithUrl(inputBaseRefOrUrl) : null;
+			else if (inputBaseRefOrUrl instanceof DID)
+				return DIDURL.newWithDID(inputBaseRefOrUrl);
 			else
 				throw new IllegalArgumentException("DID is mandatory without an URL");
 		}

@@ -104,17 +104,15 @@ export class DIDBackend {
 
 		this.adapter = adapter;
 
-		/* TODO let loader: CacheLoader<ResolveRequest<?, ?>, ResolveResult<?>>;
-		loader = new CacheLoader<ResolveRequest<?, ?>, ResolveResult<?>>() {
-			public ResolveResult<?> load(ResolveRequest<?, ?> key) {
-				log.trace("Cache loading {}...", key);
-				return resolve(key);
-			}
-		}; */
-
 		this.cache = new LRUCache({
 			maxItems: maxCacheCapacity,
-      		maxAge: cacheTtl/1000 //TimeUnit.MILLISECONDS,
+      		maxAge: cacheTtl/1000, //TimeUnit.MILLISECONDS,
+			loader: (key) => {
+				log.trace("Cache loading {}...", key);
+				return {
+					value: this.resolve(key)
+				};
+			}
 		});
 
 		log.info("DID backend initialized, cache(init:{}, max:{}, ttl:{})",

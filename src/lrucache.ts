@@ -44,7 +44,7 @@ export type LRUCacheItem<K, V> = {
 }
 
 export class LRUCache<K extends Hashable | string, V> {
-  private options: LRUCacheOptions<K, V>;
+    private options: LRUCacheOptions<K, V>;
     private count: number = 0;
     private items: Map<string, LRUCacheItem<K, V>> = new Map();
     private first: LRUCacheItem<K, V> = null;
