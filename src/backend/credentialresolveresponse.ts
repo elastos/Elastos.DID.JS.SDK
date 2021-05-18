@@ -20,13 +20,17 @@
  * SOFTWARE.
  */
 
-import { JsonCreator } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
 import { CredentialBiography } from "./credentialbiography";
 import { ResolveError } from "./resolveerror";
-import { ResolveResponse } from "./resolveresponse";
+import { ResolveResponse, RpcConstants } from "./resolveresponse";
 
 @JsonCreator()
 export class CredentialResolveResponse extends ResolveResponse<CredentialResolveResponse, CredentialBiography> {
+	@JsonProperty({value: RpcConstants.RESULT})
+	@JsonClassType({type: ()=>[CredentialBiography]})
+	protected result: CredentialBiography;
+	
 	constructor(responseId: string, resultOrError: CredentialBiography | ResolveError) {
 		super(responseId, resultOrError);
 	}

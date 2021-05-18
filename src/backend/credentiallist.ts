@@ -46,7 +46,7 @@ export class CredentialList extends ResolveResult<CredentialList> {
 	@JsonProperty({ value: CredentialList.CREDENTIALS })
 	private credentialIds: DIDURL[];
 
-	protected constructor(did: DID = null) {
+	public constructor(did: DID = null) {
 		super();
 		this.did = did;
 	}

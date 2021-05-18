@@ -43,7 +43,7 @@ export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Paramet
 		else if (didOrStringOrParams instanceof Parameters)
 			super.setParameters(didOrStringOrParams);
 		else
-			super.setParameters(new Parameters(DID.valueOf(didOrStringOrParams), all));
+			super.setParameters(new Parameters(DID.from(didOrStringOrParams), all));
 	}
 
 	public getDid(): DID {

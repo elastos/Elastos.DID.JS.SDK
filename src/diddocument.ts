@@ -1587,7 +1587,7 @@ import { VerifiableCredential } from "./internals";
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
-        let did = inputDID instanceof DID ? inputDID : DID.valueOf(inputDID);
+        let did = inputDID instanceof DID ? inputDID : DID.from(inputDID);
         let controllers = [];
 
         if (inputControllers && inputControllers.length ) {

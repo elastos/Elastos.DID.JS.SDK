@@ -160,7 +160,7 @@ export class DIDDocumentBuilder {
         checkArgument(controller != null, "Invalid controller");
 
         if (typeof controller === "string")
-            controller = DID.valueOf(controller);
+            controller = DID.from(controller);
 
         this.checkNotSealed();
         this.checkIsCustomized();
@@ -199,7 +199,7 @@ export class DIDDocumentBuilder {
         checkArgument(controller != null, "Invalid controller");
 
         if (typeof controller === "string")
-            controller = DID.valueOf(controller);
+            controller = DID.from(controller);
 
         this.checkNotSealed();
         this.checkIsCustomized();
@@ -294,7 +294,7 @@ export class DIDDocumentBuilder {
         if (controller === undefined)
             controller = null as DID;
         else if (typeof controller === "string")
-            controller = DID.valueOf(controller);
+            controller = DID.from(controller);
 
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())), "Invalid publicKey id");
         checkArgument(pk && pk != null, "Invalid publicKey");
@@ -502,7 +502,7 @@ export class DIDDocumentBuilder {
             id = this.canonicalId(id);
 
         if (typeof controller === "string")
-            controller = DID.valueOf(controller);
+            controller = DID.from(controller);
 
         checkArgument(id.getDid() == null || id.getDid().equals(this.getSubject()),
             "Invalid publicKey id");

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonValue } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonValue } from "jackson-js";
 import { List as ImmutableList } from "immutable";
 import { DID } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
@@ -41,7 +41,7 @@ export class DIDBiographyStatus {
 	 */
 	public static NOT_FOUND = new DIDBiographyStatus("not_found", 3);
 
-	private constructor(private name: string, private value: number) {}
+	public constructor(private name: string, private value: number) {}
 
 	@JsonValue()
 	public getValue(): number {
@@ -88,11 +88,11 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 	protected static STATUS = "status";
 	protected static TRANSACTION = "transaction";
 
-	@JsonProperty({value: DIDBiography.DID})
-	private did: any; //DID;
-	@JsonProperty({value: DIDBiography.STATUS})
+	@JsonProperty({value: DIDBiography.DID}) @JsonClassType({type: ()=>[DID]})
+	private did: DID;
+	@JsonProperty({value: DIDBiography.STATUS}) @JsonClassType({type: ()=>[DIDBiographyStatus]})
 	private status: DIDBiographyStatus;
-	@JsonProperty({value: DIDBiography.TRANSACTION})
+	@JsonProperty({value: DIDBiography.TRANSACTION}) @JsonClassType({type: ()=>[Array, [DIDTransaction]]})
 	private txs: DIDTransaction[];
 
 	/**
@@ -102,7 +102,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 	 * @param status the DID's status
 	 */
 	@JsonCreator()
-	protected static toDIDBiography(
+	public static toDIDBiography(
 		@JsonProperty({value: DIDBiography.DID, required: true}) did: any /* DID */,
 		@JsonProperty({value: DIDBiography.STATUS, required: true}) status: DIDBiographyStatus
 	) {
@@ -111,7 +111,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 			return didBiography;
 	}
 
-	protected constructor(did: any /* DID */) {
+	public constructor(did: any /* DID */) {
 		super();
 		this.did = did;
 	}

@@ -20,28 +20,31 @@
  * SOFTWARE.
  */
 
-import { JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { JsonClassType, JsonGetter, JsonIgnore, JsonProperty, JsonPropertyOrder, JsonSetter } from "jackson-js";
 import { Class } from "../class";
 import { DIDEntity } from "../internals";
 import { Hashable } from "../hashable";
 import { hashCode } from "../internals";
 
-@JsonPropertyOrder({value: [
-	ResolveRequest.ID,
-	ResolveRequest.METHOD,
-	ResolveRequest.PARAMETERS
-]})
+@JsonPropertyOrder({
+	value: [
+		ResolveRequest.ID,
+		ResolveRequest.METHOD,
+		ResolveRequest.PARAMETERS
+	]
+})
 export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T> {
 	protected static ID = "id";
 	protected static METHOD = "method";
 	protected static PARAMETERS = "params";
 
-	@JsonProperty({value: ResolveRequest.ID})
+	@JsonProperty({ value: ResolveRequest.ID }) @JsonClassType({type: ()=>[String]})
 	private requestId: string;
-	@JsonProperty({value: ResolveRequest.METHOD})
+	@JsonProperty({ value: ResolveRequest.METHOD }) @JsonClassType({type: ()=>[String]})
 	private method: string;
-	@JsonProperty({value: ResolveRequest.PARAMETERS})
-	private params: P;
+
+	@JsonIgnore()
+	private _params: P;
 
 	protected constructor(requestId: string, method: string) {
 		super();
@@ -58,15 +61,50 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
 	}
 
 	protected setParameters(params: P) {
-		this.params = params;
+		this._params = params;
 	}
 
 	protected getParameters(): P {
-		return this.params;
+		return this._params;
+	}
+
+	/**
+	 * Map an array(single element) of the parameter objects to parameter object.
+	 *
+	 * <p>
+	 * NOTICE: this is required by the Ethereum RPC call schema.
+	 * </p>
+	 *
+	 * @param params an array of the parameter objects
+	 */
+	@JsonSetter({ value: ResolveRequest.PARAMETERS })
+	@JsonIgnore()
+	private _setParameters(params: P[]) {
+		this._params = (params == null || params.length == 0) ? null : params[0];
+	}
+
+	/**
+	 * Map the parameter object to an single element array.
+	 *
+	 * <p>
+	 * NOTICE: this is required by the Ethereum RPC call schema.
+	 * </p>
+	 *
+	 * @return an array(single element) of the parameter objects
+	 */
+	@JsonGetter({ value: ResolveRequest.PARAMETERS })
+	@JsonClassType({type: ()=>[Array, [String]]})
+	private _getParameters(): P[] {
+		if (this._params != null) {
+			let ret: P[] = [this._params];
+			return ret;
+		} else {
+			return null;
+		}
 	}
 
 	public hashCode(): number {
-		return hashCode(this.method) + this.params.hashCode();
+		return hashCode(this.method) + this._params.hashCode();
 	}
 
 	public equals(o: Object): boolean {
@@ -78,7 +116,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
 		if (this.method !== rr.method)
 			return false;
 
-		return this.params === rr.params;
+		return this._params === rr._params; // TODO: PROBABLY BUGGY
 	}
 
 	public static parse<T extends DIDEntity<T>>(content: string, clazz: Class<T>): T {

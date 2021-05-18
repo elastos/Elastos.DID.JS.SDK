@@ -433,7 +433,7 @@ import { BASE64 } from "./internals";
 
 			let did: DID;
 			if (!(didOrString instanceof DID))
-				did = DID.valueOf(didOrString);
+				did = DID.from(didOrString);
 			else
 				did = didOrString;
 
@@ -469,7 +469,7 @@ import { BASE64 } from "./internals";
 			if (did instanceof DID)
 				return this.loadDid(did) != null;
 			else
-				return this.loadDid(DID.valueOf(did)) != null;
+				return this.loadDid(DID.from(did)) != null;
 		}
 
 		/**
@@ -535,7 +535,7 @@ import { BASE64 } from "./internals";
 			if (didOrString instanceof DID)
 				did = didOrString;
 			else
-				did = DID.valueOf(didOrString);
+				did = DID.from(didOrString);
 
 			let success = this.storage.deleteDid(did);
 
@@ -685,7 +685,7 @@ import { BASE64 } from "./internals";
 		 * @throws DIDStoreException DIDStore error.
 		 */
 		/* public boolean containsCredentials(String did) throws DIDStoreException {
-			return containsCredentials(DID.valueOf(did));
+			return containsCredentials(DID.from(did));
 		} */
 
 		/**
@@ -778,7 +778,7 @@ import { BASE64 } from "./internals";
 			if (didOrString instanceof DID)
 				did = didOrString;
 			else
-				did = DID.valueOf(didOrString);
+				did = DID.from(didOrString);
 
 			let ids = this.storage.listCredentials(did);
 			for (let id of ids) {
@@ -805,7 +805,7 @@ import { BASE64 } from "./internals";
 			if (didOrString instanceof DID)
 				did = didOrString;
 			else
-				did = DID.valueOf(didOrString);
+				did = DID.from(didOrString);
 
 			let vcs = this.listCredentials(did);
 
@@ -916,7 +916,7 @@ import { BASE64 } from "./internals";
 			if (did instanceof DID)
 				return this.storage.containsPrivateKeys(did);
 			else
-				return this.storage.containsPrivateKeys(DID.valueOf(did));
+				return this.storage.containsPrivateKeys(DID.from(did));
 		}
 
 		/**
@@ -1059,7 +1059,7 @@ import { BASE64 } from "./internals";
 
 		public exportDid(did: DID | string, password: string, storepass: string): DIDStore.DIDExport {
 			if (typeof did === "string")
-				did = DID.valueOf(did);
+				did = DID.from(did);
 
 			// All objects should load directly from storage,
 			// avoid affects the cached objects.
@@ -1135,7 +1135,7 @@ import { BASE64 } from "./internals";
 		 */
 		/* public void exportDid(String did, OutputStream out, String password,
 	String storepass) throws DIDStoreException, IOException {
-	exportDid(DID.valueOf(did), out, password, storepass);
+	exportDid(DID.from(did), out, password, storepass);
 } */
 
 		/**
@@ -1172,7 +1172,7 @@ import { BASE64 } from "./internals";
 		 */
 		/* public void exportDid(String did, Writer out, String password, String storepass)
 throws DIDStoreException, IOException {
-	exportDid(DID.valueOf(did), out, password, storepass);
+	exportDid(DID.from(did), out, password, storepass);
 } */
 
 		/**
@@ -1209,7 +1209,7 @@ throws DIDStoreException, IOException {
 		 */
 		/* public void exportDid(String did, File file, String password, String storepass)
 throws DIDStoreException, IOException {
-	exportDid(DID.valueOf(did), file, password, storepass);
+	exportDid(DID.from(did), file, password, storepass);
 } */
 
 		/**
@@ -1246,7 +1246,7 @@ throws DIDStoreException, IOException {
 		 */
 		/* public void exportDid(String did, String file, String password, String storepass)
 throws DIDStoreException, IOException {
-	exportDid(DID.valueOf(did), file, password, storepass);
+	exportDid(DID.from(did), file, password, storepass);
 }
 */
 		private importDid(de: DIDStore.DIDExport, password: string, storepass: string) {

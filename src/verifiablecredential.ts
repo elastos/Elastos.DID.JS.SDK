@@ -891,7 +891,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			id = DIDURL.valueOf(id);
 
 		if (typeof issuer === "string")
-			issuer = DID.valueOf(issuer);
+			issuer = DID.from(issuer);
 
 		let vc = DIDBackend.getInstance().resolveCredential(id, issuer, force);
 		if (vc != null)
@@ -963,7 +963,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	} */
 
 	/* public static CredentialBiography resolveBiography(String id, String issuer) {
-		return resolveBiography(DIDURL.valueOf(id), DID.valueOf(issuer));
+		return resolveBiography(DIDURL.valueOf(id), DID.from(issuer));
 	}
 
 	public static CredentialBiography resolveBiography(String id) {

@@ -372,7 +372,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		checkArgument(store != null, "Invalid store");
 
 		if (typeof did === "string")
-			did = DID.valueOf(did);
+			did = DID.from(did);
 
 		if (typeof signKey === "string")
 			signKey = DIDURL.valueOf(did, signKey);

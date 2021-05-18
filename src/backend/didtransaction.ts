@@ -41,7 +41,7 @@ export class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
 	 * @param timestamp the time stamp
 	 * @param request the IDChainRequest content
 	 */
-	protected constructor(txid: string = null, timestamp: Date = null, request: DIDRequest = null) {
+	public constructor(txid: string = null, timestamp: Date = null, request: DIDRequest = null) {
 		super(txid, timestamp, request);
 	}
 

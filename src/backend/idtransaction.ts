@@ -30,7 +30,6 @@ import { IDChainRequest } from "./idchaindrequest";
 	IDTransaction.TIMESTAMP,
 	IDTransaction.OPERATION
 ]})
-@JsonCreator()
 export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDEntity<T> {
 	protected static TXID = "txid";
 	protected static TIMESTAMP = "timestamp";

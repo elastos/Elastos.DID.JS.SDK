@@ -32,7 +32,8 @@ import { DIDBackend } from "./internals";
 import { DIDBiography } from "./internals";
 import {
     JsonSerialize,
-    JsonDeserialize
+    JsonDeserialize,
+    JsonCreator
 } from "jackson-js";
 import {
     Serializer,
@@ -77,9 +78,14 @@ export class DID {
     private methodSpecificId: string | null;
     private metadata: DIDMetadata | null;
 
-    public constructor(methodOrDID: string, methodSpecificId: string | null = null) {
+    public constructor(methodOrDID: string, methodSpecificId: string | null = null, internal = false) {
         this.metadata = null;
-        if (methodSpecificId) {
+        if (internal) {
+            // For jackson creation only
+            this.method = null;
+            this.methodSpecificId = null;
+        }
+        else if (methodSpecificId) {
             let method: string = methodOrDID;
             checkEmpty(method, "Invalid method");
             checkEmpty(methodSpecificId, "Invalid methodSpecificId");
@@ -91,15 +97,18 @@ export class DID {
             checkEmpty(did, "Invalid DID string");
             this.method = null;
             this.methodSpecificId = null;
-
-
             let didParsed = DIDURLParser.NewFromURL(methodOrDID)
             this.method = didParsed.did.method;
             this.methodSpecificId = didParsed.did.methodSpecificId;
         }
     }
 
-    public static valueOf(did: string): DID | null{
+    @JsonCreator()
+    public static jacksonCreator() {
+        return new DID(null, null, true);
+    }
+
+    public static from(did: string): DID | null {
         return isEmpty(did) ? null : new DID(did);
     }
 

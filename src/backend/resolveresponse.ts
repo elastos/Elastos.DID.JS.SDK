@@ -20,13 +20,15 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSubTypes, JsonTypeInfo, JsonTypeInfoAs, JsonTypeInfoId } from "jackson-js";
 import { DIDEntity } from "../internals";
+import { Class } from "../class";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 import { ResolveError } from "./resolveerror";
 import { ResolveResult } from "./resolveresult";
+import { DIDResolveResponse } from "./didresolveresponse";
 
-class RpcConstants {
+export class RpcConstants {
 	public static ID = "id";
 	public static JSON_RPC = "jsonrpc";
 	public static RESULT = "result";
@@ -78,8 +80,11 @@ export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DID
 	private responseId: string;
 	@JsonProperty({value: RpcConstants.JSON_RPC}) @JsonClassType({type: ()=>[String]})
 	private jsonRpcVersion: string;
-	@JsonProperty({value: RpcConstants.RESULT})
-	private result: R;
+	// NOTE: result here can't use JsonProperty even if responses can be deserialized.
+	// This is because of the generic type R that is not a class that jackson can instanciate.
+	// Each class overriding ResolveResponse such as DIDResolveResponse needs to override result with the right real
+	// @JsonClassType and @JsonProperty
+	protected result: R;
 	@JsonProperty({value: RpcConstants.ERROR}) @JsonClassType({type: ()=>[JsonRpcError]})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	private error: JsonRpcError;

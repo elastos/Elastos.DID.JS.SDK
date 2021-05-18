@@ -102,7 +102,7 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 	 * @param did the specified DID
 	 * @param status the DID's status
 	 */
-	protected constructor(
+	public constructor(
 			@JsonProperty({value: CredentialBiography.ID, required: true}) id: DIDURL,
 			@JsonProperty({value: CredentialBiography.STATUS, required: true}) status: CredentialBiographyStatus = undefined) {
 		super();

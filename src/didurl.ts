@@ -196,7 +196,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 			else
 				throw new IllegalArgumentException("DID is mandatory without an URL");
 		}
-		let baseRef: DID = typeof inputBaseRefOrUrl === "string" ? DID.valueOf(inputBaseRefOrUrl) : inputBaseRefOrUrl as DID;
+		let baseRef: DID = typeof inputBaseRefOrUrl === "string" ? DID.from(inputBaseRefOrUrl) : inputBaseRefOrUrl as DID;
 		return url ? DIDURL.newWithDID(baseRef, url) : null;
 	}
 
@@ -468,7 +468,7 @@ export namespace DIDURL {
 			if (didOrString instanceof DID)
 				this.url.setDid(didOrString);
 			else
-				this.url.setDid(DID.valueOf(didOrString));
+				this.url.setDid(DID.from(didOrString));
 			return this;
 		}
 

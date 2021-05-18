@@ -138,6 +138,6 @@ export class Issuer {
         if (did instanceof DID) {
 		    return new VerifiableCredential.Builder(this, did);
         }
-        return new VerifiableCredential.Builder(this, DID.valueOf(did));
+        return new VerifiableCredential.Builder(this, DID.from(did));
 	}
 }

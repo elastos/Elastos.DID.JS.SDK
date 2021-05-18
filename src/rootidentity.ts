@@ -182,7 +182,7 @@ export class RootIdentity {
 		if (did instanceof DID)
 			this.metadata.setDefaultDid(did);
 		else
-			this.metadata.setDefaultDid(DID.valueOf(did as string));
+			this.metadata.setDefaultDid(DID.from(did as string));
 	}
 
 	public setDefaultDidByIndex(index: number) {
@@ -475,7 +475,7 @@ export namespace RootIdentity {
 		 * @return the transaction string
 		 */
 		public getDefaultDid(): DID {
-			return DID.valueOf(this.get(Metadata.DEFAULT_DID) as string);
+			return DID.from(this.get(Metadata.DEFAULT_DID) as string);
 		}
 
 		protected save() {
