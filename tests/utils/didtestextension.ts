@@ -22,6 +22,7 @@
 
 import type { DIDAdapter } from "../../dist/did";
 import { DIDBackend, SimulatedIDChain } from "../../dist/did";
+import { Web3Adapter } from "../backend/web3adapter";
 import { TestConfig } from "./testconfig";
 
 export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource */ {
@@ -30,20 +31,13 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 
 	public static setup(/* name: string */) {
 		// Force load TestConfig first!!!
-		let network: string = TestConfig.network;
+		let rpcEndpoint = TestConfig.rpcEndpoint;
 
-		/* if (name.equals("IDChainOperationsTest")) {
-			if (network.equalsIgnoreCase("mainnet") || network.equalsIgnoreCase("testnet")) {
-				adapter = new SPVAdapter(network,
-					TestConfig.walletDir, TestConfig.walletId,
-					new SPVAdapter.PasswordCallback() {
-						@Override
-						public String getPassword(String walletDir, String walletId) {
-							return TestConfig.walletPassword;
-						}
-					});
-			}
-		} */
+		// if (name.equals("IDChainOperationsTest")) {
+			// When run the IDChainOperationsTest only
+			DIDTestExtension.adapter = new Web3Adapter(rpcEndpoint, TestConfig.contractAddress,
+				TestConfig.walletPath, TestConfig.walletPassword);
+		// }
 
 		if (DIDTestExtension.adapter == null) {
 			DIDTestExtension.simChain = new SimulatedIDChain();
@@ -57,9 +51,6 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 	/* public void close() throws Throwable {
 		if (simChain != null)
 			simChain.stop();
-
-		if (adapter != null && adapter instanceof SPVAdapter)
-			((SPVAdapter)adapter).destroy();
 
 		simChain = null;
 		adapter = null;

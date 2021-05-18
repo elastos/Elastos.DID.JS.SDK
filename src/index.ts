@@ -23,6 +23,7 @@ import { Base58 } from "./crypto/base58";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { JSONObject, JSONValue } from "./json";
 import { SimulatedIDChain } from "./internals";
+import { DefaultDIDAdapter } from "./internals";
 import { runningInBrowser } from "./utils";
 
 /**
@@ -77,6 +78,7 @@ export {
 	Issuer,
 	DIDURL,
 	DIDURLParser,
+	DefaultDIDAdapter,
 	SimulatedIDChain,
 	Exceptions,
 

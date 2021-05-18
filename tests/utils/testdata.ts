@@ -118,21 +118,21 @@ export class TestData {
 
 	/*public void waitForWalletAvaliable() throws DIDException {
 		// need synchronize?
-		if (DIDTestExtension.getAdapter() instanceof SPVAdapter) {
-			SPVAdapter spvAdapter = (SPVAdapter)DIDTestExtension.getAdapter();
+		if (DIDTestExtension.getAdapter() instanceof Web3Adapter) {
+			Web3Adapter adapter = (Web3Adapter)DIDTestExtension.getAdapter();
 
 			System.out.print("Waiting for wallet available...");
 			long start = System.currentTimeMillis();
 			while (true) {
-				try {
-					Thread.sleep(30000);
-				} catch (InterruptedException ignore) {
-				}
-
-				if (spvAdapter.isAvailable()) {
+				if (adapter.isAvailable()) {
 					long duration = (System.currentTimeMillis() - start + 500) / 1000;
 					System.out.println("OK(" + duration + "s)");
 					break;
+				}
+
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException ignore) {
 				}
 			}
 		}
@@ -150,13 +150,13 @@ export class CompatibleData {
 
 		if (!runningInBrowser()) {
 			// NodeJS
-			this.dataPath = join(__dirname, "..", "data/v" + version.toString() + "/testdata/");
-			this.storePath = join(__dirname, "..", "data/v" + version.toString() + "/teststore/");
+			this.dataPath = join(__dirname, "..", "data/v" + version.toString() + "/testdata");
+			this.storePath = join(__dirname, "..", "data/v" + version.toString() + "/teststore");
 		}
 		else {
 			// Browser
-			this.dataPath = "/testresources/data/v" + version.toString() + "/testdata/";
-			this.storePath = "/testresources/data/v" + version.toString() + "/teststore/";
+			this.dataPath = "/testresources/data/v" + version.toString() + "/testdata";
+			this.storePath = "/testresources/data/v" + version.toString() + "/teststore";
 		}
 		this.version = version;
 	}

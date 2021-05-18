@@ -30,7 +30,7 @@ export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 	public static PARAMETER_ID = "id";
 	public static PARAMETER_ISSUER = "issuer";
 
-	public static METHOD_NAME = "resolvecredential";
+	public static METHOD_NAME = "did_resolveCredential";
 
 	// TODO Java - @JsonCreator
 	public constructor(

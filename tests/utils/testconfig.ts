@@ -33,13 +33,14 @@ export class TestConfig {
 	private static TEST_CONFIG_FILE = "tests/assets/test.config.json";
 
 	public static network: string;
+	public static rpcEndpoint: string;
+	public static contractAddress: string;
+
+	public static walletPath: string;
+	public static walletPassword: string;
 
 	public static passphrase: string;
 	public static storePass: string;
-
-	public static walletDir: string;
-	public static walletId: string;
-	public static walletPassword: string;
 
 	public static tempDir: string;
 	public static storeRoot: string;
@@ -51,8 +52,13 @@ export class TestConfig {
 
 		this.network = testConfig.network
 		// Java: System.setProperty("org.elastos.did.network", network);
+		this.rpcEndpoint = testConfig.idchain.rpcEndpoint;
+		this.contractAddress = testConfig.idchain.contractAddress;
 
-		this.passphrase = testConfig.mnemnoic.passphrase;
+		this.walletPath = testConfig.wallet.path;
+		this.walletPassword = testConfig.wallet.password;
+
+		this.passphrase = testConfig.mnemonic.passphrase;
 		this.storePass = testConfig.store.pass;
 
 		if (runningInBrowser()) // browser
@@ -61,10 +67,6 @@ export class TestConfig {
 			this.tempDir = join(__dirname, "../..", "generated", "tmp");
 
 		this.storeRoot = testConfig.store.root || this.tempDir + "/DIDStore";
-
-		this.walletDir = testConfig.wallet.dir;
-		this.walletId = testConfig.wallet.id;
-		this.walletPassword = testConfig.wallet.password;
 
 		//level = Level.valueOf(config.getProperty("log.level", "info").toUpperCase());
 

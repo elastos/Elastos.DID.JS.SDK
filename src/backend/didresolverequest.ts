@@ -31,7 +31,7 @@ export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Paramet
 	public static PARAMETER_DID = "did";
 	public static PARAMETER_ALL = "all";
 
-	public static METHOD_NAME = "resolvedid";
+	public static METHOD_NAME = "did_resolveDID";
 
 	public constructor(@JsonProperty({value: ResolveRequest.ID}) requestId: string) {
 		super(requestId, DIDResolveRequest.METHOD_NAME);

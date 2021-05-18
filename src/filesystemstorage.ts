@@ -150,9 +150,9 @@ export class FileSystemStorage implements DIDStorage {
 		this.postOperations();
 
 		let file: File = this.getDir(this.currentDataDir);
-		if (!file.exists()) {
-			let files = this.storeRoot.list();
-			if (files == null || files.length == 0) {
+		if (file.exists()) {
+			let storeRootFiles = this.storeRoot.list();
+			if (storeRootFiles == null || storeRootFiles.length == 0) {
 				// if an empty folder
 				this.initializeStore();
 				return;

@@ -1,18 +1,20 @@
 {
     "_comment_network": "network could be MainNet, TestNet, SimNet",
-    "network": "SimNet",
-    "mnemnoic": {
-      "passphrase": "secret"
+    "idchain": {
+        "rpcEndpoint": "http://52.80.107.251:1111",
+        "contractAddress": "0xEA2256bd30cfeC643203d1a6f36A90A4fD17863E"
+    },
+    "wallet": {
+        "path": "/PATH/TO/Wallet",
+        "password": "passwd"
+    },
+    "mnemonic": {
+        "passphrase": "passphrase"
     },
     "store": {
         "pass": "passwd",
         "_comment_root": "Default is $temp.dir/DIDStore",
         "rootDISABLED": "/PATH/TO/DIDStore"
-    },
-    "wallet": {
-        "dir": "/PATH/TO/Wallet",
-        "id": "test",
-        "password": "passwd"
     },
     "log": {
         "_comment_level": "error, warn, info, debug, trace",

@@ -34,7 +34,7 @@ export class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 	public static PARAMETER_SKIP = "skip";
 	public static PARAMETER_LIMIT = "limit";
 
-	public static METHOD_NAME = "listcredential";
+	public static METHOD_NAME = "did_listCredentials";
 
 	public constructor(@JsonProperty({value: CredentialListRequest.ID}) requestId: string) {
 		super(requestId, CredentialListRequest.METHOD_NAME);
