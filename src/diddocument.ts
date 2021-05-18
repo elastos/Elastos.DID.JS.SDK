@@ -158,13 +158,15 @@ import { VerifiableCredential } from "./internals";
     @JsonIgnore()
     public defaultPublicKey?: DIDDocumentPublicKey;
 
-    private controllerDocs?: Map<DID, DIDDocument>;
-    private publicKeys?: Map<DIDURL, DIDDocumentPublicKey>;
-    private credentials?: Map<DIDURL, VerifiableCredential>;
-    private services?: Map<DIDURL, DIDDocumentService>;
-    private proofs?: Map<DID, DIDDocumentProof>;
+    // Internal properties for DIDDocumentBuilder
+    public controllerDocs?: Map<DID, DIDDocument>;
+    public publicKeys?: Map<DIDURL, DIDDocumentPublicKey>;
+    public credentials?: Map<DIDURL, VerifiableCredential>;
+    public services?: Map<DIDURL, DIDDocumentService>;
+    public proofs?: Map<DID, DIDDocumentProof>;
+    public effectiveController?: DID;
+
     private metadata?: DIDMetadata;
-    private effectiveController?: DID;
 
     /**
      * Set the DIDDocument subject.
