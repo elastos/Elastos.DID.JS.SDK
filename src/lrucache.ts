@@ -116,7 +116,7 @@ export class LRUCache<K extends Hashable | string, V> {
       let hash = this.getHash(key)
       var item = this.items[hash];
 
-      if (item.expires && (Date.now() / 1000 >= item.expires)) {
+      if (item && item.expires && (Date.now() / 1000 >= item.expires)) {
         this.invalidate(key);
         item = null;
       }

@@ -1,4 +1,4 @@
-import { JsonInclude, JsonIncludeType } from "jackson-js";
+import { JsonCreator, JsonInclude, JsonIncludeType } from "jackson-js";
 import { AbstractMetadata } from "./internals";
 import { DIDStore } from "./internals";
 import { DIDStoreException } from "./exceptions/exceptions";
@@ -20,6 +20,16 @@ export class DIDStoreMetadata extends AbstractMetadata {
         super(store);
         this.put(DIDStoreMetadata.TYPE, DIDStoreMetadata.DID_STORE_TYPE);
         this.put(DIDStoreMetadata.VERSION, DIDStoreMetadata.DID_STORE_VERSION);
+    }
+
+    /**
+     * Called by Jackson when it wants to restore a class from json. Without this, it calls the constructor
+     * with a json object and we don't want this.
+     * Here we don't handle the json data as everything will be handled by the AbstractMetadata JsonAnySetter.
+     */
+    @JsonCreator()
+    public static jacksonCreator(json: any) {
+        return new DIDStoreMetadata(null);
     }
 
     public getType(): string {

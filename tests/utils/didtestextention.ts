@@ -20,28 +20,17 @@
  * SOFTWARE.
  */
 
-/*
-package org.elastos.did.utils;
+import { TestConfig } from "./testconfig";
 
-import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
+export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource */ {
+	//private static adapter: DIDAdapter;
+	//private static simChain: SimulatedIDChain;
 
-import org.elastos.did.DIDAdapter;
-import org.elastos.did.DIDBackend;
-import org.elastos.did.backend.SPVAdapter;
-import org.elastos.did.backend.SimulatedIDChain;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
-
-public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
-	private static DIDAdapter adapter;
-	private static SimulatedIDChain simChain;
-
-	private void setup(String name) throws Exception {
+	private setup(name: string) {
 		// Force load TestConfig first!!!
-		String network = TestConfig.network;
+		let network: string = TestConfig.network;
 
-		if (name.equals("IDChainOperationsTest")) {
+		/* if (name.equals("IDChainOperationsTest")) {
 			if (network.equalsIgnoreCase("mainnet") || network.equalsIgnoreCase("testnet")) {
 				adapter = new SPVAdapter(network,
 					TestConfig.walletDir, TestConfig.walletId,
@@ -52,19 +41,18 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 						}
 					});
 			}
-		}
+		} */
 
-		if (adapter == null) {
+		/* if (this.adapter == null) {
 			simChain = new SimulatedIDChain();
 			simChain.start();
 			adapter = simChain.getAdapter();
 		}
 
-		DIDBackend.initialize(adapter);
+		DIDBackend.initialize(adapter); */
 	}
 
-	@Override
-	public void close() throws Throwable {
+	/* public void close() throws Throwable {
 		if (simChain != null)
 			simChain.stop();
 
@@ -73,25 +61,23 @@ public class DIDTestExtension implements BeforeAllCallback, CloseableResource {
 
 		simChain = null;
 		adapter = null;
-	}
+	} */
 
-	@Override
-	public void beforeAll(ExtensionContext context) throws Exception {
-		String key = this.getClass().getName();
-	    Object value = context.getRoot().getStore(GLOBAL).get(key);
-	    if (value == null) {
+	public beforeAll(/* ExtensionContext context */) {
+		/* String key = this.getClass().getName();
+	    Object value = context.getRoot().getStore(GLOBAL).get(key); */
+	    //if (value == null) {
 	    	// First test container invocation.
-	    	setup(context.getDisplayName());
-	    	context.getRoot().getStore(GLOBAL).put(key, this);
-	    }
+	    	//setup(context.getDisplayName());
+	    	//context.getRoot().getStore(GLOBAL).put(key, this);
+	    //}
 	}
 
-	public static void resetData() {
+	/* public static void resetData() {
 		simChain.reset();
 	}
 
 	public static DIDAdapter getAdapter() {
 		return adapter;
-	}
+	} */
 }
-*/
