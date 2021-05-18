@@ -16,7 +16,7 @@ import { JSONObject, JSONValue } from "./json";
  * wishes to advertise, including decentralized identity management services
  * for further discovery, authentication, authorization, or interaction.
  */
-    @JsonPropertyOrder({
+@JsonPropertyOrder({
     value: [
         DIDDocumentService.ID, DIDDocumentService.TYPE, DIDDocumentService.SERVICE_ENDPOINT
     ]

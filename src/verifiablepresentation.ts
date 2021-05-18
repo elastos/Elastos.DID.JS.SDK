@@ -21,17 +21,40 @@
  */
 
 import { List as ImmutableList } from "immutable";
-import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize } from "jackson-js";
+import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
 import { DID } from "./internals";
 import { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
 import { DIDStore } from "./internals";
-import { DIDURL, NormalizedURLSerializer } from "./internals";
-import { AlreadySealedException, DIDNotFoundException, DIDObjectAlreadyExistException, IllegalUsage, InvalidKeyException, MalformedPresentationException } from "./exceptions/exceptions";
+import { DIDURL } from "./internals";
+import { ParentException, AlreadySealedException, IllegalArgumentException, DIDNotFoundException, DIDObjectAlreadyExistException, IllegalUsage, InvalidKeyException, MalformedPresentationException } from "./exceptions/exceptions";
 import { checkArgument, promisify } from "./internals";
 import { VerifiableCredential } from "./internals";
+import {
+	JsonStringifierTransformerContext,
+	JsonParserTransformerContext
+} from "jackson-js/dist/@types";
+import {
+    Serializer,
+	Deserializer
+} from "./internals";
+class NormalizedURLSerializer extends Serializer {
+	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
+
+		return this.mapper(context).stringify(id.toString());
+	}
+}
+class NormalizedURLDeserializer extends Deserializer {
+	public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
+		try {
+			return DIDURL.newWithUrl(value);
+		} catch (e) {
+			throw new ParentException("Invalid public key");
+		}
+	}
+}
 
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
@@ -560,6 +583,7 @@ export namespace VerifiablePresentation {
 		 private type: string;
 		 @JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD})
 		 @JsonSerialize({using: NormalizedURLSerializer.serialize})
+		 @JsonDeserialize({using: NormalizedURLDeserializer.deserialize})
 		 private verificationMethod: DIDURL;
 		 @JsonProperty({value: VerifiablePresentation.REALM})
 		 private realm: string;

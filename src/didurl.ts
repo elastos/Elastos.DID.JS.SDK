@@ -59,13 +59,6 @@ class URLSerializer extends Serializer {
 	}
 }
 
-export class NormalizedURLSerializer extends Serializer {
-	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
-
-		return this.mapper(context).stringify(id.toString());
-	}
-}
-
 class URLDeserializer extends Deserializer {
 	public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
 		try {
