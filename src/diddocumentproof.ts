@@ -8,30 +8,34 @@ import {
 } from "jackson-js";
 import { Comparable } from "./comparable";
 import { Constants } from "./constants";
-import { DIDDocumentConstants } from "./diddocumentconstants";
 import { DIDURL } from "./internals";
 import { TypeSerializerFilter } from "./internals";
 
 /**
  * The Proof represents the proof content of DID Document.
  */
-    @JsonPropertyOrder({
+@JsonPropertyOrder({
     value: [
-        DIDDocumentConstants.TYPE, DIDDocumentConstants.CREATED, DIDDocumentConstants.CREATOR, DIDDocumentConstants.SIGNATURE_VALUE
+        DIDDocumentProof.TYPE, DIDDocumentProof.CREATED, DIDDocumentProof.CREATOR, DIDDocumentProof.SIGNATURE_VALUE
     ]
 })
 export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
+    public static TYPE: string = "type";
+    public static CREATOR: string = "creator";
+    public static CREATED: string = "created";
+    public static SIGNATURE_VALUE: string = "signatureValue";
+    
     @JsonSerialize({using: TypeSerializerFilter.serialize})
-    @JsonProperty({ value: DIDDocumentConstants.TYPE })
+    @JsonProperty({ value: DIDDocumentProof.TYPE })
     private type: string;
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
-    @JsonProperty({ value: DIDDocumentConstants.CREATED })
+    @JsonProperty({ value: DIDDocumentProof.CREATED })
     private created: Date;
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
-    @JsonProperty({ value: DIDDocumentConstants.CREATOR })
+    @JsonProperty({ value: DIDDocumentProof.CREATOR })
     @JsonClassType({type: () => [DIDURL]})
     public creator: DIDURL;
-    @JsonProperty({ value: DIDDocumentConstants.SIGNATURE_VALUE })
+    @JsonProperty({ value: DIDDocumentProof.SIGNATURE_VALUE })
     private signature: string;
 
     /**
@@ -43,10 +47,10 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
      * @param signature the signature string
      */
     // Java: @JsonCreator
-    constructor(@JsonProperty({ value: DIDDocumentConstants.CREATOR }) creator: DIDURL,
-        @JsonProperty({ value: DIDDocumentConstants.SIGNATURE_VALUE, required: true }) signature: string,
-        @JsonProperty({ value: DIDDocumentConstants.TYPE }) type?: string,
-        @JsonProperty({ value: DIDDocumentConstants.CREATED, required: true }) created?: Date) {
+    constructor(@JsonProperty({ value: DIDDocumentProof.CREATOR }) creator: DIDURL,
+        @JsonProperty({ value: DIDDocumentProof.SIGNATURE_VALUE, required: true }) signature: string,
+        @JsonProperty({ value: DIDDocumentProof.TYPE }) type?: string,
+        @JsonProperty({ value: DIDDocumentProof.CREATED, required: true }) created?: Date) {
 
         this.type = type ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 

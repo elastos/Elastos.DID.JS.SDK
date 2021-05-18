@@ -8,7 +8,6 @@ import { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { Base58 } from "./internals";
 import { DID } from "./internals";
-import { DIDDocumentConstants } from "./diddocumentconstants";
 import { DIDDocumentPublicKeySerializerFilter } from "./internals";
 import { DIDObject } from "./internals";
 import { DIDURL } from "./internals";
@@ -21,21 +20,26 @@ import { TypeSerializerFilter } from "./internals";
  */
 @JsonPropertyOrder({
     value: [
-        DIDDocumentConstants.ID, DIDDocumentConstants.TYPE, DIDDocumentConstants.CONTROLLER, DIDDocumentConstants.PUBLICKEY_BASE58
+        DIDDocumentPublicKey.ID, DIDDocumentPublicKey.TYPE, DIDDocumentPublicKey.CONTROLLER, DIDDocumentPublicKey.PUBLICKEY_BASE58
     ]
 })
 export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDocumentPublicKey> {
-    @JsonProperty({ value: DIDDocumentConstants.ID })
+    private static ID: string = "id";
+    private static TYPE: string = "type";
+    private static CONTROLLER: string = "controller";
+    private static PUBLICKEY_BASE58: string = "publicKeyBase58";
+
+    @JsonProperty({ value: DIDDocumentPublicKey.ID })
     @JsonClassType({type: () => [DIDURL]})
     public id: DIDURL;
     @JsonSerialize({using: TypeSerializerFilter.filter})
-    @JsonProperty({ value: DIDDocumentConstants.TYPE })
+    @JsonProperty({ value: DIDDocumentPublicKey.TYPE })
     public type: string;
     @JsonSerialize({using: DIDDocumentPublicKeySerializerFilter.filter})
-    @JsonProperty({ value: DIDDocumentConstants.CONTROLLER })
+    @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER })
     @JsonClassType({type: () => [DID]})
     public controller: DID;
-    @JsonProperty({ value: DIDDocumentConstants.PUBLICKEY_BASE58 })
+    @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58 })
     public keyBase58: string;
     private authenticationKey: boolean;
     private authorizationKey: boolean;
@@ -49,10 +53,10 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
      * @param keyBase58 the string from encoded base58 of public key
      */
     // Java: @JsonCreator
-    constructor(@JsonProperty({ value: DIDDocumentConstants.ID, required: true }) id: DIDURL,
-        @JsonProperty({ value: DIDDocumentConstants.TYPE }) type: string,
-        @JsonProperty({ value: DIDDocumentConstants.CONTROLLER }) controller: any /* DID */,
-        @JsonProperty({ value: DIDDocumentConstants.PUBLICKEY_BASE58, required: true }) keyBase58: string) {
+    constructor(@JsonProperty({ value: DIDDocumentPublicKey.ID, required: true }) id: DIDURL,
+        @JsonProperty({ value: DIDDocumentPublicKey.TYPE }) type: string,
+        @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER }) controller: any /* DID */,
+        @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58, required: true }) keyBase58: string) {
         this.id = id;
         this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
         this.controller = controller;

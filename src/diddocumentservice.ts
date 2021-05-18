@@ -10,7 +10,6 @@ import {
     Map as ImmutableMap
 } from "immutable";
 import { JSONObject, JSONValue } from "./json";
-import { DIDDocumentConstants } from "./diddocumentconstants";
 
 /**
  * A Service may represent any type of service the subject
@@ -19,16 +18,20 @@ import { DIDDocumentConstants } from "./diddocumentconstants";
  */
     @JsonPropertyOrder({
     value: [
-        DIDDocumentConstants.ID, DIDDocumentConstants.TYPE, DIDDocumentConstants.SERVICE_ENDPOINT
+        DIDDocumentService.ID, DIDDocumentService.TYPE, DIDDocumentService.SERVICE_ENDPOINT
     ]
 })
 export class DIDDocumentService implements DIDObject<string> {
-    @JsonProperty({ value: DIDDocumentConstants.ID })
+    private static ID: string = "id";
+    private static TYPE: string = "type";
+    private static SERVICE_ENDPOINT: string = "serviceEndpoint";
+    
+    @JsonProperty({ value: DIDDocumentService.ID })
     @JsonClassType({type: () => [DIDURL]})
     private id: DIDURL;
-    @JsonProperty({ value: DIDDocumentConstants.TYPE }) @JsonClassType({ type: () => [String] })
+    @JsonProperty({ value: DIDDocumentService.TYPE }) @JsonClassType({ type: () => [String] })
     private type: string;
-    @JsonProperty({ value: DIDDocumentConstants.SERVICE_ENDPOINT }) @JsonClassType({ type: () => [String] })
+    @JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT }) @JsonClassType({ type: () => [String] })
     private endpoint: string;
     private properties: JSONObject;
 
@@ -39,9 +42,9 @@ export class DIDDocumentService implements DIDObject<string> {
      * @param type the type of Service
      * @param endpoint the address of service point
      */
-    constructor(@JsonProperty({ value: DIDDocumentConstants.ID, required: true }) id: DIDURL,
-        @JsonProperty({ value: DIDDocumentConstants.TYPE, required: true }) type: string,
-        @JsonProperty({ value: DIDDocumentConstants.SERVICE_ENDPOINT, required: true }) endpoint: string,
+    constructor(@JsonProperty({ value: DIDDocumentService.ID, required: true }) id: DIDURL,
+        @JsonProperty({ value: DIDDocumentService.TYPE, required: true }) type: string,
+        @JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT, required: true }) endpoint: string,
         properties?: JSONObject) {
         this.id = id;
         this.type = type;
@@ -49,9 +52,9 @@ export class DIDDocumentService implements DIDObject<string> {
         this.properties = properties ? properties : {};
 
         if (properties.size > 0) {
-            delete this.properties[DIDDocumentConstants.ID];
-            delete this.properties[DIDDocumentConstants.TYPE];
-            delete this.properties[DIDDocumentConstants.SERVICE_ENDPOINT];
+            delete this.properties[DIDDocumentService.ID];
+            delete this.properties[DIDDocumentService.TYPE];
+            delete this.properties[DIDDocumentService.SERVICE_ENDPOINT];
         }
     }
 
@@ -102,7 +105,7 @@ export class DIDDocumentService implements DIDObject<string> {
      */
     @JsonAnySetter()
     private setProperty(name: string, value: JSONValue) {
-        if (name === DIDDocumentConstants.ID || name === DIDDocumentConstants.TYPE || name === DIDDocumentConstants.SERVICE_ENDPOINT)
+        if (name === DIDDocumentService.ID || name === DIDDocumentService.TYPE || name === DIDDocumentService.SERVICE_ENDPOINT)
             return;
 
         if (this.properties == null)

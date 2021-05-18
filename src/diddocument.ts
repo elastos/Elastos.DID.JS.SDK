@@ -27,7 +27,8 @@ import {
     JsonIncludeType,
     JsonProperty,
     JsonClassType,
-    JsonCreator
+    JsonPropertyOrder,
+    JsonIgnore,
 } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
@@ -39,7 +40,6 @@ import { SHA256 } from "./internals";
 import { DID } from "./internals";
 import { DIDBackend } from "./internals";
 import { DIDDocumentBuilder } from "./internals";
-import { DIDDocumentConstants } from "./diddocumentconstants";
 import { DIDDocumentMultiSignature } from "./internals";
 import { DIDDocumentProof } from "./internals";
 import { DIDDocumentPublicKey } from "./internals";
@@ -83,75 +83,95 @@ import { VerifiableCredential } from "./internals";
  * services. One document must be have one subject, and at least one public
  * key.
  */
+ @JsonPropertyOrder({value: [
+    DIDDocument.ID,
+    DIDDocument.CONTROLLER,
+    DIDDocument.MULTI_SIGNATURE,
+    DIDDocument.PUBLICKEY,
+    DIDDocument.AUTHENTICATION,
+    DIDDocument.AUTHORIZATION,
+    DIDDocument.VERIFIABLE_CREDENTIAL,
+    DIDDocument.SERVICE,
+    DIDDocument.EXPIRES,
+    DIDDocument.PROOF ]})
  export class DIDDocument extends DIDEntity<DIDDocument> {
 
     private static log = new Logger("DIDDocument");
+    private static ID: string = "id";
+    private static PUBLICKEY: string = "publicKey";
+    private static CONTROLLER: string = "controller";
+    private static MULTI_SIGNATURE: string = "multisig";
+    private static AUTHENTICATION: string = "authentication";
+    private static AUTHORIZATION: string = "authorization";
+    private static SERVICE: string = "service";
+    private static VERIFIABLE_CREDENTIAL: string = "verifiableCredential";
+    private static EXPIRES: string = "expires";
+    private static PROOF: string = "proof";
 
     private subject: DID;
 
     // TODO: Convert from java - @JsonFormat(with:{JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
-    @JsonProperty({ value: DIDDocumentConstants.CONTROLLER })
+    @JsonProperty({ value: DIDDocument.CONTROLLER })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DID]]})
     public controllers?: DID[];
 
-    @JsonProperty({ value: DIDDocumentConstants.MULTI_SIGNATURE })
+    @JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
     @JsonClassType({type: () => [DIDDocumentMultiSignature]})
     public multisig?: DIDDocumentMultiSignature;
 
-    @JsonProperty({ value: DIDDocumentConstants.PUBLICKEY })
+    @JsonProperty({ value: DIDDocument.PUBLICKEY })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentPublicKey]]})
     public _publickeys?: DIDDocumentPublicKey[];
 
-    @JsonProperty({ value: DIDDocumentConstants.AUTHENTICATION })
+    @JsonProperty({ value: DIDDocument.AUTHENTICATION })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
     public _authentications?: DIDDocumentPublicKeyReference[];
 
-    @JsonProperty({ value: DIDDocumentConstants.AUTHORIZATION })
+    @JsonProperty({ value: DIDDocument.AUTHORIZATION })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
     public _authorizations?: DIDDocumentPublicKeyReference[];
 
-    @JsonProperty({ value: DIDDocumentConstants.VERIFIABLE_CREDENTIAL })
+    @JsonProperty({ value: DIDDocument.VERIFIABLE_CREDENTIAL })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [VerifiableCredential]]})
     public _credentials?: VerifiableCredential[];
 
-    @JsonProperty({ value: DIDDocumentConstants.SERVICE })
+    @JsonProperty({ value: DIDDocument.SERVICE })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentService]]})
     public _services?: DIDDocumentService[];
 
-    @JsonProperty({ value: DIDDocumentConstants.EXPIRES })
+    @JsonProperty({ value: DIDDocument.EXPIRES })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     public expires?: Date;
 
-    @JsonProperty({ value: DIDDocumentConstants.PROOF })
+    @JsonProperty({ value: DIDDocument.PROOF })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentProof]]})
-    // TODO - Convert from Java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
     public _proofs?: DIDDocumentProof[];
 
-    public controllerDocs?: Map<DID, DIDDocument>;
-    public publicKeys?: Map<DIDURL, DIDDocumentPublicKey>;
-    public credentials?: Map<DIDURL, VerifiableCredential>;
-    public services?: Map<DIDURL, DIDDocumentService>;
-    public proofs?: Map<DID, DIDDocumentProof>;
-
-    public effectiveController?: DID;
+    @JsonIgnore()
     public defaultPublicKey?: DIDDocumentPublicKey;
 
-    public metadata?: DIDMetadata;
+    private controllerDocs?: Map<DID, DIDDocument>;
+    private publicKeys?: Map<DIDURL, DIDDocumentPublicKey>;
+    private credentials?: Map<DIDURL, VerifiableCredential>;
+    private services?: Map<DIDURL, DIDDocumentService>;
+    private proofs?: Map<DID, DIDDocumentProof>;
+    private metadata?: DIDMetadata;
+    private effectiveController?: DID;
 
     /**
      * Set the DIDDocument subject.
      *
      * @param subject the owner of DIDDocument
      */
-    public constructor(@JsonProperty({ value: DIDDocumentConstants.ID, required: true }) subject?: DID) {
+    public constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) subject?: DID) {
         super();
         this.subject = subject;
     }
@@ -488,7 +508,7 @@ import { VerifiableCredential } from "./internals";
                 throw new NoEffectiveControllerException(this.getSubject().toString());
         } else {
             if (!this.hasPublicKey(id))
-                throw new InvalidKeyException(DIDDocumentConstants.ID.toString());
+                throw new InvalidKeyException(DIDDocument.ID.toString());
         }
 
         if (!this.getMetadata().getStore().containsPrivateKey(id))
