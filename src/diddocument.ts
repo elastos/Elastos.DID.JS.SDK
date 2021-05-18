@@ -26,7 +26,8 @@ import {
     JsonInclude,
     JsonIncludeType,
     JsonProperty,
-    JsonClassType
+    JsonClassType,
+    JsonCreator
 } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
@@ -82,7 +83,7 @@ import { VerifiableCredential } from "./internals";
  * services. One document must be have one subject, and at least one public
  * key.
  */
-export class DIDDocument extends DIDEntity<DIDDocument> {
+ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     private static log = new Logger("DIDDocument");
 
@@ -150,8 +151,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @param subject the owner of DIDDocument
      */
-    // Java: @JsonCreator()
-    public constructor(@JsonProperty({ value: DIDDocumentConstants.ID, required: true }) subject?: any /* DID */) {
+    public constructor(@JsonProperty({ value: DIDDocumentConstants.ID, required: true }) subject?: DID) {
         super();
         this.subject = subject;
     }

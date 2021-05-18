@@ -1,6 +1,8 @@
 import {
-    JsonValue
+    JsonValue,
+    JsonCreator
 } from "jackson-js";
+import { IllegalArgumentException } from "./exceptions/exceptions"
 import { checkArgument } from "./internals";
 
 export class DIDDocumentMultiSignature {
@@ -9,6 +11,18 @@ export class DIDDocumentMultiSignature {
 
     public constructor(m: number, n: number) {
         this.apply(m, n);
+    }
+
+    @JsonCreator()
+    public static newFormJson(mOfN: string): DIDDocumentMultiSignature {
+        if (!mOfN || mOfN == null)
+            throw new IllegalArgumentException("Invalid multisig spec");
+
+        let mn: string[] = mOfN.split(":");
+        if (mn == null || mn.length != 2)
+            throw new IllegalArgumentException("Invalid multisig spec");
+
+        return new DIDDocumentMultiSignature(Number.parseInt(mn[0]), Number.parseInt(mn[1]));
     }
 
     public static newFromMultiSignature(ms: DIDDocumentMultiSignature): DIDDocumentMultiSignature {
