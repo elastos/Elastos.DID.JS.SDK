@@ -1,4 +1,5 @@
 // Internal dependencies
+export * from "./logger";
 export * from "./didentity";
 export * from "./serializers";
 export * from "./diddocumentpublickeyreferenceserializer";
@@ -51,6 +52,9 @@ export * from "./backend/didresolveresponse";
 export * from "./backend/resolveresponse";
 export * from "./backend/didrequest";
 export * from "./backend/credentialbiography";
+export * from "./defaultdidadapter";
+export * from "./backend/simulatedidchainadapter";
+export * from "./backend/simulatedidchain";
 export * from "./diddocumentbuilder";
 export * from "./rootidentity";
 export * from "./didobject";
@@ -59,7 +63,6 @@ export * from "./diddocumentmultisignature";
 export * from "./filesystemstorage";
 export * from "./diddocument";
 export * from "./verifiablecredential";
-export * from "./defaultdidadapter";
 export * from "./didadapter";
 export * from "./diddocumentproof";
 export * from "./utils";

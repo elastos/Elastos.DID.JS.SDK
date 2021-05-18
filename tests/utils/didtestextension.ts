@@ -20,13 +20,15 @@
  * SOFTWARE.
  */
 
+import type { DIDAdapter } from "../../dist/did";
+import { DIDBackend, SimulatedIDChain } from "../../dist/did";
 import { TestConfig } from "./testconfig";
 
 export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource */ {
-	//private static adapter: DIDAdapter;
-	//private static simChain: SimulatedIDChain;
+	private static adapter: DIDAdapter;
+	private static simChain: SimulatedIDChain;
 
-	private setup(name: string) {
+	public static setup(/* name: string */) {
 		// Force load TestConfig first!!!
 		let network: string = TestConfig.network;
 
@@ -43,13 +45,13 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 			}
 		} */
 
-		/* if (this.adapter == null) {
-			simChain = new SimulatedIDChain();
-			simChain.start();
-			adapter = simChain.getAdapter();
+		if (DIDTestExtension.adapter == null) {
+			DIDTestExtension.simChain = new SimulatedIDChain();
+			//simChain.start();
+			DIDTestExtension.adapter = DIDTestExtension.simChain.getAdapter();
 		}
 
-		DIDBackend.initialize(adapter); */
+		DIDBackend.initialize(DIDTestExtension.adapter);
 	}
 
 	/* public void close() throws Throwable {
@@ -63,15 +65,15 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 		adapter = null;
 	} */
 
-	public beforeAll(/* ExtensionContext context */) {
-		/* String key = this.getClass().getName();
-	    Object value = context.getRoot().getStore(GLOBAL).get(key); */
+	/* public static beforeAll(contextName: string) {
+	 	String key = this.getClass().getName();
+	    Object value = context.getRoot().getStore(GLOBAL).get(key);
 	    //if (value == null) {
 	    	// First test container invocation.
-	    	//setup(context.getDisplayName());
+	    	DIDTestExtension.setup(contextName);
 	    	//context.getRoot().getStore(GLOBAL).put(key, this);
 	    //}
-	}
+	} */
 
 	/* public static void resetData() {
 		simChain.reset();

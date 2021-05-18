@@ -1,5 +1,6 @@
 'use strict';
 
+import { DIDBackend } from "./internals";
 import { DID } from "./internals";
 import { DIDDocument } from "./internals";
 import { DIDStore } from "./internals";
@@ -14,12 +15,14 @@ import { DIDURLParser, DIDURLValues } from "./parser/DIDURLParser";
 import * as Exceptions from "./exceptions/exceptions";
 import { File } from "./internals";
 import { Logger } from "./logger";
+import { DIDAdapter } from "./internals";
 import { Aes256cbc } from "./crypto/aes256cbc";
 import { BASE64 } from "./crypto/base64";
 import { HDKey } from "./crypto/hdkey";
 import { Base58 } from "./crypto/base58";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import { JSONObject, JSONValue } from "./json";
+import { SimulatedIDChain } from "./internals";
 import { runningInBrowser } from "./utils";
 
 /**
@@ -54,6 +57,7 @@ import { runningInBrowser } from "./utils";
 
 export type {
 	DIDURLValues,
+	DIDAdapter,
 	JSONObject,
 	JSONValue
 }
@@ -64,6 +68,7 @@ export {
 	DID,
 	DIDDocument,
 	DIDStore,
+	DIDBackend,
 	RootIdentity,
 	VerifiableCredential,
 	VerifiablePresentation,
@@ -72,6 +77,7 @@ export {
 	Issuer,
 	DIDURL,
 	DIDURLParser,
+	SimulatedIDChain,
 	Exceptions,
 
 	// TODO - others

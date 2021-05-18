@@ -22,7 +22,7 @@
 
 
 import { List as ImmutableList } from "immutable";
-import { randomBytes } from "randombytes";
+import { randomBytes } from "crypto";
 import { CredentialBiography, CredentialBiographyStatus } from "./internals";
 import { CredentialList } from "./internals";
 import { CredentialListRequest } from "./internals";
@@ -131,8 +131,8 @@ export class DIDBackend {
      */
 	public static initialize(
 		adapter: DIDAdapter,
-		initialCacheCapacity: number = DIDBackend.DEFAULT_CACHE_MAX_CAPACITY,
-		maxCacheCapacity: number = DIDBackend.DEFAULT_CACHE_INITIAL_CAPACITY,
+		initialCacheCapacity: number = DIDBackend.DEFAULT_CACHE_INITIAL_CAPACITY,
+		maxCacheCapacity: number = DIDBackend.DEFAULT_CACHE_MAX_CAPACITY,
 		cacheTtl: number = DIDBackend.DEFAULT_CACHE_TTL
 	) {
 		checkArgument(adapter != null, "Invalid adapter");

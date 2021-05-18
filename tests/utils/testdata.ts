@@ -30,6 +30,7 @@ import {
 } from "../../dist/did";
 import { TestConfig } from "./testconfig";
 import { importBundledBrowserData } from "./browserdataimport";
+import { DIDTestExtension } from "./didtestextension";
 
 export class TestData {
 	// HDKey for temporary key generation
@@ -49,6 +50,9 @@ export class TestData {
 		if (File.exists(TestConfig.storeRoot))
     		(new File(TestConfig.storeRoot)).delete();
 		importBundledBrowserData();
+
+		DIDTestExtension.setup();
+
 		this.store = DIDStore.open(TestConfig.storeRoot);
 	}
 
