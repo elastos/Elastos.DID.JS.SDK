@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder } from "jackson-js";
 import { DIDEntity } from "../internals";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 import { ResolveError } from "./resolveerror";
@@ -39,11 +39,11 @@ class RpcConstants {
 @JsonPropertyOrder({value: [RpcConstants.ERROR_CODE, RpcConstants.ERROR_MESSAGE, RpcConstants.ERROR_DATA ]})
 @JsonCreator()
 class JsonRpcError {
-	@JsonProperty({value: RpcConstants.ERROR_CODE})
+	@JsonProperty({value: RpcConstants.ERROR_CODE}) @JsonClassType({type: ()=>[Number]})
 	private code: number;
-	@JsonProperty({value: RpcConstants.ERROR_MESSAGE})
+	@JsonProperty({value: RpcConstants.ERROR_MESSAGE}) @JsonClassType({type: ()=>[String]})
 	private message: string;
-	@JsonProperty({value: RpcConstants.ERROR_DATA})
+	@JsonProperty({value: RpcConstants.ERROR_DATA}) @JsonClassType({type: ()=>[String]})
 	private data: string;
 
 	constructor(code: number, message: string) {
@@ -74,13 +74,13 @@ class JsonRpcError {
 export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
 	private static JSON_RPC_VERSION = "2.0";
 
-	@JsonProperty({value: RpcConstants.ID})
+	@JsonProperty({value: RpcConstants.ID}) @JsonClassType({type: ()=>[String]})
 	private responseId: string;
-	@JsonProperty({value: RpcConstants.JSON_RPC})
+	@JsonProperty({value: RpcConstants.JSON_RPC}) @JsonClassType({type: ()=>[String]})
 	private jsonRpcVersion: string;
 	@JsonProperty({value: RpcConstants.RESULT})
 	private result: R;
-	@JsonProperty({value: RpcConstants.ERROR})
+	@JsonProperty({value: RpcConstants.ERROR}) @JsonClassType({type: ()=>[JsonRpcError]})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	private error: JsonRpcError;
 

@@ -66,11 +66,11 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	// "main" java implementation to rework synchronous calls and we will also migrate to Promises/Async.
 	protected performRequest(url: URL, body: string): JSONObject {
 		var request = new XMLHttpRequest();
+		request.open('POST', url.toString(), false);  // `false` makes the request synchronous
 		request.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
 		request.setRequestHeader("Content-Type", "application/json");
 		request.setRequestHeader("Accept", "application/json");
-		request.open('POST', url.toString(), false);  // `false` makes the request synchronous
-		request.send(null);
+		request.send(body);
 
 		if (request.status < 200 || request.status > 299) {
 			log.error("HTTP request error, status: "+request.status+", message: "+request.statusText);
