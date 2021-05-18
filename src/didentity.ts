@@ -26,14 +26,14 @@ import {
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
 import { Class } from "./class";
-import { DID } from "./did";
+import { DID } from "./internals";
 import {
 	DIDSyntaxException,
 	UnknownInternalException,
 	InvalidDateFormat
 } from "./exceptions/exceptions";
 import { JSONObject } from "./json";
-import { checkArgument } from "./utils";
+import { checkArgument } from "./internals";
 
 /**
  * Base class for all DID objects.
@@ -114,7 +114,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public static parse <T extends DIDEntity<any>>(content: JSONObject | string, clazz: Class<T>): T {
+	public static parse <T extends DIDEntity<T>>(content: JSONObject | string, clazz: Class<T>): T {
 		checkArgument(content && content !== "", "Invalid JSON content");
 		checkArgument(clazz && clazz !== null, "Invalid result class object");
 

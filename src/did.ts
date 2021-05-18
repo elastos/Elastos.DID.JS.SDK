@@ -20,16 +20,16 @@
  * SOFTWARE.
  */
 
-import { DIDMetadata } from "./didmetadata";
+import { DIDMetadata } from "./internals";
 import {
     checkEmpty,
     checkNotNull,
     isEmpty,
     hashCode
-} from "./utils";
-import { DIDDocument } from "./diddocument";
-import { DIDBackend } from "./didbackend";
-import { DIDBiography } from "./backend/didbiography";
+} from "./internals";
+import { DIDDocument } from "./internals";
+import { DIDBackend } from "./internals";
+import { DIDBiography } from "./internals";
 import {
     JsonSerialize,
     JsonDeserialize
@@ -37,7 +37,7 @@ import {
 import {
     Serializer,
     Deserializer
-} from "./serializers";
+} from "./internals";
 import {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext

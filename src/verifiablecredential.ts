@@ -22,34 +22,28 @@
 
 import dayjs, { Dayjs } from "dayjs";
 import {
-	List as ImmutableList,
-	Map as ImmutableMap
+	List as ImmutableList
 } from "immutable";
 import {
-	JsonPropertyOrder,
-	JsonProperty,
-	JsonSerialize,
-	JsonInclude,
-	JsonIncludeType,
-	JsonGetter,
-	JsonAnyGetter,
-	JsonAnySetter,
-	JsonFilter
+	JsonAnySetter, JsonClassType, JsonFilter, JsonGetter, JsonInclude,
+	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize
 } from "jackson-js";
-import { CredentialBiography } from "./backend/credentialbiography";
-import { IDChainRequest } from "./backend/idchaindrequest";
-import { Status as CredentialBiographyStatus} from "./backend/credentialbiography";
-import { Collections } from "./collections";
+import {
+	JsonStringifierTransformerContext
+} from "jackson-js/dist/@types";
+import { CredentialBiography, CredentialBiographyStatus } from "./internals";
+import { IDChainRequest } from "./internals";
+import { Collections } from "./internals";
 import { Constants } from "./constants";
-import { CredentialMetadata } from "./credentialmetadata";
-import { DID } from "./did";
-import { DIDBackend } from "./didbackend";
-import { DIDDocument } from "./diddocument";
-import { DIDEntity } from "./didentity";
-import { DIDObject } from "./didobject";
-import { DIDStore } from "./didstore";
+import { CredentialMetadata } from "./internals";
+import { DID } from "./internals";
+import { DIDBackend } from "./internals";
+import { DIDDocument } from "./internals";
+import { DIDEntity } from "./internals";
+import { DIDObject } from "./internals";
+import { DIDStore } from "./internals";
 import { DIDTransactionAdapter } from "./didtransactionadapter";
-import { DIDURL } from "./didurl";
+import { DIDURL } from "./internals";
 import {
 	AlreadySealedException,
 	CredentialAlreadyExistException,
@@ -63,23 +57,17 @@ import {
 	NotAttachedWithStoreException,
 	UnknownInternalException
 } from "./exceptions/exceptions";
-import { Issuer } from "./issuer";
-import { Logger } from "./logger";
-import { checkArgument } from "./utils";
+import { TypeSerializerFilter } from "./internals";
+import { Issuer } from "./internals";
 import {
 	JSONObject,
 	JSONValue
 } from "./json";
+import { Logger } from "./logger";
 import {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "jackson-js/dist/@types";
-import {
-    PropertySerializerFilter,
-    Serializer,
-    Deserializer
-} from "./serializers";
-import { TypeSerializerFilter } from "./filters";
+	PropertySerializerFilter
+} from "./internals";
+import { checkArgument } from "./internals";
 
 const log = new Logger("VerifiableCredential");
 
@@ -120,22 +108,26 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public static SIGNATURE = "signature";
 
 	@JsonProperty({value:VerifiableCredential.ID})
+	@JsonClassType({type: () => [DIDURL]})
 	public id: DIDURL;
 	@JsonProperty({value:VerifiableCredential.TYPE})
 	// TODO: migrate from java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY})
 	public type: string[];
 	@JsonSerialize({using: IssuerSerializerFilter.filter})
 	@JsonProperty({value:VerifiableCredential.ISSUER})
-	public issuer: any // DID;
+	@JsonClassType({type: () => [DID]})
+	public issuer: DID;
 	@JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
 	public issuanceDate: Date;
 	@JsonProperty({value:VerifiableCredential.EXPIRATION_DATE})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	public expirationDate: Date;
 	@JsonProperty({value:VerifiableCredential.CREDENTIAL_SUBJECT})
+	@JsonClassType({type: () => [VerifiableCredential.Subject]})
 	public subject: VerifiableCredential.Subject;
 	@JsonProperty({value:VerifiableCredential.PROOF})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
+	@JsonClassType({type: () => [VerifiableCredential.Proof]})
 	public proof: VerifiableCredential.Proof;
 
 	public metadata: CredentialMetadata;

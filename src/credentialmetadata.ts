@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-import { AbstractMetadata } from "./abstractmetadata";
+import { AbstractMetadata } from "./internals";
 import { Cloneable } from "./cloneable";
-import { DIDStore } from "./didstore";
-import { DIDURL } from "./didurl";
+import { DIDStore } from "./internals";
+import { DIDURL } from "./internals";
 import { Logger } from "./logger";
-import { checkArgument } from "./utils";
+import { checkArgument } from "./internals";
 
-const log = new Logger("CredentialMetadata");
+//const log = new Logger("CredentialMetadata");
 
 /**
  * The interface for Credential's meta data(include alias name, last modified time for Credential
@@ -40,6 +40,8 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 	private static TXID = "txid";
 	private static PUBLISHED = "published";
 	private static REVOKED = "revoked";
+	private static log = new Logger("CredentialMetadata");
+
 
 	private id: DIDURL;
 
@@ -130,7 +132,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 			return super.clone();
 		} catch (e) {
 			// CloneNotSupportedException
-			log.error(e);
+			CredentialMetadata.log.error(e);
 			return null;
 		}
     }
@@ -141,7 +143,8 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 				this.getStore().storeCredentialMetadata(this.id, this);
 			} catch (e) {
 				// DIDStoreException
-				log.error("INTERNAL - error store metadata for credential {}", this.id);
+				CredentialMetadata.log.error("INTERNAL - error store metadata for credential {}", this.id);
+				throw e;
 			}
 		}
 	}

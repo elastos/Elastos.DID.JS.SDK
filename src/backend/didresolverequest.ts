@@ -21,11 +21,11 @@
  */
 
 import { JsonCreator, JsonProperty, JsonInclude, JsonFilterType, JsonIncludeType } from "jackson-js";
-import { DID } from "../did";
-import { DIDURL } from "../didurl";
+import { DID } from "../internals";
+import { DIDURL } from "../internals";
 import { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
-import { hashCode } from "../utils";
+import { hashCode } from "../internals";
 @JsonCreator()
 export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Parameters> {
 	public static PARAMETER_DID = "did";

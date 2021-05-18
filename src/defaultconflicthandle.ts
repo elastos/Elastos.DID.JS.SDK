@@ -1,5 +1,5 @@
-import { ConflictHandle } from "./conflicthandle";
-import { DIDDocument } from "./diddocument";
+import { ConflictHandle } from "./internals";
+import { DIDDocument } from "./internals";
 
 export class DefaultConflictHandle implements ConflictHandle {
 

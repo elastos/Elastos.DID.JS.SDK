@@ -21,12 +21,12 @@
  */
 
 import { JsonCreator } from "jackson-js";
-import { BASE64 } from "../crypto/base64";
-import { DID } from "../did";
-import { DIDDocument } from "../diddocument";
-import { DIDURL } from "../didurl";
+import { BASE64 } from "../internals";
+import { DID } from "../internals";
+import { DIDDocument } from "../internals";
+import { DIDURL } from "../internals";
 import { InvalidKeyException, MalformedIDChainRequestException, UnknownInternalException } from "../exceptions/exceptions";
-import { TransferTicket } from "../transferticket";
+import { TransferTicket } from "../internals";
 import { IDChainRequest } from "./idchaindrequest";
 
 /**

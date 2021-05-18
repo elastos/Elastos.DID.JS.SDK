@@ -21,39 +21,39 @@
  */
 
 import { List as ImmutableList } from "immutable";
-import { JsonClassType, JsonIgnoreType, JsonProperty } from "jackson-js";
-import { CredentialMetadata } from "./credentialmetadata";
-import { DID } from "./did";
-import { DIDDocument } from "./diddocument";
-import { DIDEntity } from "./didentity";
-import { DIDMetadata } from "./didmetadata";
-import { DIDStorage } from "./didstorage";
-import { DIDURL } from "./didurl";
+import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty, JsonIgnore } from "jackson-js";
+import { CredentialMetadata } from "./internals";
+import { DID } from "./internals";
+import { DIDDocument } from "./internals";
+import { DIDEntity } from "./internals";
+import { DIDMetadata } from "./internals";
+import { DIDStorage } from "./internals";
+import { DIDURL } from "./internals";
 import { DIDStoreCryptoException, DIDStoreException, IllegalArgumentException, WrongPasswordException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
-import { RootIdentity } from "./rootidentity";
-import { checkArgument, hashCode } from "./utils";
-import { LRUCache } from "./lrucache";
-import { Aes256cbc } from "./crypto/aes256cbc";
-import { HDKey } from "./crypto/hdkey";
-import { VerifiableCredential } from "./verifiablecredential";
+import { RootIdentity } from "./internals";
+import { checkArgument, hashCode } from "./internals";
+import { LRUCache } from "./internals";
+import { Aes256cbc } from "./internals";
+import { HDKey } from "./internals";
+import { VerifiableCredential } from "./internals";
 import { Hashable } from "./hashable";
 import { Comparable } from "./comparable";
-import { FileSystemStorage } from "./filesystemstorage";
-import { EcdsaSigner } from "./crypto/ecdsasigner";
+import { FileSystemStorage } from "./internals";
+import { EcdsaSigner } from "./internals";
 import dayjs from "dayjs";
-import { ConflictHandle } from "./conflicthandle";
-import { DefaultConflictHandle } from "./defaultconflicthandle";
-import { DIDStoreMetadata } from "./didstoremetadata";
-import { md5 } from "./crypto/md5";
-import { BASE64 } from "./crypto/base64";
+import { ConflictHandle } from "./internals";
+import { DefaultConflictHandle } from "./internals";
+import { DIDStoreMetadata } from "./internals";
+import { md5 } from "./internals";
+import { BASE64 } from "./internals";
 
 /**
  * DIDStore is local store for all DIDs.
  */
  const log = new Logger("DIDStore");
 
-@JsonIgnoreType()
+ @JsonIgnoreType()
  export class DIDStore {
 
 	private static CACHE_INITIAL_CAPACITY = 16;
@@ -65,7 +65,9 @@ import { BASE64 } from "./crypto/base64";
 
 	private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
+	//@JsonIgnore()
 	public storage: DIDStorage;
+	//@JsonClassType({type: () => [DIDStoreMetadata]})
 	private metadata: DIDStoreMetadata;
 
 	private constructor(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage) {
@@ -216,7 +218,7 @@ import { BASE64 } from "./crypto/base64";
 					encryptedPrivateKey, publicKey, identity.getIndex());
 
 				if (this.metadata.getDefaultRootIdentity() == null)
-				this.metadata.setDefaultRootIdentity(identity.getId());
+					this.metadata.setDefaultRootIdentity(identity.getId());
 
 				this.cache.invalidate(DIDStore.Key.forRootIdentity(identity.getId()));
 				this.cache.invalidate(DIDStore.Key.forRootIdentityPrivateKey(identity.getId()));
@@ -1950,28 +1952,31 @@ export namespace DIDStore {
 		select(id: DIDURL): boolean;
 	}
 
-	//@JsonPropertyOrder({ "type", "id", "document", "credential", "privatekey",
-	//						 "created", "fingerprint" })
-	//	@JsonInclude(Include.NON_NULL)
+	@JsonPropertyOrder({ value: ["type", "id", "document", "credential", "privatekey",
+							 "created", "fingerprint"]})
+	@JsonInclude({value : JsonIncludeType.NON_NULL})
 	export class DIDExport extends DIDEntity<DIDExport> {
-		//@JsonProperty("type")
+		@JsonProperty({ value: "type"})
 		private type: string;
-		//@JsonProperty("id")
+		@JsonProperty({ value: "id"})
 		private id: DID;
-		//@JsonProperty("document")
+		@JsonProperty({value: "document"})
+		@JsonClassType({type: () => [DIDExport.Document]})
 		private document: DIDExport.Document | null = null;
-		//@JsonProperty("credential")
+		@JsonProperty({ value: "credential"})
+		@JsonClassType({type: () => [Array, [DIDExport.Credential]]})
 		private credentials: DIDExport.Credential[] = [];
-		//@JsonProperty("privatekey")
+		@JsonProperty({ value: "privatekey"})
+		@JsonClassType({type: () => [Array, [DIDExport.PrivateKey]]})
 		private privatekeys: DIDExport.PrivateKey[] = [];
-		//@JsonProperty("created")
+		@JsonProperty({value: "created"})
 		private created: Date | null = null;
-		//@JsonProperty("fingerprint")
+		@JsonProperty({ value: "fingerprint"})
 		private fingerprint: String | null = null;
 
 		//@JsonCreator
-		public constructor(/* @JsonProperty(value = "type", required = true) */ type: string,
-					/* @JsonProperty(value = "id", required = true) */ id: DID) {
+		public constructor(@JsonProperty({value: "type", required: true}) type: string,
+					@JsonProperty({value: "id", required: true}) id: DID) {
 						super();
 			if (type == null)
 				throw new IllegalArgumentException("Invalid export type");
@@ -2134,26 +2139,28 @@ export namespace DIDStore {
 	}
 
 	export namespace DIDExport {
-		//@JsonPropertyOrder({ "content", "metadata" })
+		@JsonPropertyOrder({value: ["content", "metadata"] })
 		export class Document {
-			//@JsonProperty("content")
+			@JsonProperty({value: "content"})
 			public content: DIDDocument;
-			//@JsonProperty("metadata")
+			@JsonProperty({value: "metadata"})
 			private metadata: DIDMetadata;
 
 			//@JsonCreator
-			constructor(/* @JsonProperty(value = "content", required = true) */ content: DIDDocument,
-					/* @JsonProperty(value = "metadata") */ metadata: DIDMetadata) {
+			constructor(@JsonProperty({value: "content", required: true}) content: DIDDocument,
+					@JsonProperty({value: "metadata"}) metadata: DIDMetadata) {
 				this.content = content;
 				this.metadata = metadata;
 			}
 		}
 
-		//@JsonPropertyOrder({ "content", "metadata" })
+		@JsonPropertyOrder({ value: ["content", "metadata"]})
 		export class Credential {
 			@JsonProperty({value:"content"}) @JsonClassType({type: () => [VerifiableCredential]})
+			@JsonClassType({type: () => [VerifiableCredential]})
 			public content: VerifiableCredential;
 			@JsonProperty({value:"metadata"}) @JsonClassType({type: () => [CredentialMetadata]})
+			@JsonClassType({type: () => [CredentialMetadata]})
 			private metadata: CredentialMetadata;
 
 			// Java: @JsonCreator
@@ -2164,7 +2171,7 @@ export namespace DIDStore {
 			}
 		}
 
-		//@JsonPropertyOrder({ "id", "key" })
+		@JsonPropertyOrder({ value: ["id", "key"]})
 		export class PrivateKey {
 			@JsonProperty({value: "id"}) @JsonClassType({type: () => [DIDURL]})
 			private id: DIDURL;

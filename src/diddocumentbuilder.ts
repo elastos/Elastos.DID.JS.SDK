@@ -1,28 +1,28 @@
 import dayjs from "dayjs";
-import { Collections } from "./collections";
+import { Collections } from "./internals";
 import { Constants } from "./constants";
-import { HDKey } from "./crypto/hdkey";
-import { DID } from "./did";
-import { DIDDocument } from "./diddocument";
-import { DIDDocumentMultiSignature } from "./diddocumentmultisignature";
-import { DIDDocumentProof } from "./diddocumentproof";
-import { DIDDocumentPublicKey } from "./diddocumentpublickey";
-import { DIDDocumentPublicKeyReference } from "./diddocumentpublickeyreference";
-import { DIDDocumentService } from "./diddocumentservice";
-import { DIDMetadata } from "./didmetadata";
-import { DIDStore } from "./didstore";
-import { DIDURL } from "./didurl";
+import { HDKey } from "./internals";
+import { DID } from "./internals";
+import { DIDDocument } from "./internals";
+import { DIDDocumentMultiSignature } from "./internals";
+import { DIDDocumentProof } from "./internals";
+import { DIDDocumentPublicKey } from "./internals";
+import { DIDDocumentPublicKeyReference } from "./internals";
+import { DIDDocumentService } from "./internals";
+import { DIDMetadata } from "./internals";
+import { DIDStore } from "./internals";
+import { DIDURL } from "./internals";
 import {
     AlreadySealedException, AlreadySignedException,
     CanNotRemoveEffectiveController, DIDDeactivatedException,
     DIDExpiredException, DIDNotFoundException, DIDNotGenuineException, DIDObjectAlreadyExistException, DIDObjectHasReference, DIDObjectNotExistException, IllegalArgumentException, IllegalUsage, MalformedDocumentException, NoEffectiveControllerException, NotAttachedWithStoreException,
     NotControllerException, NotCustomizedDIDException, NotPrimitiveDIDException, UnknownInternalException
 } from "./exceptions/exceptions";
-import { Issuer } from "./issuer";
+import { Issuer } from "./internals";
 import { JSONObject } from "./json";
 import { Logger } from "./logger";
-import { checkArgument } from "./utils";
-import { VerifiableCredential } from "./verifiablecredential";
+import { checkArgument } from "./internals";
+import { VerifiableCredential } from "./internals";
 
 /**
 * Builder object to create or modify the DIDDocument.

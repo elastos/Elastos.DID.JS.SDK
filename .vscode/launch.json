@@ -9,7 +9,8 @@
           "--inspect-brk",
           "${workspaceRoot}/node_modules/.bin/jest",
           "--runInBand",
-          "didstore.test"
+          "--silent=true",
+          "${workspaceRoot}/tests/didstore.test"
         ],
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen",

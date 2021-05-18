@@ -2,8 +2,8 @@ import {
     JsonStringifierTransformerContext,
     JsonParserTransformerContext
 } from "jackson-js/dist/@types";
-import { DIDEntity } from "./didentity";
-import { DID } from "./did";
+import { DIDEntity } from "./internals";
+import { DID } from "./internals";
 import { Constants } from "./constants";
 import { ObjectMapper } from "jackson-js";
 

@@ -21,28 +21,38 @@
  */
 
 import { Cloneable } from "./cloneable";
-import { DIDEntity } from "./didentity";
-import { DIDStore } from "./didstore";
-import { checkArgument } from "./utils";
+import { DIDEntity } from "./internals";
+import { DIDStore } from "./internals";
 import { JSONObject, JSONValue } from "./json";
+import { checkArgument } from "./internals";
+import { JsonIgnore, JsonInclude, JsonIncludeType, JsonClassType, JsonAnySetter, JsonAnyGetter, JsonProperty } from "jackson-js";
 
 /**
  * The class defines the base interface of Meta data.
  */
-export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneable<any> {
+export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneable<AbstractMetadata> {
 	private static ALIAS = "alias";
 
 	protected static USER_EXTRA_PREFIX = "UX-";
 
+	// TODO @carl (BPI): I temporarily remplace this Map/String/String type with a raw Object, because
+	// this throws a "incompatible receiver 'size' or #Map" runtime error. Not sure how to fix this correctly
+	// but for now i want to keep validating the "internals" fix and Object does the job for now.
+	//@JsonClassType({type: () => [Map, [String, String]]})
+	@JsonClassType({type: ()=>[Object]})
 	public props: JSONObject = {};
-	protected store: DIDStore | null = null;
+
+	//@JsonInclude({value: JsonIncludeType.NON_NULL})
+	//@JsonClassType({type: () => [DIDStore]})
+	@JsonIgnore()
+	protected store?: DIDStore;
 
 	/**
 	 * Constructs the AbstractMetadata and attach with the store.
 	 *
 	 * @param store the DIDStore
 	 */
-	protected constructor(store: DIDStore | null = null) {
+	constructor(store?: DIDStore) {
 		super();
 		this.store = store;
 		this.props = {};
@@ -66,7 +76,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 *
 	 * @return the DIDStore object
 	 */
-	public getStore(): DIDStore | null {
+	public getStore(): DIDStore {
 		return this.store;
 	}
 
@@ -80,16 +90,16 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 		return this.store != null;
 	}
 
-	//@JsonAnyGetter
-	protected getProperties(): JSONObject | null {
+	@JsonAnyGetter()
+	protected getProperties(): JSONObject {
 		return this.props;
 	}
 
-	protected get(name: string): JSONValue | null {
+	protected get(name: string): JSONValue {
 		return this.props[name];
 	}
 
-	//@JsonAnySetter
+	@JsonAnySetter()
 	protected put(name: string, value: JSONValue | Date ) {
 		this.props[name] = value instanceof Date ? value.toISOString() : value;
 
@@ -155,27 +165,27 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 * @return the value string
 	 */
 	public getExtra(key: string): string {
-		checkArgument(key != null && key !== "", "Invalid key");
+		checkArgument(key && key != null, "Invalid key");
 		return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key).toString();
 	}
 
 	public getExtraBoolean(key: string): boolean {
-		checkArgument(key != null && key !== "", "Invalid key");
+		checkArgument(key && key != null, "Invalid key");
 		return this.getBoolean(AbstractMetadata.USER_EXTRA_PREFIX + key);
 	}
 
 	public getExtraInteger(key: string): number {
-		checkArgument(key != null && key !== "", "Invalid key");
+		checkArgument(key && key != null, "Invalid key");
 		return this.getInteger(AbstractMetadata.USER_EXTRA_PREFIX + key);
 	}
 
 	public getExtraDate(key: string): Date /* throws ParseException */ {
-		checkArgument(key != null && key !== "", "Invalid key");
+		checkArgument(key && key != null, "Invalid key");
 		return this.getDate(AbstractMetadata.USER_EXTRA_PREFIX + key);
 	}
 
 	public removeExtra(key: string): string {
-		checkArgument(key != null && key !== "", "Invalid key");
+		checkArgument(key && key != null, "Invalid key");
 		return this.remove(AbstractMetadata.USER_EXTRA_PREFIX + key);
 	}
 

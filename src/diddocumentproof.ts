@@ -1,13 +1,16 @@
 import {
     JsonInclude,
-    JsonIncludeType, JsonProperty, JsonPropertyOrder,
-    JsonSerialize
+    JsonIncludeType,
+    JsonProperty,
+    JsonPropertyOrder,
+    JsonSerialize,
+    JsonClassType
 } from "jackson-js";
 import { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { DIDDocumentConstants } from "./diddocumentconstants";
-import { DIDURL } from "./didurl";
-import { TypeSerializerFilter } from "./filters";
+import { DIDURL } from "./internals";
+import { TypeSerializerFilter } from "./internals";
 
 /**
  * The Proof represents the proof content of DID Document.
@@ -26,6 +29,7 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
     private created: Date;
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
     @JsonProperty({ value: DIDDocumentConstants.CREATOR })
+    @JsonClassType({type: () => [DIDURL]})
     public creator: DIDURL;
     @JsonProperty({ value: DIDDocumentConstants.SIGNATURE_VALUE })
     private signature: string;

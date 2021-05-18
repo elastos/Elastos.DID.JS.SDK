@@ -21,18 +21,17 @@
  */
 
 import { List as ImmutableList } from "immutable";
-import { JsonCreator, JsonFormat, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize } from "jackson-js";
-import { Collections } from "./collections";
+import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize } from "jackson-js";
+import { Collections } from "./internals";
 import { Constants } from "./constants";
-import { DID } from "./did";
-import { DIDDocument } from "./diddocument";
-import { DIDEntity } from "./didentity";
-import { DIDStore } from "./didstore";
-import { DIDURL } from "./didurl";
-import { DIDResolveException, DIDStoreException, DIDNotFoundException, InvalidKeyException, AlreadySealedException, IllegalUsage, DIDObjectAlreadyExistException, MalformedPresentationException } from "./exceptions/exceptions";
-import { checkArgument, promisify } from "./utils";
-import { VerifiableCredential } from "./verifiablecredential";
-import { NormalizedURLSerializer } from "./didurl";
+import { DID } from "./internals";
+import { DIDDocument } from "./internals";
+import { DIDEntity } from "./internals";
+import { DIDStore } from "./internals";
+import { DIDURL, NormalizedURLSerializer } from "./internals";
+import { AlreadySealedException, DIDNotFoundException, DIDObjectAlreadyExistException, IllegalUsage, InvalidKeyException, MalformedPresentationException } from "./exceptions/exceptions";
+import { checkArgument, promisify } from "./internals";
+import { VerifiableCredential } from "./internals";
 
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
@@ -68,19 +67,23 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
 	@JsonProperty({value: VerifiablePresentation.ID})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
+	@JsonClassType({type: () => [DIDURL]})
 	public id: DIDURL;
 	@JsonProperty({value: VerifiablePresentation.TYPE})
 	// TODO JAVA: @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
 	public type: string[];
 	@JsonProperty({value: VerifiablePresentation.HOLDER})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
+	@JsonClassType({type: () => [DID]})
 	public holder: DID;
 	@JsonProperty({value: VerifiablePresentation.CREATED})
 	public created: Date;
 	@JsonProperty({value: VerifiablePresentation.VERIFIABLE_CREDENTIAL})
+	@JsonClassType({type: () => [VerifiableCredential]})
 	public _credentials: VerifiableCredential[];
 	@JsonProperty({value: VerifiablePresentation.PROOF})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
+	@JsonClassType({type: () => [VerifiablePresentation.Proof]})
 	public proof: VerifiablePresentation.Proof;
 
 	public credentials: Map<DIDURL, VerifiableCredential>;

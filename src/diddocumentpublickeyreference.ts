@@ -2,11 +2,11 @@ import {
     JsonDeserialize, JsonSerialize
 } from "jackson-js";
 import { Comparable } from "./comparable";
-import { DIDDocumentPublicKey } from "./diddocumentpublickey";
-import { DIDDocumentPublicKeyReferenceDeserializer } from "./diddocumentpublickeyreferencedeserializer";
-import { DIDDocumentPublicKeyReferenceSerializer } from "./diddocumentpublickeyreferenceserializer";
-import { DIDURL } from "./didurl";
-import { checkArgument } from "./utils";
+import { DIDDocumentPublicKey } from "./internals";
+import { DIDDocumentPublicKeyReferenceDeserializer } from "./internals";
+import { DIDDocumentPublicKeyReferenceSerializer } from "./internals";
+import { DIDURL } from "./internals";
+import { checkArgument } from "./internals";
 
 
 @JsonSerialize({ using: DIDDocumentPublicKeyReferenceSerializer.serialize })
@@ -15,7 +15,7 @@ export class DIDDocumentPublicKeyReference implements Comparable<DIDDocumentPubl
     private id: DIDURL;
     private key?: DIDDocumentPublicKey;
 
-    private constructor(id: DIDURL) {
+    public constructor(id: DIDURL) {
         this.id = id;
     }
 

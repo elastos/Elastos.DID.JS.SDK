@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DIDEntity } from "../didentity"
+import { DIDEntity } from "../internals"
 
 export abstract class ResolveResult<T> extends DIDEntity<T> {
 	/**

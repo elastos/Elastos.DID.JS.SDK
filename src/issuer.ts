@@ -20,15 +20,15 @@
  * SOFTWARE.
  */
 
-import { checkArgument } from "./utils";
+import { checkArgument } from "./internals";
 import { DIDNotFoundException } from "./exceptions/exceptions";
 import { DIDStoreException } from "./exceptions/exceptions";
 import { InvalidKeyException } from "./exceptions/exceptions";
-import { DIDURL } from "./didurl";
-import { DIDDocument } from "./diddocument";
-import { DID } from "./did";
-import { DIDStore } from "./didstore";
-import { VerifiableCredential } from "./verifiablecredential";
+import { DIDURL } from "./internals";
+import { DIDDocument } from "./internals";
+import { DID } from "./internals";
+import { DIDStore } from "./internals";
+import { VerifiableCredential } from "./internals";
 
 /**
  * A issuer is the DID to issue Credential. Issuer includes issuer's did and

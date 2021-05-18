@@ -1,7 +1,7 @@
 import {
     JsonValue
 } from "jackson-js";
-import { checkArgument } from "./utils";
+import { checkArgument } from "./internals";
 
 export class DIDDocumentMultiSignature {
     private mv: number;

@@ -25,29 +25,30 @@ import { List as ImmutableList } from "immutable";
 import {
     JsonInclude,
     JsonIncludeType,
-    JsonProperty
+    JsonProperty,
+    JsonClassType
 } from "jackson-js";
-import { Collections } from "./collections";
+import { Collections } from "./internals";
 import { Constants } from "./constants";
-import { ByteBuffer } from "./crypto/bytebuffer";
-import { EcdsaSigner } from "./crypto/ecdsasigner";
-import { HDKey } from "./crypto/hdkey";
+import { ByteBuffer } from "./internals";
+import { EcdsaSigner } from "./internals";
+import { HDKey } from "./internals";
 import { KeyPair } from "./crypto/keypair";
-import { SHA256 } from "./crypto/sha256";
-import { DID } from "./did";
-import { DIDBackend } from "./didbackend";
-import { DIDDocumentBuilder } from "./diddocumentbuilder";
+import { SHA256 } from "./internals";
+import { DID } from "./internals";
+import { DIDBackend } from "./internals";
+import { DIDDocumentBuilder } from "./internals";
 import { DIDDocumentConstants } from "./diddocumentconstants";
-import { DIDDocumentMultiSignature } from "./diddocumentmultisignature";
-import { DIDDocumentProof } from "./diddocumentproof";
-import { DIDDocumentPublicKey } from "./diddocumentpublickey";
-import { DIDDocumentPublicKeyReference } from "./diddocumentpublickeyreference";
-import { DIDDocumentService } from "./diddocumentservice";
-import { DIDEntity } from "./didentity";
-import { DIDMetadata } from "./didmetadata";
-import { DIDStore } from "./didstore";
+import { DIDDocumentMultiSignature } from "./internals";
+import { DIDDocumentProof } from "./internals";
+import { DIDDocumentPublicKey } from "./internals";
+import { DIDDocumentPublicKeyReference } from "./internals";
+import { DIDDocumentService } from "./internals";
+import { DIDEntity } from "./internals";
+import { DIDMetadata } from "./internals";
+import { DIDStore } from "./internals";
 import { DIDTransactionAdapter } from "./didtransactionadapter";
-import { DIDURL } from "./didurl";
+import { DIDURL } from "./internals";
 import {
     AlreadySignedException,
     DIDAlreadyExistException,
@@ -66,9 +67,9 @@ import {
     UnknownInternalException
 } from "./exceptions/exceptions";
 import { Logger } from "./logger";
-import { TransferTicket } from "./transferticket";
-import { base64Decode, checkArgument } from "./utils";
-import { VerifiableCredential } from "./verifiablecredential";
+import { TransferTicket } from "./internals";
+import { base64Decode, checkArgument } from "./internals";
+import { VerifiableCredential } from "./internals";
 
 /**
  * The DIDDocument represents the DID information.
@@ -90,30 +91,37 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     // TODO: Convert from java - @JsonFormat(with:{JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
     @JsonProperty({ value: DIDDocumentConstants.CONTROLLER })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
+    @JsonClassType({type: () => [Array, [DID]]})
     public controllers?: DID[];
 
     @JsonProperty({ value: DIDDocumentConstants.MULTI_SIGNATURE })
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
+    @JsonClassType({type: () => [DIDDocumentMultiSignature]})
     public multisig?: DIDDocumentMultiSignature;
 
     @JsonProperty({ value: DIDDocumentConstants.PUBLICKEY })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
+    @JsonClassType({type: () => [Array, [DIDDocumentPublicKey]]})
     public _publickeys?: DIDDocumentPublicKey[];
 
     @JsonProperty({ value: DIDDocumentConstants.AUTHENTICATION })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
+    @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
     public _authentications?: DIDDocumentPublicKeyReference[];
 
     @JsonProperty({ value: DIDDocumentConstants.AUTHORIZATION })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
+    @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
     public _authorizations?: DIDDocumentPublicKeyReference[];
 
     @JsonProperty({ value: DIDDocumentConstants.VERIFIABLE_CREDENTIAL })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
+    @JsonClassType({type: () => [Array, [VerifiableCredential]]})
     public _credentials?: VerifiableCredential[];
 
     @JsonProperty({ value: DIDDocumentConstants.SERVICE })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
+    @JsonClassType({type: () => [Array, [DIDDocumentService]]})
     public _services?: DIDDocumentService[];
 
     @JsonProperty({ value: DIDDocumentConstants.EXPIRES })
@@ -122,6 +130,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     @JsonProperty({ value: DIDDocumentConstants.PROOF })
     @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
+    @JsonClassType({type: () => [Array, [DIDDocumentProof]]})
     // TODO - Convert from Java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
     public _proofs?: DIDDocumentProof[];
 

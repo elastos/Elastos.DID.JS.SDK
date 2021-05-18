@@ -1,5 +1,5 @@
-import { BASE64 } from "./crypto/base64";
-import { SHA256 } from "./crypto/sha256";
+import { BASE64 } from "./internals";
+import { SHA256 } from "./internals";
 import { IllegalArgumentException } from "./exceptions/exceptions";
 
 export function checkArgument(condition: boolean, errorMessage: string): void {

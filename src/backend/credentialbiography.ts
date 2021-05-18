@@ -22,28 +22,28 @@
 
 import { List as ImmutableList } from "immutable";
 import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue } from "jackson-js";
-import { DIDURL } from "../didurl";
+import { DIDURL } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
 import { CredentialTransaction } from "./credentialtransaction";
 import { ResolveResult } from "./resolveresult";
 
-export class Status {
+export class CredentialBiographyStatus {
 	/**
 	 * The credential is valid.
 	 */
-	public static VALID = new Status("valid", 0);
+	public static VALID = new CredentialBiographyStatus("valid", 0);
 	/**
 	 * The credential is expired.
 	 */
-	//public static EXPIRED = new Status("expired", 1);
+	//public static EXPIRED = new CredentialBiographyStatus("expired", 1);
 	/**
 	 * The credential is revoked.
 	 */
-	public static REVOKED = new Status("revoked", 2);
+	public static REVOKED = new CredentialBiographyStatus("revoked", 2);
 	/**
 	 * The credential is not published.
 	 */
-	public static NOT_FOUND = new Status("not_found", 3);
+	public static NOT_FOUND = new CredentialBiographyStatus("not_found", 3);
 
 	private constructor(private name: string, private value: number) {}
 
@@ -53,16 +53,16 @@ export class Status {
 	}
 
 	@JsonCreator()
-	public static fromJson(value: number): Status {
+	public static fromJson(value: number): CredentialBiographyStatus {
 		switch (value) {
 		case 0:
-			return Status.VALID;
+			return CredentialBiographyStatus.VALID;
 
 		case 2:
-			return Status.REVOKED;
+			return CredentialBiographyStatus.REVOKED;
 
 		case 3:
-			return Status.NOT_FOUND;
+			return CredentialBiographyStatus.NOT_FOUND;
 
 		default:
 			throw new IllegalArgumentException("Invalid status value: " + value);
@@ -73,7 +73,7 @@ export class Status {
 		return this.name.toLowerCase();
 	}
 
-	public equals(status: Status): boolean {
+	public equals(status: CredentialBiographyStatus): boolean {
 		return this.value == status.value;
 	}
 }
@@ -92,7 +92,7 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 	@JsonProperty({value: CredentialBiography.ID})
 	private id: DIDURL;
 	@JsonProperty({value: CredentialBiography.STATUS})
-	private status: Status;
+	private status: CredentialBiographyStatus;
 	@JsonProperty({value: CredentialBiography.TRANSACTION})
 	private txs: CredentialTransaction[];
 
@@ -104,7 +104,7 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 	 */
 	protected constructor(
 			@JsonProperty({value: CredentialBiography.ID, required: true}) id: DIDURL,
-			@JsonProperty({value: CredentialBiography.STATUS, required: true}) status: Status = undefined) {
+			@JsonProperty({value: CredentialBiography.STATUS, required: true}) status: CredentialBiographyStatus = undefined) {
 		super();
 		this.id = id;
 		this.status = status;
@@ -114,11 +114,11 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 		return this.id;
 	}
 
-	protected setStatus(status: Status) {
+	protected setStatus(status: CredentialBiographyStatus) {
 		this.status = status;
 	}
 
-	public getStatus(): Status {
+	public getStatus(): CredentialBiographyStatus {
 		return this.status;
 	}
 
@@ -155,7 +155,7 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 		if (this.id == null)
 			throw new MalformedResolveResultException("Missing id");
 
-		if (this.status != Status.NOT_FOUND) {
+		if (this.status != CredentialBiographyStatus.NOT_FOUND) {
 			if (this.txs == null || this.txs.length == 0)
 				throw new MalformedResolveResultException("Missing transaction");
 

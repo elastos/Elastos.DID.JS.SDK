@@ -20,11 +20,11 @@
  * SOFTWARE.
  */
 
-import { DIDAdapter } from "./didadapter";
+import { DIDAdapter } from "./internals";
 import { IllegalArgumentException, NetworkException, ResolveException, UnsupportedOperationException } from "./exceptions/exceptions";
 import { JSONObject } from "./json";
 import { Logger } from "./logger";
-import { checkArgument } from "./utils";
+import { checkArgument } from "./internals";
 
 const log = new Logger("DefaultDIDAdapter");
 
