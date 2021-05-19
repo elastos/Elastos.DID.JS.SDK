@@ -10,9 +10,7 @@
           "${workspaceRoot}/node_modules/.bin/jest",
           "--runInBand",
           "--silent=true",
-          "${workspaceRoot}/tests/didstore.test",
-          "-t",
-          "testCompatibility"
+          "${workspaceRoot}/tests/rootidentity.test",
         ],
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen",
