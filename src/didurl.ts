@@ -66,7 +66,7 @@ class URLDeserializer extends Deserializer {
 				throw new IllegalArgumentException(value);
 			return DIDURL.newWithUrl(value);
 		} catch (e) {
-			throw new ParentException("Invalid public key");
+			throw new ParentException("Invalid public key", e);
 		}
 	}
 }

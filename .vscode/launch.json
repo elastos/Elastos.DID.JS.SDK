@@ -12,7 +12,7 @@
           "--silent=true",
           "${workspaceRoot}/tests/didstore.test",
           "-t",
-          "testBulkCreate"
+          "testCompatibility"
         ],
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen",
