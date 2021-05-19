@@ -130,7 +130,7 @@ describe("Issuer Tests", ()=>{
 		expect(vc.isGenuine()).toBeTruthy()
 		expect(vc.isValid()).toBeTruthy()
 
-	
+
 	})
 
 	test('Issue Self Proclaimed Credential Test', () => {
@@ -168,12 +168,12 @@ describe("Issuer Tests", ()=>{
 		expect(vc.isExpired()).toBeFalsy()
 		expect(vc.isGenuine()).toBeTruthy()
 		expect(vc.isValid()).toBeTruthy()
-	
+
 	})
 
 	test('Issue Kyc Credential For Cid Test', () => {
 
-		let testDoc = testData.getInstantData().getBazDocument();
+		//let testDoc = testData.getInstantData().getBazDocument();
 
 
 		let props = new Map<String, any>()
@@ -214,7 +214,7 @@ describe("Issuer Tests", ()=>{
 		expect(vc.isGenuine()).toBeTruthy()
 		expect(vc.isValid()).toBeTruthy()
 
-		
+
 	})
 
 	test('Issue Kyc Credential From Cid Test', () => {

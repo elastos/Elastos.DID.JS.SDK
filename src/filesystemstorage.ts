@@ -150,19 +150,18 @@ export class FileSystemStorage implements DIDStorage {
 		this.postOperations();
 
 		let file: File = this.getDir(this.currentDataDir);
-		if (file.exists()) {
+		if (!file.exists()) {
 			let storeRootFiles = this.storeRoot.list();
 			if (storeRootFiles == null || storeRootFiles.length == 0) {
 				// if an empty folder
 				this.initializeStore();
 				return;
 			} else {
-				log.error("Path {} not a DID store", this.storeRoot.getAbsolutePath());
-				throw new DIDStorageException("Invalid DIDStore \""
+				log.error("Path {} cannot be initialized as DID Store because it's not empty", this.storeRoot.getAbsolutePath());
+				throw new DIDStorageException("Path cannot be initialized as DID Store because it's not empty \""
 						+ this.storeRoot.getAbsolutePath() + "\".");
 			}
 		}
-
 
 		if (!file.isDirectory()) {
 			log.error("Path {} is not a DID store, missing data directory", this.storeRoot.getAbsolutePath());

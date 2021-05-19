@@ -128,7 +128,7 @@ import path from "path";
 		}
 		let files: File[] = [];
 		this.list().forEach((fileName)=>{
-			files.push(new File(fileName));
+			files.push(new File(this.getAbsolutePath()+"/"+fileName));
 		});
 
 		return files;
