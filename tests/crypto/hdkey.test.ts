@@ -180,7 +180,7 @@ describe('HDKey Tests', () => {
 		let key = root.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + "0")
 
 		expect(key.getAddress()).toBe(expectedIDString)
-
+		expect(key.getAddress()).toEqual(HDKey.toAddress(key.getPublicKeyBytes()));
 
 		let sk = HDKey.paddingToExtendedPrivateKey(key.getPrivateKeyBytes());
 		let rk = HDKey.deserialize(sk);

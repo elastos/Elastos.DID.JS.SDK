@@ -227,7 +227,7 @@ export class RootIdentity {
 	public getDid(index: number): DID {
 		checkArgument(index >= 0, "Invalid index");
 
-		let key = this.preDerivedPublicKey.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + index);
+		let key = this.preDerivedPublicKey.deriveWithIndex(0).deriveWithIndex(index);
 		let did = new DID(DID.METHOD, key.getAddress());
 		return did;
 	}
