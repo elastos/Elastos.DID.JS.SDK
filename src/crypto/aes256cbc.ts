@@ -24,53 +24,45 @@ import crypto from "crypto"
 import { BASE64 } from "./base64";
 
 export class Aes256cbc {
-	private static generateKeyAndIv(passwd: string): {key: string, iv: string} {
+	private static generateKeyAndIv(passwd: string): {key: Buffer, iv: Buffer} {
 
 		let bufferPassword : Buffer = Buffer.from(passwd, "utf-8")
 
 		let first16KeyBytesInHex = crypto
 		.createHash('md5')
 		.update(bufferPassword)
-		.digest("hex");
+		.digest();
 
 		let last16KeyBytesInHex = crypto
 		.createHash('md5')
-		.update(Buffer.from(first16KeyBytesInHex, "hex"))
+		.update(first16KeyBytesInHex)
 		.update(bufferPassword)
-		.digest("hex")
+		.digest()
 
 		let iv = crypto
 		.createHash('md5')
-		.update(Buffer.from(last16KeyBytesInHex, "hex"))
+		.update(last16KeyBytesInHex)
 		.update(bufferPassword)
-		.digest("hex");
+		.digest();
 
 		return {
-			key: first16KeyBytesInHex + last16KeyBytesInHex,
+			key: Buffer.concat([first16KeyBytesInHex, last16KeyBytesInHex]),
 			iv
 		};
-
 	}
 
 	public static encrypt(plain: Buffer, passwd: string): Buffer {
 		let { key, iv } = Aes256cbc.generateKeyAndIv(passwd);
 
-		let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
-		let encrypted = cipher.update(plain.toString("utf-8"), 'utf8', 'base64');
-		encrypted += cipher.final('base64');
-		return Buffer.from(encrypted, "base64")
+		let cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+		return Buffer.concat([cipher.update(plain), cipher.final()]);
 	}
 
 	public static decrypt(secret: Buffer, passwd: string): Buffer {
-
 		let { key, iv } = this.generateKeyAndIv(passwd);
 
-		let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
-		let decrypted = decipher.update(secret);
-		decrypted = Buffer.concat([decrypted, decipher.final()]);
-
-		return decrypted
-
+		let decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+		return Buffer.concat([decipher.update(secret), decipher.final()]);
 	}
 
 	public static encryptToBase64(plain: Buffer, passwd: string): string {

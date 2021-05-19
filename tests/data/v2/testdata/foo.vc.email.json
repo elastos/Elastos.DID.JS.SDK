@@ -2,16 +2,16 @@
   "id" : "did:elastos:foo#email",
   "type" : [ "InternetAccountCredential" ],
   "issuer" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj",
-  "issuanceDate" : "2021-03-05T08:09:58Z",
-  "expirationDate" : "2026-03-05T08:09:58Z",
+  "issuanceDate" : "2021-03-19T08:41:57Z",
+  "expirationDate" : "2026-03-19T08:41:57Z",
   "credentialSubject" : {
     "id" : "did:elastos:foo",
     "email" : "foo@example.com"
   },
   "proof" : {
     "type" : "ECDSAsecp256r1",
-    "created" : "2021-03-05T08:09:58Z",
+    "created" : "2021-03-19T08:41:57Z",
     "verificationMethod" : "did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj#primary",
-    "signature" : "Ecto1_5FnwJ753mO2zw70HCkLQKEhWnW7ChHBY9fDroBfwmwvbDB1yAnY79f-BtQd3H7AvedGrQXkUTs6kcR-Q"
+    "signature" : "P0lEAqBG43ij-qZmtcflMuAjOE34yOnnpda1rviCUp3gIqvqS7f7hgjUKXgMK6qE0XMMILFIyRS-r4r5WLvWWQ"
   }
 }
