@@ -122,7 +122,7 @@ describe("RootIdentity Tests", ()=>{
 	    let identity = testData.getRootIdentity();
 
 	    let did = identity.getDid(0);
-	    let doc = identity.newDid(0, TestConfig.storePass);
+	    let doc = identity.newDid(TestConfig.storePass, 0);
 	    expect(doc.isValid()).toBeTruthy();
 	    expect(did.equals(doc.getSubject())).toBeTruthy();
 

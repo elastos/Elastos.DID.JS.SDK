@@ -3,11 +3,11 @@ export * from "./logger";
 export * from "./didentity";
 export * from "./serializers"; // Should be before filters
 export * from "./filters"; // Should be before DIDDocumentPublicKey
+export * from "./didurl";
+export * from "./did";
 export * from "./diddocumentpublickeyreferenceserializer";
 export * from "./diddocumentpublickeyreferencedeserializer";
 export * from "./diddocumentpublickeyserializerfilter";
-export * from "./didurl";
-export * from "./did";
 export * from "./diddocumentmultisignature"; // Should be before DIDDocument
 export * from "./diddocumentpublickey"; // Should be before DIDDocument
 export * from "./diddocument"; // Should be before DIDExport (DIDStore)
