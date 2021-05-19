@@ -22,11 +22,9 @@
 
 import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSubTypes, JsonTypeInfo, JsonTypeInfoAs, JsonTypeInfoId } from "jackson-js";
 import { DIDEntity } from "../internals";
-import { Class } from "../class";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 import { ResolveError } from "./resolveerror";
 import { ResolveResult } from "./resolveresult";
-import { DIDResolveResponse } from "./didresolveresponse";
 
 export class RpcConstants {
 	public static ID = "id";
@@ -40,7 +38,7 @@ export class RpcConstants {
 
 @JsonPropertyOrder({value: [RpcConstants.ERROR_CODE, RpcConstants.ERROR_MESSAGE, RpcConstants.ERROR_DATA ]})
 @JsonCreator()
-class JsonRpcError {
+export class JsonRpcError {
 	@JsonProperty({value: RpcConstants.ERROR_CODE}) @JsonClassType({type: ()=>[Number]})
 	private code: number;
 	@JsonProperty({value: RpcConstants.ERROR_MESSAGE}) @JsonClassType({type: ()=>[String]})
@@ -48,9 +46,10 @@ class JsonRpcError {
 	@JsonProperty({value: RpcConstants.ERROR_DATA}) @JsonClassType({type: ()=>[String]})
 	private data: string;
 
-	constructor(code: number, message: string) {
+	constructor(@JsonProperty({value: RpcConstants.ERROR_CODE, required: true}) code: number, @JsonProperty({value: RpcConstants.ERROR_MESSAGE, required: true}) message: string, @JsonProperty({value: RpcConstants.ERROR_DATA, required: false}) data?: string) {
 		this.code = code;
 		this.message = message;
+		this.data = data;
 	}
 
 	public getCode(): number {
@@ -73,43 +72,41 @@ class JsonRpcError {
 	RpcConstants.ERROR
 ]})
 @JsonInclude({value: JsonIncludeType.NON_NULL})
-export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
-	private static JSON_RPC_VERSION = "2.0";
+export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
+	protected static JSON_RPC_VERSION = "2.0";
 
 	@JsonProperty({value: RpcConstants.ID}) @JsonClassType({type: ()=>[String]})
-	private responseId: string;
+	protected id: string;
 	@JsonProperty({value: RpcConstants.JSON_RPC}) @JsonClassType({type: ()=>[String]})
-	private jsonRpcVersion: string;
-	// NOTE: result here can't use JsonProperty even if responses can be deserialized.
-	// This is because of the generic type R that is not a class that jackson can instanciate.
-	// Each class overriding ResolveResponse such as DIDResolveResponse needs to override result with the right real
-	// @JsonClassType and @JsonProperty
-	protected result: R;
+	protected jsonrpc: string;
 	@JsonProperty({value: RpcConstants.ERROR}) @JsonClassType({type: ()=>[JsonRpcError]})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	private error: JsonRpcError;
+	protected error: JsonRpcError;
 
-	protected constructor(responseId: string, resultOrError: R | ResolveError) {
+	protected constructor() { super(); }
+
+	/*
+	protected constructor(responseId: string, resultOrError: R | ResolveError | JsonRpcError) {
 		super();
+		this.jsonRpcVersion = ResolveResponse.JSON_RPC_VERSION;
+		this.responseId = responseId;
 		if (resultOrError instanceof ResolveError) {
-			// ResolveError
-			this.responseId = responseId;
-			this.jsonRpcVersion = ResolveResponse.JSON_RPC_VERSION;
 			this.error = new JsonRpcError(resultOrError.code, resultOrError.message);
-		}
-		else {
-			this.responseId = responseId;
-			this.jsonRpcVersion = ResolveResponse.JSON_RPC_VERSION;
-			this.result = resultOrError;
+		} else if (resultOrError instanceof JsonRpcError) {
+			this.error = resultOrError;
 		}
 	}
 
+	@JsonCreator()
+	//public static jacksonCreatorParent(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.JSON_RPC, required: false}) jsonVersion?: string, @JsonProperty({value: RpcConstants.ID, required: false}) error?: JsonRpcError) {
+	public static emptyInstance(): ResolveResponse) {
+		let newInstance = new ResolveResponse(id, error);
+		newInstance.jsonRpcVersion = jsonVersion;
+		return newInstance;		
+	}
+*/
 	public getResponseId(): string {
-		return this.responseId;
-	}
-
-	public getResult(): R {
-		return this.result;
+		return this.id;
 	}
 
 	public getErrorCode(): number {
@@ -121,19 +118,9 @@ export abstract class ResolveResponse<T, R extends ResolveResult<R>> extends DID
 	}
 
 	protected sanitize() {
-		if (this.jsonRpcVersion == null || this.jsonRpcVersion !== ResolveResponse.JSON_RPC_VERSION)
+		if (this.jsonrpc == null || this.jsonrpc !== ResolveResponse.JSON_RPC_VERSION)
 			throw new MalformedResolveResponseException("Invalid JsonRPC version");
-
-		if (this.result == null && this.error == null)
-			throw new MalformedResolveResponseException("Missing result or error");
-
-		if (this.result != null) {
-			try {
-				this.result.sanitize();
-			} catch (e) {
-				// MalformedResolveResultException
-				throw new MalformedResolveResponseException("Invalid result", e);
-			}
-		}
 	}
+
+	public getResult () { return null; }
 }

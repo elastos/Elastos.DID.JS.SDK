@@ -23,7 +23,8 @@
 import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
 import { CredentialList } from "./credentiallist";
 import { ResolveError } from "./resolveerror";
-import { ResolveResponse, RpcConstants } from "./resolveresponse";
+import { ResolveResponse, RpcConstants, JsonRpcError } from "./resolveresponse";
+import { MalformedResolveResponseException } from "../exceptions/exceptions";
 
 @JsonCreator()
 export class CredentialListResponse extends ResolveResponse<CredentialListResponse, CredentialList> {
@@ -31,7 +32,45 @@ export class CredentialListResponse extends ResolveResponse<CredentialListRespon
 	@JsonClassType({type: ()=>[CredentialList]})
 	protected result: CredentialList;
 
-	constructor(responseId: string, resultOrError: CredentialList | ResolveError) {
-		super(responseId, resultOrError);
+	constructor(responseId: string, resultOrError: CredentialList | ResolveError | JsonRpcError) {
+		super();
+		this.jsonrpc = ResolveResponse.JSON_RPC_VERSION;
+		this.id = responseId;
+		if (resultOrError instanceof ResolveError) {
+			this.error = new JsonRpcError(resultOrError.code, resultOrError.message);
+		} else if (resultOrError instanceof JsonRpcError) {
+			this.error = resultOrError;
+		}
+		if (resultOrError instanceof CredentialList) {
+			this.result = resultOrError
+		}
 	}
+
+	@JsonCreator()
+	public static jacksonCreator(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.RESULT, required: false}) result: CredentialList, @JsonProperty({value: RpcConstants.ERROR, required: false}) error: JsonRpcError): CredentialListResponse {
+		let newInstance = result ? new CredentialListResponse(id, result) : new CredentialListResponse(id, error);
+		if (result) newInstance.result = result;
+		return newInstance;
+	}
+
+	public getResult(): CredentialList {
+		return this.result;
+	}
+
+	protected sanitize() {
+		super.sanitize();
+
+		if (this.result == null && this.error == null)
+			throw new MalformedResolveResponseException("Missing result or error");
+
+		if (this.result != null) {
+			try {
+				this.result.sanitize();
+			} catch (e) {
+				// MalformedResolveResultException
+				throw new MalformedResolveResponseException("Invalid result", e);
+			}
+		}
+	}
+
 }

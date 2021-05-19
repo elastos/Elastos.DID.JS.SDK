@@ -34,9 +34,9 @@ export class Logger {
         let logLine = (new Date()).toISOString() + " " + level.toUpperCase() + " " + this.context + " ";
         if (!data || data.length < 1)
             return logLine;
-        let content:string = data[0].toString();
+        let content:string = String(data[0]);
         for (let i = 1; i < data.length; i++) {
-            content = content.replace(/\{\}/, data[i] ? data[i] as string: "null");
+            content = content.replace(/\{\}/, String(data[i]));
         }
         return logLine + " " + content;
     }

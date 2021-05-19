@@ -21,17 +21,47 @@
  */
 
 import { List as ImmutableList } from "immutable";
-import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue } from "jackson-js";
+import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue, JsonSerialize, JsonDeserialize } from "jackson-js";
 import { DIDURL } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
 import { CredentialTransaction } from "./credentialtransaction";
 import { ResolveResult } from "./resolveresult";
+import {
+    Serializer,
+    Deserializer
+} from "../internals";
+import {
+	JsonStringifierTransformerContext,
+	JsonParserTransformerContext
+} from "jackson-js/dist/@types";
 
+class CredentialBiographyStatusSerializer extends Serializer {
+	public static serialize(value: CredentialBiographyStatus, context: JsonStringifierTransformerContext): string {
+		return value ? String(value) : null;
+	}
+}
+class CredentialBiographyStatusDeserializer extends Deserializer {
+	public static deserialize(value: string | number, context: JsonParserTransformerContext): CredentialBiographyStatus {
+		switch(String(value)) {
+			case "0":
+				return CredentialBiographyStatus.VALID;
+			case "2":
+				return CredentialBiographyStatus.REVOKED;
+			case "3":
+				return CredentialBiographyStatus.NOT_FOUND;
+			default:
+				throw new IllegalArgumentException("Invalid CredentialBiographyStatus");
+		}
+	}	
+}
+
+@JsonSerialize({using: CredentialBiographyStatusSerializer.serialize})
+@JsonDeserialize({using: CredentialBiographyStatusDeserializer.deserialize})
 export class CredentialBiographyStatus {
 	/**
 	 * The credential is valid.
 	 */
-	public static VALID = new CredentialBiographyStatus("valid", 0);
+	public static VALID = new CredentialBiographyStatus(0, "valid");
 	/**
 	 * The credential is expired.
 	 */
@@ -39,34 +69,23 @@ export class CredentialBiographyStatus {
 	/**
 	 * The credential is revoked.
 	 */
-	public static REVOKED = new CredentialBiographyStatus("revoked", 2);
+	public static REVOKED = new CredentialBiographyStatus(2, "revoked");
 	/**
 	 * The credential is not published.
 	 */
-	public static NOT_FOUND = new CredentialBiographyStatus("not_found", 3);
+	public static NOT_FOUND = new CredentialBiographyStatus(3, "not_found");
 
-	private constructor(private name: string, private value: number) {}
+	protected name: string;
+	protected value: number;
+
+	public constructor(value: number, name: string, ) {
+		this.name = name;
+		this.value = value;
+	}
 
 	@JsonValue()
 	public getValue(): number {
 		return this.value;
-	}
-
-	@JsonCreator()
-	public static fromJson(value: number): CredentialBiographyStatus {
-		switch (value) {
-		case 0:
-			return CredentialBiographyStatus.VALID;
-
-		case 2:
-			return CredentialBiographyStatus.REVOKED;
-
-		case 3:
-			return CredentialBiographyStatus.NOT_FOUND;
-
-		default:
-			throw new IllegalArgumentException("Invalid status value: " + value);
-		}
 	}
 
 	public toString(): string {

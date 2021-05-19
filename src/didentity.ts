@@ -114,12 +114,16 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public static parse <T extends DIDEntity<T>>(content: JSONObject | string, clazz: Class<T>): T {
-		checkArgument(content && content !== "", "Invalid JSON content");
+	public static parse <T extends DIDEntity<T>>(source: JSONObject | string, clazz: Class<T>): T {
+		checkArgument(source && source !== "", "Invalid JSON content");
 		checkArgument(clazz && clazz !== null, "Invalid result class object");
 
-		if (typeof content !== "string")
-			content = JSON.stringify(content);
+		let content: string;
+		if (typeof source !== "string") {
+			content = JSON.stringify(source);
+		} else {
+			content = source;
+		}
 
 		let mapper = DIDEntity.getDefaultObjectMapper();
 

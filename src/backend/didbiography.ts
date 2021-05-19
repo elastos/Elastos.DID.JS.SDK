@@ -20,49 +20,68 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonValue } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonValue } from "jackson-js";
 import { List as ImmutableList } from "immutable";
 import { DID } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
 import { DIDTransaction } from "./didtransaction";
+import {
+    Serializer,
+    Deserializer
+} from "../internals";
+import {
+	JsonStringifierTransformerContext,
+	JsonParserTransformerContext
+} from "jackson-js/dist/@types";
 
+class DIDBiographyStatusSerializer extends Serializer {
+	public static serialize(value: DIDBiographyStatus, context: JsonStringifierTransformerContext): string {
+		return value ? String(value) : null;
+	}
+}
+class DIDBiographyStatusDeserializer extends Deserializer {
+	public static deserialize(value: string | number, context: JsonParserTransformerContext): DIDBiographyStatus {
+		switch(String(value)) {
+			case "0":
+				return DIDBiographyStatus.VALID;
+			case "2":
+				return DIDBiographyStatus.DEACTIVATED;
+			case "3":
+				return DIDBiographyStatus.NOT_FOUND;
+			default:
+				throw new IllegalArgumentException("Invalid DIDBiographyStatus");
+		}
+	}	
+}
+
+@JsonSerialize({using: DIDBiographyStatusSerializer.serialize})
+@JsonDeserialize({using: DIDBiographyStatusDeserializer.deserialize})
 export class DIDBiographyStatus {
 	/**
 	 * The credential is valid.
 	 */
-	public static VALID = new DIDBiographyStatus("valid", 0);
+	public static VALID = new DIDBiographyStatus(0, "valid");
 	/**
 	 * The credential is deactivated.
 	 */
-	public static DEACTIVATED = new DIDBiographyStatus("deactivated", 2);
+	public static DEACTIVATED = new DIDBiographyStatus(2, "deactivated");
 	/**
 	 * The credential is not published.
 	 */
-	public static NOT_FOUND = new DIDBiographyStatus("not_found", 3);
+	public static NOT_FOUND = new DIDBiographyStatus(3, "not_found");
 
-	public constructor(private name: string, private value: number) {}
+	protected name: string;
+	protected value: number;
+
+	public constructor(value: number, name: string, ) {
+		this.name = name;
+		this.value = value;
+	}
 
 	@JsonValue()
 	public getValue(): number {
 		return this.value;
-	}
-
-	@JsonCreator()
-	public static fromJson(value: number): DIDBiographyStatus {
-		switch (value) {
-		case 0:
-			return DIDBiographyStatus.VALID;
-
-		case 2:
-			return DIDBiographyStatus.DEACTIVATED;
-
-		case 3:
-			return DIDBiographyStatus.NOT_FOUND;
-
-		default:
-			throw new IllegalArgumentException("Invalid status value: " + value);
-		}
 	}
 
 	public toString(): string {
@@ -103,7 +122,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 	 */
 	@JsonCreator()
 	public static toDIDBiography(
-		@JsonProperty({value: DIDBiography.DID, required: true}) did: any /* DID */,
+		@JsonProperty({value: DIDBiography.DID, required: true}) did: DID,
 		@JsonProperty({value: DIDBiography.STATUS, required: true}) status: DIDBiographyStatus
 	) {
 			let didBiography = new DIDBiography(did);
@@ -111,7 +130,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 			return didBiography;
 	}
 
-	public constructor(did: any /* DID */) {
+	public constructor(did: DID) {
 		super();
 		this.did = did;
 	}

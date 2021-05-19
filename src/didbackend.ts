@@ -180,7 +180,6 @@ export class DIDBackend {
 
 		let requestJson = request.serialize(true);
 		let resolvedJson = this.getAdapter().resolve(requestJson);
-
 		let response: ResolveResponse<any, any>  = null;
 		try {
 			switch (request.getMethod()) {
@@ -214,14 +213,14 @@ export class DIDBackend {
 		if (response.getResponseId() == null || response.getResponseId() !== request.getRequestId())
 			throw new DIDResolveException("Mismatched resolve result with request.");
 
-		if (response.getResult() != null)
+		if (response.getResult() != null) {
 			return response.getResult();
-		else
+		} else
 			throw new DIDResolveException("Server error(" + response.getErrorCode()
 					+ "): " + response.getErrorMessage());
 	}
 
-	public resolveDidBiography(did: DID, all: boolean= true, force: boolean = false): DIDBiography {
+	public resolveDidBiography(did: DID, all: boolean = true, force: boolean = false): DIDBiography {
 		log.info("Resolving DID {}, all={}...", did.toString(), all);
 
 		let request = new DIDResolveRequest(this.generateRequestId());
