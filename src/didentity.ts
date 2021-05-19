@@ -74,7 +74,10 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 */
 	public static getDefaultObjectMapper(): ObjectMapper {
 		let mapper = new ObjectMapper();
+
 		mapper.defaultParserContext.features.deserialization.FAIL_ON_UNKNOWN_PROPERTIES = false;
+		mapper.defaultParserContext.features.deserialization.DEFAULT_VIEW_INCLUSION = false;
+
 		mapper.defaultStringifierContext.serializers.push({
 			type: () => Date,
 			order: 0,
@@ -85,6 +88,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 			order: 0,
 			mapper: this.DateSerializer.deserialize
 		});
+		mapper.defaultStringifierContext.features.serialization.DEFAULT_VIEW_INCLUSION = false;
 
 		return mapper;
 	}
