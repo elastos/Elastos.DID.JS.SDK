@@ -8,7 +8,7 @@ import {
 
 export class DIDDocumentPublicKeySerializerFilter extends PropertySerializerFilter<DID> {
     public static include (controller: DID, context: JsonStringifierTransformerContext): boolean {
-        let serializeContext =  this.context(context);
+        let serializeContext =  DIDDocumentPublicKeySerializerFilter.context(context);
 
         return serializeContext.isNormalized() || (!(serializeContext && controller && controller.equals(serializeContext.getDid())));
     }

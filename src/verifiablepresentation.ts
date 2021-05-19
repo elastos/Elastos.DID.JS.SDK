@@ -43,7 +43,7 @@ import {
 class NormalizedURLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
 
-		return this.mapper(context).stringify(id.toString());
+		return NormalizedURLSerializer.mapper(context).stringify(id.toString());
 	}
 }
 class NormalizedURLDeserializer extends Deserializer {

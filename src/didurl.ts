@@ -51,11 +51,11 @@ import { DIDURLParser } from "./parser/DIDURLParser";
 class URLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
 		let base: DID = null;
-		let serializeContext = this.context(context);
+		let serializeContext = URLSerializer.context(context);
 		if (!serializeContext.isNormalized())
 			base = serializeContext.getDid() != null ? serializeContext.getDid() : id.getDid();
 
-		return this.mapper(context).stringify(id.toString(base));
+		return URLSerializer.mapper(context).stringify(id.toString(base));
 	}
 }
 

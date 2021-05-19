@@ -73,7 +73,7 @@ const log = new Logger("VerifiableCredential");
 
 export class IssuerSerializerFilter extends PropertySerializerFilter<DID> {
     public static include (issuer: DID, context: JsonStringifierTransformerContext): boolean {
-        let serializeContext =  this.context(context);
+        let serializeContext =  IssuerSerializerFilter.context(context);
 
         return serializeContext.isNormalized() || (!(serializeContext && issuer && issuer.equals(serializeContext.getDid())));
     }

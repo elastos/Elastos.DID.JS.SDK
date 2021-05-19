@@ -14,11 +14,11 @@ export class Serializer {
     }
 
     public static mapper(context: JsonStringifierTransformerContext): ObjectMapper {
-        return this.context(context).getObjectMapper();
+        return Serializer.context(context).getObjectMapper();
     }
 
     public static serialize (value: any, context: JsonStringifierTransformerContext): string {
-        return this.mapper(context).stringify(value);
+        return Serializer.mapper(context).stringify(value);
     }
 }
 
@@ -29,14 +29,14 @@ export class Deserializer {
     }
 
     public static deserialize(value: string, context: JsonParserTransformerContext): any {
-        return this.mapper(context).parse(value);
+        return Deserializer.mapper(context).parse(value);
     }
 }
 
 export class PropertySerializerFilter<T> extends Serializer {
 
     public static filter (value: any, context: JsonStringifierTransformerContext): string | null {
-        return this.serialize(value, context);
+        return PropertySerializerFilter.serialize(value, context);
     }
 
     public static serialize (value: any, context: JsonStringifierTransformerContext): string | null {

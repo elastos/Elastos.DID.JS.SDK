@@ -14,7 +14,7 @@ export class DIDDocumentPublicKeyReferenceDeserializer extends Deserializer {
         try {
             if (value && value.includes("{")) {
                 let jsonObj = JSON.parse(value);
-                return DIDDocumentPublicKeyReference.newWithKey(this.mapper(context).parse<DIDDocumentPublicKey>(jsonObj.key, {mainCreator: () => [DIDDocumentPublicKey]}));
+                return DIDDocumentPublicKeyReference.newWithKey(DIDDocumentPublicKeyReferenceDeserializer.mapper(context).parse<DIDDocumentPublicKey>(jsonObj.key, {mainCreator: () => [DIDDocumentPublicKey]}));
             }
             return DIDDocumentPublicKeyReference.newWithURL(DIDURL.newWithUrl(value));
         } catch (e) {
