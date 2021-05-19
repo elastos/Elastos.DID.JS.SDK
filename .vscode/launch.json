@@ -10,9 +10,7 @@
           "${workspaceRoot}/node_modules/.bin/jest",
           "--runInBand",
           "--silent=true",
-          "${workspaceRoot}/tests/didstore.test",
-          "-t",
-          "testBulkCreate"
+          "${workspaceRoot}/tests/issuer.test",
         ],
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen",

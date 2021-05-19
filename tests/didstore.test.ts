@@ -515,35 +515,31 @@ describe("DIDStore Tests", ()=>{
 		});
 	//});
 
-	[1,2].forEach((version)=>{
-		test("testCompatibilityNewDIDWithWrongPass("+version+")", ()=>{
-			let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
-			let identity = store.loadRootIdentity();
+	test("testNewDIDWithWrongPass", ()=>{
+		let store = DIDStore.open(testData.getCompatibleData(2).getStoreDir());
+		let identity = store.loadRootIdentity();
 
-			expect(()=>{
-				identity.newDid("wrongpass");
-			}).toThrow(); //WrongPasswordException
-		});
+		expect(()=>{
+			identity.newDid("wrongpass");
+		}).toThrow(); //WrongPasswordException
 	});
 
-	[1,2].forEach((version)=>{
-		test("testCompatibilityNewDIDandGetDID("+version+")", ()=>{
-			let store = DIDStore.open(testData.getCompatibleData(version).getStoreDir());
-			let identity = store.loadRootIdentity();
+	test("testNewDIDandGetDID", ()=>{
+		let store = DIDStore.open(testData.getCompatibleData(2).getStoreDir());
+		let identity = store.loadRootIdentity();
 
-			let doc = identity.newDid(TestConfig.storePass);
-			expect(doc).not.toBeNull();
+		let doc = identity.newDid(TestConfig.storePass);
+		expect(doc).not.toBeNull();
 
-			store.deleteDid(doc.getSubject());
+		store.deleteDid(doc.getSubject());
 
-			let did = identity.getDid(1000);
+		let did = identity.getDid(1000);
 
-			doc = identity.newDid(TestConfig.storePass, 1000);
-			expect(doc).not.toBeNull();
-			expect(doc.getSubject().equals(did)).toBeTruthy();
+		doc = identity.newDid(TestConfig.storePass, 1000);
+		expect(doc).not.toBeNull();
+		expect(doc.getSubject().equals(did)).toBeTruthy();
 
-			store.deleteDid(doc.getSubject());
-		});
+		store.deleteDid(doc.getSubject());
 	});
 
 	function createDataForPerformanceTest(store: DIDStore) {

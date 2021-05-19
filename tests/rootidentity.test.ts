@@ -1,163 +1,150 @@
-test("stub", ()=> Promise.resolve(true));
+import { Logger, DIDStore, RootIdentity, DIDDocument, DID } from "../dist/did";
+import { TestConfig } from "./utils/testconfig";
+import { TestData } from "./utils/testdata";
 
-/* @ExtendWith(DIDTestExtension.class)
-public class RootIdentityTest {
-	private TestData testData;
-	private DIDStore store;
+const log = new Logger("DIDStoreTest");
 
-    @BeforeEach
-    public void beforeEach() throws DIDException {
+let testData: TestData;
+let store: DIDStore;
+
+describe("RootIdentity Tests", ()=>{
+    beforeEach(() => {
     	testData = new TestData();
     	store = testData.getStore();
-    }
+    });
 
-    @AfterEach
-    public void afterEach() {
+    afterEach(() => {
     	testData.cleanup();
-    }
+    });
 
-	@Test
-	public void testInitPrivateIdentity() throws DIDException {
-    	assertFalse(store.containsRootIdentities());
+	test("testInitPrivateIdentity", () => {
+    	expect(store.containsRootIdentities()).toBeFalsy();
 
-    	RootIdentity identity = testData.getRootIdentity();
-    	assertTrue(store.containsRootIdentities());
+    	let identity = testData.getRootIdentity();
+    	expect(store.containsRootIdentities()).toBeTruthy();
 
-    	DIDStore store2 = DIDStore.open(TestConfig.storeRoot);
-    	assertTrue(store2.containsRootIdentities());
-    	RootIdentity identity2 = store2.loadRootIdentity();
-    	assertNotNull(identity2);
+    	let store2 = DIDStore.open(TestConfig.storeRoot);
+    	expect(store2.containsRootIdentities()).toBeTruthy();
+    	let identity2 = store2.loadRootIdentity();
+    	expect(identity2).not.toBeNull();
 
-    	assertEquals(identity.getPreDerivedPublicKey().serializePublicKeyBase58(),
-    			identity2.getPreDerivedPublicKey().serializePublicKeyBase58());
+    	expect(identity.getPreDerivedPublicKey().serializePublicKeyBase58().equals(
+    			identity2.getPreDerivedPublicKey().serializePublicKeyBase58())).toBeTruthy();
 
-    	String exportedMnemonic = identity2.exportMnemonic(TestConfig.storePass);
-    	assertEquals(testData.getMnemonic(), exportedMnemonic);
-	}
+    	let exportedMnemonic = identity2.exportMnemonic(TestConfig.storePass);
+    	expect(testData.getMnemonic()).toEqual(exportedMnemonic);
+	});
 
-	@Test
-	public void testInitPrivateIdentityWithMnemonic() throws DIDException {
-		String expectedIDString = "iY4Ghz9tCuWvB5rNwvn4ngWvthZMNzEA7U";
-		String mnemonic = "cloth always junk crash fun exist stumble shift over benefit fun toe";
+	test("testInitPrivateIdentityWithMnemonic", () => {
+		let expectedIDString = "iY4Ghz9tCuWvB5rNwvn4ngWvthZMNzEA7U";
+		let mnemonic = "cloth always junk crash fun exist stumble shift over benefit fun toe";
 
-    	assertFalse(store.containsRootIdentities());
+    	expect(store.containsRootIdentities()).toBeFalsy();
 
-    	RootIdentity.create(mnemonic, "", store, TestConfig.storePass);
-    	assertTrue(store.containsRootIdentities());
+    	RootIdentity.createFromMnemonic(mnemonic, "", store, TestConfig.storePass);
+    	expect(store.containsRootIdentities()).toBeTruthy();
 
-    	DIDStore store2 = DIDStore.open(TestConfig.storeRoot);
-    	assertTrue(store2.containsRootIdentities());
+    	let store2 = DIDStore.open(TestConfig.storeRoot);
+    	expect(store2.containsRootIdentities()).toBeTruthy();
 
-    	RootIdentity identity2 = store2.loadRootIdentity();
+    	let identity2 = store2.loadRootIdentity();
 
-    	DIDDocument doc = identity2.newDid(TestConfig.storePass);
-    	assertNotNull(doc);
-    	assertEquals(expectedIDString, doc.getSubject().getMethodSpecificId());
-	}
+    	let doc = identity2.newDid(TestConfig.storePass);
+    	expect(doc).not.toBeNull();
+    	expect(expectedIDString).toEqual(doc.getSubject().getMethodSpecificId());
+	});
 
-	@Test
-	public void testInitPrivateIdentityWithRootKey() throws DIDException {
-		String expectedIDString = "iYbPqEA98rwvDyA5YT6a3mu8UZy87DLEMR";
-		String rootKey = "xprv9s21ZrQH143K4biiQbUq8369meTb1R8KnstYFAKtfwk3vF8uvFd1EC2s49bMQsbdbmdJxUWRkuC48CXPutFfynYFVGnoeq8LJZhfd9QjvUt";
+	test("testInitPrivateIdentityWithRootKey", () => {
+		let expectedIDString = "iYbPqEA98rwvDyA5YT6a3mu8UZy87DLEMR";
+		let rootKey = "xprv9s21ZrQH143K4biiQbUq8369meTb1R8KnstYFAKtfwk3vF8uvFd1EC2s49bMQsbdbmdJxUWRkuC48CXPutFfynYFVGnoeq8LJZhfd9QjvUt";
 
-    	assertFalse(store.containsRootIdentities());
+    	expect(store.containsRootIdentities()).toBeFalsy();
 
-    	RootIdentity.create(rootKey, store, TestConfig.storePass);
-    	assertTrue(store.containsRootIdentities());
+    	RootIdentity.createFromPrivateKey(rootKey, store, TestConfig.storePass);
+    	expect(store.containsRootIdentities()).toBeTruthy();
 
-    	DIDStore store2 = DIDStore.open(TestConfig.storeRoot);
-    	assertTrue(store2.containsRootIdentities());
+    	let store2 = DIDStore.open(TestConfig.storeRoot);
+    	expect(store2.containsRootIdentities()).toBeTruthy();
 
-    	RootIdentity identity2 = store2.loadRootIdentity();
+    	let identity2 = store2.loadRootIdentity();
 
-    	DIDDocument doc = identity2.newDid(TestConfig.storePass);
-    	assertNotNull(doc);
-    	assertEquals(expectedIDString, doc.getSubject().getMethodSpecificId());
-	}
+    	let doc = identity2.newDid(TestConfig.storePass);
+    	expect(doc).not.toBeNull();
+    	expect(expectedIDString).toEqual(doc.getSubject().getMethodSpecificId());
+	});
 
-	@Test
-	public void testCreateDIDWithAlias() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
+	test("testCreateDIDWithAlias", () => {
+    	let identity = testData.getRootIdentity();
 
-    	String alias = "my first did";
+    	let alias = "my first did";
 
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	let doc = identity.newDid(TestConfig.storePass);
     	doc.getMetadata().setAlias(alias);
-    	assertTrue(doc.isValid());
+    	expect(doc.isValid()).toBeTruthy();
 
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNull(resolved);
+    	let resolved = doc.getSubject().resolve();
+    	expect(resolved).toBeNull();
 
     	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
+    	expect(resolved).not.toBeNull();
 
     	// test alias
     	store.storeDid(resolved);
-    	assertEquals(alias, resolved.getMetadata().getAlias());
-    	assertEquals(doc.getSubject(), resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
+    	expect(alias).toEqual(resolved.getMetadata().getAlias());
+    	expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
+    	expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
 
-    	assertTrue(resolved.isValid());
-	}
+    	expect(resolved.isValid()).toBeTruthy();
+	});
 
-	@Test
-	public void testCreateDIDWithoutAlias() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
+	test("testCreateDIDWithoutAlias", () => {
+    	let identity = testData.getRootIdentity();
 
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
+    	let doc = identity.newDid(TestConfig.storePass);
+    	expect(doc.isValid()).toBeTruthy();
 
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNull(resolved);
+    	let resolved = doc.getSubject().resolve();
+    	expect(resolved).toBeNull();
 
     	doc.publish(TestConfig.storePass);
 
     	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.getSubject(), resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
+    	expect(resolved).not.toBeNull();
+    	expect(doc.getSubject()).toEqual(resolved.getSubject());
+    	expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
 
-    	assertTrue(resolved.isValid());
-    }
+    	expect(resolved.isValid()).toBeTruthy();
+    });
 
-	@Test
-	public void testCreateDIDByIndex() throws DIDException {
-	    RootIdentity identity = testData.getRootIdentity();
+	test("testCreateDIDByIndex", () => {
+	    let identity = testData.getRootIdentity();
 
-	    DID did = identity.getDid(0);
-	    DIDDocument doc = identity.newDid(0, TestConfig.storePass);
-	    assertTrue(doc.isValid());
-	    assertEquals(did, doc.getSubject());
+	    let did = identity.getDid(0);
+	    let doc = identity.newDid(TestConfig.storePass, 0);
+	    expect(doc.isValid()).toBeTruthy();
+	    expect(did.equals(doc.getSubject())).toBeTruthy();
 
-	    Exception e = assertThrows(DIDAlreadyExistException.class, () -> {
-	    	identity.newDid(TestConfig.storePass);
-	    });
-	    assertEquals("DID already exists in the store.", e.getMessage());
+		expect(identity.newDid(TestConfig.storePass)).toThrowError("DID already exists in the store.");
 
-	    boolean success = store.deleteDid(did);
-	    assertTrue(success);
+	    let success = store.deleteDid(did);
+	    expect(success).toBeTruthy();
 	    doc = identity.newDid(TestConfig.storePass);
-	    assertTrue(doc.isValid());
-	    assertEquals(did, doc.getSubject());
-	}
+	    expect(doc.isValid()).toBeTruthy();
+	    expect(did.equals(doc.getSubject())).toBeTruthy();
+	});
 
-	@Test
-	public void testGetDid() throws DIDException {
-	    RootIdentity identity = testData.getRootIdentity();
+	test("testGetDid", () => {
+	    let identity = testData.getRootIdentity();
 
-	    for (int i = 0; i < 100; i++) {
-		    DIDDocument doc = identity.newDid(i, TestConfig.storePass);
-		    assertTrue(doc.isValid());
+	    for (let i = 0; i < 100; i++) {
+		    let doc = identity.newDid(i, TestConfig.storePass);
+		    expect(doc.isValid()).toBeTruthy();
 
-		    DID did = identity.getDid(i);
+		    let did = identity.getDid(i);
 
-		    assertEquals(doc.getSubject(), did);
+		    expect(doc.getSubject().equals(did)).toBeTruthy();
 	    }
-	}
-
-}
- */
+	});
+});

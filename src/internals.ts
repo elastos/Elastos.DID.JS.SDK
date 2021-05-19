@@ -1,14 +1,18 @@
 // Internal dependencies
 export * from "./logger";
 export * from "./didentity";
-export * from "./serializers";
+export * from "./serializers"; // Should be before filters
+export * from "./filters"; // Should be before DIDDocumentPublicKey
+export * from "./didurl";
+export * from "./did";
 export * from "./diddocumentpublickeyreferenceserializer";
 export * from "./diddocumentpublickeyreferencedeserializer";
 export * from "./diddocumentpublickeyserializerfilter";
-export * from "./didurl";
-export * from "./did";
-export * from "./abstractmetadata";
-export * from "./didmetadata";
+export * from "./diddocumentmultisignature"; // Should be before DIDDocument
+export * from "./diddocumentpublickey"; // Should be before DIDDocument
+export * from "./diddocument"; // Should be before DIDExport (DIDStore)
+export * from "./abstractmetadata"; // Should be before DIDMetadata
+export * from "./didmetadata"; // Should be before DIDExport (DIDStore)
 export * from "./credentialmetadata";
 export * from "./didstore";
 export * from "./collections";
@@ -27,13 +31,11 @@ export * from "./defaultconflicthandle";
 export * from "./hdkey-secp256r1/secp256r1";
 export * from "./didbackend";
 export * from "./conflicthandle";
-export * from "./filters";
 export * from "./issuer";
 export * from "./didstoremetadata";
 export * from "./diddocumentservice";
 export * from "./transferticket";
 export * from "./didstorage";
-export * from "./diddocumentpublickey";
 export * from "./backend/idtransaction";
 export * from "./backend/resolverequest";
 export * from "./backend/didresolverequest";
@@ -59,9 +61,7 @@ export * from "./diddocumentbuilder";
 export * from "./rootidentity";
 export * from "./didobject";
 export * from "./verifiablepresentation";
-export * from "./diddocumentmultisignature";
 export * from "./filesystemstorage";
-export * from "./diddocument";
 export * from "./verifiablecredential";
 export * from "./didadapter";
 export * from "./diddocumentproof";

@@ -32,7 +32,7 @@ describe("Issuer Tests", ()=>{
 	let issuerDoc : DIDDocument;
 	let testDoc : DIDDocument;
 
-	beforeEach(()=>{
+	beforeEach(async ()=>{
 		testData = new TestData();
     	store = testData.getStore();
     	testData.getRootIdentity();
@@ -46,7 +46,6 @@ describe("Issuer Tests", ()=>{
 	})
 
 	test('New Issuer Test With Sign Key', () => {
-
 		let signKey = issuerDoc.getDefaultPublicKeyId();
 		let issuer = Issuer.newWithDID(issuerDoc.getSubject(), store, signKey);
 
@@ -130,7 +129,7 @@ describe("Issuer Tests", ()=>{
 		expect(vc.isGenuine()).toBeTruthy()
 		expect(vc.isValid()).toBeTruthy()
 
-	
+
 	})
 
 	test('Issue Self Proclaimed Credential Test', () => {
@@ -168,12 +167,12 @@ describe("Issuer Tests", ()=>{
 		expect(vc.isExpired()).toBeFalsy()
 		expect(vc.isGenuine()).toBeTruthy()
 		expect(vc.isValid()).toBeTruthy()
-	
+
 	})
 
 	test('Issue Kyc Credential For Cid Test', () => {
 
-		let testDoc = testData.getInstantData().getBazDocument();
+		//let testDoc = testData.getInstantData().getBazDocument();
 
 
 		let props = new Map<String, any>()
@@ -214,7 +213,7 @@ describe("Issuer Tests", ()=>{
 		expect(vc.isGenuine()).toBeTruthy()
 		expect(vc.isValid()).toBeTruthy()
 
-		
+
 	})
 
 	test('Issue Kyc Credential From Cid Test', () => {

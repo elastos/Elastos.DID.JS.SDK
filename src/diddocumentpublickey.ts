@@ -40,7 +40,7 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
     @JsonClassType({type: () => [DID]})
     public controller: DID;
     @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58 })
-    public keyBase58: string;
+    public publicKeyBase58: string;
     private authenticationKey: boolean;
     private authorizationKey: boolean;
 
@@ -50,17 +50,17 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
      * @param id the Id for PublicKey
      * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
      * @param controller the DID who holds private key
-     * @param keyBase58 the string from encoded base58 of public key
+     * @param publicKeyBase58 the string from encoded base58 of public key
      */
     // Java: @JsonCreator
     constructor(@JsonProperty({ value: DIDDocumentPublicKey.ID, required: true }) id: DIDURL,
         @JsonProperty({ value: DIDDocumentPublicKey.TYPE }) type: string,
         @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER }) controller: any /* DID */,
-        @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58, required: true }) keyBase58: string) {
+        @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58, required: true }) publicKeyBase58: string) {
         this.id = id;
         this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
         this.controller = controller;
-        this.keyBase58 = keyBase58;
+        this.publicKeyBase58 = publicKeyBase58;
     }
 
     /**
@@ -96,7 +96,7 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
      * @return the key base58 string
      */
     public getPublicKeyBase58(): string {
-        return this.keyBase58;
+        return this.publicKeyBase58;
     }
 
     /**
@@ -105,7 +105,7 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
      * @return the key bytes
      */
     public getPublicKeyBytes(): Buffer {
-        return Base58.decode(this.keyBase58);
+        return Base58.decode(this.publicKeyBase58);
     }
 
     /**
@@ -150,7 +150,7 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
         if (rc != 0)
             return rc;
         else
-            rc = this.keyBase58.localeCompare(key.keyBase58);
+            rc = this.publicKeyBase58.localeCompare(key.publicKeyBase58);
 
         if (rc != 0)
             return rc;

@@ -38,6 +38,7 @@ export class HDKey {
         return hdkey;
     }
 
+    // https://en.bitcoin.it/wiki/BIP_0032
     static fromExtendedKey(base58key: string, versions?: any) {
         // => version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
         versions = versions || BITCOIN_VERSIONS;
@@ -60,10 +61,10 @@ export class HDKey {
         if (key.readUInt8(0) === 0) {
             // private
             assert.ok(version === versions.private, 'Version mismatch: version does not match private');
-            hdkey.privateKey = key.slice(1, 33); // cut off first 0x0 byte
+            hdkey.privateKey = key.slice(1, 33); // cut off first 0x0 byte + remove the 4 bytes checksum in the end
         } else {
             assert.ok(version === versions.public, 'Version mismatch: version does not match public');
-            hdkey.publicKey = key;
+            hdkey.publicKey = key.slice(0, 33); // Remove the 4 bytes checksum in the end
         }
 
         return hdkey;
