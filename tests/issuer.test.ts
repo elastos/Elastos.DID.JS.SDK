@@ -32,7 +32,7 @@ describe("Issuer Tests", ()=>{
 	let issuerDoc : DIDDocument;
 	let testDoc : DIDDocument;
 
-	beforeEach(()=>{
+	beforeEach(async ()=>{
 		testData = new TestData();
     	store = testData.getStore();
     	testData.getRootIdentity();
@@ -46,7 +46,6 @@ describe("Issuer Tests", ()=>{
 	})
 
 	test('New Issuer Test With Sign Key', () => {
-
 		let signKey = issuerDoc.getDefaultPublicKeyId();
 		let issuer = Issuer.newWithDID(issuerDoc.getSubject(), store, signKey);
 
