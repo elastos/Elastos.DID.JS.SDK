@@ -20,125 +20,122 @@
  * SOFTWARE.
  */
 
-test("stub", ()=> Promise.resolve(true));
+import { DIDURL, VerifiablePresentation } from "../dist/did";
+import { TestConfig } from "./utils/testconfig";
+import { TestData } from "./utils/testdata";
 
-/* @ExtendWith(DIDTestExtension.class)
-public class VerifiablePresentationTest {
-	private TestData testData;
-	private DIDStore store;
+let testData: TestData;
+let store: DIDStore;
 
-    @BeforeEach
-    public void beforeEach() throws DIDException {
+describe('VerifiablePresentation Tests', () => {
+    beforeEach(() => {
     	testData = new TestData();
     	store = testData.getStore();
-    }
+    });
 
-    @AfterEach
-    public void afterEach() {
+    afterEach(() => {
     	testData.cleanup();
-    }
+    });
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testReadPresentationNonempty(int version) throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	test('testReadPresentationNonempty', () => {
+		let version = 2;
+    	let cd = testData.getCompatibleData(version);
 
     	// For integrity check
 		cd.getDocument("issuer");
-		DIDDocument user = cd.getDocument("user1");
-		VerifiablePresentation vp = cd.getPresentation("user1", "nonempty");
+		let user = cd.getDocument("user1");
+		let vp = cd.getPresentation("user1", "nonempty");
 
-		assertNull(vp.getId());
-		assertEquals(1, vp.getType().size());
-		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType().get(0));
+		expect(vp.getId()).toBeNull();
+		expect(1).toEqual(vp.getType().size());
+		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
 		assertEquals(user.getSubject(), vp.getHolder());
 
-		assertEquals(4, vp.getCredentialCount());
-		List<VerifiableCredential> vcs = vp.getCredentials();
-		for (VerifiableCredential vc : vcs) {
+		expect(4).toEqual(vp.getCredentialCount());
+		let vcs = vp.getCredentials();
+		for (let vc of vcs) {
 			assertEquals(user.getSubject(), vc.getSubject().getId());
 
-			assertTrue(vc.getId().getFragment().equals("profile")
+			expect(vc.getId().getFragment().equals("profile")
 					|| vc.getId().getFragment().equals("email")
 					|| vc.getId().getFragment().equals("twitter")
-					|| vc.getId().getFragment().equals("passport"));
+					|| vc.getId().getFragment().equals("passport")).toBeTruthy();
 		}
 
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#profile")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#email")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#twitter")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#passport")));
-		assertNull(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist")));
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#profile"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#email"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#twitter"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#passport"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist"))).toBeNull();
 
-		assertTrue(vp.isGenuine());
-		assertTrue(vp.isValid());
-	}
+		expect(vp.isGenuine()).toBeTruthy();
+		expect(vp.isValid()).toBeTruthy();
+	});
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testReadPresentationEmpty(int version) throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	test('testReadPresentationEmpty', () => {
+		let version = 2;
+    	let cd = testData.getCompatibleData(version);
 
     	// For integrity check
 		cd.getDocument("issuer");
-		DIDDocument user = cd.getDocument("user1");
-		VerifiablePresentation vp = cd.getPresentation("user1", "empty");
+		let user = cd.getDocument("user1");
+		let vp = cd.getPresentation("user1", "empty");
 
-		assertNull(vp.getId());
-		assertEquals(1, vp.getType().size());
-		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType().get(0));
+		expect(vp.getId()).toBeNull();
+		expect(1).toEqual(vp.getType().size());
+		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
 		assertEquals(user.getSubject(), vp.getHolder());
 
-		assertEquals(0, vp.getCredentialCount());
-		assertNull(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist")));
+		expect(0).toEqual(vp.getCredentialCount());
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist"))).toBeNull();
 
-		assertTrue(vp.isGenuine());
-		assertTrue(vp.isValid());
-	}
+		expect(vp.isGenuine()).toBeTruthy();
+		expect(vp.isValid()).toBeTruthy();
+	});
 
-    @ParameterizedTest
-    @CsvSource({
-    	"1,user1,empty",
-    	"1,user1,nonempty",
-    	"2,user1,empty",
-    	"2,user1,nonempty",
-    	"2,user1,optionalattrs",
-    	"2,foobar,empty",
-    	"2,foobar,nonempty",
-    	"2,foobar,optionalattrs"
-    })
-	public void testParseAndSerializeNonempty(int version, String did, String presentation)
-			throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
-    	// For integrity check
-    	cd.loadAll();
+	[
+    	"user1,empty",
+    	"user1,nonempty",
+    	"user1,optionalattrs",
+    	"foobar,empty",
+    	"foobar,nonempty",
+    	"foobar,optionalattrs"
+	].forEach((entry)=>{
+		let entryParts = entry.split(',');
+		let did = entryParts[0];
+		let presentation = entryParts[1];
+		test('testParseAndSerializeNonempty', () => {
+			let version = 2;
+			let cd = testData.getCompatibleData(2);
+			// For integrity check
+			cd.loadAll();
 
-		VerifiablePresentation vp = cd.getPresentation(did, presentation);
+			let vp = cd.getPresentation(did, presentation);
 
-		assertNotNull(vp);
-		assertTrue(vp.isGenuine());
-		assertTrue(vp.isValid());
+			expect(vp).not.toBeNull();
+			expect(vp.isGenuine()).toBeTruthy();
+			expect(vp.isValid()).toBeTruthy();
 
-		String normalizedJson = cd.getPresentationJson(did, presentation, "normalized");
+			let normalizedJson = cd.getPresentationJson(did, presentation, "normalized");
 
-		VerifiablePresentation normalized = VerifiablePresentation.parse(normalizedJson);
-		assertNotNull(normalized);
-		assertTrue(normalized.isGenuine());
-		assertTrue(normalized.isValid());
+			let normalized = VerifiablePresentation.parse(normalizedJson);
+			expect(normalized).not.toBeNull();
+			expect(normalized.isGenuine()).toBeTruthy();
+			expect(normalized.isValid()).toBeTruthy();
 
-		assertEquals(normalizedJson, normalized.toString(true));
-		assertEquals(normalizedJson, vp.toString(true));
-	}
+			expect(normalizedJson).toEqual(normalized.toString(true));
+			expect(normalizedJson).toEqual(vp.toString(true));
+		});
+	});
 
-	@Test
-	public void testBuildNonempty() throws DIDException, IOException {
-		TestData.InstantData td = testData.getInstantData();
-		DIDDocument doc = td.getUser1Document();
+	test('testBuildNonempty', () => {
+		let td = testData.getInstantData();
+		let doc = td.getUser1Document();
 
-		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+		let pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
 
-		VerifiablePresentation vp = pb
+		let vp = pb
 				.credentials(doc.getCredential("#profile"))
 				.credentials(doc.getCredential("#email"))
 				.credentials(td.getUser1TwitterCredential())
@@ -147,43 +144,42 @@ public class VerifiablePresentationTest {
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
 
-		assertNotNull(vp);
+		expect(vp).not.toBeNull();
 
-		assertNull(vp.getId());
-		assertEquals(1, vp.getType().size());
-		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType().get(0));
-		assertEquals(doc.getSubject(), vp.getHolder());
+		expect(vp.getId()).toBeNull();
+		expect(1).toEqual(vp.getType().size());
+		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
+		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		assertEquals(4, vp.getCredentialCount());
-		List<VerifiableCredential> vcs = vp.getCredentials();
-		for (VerifiableCredential vc : vcs) {
-			assertEquals(doc.getSubject(), vc.getSubject().getId());
+		expect(4).toEqual(vp.getCredentialCount());
+		let vcs = vp.getCredentials();
+		for (let vc of vcs) {
+			expect(doc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-			assertTrue(vc.getId().getFragment().equals("profile")
+			expect(vc.getId().getFragment().equals("profile")
 					|| vc.getId().getFragment().equals("email")
 					|| vc.getId().getFragment().equals("twitter")
-					|| vc.getId().getFragment().equals("passport"));
+					|| vc.getId().getFragment().equals("passport")).toBeTruthy();
 		}
 
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#profile")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#email")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#twitter")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#passport")));
-		assertNull(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist")));
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#profile"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#email"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#twitter"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#passport"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist"))).toBeNull();
 
-		assertTrue(vp.isGenuine());
-		assertTrue(vp.isValid());
-	}
+		expect(vp.isGenuine()).toBeTruthy();
+		expect(vp.isValid()).toBeTruthy();
+	});
 
-	@Test
-	public void testBuildNonemptyWithOptionalAttrs() throws DIDException, IOException {
-		TestData.InstantData td = testData.getInstantData();
-		DIDDocument doc = td.getUser1Document();
+	test('testBuildNonemptyWithOptionalAttrs', () => {
+		let td = testData.getInstantData();
+		let doc = td.getUser1Document();
 
-		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+		let pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
 
-		VerifiablePresentation vp = pb
+		let vp = pb
 				.id("#test-vp")
 				.type("Trail", "TestPresentation")
 				.credentials(doc.getCredential("#profile"))
@@ -194,89 +190,86 @@ public class VerifiablePresentationTest {
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
 
-		assertNotNull(vp);
+		expect(vp).not.toBeNull();
 
-		assertEquals(new DIDURL(doc.getSubject(), "#test-vp"), vp.getId());
-		assertEquals(2, vp.getType().size());
-		assertEquals("TestPresentation", vp.getType().get(0));
-		assertEquals("Trail", vp.getType().get(1));
-		assertEquals(doc.getSubject(), vp.getHolder());
+		expect(new DIDURL(doc.getSubject(), "#test-vp").equals(vp.getId())).toBeTruthy();
+		expect(2).toEqual(vp.getType().size());
+		expect("TestPresentation").toEqual(vp.getType().get(0));
+		expect("Trail").toEqual(vp.getType().get(1));
+		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		assertEquals(4, vp.getCredentialCount());
-		List<VerifiableCredential> vcs = vp.getCredentials();
-		for (VerifiableCredential vc : vcs) {
-			assertEquals(doc.getSubject(), vc.getSubject().getId());
+		expect(4).toEqual(vp.getCredentialCount());
+		let vcs = vp.getCredentials();
+		for (let vc of vcs) {
+			expect(doc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-			assertTrue(vc.getId().getFragment().equals("profile")
+			expect(vc.getId().getFragment().equals("profile")
 					|| vc.getId().getFragment().equals("email")
 					|| vc.getId().getFragment().equals("twitter")
-					|| vc.getId().getFragment().equals("passport"));
+					|| vc.getId().getFragment().equals("passport")).toBeTruthy();
 		}
 
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#profile")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#email")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#twitter")));
-		assertNotNull(vp.getCredential(new DIDURL(vp.getHolder(), "#passport")));
-		assertNull(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist")));
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#profile"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#email"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#twitter"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#passport"))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist"))).toBeNull();
 
-		assertTrue(vp.isGenuine());
-		assertTrue(vp.isValid());
-	}
+		expect(vp.isGenuine()).toBeTruthy();
+		expect(vp.isValid()).toBeTruthy();
+	});
 
-	@Test
-	public void testBuildEmpty() throws DIDException, IOException {
-		DIDDocument doc = testData.getInstantData().getUser1Document();
+	test('testBuildEmpty', () => {
+		let doc = testData.getInstantData().getUser1Document();
 
-		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+		let pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
 
-		VerifiablePresentation vp = pb
+		let vp = pb
 				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
 
-		assertNotNull(vp);
+		expect(vp).not.toBeNull();
 
-		assertNull(vp.getId());
-		assertEquals(1, vp.getType().size());
-		assertEquals(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE, vp.getType().get(0));
-		assertEquals(doc.getSubject(), vp.getHolder());
+		expect(vp.getId()).toBeNull();
+		expect(1).toEqual(vp.getType().size());
+		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
+		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		assertEquals(0, vp.getCredentialCount());
-		assertNull(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist")));
+		expect(0).toEqual(vp.getCredentialCount());
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist"))).toBeNull();
 
-		assertTrue(vp.isGenuine());
-		assertTrue(vp.isValid());
-	}
+		expect(vp.isGenuine()).toBeTruthy();
+		expect(vp.isValid()).toBeTruthy();
+	});
 
-	@Test
-	public void testBuildEmptyWithOptionsAttrs() throws DIDException, IOException {
-		DIDDocument doc = testData.getInstantData().getUser1Document();
+	test('testBuildEmptyWithOptionsAttrs', () => {
+		let doc = testData.getInstantData().getUser1Document();
 
-		VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
+		let pb = VerifiablePresentation.createFor(
 				doc.getSubject(), store);
 
-		VerifiablePresentation vp = pb
+		let vp = pb
 				.id("#test-vp")
 				.type("HelloWorld", "FooBar", "Baz")
 				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
 
-		assertNotNull(vp);
+		expect(vp).not.toBeNull();
 
-		assertEquals(new DIDURL(doc.getSubject(), "#test-vp"), vp.getId());
-		assertEquals(3, vp.getType().size());
-		assertEquals("Baz", vp.getType().get(0));
-		assertEquals("FooBar", vp.getType().get(1));
-		assertEquals("HelloWorld", vp.getType().get(2));
-		assertEquals(doc.getSubject(), vp.getHolder());
+		expect(new DIDURL(doc.getSubject(), "#test-vp").equals(vp.getId())).toBeTruthy();
+		expect(3).toEqual(vp.getType().size());
+		expect("Baz").toEqual(vp.getType().get(0));
+		expect("FooBar").toEqual(vp.getType().get(1));
+		expect("HelloWorld").toEqual(vp.getType().get(2));
+		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		assertEquals(0, vp.getCredentialCount());
-		assertNull(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist")));
+		expect(0).toEqual(vp.getCredentialCount());
+		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist"))).toBeNull();
 
-		assertTrue(vp.isGenuine());
-		assertTrue(vp.isValid());
-	}
+		expect(vp.isGenuine()).toBeTruthy();
+		expect(vp.isValid()).toBeTruthy();
+	});
 }
- */
