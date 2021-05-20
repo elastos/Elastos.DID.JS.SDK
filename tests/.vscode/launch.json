@@ -9,26 +9,21 @@
         "args": [
           //"--inspect-brk",
           "--config",
-          "${workspaceRoot}/tests/jest.node.config.ts",
+          "${workspaceRoot}/jest.node.config.ts",
           "--no-cache",
           "--runInBand",
           "--detectOpenHandles",
           "--silent=true",
-          "${workspaceRoot}/tests/src/rootidentity.test",
+          "${workspaceRoot}/src/rootidentity.test",
         ],
         "runtimeArgs": [
           "--nolazy"
         ],
-        "outFiles": [
-          "${workspaceRoot}/dist/**/*"
-        ],
+        "trace": true,
         "console": "integratedTerminal",
         "sourceMaps": true,
         "internalConsoleOptions": "neverOpen",
-        "resolveSourceMapLocations": [
-          "${workspaceFolder}/**",
-          "!**/node_modules/**"
-        ]
+        "resolveSourceMapLocations": null
       }
     ]
   }
