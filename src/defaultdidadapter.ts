@@ -32,7 +32,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	private static MAINNET_RESOLVER = "http://api.elastos.io:20606";
 	private static TESTNET_RESOLVER = "http://api.elastos.io:21606";
 
-	private resolver: URL;
+	protected resolver: URL;
 
 	/**
 	 * Set default resolver according to specified url.

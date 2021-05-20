@@ -21,26 +21,44 @@
  */
 
 import { Logger, DefaultDIDAdapter } from "@elastosfoundation/did-js-sdk";
+import Web3 from "web3";
 
 const log = new Logger("Web3Adapter");
+const PUBLISH_CONTRACT_ABI: any = [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"payable": false,
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "data",
+				"type": "string"
+			}
+		],
+		"name": "publishDidTransaction",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"payable": false,
+		"type": "function"
+	}
+];
 
 export class Web3Adapter extends DefaultDIDAdapter {
 	private static MAX_WAIT_BLOCKS = 5;
 	//private static final BigInteger WAIT_FOR_CONFIRMS = BigInteger.valueOf(3);
 
-	private contractAddress: String;
+	private lastTxHash: string;
 
-	/* private web3j: Web3j;
-	private account: Credentials;
-	private lastTxHash: string; */
-
-	public constructor(rpcEndpoint: string, contractAddress: string, walletFile: string, walletPassword: string) {
+	public constructor(rpcEndpoint: string, private contractAddress: string, walletFile: string, walletPassword: string) {
 		super(rpcEndpoint);
-		this.initWeb3j(rpcEndpoint, walletFile, walletPassword);
-		this.contractAddress = contractAddress;
+		this.initWeb3(rpcEndpoint, walletFile, walletPassword);
 	}
 
-	private initWeb3j(rpcEndpoint: string, walletFile: string, walletPassword: string) {
+	private initWeb3(rpcEndpoint: string, walletFile: string, walletPassword: string) {
 		/* this.web3j = Web3j.build(new HttpService(rpcEndpoint));
 		try {
 			account = WalletUtils.loadCredentials(walletPassword, walletFile);
@@ -63,97 +81,50 @@ export class Web3Adapter extends DefaultDIDAdapter {
 		} */
 	}
 
-    /**
-     * TODO: HERE IS THE SAMPLE CODE PROVIDED BY JINGYU EQUIVALENT TO THE JAVA CODE BELOW:
-     *
-     * Web3 = require("web3");
-        web3 = new Web3("http://52.80.107.251:1111");
-        contract = new web3.eth.Contract([
-        {
-        "inputs": [],
-        "stateMutability": "nonpayable",
-        "payable": false,
-        "type": "constructor"
-        },
-        {
-        "inputs": [
-        {
-            "internalType": "string",
-            "name": "data",
-            "type": "string"
-        }
-        ],
-        "name": "publishDidTransaction",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "payable": false,
-        "type": "function"
-        }
-        ]);
-        contract.options.address = "0xEA2256bd30cfeC643203d1a6f36A90A4fD17863E";
-        acc = web3.eth.accounts.decrypt({"address":"53781e106a2e3378083bdcede1874e5c2a7225f8","crypto":{"cipher":"aes-128-ctr","ciphertext":"bc53c1fcd6e31a6392ddc1777157ae961e636c202ed60fb5dda77244c5c4b6ff","cipherparams":{"iv":"c5d1a7d86d0685aa4542d58c27ae7eb4"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"409429444dabb5664ba1314c93f0e1d7a1e994a307e7b43d3f6cc95850fbfa9f"},"mac":"4c37821c90d35118182c2d4a51356186482662bb945f0fcd33d3836749fe59c0"},"id":"39e7770e-4bc6-42f3-aa6a-c0ae7756b607","version":3}, "123");
-        payload = '{"header":{"specification":"elastos/did/1.0","operation":"create"},"payload":"..."}}'
-        cdata = contract.methods.publishDidTransaction(payload).encodeABI();
-        tx = {data: cdata, to: contract.options.address, from: acc.address, gas: 3000000, gasPrice: "1000000000000"};
-        acc.signTransaction(tx).then((res)=>{
-            console.log("coming");
-            stx = res;
-            console.log(stx.rawTransaction);
-            web3.eth.sendSignedTransaction(stx.rawTransaction).then(console.log)
-        });
-     */
-	/* public void createIdTransaction(String payload, String memo)
-			throws DIDTransactionException {
-		@SuppressWarnings("rawtypes")
-		Function contract = new Function("publishDidTransaction",
-				Arrays.<Type>asList(new Utf8String(payload)),
-				Collections.<TypeReference<?>>emptyList());
+	public async createIdTransaction(payload: string, memo: string) {
+		let web3 = new Web3(this.resolver.toString());
+        let contract = new web3.eth.Contract(PUBLISH_CONTRACT_ABI, this.contractAddress);
 
-		String encodedContract = FunctionEncoder.encode(contract);
+		// PRIVNET WALLET WITH FUNDS TO PUBLISH - TODO: MAKE THIS BE A ENV DATA, NOT PUSHED.
+		let acc = web3.eth.accounts.decrypt({"address":"53781e106a2e3378083bdcede1874e5c2a7225f8","crypto":{"cipher":"aes-128-ctr","ciphertext":"bc53c1fcd6e31a6392ddc1777157ae961e636c202ed60fb5dda77244c5c4b6ff","cipherparams":{"iv":"c5d1a7d86d0685aa4542d58c27ae7eb4"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"409429444dabb5664ba1314c93f0e1d7a1e994a307e7b43d3f6cc95850fbfa9f"},"mac":"4c37821c90d35118182c2d4a51356186482662bb945f0fcd33d3836749fe59c0"},"id":"39e7770e-4bc6-42f3-aa6a-c0ae7756b607","version":3}, "123");
+        let cdata = contract.methods.publishDidTransaction(payload).encodeABI();
+        let tx = {
+			data: cdata,
+			to: contract.options.address,
+			from: acc.address,
+			gas: 3000000,
+			gasPrice: "1000000000000"
+		};
 
-		try {
-			//BigInteger gasPrice = web3j.ethGasPrice().sendAsync().get().getGasPrice();
-			BigInteger gasPrice = new BigInteger("1000000000000");
-			BigInteger gasLimit = new BigInteger("3000000");
+		let stx = await acc.signTransaction(tx);
+		console.log(stx.rawTransaction); // TODO: improve
+		let receipt = await web3.eth.sendSignedTransaction(stx.rawTransaction, (err, hash) => {
+			console.log("sendSignedTransaction result:", err, hash);
+		});
 
-			TransactionManager txManager = new RawTransactionManager(web3j, account);
-			EthSendTransaction ethSendTx = txManager.sendTransaction(
-					gasPrice,
-					gasLimit,
-				    contractAddress,
-				    encodedContract,
-				    BigInteger.ZERO);
+		let txHash = receipt.transactionHash;
 
-            if (ethSendTx.hasError())
-				throw new DIDTransactionException("Error send transaction: " +
-						txResponse.getError().getMessage());
+		/* int waitBlocks = MAX_WAIT_BLOCKS;
+		while (true) {
+			EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).sendAsync().get();
+			if (receipt.hasError())
+				throw new DIDTransactionException("Error transaction response: " +
+						receipt.getError().getMessage());
 
-			String txHash = ethSendTx.getTransactionHash();
+			if (!receipt.getTransactionReceipt().isPresent()) {
+				if (waitBlocks-- == 0)
+					throw new DIDTransactionException("Create transaction timeout.");
 
-			int waitBlocks = MAX_WAIT_BLOCKS;
-			while (true) {
-				EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).sendAsync().get();
-				if (receipt.hasError())
-					throw new DIDTransactionException("Error transaction response: " +
-							receipt.getError().getMessage());
-
-				if (!receipt.getTransactionReceipt().isPresent()) {
-					if (waitBlocks-- == 0)
-						throw new DIDTransactionException("Create transaction timeout.");
-
-					Thread.sleep(5000);
-				} else {
-					break;
-				}
+				Thread.sleep(5000);
+			} else {
+				break;
 			}
+		} */
 
-			lastTxHash = txHash;
-		} catch(ExecutionException | InterruptedException | IOException e) {
-			throw new DIDTransactionException("Error create transaction: " + e.getMessage(), e);
-		}
+		this.lastTxHash = txHash;
 	}
 
-	public boolean isAvailable() {
+	/*public boolean isAvailable() {
 		if (lastTxHash == null)
 			return true;
 
