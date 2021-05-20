@@ -1,0 +1,136 @@
+/*
+ * Copyright (c) 2021 Elastos Foundation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+import { RootIdentity, Mnemonic, runningInBrowser } from "@elastosfoundation/did-js-sdk";
+
+import { TestConfig } from "./utils/testconfig";
+import { TestData } from "./utils/testdata";
+
+describe('Mnemonic Tests', () => {
+	let testData: TestData;
+
+	beforeEach(async ()=>{
+		//testData = new TestData();
+	})
+
+	afterEach(()=>{
+		//testData.cleanup();
+	});
+
+
+	test('Test builtin wordlist', () => {
+		let languages = [
+			Mnemonic.DEFAULT,
+			Mnemonic.CHINESE_SIMPLIFIED,
+			Mnemonic.CHINESE_TRADITIONAL,
+			Mnemonic.CZECH,
+			Mnemonic.ENGLISH,
+			Mnemonic.FRENCH,
+			Mnemonic.ITALIAN,
+			Mnemonic.JAPANESE,
+			Mnemonic.KOREAN,
+			Mnemonic.SPANISH
+		];
+
+		languages.forEach(lang => {
+			let mc = Mnemonic.getInstance(lang);
+			let mnemonic = mc.generate();
+
+			expect(mc.isValid(mnemonic)).toBeTruthy()
+		    expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy()
+
+			//let store = testData.getStore();
+			//RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
+
+			expect(mc.isValid(mnemonic + "z")).toBeFalsy()
+			expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy()
+		});
+	})
+
+	test('Test french mnemonic', () => {
+		let mnemonic = "remarque séduire massif boire horde céleste exact dribbler pulpe prouesse vagabond opale";
+		let mc = Mnemonic.getInstance(Mnemonic.FRENCH)
+
+		expect(mc.isValid(mnemonic)).toBeTruthy()
+		expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy()
+	});
+
+
+})
+
+
+
+/* @ExtendWith(DIDTestExtension.class)
+public class MnemonicTest {
+	private TestData testData;
+
+    @BeforeEach
+    public void beforeEach() throws DIDException {
+    	testData = new TestData();
+    }
+
+    @AfterEach
+    public void afterEach() {
+    	testData.cleanup();
+    }
+
+    @Test
+	public void testBuiltinWordList() throws DIDException {
+		String[] languages = {
+				Mnemonic.DEFAULT,
+				Mnemonic.CHINESE_SIMPLIFIED,
+				Mnemonic.CHINESE_TRADITIONAL,
+				Mnemonic.CZECH,
+				Mnemonic.ENGLISH,
+				Mnemonic.FRENCH,
+				Mnemonic.ITALIAN,
+				Mnemonic.JAPANESE,
+				Mnemonic.KOREAN,
+				Mnemonic.SPANISH
+		};
+
+		for (String lang : languages) {
+			Mnemonic mc = Mnemonic.getInstance(lang);
+			String mnemonic = mc.generate();
+			assertTrue(mc.isValid(mnemonic));
+			assertTrue(Mnemonic.checkIsValid(mnemonic));
+
+			DIDStore store = testData.getStore();
+	    	RootIdentity.create(mnemonic, TestConfig.passphrase,
+	    			true, store, TestConfig.storePass);
+
+			mnemonic = mnemonic + "z";
+			assertFalse(mc.isValid(mnemonic));
+			assertFalse(Mnemonic.checkIsValid(mnemonic));
+		}
+	}
+
+	@Test
+	public void testFrenchMnemonic() throws DIDException {
+		String mnemonic = "remarque séduire massif boire horde céleste exact dribbler pulpe prouesse vagabond opale";
+
+		Mnemonic mc = Mnemonic.getInstance(Mnemonic.FRENCH);
+		assertTrue(mc.isValid(mnemonic));
+		assertTrue(Mnemonic.checkIsValid(mnemonic));
+	}
+}
+ */

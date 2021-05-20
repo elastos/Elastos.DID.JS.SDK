@@ -1360,8 +1360,11 @@ export namespace VerifiableCredential {
 		 * @param properties the subject content
 		 * @return the Builder object
 		 */
-		public properties(newProperties: JSONObject): Builder {
+		public properties(newProperties: JSONObject | string): Builder {
 			this.checkNotSealed();
+
+			if (typeof newProperties === "string")
+				newProperties = JSON.parse(newProperties);
 
 			this.credential.subject.setProperties({});
 
@@ -1369,7 +1372,7 @@ export namespace VerifiableCredential {
 				return this;
 
 			let properties = this.credential.subject.getProperties();
-			for (let key in newProperties) {
+			for (let key in newProperties as JSONObject) {
 				properties[key] = newProperties[key];
 			}
 			delete properties.id;
