@@ -31,6 +31,7 @@ import {
 import { TestConfig } from "./testconfig";
 import { importBundledBrowserData } from "./browserdataimport";
 import { DIDTestExtension } from "./didtestextension";
+import { Web3Adapter } from "../backend/web3adapter";
 
 export class TestData {
 	// HDKey for temporary key generation
@@ -116,12 +117,12 @@ export class TestData {
 		return this.instantData;
 	}
 
-	/*public void waitForWalletAvaliable() throws DIDException {
+	public waitForWalletAvailable() {
 		// need synchronize?
 		if (DIDTestExtension.getAdapter() instanceof Web3Adapter) {
-			Web3Adapter adapter = (Web3Adapter)DIDTestExtension.getAdapter();
+			let adapter = DIDTestExtension.getAdapter() as Web3Adapter;
 
-			System.out.print("Waiting for wallet available...");
+			/* console.log(("Waiting for wallet available...");
 			long start = System.currentTimeMillis();
 			while (true) {
 				if (adapter.isAvailable()) {
@@ -134,9 +135,9 @@ export class TestData {
 					Thread.sleep(5000);
 				} catch (InterruptedException ignore) {
 				}
-			}
+			} */
 		}
-	}*/
+	}
 }
 
 export class CompatibleData {
@@ -267,7 +268,7 @@ export class CompatibleData {
 		if (this.data[key] !== null && this.data[key] !== undefined)
 			return this.data[key];
 
-		let credential = VerifiableCredential.parse(this.getCredentialFile(did, vc, type));	
+		let credential = VerifiableCredential.parse(this.getCredentialFile(did, vc, type));
 
 		this.testData.store.storeCredential(credential);
 
@@ -282,8 +283,8 @@ export class CompatibleData {
 			fileName += "." + type;
 		fileName += ".json";
 		let key = "res:json:" + fileName;
-		
-		if (this.data[key] !== null && 
+
+		if (this.data[key] !== null &&
 		    this.data[key] !== undefined)
 			return this.data[key];
 
@@ -297,7 +298,7 @@ export class CompatibleData {
 
 		let baseKey = "res:vp:" + did + ":" + vp;
 		let key = type != null ? baseKey + ":" + type : baseKey;
-		if (this.data[key] !== null && 
+		if (this.data[key] !== null &&
 		    this.data[key] !== undefined)
 			return  this.data[key];
 
@@ -315,8 +316,8 @@ export class CompatibleData {
 		fileName += ".json";
 
 		let key = "res:json:" + fileName;
-		
-		if (this.data[key] !== null && 
+
+		if (this.data[key] !== null &&
 		    this.data[key] !== undefined)
 			return  this.data[key];
 
@@ -771,8 +772,8 @@ export class InstantData {
 			this.getUser2Document();
 			this.getUser3Document();
 
-			let controllers = [this.idUser1.getSubject(), 
-				               this.idUser2.getSubject(), 
+			let controllers = [this.idUser1.getSubject(),
+				               this.idUser2.getSubject(),
 							   this.idUser3.getSubject()];
 			let did = new DID("did:elastos:foobar");
 			let doc = this.idUser1.newCustomized(did, controllers, 2, TestConfig.storePass);
@@ -1022,7 +1023,7 @@ export class InstantData {
 			this.getUser2Document();
 			this.getUser3Document();
 
-			let controllers = [this.idUser2.getSubject(), 
+			let controllers = [this.idUser2.getSubject(),
 				               this.idUser3.getSubject()];
 			let did = new DID("did:elastos:bar");
 			let doc = this.idUser1.newCustomizedDid(did, controllers, 3, TestConfig.storePass);
@@ -1072,34 +1073,34 @@ export class InstantData {
 		switch (did) {
 			case "issuer":
 				return this.getIssuerDocument();
-	
+
 			case "user1":
 				return this.getUser1Document();
-	
+
 			case "user2":
 				return this.getUser1Document();
-	
+
 			case "user3":
 				return this.getUser1Document();
-	
+
 			case "user4":
 				return this.getUser1Document();
-	
+
 			case "examplecorp":
 				return this.getExampleCorpDocument();
-	
+
 			case "foobar":
 				return this.getFooBarDocument();
-	
+
 			case "foo":
 				return this.getFooDocument();
-	
+
 			case "bar":
 				return this.getBarDocument();
-	
+
 			case "baz":
 				return this.getBazDocument();
-	
+
 			default:
 				return null;
 			}
@@ -1111,41 +1112,41 @@ export class InstantData {
 				switch (vc) {
 				case "passport":
 					return this.getUser1PassportCredential();
-	
+
 				case "twitter":
 					return this.getUser1TwitterCredential();
-	
+
 				case "json":
 					return this.getUser1JsonCredential();
-	
+
 				case "jobposition":
 					return this.getUser1JobPositionCredential();
-	
+
 				default:
 					return null;
 				}
-	
+
 			case "foobar":
 				switch (vc) {
 				case "services":
 					return this.getFooBarServiceCredential();
-	
+
 				case "license":
 					return this.getFooBarLicenseCredential();
-	
+
 				default:
 					return null;
 				}
-	
+
 			case "foo":
 				switch (vc) {
 				case "email":
 					return this.getFooEmailCredential();
-	
+
 				default:
 					return null;
 				}
-	
+
 			default:
 				return null;
 			}
@@ -1157,26 +1158,26 @@ export class InstantData {
 				switch (vp) {
 				case "nonempty":
 					return this.getUser1NonemptyPresentation();
-	
+
 				case "empty":
 					return this.getUser1EmptyPresentation();
-	
+
 				default:
 					return null;
 				}
-	
+
 			case "foobar":
 				switch (vp) {
 				case "nonempty":
 					return this.getFooBarNonemptyPresentation();
-	
+
 				case "empty":
 					return this.getFooBarEmptyPresentation();
-	
+
 				default:
 					return null;
 				}
-	
+
 			default:
 				return null;
 			}
