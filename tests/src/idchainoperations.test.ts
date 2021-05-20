@@ -21,10 +21,8 @@
  */
 
 import { TestData } from "./utils/testdata";
-import { Logger, DIDStore, DID, RootIdentity, DIDDocument, DIDBiography, IDChainRequest } from "@elastosfoundation/did-js-sdk";
+import { DIDDocumentBuilder, DIDBiographyStatus, Logger, DIDStore, DID, RootIdentity, DIDDocument, DIDBiography, IDChainRequest } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
-import { DIDDocumentBuilder } from "../../typings/diddocumentbuilder";
-import { DIDBiographyStatus } from "../../typings/internals";
 
 const log = new Logger("IDChainOperationsTest");
 

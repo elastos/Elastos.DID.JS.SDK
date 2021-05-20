@@ -690,7 +690,9 @@ export class InstantData {
 			    twitter: "@john"
 			};
 
-			db.addCredential("#profile", props, TestConfig.storePass);
+			// Java was: db.addCredential("#profile", props, TestConfig.storePass);
+			db.createAndAddCredential(DIDURL.newWithUrl("#profile"), [], props, null, TestConfig.storePass);
+
 			doc = db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			doc.publish(TestConfig.storePass);
@@ -860,7 +862,7 @@ export class InstantData {
 			db.addCredential(vcProfile);
 			db.addCredential(vcEmail);
 			doc = db.seal(TestConfig.storePass);
-			doc = this.idUser3.sign(doc, TestConfig.storePass);
+			doc = this.idUser3.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			doc.publish(TestConfig.storePass, signKey);
 
@@ -972,7 +974,7 @@ export class InstantData {
 			let user4 = this.getUser4Document();
 
 			let tt = this.idUser1.createTransferTicket(doc.getSubject(), TestConfig.storePass, user4.getSubject());
-			tt = this.idUser3.sign(tt, TestConfig.storePass);
+			tt = this.idUser3.signWithTicket(tt, TestConfig.storePass);
 
 			this.ttFooBar = tt;
 		}
@@ -988,7 +990,7 @@ export class InstantData {
 			let controllers : DID[] = [this.idUser2.getSubject()];
 			let did = new DID("did:elastos:foo");
 			let doc = this.idUser1.newCustomizedDidWithController(did, controllers, 2, TestConfig.storePass);
-			doc = this.idUser2.sign(doc, TestConfig.storePass);
+			doc = this.idUser2.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 
 			doc.setEffectiveController(this.idUser2.getSubject());
@@ -1038,8 +1040,8 @@ export class InstantData {
 				               this.idUser3.getSubject()];
 			let did = new DID("did:elastos:bar");
 			let doc = this.idUser1.newCustomizedDidWithController(did, controllers, 3, TestConfig.storePass);
-			doc = this.idUser2.sign(doc, TestConfig.storePass);
-			doc = this.idUser3.sign(doc, TestConfig.storePass);
+			doc = this.idUser2.signWithDocument(doc, TestConfig.storePass);
+			doc = this.idUser3.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			doc.publish(TestConfig.storePass, this.idUser3.getDefaultPublicKeyId());
 

@@ -12,7 +12,7 @@ import { TransferTicket } from "./internals";
 import { Issuer } from "./internals";
 import { DIDURL,  } from "./internals";
 import { DIDURLParser, DIDURLValues } from "./parser/DIDURLParser";
-import { DIDBiography } from "./internals";
+import { DIDBiography, DIDBiographyStatus } from "./internals";
 import { IDChainRequest } from "./internals";
 import * as Exceptions from "./exceptions/exceptions";
 import { File } from "./internals";
@@ -83,6 +83,7 @@ export {
 	DIDURL,
 	DIDURLParser,
 	DIDBiography,
+	DIDBiographyStatus,
 	IDChainRequest,
 	DefaultDIDAdapter,
 	SimulatedIDChain,
