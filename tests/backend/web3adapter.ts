@@ -105,7 +105,7 @@ export class Web3Adapter extends DefaultDIDAdapter {
 	/* public void createIdTransaction(String payload, String memo)
 			throws DIDTransactionException {
 		@SuppressWarnings("rawtypes")
-		Function contract = new Function("operationDID",
+		Function contract = new Function("publishDidTransaction",
 				Arrays.<Type>asList(new Utf8String(payload)),
 				Collections.<TypeReference<?>>emptyList());
 

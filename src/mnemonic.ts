@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { mnemonicToSeedSync, generateMnemonic, wordlists, validateMnemonic } from "bip39";
+import { mnemonicToSeedSync, generateMnemonic, wordlists, validateMnemonic, entropyToMnemonic } from "bip39";
 import { MnemonicException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
 
@@ -103,13 +103,18 @@ export class Mnemonic {
 	}
 
 	/**
-	 * Generate mnemonic.
+	 * Generate a mnemonic from entropy.
+	 *
+	 * @param entropy the entropy data to generate mnemonic, or a random one will be used
 	 *
 	 * @return the mnemonic string
 	 * @throws DIDException generate Mnemonic into table failed.
 	 */
-	public generate(): string {
-		return generateMnemonic(Mnemonic.TWELVE_WORDS_ENTROPY, null, Mnemonic.WORDLISTS[this.language]);
+	public generate(entropy?: Buffer): string {
+		if (entropy)
+			return entropyToMnemonic(entropy, Mnemonic.WORDLISTS[this.language]);
+		else
+			return generateMnemonic(Mnemonic.TWELVE_WORDS_ENTROPY, null, Mnemonic.WORDLISTS[this.language]);
 	}
 
 	/**

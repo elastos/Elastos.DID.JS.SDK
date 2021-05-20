@@ -35,7 +35,8 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 
 		// if (name.equals("IDChainOperationsTest")) {
 			// When run the IDChainOperationsTest only
-			DIDTestExtension.adapter = new Web3Adapter(rpcEndpoint, TestConfig.contractAddress,
+			DIDTestExtension.adapter = new Web3Adapter(
+				rpcEndpoint, TestConfig.contractAddress,
 				TestConfig.walletPath, TestConfig.walletPassword);
 		// }
 
@@ -69,8 +70,8 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 	/* public static void resetData() {
 		simChain.reset();
 	}
-
-	public static DIDAdapter getAdapter() {
-		return adapter;
-	} */
+*/
+	public static getAdapter(): DIDAdapter {
+		return DIDTestExtension.adapter;
+	}
 }

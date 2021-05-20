@@ -3,18 +3,32 @@
     "configurations": [
       {
         "name": "Debug Jest Tests",
-        "type": "node",
+        "type": "pwa-node",
         "request": "launch",
-        "runtimeArgs": [
-          "--inspect-brk",
-          "${workspaceRoot}/node_modules/.bin/jest",
+        "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+        "args": [
+          //"--inspect-brk",
+          "--config",
+          "${workspaceRoot}/jest.node.config.ts",
+          "--no-cache",
           "--runInBand",
+          "--detectOpenHandles",
           "--silent=true",
-          "${workspaceRoot}/tests/didstore.test",
+          "${workspaceRoot}/tests/idchainoperations.test",
+        ],
+        "runtimeArgs": [
+          "--nolazy"
+        ],
+        "outFiles": [
+          "${workspaceRoot}/dist/**/*"
         ],
         "console": "integratedTerminal",
+        "sourceMaps": true,
         "internalConsoleOptions": "neverOpen",
-        "port": 9229
+        "resolveSourceMapLocations": [
+          "${workspaceFolder}/**",
+          "!**/node_modules/**"
+        ]
       }
     ]
   }

@@ -20,92 +20,84 @@
  * SOFTWARE.
  */
 
-test("stub", ()=> Promise.resolve(true));
+import { TestData } from "./utils/testdata";
+import { Logger, DIDStore, DID, RootIdentity, DIDDocument } from "../dist/did";
+import { TestConfig } from "./utils/testconfig";
 
-/* @TestMethodOrder(OrderAnnotation.class)
-@ExtendWith(DIDTestExtension.class)
-public class IDChainOperationsTest {
-	private static TestData testData;
-	private static List<DID> dids;
+const log = new Logger("IDChainOperationsTest");
 
-	private DIDStore store;
-	private String mnemonic;
-	private RootIdentity identity;
+let testData: TestData;
+let store: DIDStore;
+let dids: DID[];
 
-	private static final Logger log = LoggerFactory.getLogger(IDChainOperationsTest.class);
+let mnemonic: string;
+let identity: RootIdentity;
 
-    @BeforeAll
-    public static void beforeAll() throws DIDException {
+describe('IDChainOperations Tests', () => {
+    beforeAll(()=> {
     	testData = new TestData();
     	testData.getRootIdentity();
-    	dids = new ArrayList<DID>();
-    }
+    	dids = [];
+    });
 
-    @AfterAll
-    public static void afterEach() {
+    afterAll(() => {
     	testData.cleanup();
-    }
+    });
 
-    @BeforeEach
-    public void beforeEach() throws DIDException {
+    beforeEach(() => {
     	store = testData.getStore();
     	mnemonic = testData.getMnemonic();
     	identity = testData.getRootIdentity();
 
-		testData.waitForWalletAvaliable();
-    }
+		testData.waitForWalletAvailable();
+    });
 
-	@Test
-	@Order(1)
-	public void testCreateAndResolve() throws DIDException {
-		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
-		DID did = doc.getSubject();
+	describe('Order 1', () => {
+		test('testCreateAndResolve', () => {
+			// Create new DID and publish to ID sidechain.
+			let doc = identity.newDid(TestConfig.storePass);
+			let did = doc.getSubject();
 
-		log.debug("Publishing new DID {}...", did);
-		long start = System.currentTimeMillis();
-		doc.publish(TestConfig.storePass);
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-		log.debug("Publish new DID {}...OK({}s)", did, duration);
+			log.debug("Publishing new DID {}...", did);
+			let start = Date.now();
+			doc.publish(TestConfig.storePass);
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-		testData.waitForWalletAvaliable();
-		DIDDocument resolved = did.resolve();
-		assertNotNull(resolved);
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
+			testData.waitForWalletAvailable();
+			let resolved = did.resolve();
+			expect(resolved).not.toBeNull();
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		dids.add(did); // 0
-	}
+			dids.push(did); // 0
+		});
+	});
 
-	@Test
-	@Order(2)
-	public void testCreateAndResolveAsync() throws DIDException {
-		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
-		DID did = doc.getSubject();
+	describe('Order 2', () => {
+		test('testCreateAndResolveAsync', async () => {
+			// Create new DID and publish to ID sidechain.
+			let doc = identity.newDid(TestConfig.storePass);
+			let did = doc.getSubject();
 
-        log.debug("Publishing new DID {}...", did);
-		long start = System.currentTimeMillis();
-		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
-				.thenApply((tx) -> {
-					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-			        log.debug("Publish new DID {}...OK({}s)", did, duration);
-					return tx;
-				});
-		tf.join();
+			log.debug("Publishing new DID {}...", did);
+			let start = Date.now();
+			await doc.publishAsync(TestConfig.storePass)
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-		testData.waitForWalletAvaliable();
-		CompletableFuture<DIDDocument> rf = did.resolveAsync(true);
-		DIDDocument resolved = rf.join();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
+			testData.waitForWalletAvailable();
+			let resolved = await did.resolveAsync(true);
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		dids.add(did); // 1
-	}
+			dids.push(did); // 1
+		});
+	});
 
-	@Test
+	/* @Test
 	@Order(3)
 	public void testCreateAndResolveAsync2() throws DIDException {
 		// Create new DID and publish to ID sidechain.
@@ -1089,10 +1081,5 @@ public class IDChainOperationsTest {
 		// Should overwrite the local modified copy with chain copy after sync
 		doc = cleanStore.loadDid(modifiedDid);
 		assertEquals(originalSignature, doc.getSignature());
-	}
-
-	//@Test
-	//@DisabledIfSystemProperty(named = "org.elastos.did.network", matches = "SimNet")
-
-}
- */
+	} */
+});
