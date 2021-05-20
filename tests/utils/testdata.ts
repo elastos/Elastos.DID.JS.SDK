@@ -247,96 +247,85 @@ export class CompatibleData {
 		return doc;
 	}
 
-/*
-	public synchronized String getDocumentJson(String did, String type)
-			throws IOException {
-		File file = getDidFile(did, type);
-		String key = "res:json:" + file.getName();
-		if (data.containsKey(key))
-			return (String)data.get(key);
-
-		// load the document
-		String text = loadText(file);
-		data.put(key, text);
-		return text;
+	public getDocumentJson(did: string, type: string) : string {
+		let file = this.getDidFile(did, type)
+		let fileName = did + ".id";
+		if (type != null)
+			fileName += "." + type;
+		fileName += ".json";
+		let key = "res:json:" + fileName
+		this.data[key] = file
+		return file
 	}
 
-	public synchronized VerifiableCredential getCredential(String did, String vc, String type)
-			throws DIDException, IOException {
+	public getCredential(did: string, vc: string, type: string = null) : VerifiableCredential{
 		// Load DID document first for verification
-		getDocument(did);
+		this.getDocument(did);
+		let baseKey = "res:vc:" + did + ":" + vc;
+		let key = type != null ? baseKey + ":" + type : baseKey;
 
-		String baseKey = "res:vc:" + did + ":" + vc;
-		String key = type != null ? baseKey + ":" + type : baseKey;
-		if (data.containsKey(key))
-			return (VerifiableCredential)data.get(key);
+		if (this.data[key] !== null && this.data[key] !== undefined)
+			return this.data[key];
 
-		// load the credential
-		VerifiableCredential credential = VerifiableCredential.parse(
-				getCredentialFile(did, vc, type));
+		let credential = VerifiableCredential.parse(this.getCredentialFile(did, vc, type));	
 
-		// If not stored before, store it
-		if (!data.containsKey(baseKey))
-			store.storeCredential(credential);
+		this.testData.store.storeCredential(credential);
 
-		data.put(key, credential);
-		return credential;
+		this.data[key] = credential
+		return credential
 	}
 
-	public VerifiableCredential getCredential(String did, String vc)
-			throws DIDException, IOException {
-		return getCredential(did, vc, null);
+	public getCredentialJson(did: string, vc: string, type: string): string{
+		let file = this.getCredentialFile(did, vc, type);
+		let fileName = did + ".vc." + vc;
+		if (type != null)
+			fileName += "." + type;
+		fileName += ".json";
+		let key = "res:json:" + fileName;
+		
+		if (this.data[key] !== null && 
+		    this.data[key] !== undefined)
+			return this.data[key];
+
+		this.data[key] =  file;
+		return file;
 	}
 
-	public synchronized String getCredentialJson(String did, String vc, String type)
-			throws IOException {
-		File file = getCredentialFile(did, vc, type);
-		String key = "res:json:" + file.getName();
-		if (data.containsKey(key))
-			return (String)data.get(key);
-
-		// load the document
-		String text = loadText(file);
-		data.put(key, text);
-		return text;
-	}
-
-	public synchronized VerifiablePresentation getPresentation(String did, String vp, String type)
-			throws DIDException, IOException {
+	public getPresentation(did: string,  vp: string,  type: string = null): VerifiablePresentation {
 		// Load DID document first for verification
-		getDocument(did);
+		 this.getDocument(did);
 
-		String baseKey = "res:vp:" + did + ":" + vp;
-		String key = type != null ? baseKey + ":" + type : baseKey;
-		if (data.containsKey(key))
-			return (VerifiablePresentation)data.get(key);
+		let baseKey = "res:vp:" + did + ":" + vp;
+		let key = type != null ? baseKey + ":" + type : baseKey;
+		if (this.data[key] !== null && 
+		    this.data[key] !== undefined)
+			return  this.data[key];
 
 		// load the presentation
-		VerifiablePresentation presentation = VerifiablePresentation.parse(
-				getPresentationFile(did, vp, type));
-
-		data.put(key, presentation);
+		let presentation = VerifiablePresentation.parse(this.getPresentationFile(did, vp, type));
+		this.data[key] = presentation;
 		return presentation;
 	}
 
-	public VerifiablePresentation getPresentation(String did, String vp)
-			throws DIDException, IOException {
-		return getPresentation(did, vp, null);
-	}
+	public getPresentationJson(did: string,  vp: string,  type: string): string{
+		let file = this.getPresentationFile(did, vp, type);
+		let fileName = did + ".vp." + vp;
+		if (type != null)
+			fileName += "." + type;
+		fileName += ".json";
 
-	public synchronized String getPresentationJson(String did, String vp, String type)
-			throws IOException {
-		File file = getPresentationFile(did, vp, type);
-		String key = "res:json:" + file.getName();
-		if (data.containsKey(key))
-			return (String)data.get(key);
+		let key = "res:json:" + fileName;
+		
+		if (this.data[key] !== null && 
+		    this.data[key] !== undefined)
+			return  this.data[key];
 
 		// load the document
-		String text = loadText(file);
-		data.put(key, text);
-		return text;
+		this.data[key] =  file;
+		return file;
 	}
-*/
+
+
 	public getStoreDir(): string {
 		return this.storePath;
 	}
@@ -596,175 +585,169 @@ export class InstantData {
 	}
 
 
+	public getUser1JsonCredential(): VerifiableCredential{
+		if (this.vcUser1Json == null) {
+			let doc = this.getUser1Document();
 
+			let id = new DIDURL(doc.getSubject(), "#json");
 
-/*
-	public synchronized VerifiableCredential getUser1JsonCredential() throws DIDException {
-		if (vcUser1Json == null) {
-			DIDDocument doc = getUser1Document();
+			let kycIssuer = new Issuer(this.idIssuer);
+			let cb = kycIssuer.issueFor(doc.getSubject());
 
-			DIDURL id = new DIDURL(doc.getSubject(), "#json");
+			let jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
-			Issuer kycIssuer = new Issuer(idIssuer);
-			VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
-
-			String jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
-
-			VerifiableCredential vcJson = cb.id(id)
+			let vcJson = cb.id(id)
 					.type("TestCredential", "JsonCredential")
 					.properties(jsonProps)
 					.seal(TestConfig.storePass);
 			vcJson.getMetadata().setAlias("json");
-			store.storeCredential(vcJson);
-
-			vcUser1Json = vcJson;
+			this.testData.store.storeCredential(vcJson);
+			this.vcUser1Json = vcJson;
 		}
 
-		return vcUser1Json;
+		return this.vcUser1Json;
 	}
 
-	public synchronized VerifiableCredential getUser1JobPositionCredential() throws DIDException {
-		if (vcUser1JobPosition == null) {
-			getExampleCorpDocument();
 
-			DIDDocument doc = getUser1Document();
+	public getUser1JobPositionCredential(): VerifiableCredential{
+		if (this.vcUser1JobPosition == null) {
+			this.getExampleCorpDocument();
 
-			DIDURL id = new DIDURL(doc.getSubject(), "#email");
+			let doc = this.getUser1Document();
 
-			Issuer kycIssuer = new Issuer(idExampleCorp);
-			VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+			let id = new DIDURL(doc.getSubject(), "#email");
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("title", "CEO");
+			let kycIssuer = new Issuer(this.idExampleCorp);
+			let cb = kycIssuer.issueFor(doc.getSubject());
 
-			VerifiableCredential vc = cb.id(id)
+			let props = new Map<String, Object>();
+			props.set("title", "CEO");
+
+			let vc = cb.id(id)
 					.type("JobPositionCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
-			store.storeCredential(vc);
-
-			vcUser1JobPosition = vc;
+			this.testData.store.storeCredential(vc);
+			this.vcUser1JobPosition = vc;
 		}
 
-		return vcUser1JobPosition;
+		return this.vcUser1JobPosition;
 	}
 
-	public synchronized VerifiablePresentation getUser1NonemptyPresentation() throws DIDException {
-		if (vpUser1Nonempty == null) {
-			DIDDocument doc = getUser1Document();
+	public  getUser1NonemptyPresentation() : VerifiablePresentation {
+		if (this.vpUser1Nonempty == null) {
+			let doc = this.getUser1Document();
 
-			VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
-					doc.getSubject(), store);
+			let pb = VerifiablePresentation.createFor(doc.getSubject(), this.testData.store);
 
-			VerifiablePresentation vp = pb
+			let vp = pb
 					.credentials(doc.getCredential("#profile"), doc.getCredential("#email"))
-					.credentials(getUser1PassportCredential())
-					.credentials(getUser1TwitterCredential())
-					.credentials(getUser1JobPositionCredential())
+					.credentials(this.getUser1PassportCredential())
+					.credentials(this.getUser1TwitterCredential())
+					.credentials(this.getUser1JobPositionCredential())
 					.realm("https://example.com/")
 					.nonce("873172f58701a9ee686f0630204fee59")
 					.seal(TestConfig.storePass);
 
-			vpUser1Nonempty = vp;
+			this.vpUser1Nonempty = vp;
 		}
 
-		return vpUser1Nonempty;
+		return this.vpUser1Nonempty;
 	}
 
-	public synchronized VerifiablePresentation getUser1EmptyPresentation() throws DIDException {
-		if (vpUser1Empty == null) {
-			DIDDocument doc = getUser1Document();
+	public  getUser1EmptyPresentation() : VerifiablePresentation {
+		if (this.vpUser1Empty == null) {
+			let doc = this.getUser1Document();
 
-			VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
-					doc.getSubject(), store);
+			let pb = VerifiablePresentation.createFor(doc.getSubject(), this.testData.store);
 
-			VerifiablePresentation vp = pb.realm("https://example.com/")
-					.nonce("873172f58701a9ee686f0630204fee59")
-					.seal(TestConfig.storePass);
+			let vp = pb.realm("https://example.com/")
+			.nonce("873172f58701a9ee686f0630204fee59")
+			.seal(TestConfig.storePass);
 
-			vpUser1Empty = vp;
+			this.vpUser1Empty = vp;
 		}
 
-		return vpUser1Empty;
+		return this.vpUser1Empty;
 	}
 
-	public synchronized DIDDocument getUser2Document() throws DIDException {
-		if (idUser2 == null) {
-			DIDDocument doc = identity.newDid(TestConfig.storePass);
+	public getUser2Document() : DIDDocument{
+		if (this.idUser2 == null) {
+			let doc = this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User2");
 
-			DIDDocument.Builder db = doc.edit();
+			let db = doc.edit();
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("name", "John");
-			props.put("gender", "Male");
-			props.put("nation", "Singapore");
-			props.put("language", "English");
-			props.put("email", "john@example.com");
-			props.put("twitter", "@john");
+			let props = new Map<String, Object>();
+			props.set("name", "John");
+			props.set("gender", "Male");
+			props.set("nation", "Singapore");
+			props.set("language", "English");
+			props.set("email", "john@example.com");
+			props.set("twitter", "@john");
 
 			db.addCredential("#profile", props, TestConfig.storePass);
 			doc = db.seal(TestConfig.storePass);
-			store.storeDid(doc);
+			this.testData.store.storeDid(doc);
 			doc.publish(TestConfig.storePass);
 
-			idUser2 = doc;
+			this.idUser2 = doc;
 		}
 
-		return idUser2;
+		return this.idUser2;
 	}
 
-	public synchronized DIDDocument getUser3Document() throws DIDException {
-		if (idUser3 == null) {
-			DIDDocument doc = identity.newDid(TestConfig.storePass);
+	public getUser3Document() : DIDDocument{
+		if (this.idUser3 == null) {
+			let doc = this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User3");
 			doc.publish(TestConfig.storePass);
 
-			idUser3 = doc;
+			this.idUser3 = doc;
 		}
 
-		return idUser3;
+		return this.idUser3;
 	}
 
-	public synchronized DIDDocument getUser4Document() throws DIDException {
-		if (idUser4 == null) {
-			DIDDocument doc = identity.newDid(TestConfig.storePass);
+	public getUser4Document() : DIDDocument{
+		if (this.idUser4 == null) {
+			let doc = this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User4");
 			doc.publish(TestConfig.storePass);
 
-			idUser4 = doc;
+			this.idUser4 = doc;
 		}
 
-		return idUser4;
+		return this.idUser4;
 	}
 
-	public synchronized DIDDocument getExampleCorpDocument() throws DIDException {
-		if (idExampleCorp == null) {
-			getIssuerDocument();
+    public getExampleCorpDocument() : DIDDocument{
+		if (this.idExampleCorp == null) {
+			this.getIssuerDocument();
 
-			DID did = new DID("did:elastos:example");
-			DIDDocument doc = idIssuer.newCustomizedDid(did, TestConfig.storePass);
+			let did = new DID("did:elastos:example");
+			let doc = this.idIssuer.newCustomized(did, TestConfig.storePass);
 
-			Issuer selfIssuer = new Issuer(doc);
-			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(doc.getSubject());
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("name", "Example LLC");
-			props.put("website", "https://example.com/");
-			props.put("email", "contact@example.com");
+			let props = new Map<string, any>();
+			props.set("name", "Example LLC");
+			props.set("website", "https://example.com/");
+			props.set("email", "contact@example.com");
 
-			VerifiableCredential vc = cb.id("#profile")
+			let vc = cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
 
-			DIDDocument.Builder db = doc.edit();
+			let db = doc.edit();
 			db.addCredential(vc);
 
-			HDKey key = TestData.generateKeypair();
-			DIDURL id = new DIDURL(doc.getSubject(), "#key2");
+			let key = TestData.generateKeypair();
+			let id = new DIDURL(doc.getSubject(), "#key2");
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
-			store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+			this.testData.store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 
 			// No private key for testKey
 			key = TestData.generateKeypair();
@@ -772,92 +755,94 @@ export class InstantData {
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 
 			doc = db.seal(TestConfig.storePass);
-			store.storeDid(doc);
+			this.testData.store.storeDid(doc);
 			doc.publish(TestConfig.storePass);
 
-			idExampleCorp = doc;
+			this.idExampleCorp = doc;
 		}
 
-		return idExampleCorp;
+		return this.idExampleCorp;
 	}
 
-	public synchronized DIDDocument getFooBarDocument() throws DIDException {
-		if (idFooBar == null) {
-			getExampleCorpDocument();
-			getUser1Document();
-			getUser2Document();
-			getUser3Document();
+	public getFooBarDocument() : DIDDocument{
+		if (this.idFooBar == null) {
+			this.getExampleCorpDocument();
+			this.getUser1Document();
+			this.getUser2Document();
+			this.getUser3Document();
 
-			DID[] controllers = {idUser1.getSubject(), idUser2.getSubject(), idUser3.getSubject()};
-			DID did = new DID("did:elastos:foobar");
-			DIDDocument doc = idUser1.newCustomizedDid(did, controllers, 2, TestConfig.storePass);
-			DIDURL signKey = idUser1.getDefaultPublicKeyId();
+			let controllers = [this.idUser1.getSubject(), 
+				               this.idUser2.getSubject(), 
+							   this.idUser3.getSubject()];
+			let did = new DID("did:elastos:foobar");
+			let doc = this.idUser1.newCustomized(did, controllers, 2, TestConfig.storePass);
+			let signKey = this.idUser1.getDefaultPublicKeyId();
 
 			// Add public keys embedded credentials
-			DIDDocument.Builder db = doc.edit(idUser1);
+			let db = doc.edit(this.idUser1);
 
-			HDKey temp = TestData.generateKeypair();
+			let temp = TestData.generateKeypair();
 			db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
-			store.storePrivateKey(new DIDURL(doc.getSubject(), "#key2"),
+			this.testData.store.storePrivateKey(new DIDURL(doc.getSubject(), "#key2"),
 					temp.serialize(), TestConfig.storePass);
 
 			temp = TestData.generateKeypair();
 			db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
-			store.storePrivateKey(new DIDURL(doc.getSubject(), "#key3"),
+			this.testData.store.storePrivateKey(new DIDURL(doc.getSubject(), "#key3"),
 					temp.serialize(), TestConfig.storePass);
 
 			db.addService("#vault", "Hive.Vault.Service",
 					"https://foobar.com/vault");
 
-			Map<String, Object> map = new HashMap<String, Object>();
-			map.put("abc", "helloworld");
-			map.put("foo", 123);
-			map.put("bar", "foobar");
-			map.put("foobar", "lalala...");
-			map.put("date", Calendar.getInstance().getTime());
-			map.put("ABC", "Helloworld");
-			map.put("FOO", 678);
-			map.put("BAR", "Foobar");
-			map.put("FOOBAR", "Lalala...");
-			map.put("DATE", Calendar.getInstance().getTime());
+			let map = new Map<string, any>();
+			map.set("abc", "helloworld");
+			map.set("foo", 123);
+			map.set("bar", "foobar");
+			map.set("foobar", "lalala...");
+			map.set("date", new Date());
+			map.set("ABC", "Helloworld");
+			map.set("FOO", 678);
+			map.set("BAR", "Foobar");
+			map.set("FOOBAR", "Lalala...");
+			map.set("DATE", new Date());
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("abc", "helloworld");
-			props.put("foo", 123);
-			props.put("bar", "foobar");
-			props.put("foobar", "lalala...");
-			props.put("date", Calendar.getInstance().getTime());
-			props.put("map", map);
-			props.put("ABC", "Helloworld");
-			props.put("FOO", 678);
-			props.put("BAR", "Foobar");
-			props.put("FOOBAR", "Lalala...");
-			props.put("DATE", Calendar.getInstance().getTime());
-			props.put("MAP", map);
+			let props = new Map<string, any>();
+			props.set("abc", "helloworld");
+			props.set("foo", 123);
+			props.set("bar", "foobar");
+			props.set("foobar", "lalala...");
+			props.set("date", new Date());
+			props.set("map", map);
+			props.set("ABC", "Helloworld");
+			props.set("FOO", 678);
+			props.set("BAR", "Foobar");
+			props.set("FOOBAR", "Lalala...");
+			props.set("DATE", new Date());
+			props.set("MAP", map);
 
 			db.addService("#vcr", "CredentialRepositoryService",
 					"https://foobar.com/credentials", props);
 
-			Issuer selfIssuer = new Issuer(doc, signKey);
-			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+			let selfIssuer = new Issuer(doc, signKey);
+			let cb = selfIssuer.issueFor(doc.getSubject());
 
-			props = new HashMap<String, Object>();
-			props.put("name", "Foo Bar Inc");
-			props.put("language", "Chinese");
-			props.put("email", "contact@foobar.com");
+			props = new Map<string, any>();
+			props.set("name", "Foo Bar Inc");
+			props.set("language", "Chinese");
+			props.set("email", "contact@foobar.com");
 
-			VerifiableCredential vcProfile = cb.id("#profile")
+			let vcProfile = cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
 
-			Issuer kycIssuer = new Issuer(idExampleCorp);
+			let kycIssuer = new Issuer(this.idExampleCorp);
 			cb = kycIssuer.issueFor(doc.getSubject());
 
 			props.clear();
-			props.put("email", "foobar@example.com");
+			props.set("email", "foobar@example.com");
 
-			VerifiableCredential vcEmail = cb.id("#email")
+			let vcEmail = cb.id("#email")
 					.type("BasicProfileCredential",
 							"InternetAccountCredential", "EmailCredential")
 					.properties(props)
@@ -866,333 +851,336 @@ export class InstantData {
 			db.addCredential(vcProfile);
 			db.addCredential(vcEmail);
 			doc = db.seal(TestConfig.storePass);
-			doc = idUser3.sign(doc, TestConfig.storePass);
-			store.storeDid(doc);
+			doc = this.idUser3.sign(doc, TestConfig.storePass);
+			this.testData.store.storeDid(doc);
 			doc.publish(signKey, TestConfig.storePass);
 
-			idFooBar = doc;
+			this.idFooBar = doc;
 		}
 
-		return idFooBar;
+		return this.idFooBar;
 	}
 
-	public synchronized VerifiableCredential getFooBarServiceCredential() throws DIDException {
-		if (vcFooBarServices == null) {
-			DIDDocument doc = getFooBarDocument();
+	public getFooBarServiceCredential() : VerifiableCredential{
+		if (this.vcFooBarServices == null) {
+			let doc = this.getFooBarDocument();
 
-			DIDURL id = new DIDURL(doc.getSubject(), "#services");
+			let id = new DIDURL(doc.getSubject(), "#services");
 
-			Issuer selfIssuer = new Issuer(doc, idUser1.getDefaultPublicKeyId());
-			VerifiableCredential.Builder cb = selfIssuer.issueFor(doc.getSubject());
+			let selfIssuer = new Issuer(doc, this.idUser1.getDefaultPublicKeyId());
+			let cb = selfIssuer.issueFor(doc.getSubject());
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("consultation", "https://foobar.com/consultation");
-			props.put("Outsourceing", "https://foobar.com/outsourcing");
+			let props = new Map<string, any>();
+			props.set("consultation", "https://foobar.com/consultation");
+			props.set("Outsourceing", "https://foobar.com/outsourcing");
 
-			VerifiableCredential vc = cb.id(id)
+			let vc = cb.id(id)
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
-			store.storeCredential(vc);
+			this.testData.store.storeCredential(vc);
 
-			vcFooBarServices = vc;
+			this.vcFooBarServices = vc;
 		}
 
-		return vcFooBarServices;
+		return this.vcFooBarServices;
 	}
 
-	public synchronized VerifiableCredential getFooBarLicenseCredential() throws DIDException {
-		if (vcFooBarLicense == null) {
-			getExampleCorpDocument();
-			getUser1Document();
-			getUser2Document();
-			getUser3Document();
+	public getFooBarLicenseCredential() : VerifiableCredential{
+		if (this.vcFooBarLicense == null) {
+			this.getExampleCorpDocument();
+			this.getUser1Document();
+			this.getUser2Document();
+			this.getUser3Document();
 
-			DIDDocument doc = getFooBarDocument();
+			let doc = this.getFooBarDocument();
 
-			DIDURL id = new DIDURL(doc.getSubject(), "#license");
+			let id = new DIDURL(doc.getSubject(), "#license");
 
-			Issuer kycIssuer = new Issuer(idExampleCorp);
-			VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+			let kycIssuer = new Issuer(this.idExampleCorp);
+			let cb = kycIssuer.issueFor(doc.getSubject());
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("license-id", "20201021C889");
-			props.put("scope", "Consulting");
+			let props = new Map<string, any>();
+			props.set("license-id", "20201021C889");
+			props.set("scope", "Consulting");
 
-			VerifiableCredential vc = cb.id(id)
+			let vc = cb.id(id)
 					.type("LicenseCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
-			store.storeCredential(vc);
+			this.testData.store.storeCredential(vc);
 
-			vcFooBarLicense = vc;
+			this.vcFooBarLicense = vc;
 		}
 
-		return vcFooBarLicense;
+		return this.vcFooBarLicense;
 	}
 
-	public synchronized VerifiablePresentation getFooBarNonemptyPresentation() throws DIDException {
-		if (vpFooBarNonempty == null) {
-			DIDDocument doc = getFooBarDocument();
+	public getFooBarNonemptyPresentation() : VerifiablePresentation{
+		if (this.vpFooBarNonempty == null) {
+			let doc = this.getFooBarDocument();
 
-			VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
-					doc.getSubject(), idUser1.getDefaultPublicKeyId(), store);
+			let pb = VerifiablePresentation.createFor(
+					doc.getSubject(), this.idUser1.getDefaultPublicKeyId(), this.testData.store);
 
-			VerifiablePresentation vp = pb
+			let vp = pb
 					.credentials(doc.getCredential("#profile"),
 							doc.getCredential("#email"))
-					.credentials(getFooBarServiceCredential())
-					.credentials(getFooBarLicenseCredential())
+					.credentials(this.getFooBarServiceCredential())
+					.credentials(this.getFooBarLicenseCredential())
 					.realm("https://example.com/")
 					.nonce("873172f58701a9ee686f0630204fee59")
 					.seal(TestConfig.storePass);
 
-			vpFooBarNonempty = vp;
+			this.vpFooBarNonempty = vp;
 		}
 
-		return vpFooBarNonempty;
+		return this.vpFooBarNonempty;
 	}
 
-	public synchronized VerifiablePresentation getFooBarEmptyPresentation() throws DIDException {
-		if (vpFooBarEmpty == null) {
-			DIDDocument doc = getFooBarDocument();
+	public getFooBarEmptyPresentation() : VerifiablePresentation{
+		if (this.vpFooBarEmpty == null) {
+			let doc = this.getFooBarDocument();
 
-			VerifiablePresentation.Builder pb = VerifiablePresentation.createFor(
-					doc.getSubject(), new DIDURL("did:elastos:foobar#key2"), store);
+			let pb = VerifiablePresentation.createFor(
+					doc.getSubject(), new DIDURL("did:elastos:foobar#key2"), this.testData.store);
 
-			VerifiablePresentation vp = pb.realm("https://example.com/")
+			let vp = pb.realm("https://example.com/")
 					.nonce("873172f58701a9ee686f0630204fee59")
 					.seal(TestConfig.storePass);
 
-			vpFooBarEmpty = vp;
+			this.vpFooBarEmpty = vp;
 		}
 
-		return vpFooBarEmpty;
+		return this.vpFooBarEmpty;
 	}
 
-	public synchronized TransferTicket getFooBarTransferTicket() throws DIDException {
-		if (ttFooBar == null) {
-			DIDDocument doc = getFooBarDocument();
-			DIDDocument user4 = getUser4Document();
+	public getFooBarTransferTicket() : TransferTicket{
+		if (this.ttFooBar == null) {
+			let doc = this.getFooBarDocument();
+			let user4 = this.getUser4Document();
 
-			TransferTicket tt = idUser1.createTransferTicket(doc.getSubject(), user4.getSubject(), TestConfig.storePass);
-			tt = idUser3.sign(tt, TestConfig.storePass);
+			let tt = this.idUser1.createTransferTicket(doc.getSubject(), user4.getSubject(), TestConfig.storePass);
+			tt = this.idUser3.sign(tt, TestConfig.storePass);
 
-			ttFooBar = tt;
+			this.ttFooBar = tt;
 		}
 
-		return ttFooBar;
+		return this.ttFooBar;
 	}
 
-	public synchronized DIDDocument getFooDocument() throws DIDException {
-		if (idFoo == null) {
-			getUser1Document();
-			getUser2Document();
+	public getFooDocument() : DIDDocument{
+		if (this.idFoo == null) {
+			this.getUser1Document();
+			this.getUser2Document();
 
-			DID[] controllers = {idUser2.getSubject()};
-			DID did = new DID("did:elastos:foo");
-			DIDDocument doc = idUser1.newCustomizedDid(did, controllers, 2, TestConfig.storePass);
-			doc = idUser2.sign(doc, TestConfig.storePass);
-			store.storeDid(doc);
+			let controllers : DID[] = [this.idUser2.getSubject()];
+			let did = new DID("did:elastos:foo");
+			let doc = this.idUser1.newCustomizedDid(did, controllers, 2, TestConfig.storePass);
+			doc = this.idUser2.sign(doc, TestConfig.storePass);
+			this.testData.store.storeDid(doc);
 
-			doc.setEffectiveController(idUser2.getSubject());
+			doc.setEffectiveController(this.idUser2.getSubject());
 			doc.publish(TestConfig.storePass);
 			doc.setEffectiveController(null);
 
-			idFoo = doc;
+			this.idFoo = doc;
 		}
 
-		return idFoo;
+		return this.idFoo;
 	}
 
-	public synchronized VerifiableCredential getFooEmailCredential() throws DIDException {
-		if (vcFooEmail == null) {
-			getIssuerDocument();
+	public getFooEmailCredential() : VerifiableCredential{
+		if (this.vcFooEmail == null) {
+			this.getIssuerDocument();
 
-			DIDDocument doc = getFooDocument();
+			let doc = this.getFooDocument();
 
-			DIDURL id = new DIDURL(doc.getSubject(), "#email");
+			let id = new DIDURL(doc.getSubject(), "#email");
 
-			Issuer kycIssuer = new Issuer(idIssuer);
-			VerifiableCredential.Builder cb = kycIssuer.issueFor(doc.getSubject());
+			let kycIssuer = new Issuer(this.idIssuer);
+			let cb = kycIssuer.issueFor(doc.getSubject());
 
-			Map<String, Object> props = new HashMap<String, Object>();
-			props.put("email", "foo@example.com");
+			let props = new Map<string, any>();
+			props.set("email", "foo@example.com");
 
-			VerifiableCredential vc = cb.id(id)
+			let vc = cb.id(id)
 					.type("InternetAccountCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
-			store.storeCredential(vc);
+			this.testData.store.storeCredential(vc);
 
-			vcFooEmail = vc;
+			this.vcFooEmail = vc;
 		}
 
-		return vcFooEmail;
+		return this.vcFooEmail;
 	}
 
-	public synchronized DIDDocument getBarDocument() throws DIDException {
-		if (idBar == null) {
-			getUser1Document();
-			getUser2Document();
-			getUser3Document();
+	public getBarDocument() : DIDDocument{
+		if (this.idBar == null) {
+			this.getUser1Document();
+			this.getUser2Document();
+			this.getUser3Document();
 
-			DID[] controllers = {idUser2.getSubject(), idUser3.getSubject()};
-			DID did = new DID("did:elastos:bar");
-			DIDDocument doc = idUser1.newCustomizedDid(did, controllers, 3, TestConfig.storePass);
-			doc = idUser2.sign(doc, TestConfig.storePass);
-			doc = idUser3.sign(doc, TestConfig.storePass);
-			store.storeDid(doc);
-			doc.publish(idUser3.getDefaultPublicKeyId(), TestConfig.storePass);
+			let controllers = [this.idUser2.getSubject(), 
+				               this.idUser3.getSubject()];
+			let did = new DID("did:elastos:bar");
+			let doc = this.idUser1.newCustomizedDid(did, controllers, 3, TestConfig.storePass);
+			doc = this.idUser2.sign(doc, TestConfig.storePass);
+			doc = this.idUser3.sign(doc, TestConfig.storePass);
+			this.testData.store.storeDid(doc);
+			doc.publish(this.idUser3.getDefaultPublicKeyId(), TestConfig.storePass);
 
-			idBar = doc;
+			this.idBar = doc;
 		}
 
-		return idBar;
+		return this.idBar;
 	}
 
-	public synchronized DIDDocument getBazDocument() throws DIDException {
-		if (idBaz == null) {
-			getUser1Document();
-			getUser2Document();
-			getUser3Document();
+	public getBazDocument(): DIDDocument{
+		if (this.idBaz == null) {
+			this.getUser1Document();
+			this.getUser2Document();
+			this.getUser3Document();
 
-			DID[] controllers = {idUser2.getSubject(), idUser3.getSubject()};
-			DID did = new DID("did:elastos:baz");
-			DIDDocument doc = idUser1.newCustomizedDid(did, controllers, 1, TestConfig.storePass);
-			store.storeDid(doc);
-			doc.publish(idUser1.getDefaultPublicKeyId(), TestConfig.storePass);
+			let controllers = [this.idUser2.getSubject(), this.idUser3.getSubject()];
+			let did = new DID("did:elastos:baz");
+			let doc = this.idUser1.newCustomizedDid(did, controllers, 1, TestConfig.storePass);
+			this.testData.store.storeDid(doc);
+			doc.publish(this.idUser1.getDefaultPublicKeyId(), TestConfig.storePass);
 
-			idBaz = doc;
+			this.idBaz = doc;
 		}
 
-		return idBaz;
+		return this.idBaz;
 	}
 
-	public synchronized TransferTicket getBazTransferTicket() throws DIDException {
-		if (ttBaz == null) {
-			DIDDocument doc = getBazDocument();
-			DIDDocument user4 = getUser4Document();
+	public getBazTransferTicket() : TransferTicket{
+		if (this.ttBaz == null) {
+			let doc = this.getBazDocument();
+			let user4 = this.getUser4Document();
 
-			TransferTicket tt = idUser2.createTransferTicket(doc.getSubject(), user4.getSubject(), TestConfig.storePass);
+			let tt = this.idUser2.createTransferTicket(doc.getSubject(), user4.getSubject(), TestConfig.storePass);
 
-			ttBaz = tt;
+			this.ttBaz = tt;
 		}
 
-		return ttBaz;
+		return this.ttBaz;
 	}
 
-	public DIDDocument getDocument(String did) throws DIDException {
+	public getDocument(did: string): DIDDocument{
 		switch (did) {
-		case "issuer":
-			return getIssuerDocument();
-
-		case "user1":
-			return getUser1Document();
-
-		case "user2":
-			return getUser1Document();
-
-		case "user3":
-			return getUser1Document();
-
-		case "user4":
-			return getUser1Document();
-
-		case "examplecorp":
-			return getExampleCorpDocument();
-
-		case "foobar":
-			return getFooBarDocument();
-
-		case "foo":
-			return getFooDocument();
-
-		case "bar":
-			return getBarDocument();
-
-		case "baz":
-			return getBazDocument();
-
-		default:
-			return null;
-		}
+			case "issuer":
+				return this.getIssuerDocument();
+	
+			case "user1":
+				return this.getUser1Document();
+	
+			case "user2":
+				return this.getUser1Document();
+	
+			case "user3":
+				return this.getUser1Document();
+	
+			case "user4":
+				return this.getUser1Document();
+	
+			case "examplecorp":
+				return this.getExampleCorpDocument();
+	
+			case "foobar":
+				return this.getFooBarDocument();
+	
+			case "foo":
+				return this.getFooDocument();
+	
+			case "bar":
+				return this.getBarDocument();
+	
+			case "baz":
+				return this.getBazDocument();
+	
+			default:
+				return null;
+			}
 	}
 
-	public VerifiableCredential getCredential(String did, String vc) throws DIDException {
+	public getCredential(did: string, vc: string) : VerifiableCredential{
 		switch (did) {
-		case "user1":
-			switch (vc) {
-			case "passport":
-				return getUser1PassportCredential();
-
-			case "twitter":
-				return getUser1TwitterCredential();
-
-			case "json":
-				return getUser1JsonCredential();
-
-			case "jobposition":
-				return getUser1JobPositionCredential();
-
+			case "user1":
+				switch (vc) {
+				case "passport":
+					return this.getUser1PassportCredential();
+	
+				case "twitter":
+					return this.getUser1TwitterCredential();
+	
+				case "json":
+					return this.getUser1JsonCredential();
+	
+				case "jobposition":
+					return this.getUser1JobPositionCredential();
+	
+				default:
+					return null;
+				}
+	
+			case "foobar":
+				switch (vc) {
+				case "services":
+					return this.getFooBarServiceCredential();
+	
+				case "license":
+					return this.getFooBarLicenseCredential();
+	
+				default:
+					return null;
+				}
+	
+			case "foo":
+				switch (vc) {
+				case "email":
+					return this.getFooEmailCredential();
+	
+				default:
+					return null;
+				}
+	
 			default:
 				return null;
 			}
-
-		case "foobar":
-			switch (vc) {
-			case "services":
-				return getFooBarServiceCredential();
-
-			case "license":
-				return getFooBarLicenseCredential();
-
-			default:
-				return null;
-			}
-
-		case "foo":
-			switch (vc) {
-			case "email":
-				return getFooEmailCredential();
-
-			default:
-				return null;
-			}
-
-		default:
-			return null;
-		}
 	}
 
-	public VerifiablePresentation getPresentation(String did, String vp) throws DIDException {
+	public getPresentation(did: string, vp: string): VerifiablePresentation{
 		switch (did) {
-		case "user1":
-			switch (vp) {
-			case "nonempty":
-				return getUser1NonemptyPresentation();
-
-			case "empty":
-				return getUser1EmptyPresentation();
-
+			case "user1":
+				switch (vp) {
+				case "nonempty":
+					return this.getUser1NonemptyPresentation();
+	
+				case "empty":
+					return this.getUser1EmptyPresentation();
+	
+				default:
+					return null;
+				}
+	
+			case "foobar":
+				switch (vp) {
+				case "nonempty":
+					return this.getFooBarNonemptyPresentation();
+	
+				case "empty":
+					return this.getFooBarEmptyPresentation();
+	
+				default:
+					return null;
+				}
+	
 			default:
 				return null;
 			}
+	}
 
-		case "foobar":
-			switch (vp) {
-			case "nonempty":
-				return getFooBarNonemptyPresentation();
 
-			case "empty":
-				return getFooBarEmptyPresentation();
-
-			default:
-				return null;
-			}
-
-		default:
-			return null;
-		}
-	}*/
 }
