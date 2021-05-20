@@ -21,7 +21,7 @@
  */
 
 import { TestData } from "./utils/testdata";
-import { Logger, DIDStore, DID, RootIdentity, DIDDocument } from "../dist/did";
+import { Logger, DIDStore, DID, RootIdentity, DIDDocument, DIDBiography, IDChainRequest } from "../dist/did";
 import { TestConfig } from "./utils/testconfig";
 
 const log = new Logger("IDChainOperationsTest");
@@ -97,162 +97,156 @@ describe('IDChainOperations Tests', () => {
 		});
 	});
 
-	/* @Test
-	@Order(3)
-	public void testCreateAndResolveAsync2() throws DIDException {
-		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
-		DID did = doc.getSubject();
+	describe('Order 3', () => {
+		test('testCreateAndResolveAsync2', async () => {
+			// Create new DID and publish to ID sidechain.
+			let doc = identity.newDid(TestConfig.storePass);
+			let did = doc.getSubject();
 
-		log.debug("Publishing new DID and resolve {}...", did);
-		long start = System.currentTimeMillis();
-		CompletableFuture<DIDDocument> tf = doc.publishAsync(TestConfig.storePass)
-				.thenCompose((Void) -> {
-					try {
-						testData.waitForWalletAvaliable();
-					} catch (DIDException e) {
-						throw new CompletionException(e);
-					}
+			log.debug("Publishing new DID and resolve {}...", did);
 
-					return did.resolveAsync(true);
-				});
-		DIDDocument resolved = tf.join();
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Publish new DID and resolve {}...OK({}s)", did, duration);
+			let start = Date.now();
+			doc.publishAsync(TestConfig.storePass);
+			testData.waitForWalletAvailable();
+			let resolved = await did.resolveAsync(true);
 
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Publish new DID and resolve {}...OK({}s)", did, duration);
 
-		dids.add(did); // 2
-	}
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-	@Test
-	@Order(4)
-	public void testUpdateAndResolve() throws DIDException {
-		// User the DID that created in previous case(1)
-		DIDDocument doc = store.loadDid(dids.get(0));
-		assertNotNull(doc);
-		DID did = doc.getSubject();
+			dids.push(did); // 2
+		});
+	});
 
-		DIDDocument resolved = did.resolve();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
-		String lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
+	describe('Order 4', () => {
+		test('testUpdateAndResolve', () => {
+			// User the DID that created in previous case(1)
+			let doc = store.loadDid(dids[0]);
+			expect(doc).not.toBeNull();
+			let did = doc.getSubject();
 
-		// Update
-		DIDDocument.Builder db = doc.edit();
-		HDKey key = TestData.generateKeypair();
-		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
-		assertEquals(2, doc.getPublicKeyCount());
-		assertEquals(2, doc.getAuthenticationKeyCount());
-		store.storeDid(doc);
+			let resolved = did.resolve();
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
+			let lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-        log.debug("Updating DID {}...", did);
-		long start = System.currentTimeMillis();
-		doc.publish(TestConfig.storePass);
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Update DID {}...OK({}s)", did, duration);
+			// Update
+			let db = doc.edit();
+			let key = TestData.generateKeypair();
+			db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+			doc = db.seal(TestConfig.storePass);
+			expect(2).toEqual(doc.getPublicKeyCount());
+			expect(2).toEqual(doc.getAuthenticationKeyCount());
+			store.storeDid(doc);
 
-		testData.waitForWalletAvaliable();
-		resolved = did.resolve();
-		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
+			log.debug("Updating DID {}...", did);
+			let start = Date.now();
+			doc.publish(TestConfig.storePass);
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Update DID {}...OK({}s)", did, duration);
 
-		lastTxid = resolved.getMetadata().getTransactionId();
-        log.debug("Last transaction id {}", lastTxid);
+			testData.waitForWalletAvailable();
+			resolved = did.resolve();
+			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(2, rr.getTransactionCount());
-		List<DIDTransaction> txs = rr.getAllTransactions();
-		assertNotNull(txs);
-		assertEquals(2, txs.size());
+			lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		DIDTransaction tx = txs.get(0);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.UPDATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
+			let rr = did.resolveBiography();
+			expect(rr).not.toBeNull();
+			expect(did.equals(rr.getDid())).toBeTruthy();
+			expect(DIDBiography.Status.VALID).toEqual(rr.getStatus());
+			expect(2).toEqual(rr.getTransactionCount());
+			let txs = rr.getAllTransactions();
+			expect(txs).not.toBeNull();
+			expect(2).toEqual(txs.size());
 
-		tx = txs.get(1);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.CREATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-	}
+			let tx = txs.get(0);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
 
-	@Test
-	@Order(5)
-	public void testUpdateAndResolveAgain() throws DIDException {
-		// User the DID that created in previous case(1)
-		DIDDocument doc = store.loadDid(dids.get(0));
-		assertNotNull(doc);
-		DID did = doc.getSubject();
+			tx = txs.get(1);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
+		});
+	});
 
-		DIDDocument resolved = did.resolve();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
-		String lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
+	describe('Order 5', () => {
+		test('testUpdateAndResolveAgain', () => {
+			// User the DID that created in previous case(1)
+			let doc = store.loadDid(dids[0]);
+			expect(doc).not.toBeNull();
+			let did = doc.getSubject();
 
-		// Update again
-		DIDDocument.Builder db = doc.edit();
-		HDKey key = TestData.generateKeypair();
-		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
-		assertEquals(3, doc.getPublicKeyCount());
-		assertEquals(3, doc.getAuthenticationKeyCount());
-		store.storeDid(doc);
+			let resolved = did.resolve();
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
+			let lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-        log.debug("Updating DID {}...", did);
-		long start = System.currentTimeMillis();
-		doc.publish(TestConfig.storePass);
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Update DID {}...OK({}s)", did, duration);
+			// Update again
+			let db = doc.edit();
+			let key = TestData.generateKeypair();
+			db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+			doc = db.seal(TestConfig.storePass);
+			expect(3).toEqual(doc.getPublicKeyCount());
+			expect(3).toEqual(doc.getAuthenticationKeyCount());
+			store.storeDid(doc);
 
-		testData.waitForWalletAvaliable();
-		resolved = did.resolve();
-		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
+			log.debug("Updating DID {}...", did);
+			let start = Date.now();
+			doc.publish(TestConfig.storePass);
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Update DID {}...OK({}s)", did, duration);
 
-		lastTxid = resolved.getMetadata().getTransactionId();
-        log.debug("Last transaction id {}", lastTxid);
+			testData.waitForWalletAvailable();
+			resolved = did.resolve();
+			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.getTransactionCount());
-		List<DIDTransaction> txs = rr.getAllTransactions();
-		assertNotNull(txs);
-		assertEquals(3, txs.size());
+			lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		DIDTransaction tx = txs.get(0);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.UPDATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
+			let rr = did.resolveBiography();
+			expect(rr).not.toBeNull();
+			expect(did.equals(rr.getDid())).toBeTruthy();
+			expect(DIDBiography.Status.VALID.equals(rr.getStatus())).toBeTruthy();
+			expect(3).toEqual(rr.getTransactionCount());
+			let txs = rr.getAllTransactions();
+			expect(txs).not.toBeNull();
+			expect(3).toEqual(txs.size());
 
-		tx = txs.get(1);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.UPDATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
+			let tx = txs.get(0);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
 
-		tx = txs.get(2);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.CREATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-	}
+			tx = txs.get(1);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
 
-	@Test
+			tx = txs.get(2);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
+		});
+	});
+
+	/*@Test
 	@Order(6)
 	public void testUpdateAndResolveAsync() throws DIDException {
 		// User the DID that created in previous case(2)
@@ -286,7 +280,7 @@ describe('IDChainOperations Tests', () => {
 				});
 		tf.join();
 
-		testData.waitForWalletAvaliable();
+		testData.waitForWalletAvailable();
 		rf = did.resolveAsync(true);
 		resolved = rf.join();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
@@ -350,7 +344,7 @@ describe('IDChainOperations Tests', () => {
 				});
 		tf.join();
 
-		testData.waitForWalletAvaliable();
+		testData.waitForWalletAvailable();
 		rf = did.resolveAsync(true);
 		resolved = rf.join();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
@@ -423,7 +417,7 @@ describe('IDChainOperations Tests', () => {
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
         log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-		testData.waitForWalletAvaliable();
+		testData.waitForWalletAvailable();
 		DIDDocument resolved = did.resolve();
 		assertEquals(did, resolved.getSubject());
 		assertTrue(resolved.isValid());
@@ -476,7 +470,7 @@ describe('IDChainOperations Tests', () => {
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
         log.debug("Update DID {}...OK({}s)", did, duration);
 
-		testData.waitForWalletAvaliable();
+		testData.waitForWalletAvailable();
 		resolved = did.resolve();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
 		assertEquals(did, resolved.getSubject());
@@ -552,7 +546,7 @@ describe('IDChainOperations Tests', () => {
 		long duration = (System.currentTimeMillis() - start + 500) / 1000;
         log.debug("Update DID {}...OK({}s)", did, duration);
 
-		testData.waitForWalletAvaliable();
+		testData.waitForWalletAvailable();
 		resolved = did.resolve();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
 		assertEquals(did, resolved.getSubject());
@@ -627,7 +621,7 @@ describe('IDChainOperations Tests', () => {
 				});
 		tf.join();
 
-		testData.waitForWalletAvaliable();
+		testData.waitForWalletAvailable();
 		CompletableFuture<DIDDocument> rf = did.resolveAsync(true);
 		DIDDocument resolved = rf.join();
 		assertEquals(did, resolved.getSubject());
@@ -685,7 +679,7 @@ describe('IDChainOperations Tests', () => {
 				});
 		tf.join();
 
-		testData.waitForWalletAvaliable();
+		testData.waitForWalletAvailable();
 		CompletableFuture<DIDDocument> rf = did.resolveAsync(true);
 		resolved = rf.join();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
@@ -746,7 +740,7 @@ describe('IDChainOperations Tests', () => {
 				});
 		tf.join();
 
-		testData.waitForWalletAvaliable();
+		testData.waitForWalletAvailable();
 		CompletableFuture<DIDDocument> rf = did.resolveAsync(true);
 		resolved = rf.join();
 		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
