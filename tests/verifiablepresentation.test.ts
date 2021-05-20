@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DIDURL, VerifiablePresentation } from "../dist/did";
+import { DIDURL, DIDStore, VerifiablePresentation } from "../dist/did";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
 
@@ -49,12 +49,12 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp.getId()).toBeNull();
 		expect(1).toEqual(vp.getType().size());
 		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
-		assertEquals(user.getSubject(), vp.getHolder());
+		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(4).toEqual(vp.getCredentialCount());
 		let vcs = vp.getCredentials();
 		for (let vc of vcs) {
-			assertEquals(user.getSubject(), vc.getSubject().getId());
+			expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
 			expect(vc.getId().getFragment().equals("profile")
 					|| vc.getId().getFragment().equals("email")
@@ -84,7 +84,7 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp.getId()).toBeNull();
 		expect(1).toEqual(vp.getType().size());
 		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
-		assertEquals(user.getSubject(), vp.getHolder());
+		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());
 		expect(vp.getCredential(new DIDURL(vp.getHolder(), "#notExist"))).toBeNull();
@@ -272,4 +272,4 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp.isGenuine()).toBeTruthy();
 		expect(vp.isValid()).toBeTruthy();
 	});
-}
+});
