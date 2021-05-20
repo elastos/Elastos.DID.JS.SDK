@@ -28,8 +28,8 @@ describe("RootIdentity Tests", ()=>{
     	let identity2 = store2.loadRootIdentity();
     	expect(identity2).not.toBeNull();
 
-    	expect(identity.getPreDerivedPublicKey().serializePublicKeyBase58().equals(
-    			identity2.getPreDerivedPublicKey().serializePublicKeyBase58())).toBeTruthy();
+    	expect(identity.getPreDerivedPublicKey().serializePublicKeyBase58()).toEqual(
+    			identity2.getPreDerivedPublicKey().serializePublicKeyBase58());
 
     	let exportedMnemonic = identity2.exportMnemonic(TestConfig.storePass);
     	expect(testData.getMnemonic()).toEqual(exportedMnemonic);

@@ -89,6 +89,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 			mapper: this.DateSerializer.deserialize
 		});
 		mapper.defaultStringifierContext.features.serialization.DEFAULT_VIEW_INCLUSION = false;
+		mapper.defaultStringifierContext.features.serialization.FAIL_ON_SELF_REFERENCES = true;
 
 		return mapper;
 	}

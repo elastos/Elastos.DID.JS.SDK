@@ -33,7 +33,9 @@ import { DIDBiography } from "./internals";
 import {
     JsonSerialize,
     JsonDeserialize,
-    JsonCreator
+    JsonCreator,
+    JsonProperty,
+    JsonClassType
 } from "jackson-js";
 import {
     Serializer,

@@ -42,7 +42,7 @@ export class PropertySerializerFilter<T> extends Serializer {
     public static serialize (value: any, context: JsonStringifierTransformerContext): string | null {
         let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
 
-        if ((serializeContext && serializeContext.isNormalized()) || this.include(value, context)) {
+        if ((serializeContext && serializeContext.isNormalized()) || PropertySerializerFilter.include(value, context)) {
             return serializeContext.getObjectMapper().stringify(value);
         }
 
