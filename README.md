@@ -1,5 +1,35 @@
 # Elastos DID Typescript SDK
 
+## SDK development workflow
+
+- From the SDK folder: `npm run dev` (this enables hot reload when SDK files change)
+- Or `npm run build` without hot reload.
+
+## Writing tests
+
+**Note**: the tests/ folder contains its **own package.json and node_modules**, and depends on the "external library" **@elastosfoundation/did-js-sdk**.
+
+- Open the **tests/** folder as root in a different instance of vscode, this is the only way for now to let vscode display typescript types and issues correctly.
+- `npm link ..` (every time after calling `npm install` or `npm update`) from the tests/ folder. This command uses the local version of the DID SDK, that is just in the folder above tests.
+- Run one or several tests using one of the options below.
+
+## Running tests
+
+Several independant options:
+
+- In vscode, Menu -> Run -> **Start debugging**
+
+Or:
+
+- From the command line (SDK or tests/ folders):
+- `npm run test:node`
+
+Or:
+
+- Using **jest runner**:
+- Click **run** or **debug** directly from the code, above test descriptions.
+
+
 ## The DID Adapter
 
 A DIDAdapter is required to publish transactions to the DID chain. Different environments require different adapters such as:
