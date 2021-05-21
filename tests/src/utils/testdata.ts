@@ -48,14 +48,21 @@ export class TestData {
 	private instantData: InstantData;
 
 	public constructor() {
-		TestConfig.initialize();
-		if (File.exists(TestConfig.storeRoot))
-    		(new File(TestConfig.storeRoot)).delete();
-		importBundledBrowserData();
+		try {
+			TestConfig.initialize();
+			if (File.exists(TestConfig.storeRoot))
+				(new File(TestConfig.storeRoot)).delete();
+			importBundledBrowserData();
 
-		DIDTestExtension.setup();
+			DIDTestExtension.setup();
 
-		this.store = DIDStore.open(TestConfig.storeRoot);
+			this.store = DIDStore.open(TestConfig.storeRoot);
+		}
+		catch(e) {
+			// Catch errors here because Jest will silence them. So we print them to get more clues.
+			console.error("Catched exception in TestData constructor", e);
+			throw e;
+		}
 	}
 
 	public cleanup() {

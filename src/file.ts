@@ -172,7 +172,7 @@ import path from "path";
 	}
 
 	/**
-	 * Internal reimplementation of mkdir because even if nodejs now has a "resursive" option,
+	 * Internal reimplementation of mkdir because even if nodejs now has a "recursive" option,
 	 * browserfs localstorage driver doesn't.
 	 */
 	private mkdirpath(dirPath: string)
@@ -184,8 +184,16 @@ import path from "path";
 			}
 			catch(e)
 			{
-				this.mkdirpath(path.dirname(dirPath));
-				this.mkdirpath(dirPath);
+				let dirname = path.dirname(dirPath);
+				if (dirname !== dirPath) {
+					this.mkdirpath(dirname);
+					this.mkdirpath(dirPath);
+				}
+				else {
+					// We reached the root path. Folder creation has failed for some reason, so we
+					// throw an error.
+					throw e;
+				}
 			}
 		}
 	}
