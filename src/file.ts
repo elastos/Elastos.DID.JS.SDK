@@ -1,7 +1,8 @@
-import BrowserFS from "browserfs";
-import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, writeFileSync } from "fs";
-import fs from "fs";
+import BrowserFS, { BFSRequire } from "browserfs";
 import path from "path";
+
+const fs = BFSRequire("fs");
+const { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, writeFileSync } = fs;
 
 /**
  * Internal class mimicing Java File class in order to reduce the divergence with Java implementation
@@ -26,7 +27,7 @@ import path from "path";
 	public static SEPARATOR = "/";
 
 	private fullPath: string;
-	private fileStats?: Stats;
+	private fileStats?: any;
 
 	public constructor(path: File | string, subpath?: string) {
 		let fullPath: string = path instanceof File ? path.getAbsolutePath() : path as string;

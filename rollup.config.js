@@ -42,8 +42,8 @@ const banner = `/*
 
 const onwarn = warning => {
 	// eslint-disable-next-line no-console
-	//if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && warning.importer.indexOf('node_modules') < 0)
-	//	return; // TMP: don't get flooded by circular dependencies for now
+	if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && warning.importer.indexOf('node_modules') < 0 && warning.importer.indexOf("internals.ts") >= 0)
+		return; // TMP: don't get flooded by our "internals" circular dependencies for now
 
 	if (warning.code && warning.code === "THIS_IS_UNDEFINED")
 		return; // TMP: don't get flooded by this for now
@@ -163,7 +163,7 @@ export default command => {
 		input: 'src/index.ts',
 		onwarn,
 		external: [
-			'browserfs'
+			//'browserfs'
 			/* 'readable-stream',
 			'readable-stream/transform' */
 		],
@@ -218,8 +218,8 @@ export default command => {
 				"entries": [
 					{ "find": "buffer", "replacement": "buffer-es6" },
 					{ "find": "process", "replacement": "process-es6" },
-					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
-					{ "find": "path", "replacement": "browserfs/dist/shims/path" },
+					//{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
+					{ "find": "path", "replacement": "path-browserify" },
 					{ "find": "crypto", "replacement": "crypto-browserify" },
 					{ "find": "util/", "replacement": "node_modules/util/util.js" },
 					{ "find": "util", "replacement": "node_modules/util/util.js" },
@@ -231,7 +231,7 @@ export default command => {
 				]
 			}),
 			resolve({
-				mainFields: ['module', 'browser', 'jsnext:main', 'main'],
+				mainFields: ['browser', 'module', 'jsnext:main', 'main'],
 				browser: true,
 				preferBuiltins: true,
 				dedupe: ['bn.js', 'browserfs']

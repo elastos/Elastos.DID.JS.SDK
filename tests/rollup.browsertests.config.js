@@ -84,7 +84,7 @@ export default [
                 }
             }), */
             resolve({
-                mainFields: ['module', 'browser', 'jsnext:main', 'main'],
+                mainFields: ['browser', 'module', 'jsnext:main', 'main'],
                 browser: true,
                 preferBuiltins: false,
                 dedupe: []
@@ -97,7 +97,7 @@ export default [
             alias({
                 include: [".js",".ts"],
 				"entries": [
-					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
+					//{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
 					{ "find": "crypto", "replacement": "crypto-browserify" },
 					{ "find": "stream", "replacement": "stream-browserify" },
                     { "find": "http", "replacement": "http-browserify" },
@@ -113,7 +113,7 @@ export default [
                 tsconfig: __dirname+"/tsconfig.browsertests.json" // Custom config to build only tests/ files
             }),
             inject({
-				"BrowserFS": "browserfs"
+				//"BrowserFS": "browserfs"
 			}),
             // Serve the generated tests JS file to be ran from the browser
             serve({
