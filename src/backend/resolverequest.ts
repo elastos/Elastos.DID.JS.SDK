@@ -43,7 +43,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
 	@JsonProperty({ value: ResolveRequest.METHOD }) @JsonClassType({type: ()=>[String]})
 	private method: string;
 
-	@JsonIgnore()
+	// Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnore()
 	private _params: P;
 
 	protected constructor(requestId: string, method: string) {

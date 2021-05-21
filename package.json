@@ -14,11 +14,13 @@
     "test:stubbrowserdata": "mkdir -p ./generated && echo '{}' > ./generated/browserdata.json",
     "test:node": "npm run test:stubbrowserdata && JEST_CIRCUS=1 jest --silent=true --config tests/jest.node.config.ts",
     "test:node:debug": "JEST_CIRCUS=1 node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
-    "test:browser": "npm run clean:tests && rollup -c rollup.browsertests.config.js"
+    "test:browser": "npm run clean:tests && rollup -c tests/rollup.browsertests.config.js"
   },
   "main": "dist/did.js",
-  "module": "dist/did.js",
+  "module": "dist/es/did.js",
   "browser": {
+    "dist/did.js": "dist/did.browser.js",
+    "dist/es/did.js": "dist/es/did.browser.js",
     "crypto": "crypto-browserify"
   },
   "typings": "typings/",

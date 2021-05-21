@@ -14,6 +14,7 @@ export * from "./diddocument"; // Should be before DIDExport (DIDStore)
 export * from "./abstractmetadata"; // Should be before DIDMetadata
 export * from "./didmetadata"; // Should be before DIDExport (DIDStore)
 export * from "./credentialmetadata";
+export * from "./verifiablecredential"; // Should be before DIDExport (DIDStore)
 export * from "./didstore";
 export * from "./collections";
 export * from "./diddocumentpublickeyreference";
@@ -62,7 +63,6 @@ export * from "./rootidentity";
 export * from "./didobject";
 export * from "./verifiablepresentation";
 export * from "./filesystemstorage";
-export * from "./verifiablecredential";
 export * from "./didadapter";
 export * from "./diddocumentproof";
 export * from "./utils";

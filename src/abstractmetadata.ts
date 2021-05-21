@@ -44,7 +44,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 
 	//@JsonInclude({value: JsonIncludeType.NON_NULL})
 	//@JsonClassType({type: () => [DIDStore]})
-	@JsonIgnore()
+	// Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnore()
 	protected store?: DIDStore;
 
 	/**

@@ -155,7 +155,7 @@ import { VerifiableCredential } from "./internals";
     @JsonClassType({type: () => [Array, [DIDDocumentProof]]})
     public _proofs?: DIDDocumentProof[];
 
-    @JsonIgnore()
+    // Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnore()
     public defaultPublicKey?: DIDDocumentPublicKey;
 
     // Internal properties for DIDDocumentBuilder

@@ -53,7 +53,7 @@ import { BASE64 } from "./internals";
  */
  const log = new Logger("DIDStore");
 
- @JsonIgnoreType()
+ // Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnoreType()
  export class DIDStore {
 
 	private static CACHE_INITIAL_CAPACITY = 16;

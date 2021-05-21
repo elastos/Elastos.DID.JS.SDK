@@ -163,6 +163,7 @@ export default command => {
 		input: 'src/index.ts',
 		onwarn,
 		external: [
+			'browserfs'
 			/* 'readable-stream',
 			'readable-stream/transform' */
 		],
@@ -230,10 +231,10 @@ export default command => {
 				]
 			}),
 			resolve({
-				mainFields: ['browser', 'jsnext:main', 'main'],
+				mainFields: ['module', 'browser', 'jsnext:main', 'main'],
 				browser: true,
 				preferBuiltins: true,
-				dedupe: ['bn.js']
+				dedupe: ['bn.js', 'browserfs']
 			}),
 			// Polyfills needed to replace readable-stream with stream (circular dep)
 			commonjs({
@@ -276,5 +277,5 @@ export default command => {
 		]
 	};
 
-	return [    commonJSBuild,  /* esmBuild,  */ /* browserBuilds */];
+	return [ commonJSBuild, esmBuild, browserBuilds];
 };
