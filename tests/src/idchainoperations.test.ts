@@ -21,8 +21,22 @@
  */
 
 import { TestData } from "./utils/testdata";
-import { DIDDocumentBuilder, DIDBiographyStatus, Logger, DIDStore, DID, RootIdentity, DIDDocument, DIDBiography, IDChainRequest } from "@elastosfoundation/did-js-sdk";
+import {
+	DIDDocumentBuilder,
+	DIDBiographyStatus,
+	Logger,
+	DIDStore,
+	DID,
+	RootIdentity,
+	DIDDocument,
+	DIDBiography,
+	IDChainRequest,
+	Issuer,
+	File } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
+import { Utils } from "./utils/utils";
+import { merge } from "immutable";
+import { DefaultConflictHandle } from "../../typings/defaultconflicthandle";
 
 const log = new Logger("IDChainOperationsTest");
 
@@ -33,6 +47,8 @@ let dids: DID[];
 let mnemonic: string;
 let identity: RootIdentity;
 
+// We use several describe() to force jest running test in a sequential order, as the below
+// tests depend on each other.
 describe('IDChainOperations Tests', () => {
     beforeAll(()=> {
     	testData = new TestData();
@@ -305,7 +321,7 @@ describe('IDChainOperations Tests', () => {
 		});
 	});
 
-	describe('Order 6', () => {
+	describe('Order 7', () => {
 		test('testUpdateAndResolveAsyncAgain', async () => {
 			// User the DID that created in previous case(2)
 			let doc = store.loadDid(dids[1]);
@@ -370,700 +386,681 @@ describe('IDChainOperations Tests', () => {
 		});
 	});
 
-	/*@Test
-	@Order(8)
-	public void testCreateAndResolveWithCredentials() throws DIDException {
-		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
-		DID did = doc.getSubject();
-
-		Issuer selfIssuer = new Issuer(doc);
-		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
-
-		Map<String, Object> props= new HashMap<String, Object>();
-		props.put("name", "John");
-		props.put("gender", "Male");
-		props.put("nation", "Singapore");
-		props.put("language", "English");
-		props.put("email", "john@example.com");
-		props.put("twitter", "@john");
-
-		VerifiableCredential vc = cb.id("#profile")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
-				.properties(props)
-				.seal(TestConfig.storePass);
-		assertNotNull(vc);
-
-		DIDDocument.Builder db = doc.edit();
-		db.addCredential(vc);
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertEquals(1, doc.getCredentialCount());
-		store.storeDid(doc);
-
-        log.debug("Publishing new DID {}...", did);
-		long start = System.currentTimeMillis();
-		doc.publish(TestConfig.storePass);
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Publish new DID {}...OK({}s)", did, duration);
-
-		testData.waitForWalletAvailable();
-		DIDDocument resolved = did.resolve();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
-
-		String lastTxid = resolved.getMetadata().getTransactionId();
-        log.debug("Last transaction id {}", lastTxid);
-
-        dids.add(did); // 3
-	}
-
-	@Test
-	@Order(9)
-	public void testUpdateAndResolveWithCredentials() throws DIDException {
-		// User the DID that created in previous case(8)
-		DIDDocument doc = store.loadDid(dids.get(3));
-		assertNotNull(doc);
-		DID did = doc.getSubject();
-
-		DIDDocument resolved = did.resolve();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
-		String lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-
-		Issuer selfIssuer = new Issuer(doc);
-		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
-
-		Map<String, Object> props= new HashMap<String, Object>();
-		props.put("nation", "Singapore");
-		props.put("passport", "S653258Z07");
-
-		VerifiableCredential vc = cb.id("#passport")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
-				.properties(props)
-				.seal(TestConfig.storePass);
-		assertNotNull(vc);
-
-		DIDDocument.Builder db = doc.edit();
-		db.addCredential(vc);
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertEquals(2, doc.getCredentialCount());
-		store.storeDid(doc);
-
-        log.debug("Updating DID {}...", did);
-		long start = System.currentTimeMillis();
-		doc.publish(TestConfig.storePass);
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Update DID {}...OK({}s)", did, duration);
-
-		testData.waitForWalletAvailable();
-		resolved = did.resolve();
-		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
-
-		lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(2, rr.getTransactionCount());
-		List<DIDTransaction> txs = rr.getAllTransactions();
-		assertNotNull(txs);
-		assertEquals(2, txs.size());
-
-		DIDTransaction tx = txs.get(0);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.UPDATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-
-		tx = txs.get(1);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.CREATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-	}
-
-	@Test
-	@Order(10)
-	public void testUpdateAndResolveWithCredentialsAgain() throws DIDException {
-		// User the DID that created in previous case(8)
-		DIDDocument doc = store.loadDid(dids.get(3));
-		assertNotNull(doc);
-		DID did = doc.getSubject();
-
-		DIDDocument resolved = did.resolve();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
-		String lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-
-		// Update again
-		Issuer selfIssuer = new Issuer(doc);
-		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
-
-		Map<String, Object> props= new HashMap<String, Object>();
-		props.put("Abc", "Abc");
-		props.put("abc", "abc");
-		props.put("Foobar", "Foobar");
-		props.put("foobar", "foobar");
-		props.put("zoo", "zoo");
-		props.put("Zoo", "Zoo");
-
-		VerifiableCredential vc = cb.id("#test")
-				.type("TestCredential", "SelfProclaimedCredential")
-				.properties(props)
-				.seal(TestConfig.storePass);
-		assertNotNull(vc);
-
-		DIDDocument.Builder db = doc.edit();
-		db.addCredential(vc);
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertEquals(3, doc.getCredentialCount());
-		store.storeDid(doc);
-
-		log.debug("Updating DID {}...", did);
-		long start = System.currentTimeMillis();
-		doc.publish(TestConfig.storePass);
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-        log.debug("Update DID {}...OK({}s)", did, duration);
-
-		testData.waitForWalletAvailable();
-		resolved = did.resolve();
-		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
-
-		lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.getTransactionCount());
-		List<DIDTransaction> txs = rr.getAllTransactions();
-		assertNotNull(txs);
-		assertEquals(3, txs.size());
-
-		DIDTransaction tx = txs.get(0);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.UPDATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-
-		tx = txs.get(1);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.UPDATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-
-		tx = txs.get(2);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.CREATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-	}
-
-	@Test
-	@Order(11)
-	public void testCreateAndResolveWithCredentialsAsync() throws DIDException {
-		// Create new DID and publish to ID sidechain.
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
-		DID did = doc.getSubject();
-
-		Issuer selfIssuer = new Issuer(doc);
-		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
-
-		Map<String, Object> props= new HashMap<String, Object>();
-		props.put("name", "John");
-		props.put("gender", "Male");
-		props.put("nation", "Singapore");
-		props.put("language", "English");
-		props.put("email", "john@example.com");
-		props.put("twitter", "@john");
-
-		VerifiableCredential vc = cb.id("#profile")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
-				.properties(props)
-				.seal(TestConfig.storePass);
-		assertNotNull(vc);
-
-		DIDDocument.Builder db = doc.edit();
-		db.addCredential(vc);
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertEquals(1, doc.getCredentialCount());
-		store.storeDid(doc);
-
-        log.debug("Publishing new DID {}...", did);
-		long s1 = System.currentTimeMillis();
-		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
-				.thenRun(() -> {
-					long duration = (System.currentTimeMillis() - s1 + 500) / 1000;
-			        log.debug("Publish new DID {}...OK({}s)", did, duration);
-				});
-		tf.join();
-
-		testData.waitForWalletAvailable();
-		CompletableFuture<DIDDocument> rf = did.resolveAsync(true);
-		DIDDocument resolved = rf.join();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
-
-		String lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-
-		dids.add(did); // 4
-	}
-
-	@Test
-	@Order(12)
-	public void testUpdateAndResolveWithCredentialsAsync() throws DIDException {
-		// User the DID that created in previous case(11)
-		DIDDocument doc = store.loadDid(dids.get(4));
-		assertNotNull(doc);
-		DID did = doc.getSubject();
-
-		DIDDocument resolved = did.resolveAsync(true).join();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
-		String lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-
-		// Update
-		Issuer selfIssuer = new Issuer(doc);
-		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
-
-		Map<String, Object> props= new HashMap<String, Object>();
-		props.put("nation", "Singapore");
-		props.put("passport", "S653258Z07");
-
-		VerifiableCredential vc = cb.id("#passport")
-				.type("BasicProfileCredential", "SelfProclaimedCredential")
-				.properties(props)
-				.seal(TestConfig.storePass);
-		assertNotNull(vc);
-
-		DIDDocument.Builder db = doc.edit();
-		db.addCredential(vc);
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertEquals(2, doc.getCredentialCount());
-		store.storeDid(doc);
-
-        log.debug("Updating DID {}...", did);
-		long start = System.currentTimeMillis();
-		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
-				.thenRun(() -> {
-					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-			        log.debug("Update DID {}...OK({}s)", did, duration);
-				});
-		tf.join();
-
-		testData.waitForWalletAvailable();
-		CompletableFuture<DIDDocument> rf = did.resolveAsync(true);
-		resolved = rf.join();
-		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
-
-		lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-	}
-
-	@Test
-	@Order(13)
-	public void testUpdateAndResolveWithCredentialsAsyncAgain() throws DIDException {
-		// User the DID that created in previous case(11)
-		DIDDocument doc = store.loadDid(dids.get(4));
-		assertNotNull(doc);
-		DID did = doc.getSubject();
-
-		DIDDocument resolved = did.resolveAsync(true).join();
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.getProof().getSignature(), resolved.getProof().getSignature());
-		String lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-
-		// Update again
-		Issuer selfIssuer = new Issuer(doc);
-		VerifiableCredential.Builder cb = selfIssuer.issueFor(did);
-
-		Map<String, Object> props= new HashMap<String, Object>();
-		props.put("Abc", "Abc");
-		props.put("abc", "abc");
-		props.put("Foobar", "Foobar");
-		props.put("foobar", "foobar");
-		props.put("zoo", "zoo");
-		props.put("Zoo", "Zoo");
-
-		VerifiableCredential vc = cb.id("#test")
-				.type("TestCredential", "SelfProclaimedCredential")
-				.properties(props)
-				.seal(TestConfig.storePass);
-		assertNotNull(vc);
-
-		DIDDocument.Builder db = doc.edit();
-		db.addCredential(vc);
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertEquals(3, doc.getCredentialCount());
-		store.storeDid(doc);
-
-        log.debug("Updating DID {}...", did);
-		long start = System.currentTimeMillis();
-		CompletableFuture<Void> tf = doc.publishAsync(TestConfig.storePass)
-				.thenRun(() -> {
-					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-			        log.debug("Update DID {}...OK({}s)", did, duration);
-				});
-		tf.join();
-
-		testData.waitForWalletAvailable();
-		CompletableFuture<DIDDocument> rf = did.resolveAsync(true);
-		resolved = rf.join();
-		assertNotEquals(lastTxid, resolved.getMetadata().getTransactionId());
-		assertEquals(did, resolved.getSubject());
-		assertTrue(resolved.isValid());
-		assertEquals(doc.toString(true), resolved.toString(true));
-
-		lastTxid = resolved.getMetadata().getTransactionId();
-		log.debug("Last transaction id {}", lastTxid);
-
-		DIDBiography rr = did.resolveBiography();
-		assertNotNull(rr);
-		assertEquals(did, rr.getDid());
-		assertEquals(DIDBiography.Status.VALID, rr.getStatus());
-		assertEquals(3, rr.getTransactionCount());
-		List<DIDTransaction> txs = rr.getAllTransactions();
-		assertNotNull(txs);
-		assertEquals(3, txs.size());
-
-		DIDTransaction tx = txs.get(0);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.UPDATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-
-		tx = txs.get(1);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.UPDATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-
-		tx = txs.get(2);
-		assertEquals(did, tx.getDid());
-		assertEquals(IDChainRequest.Operation.CREATE, tx.getRequest().getOperation());
-		assertTrue(tx.getRequest().isValid());
-	}
-
-	@Test
-	@Order(14)
-	public void testSyncRootIdentityClean() throws DIDException, IOException {
-		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
-		Utils.deleteFile(path);
-
-		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
-				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
-
-		log.debug("Synchronizing from IDChain...");
-		long start = System.currentTimeMillis();
-		rootIdentity.synchronize();
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-		log.debug("Synchronize from IDChain...OK({}s)", duration);
-
-		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
-
-		List<DID> originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
-
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
-	}
-
-	@Test
-	@Order(15)
-	public void testSyncRootIdentityCleanAsync() throws DIDException, IOException {
-		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
-		Utils.deleteFile(path);
-
-		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
-				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
-
-		log.debug("Synchronizing from IDChain...");
-		long start = System.currentTimeMillis();
-		CompletableFuture<Void> f = rootIdentity.synchronizeAsync()
-				.thenRun(() -> {
-					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-					log.debug("Synchronize from IDChain...OK({}s)", duration);
-				});
-
-		f.join();
-
-		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
-
-		List<DID> originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
-
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
-	}
-
-	@Test
-	@Order(16)
-	public void testSyncRootIdentityWithoutModification() throws DIDException, IOException {
-		log.debug("Synchronizing from IDChain...");
-		long start = System.currentTimeMillis();
-		identity.synchronize((c, l) -> {
-			assertEquals(l.getProof().getSignature(), c.getProof().getSignature());
-			assertEquals(l.getLastModified(), c.getLastModified());
-
-			l.getMetadata().setPublished(c.getMetadata().getPublished());
-			l.getMetadata().setSignature(c.getMetadata().getSignature());
-			return l;
+	describe('Order 8', () => {
+		test('testCreateAndResolveWithCredentials', () => {
+			// Create new DID and publish to ID sidechain.
+			let doc = identity.newDid(TestConfig.storePass);
+			let did = doc.getSubject();
+
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(did);
+
+			let props= {
+			    name: "John",
+			    gender: "Male",
+			    nation: "Singapore",
+			    language: "English",
+			    email: "john@example.com",
+			    twitter: "@john"
+			};
+
+			let vc = cb.id("#profile")
+					.type("BasicProfileCredential", "SelfProclaimedCredential")
+					.properties(props)
+					.seal(TestConfig.storePass);
+			expect(vc).not.toBeNull();
+
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addCredential(vc);
+			doc = db.seal(TestConfig.storePass);
+			expect(doc).not.toBeNull();
+			expect(1).toEqual(doc.getCredentialCount());
+			store.storeDid(doc);
+
+			log.debug("Publishing new DID {}...", did);
+			let start = Date.now();
+			doc.publish(TestConfig.storePass);
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Publish new DID {}...OK({}s)", did, duration);
+
+			testData.waitForWalletAvailable();
+			let resolved = did.resolve();
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
+
+			let lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
+
+			dids.push(did); // 3
 		});
+	});
 
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-		log.debug("Synchronize from IDChain...OK({}s)", duration);
+	describe('Order 9', () => {
+		test('testUpdateAndResolveWithCredentials', () => {
+			// User the DID that created in previous case(8)
+			let doc = store.loadDid(dids[3]);
+			expect(doc).not.toBeNull();
+			let did = doc.getSubject();
 
-		List<DID> restoredDids = new ArrayList<DID>(store.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
+			let resolved = did.resolve();
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
+			let lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		List<DID> originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(did);
 
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
-	}
+			let props = {
+				nation: "Singapore",
+				passport: "S653258Z07"
+			};
 
-	@Test
-	@Order(17)
-	public void testSyncRootIdentityWithoutModificationAsync() throws DIDException, IOException {
-		log.debug("Synchronizing from IDChain...");
-		long start = System.currentTimeMillis();
+			let vc = cb.id("#passport")
+					.type("BasicProfileCredential", "SelfProclaimedCredential")
+					.properties(props)
+					.seal(TestConfig.storePass);
+			expect(vc).not.toBeNull();
 
-		ConflictHandle ch = (c, l) -> {
-			assertEquals(l.getProof().getSignature(), c.getProof().getSignature());
-			assertEquals(l.getLastModified(), c.getLastModified());
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addCredential(vc);
+			doc = db.seal(TestConfig.storePass);
+			expect(doc).not.toBeNull();
+			expect(2).toEqual(doc.getCredentialCount());
+			store.storeDid(doc);
 
-			l.getMetadata().setPublished(c.getMetadata().getPublished());
-			l.getMetadata().setSignature(c.getMetadata().getSignature());
-			return l;
-		};
+			log.debug("Updating DID {}...", did);
+			let start = Date.now();
+			doc.publish(TestConfig.storePass);
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Update DID {}...OK({}s)", did, duration);
 
-		CompletableFuture<Void> f = identity.synchronizeAsync(ch)
-				.thenRun(() -> {
-					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-					log.debug("Synchronize from IDChain...OK({}s)", duration);
-				});
+			testData.waitForWalletAvailable();
+			resolved = did.resolve();
+			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		f.join();
+			lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		List<DID> restoredDids = new ArrayList<DID>(store.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
+			let rr = did.resolveBiography();
+			expect(rr).not.toBeNull();
+			expect(did.equals(rr.getDid())).toBeTruthy();
+			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
+			expect(2).toEqual(rr.getTransactionCount());
+			let txs = rr.getAllTransactions();
+			expect(txs).not.toBeNull();
+			expect(2).toEqual(txs.size);
 
-		List<DID> originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
+			let tx = txs.get(0);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
 
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
-	}
+			tx = txs.get(1);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
+		});
+	});
 
-	@Test
-	@Order(18)
-	public void testSyncRootIdentityWithLocalModification1() throws DIDException, IOException {
-		// Sync to a clean store first
-		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
-		Utils.deleteFile(path);
+	describe('Order 10', () => {
+		test('testUpdateAndResolveWithCredentialsAgain', () => {
+			// User the DID that created in previous case(8)
+			let doc = store.loadDid(dids[3]);
+			expect(doc).not.toBeNull();
+			let did = doc.getSubject();
 
-		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
-				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
+			let resolved = did.resolve();
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
+			let lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		log.debug("Synchronizing from IDChain...");
-		long start = System.currentTimeMillis();
-		rootIdentity.synchronize();
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-		log.debug("Synchronize from IDChain...OK({}s)", duration);
+			// Update again
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(did);
 
-		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
+			let props = {
+				Abc: "Abc",
+				abc: "abc",
+				Foobar: "Foobar",
+				foobar: "foobar",
+				zoo: "zoo",
+				Zoo: "Zoo"
+			};
 
-		List<DID> originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
+			let vc = cb.id("#test")
+					.type("TestCredential", "SelfProclaimedCredential")
+					.properties(props)
+					.seal(TestConfig.storePass);
+			expect(vc).not.toBeNull();
 
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addCredential(vc);
+			doc = db.seal(TestConfig.storePass);
+			expect(doc).not.toBeNull();
+			expect(3).toEqual(doc.getCredentialCount());
+			store.storeDid(doc);
 
-		// Modify a DID document
-		DID modifiedDid = dids.get(0);
-		DIDDocument doc = cleanStore.loadDid(modifiedDid);
-		DIDDocument.Builder db = doc.edit();
-		db.addService("#test1", "TestType", "http://test.com/");
-		doc = db.seal(TestConfig.storePass);
-		cleanStore.storeDid(doc);
-		String modifiedSignature = doc.getProof().getSignature();
+			log.debug("Updating DID {}...", did);
+			let start = Date.now();
+			doc.publish(TestConfig.storePass);
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Update DID {}...OK({}s)", did, duration);
 
-		log.debug("Synchronizing again from IDChain...");
-		start = System.currentTimeMillis();
-		rootIdentity.synchronize();
-		duration = (System.currentTimeMillis() - start + 500) / 1000;
-		log.debug("Synchronize again from IDChain...OK({}s)", duration);
+			testData.waitForWalletAvailable();
+			resolved = did.resolve();
+			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		restoredDids = new ArrayList<DID>(cleanStore.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
+			lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
+			let rr = did.resolveBiography();
+			expect(rr).not.toBeNull();
+			expect(did.equals(rr.getDid())).toBeTruthy();
+			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
+			expect(3).toEqual(rr.getTransactionCount());
+			let txs = rr.getAllTransactions();
+			expect(txs).not.toBeNull();
+			expect(3).toEqual(txs.size);
 
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
+			let tx = txs.get(0);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
 
-		// Should keep the local modified copy after sync
-		doc = cleanStore.loadDid(modifiedDid);
-		assertEquals(modifiedSignature, doc.getProof().getSignature());
-	}
+			tx = txs.get(1);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
 
-	@Test
-	@Order(19)
-	public void testSyncRootIdentityWithLocalModification2() throws DIDException, IOException {
-		// Sync to a clean store first
-		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
-		Utils.deleteFile(path);
+			tx = txs.get(2);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
+		});
+	});
 
-		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
-				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
+	describe('Order 11', () => {
+		test('testCreateAndResolveWithCredentialsAsync', async () => {
+			// Create new DID and publish to ID sidechain.
+			let doc = identity.newDid(TestConfig.storePass);
+			let did = doc.getSubject();
 
-		log.debug("Synchronizing from IDChain...");
-		long start = System.currentTimeMillis();
-		rootIdentity.synchronize();
-		long duration = (System.currentTimeMillis() - start + 500) / 1000;
-		log.debug("Synchronize from IDChain...OK({}s)", duration);
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(did);
 
-		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
+			let props = {
+				name: "John",
+				gender: "Male",
+				nation: "Singapore",
+				language: "English",
+				email: "john@example.com",
+				twitter: "@john"
+			};
 
-		List<DID> originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
+			let vc = cb.id("#profile")
+					.type("BasicProfileCredential", "SelfProclaimedCredential")
+					.properties(props)
+					.seal(TestConfig.storePass);
+			expect(vc).not.toBeNull();
 
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addCredential(vc);
+			doc = db.seal(TestConfig.storePass);
+			expect(doc).not.toBeNull();
+			expect(1).toEqual(doc.getCredentialCount());
+			store.storeDid(doc);
 
-		// Modify a DID document
-		DID modifiedDid = dids.get(0);
-		DIDDocument doc = cleanStore.loadDid(modifiedDid);
-		String originalSignature = doc.getSignature();
+			log.debug("Publishing new DID {}...", did);
+			let s1 = Date.now();
+			await doc.publishAsync(TestConfig.storePass)
+			let duration = (Date.now() - s1 + 500) / 1000;
+			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-		DIDDocument.Builder db = doc.edit();
-		db.addService("#Stest1", "TestType", "http://test.com/");
-		doc = db.seal(TestConfig.storePass);
-		cleanStore.storeDid(doc);
+			testData.waitForWalletAvailable();
+			let resolved = await did.resolveAsync(true);
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		log.debug("Synchronizing again from IDChain...");
-		start = System.currentTimeMillis();
-		rootIdentity.synchronize((c, l) -> c);
-		duration = (System.currentTimeMillis() - start + 500) / 1000;
-		log.debug("Synchronize again from IDChain...OK({}s)", duration);
+			let lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		restoredDids = new ArrayList<DID>(cleanStore.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
+			dids.push(did); // 4
+		});
+	});
 
-		originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
+	describe('Order 12', () => {
+		test('testUpdateAndResolveWithCredentialsAsync', async () => {
+			// User the DID that created in previous case(11)
+			let doc = store.loadDid(dids[4]);
+			expect(doc).not.toBeNull();
+			let did = doc.getSubject();
 
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
+			let resolved = await did.resolveAsync(true);
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
+			let lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		// Should overwrite the local modified copy with chain copy after sync
-		doc = cleanStore.loadDid(modifiedDid);
-		assertEquals(originalSignature, doc.getSignature());
-	}
+			// Update
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(did);
 
-	@Test
-	@Order(20)
-	public void testSyncRootIdentityWithLocalModificationAsync() throws DIDException, IOException {
-		// Sync to a clean store first
-		File path = new File(TestConfig.tempDir + "/cleanstore").getCanonicalFile();
-		Utils.deleteFile(path);
+			let props = {
+				nation: "Singapore",
+				passport: "S653258Z07"
+			};
 
-		DIDStore cleanStore = DIDStore.open(path);
-		RootIdentity rootIdentity = RootIdentity.create(mnemonic,
-				TestConfig.passphrase, true, cleanStore, TestConfig.storePass);
+			let vc = cb.id("#passport")
+					.type("BasicProfileCredential", "SelfProclaimedCredential")
+					.properties(props)
+					.seal(TestConfig.storePass);
+			expect(vc).not.toBeNull();
 
-		log.debug("Synchronizing from IDChain...");
-		long start = System.currentTimeMillis();
-		CompletableFuture<Void> f = rootIdentity.synchronizeAsync()
-				.thenRun(() -> {
-					long duration = (System.currentTimeMillis() - start + 500) / 1000;
-					log.debug("Synchronize from IDChain...OK({}s)", duration);
-				});
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addCredential(vc);
+			doc = db.seal(TestConfig.storePass);
+			expect(doc).not.toBeNull();
+			expect(2).toEqual(doc.getCredentialCount());
+			store.storeDid(doc);
 
-		f.join();
+			log.debug("Updating DID {}...", did);
+			let start = Date.now();
+			await doc.publishAsync(TestConfig.storePass)
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Update DID {}...OK({}s)", did, duration);
 
-		List<DID> restoredDids = new ArrayList<DID>(cleanStore.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
+			testData.waitForWalletAvailable();
+			resolved = await did.resolveAsync(true);
+			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		List<DID> originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
+			lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
+		});
+	});
 
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
+	describe('Order 13', () => {
+		test('testUpdateAndResolveWithCredentialsAsyncAgain', async () => {
+			// User the DID that created in previous case(11)
+			let doc = store.loadDid(dids[4]);
+			expect(doc).not.toBeNull();
+			let did = doc.getSubject();
 
-		// Modify a DID document
-		DID modifiedDid = dids.get(0);
-		DIDDocument doc = cleanStore.loadDid(modifiedDid);
-		String originalSignature = doc.getSignature();
+			let resolved = await did.resolveAsync(true);
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
+			let lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
 
-		DIDDocument.Builder db = doc.edit();
-		db.addService("#test1", "TestType", "http://test.com/");
-		doc = db.seal(TestConfig.storePass);
-		cleanStore.storeDid(doc);
+			// Update again
+			let selfIssuer = new Issuer(doc);
+			let cb = selfIssuer.issueFor(did);
 
-		log.debug("Synchronizing again from IDChain...");
-		long start2 = System.currentTimeMillis();
-		f = rootIdentity.synchronizeAsync((c, l) -> c)
-				.thenRun(() -> {
-					long duration = (System.currentTimeMillis() - start2 + 500) / 1000;
-					log.debug("Synchronize again from IDChain...OK({}s)", duration);
-				});
+			let props = {
+				Abc: "Abc",
+				abc: "abc",
+				Foobar: "Foobar",
+				foobar: "foobar",
+				zoo: "zoo",
+				Zoo: "Zoo"
+			};
 
-		f.join();
+			let vc = cb.id("#test")
+					.type("TestCredential", "SelfProclaimedCredential")
+					.properties(props)
+					.seal(TestConfig.storePass);
+			expect(vc).not.toBeNull();
 
-		restoredDids = new ArrayList<DID>(cleanStore.listDids());
-		assertEquals(5, restoredDids.size());
-		Collections.sort(restoredDids);
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addCredential(vc);
+			doc = db.seal(TestConfig.storePass);
+			expect(doc).not.toBeNull();
+			expect(3).toEqual(doc.getCredentialCount());
+			store.storeDid(doc);
 
-		originalDids = new ArrayList<DID>(dids);
-		Collections.sort(originalDids);
+			log.debug("Updating DID {}...", did);
+			let start = Date.now();
+			await doc.publishAsync(TestConfig.storePass)
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Update DID {}...OK({}s)", did, duration);
 
-		assertArrayEquals(originalDids.toArray(new DID[0]),
-				restoredDids.toArray(new DID[0]));
+			testData.waitForWalletAvailable();
+			resolved = await did.resolveAsync(true);
+			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-		// Should overwrite the local modified copy with chain copy after sync
-		doc = cleanStore.loadDid(modifiedDid);
-		assertEquals(originalSignature, doc.getSignature());
-	} */
+			lastTxid = resolved.getMetadata().getTransactionId();
+			log.debug("Last transaction id {}", lastTxid);
+
+			let rr = did.resolveBiography();
+			expect(rr).not.toBeNull();
+			expect(did.equals(rr.getDid())).toBeTruthy();
+			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
+			expect(3).toEqual(rr.getTransactionCount());
+			let txs = rr.getAllTransactions();
+			expect(txs).not.toBeNull();
+			expect(3).toEqual(txs.size);
+
+			let tx = txs.get(0);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
+
+			tx = txs.get(1);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
+
+			tx = txs.get(2);
+			expect(did.equals(tx.getDid())).toBeTruthy();
+			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+			expect(tx.getRequest().isValid()).toBeTruthy();
+		});
+	});
+
+	describe('Order 14', () => {
+		test('testSyncRootIdentityClean', () => {
+			let filePath = TestConfig.tempDir + "/cleanstore";
+			let path = new File(filePath);
+			Utils.deleteFile(path);
+
+			let cleanStore = DIDStore.open(filePath);
+			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
+
+			log.debug("Synchronizing from IDChain...");
+			let start = Date.now();
+			rootIdentity.synchronize();
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize from IDChain...OK({}s)", duration);
+
+			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			let originalDids: DID[] = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+		});
+	});
+
+	describe('Order 15', () => {
+		test('testSyncRootIdentityCleanAsync', async () => {
+			let filePath = TestConfig.tempDir + "/cleanstore";
+			let path = new File(filePath);
+			Utils.deleteFile(path);
+
+			let cleanStore = DIDStore.open(filePath);
+			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
+
+			log.debug("Synchronizing from IDChain...");
+			let start = Date.now();
+			await rootIdentity.synchronizeAsync()
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize from IDChain...OK({}s)", duration);
+
+			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			let originalDids: DID[] = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+		});
+	});
+
+	describe('Order 16', () => {
+		test('testSyncRootIdentityWithoutModification', () => {
+			log.debug("Synchronizing from IDChain...");
+			let start = Date.now();
+			identity.synchronize({
+				merge(c, l): DIDDocument {
+					expect(l.getProof().getSignature()).toEqual(c.getProof().getSignature());
+					expect(l.getLastModified().getTime()).toEqual(c.getLastModified().getTime());
+
+					l.getMetadata().setPublished(c.getMetadata().getPublished());
+					l.getMetadata().setSignature(c.getMetadata().getSignature());
+					return l;
+				}
+			})
+
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize from IDChain...OK({}s)", duration);
+
+			let restoredDids: DID[] = Array.from(store.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			let originalDids: DID[] = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+		});
+	});
+
+	describe('Order 17', () => {
+		test('testSyncRootIdentityWithoutModificationAsync', async () => {
+			log.debug("Synchronizing from IDChain...");
+			let start = Date.now();
+
+			let ch = {
+				merge(c: DIDDocument, l: DIDDocument) {
+					expect(l.getProof().getSignature()).toEqual(c.getProof().getSignature());
+					expect(l.getLastModified().getTime()).toEqual(c.getLastModified().getTime());
+
+					l.getMetadata().setPublished(c.getMetadata().getPublished());
+					l.getMetadata().setSignature(c.getMetadata().getSignature());
+					return l;
+				}
+			}
+
+			await identity.synchronizeAsync(ch)
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize from IDChain...OK({}s)", duration);
+
+			let restoredDids: DID[] = Array.from(store.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			let originalDids: DID[] = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+		});
+	});
+
+	describe('Order 18', () => {
+		test('testSyncRootIdentityWithLocalModification1', () => {
+			// Sync to a clean store first
+			let filePath = TestConfig.tempDir + "/cleanstore";
+			let path = new File(filePath);
+			Utils.deleteFile(path);
+
+			let cleanStore = DIDStore.open(filePath);
+			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
+
+			log.debug("Synchronizing from IDChain...");
+			let start = Date.now();
+			rootIdentity.synchronize();
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize from IDChain...OK({}s)", duration);
+
+			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			let originalDids: DID[] = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+
+			// Modify a DID document
+			let modifiedDid = dids[0];
+			let doc = cleanStore.loadDid(modifiedDid);
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addService("#test1", "TestType", "http://test.com/");
+			doc = db.seal(TestConfig.storePass);
+			cleanStore.storeDid(doc);
+			let modifiedSignature = doc.getProof().getSignature();
+
+			log.debug("Synchronizing again from IDChain...");
+			start = Date.now();
+			rootIdentity.synchronize();
+			duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize again from IDChain...OK({}s)", duration);
+
+			restoredDids = Array.from(cleanStore.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			originalDids = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+
+			// Should keep the local modified copy after sync
+			doc = cleanStore.loadDid(modifiedDid);
+			expect(modifiedSignature).toEqual(doc.getProof().getSignature());
+		});
+	});
+
+	describe('Order 19', () => {
+		test('testSyncRootIdentityWithLocalModification2', () => {
+			// Sync to a clean store first
+			let filePath = TestConfig.tempDir + "/cleanstore";
+			let path = new File(filePath);
+			Utils.deleteFile(path);
+
+			let cleanStore = DIDStore.open(filePath);
+			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
+
+			log.debug("Synchronizing from IDChain...");
+			let start = Date.now();
+			rootIdentity.synchronize();
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize from IDChain...OK({}s)", duration);
+
+			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			let originalDids: DID[] = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+
+			// Modify a DID document
+			let modifiedDid = dids[0];
+			let doc = cleanStore.loadDid(modifiedDid);
+			let originalSignature = doc.getSignature();
+
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addService("#Stest1", "TestType", "http://test.com/");
+			doc = db.seal(TestConfig.storePass);
+			cleanStore.storeDid(doc);
+
+			log.debug("Synchronizing again from IDChain...");
+			start = Date.now();
+			rootIdentity.synchronize({
+				merge(c, l) { return c; }
+			});
+			duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize again from IDChain...OK({}s)", duration);
+
+			restoredDids = Array.from(cleanStore.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			originalDids = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+
+			// Should overwrite the local modified copy with chain copy after sync
+			doc = cleanStore.loadDid(modifiedDid);
+			expect(originalSignature).toEqual(doc.getSignature());
+		});
+	});
+
+	describe('Order 20', () => {
+		test('testSyncRootIdentityWithLocalModificationAsync', async () => {
+			// Sync to a clean store first
+			let filePath = TestConfig.tempDir + "/cleanstore";
+			let path = new File(filePath);
+			Utils.deleteFile(path);
+
+			let cleanStore = DIDStore.open(filePath);
+			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
+
+			log.debug("Synchronizing from IDChain...");
+			let start = Date.now();
+			await rootIdentity.synchronizeAsync()
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Synchronize from IDChain...OK({}s)", duration);
+
+			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			let originalDids: DID[] = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+
+			// Modify a DID document
+			let modifiedDid = dids[0];
+			let doc = cleanStore.loadDid(modifiedDid);
+			let originalSignature = doc.getSignature();
+
+			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+			db.addService("#test1", "TestType", "http://test.com/");
+			doc = db.seal(TestConfig.storePass);
+			cleanStore.storeDid(doc);
+
+			log.debug("Synchronizing again from IDChain...");
+			let start2 = Date.now();
+			await rootIdentity.synchronizeAsync({
+				merge(c, l) { return c; }
+			});
+			duration = (Date.now() - start2 + 500) / 1000;
+			log.debug("Synchronize again from IDChain...OK({}s)", duration);
+
+			restoredDids = Array.from(cleanStore.listDids());
+			expect(5).toEqual(restoredDids.length);
+			restoredDids.sort((a,b) => a.compareTo(b));
+
+			originalDids = Array.from(dids);
+			originalDids.sort((a,b) => a.compareTo(b));
+
+			expect(originalDids).toEqual(restoredDids); // Array comparison
+
+			// Should overwrite the local modified copy with chain copy after sync
+			doc = cleanStore.loadDid(modifiedDid);
+			expect(originalSignature).toEqual(doc.getSignature());
+		});
+	});
 });
