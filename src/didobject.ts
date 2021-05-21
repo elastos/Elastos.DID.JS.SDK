@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { DIDURL } from "./internals";
 
 /**
@@ -39,5 +38,5 @@ export interface DIDObject<Type> {
 	 *
 	 * @return the type string or array
 	 */
-	getType(): string | ImmutableList<Type>;
+	getType(): string | Type[];
 }

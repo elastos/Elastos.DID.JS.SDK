@@ -128,7 +128,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = store.listDids();
-		expect(dids.size).toEqual(100);
+		expect(dids.length).toEqual(100);
 	});
 
 	test("testDeleteDID", ()=>{
@@ -161,7 +161,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let remains = store.listDids();
-		expect(80).toEqual(remains.size);
+		expect(80).toEqual(remains.length);
 	});
 
 	test("testStoreAndLoadDID", ()=>{
@@ -197,7 +197,7 @@ describe("DIDStore Tests", ()=>{
 		expect(doc.isValid()).toBeTruthy();
 
 		let dids = store.listDids();
-		expect(dids.size).toEqual(2);
+		expect(dids.length).toEqual(2);
 	});
 
 	test("testLoadCredentials", ()=>{
@@ -305,7 +305,7 @@ describe("DIDStore Tests", ()=>{
 		vc.getMetadata().setAlias("Passport");
 
 		let vcs = store.listCredentials(user.getSubject());
-		expect(4).toEqual(vcs.size);
+		expect(4).toEqual(vcs.length);
 
 		for (let id of vcs) {
 			expect(id.getFragment() ===  "profile"
@@ -416,12 +416,12 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = store.listDids();
-		expect(10).toEqual(dids.size);
+		expect(10).toEqual(dids.length);
 
 		store.changePassword(TestConfig.storePass, "newpasswd");
 
 		dids = store.listDids();
-		expect(10).toEqual(dids.size);
+		expect(10).toEqual(dids.length);
 
 		for (let i = 0; i < 10; i++) {
 			let alias = "my did " + i;
@@ -460,7 +460,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = store.listDids();
-		expect(10).toEqual(dids.size);
+		expect(10).toEqual(dids.length);
 
 		expect(() => {
 			store.changePassword("wrongpasswd", "newpasswd");
@@ -478,32 +478,32 @@ describe("DIDStore Tests", ()=>{
 			let store = DIDStore.open(cd.getStoreDir());
 
 			let dids = store.listDids();
-			expect(version == 2 ? 10 : 4).toEqual(dids.size);
+			expect(version == 2 ? 10 : 4).toEqual(dids.length);
 
 			for (let did of dids) {
 				let alias = did.getMetadata().getAlias();
 
 				if (alias === "Issuer") {
 					let vcs = store.listCredentials(did);
-					expect(1).toEqual(vcs.size);
+					expect(1).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User1") {
 					let vcs = store.listCredentials(did);
-					expect(version == 2 ? 5 : 4).toEqual(vcs.size);
+					expect(version == 2 ? 5 : 4).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User2") {
 					let vcs = store.listCredentials(did);
-					expect(1).toEqual(vcs.size);
+					expect(1).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User3") {
 					let vcs = store.listCredentials(did);
-					expect(0).toEqual(vcs.size);
+					expect(0).toEqual(vcs.length);
 				}
 
 				let doc = store.loadDid(did);
@@ -585,7 +585,7 @@ describe("DIDStore Tests", ()=>{
 			createDataForPerformanceTest(store);
 
 			let dids = store.listDids();
-			expect(10).toEqual(dids.size);
+			expect(10).toEqual(dids.length);
 
 			let start = new Date().getTime();
 

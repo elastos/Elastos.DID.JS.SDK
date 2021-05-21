@@ -48,8 +48,8 @@ describe('VerifiableCredential Tests', () => {
 
 		expect(DIDURL.newWithDID(user.getSubject(), "#twitter").equals(vc.getId()));
 
-		expect(vc.getType().contains("InternetAccountCredential")).toBeTruthy();
-		expect(vc.getType().contains("TwitterCredential")).toBeTruthy();
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("TwitterCredential") >= 0).toBeTruthy();
 
 		expect(issuer.getSubject().equals(vc.getIssuer())).toBeTruthy();
 		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();

@@ -41,3 +41,4 @@ appdid
 public/tests/
 generated/
 *stats.html
+test-report.html

@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { hash } from "immutable";
 import { JsonClassType, JsonCreator, JsonIdentityInfo, JsonInclude, JsonIncludeType, JsonProperty, ObjectIdGenerator } from "jackson-js";
 import { DID } from "../internals";
 import { DIDURL } from "../internals";

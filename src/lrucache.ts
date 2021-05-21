@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-import { is } from "immutable";
-import { IllegalArgumentException } from "./exceptions/exceptions";
 import { Hashable } from "./hashable";
 
 type Loadable<K,V> = (key: K)=>{value: V, meta?: LRUCacheMeta};

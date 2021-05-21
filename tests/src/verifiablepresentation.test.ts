@@ -47,8 +47,8 @@ describe('VerifiablePresentation Tests', () => {
 		let vp = cd.getPresentation("user1", "nonempty");
 
 		expect(vp.getId()).toBeNull();
-		expect(1).toEqual(vp.getType().size);
-		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
+		expect(1).toEqual(vp.getType().length);
+		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(4).toEqual(vp.getCredentialCount());
@@ -82,8 +82,8 @@ describe('VerifiablePresentation Tests', () => {
 		let vp = cd.getPresentation("user1", "empty");
 
 		expect(vp.getId()).toBeNull();
-		expect(1).toEqual(vp.getType().size);
-		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
+		expect(1).toEqual(vp.getType().length);
+		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());
@@ -146,8 +146,8 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp).not.toBeNull();
 
 		expect(vp.getId()).toBeNull();
-		expect(1).toEqual(vp.getType().size);
-		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
+		expect(1).toEqual(vp.getType().length);
+		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(4).toEqual(vp.getCredentialCount());
@@ -191,9 +191,9 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp).not.toBeNull();
 
 		expect(DIDURL.newWithDID(doc.getSubject(), "#test-vp").equals(vp.getId())).toBeTruthy();
-		expect(2).toEqual(vp.getType().size);
-		expect("TestPresentation").toEqual(vp.getType().get(0));
-		expect("Trail").toEqual(vp.getType().get(1));
+		expect(2).toEqual(vp.getType().length);
+		expect("TestPresentation").toEqual(vp.getType()[0]);
+		expect("Trail").toEqual(vp.getType()[1]);
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(4).toEqual(vp.getCredentialCount());
@@ -230,8 +230,8 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp).not.toBeNull();
 
 		expect(vp.getId()).toBeNull();
-		expect(1).toEqual(vp.getType().size);
-		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType().get(0));
+		expect(1).toEqual(vp.getType().length);
+		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());
@@ -256,10 +256,10 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp).not.toBeNull();
 
 		expect(DIDURL.newWithDID(doc.getSubject(), "#test-vp").equals(vp.getId())).toBeTruthy();
-		expect(3).toEqual(vp.getType().size);
-		expect("Baz").toEqual(vp.getType().get(0));
-		expect("FooBar").toEqual(vp.getType().get(1));
-		expect("HelloWorld").toEqual(vp.getType().get(2));
+		expect(3).toEqual(vp.getType().length);
+		expect("Baz").toEqual(vp.getType()[0]);
+		expect("FooBar").toEqual(vp.getType()[1]);
+		expect("HelloWorld").toEqual(vp.getType()[2]);
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());

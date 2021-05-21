@@ -5,6 +5,16 @@ const config: InitialOptionsTsJest = {
   rootDir: "./src",
   transform: {
     ...tsjPreset.transform,
-  }
+  },
+  reporters: [
+    "default",
+    [
+      "jest-html-reporter", {
+        pageTitle: "DID JS SDK NodeJS test report",
+        includeFailureMsg: true,
+        includeSuiteFailure: true
+      }
+    ]
+  ]
 }
 export default config

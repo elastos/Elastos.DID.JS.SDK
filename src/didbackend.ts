@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-
-import { List as ImmutableList } from "immutable";
 import { randomBytes } from "crypto";
 import { CredentialBiography, CredentialBiographyStatus } from "./internals";
 import { CredentialList } from "./internals";
@@ -389,7 +387,7 @@ export class DIDBackend {
 		return vc;
 	}
 
-	public listCredentials(did: DID, skip: number, limit: number): ImmutableList<DIDURL> {
+	public listCredentials(did: DID, skip: number, limit: number): DIDURL[] {
 		log.info("List credentials for {}", did);
 
 		let request = new CredentialListRequest(this.generateRequestId());

@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty, JsonIgnore } from "jackson-js";
 import { CredentialMetadata } from "./internals";
 import { DID } from "./internals";
@@ -558,17 +557,17 @@ import { BASE64 } from "./internals";
 		 * @return the DID array.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public listDids(): ImmutableList<DID> {
+		public listDids(): DID[] {
 			let dids = this.storage.listDids();
 			for (let did of dids) {
 				let metadata = this.loadDidMetadata(did);
 				did.setMetadata(metadata);
 			}
 
-			return ImmutableList<DID>(dids);
+			return dids;
 		}
 
-		public selectDids(filter: DIDStore.DIDFilter): ImmutableList<DID> {
+		public selectDids(filter: DIDStore.DIDFilter): DID[] {
 			let dids = this.listDids();
 
 			if (filter != null) {
@@ -579,10 +578,10 @@ import { BASE64 } from "./internals";
 						dest.push(did);
 				}
 
-				dids = ImmutableList<DID>(dest);
+				dids = dest;
 			}
 
-			return ImmutableList<DID>(dids);
+			return dids;
 		}
 
 		/**
@@ -771,7 +770,7 @@ import { BASE64 } from "./internals";
 		 * @return the Credential array owned the specified DID.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public listCredentials(didOrString: DID | string): ImmutableList<DIDURL> {
+		public listCredentials(didOrString: DID | string): DIDURL[] {
 			checkArgument(didOrString != null, "Invalid did");
 
 			let did: DID;
@@ -786,7 +785,7 @@ import { BASE64 } from "./internals";
 				id.setMetadata(metadata);
 			}
 
-			return ImmutableList(ids);
+			return ids;
 		}
 
 		/**
@@ -798,7 +797,7 @@ import { BASE64 } from "./internals";
 		 * @return the Credential array
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public selectCredentials(didOrString: DID | string, filter: DIDStore.CredentialFilter): ImmutableList<DIDURL> {
+		public selectCredentials(didOrString: DID | string, filter: DIDStore.CredentialFilter): DIDURL[] {
 			checkArgument(didOrString != null, "Invalid did");
 
 			let did: DID;
@@ -816,10 +815,10 @@ import { BASE64 } from "./internals";
 						dest.push(id);
 				}
 
-				vcs = ImmutableList(dest);
+				vcs = dest;
 			}
 
-			return ImmutableList(vcs);
+			return vcs;
 		}
 
 		/**

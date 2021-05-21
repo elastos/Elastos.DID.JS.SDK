@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
 import { DID } from "../internals";
 import { DIDURL } from "../internals";
@@ -55,8 +54,8 @@ export class CredentialList extends ResolveResult<CredentialList> {
 		return this.did;
 	}
 
-	public getCredentialIds(): ImmutableList<DIDURL> {
-		return ImmutableList(this.credentialIds != null ? this.credentialIds : []);
+	public getCredentialIds(): DIDURL[] {
+		return this.credentialIds != null ? this.credentialIds : [];
 	}
 
 	public size(): number {

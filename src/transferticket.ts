@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "jackson-js";
 import { Collections } from "./internals";
 import { Comparable } from "./comparable";
@@ -154,8 +153,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return list of the Proof objects
 	 */
-	public getProofs(): ImmutableList<Proof> {
-		return Collections.unmodifiableList(this._proofs);
+	public getProofs(): Proof[] {
+		return this._proofs;
 	}
 
 	private getDocument(): DIDDocument {

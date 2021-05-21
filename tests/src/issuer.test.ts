@@ -99,9 +99,9 @@ describe("Issuer Tests", ()=>{
 
 		expect(vcId).toEqual(vc.getId())
 
-		expect(vc.getType().contains("BasicProfileCredential")).toBeTruthy()
-		expect(vc.getType().contains("InternetAccountCredential")).toBeTruthy()
-		expect(vc.getType().contains("SelfProclaimedCredential")).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy()
 
 		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
 		expect(testDoc.getSubject()).toEqual(vc.getSubject().getId())
@@ -141,9 +141,9 @@ describe("Issuer Tests", ()=>{
 
 		expect(vcId).toEqual(vc.getId())
 
-		expect(vc.getType().contains("BasicProfileCredential")).toBeTruthy()
-		expect(vc.getType().contains("InternetAccountCredential")).toBeFalsy()
-		expect(vc.getType().contains("SelfProclaimedCredential")).toBeTruthy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy()
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy()
 
 		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
 		expect(testDoc.getSubject()).toEqual(vc.getSubject().getId())
@@ -185,9 +185,9 @@ describe("Issuer Tests", ()=>{
 
 		expect(vcId).toEqual(vc.getId())
 
-		expect(vc.getType().contains("BasicProfileCredential")).toBeTruthy()
-		expect(vc.getType().contains("InternetAccountCredential")).toBeTruthy()
-		expect(vc.getType().contains("SelfProclaimedCredential")).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy()
 
 		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
 		expect(testDoc.getSubject()).toEqual(vc.getSubject().getId())
@@ -231,9 +231,9 @@ describe("Issuer Tests", ()=>{
 
 		expect(vcId).toEqual(vc.getId())
 
-		expect(vc.getType().contains("BasicProfileCredential")).toBeTruthy()
-		expect(vc.getType().contains("InternetAccountCredential")).toBeTruthy()
-		expect(vc.getType().contains("SelfProclaimedCredential")).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy()
 
 		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
 		expect(testDoc.getSubject()).toEqual(vc.getSubject().getId())
@@ -275,9 +275,9 @@ describe("Issuer Tests", ()=>{
 
 		expect(vcId).toEqual(vc.getId())
 
-		expect(vc.getType().contains("BasicProfileCredential")).toBeTruthy()
-		expect(vc.getType().contains("SelfProclaimedCredential")).toBeTruthy()
-		expect(vc.getType().contains("InternetAccountCredential")).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy()
 
 		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
 		expect(issuerDoc.getSubject()).toEqual(vc.getSubject().getId())
@@ -307,9 +307,9 @@ describe("Issuer Tests", ()=>{
 
 		expect(vcId).toEqual(vc.getId())
 
-		expect(vc.getType().contains("BasicProfileCredential")).toBeTruthy()
-		expect(vc.getType().contains("SelfProclaimedCredential")).toBeTruthy()
-		expect(vc.getType().contains("InternetAccountCredential")).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy()
 
 		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
 		expect(issuerDoc.getSubject()).toEqual(vc.getSubject().getId())

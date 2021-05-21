@@ -22,9 +22,6 @@
 
 import dayjs, { Dayjs } from "dayjs";
 import {
-	List as ImmutableList
-} from "immutable";
-import {
 	JsonAnySetter, JsonClassType, JsonFilter, JsonGetter, JsonInclude,
 	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize
 } from "jackson-js";
@@ -173,8 +170,8 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @return the type array
 	 */
-	public getType(): ImmutableList<string> {
-		return ImmutableList(this.type);
+	public getType(): string[] {
+		return this.type;
 	}
 
 	/**
@@ -1017,7 +1014,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return future;
 	} */
 
-	public static list(did: DID, skip: number = 0, limit: number = 0): ImmutableList<DIDURL> {
+	public static list(did: DID, skip: number = 0, limit: number = 0): DIDURL[] {
 		checkArgument(did != null, "Invalid did");
 		return DIDBackend.getInstance().listCredentials(did, skip, limit);
 	}

@@ -21,7 +21,6 @@
  */
 
 import dayjs from "dayjs";
-import { List as ImmutableList } from "immutable";
 import {
     JsonInclude,
     JsonIncludeType,
@@ -258,8 +257,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the Controllers DID list or empty list if no controller
      */
-    public getControllers(): ImmutableList<DID> {
-        return ImmutableList(this.controllers);
+    public getControllers(): DID[] {
+        return this.controllers;
     }
 
     /**
@@ -357,15 +356,15 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the PublicKey array
      */
-    public getPublicKeys(): ImmutableList<DIDDocumentPublicKey> {
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList(this.publicKeys.values());
+    public getPublicKeys(): DIDDocumentPublicKey[] {
+        let pks: DIDDocumentPublicKey[] = Array.from(this.publicKeys.values());
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
                 pks.push(...doc.getAuthenticationKeys());
         }
 
-        return ImmutableList(pks);
+        return pks;
     }
 
     /**
@@ -375,12 +374,12 @@ import { VerifiableCredential } from "./internals";
      * @param type the type string
      * @return the matched PublicKey array
      */
-    public selectPublicKeys(id: DIDURL | string, type: string): ImmutableList<DIDDocumentPublicKey> {
+    public selectPublicKeys(id: DIDURL | string, type: string): DIDDocumentPublicKey[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+        let pks: DIDDocumentPublicKey[] = [];
         for (let pk of this.publicKeys.values()) {
             if (id != null && !pk.getId().equals(id))
                 continue;
@@ -396,8 +395,7 @@ import { VerifiableCredential } from "./internals";
                 pks.push(...doc.selectAuthenticationKeys(id, type));
         }
 
-        return ImmutableList(pks);
-
+        return pks;
     }
 
     /**
@@ -613,8 +611,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the matched authentication key array
      */
-    public getAuthenticationKeys(): ImmutableList<DIDDocumentPublicKey> {
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+    public getAuthenticationKeys(): DIDDocumentPublicKey[] {
+        let pks: DIDDocumentPublicKey[] = [];
 
         for (let pk of this.publicKeys.values()) {
             if (pk.isAuthenticationKey())
@@ -636,12 +634,12 @@ import { VerifiableCredential } from "./internals";
      * @param type the type of key
      * @return the matched authentication key array
      */
-    public selectAuthenticationKeys(id: DIDURL | string, type: string): ImmutableList<DIDDocumentPublicKey> {
+    public selectAuthenticationKeys(id: DIDURL | string, type: string): DIDDocumentPublicKey[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+        let pks: DIDDocumentPublicKey[] = [];
         for (let pk of this.publicKeys.values()) {
             if (!pk.isAuthenticationKey())
                 continue;
@@ -706,8 +704,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the  array
      */
-    public getAuthorizationKeys(): ImmutableList<DIDDocumentPublicKey> {
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+    public getAuthorizationKeys(): DIDDocumentPublicKey[] {
+        let pks: DIDDocumentPublicKey[] = [];
 
         for (let pk of this.publicKeys.values()) {
             if (pk.isAuthorizationKey())
@@ -724,12 +722,12 @@ import { VerifiableCredential } from "./internals";
      * @param type the type of key
      * @return the matched authorization key array
      */
-    public selectAuthorizationKeys(idOrString: DIDURL | string, type: string): ImmutableList<DIDDocumentPublicKey> {
+    public selectAuthorizationKeys(idOrString: DIDURL | string, type: string): DIDDocumentPublicKey[] {
         checkArgument(idOrString != null || type != null, "Invalid select args");
 
         idOrString = this.canonicalId(idOrString);
 
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+        let pks: DIDDocumentPublicKey[] = [];
         for (let pk of this.publicKeys.values()) {
             if (!pk.isAuthorizationKey())
                 continue;
@@ -782,8 +780,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the Credential array
      */
-    public getCredentials(): ImmutableList<VerifiableCredential> {
-        return ImmutableList(this._credentials);
+    public getCredentials(): VerifiableCredential[] {
+        return this._credentials;
     }
 
     /**
@@ -793,17 +791,17 @@ import { VerifiableCredential } from "./internals";
      * @param type the type of credential
      * @return the matched Credential array
      */
-    public selectCredentials(id: DIDURL | string, type: string): ImmutableList<VerifiableCredential> {
+    public selectCredentials(id: DIDURL | string, type: string): VerifiableCredential[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let vcs: ImmutableList<VerifiableCredential> = ImmutableList();
+        let vcs: VerifiableCredential[] = [];
         for (let vc of this.credentials.values()) {
             if (id != null && !vc.getId().equals(id))
                 continue;
 
-            if (type != null && !vc.getType().contains(type))
+            if (type != null && vc.getType().indexOf(type) < 0)
                 continue;
 
             vcs.push(vc);
@@ -838,8 +836,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the Service array
      */
-    public getServices(): ImmutableList<DIDDocumentService> {
-        return ImmutableList(this._services);
+    public getServices(): DIDDocumentService[] {
+        return this._services;
     }
 
     /**
@@ -849,12 +847,12 @@ import { VerifiableCredential } from "./internals";
      * @param type the type of service
      * @return the matched Service array
      */
-    public selectServices(id: DIDURL | string, type: string): ImmutableList<DIDDocumentService> {
+    public selectServices(id: DIDURL | string, type: string): DIDDocumentService[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let svcs: ImmutableList<DIDDocumentService> = ImmutableList();
+        let svcs: DIDDocumentService[] = [];
         for (let svc of this.services.values()) {
             if (id != null && !svc.getId().equals(id))
                 continue;
@@ -920,8 +918,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return list of the Proof objects
      */
-    public getProofs(): ImmutableList<DIDDocumentProof> {
-        return ImmutableList(this._proofs);
+    public getProofs(): DIDDocumentProof[] {
+        return this._proofs;
     }
 
     /**
@@ -1936,7 +1934,7 @@ import { VerifiableCredential } from "./internals";
 
             let candidatePks: DIDDocumentPublicKey[] = null;
             if (signKey == null) {
-                candidatePks = this.getAuthenticationKeys().toArray();
+                candidatePks = this.getAuthenticationKeys();
             } else {
                 let pk = this.getAuthenticationKey(signKey);
                 if (pk == null)

@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
@@ -148,8 +147,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the type string
 	 */
-	public getType(): ImmutableList<string> {
-		return ImmutableList(this.type);
+	public getType(): string[] {
+		return this.type;
 	}
 
 	/**
@@ -192,8 +191,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the Credential array
 	 */
-	public getCredentials(): ImmutableList<VerifiableCredential> {
-		return ImmutableList(this._credentials);
+	public getCredentials(): VerifiableCredential[] {
+		return this._credentials;
 	}
 
 	/**

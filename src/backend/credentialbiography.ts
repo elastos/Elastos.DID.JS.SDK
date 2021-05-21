@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue, JsonSerialize, JsonDeserialize } from "jackson-js";
 import { DIDURL } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
@@ -155,8 +154,8 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 		return this.txs != null ? this.txs[index] : null;
 	}
 
-	public getAllTransactions(): ImmutableList<CredentialTransaction> {
-		return ImmutableList(this.txs != null ? this.txs : []);
+	public getAllTransactions(): CredentialTransaction[] {
+		return this.txs != null ? this.txs : [];
 	}
 
 	/**
