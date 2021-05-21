@@ -1,2 +1,3 @@
 {
+    "jestrunner.configPath": "./jest.node.config.ts"
 }

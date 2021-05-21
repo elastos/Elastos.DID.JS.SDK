@@ -14,7 +14,7 @@
           "--runInBand",
           "--detectOpenHandles",
           "--silent=true",
-          "${workspaceRoot}/src/rootidentity.test",
+          "${workspaceRoot}/src/did.test",
         ],
         "runtimeArgs": [
           "--nolazy"
