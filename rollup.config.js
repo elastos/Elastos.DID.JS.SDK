@@ -19,6 +19,7 @@ import globals from 'rollup-plugin-node-globals';
 import alias from "@rollup/plugin-alias";
 import inject from "@rollup/plugin-inject";
 import size from 'rollup-plugin-size';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 const commitHash = (function () {
 	try {
@@ -234,7 +235,7 @@ export default command => {
 				mainFields: ['browser', 'module', 'jsnext:main', 'main'],
 				browser: true,
 				preferBuiltins: true,
-				dedupe: ['bn.js', 'browserfs']
+				dedupe: ['bn.js', 'browserfs', 'buffer-es6', 'process-es6', 'crypto-browserify', 'assert', 'events']
 			}),
 			// Polyfills needed to replace readable-stream with stream (circular dep)
 			commonjs({
@@ -253,14 +254,11 @@ export default command => {
 			inject({
 				"BrowserFS": "browserfs"
 			}),
-			size()
-			// LATER terser({ module: true, output: { comments: 'some' } }),
-			/* serve({ // For temporary local html debug in browser
-				contentBase:'',
-				headers: {
-					'Access-Control-Allow-Origin': '*'
-				}
-			}) */
+			size(),
+			visualizer({
+				filename: "./browser-bundle-stats.html"
+			}) // To visualize bundle dependencies sizes on a UI.
+			// LATER terser({ module: true, output: { comments: 'some' } })
 		],
 		treeshake,
 		strictDeprecations: true,
