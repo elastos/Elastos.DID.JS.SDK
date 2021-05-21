@@ -20,54 +20,52 @@
  * SOFTWARE.
  */
 
-test("stub", ()=> Promise.resolve(true));
+import { DIDStore, DIDURL, Logger } from "@elastosfoundation/did-js-sdk";
+import { TestData } from "./utils/testdata";
 
-/* @ExtendWith(DIDTestExtension.class)
-public class VerifiableCredentialTest {
-	private TestData testData;
+let testData: TestData;
+let store: DIDStore;
 
-	private static final Logger log = LoggerFactory.getLogger(VerifiableCredentialTest.class);
+const log = new Logger("VerifiableCredentialTest");
 
-    @BeforeEach
-    public void beforeEach() throws DIDException {
+describe('VerifiableCredential Tests', () => {
+    beforeEach(() => {
     	testData = new TestData();
-    }
+    });
 
-    @AfterEach
-    public void afterEach() {
+    afterEach(() => {
     	testData.cleanup();
-    }
+    });
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testKycCredential(int version) throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	test('testKycCredential', () => {
+		let version = 2;
+    	let cd = testData.getCompatibleData(version);
 
-    	DIDDocument issuer = cd.getDocument("issuer");
-		DIDDocument user = cd.getDocument("user1");
+    	let issuer = cd.getDocument("issuer");
+		let user = cd.getDocument("user1");
 
-		VerifiableCredential vc = cd.getCredential("user1", "twitter");
+		let vc = cd.getCredential("user1", "twitter");
 
-		assertEquals(new DIDURL(user.getSubject(), "#twitter"), vc.getId());
+		expect(DIDURL.newWithDID(user.getSubject(), "#twitter").equals(vc.getId()));
 
-		assertTrue(vc.getType().contains("InternetAccountCredential"));
-		assertTrue(vc.getType().contains("TwitterCredential"));
+		expect(vc.getType().contains("InternetAccountCredential")).toBeTruthy();
+		expect(vc.getType().contains("TwitterCredential")).toBeTruthy();
 
-		assertEquals(issuer.getSubject(), vc.getIssuer());
-		assertEquals(user.getSubject(), vc.getSubject().getId());
+		expect(issuer.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-		assertEquals("@john", vc.getSubject().getProperty("twitter"));
+		expect("@john").toEqual(vc.getSubject().getProperty("twitter"));
 
-		assertNotNull(vc.getIssuanceDate());
-		assertNotNull(vc.getExpirationDate());
+		expect(vc.getIssuanceDate()).not.toBeNull();
+		expect(vc.getExpirationDate()).not.toBeNull();
 
-		assertFalse(vc.isSelfProclaimed());
-		assertFalse(vc.isExpired());
-		assertTrue(vc.isGenuine());
-		assertTrue(vc.isValid());
-	}
+		expect(vc.isSelfProclaimed()).toBeFalsy();
+		expect(vc.isExpired()).toBeFalsy();
+		expect(vc.isGenuine()).toBeTruthy();
+		expect(vc.isValid()).toBeTruthy();
+	});
 
-    @ParameterizedTest
+   /* @ParameterizedTest
     @ValueSource(ints = {1, 2})
 	public void testSelfProclaimedCredential(int version) throws DIDException, IOException {
     	TestData.CompatibleData cd = testData.getCompatibleData(version);
@@ -968,6 +966,5 @@ public class VerifiableCredentialTest {
 		   	skip += ids.size();
     	}
     	assertEquals(0, index);
-    }
-}
- */
+    }*/
+});
