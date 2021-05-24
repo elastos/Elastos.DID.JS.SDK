@@ -469,7 +469,7 @@ describe("DIDStore Tests", ()=>{
 
 	//[1,2].forEach((version)=>{
 		test("testCompatibility", ()=>{
-			let version = 1;
+			let version = 2;
 			let data = Buffer.from("Hello World");
 
 			let cd = testData.getCompatibleData(version);
