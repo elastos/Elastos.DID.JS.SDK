@@ -38,13 +38,9 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	// TODO @carl (BPI): I temporarily remplace this Map/String/String type with a raw Object, because
 	// this throws a "incompatible receiver 'size' or #Map" runtime error. Not sure how to fix this correctly
 	// but for now i want to keep validating the "internals" fix and Object does the job for now.
-	//@JsonClassType({type: () => [Map, [String, String]]})
-	@JsonClassType({type: ()=>[Object]})
+	@JsonIgnore()
 	public props: JSONObject = {};
 
-	//@JsonInclude({value: JsonIncludeType.NON_NULL})
-	//@JsonClassType({type: () => [DIDStore]})
-	// Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnore()
 	protected store?: DIDStore;
 
 	/**
@@ -76,7 +72,7 @@ export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneab
 	 *
 	 * @return the DIDStore object
 	 */
-	public getStore(): DIDStore {
+	 public getStore(): DIDStore {
 		return this.store;
 	}
 

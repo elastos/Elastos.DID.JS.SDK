@@ -15,6 +15,11 @@ const config: InitialOptionsTsJest = {
         includeSuiteFailure: true
       }
     ]
-  ]
+  ],
+  globals: {
+    "ts-jest": {
+      "tsConfig": "./tsconfig.json"
+    }
+  }
 }
 export default config

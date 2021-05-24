@@ -52,7 +52,8 @@ import { BASE64 } from "./internals";
  */
  const log = new Logger("DIDStore");
 
- // Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnoreType()
+ // The @JsonIgnoreType() decorator is mandatory to avoid the cyclic references
+ @JsonIgnoreType()
  export class DIDStore {
 
 	private static CACHE_INITIAL_CAPACITY = 16;
@@ -64,9 +65,7 @@ import { BASE64 } from "./internals";
 
 	private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
-	//@JsonIgnore()
 	public storage: DIDStorage;
-	//@JsonClassType({type: () => [DIDStoreMetadata]})
 	private metadata: DIDStoreMetadata;
 
 	private constructor(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage) {

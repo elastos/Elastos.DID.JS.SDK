@@ -75,21 +75,24 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	public static getDefaultObjectMapper(): ObjectMapper {
 		let mapper = new ObjectMapper();
 
-		mapper.defaultParserContext.features.deserialization.FAIL_ON_UNKNOWN_PROPERTIES = false;
-		mapper.defaultParserContext.features.deserialization.DEFAULT_VIEW_INCLUSION = false;
+		mapper.defaultStringifierContext.features.serialization.DEFAULT_VIEW_INCLUSION = false;
+		mapper.defaultStringifierContext.features.serialization.WRITE_SELF_REFERENCES_AS_NULL = true;
+		mapper.defaultStringifierContext.features.serialization.FAIL_ON_SELF_REFERENCES = true;
 
 		mapper.defaultStringifierContext.serializers.push({
 			type: () => Date,
 			order: 0,
 			mapper: this.DateSerializer.serialize
 		});
+
+		mapper.defaultParserContext.features.deserialization.FAIL_ON_UNKNOWN_PROPERTIES = false;
+		mapper.defaultParserContext.features.deserialization.DEFAULT_VIEW_INCLUSION = false;
+
 		mapper.defaultParserContext.deserializers.push({
 			type: () => Date,
 			order: 0,
 			mapper: this.DateSerializer.deserialize
 		});
-		mapper.defaultStringifierContext.features.serialization.DEFAULT_VIEW_INCLUSION = false;
-		mapper.defaultStringifierContext.features.serialization.FAIL_ON_SELF_REFERENCES = true;
 
 		return mapper;
 	}
