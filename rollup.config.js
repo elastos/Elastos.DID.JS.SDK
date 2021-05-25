@@ -20,6 +20,7 @@ import alias from "@rollup/plugin-alias";
 import inject from "@rollup/plugin-inject";
 import size from 'rollup-plugin-size';
 import { visualizer } from 'rollup-plugin-visualizer';
+import replaceFiles from 'rollup-plugin-file-content-replace';
 
 const commitHash = (function () {
 	try {
@@ -85,10 +86,11 @@ const nodePlugins = [
 		}
 	}),
 	commonjs({
-		include: 'node_modules/**',
-
+		include: 'node_modules/**'
 	}),
-	typescript({}),
+	typescript({
+		exclude: "*.browser.ts"
+	}),
 	size()
 ];
 
@@ -174,6 +176,11 @@ export default command => {
 			json(),
 			//collectLicenses(),
 			//writeLicense(),
+			// Replace some node files with their browser-specific versions.
+			// Ex: fs.browser.ts -> fs.ts
+			replaceFiles({
+				fileReplacements: [{ replace: "fs.ts", with: "fs.browser.ts" }]
+			}),
 			// Dirty circular dependency removal atttempt
 			replace({
 				delimiters: ['', ''],
@@ -246,7 +253,9 @@ export default command => {
 				dynamicRequireTargets: [],
 			}),
 			globals(), // Defines process, Buffer, etc
-			typescript(),
+			typescript({
+				exclude: "*.node.ts"
+			}),
 			/* nodePolyfills({
 				stream: true
 				// crypto:true // Broken, the polyfill just doesn't work. We have to use crypto-browserify directly in our TS code instead.
