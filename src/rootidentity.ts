@@ -273,7 +273,7 @@ export class RootIdentity {
 	 * @return the DIDDocument content related to the new DID
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
-	public newDid(storepass: string, index: number = undefined, overwrite: boolean = false): DIDDocument {
+	public async newDid(storepass: string, index: number = undefined, overwrite: boolean = false): Promise<DIDDocument> {
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 		let shouldIncrementIndexAfterCompletion = false;
@@ -294,7 +294,7 @@ export class RootIdentity {
 				throw new DIDAlreadyExistException("DID already exists in the store.");
 		}
 
-		doc = did.resolve();
+		doc = await did.resolve();
 		if (doc != null) {
 			if (doc.isDeactivated())
 				throw new DIDDeactivatedException(did.toString());
@@ -345,7 +345,7 @@ export class RootIdentity {
 	}
 
 	// Java: synchronize()
-	public synchronizeIndex(index: number, handle: ConflictHandle = null): boolean {
+	public async synchronizeIndex(index: number, handle: ConflictHandle = null): Promise<boolean> {
 		checkArgument(index >= 0, "Invalid index");
 
 		if (handle == null)
@@ -354,7 +354,7 @@ export class RootIdentity {
 		let did = this.getDid(index);
 		log.info("Synchronize {}/{}...", did.toString(), index);
 
-		let resolvedDoc = did.resolve(true);
+		let resolvedDoc = await did.resolve(true);
 		if (resolvedDoc == null) {
 			log.info("Synchronize {}/{}...not exists", did.toString(), index);
 			return false;
@@ -395,10 +395,6 @@ export class RootIdentity {
 		return true;
 	}
 
-	public synchronizeIndexAsync(index: number, handle: ConflictHandle = null): Promise<boolean>  {
-		return promisify(()=>this.synchronizeIndex(index, handle));
-	}
-
 	/**
 	 * Synchronize DIDStore.
 	 *
@@ -430,18 +426,6 @@ export class RootIdentity {
 
 		if (lastIndex >= this.getIndex())
 			this.setIndex(lastIndex + 1);
-	}
-
-    /**
-     * Synchronize DIDStore with asynchronous mode.
-     *
-	 * @param handle the handle to ConflictHandle
-	 * @param storepass the password for DIDStore
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *         resolved DIDDocument if success; null otherwise.
-     */
-	public synchronizeAsync(handle: ConflictHandle = null): Promise<void> {
-		return promisify(()=>this.synchronize(handle));
 	}
 }
 

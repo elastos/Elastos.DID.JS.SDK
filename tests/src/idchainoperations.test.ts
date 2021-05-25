@@ -66,9 +66,9 @@ describe('IDChainOperations Tests', () => {
     });
 
 	describe('Order 1', () => {
-		test('testCreateAndResolve', () => {
+		test('testCreateAndResolve', async () => {
 			// Create new DID and publish to ID sidechain.
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			let did = doc.getSubject();
 
 			log.debug("Publishing new DID {}...", did);
@@ -78,7 +78,7 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			let resolved = did.resolve();
+			let resolved = await did.resolve();
 			expect(resolved).not.toBeNull();
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -89,19 +89,19 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 2', () => {
-		test('testCreateAndResolveAsync', async () => {
+		test('testCreateAndresolve', async () => {
 			// Create new DID and publish to ID sidechain.
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			let did = doc.getSubject();
 
 			log.debug("Publishing new DID {}...", did);
 			let start = Date.now();
-			await doc.publishAsync(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass)
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			let resolved = await did.resolveAsync(true);
+			let resolved = await did.resolve(true);
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.toString(true)).toEqual(resolved.toString(true));
@@ -110,18 +110,18 @@ describe('IDChainOperations Tests', () => {
 		});
 	});
 
-	describe('Order 3', () => {
-		test('testCreateAndResolveAsync2', async () => {
+	describe('Order 3', async () => {
+		test('testCreateAndresolve2', async () => {
 			// Create new DID and publish to ID sidechain.
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			let did = doc.getSubject();
 
 			log.debug("Publishing new DID and resolve {}...", did);
 
 			let start = Date.now();
-			doc.publishAsync(TestConfig.storePass);
+			doc.publish(TestConfig.storePass);
 			testData.waitForWalletAvailable();
-			let resolved = await did.resolveAsync(true);
+			let resolved = await did.resolve(true);
 
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Publish new DID and resolve {}...OK({}s)", did, duration);
@@ -135,13 +135,13 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 4', () => {
-		test('testUpdateAndResolve', () => {
+		test('testUpdateAndResolve', async () => {
 			// User the DID that created in previous case(1)
 			let doc = store.loadDid(dids[0]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
-			let resolved = did.resolve();
+			let resolved = await did.resolve();
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -164,7 +164,7 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			resolved = did.resolve();
+			resolved = await did.resolve();
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -173,7 +173,7 @@ describe('IDChainOperations Tests', () => {
 			lastTxid = resolved.getMetadata().getTransactionId();
 			log.debug("Last transaction id {}", lastTxid);
 
-			let rr = did.resolveBiography();
+			let rr = await did.resolveBiography();
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID).toEqual(rr.getStatus());
@@ -195,13 +195,13 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 5', () => {
-		test('testUpdateAndResolveAgain', () => {
+		test('testUpdateAndResolveAgain', async () => {
 			// User the DID that created in previous case(1)
 			let doc = store.loadDid(dids[0]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
-			let resolved = did.resolve();
+			let resolved = await did.resolve();
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -224,7 +224,7 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			resolved = did.resolve();
+			resolved = await did.resolve();
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -233,7 +233,7 @@ describe('IDChainOperations Tests', () => {
 			lastTxid = resolved.getMetadata().getTransactionId();
 			log.debug("Last transaction id {}", lastTxid);
 
-			let rr = did.resolveBiography();
+			let rr = await did.resolveBiography();
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
@@ -260,13 +260,13 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 6', () => {
-		test('testUpdateAndResolveAsync', async () => {
+		test('testUpdateAndresolve', async () => {
 			// User the DID that created in previous case(2)
 			let doc = store.loadDid(dids[1]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
-			let resolved = await did.resolveAsync(true);
+			let resolved = await did.resolve(true);
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -284,12 +284,12 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			await doc.publishAsync(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass)
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			resolved = await did.resolveAsync(true);
+			resolved = await did.resolve(true);
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -297,7 +297,7 @@ describe('IDChainOperations Tests', () => {
 			lastTxid = resolved.getMetadata().getTransactionId();
 			log.debug("Last transaction id {}", lastTxid);
 
-			let rr = await did.resolveBiographyAsync();
+			let rr = await did.resolveBiography();
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
@@ -319,13 +319,13 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 7', () => {
-		test('testUpdateAndResolveAsyncAgain', async () => {
+		test('testUpdateAndresolveAgain', async () => {
 			// User the DID that created in previous case(2)
 			let doc = store.loadDid(dids[1]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
-			let resolved = await did.resolveAsync(true);
+			let resolved = await did.resolve(true);
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -343,12 +343,12 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			await doc.publishAsync(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			resolved = await did.resolveAsync(true);
+			resolved = await did.resolve(true);
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toReturn;
 			expect(resolved.isValid()).toBeTruthy();
@@ -357,7 +357,7 @@ describe('IDChainOperations Tests', () => {
 			lastTxid = resolved.getMetadata().getTransactionId();
 			log.debug("Last transaction id {}", lastTxid);
 
-			let rr = did.resolveBiography();
+			let rr = await did.resolveBiography();
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
@@ -384,9 +384,9 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 8', () => {
-		test('testCreateAndResolveWithCredentials', () => {
+		test('testCreateAndResolveWithCredentials', async () => {
 			// Create new DID and publish to ID sidechain.
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			let did = doc.getSubject();
 
 			let selfIssuer = new Issuer(doc);
@@ -421,7 +421,7 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			let resolved = did.resolve();
+			let resolved = await did.resolve();
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.toString(true)).toEqual(resolved.toString(true));
@@ -434,13 +434,13 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 9', () => {
-		test('testUpdateAndResolveWithCredentials', () => {
+		test('testUpdateAndResolveWithCredentials', async () => {
 			// User the DID that created in previous case(8)
 			let doc = store.loadDid(dids[3]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
-			let resolved = did.resolve();
+			let resolved = await did.resolve();
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -475,7 +475,7 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			resolved = did.resolve();
+			resolved = await did.resolve();
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -484,7 +484,7 @@ describe('IDChainOperations Tests', () => {
 			lastTxid = resolved.getMetadata().getTransactionId();
 			log.debug("Last transaction id {}", lastTxid);
 
-			let rr = did.resolveBiography();
+			let rr = await did.resolveBiography();
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
@@ -506,13 +506,13 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 10', () => {
-		test('testUpdateAndResolveWithCredentialsAgain', () => {
+		test('testUpdateAndResolveWithCredentialsAgain', async () => {
 			// User the DID that created in previous case(8)
 			let doc = store.loadDid(dids[3]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
-			let resolved = did.resolve();
+			let resolved = await did.resolve();
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -552,7 +552,7 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			resolved = did.resolve();
+			resolved = await did.resolve();
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -561,7 +561,7 @@ describe('IDChainOperations Tests', () => {
 			lastTxid = resolved.getMetadata().getTransactionId();
 			log.debug("Last transaction id {}", lastTxid);
 
-			let rr = did.resolveBiography();
+			let rr = await did.resolveBiography();
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
@@ -590,7 +590,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 11', () => {
 		test('testCreateAndResolveWithCredentialsAsync', async () => {
 			// Create new DID and publish to ID sidechain.
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			let did = doc.getSubject();
 
 			let selfIssuer = new Issuer(doc);
@@ -620,12 +620,12 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Publishing new DID {}...", did);
 			let s1 = Date.now();
-			await doc.publishAsync(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass)
 			let duration = (Date.now() - s1 + 500) / 1000;
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			let resolved = await did.resolveAsync(true);
+			let resolved = await did.resolve(true);
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.toString(true)).toEqual(resolved.toString(true));
@@ -644,7 +644,7 @@ describe('IDChainOperations Tests', () => {
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
-			let resolved = await did.resolveAsync(true);
+			let resolved = await did.resolve(true);
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -675,12 +675,12 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			await doc.publishAsync(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass)
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			resolved = await did.resolveAsync(true);
+			resolved = await did.resolve(true);
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -698,7 +698,7 @@ describe('IDChainOperations Tests', () => {
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
-			let resolved = await did.resolveAsync(true);
+			let resolved = await did.resolve(true);
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -733,12 +733,12 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			await doc.publishAsync(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass)
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
 			testData.waitForWalletAvailable();
-			resolved = await did.resolveAsync(true);
+			resolved = await did.resolve(true);
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -747,7 +747,7 @@ describe('IDChainOperations Tests', () => {
 			lastTxid = resolved.getMetadata().getTransactionId();
 			log.debug("Last transaction id {}", lastTxid);
 
-			let rr = did.resolveBiography();
+			let rr = await did.resolveBiography();
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
@@ -812,7 +812,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Synchronizing from IDChain...");
 			let start = Date.now();
-			await rootIdentity.synchronizeAsync()
+			await rootIdentity.synchronize()
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
@@ -872,7 +872,7 @@ describe('IDChainOperations Tests', () => {
 				}
 			}
 
-			await identity.synchronizeAsync(ch)
+			await identity.synchronize(ch)
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
@@ -1015,7 +1015,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Synchronizing from IDChain...");
 			let start = Date.now();
-			await rootIdentity.synchronizeAsync()
+			await rootIdentity.synchronize()
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
@@ -1040,7 +1040,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Synchronizing again from IDChain...");
 			let start2 = Date.now();
-			await rootIdentity.synchronizeAsync({
+			await rootIdentity.synchronize({
 				merge(c, l) { return c; }
 			});
 			duration = (Date.now() - start2 + 500) / 1000;

@@ -310,9 +310,9 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		this.setProof(new DIDRequest.Proof(targetSignKey, signature));
 	}
 
-	protected getSignerDocument(): DIDDocument {
+	protected async getSignerDocument(): Promise<DIDDocument> {
 		if (this.doc == null)
-			this.doc = this.did.resolve();
+			this.doc = await this.did.resolve();
 
 		return this.doc;
 	}

@@ -22,6 +22,21 @@ import size from 'rollup-plugin-size';
 import { visualizer } from 'rollup-plugin-visualizer';
 import replaceFiles from 'rollup-plugin-file-content-replace';
 
+import { writeFileSync } from "fs";
+
+// Very dirty way to get rid on unsupported languages BIP39 languages to reduce the bundle size.
+// rollup-plugin-file-content-replace wasn't able to stub language json files and found no better way
+// than this hack currently.
+// NOTE: as the node_modules/bip39 folder is modified, re-adding a languages requires reinstalling
+// the bip39 library.
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/chinese_traditional.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/czech.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/italian.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/japanese.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/korean.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/portuguese.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/spanish.json", "[]");
+
 const commitHash = (function () {
 	try {
 		return fs.readFileSync('.commithash', 'utf-8');
@@ -63,7 +78,7 @@ const nodePlugins = [
 	resolve({
 		preferBuiltins: true
 	}),
-	json(),
+	json({}),
 	replace({
 		delimiters: ['', ''],
 		preventAssignment: true,
@@ -85,9 +100,7 @@ const nodePlugins = [
 			'LegacyTransportStream = require(\'winston-transport/legacy\')': 'LegacyTransportStream = null'
 		}
 	}),
-	commonjs({
-		include: 'node_modules/**'
-	}),
+	commonjs({}),
 	typescript({
 		exclude: "*.browser.ts"
 	}),
@@ -179,7 +192,9 @@ export default command => {
 			// Replace some node files with their browser-specific versions.
 			// Ex: fs.browser.ts -> fs.ts
 			replaceFiles({
-				fileReplacements: [{ replace: "fs.ts", with: "fs.browser.ts" }]
+				fileReplacements: [
+					{ replace: "fs.ts", with: "fs.browser.ts" }
+				]
 			}),
 			// Dirty circular dependency removal atttempt
 			replace({

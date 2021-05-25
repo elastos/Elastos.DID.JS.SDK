@@ -4,15 +4,14 @@
   "description": "Elastos DID Typescript SDK Tests",
   "scripts": {
     "dev": "rollup -c -w",
-    "clean:tests": "rm -rf public/tests",
+    "clean": "rm -rf public/tests generated/",
     "types": "npm run clean && tsc --emitDeclarationOnly --outDir typings/ --project tsconfig.types.json",
     "tsc:build": "rollup -c",
     "tsc:w": "tsc -w",
-    "test:stubbrowserdata": "mkdir -p ./generated && echo '{}' > ./generated/browserdata.json",
-    "test:node": "npm run test:stubbrowserdata && JEST_CIRCUS=1 jest --silent=true --config jest.node.config.ts",
+    "test:node": "JEST_CIRCUS=1 jest --silent=true --config jest.node.config.ts",
     "test:node:debug": "JEST_CIRCUS=1 node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
     "test:node-no-jest": "rollup -c rollup.no-jest.config.js && node generated/tests-no-jest.js",
-    "test:browser": "npm run clean:tests && rollup -c rollup.browsertests.config.js"
+    "test:browser": "npm run clean && rollup -c rollup.browsertests.config.js"
   },
   "dependencies": {
     "@elastosfoundation/did-js-sdk": "^2.0.0",

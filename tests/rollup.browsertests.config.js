@@ -46,7 +46,7 @@ writeFileSync("./generated/browserdata.json", JSON.stringify(dataBundle, null, "
 export default [
     {
         //input: 'tests/didstore.test.ts',
-        input: [__dirname+'/src/**/*.ts'],
+        input: ['src/**/*.ts'],
         //input: 'tests/crypto/ecdsasigner.test.ts',
         output: {
             //file: 'public/tests/did.browser.tests.js',

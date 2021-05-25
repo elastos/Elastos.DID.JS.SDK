@@ -22,12 +22,14 @@
 
 import { Hashable } from "./hashable";
 
-type Loadable<K,V> = (key: K)=>{value: V, meta?: LRUCacheMeta};
+type Loadable<K,V> = (key: K) => {value: V, meta?: LRUCacheMeta};
+type AsyncLoadable<K,V> = (key: K) => Promise<{value: V, meta?: LRUCacheMeta}>;
 
 export type LRUCacheOptions<K, V> = {
   maxItems?: number;
   maxAge?: number;
   loader?: Loadable<K,V>;
+  asyncLoader?: AsyncLoadable<K,V>;
 }
 
 export type LRUCacheMeta = Object;
@@ -129,6 +131,41 @@ export class LRUCache<K extends Hashable | string, V> {
 
         if (loader) {
           let {value, meta} = loader(key);
+          if (value !== undefined && value !== null) {
+            item = this.putInternal(key, value, meta);
+          }
+        }
+
+        if (!item)
+          return null;
+      }
+
+      this.promote(item);
+
+      return item.value;
+    }
+
+    public async getAsync(key: K, asyncLocalLoader?: AsyncLoadable<K,V>): Promise<V> {
+      // fetch key and return value
+      // move object to head of list
+      let hash = this.getHash(key)
+      var item = this.items[hash];
+
+      if (item && item.expires && (Date.now() / 1000 >= item.expires)) {
+        this.invalidate(key);
+        item = null;
+      }
+
+      if (!item) {
+        // Try to load the item from the loader if there is one
+        let loader: AsyncLoadable<K,V> = null;
+        if (asyncLocalLoader)
+          loader = asyncLocalLoader;
+        else if (this.options.asyncLoader)
+          loader = this.options.asyncLoader;
+
+        if (loader) {
+          let {value, meta} = await loader(key);
           if (value !== undefined && value !== null) {
             item = this.putInternal(key, value, meta);
           }

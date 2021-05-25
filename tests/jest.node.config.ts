@@ -1,5 +1,11 @@
 import type { InitialOptionsTsJest } from 'ts-jest/dist/types'
 import { defaults as tsjPreset } from 'ts-jest/presets'
+import { writeFileSync, existsSync, mkdirSync } from "fs";
+
+// Empty browser data stub for nodejs tests.
+if (!existsSync("./generated"))
+    mkdirSync("./generated");
+writeFileSync("./generated/browserdata.json", "{}");
 
 const config: InitialOptionsTsJest = {
   rootDir: "./src",
