@@ -18,7 +18,7 @@ const config: InitialOptionsTsJest = {
   ],
   globals: {
     "ts-jest": {
-      "tsConfig": "./tsconfig.json"
+      "tsconfig": "./tsconfig.json"
     }
   }
 }
