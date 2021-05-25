@@ -6,15 +6,10 @@
     "prepublishOnly": "npm run clean && npm run build",
     "build": "npm run clean && npm run types && rollup -c",
     "dev": "rollup -c -w",
-    "clean": "rm -rf dist/ typings/",
-    "clean:tests": "rm -rf public/tests",
+    "clean": "rm -rf dist/ typings/ generated/",
     "types": "npm run clean && tsc --emitDeclarationOnly --outDir typings/ --project tsconfig.types.json",
     "tsc:build": "rollup -c",
-    "tsc:w": "tsc -w",
-    "test:stubbrowserdata": "mkdir -p ./generated && echo '{}' > ./generated/browserdata.json",
-    "test:node": "npm run test:stubbrowserdata && JEST_CIRCUS=1 jest --silent=true --config tests/jest.node.config.ts",
-    "test:node:debug": "JEST_CIRCUS=1 node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
-    "test:browser": "npm run clean:tests && rollup -c tests/rollup.browsertests.config.js"
+    "tsc:w": "tsc -w"
   },
   "main": "./dist/did.js",
   "module": "./dist/es/did.js",

@@ -164,9 +164,9 @@ describe("DIDStore Tests", ()=>{
 		expect(80).toEqual(remains.length);
 	});
 
-	test("testStoreAndLoadDID", ()=>{
+	test("testStoreAndLoadDID", async ()=>{
 		// Store test data into current store
-		let issuer = testData.getInstantData().getIssuerDocument();
+		let issuer = await testData.getInstantData().getIssuerDocument();
 
 		let file = getFile("ids", issuer.getSubject().getMethodSpecificId(), "document");
 		expect(file.exists()).toBeTruthy();
@@ -176,7 +176,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		let test = testData.getInstantData().getUser1Document();
+		let test = await testData.getInstantData().getUser1Document();
 
 		file = getFile("ids", test.getSubject().getMethodSpecificId(), "document");
 		expect(file.exists()).toBeTruthy();
@@ -200,10 +200,10 @@ describe("DIDStore Tests", ()=>{
 		expect(dids.length).toEqual(2);
 	});
 
-	test("testLoadCredentials", ()=>{
+	test("testLoadCredentials", async ()=>{
 		// Store test data into current store
 		testData.getInstantData().getIssuerDocument();
-		let user = testData.getInstantData().getUser1Document();
+		let user = await testData.getInstantData().getUser1Document();
 
 		let vc = user.getCredential("#profile");
 		vc.getMetadata().setAlias("MyProfile");
@@ -231,7 +231,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		vc = testData.getInstantData().getUser1TwitterCredential();
+		vc = await testData.getInstantData().getUser1TwitterCredential();
 		vc.getMetadata().setAlias("Twitter");
 
 		file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
@@ -244,7 +244,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		vc = testData.getInstantData().getUser1PassportCredential();
+		vc = await testData.getInstantData().getUser1PassportCredential();
 		vc.getMetadata().setAlias("Passport");
 
 		file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
@@ -289,19 +289,19 @@ describe("DIDStore Tests", ()=>{
 		expect(store.containsCredential(DIDURL.valueOf(user.getSubject(), "#notExists"))).toBeFalsy();
 	});
 
-	test("testListCredentials", ()=>{
+	test("testListCredentials", async ()=>{
 		testData.getRootIdentity();
 
 		// Store test data into current store
 		testData.getInstantData().getIssuerDocument();
-		let user = testData.getInstantData().getUser1Document();
+		let user = await testData.getInstantData().getUser1Document();
 		let vc = user.getCredential("#profile");
 		vc.getMetadata().setAlias("MyProfile");
 		vc = user.getCredential("#email");
 		vc.getMetadata().setAlias("Email");
-		vc = testData.getInstantData().getUser1TwitterCredential();
+		vc = await testData.getInstantData().getUser1TwitterCredential();
 		vc.getMetadata().setAlias("Twitter");
-		vc = testData.getInstantData().getUser1PassportCredential();
+		vc = await testData.getInstantData().getUser1PassportCredential();
 		vc.getMetadata().setAlias("Passport");
 
 		let vcs = store.listCredentials(user.getSubject());
@@ -320,17 +320,17 @@ describe("DIDStore Tests", ()=>{
 		}
 	});
 
-	test("testDeleteCredential", ()=>{
+	test("testDeleteCredential", async ()=>{
 		// Store test data into current store
 		testData.getInstantData().getIssuerDocument();
-		let user = testData.getInstantData().getUser1Document();
+		let user = await testData.getInstantData().getUser1Document();
 		let vc = user.getCredential("#profile");
 		vc.getMetadata().setAlias("MyProfile");
 		vc = user.getCredential("#email");
 		vc.getMetadata().setAlias("Email");
-		vc = testData.getInstantData().getUser1TwitterCredential();
+		vc = await testData.getInstantData().getUser1TwitterCredential();
 		vc.getMetadata().setAlias("Twitter");
-		vc = testData.getInstantData().getUser1PassportCredential();
+		vc = await testData.getInstantData().getUser1PassportCredential();
 		vc.getMetadata().setAlias("Passport");
 
 

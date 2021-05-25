@@ -37,8 +37,8 @@ describe("Issuer Tests", ()=>{
     	store = testData.getStore();
     	testData.getRootIdentity();
 
-    	issuerDoc = testData.getInstantData().getIssuerDocument();
-    	testDoc = testData.getInstantData().getUser1Document();
+    	issuerDoc = await testData.getInstantData().getIssuerDocument();
+    	testDoc = await testData.getInstantData().getUser1Document();
 	})
 
 	afterEach(()=>{
@@ -159,10 +159,8 @@ describe("Issuer Tests", ()=>{
 
 	})
 
-	test('Issue Kyc Credential For Cid Test', () => {
-
-		let testDoc = testData.getInstantData().getBazDocument();
-
+	test('Issue Kyc Credential For Cid Test', async () => {
+		let testDoc = await testData.getInstantData().getBazDocument();
 
 		let props = {
 		    name: "John",
@@ -206,9 +204,8 @@ describe("Issuer Tests", ()=>{
 
 	})
 
-	test('Issue Kyc Credential From Cid Test', () => {
-
-		let issuerDoc = testData.getInstantData().getExampleCorpDocument();
+	test('Issue Kyc Credential From Cid Test', async () => {
+		let issuerDoc = await testData.getInstantData().getExampleCorpDocument();
 
 		let props = {
 		    name: "John",
@@ -252,9 +249,8 @@ describe("Issuer Tests", ()=>{
 
 	})
 
-	test('Issue SelfProclaimed Credential From Cid Test', () => {
-
-		let issuerDoc = testData.getInstantData().getExampleCorpDocument();
+	test('Issue SelfProclaimed Credential From Cid Test', async () => {
+		let issuerDoc = await testData.getInstantData().getExampleCorpDocument();
 
 		let props = {
 		    name: "Testing Issuer",

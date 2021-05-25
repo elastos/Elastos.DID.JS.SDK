@@ -128,17 +128,17 @@ describe('VerifiablePresentation Tests', () => {
 		});
 	});
 
-	test('testBuildNonempty', () => {
-		let td = testData.getInstantData();
-		let doc = td.getUser1Document();
+	test('testBuildNonempty', async () => {
+		let td = await testData.getInstantData();
+		let doc = await td.getUser1Document();
 
 		let pb = VerifiablePresentation.createFor(doc.getSubject(), null, store);
 
 		let vp = pb
 				.credentials(doc.getCredential("#profile"))
 				.credentials(doc.getCredential("#email"))
-				.credentials(td.getUser1TwitterCredential())
-				.credentials(td.getUser1PassportCredential())
+				.credentials(await td.getUser1TwitterCredential())
+				.credentials(await td.getUser1PassportCredential())
 				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
@@ -171,9 +171,9 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp.isValid()).toBeTruthy();
 	});
 
-	test('testBuildNonemptyWithOptionalAttrs', () => {
-		let td = testData.getInstantData();
-		let doc = td.getUser1Document();
+	test('testBuildNonemptyWithOptionalAttrs', async () => {
+		let td = await testData.getInstantData();
+		let doc = await td.getUser1Document();
 
 		let pb = VerifiablePresentation.createFor(doc.getSubject(), null, store);
 
@@ -182,8 +182,8 @@ describe('VerifiablePresentation Tests', () => {
 				.type("Trail", "TestPresentation")
 				.credentials(doc.getCredential("#profile"))
 				.credentials(doc.getCredential("#email"))
-				.credentials(td.getUser1TwitterCredential())
-				.credentials(td.getUser1PassportCredential())
+				.credentials(await td.getUser1TwitterCredential())
+				.credentials(await td.getUser1PassportCredential())
 				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
@@ -217,8 +217,8 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp.isValid()).toBeTruthy();
 	});
 
-	test('testBuildEmpty', () => {
-		let doc = testData.getInstantData().getUser1Document();
+	test('testBuildEmpty', async () => {
+		let doc = await testData.getInstantData().getUser1Document();
 
 		let pb = VerifiablePresentation.createFor(doc.getSubject(), null, store);
 
@@ -241,8 +241,8 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp.isValid()).toBeTruthy();
 	});
 
-	test('testBuildEmptyWithOptionsAttrs', () => {
-		let doc = testData.getInstantData().getUser1Document();
+	test('testBuildEmptyWithOptionsAttrs', async () => {
+		let doc = await testData.getInstantData().getUser1Document();
 
 		let pb = VerifiablePresentation.createFor(doc.getSubject(), null, store);
 
