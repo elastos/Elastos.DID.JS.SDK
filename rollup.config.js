@@ -179,7 +179,9 @@ export default command => {
 			// Replace some node files with their browser-specific versions.
 			// Ex: fs.browser.ts -> fs.ts
 			replaceFiles({
-				fileReplacements: [{ replace: "fs.ts", with: "fs.browser.ts" }]
+				fileReplacements: [
+					{ replace: "fs.ts", with: "fs.browser.ts" }
+				]
 			}),
 			// Dirty circular dependency removal atttempt
 			replace({

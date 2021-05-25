@@ -25,6 +25,7 @@ import { IllegalArgumentException, NetworkException, ResolveException, Unsupport
 import { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
+import { XMLHttpRequest } from "xhr2";
 
 const log = new Logger("DefaultDIDAdapter");
 
