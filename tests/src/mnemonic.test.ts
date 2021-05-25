@@ -41,14 +41,14 @@ describe('Mnemonic Tests', () => {
 		let languages = [
 			Mnemonic.DEFAULT,
 			Mnemonic.CHINESE_SIMPLIFIED,
-			Mnemonic.CHINESE_TRADITIONAL,
-			Mnemonic.CZECH,
+			//Mnemonic.CHINESE_TRADITIONAL,
+			//Mnemonic.CZECH,
 			Mnemonic.ENGLISH,
 			Mnemonic.FRENCH,
-			Mnemonic.ITALIAN,
-			Mnemonic.JAPANESE,
-			Mnemonic.KOREAN,
-			Mnemonic.SPANISH
+			//Mnemonic.ITALIAN,
+			//Mnemonic.JAPANESE,
+			//Mnemonic.KOREAN,
+			//Mnemonic.SPANISH
 		];
 
 		languages.forEach(lang => {
