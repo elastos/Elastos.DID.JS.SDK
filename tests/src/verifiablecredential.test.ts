@@ -388,16 +388,18 @@ describe('let Tests', () => {
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 			expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 		}
-    }
+    });
 /*
-    @ParameterizedTest
-    @CsvSource({
-    	"2,foobar,license",
-    	"2,foobar,services",
-    	"2,foo,email"})
-    test('testRevokeCrendentialWithDifferentKey(int version, String did, String vc)
-			throws DIDException, IOException {
-	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
+    test('testRevokeCrendentialWithDifferentKey', () => {
+
+		let csvSource = [
+			{did:"foobar", vc:"license"},
+			{did:"foobar", vc:"services"},
+			{did:"foo", vc:"email"}
+		];
+		
+
+		let cd = testData.getCompatibleData(2);
 	   	cd.loadAll();
 
 		let credential = cd.getCredential(did, vc);
