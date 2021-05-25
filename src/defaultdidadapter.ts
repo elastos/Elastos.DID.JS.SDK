@@ -25,7 +25,7 @@ import { IllegalArgumentException, NetworkException, ResolveException, Unsupport
 import { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
-import { XMLHttpRequest } from "xhr2";
+import { XMLHttpRequest } from "xhr2"; // Thx xhr2 library already abstracts real nodejs implementation VS browser map on existing XMLHttpRequest. No additional code size here for browsers.
 
 const log = new Logger("DefaultDIDAdapter");
 
@@ -65,30 +65,35 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	// NOTE: synchronous HTTP calls are deprecated and wrong practice. Though, as JAVA SDK currently
 	// mainly uses synchronous calls, we don't want to diverge our code from that. We then wait for the
 	// "main" java implementation to rework synchronous calls and we will also migrate to Promises/Async.
-	protected performRequest(url: URL, body: string): JSONObject {
-		var request = new XMLHttpRequest();
-		request.open('POST', url.toString(), false);  // `false` makes the request synchronous
-		request.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
-		request.setRequestHeader("Content-Type", "application/json");
-		request.setRequestHeader("Accept", "application/json");
-		request.send(body);
+	protected async performRequest(url: URL, body: string): Promise<JSONObject> {
+		return new Promise((resolve, reject) => {
+			var request = new XMLHttpRequest();
+			request.open('POST', url.toString());
+			request.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+			request.setRequestHeader("Content-Type", "application/json");
+			request.setRequestHeader("Accept", "application/json");
+			request.onreadystatechange = function() {
+				if (this.readyState === XMLHttpRequest.DONE) {
+					if (request.status < 200 || request.status > 299) {
+						log.error("HTTP request error, status: "+request.status+", message: "+request.statusText);
+						reject(new ResolveException("HTTP error with status: " + request.status));
+					}
 
-		if (request.status < 200 || request.status > 299) {
-			log.error("HTTP request error, status: "+request.status+", message: "+request.statusText);
-			throw new ResolveException("HTTP error with status: " + request.status);
-		}
-
-		// Try to parse as json or throw an exception
-		try {
-			let responseJSON = JSON.parse(request.responseText);
-			return responseJSON;
-		}
-		catch (e) {
-			throw new ResolveException("Unable to parse resolver response as a JSON object", e);
-		}
+					// Try to parse as json or throw an exception
+					try {
+						let responseJSON = JSON.parse(request.responseText);
+						resolve(responseJSON);
+					}
+					catch (e) {
+						reject(new ResolveException("Unable to parse resolver response as a JSON object", e));
+					}
+				}
+			}
+			request.send(body);
+		});
 	}
 
-	public resolve(request: string): JSONObject {
+	public async resolve(request: string): Promise<JSONObject> {
 		checkArgument(request && request != null, "Invalid request");
 
 		try {

@@ -87,14 +87,15 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @param to (one of ) the new owner's DID
 	 * @throws DIDResolveException if failed resolve the subject DID
 	 */
-	public static newForDIDDocument(target: DIDDocument, to: DID): TransferTicket {
+	public static async newForDIDDocument(target: DIDDocument, to: DID): Promise<TransferTicket> {
 		checkArgument(target != null, "Invalid target DID document");
 		checkArgument(to != null, "Invalid to DID");
 
 		if (!target.isCustomizedDid())
 			throw new NotCustomizedDIDException(target.getSubject().toString());
 
-		target.getMetadata().setTransactionId(target.getSubject().resolve().getMetadata().getTransactionId());
+		let doc = await target.getSubject().resolve();
+		target.getMetadata().setTransactionId(doc.getMetadata().getTransactionId());
 
 		let newTicket = new TransferTicket(target.getSubject(), to, target.getMetadata().getTransactionId());
 		newTicket.doc = target;

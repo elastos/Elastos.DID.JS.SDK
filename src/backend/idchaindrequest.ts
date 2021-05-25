@@ -146,7 +146,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 		return inputs;
 	}
 
-	protected abstract getSignerDocument(): DIDDocument;
+	protected abstract getSignerDocument(): Promise<DIDDocument>;
 
 	public sanitize() {
 	}
@@ -159,10 +159,10 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	 * @throws DIDTransactionException there is no invalid key.
 	 * @throws
 	 */
-	public isValid(): boolean {
+	public async isValid(): Promise<boolean> {
 		let signKey = this.proof.getVerificationMethod();
 
-		let doc = this.getSignerDocument();
+		let doc = await this.getSignerDocument();
 		if (doc == null)
 			return false;
 

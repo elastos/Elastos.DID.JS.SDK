@@ -126,10 +126,10 @@ export class DID {
         this.metadata = metadata;
     }
 
-    public getMetadata(): DIDMetadata {
+    public async getMetadata(): Promise<DIDMetadata> {
         if (this.metadata == null) {
             try {
-                let resolved: DIDDocument = this.resolve();
+                let resolved: DIDDocument = await this.resolve();
                 this.metadata = resolved != null ? resolved.getMetadata() : new DIDMetadata(this);
             } catch (e) {
                 this.metadata = new DIDMetadata(this);
@@ -139,8 +139,8 @@ export class DID {
         return this.metadata;
     }
 
-    public isDeactivated(): boolean {
-        return this.getMetadata().isDeactivated();
+    public async isDeactivated(): Promise<boolean> {
+        return (await this.getMetadata()).isDeactivated();
     }
 
     /**
@@ -151,31 +151,12 @@ export class DID {
      * @return the DIDDocument object
      * @throws DIDResolveException throw this exception if resolving did failed.
      */
-    public resolve(force: boolean = false): DIDDocument {
-        let doc = DIDBackend.getInstance().resolveDid(this, force);
+    public async resolve(force: boolean = false): Promise<DIDDocument> {
+        let doc = await DIDBackend.getInstance().resolveDid(this, force);
         if (doc != null)
             this.setMetadata(doc.getMetadata());
 
         return doc;
-    }
-
-    /**
-     * Resolve DID Document in asynchronous model.
-     *
-     * @param force force = true, DID content must be from chain.
-     *              force = false, DID content could be from chain or local cache.
-     * @return the new CompletableStage, the result is the DIDDocument interface for
-     *             resolved DIDDocument if success; null otherwise.
-     */
-    public resolveAsync(force: boolean = false): Promise<DIDDocument> {
-        return new Promise((resolve, reject)=>{
-            try {
-                resolve(this.resolve(force));
-            } catch (e) {
-                // DIDBackendException
-                reject(e);
-            }
-        });
     }
 
     /**
@@ -184,25 +165,8 @@ export class DID {
      * @return the DIDBiography object
      * @throws DIDResolveException throw this exception if resolving all did transactions failed.
      */
-    public resolveBiography(): DIDBiography {
+    public resolveBiography(): Promise<DIDBiography> {
         return DIDBackend.getInstance().resolveDidBiography(this);
-    }
-
-    /**
-     * Resolve all DID transactions in asynchronous model.
-     *
-     * @return the new CompletableStage, the result is the DIDHistory interface for
-     *             resolved transactions if success; null otherwise.
-     */
-    public resolveBiographyAsync(): Promise<DIDBiography> {
-        return new Promise((resolve, reject)=>{
-            try {
-                resolve(this.resolveBiography());
-            } catch (e) {
-                // DIDResolveException
-                reject(e);
-            }
-        });
     }
 
     public toString(): string {

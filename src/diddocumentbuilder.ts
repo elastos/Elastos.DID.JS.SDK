@@ -156,7 +156,7 @@ export class DIDDocumentBuilder {
      * @return the Builder object
      * @throws DIDResolveException if failed resolve the new controller's DID
      */
-    public addController(controller: DID | string): DIDDocumentBuilder {
+    public async addController(controller: DID | string): Promise<DIDDocumentBuilder> {
         checkArgument(controller != null, "Invalid controller");
 
         if (typeof controller === "string")
@@ -165,7 +165,7 @@ export class DIDDocumentBuilder {
         this.checkNotSealed();
         this.checkIsCustomized();
         checkArgument(!this.document.controllers.includes(controller), "Controller already exists");
-        let controllerDoc = controller.resolve(true);
+        let controllerDoc = await controller.resolve(true);
         if (controllerDoc == null)
             throw new DIDNotFoundException(controller.toString());
 
@@ -536,7 +536,7 @@ export class DIDDocumentBuilder {
      * @throws DIDResolveException resolve controller failed.
      * @throws InvalidKeyException the key is not an authentication key.
      */
-    public authorizationDid(id: DIDURL, controller: DID, key: DIDURL): DIDDocumentBuilder {
+    public async authorizationDid(id: DIDURL, controller: DID, key: DIDURL): Promise<DIDDocumentBuilder> {
         this.checkNotSealed();
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
             "Invalid publicKey id");
@@ -545,7 +545,7 @@ export class DIDDocumentBuilder {
         if (this.document.isCustomizedDid())
             throw new NotPrimitiveDIDException(this.getSubject().toString());
 
-        let controllerDoc = controller.resolve();
+        let controllerDoc = await controller.resolve();
         if (controllerDoc == null)
             throw new DIDNotFoundException(id.toString());
 

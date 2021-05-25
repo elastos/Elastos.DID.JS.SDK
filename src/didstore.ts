@@ -986,7 +986,7 @@ import { BASE64 } from "./internals";
 			this.cache.invalidateAll();
 		}
 
-		public synchronize(handle: ConflictHandle = null) {
+		public async synchronize(handle: ConflictHandle = null) {
 			if (handle == null)
 				handle = DefaultConflictHandle.getInstance();
 
@@ -999,7 +999,7 @@ import { BASE64 } from "./internals";
 			for (let did of dids) {
 				let localDoc = this.storage.loadDid(did);
 				if (localDoc.isCustomizedDid()) {
-					let resolvedDoc = did.resolve();
+					let resolvedDoc = await did.resolve();
 					if (resolvedDoc == null)
 						continue;
 
@@ -1041,18 +1041,6 @@ import { BASE64 } from "./internals";
 					this.storage.storeCredential(resolvedVc);
 				}
 			}
-		}
-
-		public synchronizeAsync(handle: ConflictHandle = null): Promise<void> {
-			return new Promise((resolve, reject)=>{
-				try {
-					this.synchronize(handle);
-					resolve();
-				}
-				catch (e) {
-					reject(e);
-				}
-			});
 		}
 
 		public exportDid(did: DID | string, password: string, storepass: string): DIDStore.DIDExport {
