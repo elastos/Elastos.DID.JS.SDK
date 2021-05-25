@@ -71,7 +71,7 @@ export class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 @JsonCreator()
 class Parameters implements Hashable {
 	@JsonProperty({value: CredentialListRequest.PARAMETER_DID}) @JsonClassType({type: () => [DID]})
-	public did: any; // DID
+	public did: DID;
 
 	@JsonProperty({value: CredentialListRequest.PARAMETER_SKIP})
 	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
@@ -81,7 +81,7 @@ class Parameters implements Hashable {
 	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
 	public limit: number;
 
-	public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: any /*DID*/, skip: number = 0, limit: number = 0) {
+	public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip: number = 0, limit: number = 0) {
 		this.did = did;
 		this.skip = skip;
 		this.limit = limit;

@@ -20,15 +20,17 @@
  * SOFTWARE.
  */
 
-import { DIDStore, DIDURL, Logger } from "@elastosfoundation/did-js-sdk";
+import { DIDStore, DIDURL, Logger, VerifiableCredential, IDChainRequest } from "@elastosfoundation/did-js-sdk";
+import { randomInt } from "crypto";
 import { TestData } from "./utils/testdata";
+import { TestConfig } from "./utils/testconfig";
 
 let testData: TestData;
 let store: DIDStore;
 
 const log = new Logger("VerifiableCredentialTest");
 
-describe('VerifiableCredential Tests', () => {
+describe('let Tests', () => {
     beforeEach(() => {
     	testData = new TestData();
     });
@@ -65,364 +67,345 @@ describe('VerifiableCredential Tests', () => {
 		expect(vc.isValid()).toBeTruthy();
 	});
 
-   /* @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testSelfProclaimedCredential(int version) throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	test('testSelfProclaimedCredential', () => {
+    	let cd = testData.getCompatibleData(2);
 
-    	DIDDocument user = cd.getDocument("user1");
-		VerifiableCredential vc = cd.getCredential("user1", "passport");
+    	let user = cd.getDocument("user1");
+		let vc = cd.getCredential("user1", "passport");
 
-		assertEquals(new DIDURL(user.getSubject(), "#passport"), vc.getId());
+		expect(DIDURL.newWithDID(user.getSubject(), "#passport").equals(vc.getId()));
 
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
-		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
 
-		assertEquals(user.getSubject(), vc.getIssuer());
-		assertEquals(user.getSubject(), vc.getSubject().getId());
+		expect(user.getSubject().equals(vc.getIssuer()));
+		expect(user.getSubject().equals(vc.getSubject().getId()));
 
-		assertEquals("Singapore", vc.getSubject().getProperty("nation"));
-		assertEquals("S653258Z07", vc.getSubject().getProperty("passport"));
+		expect("Singapore").toEqual(vc.getSubject().getProperty("nation"));
+		expect("S653258Z07").toEqual(vc.getSubject().getProperty("passport"));
 
-		assertNotNull(vc.getIssuanceDate());
-		assertNotNull(vc.getExpirationDate());
+		expect(vc.getIssuanceDate()).not.toBeNull();
+		expect(vc.getExpirationDate()).not.toBeNull();
 
-		assertTrue(vc.isSelfProclaimed());
-		assertFalse(vc.isExpired());
-		assertTrue(vc.isGenuine());
-		assertTrue(vc.isValid());
-	}
+		expect(vc.isSelfProclaimed()).toBeTruthy();
+		expect(vc.isExpired()).toBeFalsy();
+		expect(vc.isGenuine()).toBeTruthy();
+		expect(vc.isValid()).toBeTruthy();
+	});
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testJsonCredential(int version) throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	test('testJsonCredential', () => {
+    	let cd = testData.getCompatibleData(2);
 
-    	DIDDocument issuer = cd.getDocument("issuer");
-    	DIDDocument user = cd.getDocument("user1");
-		VerifiableCredential vc = cd.getCredential("user1", "json");
+		let issuer = cd.getDocument("issuer");
+    	let user = cd.getDocument("user1");
+		let vc = cd.getCredential("user1", "json");
 
-		assertEquals(new DIDURL(user.getSubject(), "#json"), vc.getId());
+		expect(DIDURL.newWithDID(user.getSubject(), "#json").equals(vc.getId()));
 
-		assertTrue(vc.getType().contains("JsonCredential"));
-		assertTrue(vc.getType().contains("TestCredential"));
+		expect(vc.getType().indexOf("JsonCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("TestCredential") >= 0).toBeTruthy();
 
-		assertEquals(issuer.getSubject(), vc.getIssuer());
-		assertEquals(user.getSubject(), vc.getSubject().getId());
+		expect(user.getSubject().equals(vc.getIssuer()));
+		expect(user.getSubject().equals(vc.getSubject().getId()));
 
-		assertEquals("Technologist", vc.getSubject().getProperty("Description"));
-		assertEquals(true, vc.getSubject().getProperty("booleanValue"));
-		assertEquals(1234, vc.getSubject().getProperty("numberValue"));
+		expect("Technologist").toEqual(vc.getSubject().getProperty("Description"));
+		expect(true).toEqual(vc.getSubject().getProperty("booleanValue"));
+		expect(1234).toEqual(vc.getSubject().getProperty("numberValue"));
 
-		assertNotNull(vc.getIssuanceDate());
-		assertNotNull(vc.getExpirationDate());
+		expect(vc.getIssuanceDate()).not.toBeNull();
+		expect(vc.getExpirationDate()).not.toBeNull();
 
-		assertFalse(vc.isSelfProclaimed());
-		assertFalse(vc.isExpired());
-		assertTrue(vc.isGenuine());
-		assertTrue(vc.isValid());
-	}
+		expect(vc.isSelfProclaimed()).toBeFalsy();
+		expect(vc.isExpired()).toBeFalsy();
+		expect(vc.isGenuine()).toBeTruthy();
+		expect(vc.isValid()).toBeTruthy();
+	});
 
-    @Test
-    public void testKycCredentialToCid() throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(2);
+    test('testKycCredentialToCid', () => {
+    	let cd = testData.getCompatibleData(2);
     	cd.loadAll();
 
-    	DIDDocument issuer = cd.getDocument("issuer");
-    	DIDDocument foo = cd.getDocument("foo");
+    	let issuer = cd.getDocument("issuer");
+    	let foo = cd.getDocument("foo");
 
-    	VerifiableCredential vc = cd.getCredential("foo", "email");
+    	let vc = cd.getCredential("foo", "email");
 
-		assertEquals(new DIDURL(foo.getSubject(), "#email"), vc.getId());
+		expect(DIDURL.newWithDID(foo.getSubject(), "#email").equals(vc.getId()));
 
-		assertTrue(vc.getType().contains("InternetAccountCredential"));
-		assertFalse(vc.getType().contains("ProfileCredential"));
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeTruthy();
 
-		assertEquals(issuer.getSubject(), vc.getIssuer());
-		assertEquals(foo.getSubject(), vc.getSubject().getId());
+		expect(issuer.getSubject().equals(vc.getIssuer()));
+		expect(foo.getSubject().equals(vc.getSubject().getId()));
 
-		assertEquals("foo@example.com", vc.getSubject().getProperty("email"));
+		expect("foo@example.com").toEqual(vc.getSubject().getProperty("email"));
 
-		assertNotNull(vc.getIssuanceDate());
-		assertNotNull(vc.getExpirationDate());
+		expect(vc.getIssuanceDate()).not.toBeNull();
+		expect(vc.getExpirationDate()).not.toBeNull();
 
-		assertFalse(vc.isSelfProclaimed());
-		assertFalse(vc.isExpired());
-		assertTrue(vc.isGenuine());
-		assertTrue(vc.isValid());
-    }
+		expect(vc.isSelfProclaimed()).toBeFalsy();
+		expect(vc.isExpired()).toBeFalsy();
+		expect(vc.isGenuine()).toBeTruthy();
+		expect(vc.isValid()).toBeTruthy();
+    });
 
-    @Test
-    public void testKycCredentialFromCid() throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(2);
+    test('testKycCredentialFromCid', () => {
+    	let cd = testData.getCompatibleData(2);
     	cd.loadAll();
 
-    	DIDDocument exampleCorp = cd.getDocument("examplecorp");
-    	DIDDocument foobar = cd.getDocument("foobar");
+    	let exampleCorp = cd.getDocument("examplecorp");
+    	let foobar = cd.getDocument("foobar");
 
-    	VerifiableCredential vc = cd.getCredential("foobar", "license");
+    	let vc = cd.getCredential("foobar", "license");
 
-		assertEquals(new DIDURL(foobar.getSubject(), "#license"), vc.getId());
+		expect(DIDURL.newWithDID(foobar.getSubject(), "#license").equals(vc.getId()));
 
-		assertTrue(vc.getType().contains("LicenseCredential"));
-		assertFalse(vc.getType().contains("ProfileCredential"));
+		expect(vc.getType().indexOf("LicenseCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeTruthy();
 
-		assertEquals(exampleCorp.getSubject(), vc.getIssuer());
-		assertEquals(foobar.getSubject(), vc.getSubject().getId());
+		expect(exampleCorp.getSubject().equals(vc.getIssuer()));
+		expect(foobar.getSubject().equals(vc.getSubject().getId()));
 
-		assertEquals("20201021C889", vc.getSubject().getProperty("license-id"));
-		assertEquals("Consulting", vc.getSubject().getProperty("scope"));
+		expect("20201021C889").toEqual(vc.getSubject().getProperty("license-id"));
+		expect("Consulting").toEqual(vc.getSubject().getProperty("scope"));
 
-		assertNotNull(vc.getIssuanceDate());
-		assertNotNull(vc.getExpirationDate());
+		expect(vc.getIssuanceDate()).not.toBeNull();
+		expect(vc.getExpirationDate()).not.toBeNull();
 
-		assertFalse(vc.isSelfProclaimed());
-		assertFalse(vc.isExpired());
-		assertTrue(vc.isGenuine());
-		assertTrue(vc.isValid());
-    }
+		expect(vc.isSelfProclaimed()).toBeFalsy();
+		expect(vc.isExpired()).toBeFalsy();
+		expect(vc.isGenuine()).toBeTruthy();
+		expect(vc.isValid()).toBeTruthy();
+    });
 
-    @Test
-    public void testSelfProclaimedCredentialFromCid() throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(2);
+    
+    test('testSelfProclaimedCredentialFromCid', () => {
+    	let cd = testData.getCompatibleData(2);
     	cd.loadAll();
 
-    	DIDDocument foobar = cd.getDocument("foobar");
+    	let foobar = cd.getDocument("foobar");
 
-    	VerifiableCredential vc = cd.getCredential("foobar", "services");
+    	let vc = cd.getCredential("foobar", "services");
 
-		assertEquals(new DIDURL(foobar.getSubject(), "#services"), vc.getId());
+		expect(DIDURL.newWithDID(foobar.getSubject(), "#services").equals(vc.getId()));
 
-		assertTrue(vc.getType().contains("SelfProclaimedCredential"));
-		assertTrue(vc.getType().contains("BasicProfileCredential"));
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
 
-		assertEquals(foobar.getSubject(), vc.getIssuer());
-		assertEquals(foobar.getSubject(), vc.getSubject().getId());
+		expect(foobar.getSubject().equals(vc.getIssuer()));
+		expect(foobar.getSubject().equals(vc.getSubject().getId()));
 
-		assertEquals("https://foobar.com/outsourcing", vc.getSubject().getProperty("Outsourceing"));
-		assertEquals("https://foobar.com/consultation", vc.getSubject().getProperty("consultation"));
+		expect("https://foobar.com/outsourcing").toEqual(vc.getSubject().getProperty("Outsourceing"));
+		expect("https://foobar.com/consultation").toEqual(vc.getSubject().getProperty("consultation"));
 
-		assertNotNull(vc.getIssuanceDate());
-		assertNotNull(vc.getExpirationDate());
+		expect(vc.getIssuanceDate()).not.toBeNull();
+		expect(vc.getExpirationDate()).not.toBeNull();
 
-		assertTrue(vc.isSelfProclaimed());
-		assertFalse(vc.isExpired());
-		assertTrue(vc.isGenuine());
-		assertTrue(vc.isValid());
-    }
+		expect(vc.isSelfProclaimed()).toBeTruthy();
+		expect(vc.isExpired()).toBeFalsy();
+		expect(vc.isGenuine()).toBeTruthy();
+		expect(vc.isValid()).toBeTruthy();
+    });
 
-    @ParameterizedTest
-    @CsvSource({
-    	"1,user1,twitter",
-    	"1,user1,passport",
-    	"1,user1,json",
-    	"2,user1,twitter",
-    	"2,user1,passport",
-    	"2,user1,json",
-    	"2,foobar,license",
-    	"2,foobar,services",
-    	"2,foo,email"})
-	public void testParseAndSerializeJsonCredential(int version, String did, String vc)
-			throws DIDException, IOException {
-	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
+	test('testParseAndSerializeJsonCredential', () => {		
+		let csvSource = [
+			{did:"user1", vc:"twitter"},
+			{did:"user1", vc:"passport"},
+			{did:"user1", vc:"json"},
+			{did:"foobar", vc:"license"},
+			{did:"foobar", vc:"services"},
+			{did:"foo", vc:"email"}
+		];
+
+	   	let cd = testData.getCompatibleData(2);
 	   	cd.loadAll();
 
-		String normalizedJson = cd.getCredentialJson(did, vc, "normalized");
-		VerifiableCredential normalized = VerifiableCredential.parse(normalizedJson);
+		for (let csv of csvSource) {
+			let normalizedJson = cd.getCredentialJson(csv.did, csv.vc, "normalized");
+			let normalized = VerifiableCredential.parseContent(normalizedJson);
 
-		String compactJson = cd.getCredentialJson(did, vc, "compact");
-		VerifiableCredential compact = VerifiableCredential.parse(compactJson);
+			let compactJson = cd.getCredentialJson(csv.did, csv.vc, "compact");
+			let compact = VerifiableCredential.parseContent(compactJson);
 
-		VerifiableCredential credential = cd.getCredential(did, vc);
+			let credential = cd.getCredential(csv.did, csv.vc);
 
-		assertFalse(credential.isExpired());
-		assertTrue(credential.isGenuine());
-		assertTrue(credential.isValid());
+			expect(credential.isExpired()).toBeFalsy();
+			expect(credential.isGenuine()).toBeTruthy();
+			expect(credential.isValid()).toBeTruthy();
 
-		assertEquals(normalizedJson, normalized.toString(true));
-		assertEquals(normalizedJson, compact.toString(true));
-		assertEquals(normalizedJson, credential.toString(true));
+			expect(normalizedJson).toEqual(normalized.toString(true));
+			expect(normalizedJson).toEqual(compact.toString(true));
+			expect(normalizedJson).toEqual(credential.toString(true));
 
-		// Don't check the compact mode for the old versions
-		if (cd.isLatestVersion()) {
-			assertEquals(compactJson, normalized.toString(false));
-			assertEquals(compactJson, compact.toString(false));
-			assertEquals(compactJson, credential.toString(false));
+			expect(compactJson).toEqual(normalized.toString(false));
+			expect(compactJson).toEqual(compact.toString(false));
+			expect(compactJson).toEqual(credential.toString(false));;
 		}
-	}
+	});
 
-    @ParameterizedTest
-    @CsvSource({
-    	"1,user1,twitter",
-    	"1,user1,passport",
-    	"1,user1,json",
-    	"2,user1,twitter",
-    	"2,user1,passport",
-    	"2,user1,json",
-    	"2,foobar,license",
-    	"2,foobar,services",
-    	"2,foo,email"})
-    public void testDeclareCrendential(int version, String did, String vc)
-			throws DIDException, IOException {
-	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
-	   	cd.loadAll();
+    test('testDeclareCrendential', () => {
+		let csvSource = [
+			{did:"user1", vc:"twitter"},
+			{did:"user1", vc:"passport"},
+			{did:"user1", vc:"json"},
+			{did:"foobar", vc:"license"},
+			{did:"foobar", vc:"services"},
+			{did:"foo", vc:"email"}
+		];
 
-		VerifiableCredential credential = cd.getCredential(did, vc);
-		// Sign key for customized DID
-		DIDDocument doc = credential.getSubject().getId().resolve();
-		DIDURL signKey = null;
-		if (doc.getControllerCount() > 1) {
-			Random rnd = new Random();
-			int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
-			signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
-		}
-
-		credential.declare(signKey, TestConfig.storePass);
-
-		DIDURL id = credential.getId();
-		VerifiableCredential resolved = VerifiableCredential.resolve(id);
-		assertNotNull(resolved);
-
-		assertEquals(credential.toString(), resolved.toString());
-
-		CredentialMetadata metadata = resolved.getMetadata();
-		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
-		assertNotNull(metadata.getTransactionId());
-		assertFalse(resolved.isRevoked());
-
-		CredentialBiography bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
-		assertNotNull(bio);
-		assertEquals(1, bio.getAllTransactions().size());
-		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(0).getRequest().getOperation());
-    }
-
-    @Test
-    public void testDeclareCrendentials() throws DIDException {
-	   	TestData.InstantData sd = testData.getInstantData();
-
-	   	String[][] vcds = {
-	   			{ "user1", "twitter" },
-	   			{ "user1", "passport" },
-	   			{ "user1", "json" },
-	   			{ "user1", "jobposition" },
-	   			{ "foobar", "license" },
-	   			{ "foobar", "services" },
-	   			{ "foo" , "email" }
-	   	};
-
-	   	for (String[] vcd : vcds) {
-			VerifiableCredential credential = sd.getCredential(vcd[0], vcd[1]);
+		let cd = testData.getCompatibleData(2);
+		cd.loadAll();
+		
+		for (let csv of csvSource) {
+			let credential = cd.getCredential(csv.did, csv.vc);
 			// Sign key for customized DID
-			DIDDocument doc = credential.getSubject().getId().resolve();
-			DIDURL signKey = null;
+			let doc = credential.getSubject().getId().resolve();
+			let signKey = null;
 			if (doc.getControllerCount() > 1) {
-				Random rnd = new Random();
-				int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
+				let index = (randomInt(Number.MAX_VALUE)) % doc.getControllerCount();
 				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
 			}
 
 			credential.declare(signKey, TestConfig.storePass);
 
-			DIDURL id = credential.getId();
-			VerifiableCredential resolved = VerifiableCredential.resolve(id);
-			assertNotNull(resolved);
+			let id = credential.getId();
+			let resolved = VerifiableCredential.resolve(id);
+			expect(resolved).not.toBeNull();
+			expect(credential.toString()).toEqual(resolved.toString());
 
-			assertEquals(credential.toString(), resolved.toString());
+			let metadata = resolved.getMetadata();
+			expect(metadata).not.toBeNull();
+			expect(metadata.getPublished()).not.toBeNull();
+			expect(metadata.getTransactionId()).not.toBeNull();
+			expect(resolved.isRevoked()).toBeFalsy();
 
-			CredentialMetadata metadata = resolved.getMetadata();
-			assertNotNull(metadata);
-			assertNotNull(metadata.getPublished());
-			assertNotNull(metadata.getTransactionId());
-			assertFalse(resolved.isRevoked());
+			let bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
+			expect(bio).not.toBeNull();
+			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
+		}
+	});
 
-			CredentialBiography bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
-			assertNotNull(bio);
-			assertEquals(1, bio.getAllTransactions().size());
-			assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(0).getRequest().getOperation());
+    
+    test('testDeclareCrendentials', () => {
+	   	let sd = testData.getInstantData();
+
+		let csvSource = [
+			{did:"user1", vc:"twitter"},
+			{did:"user1", vc:"passport"},
+			{did:"user1", vc:"json"},
+			{did:"user1", vc:"jobposition"},
+			{did:"foobar", vc:"license"},
+			{did:"foobar", vc:"services"},
+			{did:"foo", vc:"email"}
+		];
+
+	   	for (let csv of csvSource) {
+			let credential = sd.getCredential(csv.did, csv.vc);
+			// Sign key for customized DID
+			let doc = credential.getSubject().getId().resolve();
+			let signKey = null;
+			if (doc.getControllerCount() > 1) {
+				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+			}
+
+			credential.declare(signKey, TestConfig.storePass);
+
+			let id = credential.getId();
+			let resolved = VerifiableCredential.resolve(id);
+			expect(resolved).not.toBeNull();
+			expect(credential.toString()).toEqual(resolved.toString());
+
+			let metadata = resolved.getMetadata();
+			expect(metadata).not.toBeNull();
+			expect(metadata.getPublished()).not.toBeNull();
+			expect(metadata.getTransactionId()).not.toBeNull();
+			expect(resolved.isRevoked()).toBeFalsy();
+
+			let bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
+			expect(bio).not.toBeNull();
+			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 	   	}
-    }
+    });
 
-    @ParameterizedTest
-    @CsvSource({
-    	"1,user1,twitter",
-    	"1,user1,passport",
-    	"1,user1,json",
-    	"2,user1,twitter",
-    	"2,user1,passport",
-    	"2,user1,json",
-    	"2,foobar,license",
-    	"2,foobar,services",
-    	"2,foo,email"})
-    public void testRevokeCrendential(int version, String did, String vc)
-			throws DIDException, IOException {
-	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
+    test('testRevokeCrendential', () => {
+
+		let csvSource = [
+			{did:"user1", vc:"twitter"},
+			{did:"user1", vc:"passport"},
+			{did:"user1", vc:"json"},
+			{did:"foobar", vc:"license"},
+			{did:"foobar", vc:"services"},
+			{did:"foo", vc:"email"}
+		];
+
+		let cd = testData.getCompatibleData(2);
 	   	cd.loadAll();
 
-		VerifiableCredential credential = cd.getCredential(did, vc);
-		assertFalse(credential.wasDeclared());
+		for (let csv of csvSource) {
 
-		// Sign key for customized DID
-		DIDDocument doc = credential.getSubject().getId().resolve();
-		DIDURL signKey = null;
-		if (doc.getControllerCount() > 1) {
-			Random rnd = new Random();
-			int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
-			signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+			let credential = cd.getCredential(csv.did, csv.vc);
+			expect(credential.wasDeclared()).toBeFalsy();
+
+			// Sign key for customized DID
+			let doc = credential.getSubject().getId().resolve();
+			let signKey = null;
+			if (doc.getControllerCount() > 1) {
+				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+			}
+
+			credential.declare(signKey, TestConfig.storePass);
+
+			let id = credential.getId();
+			let resolved = VerifiableCredential.resolve(id);
+			expect(resolved).not.toBeNull();
+			expect(credential.toString()).toEqual(resolved.toString());
+
+			let metadata = resolved.getMetadata();
+			expect(metadata).not.toBeNull();
+			expect(metadata.getPublished()).not.toBeNull();
+			expect(metadata.getTransactionId()).not.toBeNull();
+			expect(resolved.isRevoked()).toBeFalsy();
+
+			expect(credential.wasDeclared()).toBeTruthy();
+
+			credential.revoke(signKey, null, TestConfig.storePass);
+
+			expect(credential.toString()).toEqual(resolved.toString());
+
+			metadata = resolved.getMetadata();
+			expect(metadata).not.toBeNull();
+			expect(metadata.getPublished()).not.toBeNull();
+			expect(metadata.getTransactionId()).not.toBeNull();
+			expect(resolved.isRevoked()).toBeTruthy();
+
+			let bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
+			expect(bio).not.toBeNull();
+			expect(bio.getAllTransactions().length).toEqual(2);
+			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+			expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 		}
-
-		credential.declare(signKey, TestConfig.storePass);
-
-		DIDURL id = credential.getId();
-		VerifiableCredential resolved = VerifiableCredential.resolve(id);
-		assertNotNull(resolved);
-
-		assertEquals(credential.toString(), resolved.toString());
-
-		CredentialMetadata metadata = resolved.getMetadata();
-		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
-		assertNotNull(metadata.getTransactionId());
-		assertFalse(resolved.isRevoked());
-
-		assertTrue(credential.wasDeclared());
-
-		credential.revoke(signKey, TestConfig.storePass);
-
-		resolved = VerifiableCredential.resolve(id);
-		assertNotNull(resolved);
-
-		assertEquals(credential.toString(), resolved.toString());
-
-		metadata = resolved.getMetadata();
-		assertNotNull(metadata);
-		assertNotNull(metadata.getPublished());
-		assertNotNull(metadata.getTransactionId());
-		assertTrue(resolved.isRevoked());
-
-		CredentialBiography bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
-		assertNotNull(bio);
-		assertEquals(2, bio.getAllTransactions().size());
-		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
-		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(1).getRequest().getOperation());
     }
-
+/*
     @ParameterizedTest
     @CsvSource({
     	"2,foobar,license",
     	"2,foobar,services",
     	"2,foo,email"})
-    public void testRevokeCrendentialWithDifferentKey(int version, String did, String vc)
+    test('testRevokeCrendentialWithDifferentKey(int version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
 
-		VerifiableCredential credential = cd.getCredential(did, vc);
+		let credential = cd.getCredential(did, vc);
 		assertFalse(credential.wasDeclared());
 
 		// Sign key for customized DID
-		DIDDocument doc = credential.getSubject().getId().resolve();
-		DIDURL signKey = null;
+		let doc = credential.getSubject().getId().resolve();
+		let signKey = null;
 		int index = 0;
 		if (doc.getControllerCount() > 1) {
 			Random rnd = new Random();
@@ -432,8 +415,8 @@ describe('VerifiableCredential Tests', () => {
 
 		credential.declare(signKey, TestConfig.storePass);
 
-		DIDURL id = credential.getId();
-		VerifiableCredential resolved = VerifiableCredential.resolve(id);
+		let id = credential.getId();
+		let resolved = VerifiableCredential.resolve(id);
 		assertNotNull(resolved);
 
 		assertEquals(credential.toString(), resolved.toString());
@@ -482,18 +465,18 @@ describe('VerifiableCredential Tests', () => {
     	"2,foobar,license",
     	"2,foobar,services",
     	"2,foo,email"})
-    public void testDeclareAfterRevoke(int version, String did, String vc)
+    test('testDeclareAfterRevoke(int version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
 
-		VerifiableCredential credential = cd.getCredential(did, vc);
+		let credential = cd.getCredential(did, vc);
 		assertFalse(credential.wasDeclared());
 		assertFalse(credential.isRevoked());
 
 		// Sign key for customized DID
-		DIDDocument doc = credential.getSubject().getId().resolve();
-		DIDURL signKey = null;
+		let doc = credential.getSubject().getId().resolve();
+		let signKey = null;
 		if (doc.getControllerCount() > 1) {
 			Random rnd = new Random();
 			int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
@@ -505,10 +488,10 @@ describe('VerifiableCredential Tests', () => {
 		assertFalse(credential.wasDeclared());
 		assertTrue(credential.isRevoked());
 
-		VerifiableCredential resolved = VerifiableCredential.resolve(credential.getId());
+		let resolved = VerifiableCredential.resolve(credential.getId());
 		assertNull(resolved);
 
-		final DIDURL key = signKey;
+		final let key = signKey;
 		assertThrows(CredentialRevokedException.class, () -> {
 			credential.declare(key, TestConfig.storePass);
 	    });
@@ -524,18 +507,18 @@ describe('VerifiableCredential Tests', () => {
     	"2,foobar,license",
     	"2,foobar,services",
     	"2,foo,email"})
-    public void testDeclareAfterRevokeWithDifferentKey(int version, String did, String vc)
+    test('testDeclareAfterRevokeWithDifferentKey(int version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
 
-		VerifiableCredential credential = cd.getCredential(did, vc);
+		let credential = cd.getCredential(did, vc);
 		assertFalse(credential.wasDeclared());
 		assertFalse(credential.isRevoked());
 
 		// Sign key for customized DID
-		DIDDocument doc = credential.getSubject().getId().resolve();
-		DIDURL signKey = null;
+		let doc = credential.getSubject().getId().resolve();
+		let signKey = null;
 		int index = 0;
 		if (doc.getControllerCount() > 1) {
 			Random rnd = new Random();
@@ -548,7 +531,7 @@ describe('VerifiableCredential Tests', () => {
 		assertFalse(credential.wasDeclared());
 		assertTrue(credential.isRevoked());
 
-		VerifiableCredential resolved = VerifiableCredential.resolve(credential.getId());
+		let resolved = VerifiableCredential.resolve(credential.getId());
 		assertNull(resolved);
 
 		if (doc.getControllerCount() > 1) {
@@ -556,7 +539,7 @@ describe('VerifiableCredential Tests', () => {
 			signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
 		}
 
-		final DIDURL key = signKey;
+		final let key = signKey;
 		assertThrows(CredentialRevokedException.class, () -> {
 			credential.declare(key, TestConfig.storePass);
 	    });
@@ -578,18 +561,18 @@ describe('VerifiableCredential Tests', () => {
     	"2,foobar,license",
     	"2,foobar,services",
     	"2,foo,email"})
-    public void testDeclareAfterRevokeByIssuer(int version, String did, String vc)
+    test('testDeclareAfterRevokeByIssuer(int version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	cd.loadAll();
 
-		VerifiableCredential credential = cd.getCredential(did, vc);
+		let credential = cd.getCredential(did, vc);
 		assertFalse(credential.wasDeclared());
 		assertFalse(credential.isRevoked());
 
 		// Sign key for issuer
-		DIDDocument issuer = credential.getIssuer().resolve();
-		DIDURL signKey = null;
+		let issuer = credential.getIssuer().resolve();
+		let signKey = null;
 		if (issuer.getControllerCount() > 1) {
 			Random rnd = new Random();
 			int index = (rnd.nextInt() & Integer.MAX_VALUE) % issuer.getControllerCount();
@@ -602,17 +585,17 @@ describe('VerifiableCredential Tests', () => {
 		assertFalse(credential.wasDeclared());
 		assertTrue(credential.isRevoked());
 
-		VerifiableCredential resolved = VerifiableCredential.resolve(credential.getId());
+		let resolved = VerifiableCredential.resolve(credential.getId());
 		assertNull(resolved);
 
-		DIDDocument doc = credential.getSubject().getId().resolve();
+		let doc = credential.getSubject().getId().resolve();
 		if (doc.getControllerCount() > 1) {
 			Random rnd = new Random();
 			int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
 			signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
 		}
 
-		final DIDURL key = signKey;
+		final let key = signKey;
 		assertThrows(CredentialRevokedException.class, () -> {
 			credential.declare(key, TestConfig.storePass);
 	    });
@@ -634,19 +617,19 @@ describe('VerifiableCredential Tests', () => {
     	"2,foobar,license",
     	"2,foobar,services",
     	"2,foo,email"})
-    public void testDeclareAfterInvalidRevoke(int version, String did, String vc)
+    test('testDeclareAfterInvalidRevoke(int version, String did, String vc)
 			throws DIDException, IOException {
 	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
 	   	TestData.InstantData sd = testData.getInstantData();
 	   	cd.loadAll();
 
-		VerifiableCredential credential = cd.getCredential(did, vc);
-		DIDURL id = credential.getId();
+		let credential = cd.getCredential(did, vc);
+		let id = credential.getId();
 
 		assertFalse(credential.wasDeclared());
 		assertFalse(credential.isRevoked());
 
-		DIDDocument doc = sd.getUser1Document();
+		let doc = sd.getUser1Document();
 		VerifiableCredential.revoke(id, doc, TestConfig.storePass);
 
 		assertFalse(credential.wasDeclared());
@@ -655,7 +638,7 @@ describe('VerifiableCredential Tests', () => {
 		assertNull(VerifiableCredential.resolve(id, doc.getSubject()));
 
 		doc = credential.getSubject().getId().resolve();
-		DIDURL signKey = null;
+		let signKey = null;
 		if (doc.getControllerCount() > 1) {
 			Random rnd = new Random();
 			int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
@@ -664,7 +647,7 @@ describe('VerifiableCredential Tests', () => {
 
 		credential.declare(signKey, TestConfig.storePass);
 
-		VerifiableCredential resolved = VerifiableCredential.resolve(id);
+		let resolved = VerifiableCredential.resolve(id);
 		assertNotNull(resolved);
 
 		assertEquals(credential.toString(), resolved.toString());
@@ -697,8 +680,8 @@ describe('VerifiableCredential Tests', () => {
 		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(1).getRequest().getOperation());
     }
 
-    @Test
-    public void testListCrendentials() throws DIDException {
+    
+    test('testListCrendentials() throws DIDException {
 	   	TestData.InstantData sd = testData.getInstantData();
 
 	   	String[][] vcds = {
@@ -712,11 +695,11 @@ describe('VerifiableCredential Tests', () => {
 	   	};
 
 	   	for (String[] vcd : vcds) {
-			VerifiableCredential credential = sd.getCredential(vcd[0], vcd[1]);
+			let credential = sd.getCredential(vcd[0], vcd[1]);
 
 			// Sign key for customized DID
-			DIDDocument doc = credential.getSubject().getId().resolve();
-			DIDURL signKey = null;
+			let doc = credential.getSubject().getId().resolve();
+			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				Random rnd = new Random();
 				int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
@@ -725,8 +708,8 @@ describe('VerifiableCredential Tests', () => {
 
 			credential.declare(signKey, TestConfig.storePass);
 
-			DIDURL id = credential.getId();
-			VerifiableCredential resolved = VerifiableCredential.resolve(id);
+			let id = credential.getId();
+			let resolved = VerifiableCredential.resolve(id);
 			assertNotNull(resolved);
 
 			assertEquals(credential.toString(), resolved.toString());
@@ -743,13 +726,13 @@ describe('VerifiableCredential Tests', () => {
 			assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(0).getRequest().getOperation());
 	   	}
 
-	   	DIDDocument doc = sd.getUser1Document();
+	   	let doc = sd.getUser1Document();
 	   	DID did = doc.getSubject();
 	   	List<DIDURL> ids = VerifiableCredential.list(did);
 	   	assertNotNull(ids);
 	   	assertEquals(4, ids.size());
-	   	for (DIDURL id : ids) {
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+	   	for (let id : ids) {
+	   		let vc = VerifiableCredential.resolve(id);
 	   		assertNotNull(vc);
 	   		assertEquals(id, vc.getId());
 	   		assertTrue(vc.wasDeclared());
@@ -761,8 +744,8 @@ describe('VerifiableCredential Tests', () => {
 	   	ids = VerifiableCredential.list(did);
 	   	assertNotNull(ids);
 	   	assertEquals(2, ids.size());
-	   	for (DIDURL id : ids) {
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+	   	for (let id : ids) {
+	   		let vc = VerifiableCredential.resolve(id);
 	   		assertNotNull(vc);
 	   		assertEquals(id, vc.getId());
 	   		assertTrue(vc.wasDeclared());
@@ -774,8 +757,8 @@ describe('VerifiableCredential Tests', () => {
 	   	ids = VerifiableCredential.list(did);
 	   	assertNotNull(ids);
 	   	assertEquals(1, ids.size());
-	   	for (DIDURL id : ids) {
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+	   	for (let id : ids) {
+	   		let vc = VerifiableCredential.resolve(id);
 	   		assertNotNull(vc);
 	   		assertEquals(id, vc.getId());
 	   		assertTrue(vc.wasDeclared());
@@ -788,11 +771,11 @@ describe('VerifiableCredential Tests', () => {
 	   	assertNull(ids);
 
 	   	for (String[] vcd : vcds) {
-			VerifiableCredential credential = sd.getCredential(vcd[0], vcd[1]);
+			let credential = sd.getCredential(vcd[0], vcd[1]);
 
 			// Sign key for customized DID
 			doc = credential.getSubject().getId().resolve();
-			DIDURL signKey = null;
+			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				Random rnd = new Random();
 				int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
@@ -801,8 +784,8 @@ describe('VerifiableCredential Tests', () => {
 
 			credential.revoke(signKey, TestConfig.storePass);
 
-			DIDURL id = credential.getId();
-			VerifiableCredential resolved = VerifiableCredential.resolve(id);
+			let id = credential.getId();
+			let resolved = VerifiableCredential.resolve(id);
 			assertNotNull(resolved);
 			assertTrue(resolved.isRevoked());
 	   	}
@@ -812,8 +795,8 @@ describe('VerifiableCredential Tests', () => {
 	   	ids = VerifiableCredential.list(did);
 	   	assertNotNull(ids);
 	   	assertEquals(4, ids.size());
-	   	for (DIDURL id : ids) {
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+	   	for (let id : ids) {
+	   		let vc = VerifiableCredential.resolve(id);
 	   		assertNotNull(vc);
 	   		assertEquals(id, vc.getId());
 	   		assertTrue(vc.wasDeclared());
@@ -825,8 +808,8 @@ describe('VerifiableCredential Tests', () => {
 	   	ids = VerifiableCredential.list(did);
 	   	assertNotNull(ids);
 	   	assertEquals(2, ids.size());
-	   	for (DIDURL id : ids) {
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+	   	for (let id : ids) {
+	   		let vc = VerifiableCredential.resolve(id);
 	   		assertNotNull(vc);
 	   		assertEquals(id, vc.getId());
 	   		assertTrue(vc.wasDeclared());
@@ -838,8 +821,8 @@ describe('VerifiableCredential Tests', () => {
 	   	ids = VerifiableCredential.list(did);
 	   	assertNotNull(ids);
 	   	assertEquals(1, ids.size());
-	   	for (DIDURL id : ids) {
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+	   	for (let id : ids) {
+	   		let vc = VerifiableCredential.resolve(id);
 	   		assertNotNull(vc);
 	   		assertEquals(id, vc.getId());
 	   		assertTrue(vc.wasDeclared());
@@ -852,11 +835,11 @@ describe('VerifiableCredential Tests', () => {
 	   	assertNull(ids);
     }
 
-    @Test
-    public void testListPagination() throws DIDException {
+    
+    test('testListPagination() throws DIDException {
     	TestData.InstantData sd = testData.getInstantData();
 
-    	DIDDocument doc = sd.getUser1Document();
+    	let doc = sd.getUser1Document();
     	DID did = doc.getSubject();
 
     	Issuer selfIssuer = new Issuer(doc);
@@ -864,7 +847,7 @@ describe('VerifiableCredential Tests', () => {
     	for (int i = 0; i < 1028; i++) {
     		log.trace("Creating test credential {}...", i);
 
-    		VerifiableCredential vc = selfIssuer.issueFor(did)
+    		let vc = selfIssuer.issueFor(did)
     				.id("#test" + i)
     				.type("SelfProclaimedCredential")
     				.propertie("index", Integer.valueOf(i))
@@ -880,13 +863,13 @@ describe('VerifiableCredential Tests', () => {
     	List<DIDURL> ids = VerifiableCredential.list(did);
     	assertNotNull(ids);
     	assertEquals(128, ids.size());
-	   	for (DIDURL id : ids) {
+	   	for (let id : ids) {
 	   		log.trace("Resolving credential {}...", id.getFragment());
 
-	   		DIDURL ref = new DIDURL(did, "#test" + index--);
+	   		let ref = DIDURL.newWithDID(did, "#test" + index--);
 	   		assertEquals(ref, id);
 
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+	   		let vc = VerifiableCredential.resolve(id);
 
 	   		assertNotNull(vc);
 	   		assertEquals(ref, vc.getId());
@@ -897,13 +880,13 @@ describe('VerifiableCredential Tests', () => {
     	ids = VerifiableCredential.list(did, 560);
     	assertNotNull(ids);
     	assertEquals(512, ids.size());
-	   	for (DIDURL id : ids) {
+	   	for (let id : ids) {
 	   		log.trace("Resolving credential {}...", id.getFragment());
 
-	   		DIDURL ref = new DIDURL(did, "#test" + index--);
+	   		let ref = DIDURL.newWithDID(did, "#test" + index--);
 	   		assertEquals(ref, id);
 
-	   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+	   		let vc = VerifiableCredential.resolve(id);
 
 	   		assertNotNull(vc);
 	   		assertEquals(ref, vc.getId());
@@ -923,13 +906,13 @@ describe('VerifiableCredential Tests', () => {
 	    		break;
 
 	    	assertEquals(resultSize, ids.size());
-		   	for (DIDURL id : ids) {
+		   	for (let id : ids) {
 		   		log.trace("Resolving credential {}...", id.getFragment());
 
-		   		DIDURL ref = new DIDURL(did, "#test" + --index);
+		   		let ref = DIDURL.newWithDID(did, "#test" + --index);
 		   		assertEquals(ref, id);
 
-		   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		   		let vc = VerifiableCredential.resolve(id);
 
 		   		assertNotNull(vc);
 		   		assertEquals(ref, vc.getId());
@@ -950,13 +933,13 @@ describe('VerifiableCredential Tests', () => {
 	    		break;
 
 	    	assertEquals(resultSize, ids.size());
-		   	for (DIDURL id : ids) {
+		   	for (let id : ids) {
 		   		log.trace("Resolving credential {}...", id.getFragment());
 
-		   		DIDURL ref = new DIDURL(did, "#test" + --index);
+		   		let ref = DIDURL.newWithDID(did, "#test" + --index);
 		   		assertEquals(ref, id);
 
-		   		VerifiableCredential vc = VerifiableCredential.resolve(id);
+		   		let vc = VerifiableCredential.resolve(id);
 
 		   		assertNotNull(vc);
 		   		assertEquals(ref, vc.getId());

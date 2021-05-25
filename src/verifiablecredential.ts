@@ -477,7 +477,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return false;
 	}
 
-	public declare(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public declare(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null) {
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 		this.checkAttachedStore();
 
@@ -765,7 +765,7 @@ export namespace VerifiableCredential {
 		  * @param id the controller of Credential Subject
 		  */
 		 // Java: @JsonCreator()
-		 constructor(@JsonProperty({value: VerifiableCredential.ID}) id: any /* DID */) {
+		 constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
 			 this.id = id;
 			 this.properties = {};
 		 }
@@ -776,7 +776,7 @@ export namespace VerifiableCredential {
 		  * @return the controller's DID
 		  */
 		 @JsonGetter({value: VerifiableCredential.ID})
-		 public getId(): any /* DID */ {
+		 public getId(): DID {
 			 return this.id;
 		 }
 

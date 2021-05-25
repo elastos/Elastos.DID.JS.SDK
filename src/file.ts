@@ -46,11 +46,10 @@ import * as fs from "./fs";
 		return file.isDirectory();
 	}
 
-	private getStats(): any /* Stats */ {
+	private getStats(): fs.Stats {
 		if (this.fileStats)
 			return this.fileStats;
 		return this.exists() ? fs.statSync(this.fullPath) : null;
-		return null;
 	}
 
 	public exists(): boolean {
