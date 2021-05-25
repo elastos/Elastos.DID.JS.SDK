@@ -52,13 +52,16 @@ export default [
                 preferBuiltins: true,
                 dedupe: ['bn.js', 'secp256k1']
             }),
-            /* replace({
-                preventAssignment: false,
-				values: {
-                    'require(\'node-gyp-build\')(__dirname)': 'require(\'node-gyp-build\')(\'../node_modules/secp256k1\')',
-                    'nodeGypBuild(__dirname)': 'require(\'node-gyp-build\')(\'../node_modules/secp256k1\')'
-                }
-            }), */
+            // Very dirty way to "solve" the fact that .node files are not bundles well by rollup
+            // even with a plugin such as rollup-plugin-natives.
+            replace({
+                include: "node_modules/secp256k1/bindings.js",
+				values: { '__dirname': '(__dirname+\'/../node_modules/secp256k1\')' }
+            }),
+            replace({
+                include: "node_modules/keccak/bindings.js",
+				values: { '__dirname': '(__dirname+\'/../node_modules/keccak\')' }
+            }),
             commonJs({
                 //esmExternals: true,
                 ignoreDynamicRequires: true,

@@ -11,7 +11,7 @@
     "test:stubbrowserdata": "mkdir -p ./generated && echo '{}' > ./generated/browserdata.json",
     "test:node": "npm run test:stubbrowserdata && JEST_CIRCUS=1 jest --silent=true --config jest.node.config.ts",
     "test:node:debug": "JEST_CIRCUS=1 node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
-    "test:node-no-jest": "rollup -c rollup.no-jest.config.js",
+    "test:node-no-jest": "rollup -c rollup.no-jest.config.js && node generated/tests-no-jest.js",
     "test:browser": "npm run clean:tests && rollup -c rollup.browsertests.config.js"
   },
   "dependencies": {
