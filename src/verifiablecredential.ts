@@ -22,9 +22,6 @@
 
 import dayjs, { Dayjs } from "dayjs";
 import {
-	List as ImmutableList
-} from "immutable";
-import {
 	JsonAnySetter, JsonClassType, JsonFilter, JsonGetter, JsonInclude,
 	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize
 } from "jackson-js";
@@ -173,8 +170,8 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @return the type array
 	 */
-	public getType(): ImmutableList<string> {
-		return ImmutableList(this.type);
+	public getType(): string[] {
+		return this.type;
 	}
 
 	/**
@@ -351,7 +348,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return whether the Credential object is expired
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public isExpired(): boolean {
+	public async isExpired(): Promise<boolean> {
 		if (this.expirationDate != null) {
 			if (dayjs().isAfter(dayjs(this.expirationDate)))
 				return true;
@@ -362,7 +359,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return true;
 
 		if (!this.isSelfProclaimed()) {
-			let issuerDoc = this.issuer.resolve();
+			let issuerDoc = await this.issuer.resolve();
 			if (issuerDoc != null && issuerDoc.isExpired())
 				return true;
 		}
@@ -371,33 +368,16 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	}
 
 	/**
-	 * Check if the Credential is expired or not in asynchronous mode.
-	 *
-	 * @return the new CompletableStage if success; null otherwise.
-	 *         The boolean result is expired or not
-	 */
-	public isExpiredAsync(): Promise<boolean> {
-		return new Promise((resolve, reject)=>{
-			try {
-				resolve(this.isExpired());
-			} catch (e) {
-				// DIDResolveException
-				reject(e);
-			}
-		});
-	}
-
-	/**
 	 * Check whether the Credential is genuine or not.
 	 *
 	 * @return whether the Credential object is genuine
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public isGenuine(): boolean {
+	public async isGenuine(): Promise<boolean> {
 		if (!this.getId().getDid().equals(this.getSubject().getId()))
 			return false;
 
-		let issuerDoc = this.issuer.resolve();
+		let issuerDoc = await this.issuer.resolve();
 		if (issuerDoc == null)
 			throw new DIDNotFoundException(this.issuer.toString());
 
@@ -426,23 +406,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return true;
 	}
 
-	/**
-	 * Check whether the Credential is genuine or not in asynchronous mode.
-	 *
-	 * @return the new CompletableStage if success; null otherwise.
-	 *         The boolean result is genuine or not
-	 */
-	public isGenuineAsync(): Promise<boolean> {
-		return new Promise((resolve, reject)=>{
-			try {
-				resolve(this.isGenuine());
-			} catch (e) {
-				// DIDResolveException
-				reject(e);
-			}
-		});
-	}
-
 	public isRevoked(): boolean {
 		if (this.getMetadata().isRevoked())
 			return true;
@@ -457,30 +420,19 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return revoked;
 	}
 
-	public isRevokedAsync(): Promise<boolean> {
-		return new Promise((resolve, reject)=>{
-			try {
-				resolve(this.isRevoked());
-			} catch (e) {
-				// DIDResolveException
-				reject(e);
-			}
-		});
-	}
-
 	/**
 	 * Check whether the Credential is valid or not.
 	 *
 	 * @return whether the Credential object is valid
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public isValid(): boolean {
+	public async isValid(): Promise<boolean> {
 		if (this.expirationDate != null) {
 			if (dayjs().isAfter(dayjs(this.expirationDate)))
 				return false;
 		}
 
-		let issuerDoc = this.issuer.resolve();
+		let issuerDoc = await this.issuer.resolve();
 		if (issuerDoc == null)
 			throw new DIDNotFoundException(this.issuer.toString());
 
@@ -511,23 +463,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 	}
 
-	/**
-	 * Check whether the Credential is valid in asynchronous mode.
-	 *
-	 * @return the new CompletableStage if success; null otherwise.
-	 * 	       The boolean result is valid or not
-	 */
-	public isValidAsync(): Promise<boolean> {
-		return new Promise((resolve, reject) =>{
-			try {
-				resolve(this.isValid());
-			} catch (e) {
-				// DIDResolveException
-				reject(e);
-			}
-		});
-	}
-
 	public wasDeclared(): boolean {
 		let bio = DIDBackend.getInstance().resolveCredentialBiography(this.getId(), this.getIssuer());
 
@@ -542,7 +477,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return false;
 	}
 
-	public declare(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public declare(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null) {
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 		this.checkAttachedStore();
 
@@ -609,48 +544,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		declare((DIDURL)null, storepass, null);
 	} */
 
-	public declareAsync(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
-		return new Promise((resolve, reject)=>{
-			try {
-				this.declare(signKey, storepass, adapter);
-			} catch (e) {
-				// DIDException
-				reject(e);
-			}
-		});
-	}
-
-	/* public CompletableFuture<Void> declareAsync(signKey: DIDURL, storepass: string) {
-		return declareAsync(signKey, storepass, null);
-	}
-
-	public CompletableFuture<Void> declareAsync(signKey: string, storepass: string,
-			DIDTransactionAdapter adapter) {
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-			try {
-				declare(signKey, storepass, adapter);
-			} catch (DIDException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-	public CompletableFuture<Void> declareAsync(signKey: string, storepass: string) {
-		return this.declareAsync(signKey, storepass, null);
-	}
-
-	public CompletableFuture<Void> declareAsync(storepass: string,
-			DIDTransactionAdapter adapter) {
-		return this.declareAsync((DIDURL)null, storepass, adapter);
-	}
-
-	public CompletableFuture<Void> declareAsync(storepass: string) {
-		return this.declareAsync((DIDURL)null, storepass, null);
-	} */
-
-	public revoke(signKey: DIDURL | string, signer: DIDDocument = null, storepass: string = null, adapter: DIDTransactionAdapter = null) {
+	public async revoke(signKey: DIDURL | string, signer: DIDDocument = null, storepass: string = null, adapter: DIDTransactionAdapter = null) {
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 		this.checkAttachedStore();
 
@@ -661,7 +555,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 		owner.getMetadata().attachStore(this.getStore());
 
-		let issuer = this.getIssuer().resolve();
+		let issuer = await this.getIssuer().resolve();
 		if (issuer == null) {
 			log.error("Publish failed because the credential issuer is not published.");
 			throw new DIDNotFoundException(this.getIssuer().toString());
@@ -711,48 +605,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, adapter);
 	}
-
-	public revokeAsync(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
-		return new Promise((resolve, reject)=>{
-			try {
-				this.revoke(signKey, null, storepass, adapter);
-				resolve();
-			} catch (e) {
-				// DIDException
-				reject(e);
-			}
-		});
-	}
-
-	/* public CompletableFuture<Void> revokeAsync(signKey: DIDURL, storepass: string) {
-		return revokeAsync(signKey, storepass, null);
-	}
-
-	public CompletableFuture<Void> revokeAsync(signKey: string, storepass: string,
-			DIDTransactionAdapter adapter) {
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-			try {
-				revoke(signKey, storepass, adapter);
-			} catch (DIDException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-	public CompletableFuture<Void> revokeAsync(signKey: string, storepass: string) {
-		return revokeAsync(signKey, storepass, null);
-	}
-
-	public CompletableFuture<Void> revokeAsync(storepass: string,
-			DIDTransactionAdapter adapter) {
-		return revokeAsync((DIDURL)null, storepass, adapter);
-	}
-
-	public CompletableFuture<Void> revokeAsync(storepass: string) {
-		return revokeAsync((DIDURL)null, storepass, null);
-	} */
 
 	public static revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
 		checkArgument(id != null, "Invalid credential id");
@@ -821,60 +673,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		revoke(DIDURL.valueOf(id), issuer, null, storepass, null);
 	} */
 
-	public static revokeAsync(id: DIDURL, issuer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
-		return new Promise((resolve, reject)=>{
-			try {
-				this.revoke(id, issuer, signKey, storepass, adapter);
-				resolve();
-			} catch (e) {
-				// DIDException
-				reject(e);
-			}
-		});
-	}
-
-	/* public static CompletableFuture<Void> revokeAsync(id: DIDURL,
-			DIDDocument issuer, signKey: DIDURL, storepass: string) {
-		return revokeAsync(id, issuer, signKey, storepass, null);
-	}
-
-	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument issuer,
-			String signKey, storepass: string, adapter: DIDTransactionAdapter) {
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-			try {
-				revoke(id, issuer, signKey, storepass, adapter);
-			} catch (DIDException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-	public static CompletableFuture<Void> revokeAsync(String id,
-			DIDDocument issuer, String signKey, storepass: string) {
-		return revokeAsync(id, issuer, signKey, storepass, null);
-	}
-
-	public static CompletableFuture<Void> revokeAsync(id: DIDURL, DIDDocument issuer,
-			storepass: string, adapter: DIDTransactionAdapter) {
-		return revokeAsync(id, issuer, null, storepass, adapter);
-	}
-
-	public static CompletableFuture<Void> revokeAsync(id: DIDURL,
-			DIDDocument issuer, storepass: string) {
-		return revokeAsync(id, issuer, null, storepass, null);
-	}
-
-	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument issuer,
-			storepass: string, adapter: DIDTransactionAdapter) {
-		return revokeAsync(id, issuer, null, storepass, adapter);
-	}
-
-	public static CompletableFuture<Void> revokeAsync(String id, DIDDocument issuer, storepass: string) {
-		return revokeAsync(id, issuer, null, storepass, null);
-	} */
-
 	/**
 	 * Resolve VerifiableCredential object.
 	 *
@@ -900,56 +698,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return vc;
 	}
 
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
-	 */
-	/* public static CompletableFuture<VerifiableCredential> resolveAsync(id: DIDURL, DID issuer, boolean force) {
-		CompletableFuture<VerifiableCredential> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return resolve(id, issuer, force);
-			} catch (DIDBackendException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	} */
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @param force if true ignore local cache and try to resolve from ID chain
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
-	 */
-	public static resolveAsync(id: DIDURL | string, issuer: DID | string, force: boolean): Promise<VerifiableCredential> {
-		return new Promise((resolve, reject) => {
-			try {
-				resolve(this.resolve(id, issuer, force));
-			} catch (e) {
-				// DIDBackendException | MalformedDIDURLException
-				reject(e);
-			}
-		});
-	}
-
-	/**
-	 * Resolve VerifiableCredential object.
-	 *
-	 * @param id the credential id
-	 * @return the new CompletableStage, the result is the DIDDocument interface for
-	 *             resolved DIDDocument if success; null otherwise.
-	 */
-	/* public static CompletableFuture<VerifiableCredential> resolveAsync(String id) {
-		return resolveAsync(id, null, false);
-	} */
-
 	public static resolveBiography(id: DIDURL, issuer: DID): CredentialBiography {
 		checkArgument(id != null, "Invalid credential id");
 
@@ -970,67 +718,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return resolveBiography(id, null);
 	} */
 
-	public static resolveBiographyAsync(id: DIDURL, issuer: DID): Promise<CredentialBiography> {
-		return new Promise((resolve, reject)=>{
-			try {
-				resolve(this.resolveBiography(id, issuer));
-			} catch (e) {
-				// DIDResolveException
-				reject(e);
-			}
-		});
-	}
-
-	/* public static CompletableFuture<CredentialBiography> resolveBiographyAsync(id: DIDURL) {
-		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return resolveBiography(id);
-			} catch (DIDResolveException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(String id, String issuer) {
-		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return resolveBiography(id, issuer);
-			} catch (DIDResolveException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	}
-
-	public static CompletableFuture<CredentialBiography> resolveBiographyAsync(String id) {
-		CompletableFuture<CredentialBiography> future = CompletableFuture.supplyAsync(() -> {
-			try {
-				return resolveBiography(id);
-			} catch (DIDResolveException e) {
-				throw new CompletionException(e);
-			}
-		});
-
-		return future;
-	} */
-
-	public static list(did: DID, skip: number = 0, limit: number = 0): ImmutableList<DIDURL> {
+	public static async list(did: DID, skip: number = 0, limit: number = 0): Promise<DIDURL[]> {
 		checkArgument(did != null, "Invalid did");
 		return DIDBackend.getInstance().listCredentials(did, skip, limit);
-	}
-
-	public static listAsync(did: DID, skip: number, limit: number): Promise<DIDURL[]> {
-		return new Promise((resolve, reject) => {
-			try {
-				return this.list(did, skip, limit);
-			} catch (e) {
-				// DIDResolveException
-				reject(e);
-			}
-		});
 	}
 
 	/**
@@ -1075,7 +765,7 @@ export namespace VerifiableCredential {
 		  * @param id the controller of Credential Subject
 		  */
 		 // Java: @JsonCreator()
-		 constructor(@JsonProperty({value: VerifiableCredential.ID}) id: any /* DID */) {
+		 constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
 			 this.id = id;
 			 this.properties = {};
 		 }
@@ -1086,7 +776,7 @@ export namespace VerifiableCredential {
 		  * @return the controller's DID
 		  */
 		 @JsonGetter({value: VerifiableCredential.ID})
-		 public getId(): any /* DID */ {
+		 public getId(): DID {
 			 return this.id;
 		 }
 

@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty, JsonIgnore } from "jackson-js";
 import { CredentialMetadata } from "./internals";
 import { DID } from "./internals";
@@ -53,6 +52,7 @@ import { BASE64 } from "./internals";
  */
  const log = new Logger("DIDStore");
 
+ // The @JsonIgnoreType() decorator is mandatory to avoid the cyclic references
  @JsonIgnoreType()
  export class DIDStore {
 
@@ -65,9 +65,7 @@ import { BASE64 } from "./internals";
 
 	private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
-	//@JsonIgnore()
 	public storage: DIDStorage;
-	//@JsonClassType({type: () => [DIDStoreMetadata]})
 	private metadata: DIDStoreMetadata;
 
 	private constructor(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage) {
@@ -558,17 +556,17 @@ import { BASE64 } from "./internals";
 		 * @return the DID array.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public listDids(): ImmutableList<DID> {
+		public listDids(): DID[] {
 			let dids = this.storage.listDids();
 			for (let did of dids) {
 				let metadata = this.loadDidMetadata(did);
 				did.setMetadata(metadata);
 			}
 
-			return ImmutableList<DID>(dids);
+			return dids;
 		}
 
-		public selectDids(filter: DIDStore.DIDFilter): ImmutableList<DID> {
+		public selectDids(filter: DIDStore.DIDFilter): DID[] {
 			let dids = this.listDids();
 
 			if (filter != null) {
@@ -579,10 +577,10 @@ import { BASE64 } from "./internals";
 						dest.push(did);
 				}
 
-				dids = ImmutableList<DID>(dest);
+				dids = dest;
 			}
 
-			return ImmutableList<DID>(dids);
+			return dids;
 		}
 
 		/**
@@ -771,7 +769,7 @@ import { BASE64 } from "./internals";
 		 * @return the Credential array owned the specified DID.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public listCredentials(didOrString: DID | string): ImmutableList<DIDURL> {
+		public listCredentials(didOrString: DID | string): DIDURL[] {
 			checkArgument(didOrString != null, "Invalid did");
 
 			let did: DID;
@@ -786,7 +784,7 @@ import { BASE64 } from "./internals";
 				id.setMetadata(metadata);
 			}
 
-			return ImmutableList(ids);
+			return ids;
 		}
 
 		/**
@@ -798,7 +796,7 @@ import { BASE64 } from "./internals";
 		 * @return the Credential array
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public selectCredentials(didOrString: DID | string, filter: DIDStore.CredentialFilter): ImmutableList<DIDURL> {
+		public selectCredentials(didOrString: DID | string, filter: DIDStore.CredentialFilter): DIDURL[] {
 			checkArgument(didOrString != null, "Invalid did");
 
 			let did: DID;
@@ -816,10 +814,10 @@ import { BASE64 } from "./internals";
 						dest.push(id);
 				}
 
-				vcs = ImmutableList(dest);
+				vcs = dest;
 			}
 
-			return ImmutableList(vcs);
+			return vcs;
 		}
 
 		/**
@@ -988,7 +986,7 @@ import { BASE64 } from "./internals";
 			this.cache.invalidateAll();
 		}
 
-		public synchronize(handle: ConflictHandle = null) {
+		public async synchronize(handle: ConflictHandle = null) {
 			if (handle == null)
 				handle = DefaultConflictHandle.getInstance();
 
@@ -1001,7 +999,7 @@ import { BASE64 } from "./internals";
 			for (let did of dids) {
 				let localDoc = this.storage.loadDid(did);
 				if (localDoc.isCustomizedDid()) {
-					let resolvedDoc = did.resolve();
+					let resolvedDoc = await did.resolve();
 					if (resolvedDoc == null)
 						continue;
 
@@ -1043,18 +1041,6 @@ import { BASE64 } from "./internals";
 					this.storage.storeCredential(resolvedVc);
 				}
 			}
-		}
-
-		public synchronizeAsync(handle: ConflictHandle = null): Promise<void> {
-			return new Promise((resolve, reject)=>{
-				try {
-					this.synchronize(handle);
-					resolve();
-				}
-				catch (e) {
-					reject(e);
-				}
-			});
 		}
 
 		public exportDid(did: DID | string, password: string, storepass: string): DIDStore.DIDExport {

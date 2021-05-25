@@ -4,21 +4,25 @@
   "description": "Elastos DID Typescript SDK Tests",
   "scripts": {
     "dev": "rollup -c -w",
-    "clean:tests": "rm -rf public/tests",
+    "clean": "rm -rf public/tests generated/",
     "types": "npm run clean && tsc --emitDeclarationOnly --outDir typings/ --project tsconfig.types.json",
     "tsc:build": "rollup -c",
     "tsc:w": "tsc -w",
-    "test:stubbrowserdata": "mkdir -p ./generated && echo '{}' > ./generated/browserdata.json",
-    "test:node": "npm run test:stubbrowserdata && JEST_CIRCUS=1 jest --silent=true --config jest.node.config.ts",
+    "test:node": "JEST_CIRCUS=1 jest --silent=true --config jest.node.config.ts",
     "test:node:debug": "JEST_CIRCUS=1 node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
-    "test:browser": "npm run clean:tests && rollup -c rollup.browsertests.config.js"
+    "test:node-no-jest": "rollup -c rollup.no-jest.config.js && node generated/tests-no-jest.js",
+    "test:browser": "npm run clean && rollup -c rollup.browsertests.config.js"
   },
   "dependencies": {
     "@elastosfoundation/did-js-sdk": "^2.0.0",
     "buffer": "^5.6.0",
+    "http-browserify": "^1.7.0",
+    "os-browserify": "^0.3.0",
+    "url": "^0.11.0",
     "web3": "^1.3.6"
   },
   "devDependencies": {
+    "@enumatech/secp256k1-js": "^1.0.0",
     "@rollup/plugin-alias": "^3.1.2",
     "@rollup/plugin-commonjs": "^19.0.0",
     "@rollup/plugin-inject": "^4.0.2",
@@ -31,6 +35,7 @@
     "jest": "^26.6.3",
     "jest-circus": "^26.6.3",
     "jest-environment-node": "^26.6.2",
+    "jest-html-reporter": "^3.4.0",
     "jest-lite": "^1.0.0-alpha.4",
     "path-browserify": "^1.0.1",
     "rollup": "^2.47.0",

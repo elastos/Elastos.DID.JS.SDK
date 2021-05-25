@@ -203,7 +203,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		this.setProof(new IDChainRequest.Proof(signKey, signature));
 	}
 
-	protected getSignerDocument(): DIDDocument {
+	protected async getSignerDocument(): Promise<DIDDocument> {
 		if (this.signer != null)
 			return this.signer;
 
@@ -213,7 +213,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			if (this.getCredential() != null)
 				this.signer = this.getCredential().getSubject().getId().resolve();
 			else
-				this.signer = this.getProof().getVerificationMethod().getDid().resolve();
+				this.signer = await this.getProof().getVerificationMethod().getDid().resolve();
 		}
 
 		return this.signer;

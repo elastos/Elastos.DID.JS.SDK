@@ -21,7 +21,6 @@
  */
 
 import dayjs from "dayjs";
-import { List as ImmutableList } from "immutable";
 import {
     JsonInclude,
     JsonIncludeType,
@@ -155,7 +154,7 @@ import { VerifiableCredential } from "./internals";
     @JsonClassType({type: () => [Array, [DIDDocumentProof]]})
     public _proofs?: DIDDocumentProof[];
 
-    @JsonIgnore()
+    // Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnore()
     public defaultPublicKey?: DIDDocumentPublicKey;
 
     // Internal properties for DIDDocumentBuilder
@@ -258,8 +257,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the Controllers DID list or empty list if no controller
      */
-    public getControllers(): ImmutableList<DID> {
-        return ImmutableList(this.controllers);
+    public getControllers(): DID[] {
+        return this.controllers;
     }
 
     /**
@@ -357,15 +356,15 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the PublicKey array
      */
-    public getPublicKeys(): ImmutableList<DIDDocumentPublicKey> {
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList(this.publicKeys.values());
+    public getPublicKeys(): DIDDocumentPublicKey[] {
+        let pks: DIDDocumentPublicKey[] = Array.from(this.publicKeys.values());
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
                 pks.push(...doc.getAuthenticationKeys());
         }
 
-        return ImmutableList(pks);
+        return pks;
     }
 
     /**
@@ -375,12 +374,12 @@ import { VerifiableCredential } from "./internals";
      * @param type the type string
      * @return the matched PublicKey array
      */
-    public selectPublicKeys(id: DIDURL | string, type: string): ImmutableList<DIDDocumentPublicKey> {
+    public selectPublicKeys(id: DIDURL | string, type: string): DIDDocumentPublicKey[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+        let pks: DIDDocumentPublicKey[] = [];
         for (let pk of this.publicKeys.values()) {
             if (id != null && !pk.getId().equals(id))
                 continue;
@@ -396,8 +395,7 @@ import { VerifiableCredential } from "./internals";
                 pks.push(...doc.selectAuthenticationKeys(id, type));
         }
 
-        return ImmutableList(pks);
-
+        return pks;
     }
 
     /**
@@ -613,8 +611,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the matched authentication key array
      */
-    public getAuthenticationKeys(): ImmutableList<DIDDocumentPublicKey> {
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+    public getAuthenticationKeys(): DIDDocumentPublicKey[] {
+        let pks: DIDDocumentPublicKey[] = [];
 
         for (let pk of this.publicKeys.values()) {
             if (pk.isAuthenticationKey())
@@ -636,12 +634,12 @@ import { VerifiableCredential } from "./internals";
      * @param type the type of key
      * @return the matched authentication key array
      */
-    public selectAuthenticationKeys(id: DIDURL | string, type: string): ImmutableList<DIDDocumentPublicKey> {
+    public selectAuthenticationKeys(id: DIDURL | string, type: string): DIDDocumentPublicKey[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+        let pks: DIDDocumentPublicKey[] = [];
         for (let pk of this.publicKeys.values()) {
             if (!pk.isAuthenticationKey())
                 continue;
@@ -706,8 +704,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the  array
      */
-    public getAuthorizationKeys(): ImmutableList<DIDDocumentPublicKey> {
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+    public getAuthorizationKeys(): DIDDocumentPublicKey[] {
+        let pks: DIDDocumentPublicKey[] = [];
 
         for (let pk of this.publicKeys.values()) {
             if (pk.isAuthorizationKey())
@@ -724,12 +722,12 @@ import { VerifiableCredential } from "./internals";
      * @param type the type of key
      * @return the matched authorization key array
      */
-    public selectAuthorizationKeys(idOrString: DIDURL | string, type: string): ImmutableList<DIDDocumentPublicKey> {
+    public selectAuthorizationKeys(idOrString: DIDURL | string, type: string): DIDDocumentPublicKey[] {
         checkArgument(idOrString != null || type != null, "Invalid select args");
 
         idOrString = this.canonicalId(idOrString);
 
-        let pks: ImmutableList<DIDDocumentPublicKey> = ImmutableList();
+        let pks: DIDDocumentPublicKey[] = [];
         for (let pk of this.publicKeys.values()) {
             if (!pk.isAuthorizationKey())
                 continue;
@@ -782,8 +780,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the Credential array
      */
-    public getCredentials(): ImmutableList<VerifiableCredential> {
-        return ImmutableList(this._credentials);
+    public getCredentials(): VerifiableCredential[] {
+        return this._credentials;
     }
 
     /**
@@ -793,17 +791,17 @@ import { VerifiableCredential } from "./internals";
      * @param type the type of credential
      * @return the matched Credential array
      */
-    public selectCredentials(id: DIDURL | string, type: string): ImmutableList<VerifiableCredential> {
+    public selectCredentials(id: DIDURL | string, type: string): VerifiableCredential[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let vcs: ImmutableList<VerifiableCredential> = ImmutableList();
+        let vcs: VerifiableCredential[] = [];
         for (let vc of this.credentials.values()) {
             if (id != null && !vc.getId().equals(id))
                 continue;
 
-            if (type != null && !vc.getType().contains(type))
+            if (type != null && vc.getType().indexOf(type) < 0)
                 continue;
 
             vcs.push(vc);
@@ -838,8 +836,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return the Service array
      */
-    public getServices(): ImmutableList<DIDDocumentService> {
-        return ImmutableList(this._services);
+    public getServices(): DIDDocumentService[] {
+        return this._services;
     }
 
     /**
@@ -849,12 +847,12 @@ import { VerifiableCredential } from "./internals";
      * @param type the type of service
      * @return the matched Service array
      */
-    public selectServices(id: DIDURL | string, type: string): ImmutableList<DIDDocumentService> {
+    public selectServices(id: DIDURL | string, type: string): DIDDocumentService[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let svcs: ImmutableList<DIDDocumentService> = ImmutableList();
+        let svcs: DIDDocumentService[] = [];
         for (let svc of this.services.values()) {
             if (id != null && !svc.getId().equals(id))
                 continue;
@@ -920,8 +918,8 @@ import { VerifiableCredential } from "./internals";
      *
      * @return list of the Proof objects
      */
-    public getProofs(): ImmutableList<DIDDocumentProof> {
-        return ImmutableList(this._proofs);
+    public getProofs(): DIDDocumentProof[] {
+        return this._proofs;
     }
 
     /**
@@ -951,7 +949,7 @@ import { VerifiableCredential } from "./internals";
         this.sanitizeProof();
     }
 
-    private sanitizeControllers() {
+    private async sanitizeControllers() {
         if (this.controllers == null || this.controllers.length == 0) {
             this.controllers = [];
             this.controllerDocs = new Map();
@@ -965,7 +963,7 @@ import { VerifiableCredential } from "./internals";
         this.controllerDocs = new Map<DID, DIDDocument>();
         try {
             for (let did of this.controllers) {
-                let doc = did.resolve();
+                let doc = await did.resolve();
                 if (doc == null)
                     throw new MalformedDocumentException("Can not resolve controller: " + did);
 
@@ -1600,11 +1598,11 @@ import { VerifiableCredential } from "./internals";
         return jpb;
     } */
 
-    public newCustomized(inputDID: DID | string, multisig: number, storepass: string, force?: boolean): DIDDocument {
+    public async newCustomized(inputDID: DID | string, multisig: number, storepass: string, force?: boolean): Promise<DIDDocument> {
         return this.newCustomizedDidWithController(inputDID, [], 1, storepass, force);
     }
 
-    public newCustomizedDidWithController(inputDID: DID | string, inputControllers: Array<DID | string>, multisig: number, storepass: string, force?: boolean): DIDDocument {
+    public async newCustomizedDidWithController(inputDID: DID | string, inputControllers: Array<DID | string>, multisig: number, storepass: string, force?: boolean): Promise<DIDDocument> {
         checkArgument(inputDID && inputDID != null, "Invalid DID");
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
@@ -1627,7 +1625,7 @@ import { VerifiableCredential } from "./internals";
 
         let doc: DIDDocument = null;
         if (!force) {
-            doc = did.resolve(true);
+            doc = await did.resolve(true);
             if (doc)
                 throw new DIDAlreadyExistException(did.toString());
         }
@@ -1650,11 +1648,11 @@ import { VerifiableCredential } from "./internals";
         }
     }
 
-    public createTransferTicket(to: DID, storepass: string, from?: DID): TransferTicket {
+    public async createTransferTicket(to: DID, storepass: string, from?: DID): Promise<TransferTicket> {
         checkArgument(to && to != null, "Invalid to");
         checkArgument(storepass && storepass != null, "Invalid storepass");
 
-        let source:DIDDocument = !from ? this : from.resolve(true);
+        let source: DIDDocument = !from ? this : await from.resolve(true);
 
         if (from) {
             this.checkIsPrimitive();
@@ -1676,13 +1674,13 @@ import { VerifiableCredential } from "./internals";
             this.checkHasEffectiveController();
         }
 
-		let ticket:TransferTicket = TransferTicket.newForDIDDocument(source, to);
+		let ticket:TransferTicket = await TransferTicket.newForDIDDocument(source, to);
 		ticket.seal(this, storepass);
 
 		return ticket;
     }
 
-    public publishWithTicket(ticket: TransferTicket, inputSignKey: DIDURL | string | null, storepass: string, adapter: DIDTransactionAdapter = null) {
+    public async publishWithTicket(ticket: TransferTicket, inputSignKey: DIDURL | string | null, storepass: string, adapter: DIDTransactionAdapter = null) {
         checkArgument(ticket.isValid(), "Invalid ticket");
         checkArgument(ticket.getSubject().equals(this.getSubject()), "Ticket mismatch with current DID");
         checkArgument(storepass && storepass != null, "Invalid storepass");
@@ -1696,7 +1694,7 @@ import { VerifiableCredential } from "./internals";
             throw new NoEffectiveControllerException(this.getSubject().toString());
 
         let did = this.getSubject();
-        let targetDoc = did.resolve(true);
+        let targetDoc = await did.resolve(true);
         if (targetDoc == null)
             throw new DIDNotFoundException(did.toString());
 
@@ -1713,18 +1711,6 @@ import { VerifiableCredential } from "./internals";
         DIDBackend.getInstance().transferDid(this, ticket, signKey, storepass, adapter);
     }
 
-    public publishWithTicketAsync(ticket: TransferTicket, signKey: DIDURL | string, storepass: string, adapter: DIDTransactionAdapter = null): Promise<void> {
-        return new Promise((resolve, reject) => {
-            try {
-                this.publishWithTicket(ticket, signKey, storepass, adapter);
-                resolve();
-            } catch (e) {
-                // DIDException
-                reject(e);
-            }
-        });
-    }
-
     /**
      * Publish DID Document to the ID chain.
      *
@@ -1738,7 +1724,7 @@ import { VerifiableCredential } from "./internals";
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public publish(storepass: string, inputSignKey: DIDURL | string = null, force: boolean = false, adapter: DIDTransactionAdapter = null) {
+    public async publish(storepass: string, inputSignKey: DIDURL | string = null, force: boolean = false, adapter: DIDTransactionAdapter = null) {
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
@@ -1767,7 +1753,7 @@ import { VerifiableCredential } from "./internals";
 
         let lastTxid: string = null;
         let reolvedSignautre: string = null;
-        let resolvedDoc = this.getSubject().resolve(true);
+        let resolvedDoc = await this.getSubject().resolve(true);
         if (resolvedDoc != null) {
             if (resolvedDoc.isDeactivated()) {
                 this.getMetadata().setDeactivated(true);
@@ -1825,28 +1811,6 @@ import { VerifiableCredential } from "./internals";
     }
 
     /**
-     * Publish DID content(DIDDocument) to chain with asynchronous mode.
-     *
-     * @param signKey the key to sign
-     * @param force force = true, must be publish whether the local document is lastest one or not;
-     *              force = false, must not be publish if the local document is not the lastest one,
-     *              and must resolve at first.
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public publishAsync(signKey: DIDURL | string, force: boolean = false, storepass: string = null, adapter: DIDTransactionAdapter = null): Promise<void> {
-        return new Promise((resolve, reject) => {
-            try {
-                this.publish(storepass, signKey, force, adapter);
-                resolve();
-            } catch (e) {
-                // DIDException
-                reject(e);
-            }
-        });
-    }
-
-    /**
      * Deactivate self use authentication key.
      *
      * @param signKey the key to sign
@@ -1855,7 +1819,7 @@ import { VerifiableCredential } from "./internals";
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public deactivate(signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
+    public async deactivate(signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
@@ -1863,7 +1827,7 @@ import { VerifiableCredential } from "./internals";
             throw new NoEffectiveControllerException(this.getSubject().toString());
 
         // Document should use the IDChain's copy
-        let doc = this.getSubject().resolve(true);
+        let doc = await this.getSubject().resolve(true);
         if (doc == null)
             throw new DIDNotFoundException(this.getSubject().toString());
         else if (doc.isDeactivated())
@@ -1885,25 +1849,6 @@ import { VerifiableCredential } from "./internals";
     }
 
     /**
-     * Deactivate self use authentication key with asynchronous mode.
-     *
-     * @param signKey the key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    public deactivateAsync(signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null): Promise<void> {
-        return new Promise((resolve, reject) => {
-            try {
-                this.deactivate(signKey, storepass, adapter);
-                resolve();
-            } catch (e) {
-                //DIDException
-                reject(e);
-            }
-        });
-    }
-
-    /**
      * Deactivate target DID by authorizor's DID.
      *
      * @param target the target DID
@@ -1914,7 +1859,7 @@ import { VerifiableCredential } from "./internals";
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
     // NOTE: Was deactivate() in java
-    public deactivateTargetDID(target: DID, signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
+    public async deactivateTargetDID(target: DID, signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
         checkArgument(target != null, "Invalid target DID");
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
@@ -1922,7 +1867,7 @@ import { VerifiableCredential } from "./internals";
         if (signKey == null && this.getDefaultPublicKeyId() == null)
             throw new NoEffectiveControllerException(this.getSubject().toString());
 
-        let targetDoc = target.resolve(true);
+        let targetDoc = await target.resolve(true);
         if (targetDoc == null)
             throw new DIDNotFoundException(target.toString());
         else if (targetDoc.isDeactivated())
@@ -1936,7 +1881,7 @@ import { VerifiableCredential } from "./internals";
 
             let candidatePks: DIDDocumentPublicKey[] = null;
             if (signKey == null) {
-                candidatePks = this.getAuthenticationKeys().toArray();
+                candidatePks = this.getAuthenticationKeys();
             } else {
                 let pk = this.getAuthenticationKey(signKey);
                 if (pk == null)
@@ -1982,27 +1927,6 @@ import { VerifiableCredential } from "./internals";
             if (this.getStore().containsDid(target))
                 this.getStore().storeDid(targetDoc);
         }
-    }
-
-    /**
-     * Deactivate target DID by authorizor's DID with asynchronous mode.
-     *
-     * @param target the target DID
-     * @param signKey the authorizor's key to sign
-     * @param storepass the password for DIDStore
-     * @return the new CompletableStage, no result.
-     */
-    // NOTE: Was deactivateAsync() in java
-    public deactivateTargetDIDAsync(target: DID, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
-        return new Promise((resolve, reject) => {
-            try {
-                this.deactivateTargetDID(target, signKey, storepass, adapter);
-                resolve();
-            } catch (e) {
-                // DIDException
-                reject(e);
-            }
-        });
     }
 
     /**

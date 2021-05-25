@@ -35,7 +35,7 @@ describe("RootIdentity Tests", ()=>{
     	expect(testData.getMnemonic()).toEqual(exportedMnemonic);
 	});
 
-	test("testInitPrivateIdentityWithMnemonic", () => {
+	test("testInitPrivateIdentityWithMnemonic", async () => {
 		let expectedIDString = "iY4Ghz9tCuWvB5rNwvn4ngWvthZMNzEA7U";
 		let mnemonic = "cloth always junk crash fun exist stumble shift over benefit fun toe";
 
@@ -49,12 +49,12 @@ describe("RootIdentity Tests", ()=>{
 
     	let identity2 = store2.loadRootIdentity();
 
-    	let doc = identity2.newDid(TestConfig.storePass);
+    	let doc = await identity2.newDid(TestConfig.storePass);
     	expect(doc).not.toBeNull();
     	expect(expectedIDString).toEqual(doc.getSubject().getMethodSpecificId());
 	});
 
-	test("testInitPrivateIdentityWithRootKey", () => {
+	test("testInitPrivateIdentityWithRootKey", async () => {
 		let expectedIDString = "iYbPqEA98rwvDyA5YT6a3mu8UZy87DLEMR";
 		let rootKey = "xprv9s21ZrQH143K4biiQbUq8369meTb1R8KnstYFAKtfwk3vF8uvFd1EC2s49bMQsbdbmdJxUWRkuC48CXPutFfynYFVGnoeq8LJZhfd9QjvUt";
 
@@ -68,26 +68,26 @@ describe("RootIdentity Tests", ()=>{
 
     	let identity2 = store2.loadRootIdentity();
 
-    	let doc = identity2.newDid(TestConfig.storePass);
+    	let doc = await identity2.newDid(TestConfig.storePass);
     	expect(doc).not.toBeNull();
     	expect(expectedIDString).toEqual(doc.getSubject().getMethodSpecificId());
 	});
 
-	test("testCreateDIDWithAlias", () => {
+	test("testCreateDIDWithAlias", async () => {
     	let identity = testData.getRootIdentity();
 
     	let alias = "my first did";
 
-    	let doc = identity.newDid(TestConfig.storePass);
+    	let doc = await identity.newDid(TestConfig.storePass);
     	doc.getMetadata().setAlias(alias);
     	expect(doc.isValid()).toBeTruthy();
 
-    	let resolved = doc.getSubject().resolve();
+    	let resolved = await doc.getSubject().resolve();
     	expect(resolved).toBeNull();
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve();
+    	resolved = await doc.getSubject().resolve();
     	expect(resolved).not.toBeNull();
 
     	// test alias
@@ -99,18 +99,18 @@ describe("RootIdentity Tests", ()=>{
     	expect(resolved.isValid()).toBeTruthy();
 	});
 
-	test("testCreateDIDWithoutAlias", () => {
+	test("testCreateDIDWithoutAlias", async () => {
     	let identity = testData.getRootIdentity();
 
-    	let doc = identity.newDid(TestConfig.storePass);
+    	let doc = await identity.newDid(TestConfig.storePass);
     	expect(doc.isValid()).toBeTruthy();
 
-    	let resolved = doc.getSubject().resolve();
+    	let resolved = await doc.getSubject().resolve();
     	expect(resolved).toBeNull();
 
     	doc.publish(TestConfig.storePass);
 
-    	resolved = doc.getSubject().resolve();
+    	resolved = await doc.getSubject().resolve();
     	expect(resolved).not.toBeNull();
     	expect(doc.getSubject()).toEqual(resolved.getSubject());
     	expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -118,11 +118,11 @@ describe("RootIdentity Tests", ()=>{
     	expect(resolved.isValid()).toBeTruthy();
     });
 
-	test("testCreateDIDByIndex", () => {
+	test("testCreateDIDByIndex", async () => {
 	    let identity = testData.getRootIdentity();
 
 	    let did = identity.getDid(0);
-	    let doc = identity.newDid(TestConfig.storePass, 0);
+	    let doc = await identity.newDid(TestConfig.storePass, 0);
 	    expect(doc.isValid()).toBeTruthy();
 	    expect(did.equals(doc.getSubject())).toBeTruthy();
 
@@ -130,16 +130,16 @@ describe("RootIdentity Tests", ()=>{
 
 	    let success = store.deleteDid(did);
 	    expect(success).toBeTruthy();
-	    doc = identity.newDid(TestConfig.storePass);
+	    doc = await identity.newDid(TestConfig.storePass);
 	    expect(doc.isValid()).toBeTruthy();
 	    expect(did.equals(doc.getSubject())).toBeTruthy();
 	});
 
-	test("testGetDid", () => {
+	test("testGetDid", async () => {
 	    let identity = testData.getRootIdentity();
 
 	    for (let i = 0; i < 100; i++) {
-		    let doc = identity.newDid(TestConfig.storePass, i);
+		    let doc = await identity.newDid(TestConfig.storePass, i);
 		    expect(doc.isValid()).toBeTruthy();
 
 		    let did = identity.getDid(i);

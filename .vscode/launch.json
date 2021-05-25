@@ -29,6 +29,19 @@
           "${workspaceFolder}/**",
           "!**/node_modules/**"
         ]
+      },
+      {
+        "name": "npm run build",
+        "request": "launch",
+        "runtimeArgs": [
+          "run-script",
+          "build"
+        ],
+        "runtimeExecutable": "npm",
+        "skipFiles": [
+          "<node_internals>/**"
+        ],
+        "type": "pwa-node"
       }
     ]
   }

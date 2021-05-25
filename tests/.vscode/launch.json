@@ -24,6 +24,26 @@
         "sourceMaps": true,
         "internalConsoleOptions": "neverOpen",
         "resolveSourceMapLocations": null
+      },
+      {
+        "name": "Node tests NO-Jest",
+        "type": "pwa-node",
+        "request": "launch",
+        "program": "./generated/tests-no-jest.js",
+        "skipFiles": [
+          "<node_internals>/**"
+        ],
+        "outFiles": [
+          "${workspaceRoot}/generated/tests-no-jest.js"
+        ],
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "sourceMaps": true,
+        "internalConsoleOptions": "neverOpen",
+        "resolveSourceMapLocations": [
+          "${workspaceFolder}/**",
+          "!**/node_modules/**"
+        ]
       }
     ]
   }

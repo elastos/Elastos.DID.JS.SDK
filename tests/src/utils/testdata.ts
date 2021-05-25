@@ -48,14 +48,21 @@ export class TestData {
 	private instantData: InstantData;
 
 	public constructor() {
-		TestConfig.initialize();
-		if (File.exists(TestConfig.storeRoot))
-    		(new File(TestConfig.storeRoot)).delete();
-		importBundledBrowserData();
+		try {
+			TestConfig.initialize();
+			if (File.exists(TestConfig.storeRoot))
+				(new File(TestConfig.storeRoot)).delete();
+			importBundledBrowserData();
 
-		DIDTestExtension.setup();
+			DIDTestExtension.setup();
 
-		this.store = DIDStore.open(TestConfig.storeRoot);
+			this.store = DIDStore.open(TestConfig.storeRoot);
+		}
+		catch(e) {
+			// Catch errors here because Jest will silence them. So we print them to get more clues.
+			console.error("Catched exception in TestData constructor", e);
+			throw e;
+		}
 	}
 
 	public cleanup() {
@@ -382,11 +389,11 @@ export class InstantData {
 
 	constructor(private testData: TestData) {}
 
-	public getIssuerDocument(): DIDDocument {
+	public async getIssuerDocument(): Promise<DIDDocument> {
 		if (this.idIssuer == null) {
 			this.testData.getRootIdentity();
 
-			let doc = this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("Issuer");
 
 			let selfIssuer = new Issuer(doc);
@@ -433,11 +440,11 @@ export class InstantData {
 		return this.idIssuer;
 	}
 
-	public getUser1Document(): DIDDocument {
+	public async getUser1Document(): Promise<DIDDocument> {
 		if (this.idUser1 == null) {
 			this.getIssuerDocument();
 
-			let doc = this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User1");
 
 			// Test document with two embedded credentials
@@ -533,9 +540,9 @@ export class InstantData {
 		return this.idUser1;
 	}
 
-	public getUser1PassportCredential(): VerifiableCredential {
+	public async getUser1PassportCredential(): Promise<VerifiableCredential> {
 		if (this.vcUser1Passport == null) {
-			let doc = this.getUser1Document();
+			let doc = await this.getUser1Document();
 
 			let id = DIDURL.newWithDID(doc.getSubject(), "#passport");
 
@@ -560,9 +567,9 @@ export class InstantData {
 		return this.vcUser1Passport;
 	}
 
-	public getUser1TwitterCredential(): VerifiableCredential{
+	public async getUser1TwitterCredential(): Promise<VerifiableCredential> {
 		if (this.vcUser1Twitter == null) {
-			let doc = this.getUser1Document();
+			let doc = await this.getUser1Document();
 
 			let id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
 
@@ -587,9 +594,9 @@ export class InstantData {
 	}
 
 
-	public getUser1JsonCredential(): VerifiableCredential{
+	public async getUser1JsonCredential(): Promise<VerifiableCredential> {
 		if (this.vcUser1Json == null) {
-			let doc = this.getUser1Document();
+			let doc = await this.getUser1Document();
 
 			let id = DIDURL.newWithDID(doc.getSubject(), "#json");
 
@@ -611,11 +618,11 @@ export class InstantData {
 	}
 
 
-	public getUser1JobPositionCredential(): VerifiableCredential{
+	public async getUser1JobPositionCredential(): Promise<VerifiableCredential> {
 		if (this.vcUser1JobPosition == null) {
 			this.getExampleCorpDocument();
 
-			let doc = this.getUser1Document();
+			let doc = await this.getUser1Document();
 
 			let id = DIDURL.newWithDID(doc.getSubject(), "#email");
 
@@ -637,17 +644,17 @@ export class InstantData {
 		return this.vcUser1JobPosition;
 	}
 
-	public  getUser1NonemptyPresentation() : VerifiablePresentation {
+	public async getUser1NonemptyPresentation() : Promise<VerifiablePresentation> {
 		if (this.vpUser1Nonempty == null) {
-			let doc = this.getUser1Document();
+			let doc = await this.getUser1Document();
 
 			let pb = VerifiablePresentation.createFor(doc.getSubject(), null, this.testData.store);
 
 			let vp = pb
 					.credentials(doc.getCredential("#profile"), doc.getCredential("#email"))
-					.credentials(this.getUser1PassportCredential())
-					.credentials(this.getUser1TwitterCredential())
-					.credentials(this.getUser1JobPositionCredential())
+					.credentials(await this.getUser1PassportCredential())
+					.credentials(await this.getUser1TwitterCredential())
+					.credentials(await this.getUser1JobPositionCredential())
 					.realm("https://example.com/")
 					.nonce("873172f58701a9ee686f0630204fee59")
 					.seal(TestConfig.storePass);
@@ -658,9 +665,9 @@ export class InstantData {
 		return this.vpUser1Nonempty;
 	}
 
-	public  getUser1EmptyPresentation() : VerifiablePresentation {
+	public async getUser1EmptyPresentation() : Promise<VerifiablePresentation> {
 		if (this.vpUser1Empty == null) {
-			let doc = this.getUser1Document();
+			let doc = await this.getUser1Document();
 
 			let pb = VerifiablePresentation.createFor(doc.getSubject(), null, this.testData.store);
 
@@ -674,9 +681,9 @@ export class InstantData {
 		return this.vpUser1Empty;
 	}
 
-	public getUser2Document() : DIDDocument{
+	public async getUser2Document() : Promise<DIDDocument> {
 		if (this.idUser2 == null) {
-			let doc = this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User2");
 
 			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
@@ -703,9 +710,9 @@ export class InstantData {
 		return this.idUser2;
 	}
 
-	public getUser3Document() : DIDDocument{
+	public async getUser3Document() : Promise<DIDDocument> {
 		if (this.idUser3 == null) {
-			let doc = this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User3");
 			doc.publish(TestConfig.storePass);
 
@@ -715,9 +722,9 @@ export class InstantData {
 		return this.idUser3;
 	}
 
-	public getUser4Document() : DIDDocument{
+	public async getUser4Document() : Promise<DIDDocument> {
 		if (this.idUser4 == null) {
-			let doc = this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User4");
 			doc.publish(TestConfig.storePass);
 
@@ -727,12 +734,12 @@ export class InstantData {
 		return this.idUser4;
 	}
 
-    public getExampleCorpDocument() : DIDDocument{
+    public async getExampleCorpDocument() : Promise<DIDDocument> {
 		if (this.idExampleCorp == null) {
 			this.getIssuerDocument();
 
 			let did = new DID("did:elastos:example");
-			let doc = this.idIssuer.newCustomized(did, 1, TestConfig.storePass);
+			let doc = await this.idIssuer.newCustomized(did, 1, TestConfig.storePass);
 
 			let selfIssuer = new Issuer(doc);
 			let cb = selfIssuer.issueFor(doc.getSubject());
@@ -771,7 +778,7 @@ export class InstantData {
 		return this.idExampleCorp;
 	}
 
-	public getFooBarDocument() : DIDDocument{
+	public async getFooBarDocument() : Promise<DIDDocument> {
 		if (this.idFooBar == null) {
 			this.getExampleCorpDocument();
 			this.getUser1Document();
@@ -782,7 +789,7 @@ export class InstantData {
 				               this.idUser2.getSubject(),
 							   this.idUser3.getSubject()];
 			let did = new DID("did:elastos:foobar");
-			let doc = this.idUser1.newCustomizedDidWithController(did, controllers, 2, TestConfig.storePass);
+			let doc = await this.idUser1.newCustomizedDidWithController(did, controllers, 2, TestConfig.storePass);
 			let signKey = this.idUser1.getDefaultPublicKeyId();
 
 			// Add public keys embedded credentials
@@ -872,9 +879,9 @@ export class InstantData {
 		return this.idFooBar;
 	}
 
-	public getFooBarServiceCredential() : VerifiableCredential{
+	public async getFooBarServiceCredential() : Promise<VerifiableCredential> {
 		if (this.vcFooBarServices == null) {
-			let doc = this.getFooBarDocument();
+			let doc = await this.getFooBarDocument();
 
 			let id = DIDURL.newWithDID(doc.getSubject(), "#services");
 
@@ -898,14 +905,14 @@ export class InstantData {
 		return this.vcFooBarServices;
 	}
 
-	public getFooBarLicenseCredential() : VerifiableCredential{
+	public async getFooBarLicenseCredential() : Promise<VerifiableCredential> {
 		if (this.vcFooBarLicense == null) {
 			this.getExampleCorpDocument();
 			this.getUser1Document();
 			this.getUser2Document();
 			this.getUser3Document();
 
-			let doc = this.getFooBarDocument();
+			let doc = await this.getFooBarDocument();
 
 			let id = DIDURL.newWithDID(doc.getSubject(), "#license");
 
@@ -929,9 +936,9 @@ export class InstantData {
 		return this.vcFooBarLicense;
 	}
 
-	public getFooBarNonemptyPresentation() : VerifiablePresentation{
+	public async getFooBarNonemptyPresentation() : Promise<VerifiablePresentation> {
 		if (this.vpFooBarNonempty == null) {
-			let doc = this.getFooBarDocument();
+			let doc = await this.getFooBarDocument();
 
 			let pb = VerifiablePresentation.createFor(
 					doc.getSubject(), this.idUser1.getDefaultPublicKeyId(), this.testData.store);
@@ -939,8 +946,8 @@ export class InstantData {
 			let vp = pb
 					.credentials(doc.getCredential("#profile"),
 							doc.getCredential("#email"))
-					.credentials(this.getFooBarServiceCredential())
-					.credentials(this.getFooBarLicenseCredential())
+					.credentials(await this.getFooBarServiceCredential())
+					.credentials(await this.getFooBarLicenseCredential())
 					.realm("https://example.com/")
 					.nonce("873172f58701a9ee686f0630204fee59")
 					.seal(TestConfig.storePass);
@@ -951,9 +958,9 @@ export class InstantData {
 		return this.vpFooBarNonempty;
 	}
 
-	public getFooBarEmptyPresentation() : VerifiablePresentation{
+	public async getFooBarEmptyPresentation() : Promise<VerifiablePresentation> {
 		if (this.vpFooBarEmpty == null) {
-			let doc = this.getFooBarDocument();
+			let doc = await this.getFooBarDocument();
 
 			let pb = VerifiablePresentation.createFor(
 					doc.getSubject(), DIDURL.newWithUrl("did:elastos:foobar#key2"), this.testData.store);
@@ -968,12 +975,12 @@ export class InstantData {
 		return this.vpFooBarEmpty;
 	}
 
-	public getFooBarTransferTicket() : TransferTicket{
+	public async getFooBarTransferTicket() : Promise<TransferTicket> {
 		if (this.ttFooBar == null) {
-			let doc = this.getFooBarDocument();
-			let user4 = this.getUser4Document();
+			let doc = await this.getFooBarDocument();
+			let user4 = await this.getUser4Document();
 
-			let tt = this.idUser1.createTransferTicket(doc.getSubject(), TestConfig.storePass, user4.getSubject());
+			let tt = await this.idUser1.createTransferTicket(doc.getSubject(), TestConfig.storePass, user4.getSubject());
 			tt = this.idUser3.signWithTicket(tt, TestConfig.storePass);
 
 			this.ttFooBar = tt;
@@ -982,14 +989,14 @@ export class InstantData {
 		return this.ttFooBar;
 	}
 
-	public getFooDocument() : DIDDocument{
+	public async getFooDocument() : Promise<DIDDocument> {
 		if (this.idFoo == null) {
 			this.getUser1Document();
 			this.getUser2Document();
 
 			let controllers : DID[] = [this.idUser2.getSubject()];
 			let did = new DID("did:elastos:foo");
-			let doc = this.idUser1.newCustomizedDidWithController(did, controllers, 2, TestConfig.storePass);
+			let doc = await this.idUser1.newCustomizedDidWithController(did, controllers, 2, TestConfig.storePass);
 			doc = this.idUser2.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 
@@ -1003,11 +1010,11 @@ export class InstantData {
 		return this.idFoo;
 	}
 
-	public getFooEmailCredential() : VerifiableCredential{
+	public async getFooEmailCredential() : Promise<VerifiableCredential> {
 		if (this.vcFooEmail == null) {
 			this.getIssuerDocument();
 
-			let doc = this.getFooDocument();
+			let doc = await this.getFooDocument();
 
 			let id = DIDURL.newWithDID(doc.getSubject(), "#email");
 
@@ -1030,7 +1037,7 @@ export class InstantData {
 		return this.vcFooEmail;
 	}
 
-	public getBarDocument() : DIDDocument{
+	public async getBarDocument() : Promise<DIDDocument> {
 		if (this.idBar == null) {
 			this.getUser1Document();
 			this.getUser2Document();
@@ -1039,7 +1046,7 @@ export class InstantData {
 			let controllers = [this.idUser2.getSubject(),
 				               this.idUser3.getSubject()];
 			let did = new DID("did:elastos:bar");
-			let doc = this.idUser1.newCustomizedDidWithController(did, controllers, 3, TestConfig.storePass);
+			let doc = await this.idUser1.newCustomizedDidWithController(did, controllers, 3, TestConfig.storePass);
 			doc = this.idUser2.signWithDocument(doc, TestConfig.storePass);
 			doc = this.idUser3.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
@@ -1051,7 +1058,7 @@ export class InstantData {
 		return this.idBar;
 	}
 
-	public getBazDocument(): DIDDocument{
+	public async getBazDocument(): Promise<DIDDocument> {
 		if (this.idBaz == null) {
 			this.getUser1Document();
 			this.getUser2Document();
@@ -1059,7 +1066,7 @@ export class InstantData {
 
 			let controllers = [this.idUser2.getSubject(), this.idUser3.getSubject()];
 			let did = new DID("did:elastos:baz");
-			let doc = this.idUser1.newCustomizedDidWithController(did, controllers, 1, TestConfig.storePass);
+			let doc = await this.idUser1.newCustomizedDidWithController(did, controllers, 1, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			doc.publish(TestConfig.storePass, this.idUser1.getDefaultPublicKeyId());
 
@@ -1069,12 +1076,12 @@ export class InstantData {
 		return this.idBaz;
 	}
 
-	public getBazTransferTicket() : TransferTicket{
+	public async getBazTransferTicket() : Promise<TransferTicket> {
 		if (this.ttBaz == null) {
-			let doc = this.getBazDocument();
-			let user4 = this.getUser4Document();
+			let doc = await this.getBazDocument();
+			let user4 = await this.getUser4Document();
 
-			let tt = this.idUser2.createTransferTicket(doc.getSubject(), TestConfig.storePass, user4.getSubject());
+			let tt = await this.idUser2.createTransferTicket(doc.getSubject(), TestConfig.storePass, user4.getSubject());
 
 			this.ttBaz = tt;
 		}
@@ -1082,7 +1089,7 @@ export class InstantData {
 		return this.ttBaz;
 	}
 
-	public getDocument(did: string): DIDDocument{
+	public async getDocument(did: string): Promise<DIDDocument> {
 		switch (did) {
 			case "issuer":
 				return this.getIssuerDocument();
@@ -1119,7 +1126,7 @@ export class InstantData {
 			}
 	}
 
-	public getCredential(did: string, vc: string) : VerifiableCredential{
+	public async getCredential(did: string, vc: string) : Promise<VerifiableCredential> {
 		switch (did) {
 			case "user1":
 				switch (vc) {
@@ -1165,7 +1172,7 @@ export class InstantData {
 			}
 	}
 
-	public getPresentation(did: string, vp: string): VerifiablePresentation{
+	public async getPresentation(did: string, vp: string): Promise<VerifiablePresentation> {
 		switch (did) {
 			case "user1":
 				switch (vp) {

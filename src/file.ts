@@ -1,7 +1,7 @@
-import BrowserFS from "browserfs";
-import { Stats, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, writeFileSync } from "fs";
-import fs from "fs";
 import path from "path";
+
+//import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, writeFileSync } from "./fs";
+import * as fs from "./fs";
 
 /**
  * Internal class mimicing Java File class in order to reduce the divergence with Java implementation
@@ -10,23 +10,11 @@ import path from "path";
  * implementation as we can until this SDK is totally stable.
  */
 
- BrowserFS.configure({
-	fs: "LocalStorage",
-	options: {}
-}, function(e) {
-	if (e) {
-		throw e;
-	}
-	else {
-		//console.log("BrowserFS initialization complete");
-	}
-});
-
  export class File { // Exported, for test cases only
 	public static SEPARATOR = "/";
 
 	private fullPath: string;
-	private fileStats?: Stats;
+	private fileStats?: any;
 
 	public constructor(path: File | string, subpath?: string) {
 		let fullPath: string = path instanceof File ? path.getAbsolutePath() : path as string;
@@ -58,15 +46,14 @@ import path from "path";
 		return file.isDirectory();
 	}
 
-	private getStats(): any /* Stats */ {
+	private getStats(): fs.Stats {
 		if (this.fileStats)
 			return this.fileStats;
-		return this.exists() ? statSync(this.fullPath) : null;
-		return null;
+		return this.exists() ? fs.statSync(this.fullPath) : null;
 	}
 
 	public exists(): boolean {
-		return existsSync(this.fullPath);
+		return fs.existsSync(this.fullPath);
 	}
 
 	// Entry size in bytes
@@ -116,7 +103,7 @@ import path from "path";
 	 * Lists all file names in this directory.
 	 */
 	public list(): string[] {
-		return this.exists() && this.getStats().isDirectory() ? readdirSync(this.fullPath) : null;
+		return this.exists() && this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
 	}
 
 	/**
@@ -136,19 +123,19 @@ import path from "path";
 
 	public writeText(content: string) {
 		if (!this.exists() || this.getStats().isFile()) {
-			writeFileSync(this.fullPath, content, { encoding: "utf-8" });
+			fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
 		}
 	}
 
 	public readText(): string {
-		return this.exists() ? readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
+		return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
 		return null;
 	}
 
 	public rename(newName: string) {
 		if (this.exists()) {
 			let targetName = this.fullPath.includes(File.SEPARATOR) && !newName.includes(File.SEPARATOR) ? this.getParentDirectoryName + File.SEPARATOR + newName : newName;
-			renameSync(this.fullPath, targetName);
+			fs.renameSync(this.fullPath, targetName);
 			this.fullPath = targetName;
 			this.fileStats = undefined;
 		}
@@ -157,7 +144,7 @@ import path from "path";
 	public createFile(overwrite?: boolean) {
 		let replace = overwrite ? overwrite : false;
 		if (!this.exists() || replace) {
-			writeFileSync(this.fullPath, "", { encoding: "utf-8" });
+			fs.writeFileSync(this.fullPath, "", { encoding: "utf-8" });
 			this.fileStats = undefined;
 		}
 	}
@@ -172,7 +159,7 @@ import path from "path";
 	}
 
 	/**
-	 * Internal reimplementation of mkdir because even if nodejs now has a "resursive" option,
+	 * Internal reimplementation of mkdir because even if nodejs now has a "recursive" option,
 	 * browserfs localstorage driver doesn't.
 	 */
 	private mkdirpath(dirPath: string)
@@ -184,8 +171,16 @@ import path from "path";
 			}
 			catch(e)
 			{
-				this.mkdirpath(path.dirname(dirPath));
-				this.mkdirpath(dirPath);
+				let dirname = path.dirname(dirPath);
+				if (dirname !== dirPath) {
+					this.mkdirpath(dirname);
+					this.mkdirpath(dirPath);
+				}
+				else {
+					// We reached the root path. Folder creation has failed for some reason, so we
+					// throw an error.
+					throw e;
+				}
 			}
 		}
 	}

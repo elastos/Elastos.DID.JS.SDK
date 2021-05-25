@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
@@ -148,8 +147,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the type string
 	 */
-	public getType(): ImmutableList<string> {
-		return ImmutableList(this.type);
+	public getType(): string[] {
+		return this.type;
 	}
 
 	/**
@@ -192,8 +191,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 *
 	 * @return the Credential array
 	 */
-	public getCredentials(): ImmutableList<VerifiableCredential> {
-		return ImmutableList(this._credentials);
+	public getCredentials(): VerifiableCredential[] {
+		return this._credentials;
 	}
 
 	/**
@@ -267,8 +266,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return whether the Credential object is genuine
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public isGenuine(): boolean {
-		let holderDoc = this.getHolder().resolve();
+	public async isGenuine(): Promise<boolean> {
+		let holderDoc = await this.getHolder().resolve();
 		if (holderDoc == null)
 			return false;
 
@@ -302,23 +301,13 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	}
 
 	/**
-	 * Check whether the presentation is genuine or not in asynchronous mode.
-	 *
-	 * @return the new CompletableStage if success; null otherwise.
-	 *         The boolean result is genuine or not
-	 */
-	public isGenuineAsync(): Promise<boolean> {
-		return promisify<boolean>(()=>this.isGenuine());
-	}
-
-	/**
 	 * Check whether the presentation is valid or not.
 	 *
 	 * @return whether the Credential object is valid
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public isValid(): boolean {
-		let  holderDoc = this.getHolder().resolve();
+	public async isValid(): Promise<boolean> {
+		let  holderDoc = await this.getHolder().resolve();
 		if (holderDoc == null)
 			return false;
 
@@ -349,16 +338,6 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		return holderDoc.verify(this.proof.getVerificationMethod(),
 			this.proof.getSignature(), Buffer.from(json),
 			Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
-	}
-
-	/**
-	 * Check whether the Credential is valid in asynchronous mode.
-	 *
-	 * @return the new CompletableStage if success; null otherwise.
-	 * 	       The boolean result is valid or not
-	 */
-	public isValidAsync(): Promise<boolean> {
-		return promisify<boolean>(()=>this.isValid());
 	}
 
 	/**

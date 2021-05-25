@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-
-import { List as ImmutableList } from "immutable";
 import { randomBytes } from "crypto";
 import { CredentialBiography, CredentialBiographyStatus } from "./internals";
 import { CredentialList } from "./internals";
@@ -107,10 +105,10 @@ export class DIDBackend {
 		this.cache = new LRUCache({
 			maxItems: maxCacheCapacity,
       		maxAge: cacheTtl/1000, //TimeUnit.MILLISECONDS,
-			loader: (key) => {
+			asyncLoader: async (key) => {
 				log.trace("Cache loading {}...", key);
 				return {
-					value: this.resolve(key)
+					value: await this.resolve(key)
 				};
 			}
 		});
@@ -175,11 +173,11 @@ export class DIDBackend {
 		this.resolveHandle = handle;
 	}
 
-	private resolve(request: ResolveRequest<any, any>): ResolveResult<any> {
+	private async resolve(request: ResolveRequest<any, any>): Promise<ResolveResult<any>> {
 		log.debug("Resolving request {}...", request);
 
 		let requestJson = request.serialize(true);
-		let resolvedJson = this.getAdapter().resolve(requestJson);
+		let resolvedJson = await this.getAdapter().resolve(requestJson);
 		let response: ResolveResponse<any, any>  = null;
 		try {
 			switch (request.getMethod()) {
@@ -220,7 +218,7 @@ export class DIDBackend {
 					+ "): " + response.getErrorMessage());
 	}
 
-	public resolveDidBiography(did: DID, all: boolean = true, force: boolean = false): DIDBiography {
+	public resolveDidBiography(did: DID, all: boolean = true, force: boolean = false): Promise<DIDBiography> {
 		log.info("Resolving DID {}, all={}...", did.toString(), all);
 
 		let request = new DIDResolveRequest(this.generateRequestId());
@@ -230,7 +228,7 @@ export class DIDBackend {
 			this.cache.invalidate(request);
 
 		try {
-			return this.cache.get(request) as DIDBiography;
+			return this.cache.getAsync(request) as Promise<DIDBiography>;
 		} catch (e) {
 			// ExecutionException
 			throw new DIDResolveException(e);
@@ -246,7 +244,7 @@ export class DIDBackend {
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	public resolveDid(did: DID, force: boolean = false): DIDDocument {
+	public async resolveDid(did: DID, force: boolean = false): Promise<DIDDocument> {
 		log.debug("Resolving DID {}...", did.toString());
 
 		if (this.resolveHandle != null) {
@@ -255,7 +253,7 @@ export class DIDBackend {
 				return doc;
 		}
 
-		let bio = this.resolveDidBiography(did, false, force);
+		let bio = await this.resolveDidBiography(did, false, force);
 
 		let tx: DIDTransaction = null;
 		if (bio.getStatus().equals(DIDBiographyStatus.VALID)) {
@@ -280,7 +278,7 @@ export class DIDBackend {
 					this.constructWithIDChainRequest(request);
 				}
 
-				getSignerDocument() {
+				async getSignerDocument() {
 					return this.getDocument() == null ? doc : this.getDocument();
 				}
 			}(tx.getRequest());
@@ -389,13 +387,13 @@ export class DIDBackend {
 		return vc;
 	}
 
-	public listCredentials(did: DID, skip: number, limit: number): ImmutableList<DIDURL> {
+	public async listCredentials(did: DID, skip: number, limit: number): Promise<DIDURL[]> {
 		log.info("List credentials for {}", did);
 
 		let request = new CredentialListRequest(this.generateRequestId());
 		request.setParameters(did, skip, limit);
 
-		let list = this.resolve(request) as CredentialList;
+		let list = await this.resolve(request) as CredentialList;
 		if (list == null || list.size() == 0)
 			return null;
 
@@ -503,10 +501,10 @@ export class DIDBackend {
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	public deactivateTargetDid(target: DIDDocument, targetSignKey: DIDURL,
+	public async deactivateTargetDid(target: DIDDocument, targetSignKey: DIDURL,
 			signer: DIDDocument, signKey: DIDURL, storepass: string,
 			adapter: DIDTransactionAdapter) {
-		let request = DIDRequest.deactivateTarget(target, targetSignKey, signer, signKey, storepass);
+		let request = await DIDRequest.deactivateTarget(target, targetSignKey, signer, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(target.getSubject());
 	}

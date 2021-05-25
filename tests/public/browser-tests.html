@@ -66,25 +66,25 @@
     </script>
 
     <!-- Browser tests requirement: import test data to browser file system -->
-    <!-- <script type="module" src="public/tests/tests/utils/browserdataimport.js"></script> -->
+    <!-- <script type="module" src="public/tests/utils/browserdataimport.js"></script> -->
 
     <!-- Load our tests -->
-    <script type="module" src="public/tests/tests/rootidentity.test.js"></script>
-    <!-- <script type="module" src="public/tests/tests/internals.test.js"></script> -->
-    <script type="module" src="public/tests/tests/diddocument.test.js"></script>
-    <!-- <script type="module" src="public/tests/tests/internalsparser.test.js"></script> -->
-    <script type="module" src="public/tests/tests/did.test.js"></script>
-    <script type="module" src="public/tests/tests/didstore.test.js"></script>
-    <script type="module" src="public/tests/tests/mnemonic.test.js"></script>
-    <script type="module" src="public/tests/tests/issuer.test.js"></script>
-    <script type="module" src="public/tests/tests/verifiablecredential.test.js"></script>
-    <script type="module" src="public/tests/tests/verifiablepresentation.test.js"></script>
+    <!-- <script type="module" src="public/tests/rootidentity.test.js"></script> -->
+    <!-- <script type="module" src="public/tests/internals.test.js"></script> -->
+    <!-- <script type="module" src="public/tests/internalsparser.test.js"></script> -->
+   <!--  <script type="module" src="public/tests/diddocument.test.js"></script> -->
+    <!-- <script type="module" src="public/tests/did.test.js"></script> -->
+    <script type="module" src="public/tests/issuer.test.js"></script>
+     <!--<script type="module" src="public/tests/didstore.test.js"></script>
+    <script type="module" src="public/tests/mnemonic.test.js"></script>
+    <script type="module" src="public/tests/verifiablecredential.test.js"></script>
+    <script type="module" src="public/tests/verifiablepresentation.test.js"></script>
 
-    <script type="module" src="public/tests/tests/crypto/aes256cbc.test.js"></script>
-    <script type="module" src="public/tests/tests/crypto/base64.test.js"></script>
-    <script type="module" src="public/tests/tests/crypto/ecdsasigner.test.js"></script>
-    <script type="module" src="public/tests/tests/crypto/hdkey.test.js"></script>
-    <script type="module" src="public/tests/tests/crypto/keypair.test.js"></script>
+    <script type="module" src="public/tests/crypto/aes256cbc.test.js"></script>
+    <script type="module" src="public/tests/crypto/base64.test.js"></script>
+    <script type="module" src="public/tests/crypto/ecdsasigner.test.js"></script>
+    <script type="module" src="public/tests/crypto/hdkey.test.js"></script>
+    <script type="module" src="public/tests/crypto/keypair.test.js"></script> -->
 
     <script type="module">
       // Run the tests, gather and display the output in the browser.
@@ -97,7 +97,7 @@
 
         // Display results in the console.
         result.then((r)=>{console.log("Raw test results:", r);});
-      }, 1000);
+      }, 3000);
 
     </script>
 </html>

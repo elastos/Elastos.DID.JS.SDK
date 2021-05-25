@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-import { List as ImmutableList } from "immutable";
 import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "jackson-js";
 import { Collections } from "./internals";
 import { Comparable } from "./comparable";
@@ -56,11 +55,11 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	public static SIGNATURE = "signature";
 
 	@JsonProperty({value:TransferTicket.ID})
-	private id: any; // DID;
+	private id: DID;
 	private doc: DIDDocument;
 
 	@JsonProperty({value:TransferTicket.TO})
-	private to: any; // DID;
+	private to: DID;
 
 	@JsonProperty({value:TransferTicket.TXID})
 	private txid: string;
@@ -68,12 +67,12 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	@JsonProperty({value:TransferTicket.PROOF})
 	@JsonInclude({value: JsonIncludeType.NON_EMPTY})
 	// TODO - Convert from java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
-	private _proofs: any[]; // Proof[];
+	private _proofs: Proof[];
 
 	private proofs: Map<DID, Proof>;
 
-	public constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: any/* DID */,
-			@JsonProperty({value: TransferTicket.TO, required: true}) to: any/* DID */,
+	public constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
+			@JsonProperty({value: TransferTicket.TO, required: true}) to: DID,
 			@JsonProperty({value: TransferTicket.TXID, required: true}) txid: string) {
 		super();
 		this.id = did;
@@ -88,14 +87,15 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @param to (one of ) the new owner's DID
 	 * @throws DIDResolveException if failed resolve the subject DID
 	 */
-	public static newForDIDDocument(target: DIDDocument, to: DID): TransferTicket {
+	public static async newForDIDDocument(target: DIDDocument, to: DID): Promise<TransferTicket> {
 		checkArgument(target != null, "Invalid target DID document");
 		checkArgument(to != null, "Invalid to DID");
 
 		if (!target.isCustomizedDid())
 			throw new NotCustomizedDIDException(target.getSubject().toString());
 
-		target.getMetadata().setTransactionId(target.getSubject().resolve().getMetadata().getTransactionId());
+		let doc = await target.getSubject().resolve();
+		target.getMetadata().setTransactionId(doc.getMetadata().getTransactionId());
 
 		let newTicket = new TransferTicket(target.getSubject(), to, target.getMetadata().getTransactionId());
 		newTicket.doc = target;
@@ -154,8 +154,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return list of the Proof objects
 	 */
-	public getProofs(): ImmutableList<Proof> {
-		return Collections.unmodifiableList(this._proofs);
+	public getProofs(): Proof[] {
+		return this._proofs;
 	}
 
 	private getDocument(): DIDDocument {

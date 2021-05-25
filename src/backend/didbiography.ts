@@ -21,7 +21,6 @@
  */
 
 import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonValue } from "jackson-js";
-import { List as ImmutableList } from "immutable";
 import { DID } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
@@ -161,8 +160,8 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 		return this.txs != null ? this.txs[index] : null;
 	}
 
-	public getAllTransactions(): ImmutableList<DIDTransaction> {
-		return ImmutableList(this.txs != null ? this.txs : []);
+	public getAllTransactions(): DIDTransaction[] {
+		return this.txs != null ? this.txs : [];
 	}
 
 	/**

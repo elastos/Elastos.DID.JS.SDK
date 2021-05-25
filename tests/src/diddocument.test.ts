@@ -34,10 +34,6 @@ import {
 	CompatibleData
 } from "./utils/testdata";
 import {
-    List,
-    Map
-} from "immutable";
-import {
 	assertEquals,
 	assertTrue,
 	assertNotNull,
@@ -54,8 +50,8 @@ function testGetPublicKey(version: number, testData: TestData) {
 	// Count and list.
 	expect(doc.getPublicKeyCount()).toEqual(4);
 
-	let pks: List<DIDDocumentPublicKey> = doc.getPublicKeys();
-	expect(pks.size).toEqual(4);
+	let pks = doc.getPublicKeys();
+	expect(pks.length).toEqual(4);
 
 	for (let pk of pks) {
 		expect(pk.getId().getDid()).toEqual(doc.getSubject());
@@ -97,23 +93,23 @@ function testGetPublicKey(version: number, testData: TestData) {
 	// Selector
 	id = doc.getDefaultPublicKeyId();
 	pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-	expect(pks.size).toEqual(1);
-	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pks.get(0).getId());
+	expect(pks.length).toEqual(1);
+	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pks[0].getId());
 
 	pks = doc.selectPublicKeys(id, null);
-	expect(pks.size).toEqual(1);
-	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pks.get(0).getId());
+	expect(pks.length).toEqual(1);
+	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pks[0].getId());
 
 	pks = doc.selectPublicKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
-	expect(pks.size).toEqual(4);
+	expect(pks.length).toEqual(4);
 
 	pks = doc.selectPublicKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
-	expect(pks.size).toEqual(1);
-	expect(DIDURL.newWithDID(doc.getSubject(), "#key2")).toEqual(pks.get(0).getId());
+	expect(pks.length).toEqual(1);
+	expect(DIDURL.newWithDID(doc.getSubject(), "#key2")).toEqual(pks[0].getId());
 
 	pks = doc.selectPublicKeys("#key3", null);
-	expect(pks.size).toEqual(1);
-	expect(DIDURL.newWithDID(doc.getSubject(), "#key3")).toEqual(pks.get(0).getId());
+	expect(pks.length).toEqual(1);
+	expect(DIDURL.newWithDID(doc.getSubject(), "#key3")).toEqual(pks[0].getId());
 }
 
 describe('DIDDocument Tests', () => {
@@ -147,19 +143,19 @@ describe('DIDDocument Tests', () => {
 		// Count and list.
 		assertEquals(7, doc.getPublicKeyCount());
 
-		let pks:List<DIDDocumentPublicKey> = doc.getPublicKeys();
-		expect(pks.size).toBe(7);
+		let pks = doc.getPublicKeys();
+		assertEquals(7, pks.length);
 
-		let ids = List<DIDURL>();
-		for (let i = 0; i < pks.size; i++) {
-			let pk:DIDDocumentPublicKey = pks.get(i);
+		let ids: DIDURL[] = [];
+		for (let i = 0; i < pks.length; i++) {
+			let pk:DIDDocumentPublicKey = pks[i];
 			ids.push(pk.getId());
 		}
 		ids.sort((e1, e2) => {
 			return e1.compareTo(e2);
 		});
 
-		let refs = List<DIDURL>();
+		let refs: DIDURL[] = [];
 		refs.push(user1.getDefaultPublicKeyId());
 		refs.push(user2.getDefaultPublicKeyId());
 		refs.push(user3.getDefaultPublicKeyId());
@@ -172,7 +168,7 @@ describe('DIDDocument Tests', () => {
 			return e1.compareTo(e2);
 		});
 
-		assertArrayEquals(refs.toArray(), ids.toArray());
+		assertArrayEquals(refs, ids);
 
 		// PublicKey getter.
 		let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");

@@ -55,7 +55,7 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
     // Java: @JsonCreator
     constructor(@JsonProperty({ value: DIDDocumentPublicKey.ID, required: true }) id: DIDURL,
         @JsonProperty({ value: DIDDocumentPublicKey.TYPE }) type: string,
-        @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER }) controller: any /* DID */,
+        @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER }) controller: DID,
         @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58, required: true }) publicKeyBase58: string) {
         this.id = id;
         this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;

@@ -67,7 +67,7 @@ describe("DIDStore Tests", ()=>{
 	});
 
 
-	test("testBulkCreate", ()=>{
+	test("testBulkCreate", async ()=>{
 		let file = getFile(".metadata");
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
@@ -100,11 +100,11 @@ describe("DIDStore Tests", ()=>{
 
 		for (let i = 0; i < 100; i++) {
 			let alias = "my did " + i;
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
 			expect(doc.isValid()).toBeTruthy();
 
-			let resolved = doc.getSubject().resolve();
+			let resolved = await doc.getSubject().resolve();
 			expect(resolved).toBeNull();
 
 			doc.publish(TestConfig.storePass);
@@ -117,7 +117,7 @@ describe("DIDStore Tests", ()=>{
 			expect(file.exists()).toBeTruthy();
 			expect(file.isFile()).toBeTruthy();
 
-			resolved = doc.getSubject().resolve();
+			resolved = await doc.getSubject().resolve();
 			expect(resolved).not.toBeNull();
 			store.storeDid(resolved);
 			expect(alias).toEqual(resolved.getMetadata().getAlias());
@@ -128,17 +128,17 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = store.listDids();
-		expect(dids.size).toEqual(100);
+		expect(dids.length).toEqual(100);
 	});
 
-	test("testDeleteDID", ()=>{
+	test("testDeleteDID", async ()=>{
 		let identity = testData.getRootIdentity();
 
 		// Create test DIDs
 		let dids: DID[] = [];
 		for (let i = 0; i < 100; i++) {
 			let alias = "my did " + i;
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
 			doc.publish(TestConfig.storePass);
 			dids.push(doc.getSubject());
@@ -161,12 +161,12 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let remains = store.listDids();
-		expect(80).toEqual(remains.size);
+		expect(80).toEqual(remains.length);
 	});
 
-	test("testStoreAndLoadDID", ()=>{
+	test("testStoreAndLoadDID", async ()=>{
 		// Store test data into current store
-		let issuer = testData.getInstantData().getIssuerDocument();
+		let issuer = await testData.getInstantData().getIssuerDocument();
 
 		let file = getFile("ids", issuer.getSubject().getMethodSpecificId(), "document");
 		expect(file.exists()).toBeTruthy();
@@ -176,7 +176,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		let test = testData.getInstantData().getUser1Document();
+		let test = await testData.getInstantData().getUser1Document();
 
 		file = getFile("ids", test.getSubject().getMethodSpecificId(), "document");
 		expect(file.exists()).toBeTruthy();
@@ -197,13 +197,13 @@ describe("DIDStore Tests", ()=>{
 		expect(doc.isValid()).toBeTruthy();
 
 		let dids = store.listDids();
-		expect(dids.size).toEqual(2);
+		expect(dids.length).toEqual(2);
 	});
 
-	test("testLoadCredentials", ()=>{
+	test("testLoadCredentials", async ()=>{
 		// Store test data into current store
 		testData.getInstantData().getIssuerDocument();
-		let user = testData.getInstantData().getUser1Document();
+		let user = await testData.getInstantData().getUser1Document();
 
 		let vc = user.getCredential("#profile");
 		vc.getMetadata().setAlias("MyProfile");
@@ -231,7 +231,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		vc = testData.getInstantData().getUser1TwitterCredential();
+		vc = await testData.getInstantData().getUser1TwitterCredential();
 		vc.getMetadata().setAlias("Twitter");
 
 		file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
@@ -244,7 +244,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		vc = testData.getInstantData().getUser1PassportCredential();
+		vc = await testData.getInstantData().getUser1PassportCredential();
 		vc.getMetadata().setAlias("Passport");
 
 		file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
@@ -289,23 +289,23 @@ describe("DIDStore Tests", ()=>{
 		expect(store.containsCredential(DIDURL.valueOf(user.getSubject(), "#notExists"))).toBeFalsy();
 	});
 
-	test("testListCredentials", ()=>{
+	test("testListCredentials", async ()=>{
 		testData.getRootIdentity();
 
 		// Store test data into current store
 		testData.getInstantData().getIssuerDocument();
-		let user = testData.getInstantData().getUser1Document();
+		let user = await testData.getInstantData().getUser1Document();
 		let vc = user.getCredential("#profile");
 		vc.getMetadata().setAlias("MyProfile");
 		vc = user.getCredential("#email");
 		vc.getMetadata().setAlias("Email");
-		vc = testData.getInstantData().getUser1TwitterCredential();
+		vc = await testData.getInstantData().getUser1TwitterCredential();
 		vc.getMetadata().setAlias("Twitter");
-		vc = testData.getInstantData().getUser1PassportCredential();
+		vc = await testData.getInstantData().getUser1PassportCredential();
 		vc.getMetadata().setAlias("Passport");
 
 		let vcs = store.listCredentials(user.getSubject());
-		expect(4).toEqual(vcs.size);
+		expect(4).toEqual(vcs.length);
 
 		for (let id of vcs) {
 			expect(id.getFragment() ===  "profile"
@@ -320,17 +320,17 @@ describe("DIDStore Tests", ()=>{
 		}
 	});
 
-	test("testDeleteCredential", ()=>{
+	test("testDeleteCredential", async ()=>{
 		// Store test data into current store
 		testData.getInstantData().getIssuerDocument();
-		let user = testData.getInstantData().getUser1Document();
+		let user = await testData.getInstantData().getUser1Document();
 		let vc = user.getCredential("#profile");
 		vc.getMetadata().setAlias("MyProfile");
 		vc = user.getCredential("#email");
 		vc.getMetadata().setAlias("Email");
-		vc = testData.getInstantData().getUser1TwitterCredential();
+		vc = await testData.getInstantData().getUser1TwitterCredential();
 		vc.getMetadata().setAlias("Twitter");
-		vc = testData.getInstantData().getUser1PassportCredential();
+		vc = await testData.getInstantData().getUser1PassportCredential();
 		vc.getMetadata().setAlias("Passport");
 
 
@@ -378,16 +378,16 @@ describe("DIDStore Tests", ()=>{
 		expect(store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
 	});
 
-	test("testChangePassword", ()=>{
+	test("testChangePassword", async ()=>{
 		let identity = testData.getRootIdentity();
 
 		for (let i = 0; i < 10; i++) {
 			let alias = "my did " + i;
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
 			expect(doc.isValid()).toBeTruthy();
 
-			let resolved = doc.getSubject().resolve();
+			let resolved = await doc.getSubject().resolve();
 			expect(resolved).toBeNull();
 
 			doc.publish(TestConfig.storePass);
@@ -404,7 +404,7 @@ describe("DIDStore Tests", ()=>{
 			expect(file.exists()).toBeTruthy();
 			expect(file.isFile()).toBeTruthy();
 
-			resolved = doc.getSubject().resolve();
+			resolved = await doc.getSubject().resolve();
 			expect(resolved).not.toBeNull();
 			store.storeDid(resolved);
 			expect(alias).toEqual(resolved.getMetadata().getAlias());
@@ -416,12 +416,12 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = store.listDids();
-		expect(10).toEqual(dids.size);
+		expect(10).toEqual(dids.length);
 
 		store.changePassword(TestConfig.storePass, "newpasswd");
 
 		dids = store.listDids();
-		expect(10).toEqual(dids.size);
+		expect(10).toEqual(dids.length);
 
 		for (let i = 0; i < 10; i++) {
 			let alias = "my did " + i;
@@ -449,18 +449,18 @@ describe("DIDStore Tests", ()=>{
 		expect(doc).not.toBeNull();
 	});
 
-	test("testChangePasswordWithWrongPassword", ()=>{
+	test("testChangePasswordWithWrongPassword", async ()=>{
 		let identity = testData.getRootIdentity();
 
 		for (let i = 0; i < 10; i++) {
 			let alias = "my did " + i;
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
 			expect(doc.isValid()).toBeTruthy();
 		}
 
 		let dids = store.listDids();
-		expect(10).toEqual(dids.size);
+		expect(10).toEqual(dids.length);
 
 		expect(() => {
 			store.changePassword("wrongpasswd", "newpasswd");
@@ -468,8 +468,8 @@ describe("DIDStore Tests", ()=>{
 	});
 
 	//[1,2].forEach((version)=>{
-		test("testCompatibility", ()=>{
-			let version = 1;
+		test("testCompatibility", async ()=>{
+			let version = 2;
 			let data = Buffer.from("Hello World");
 
 			let cd = testData.getCompatibleData(version);
@@ -478,32 +478,32 @@ describe("DIDStore Tests", ()=>{
 			let store = DIDStore.open(cd.getStoreDir());
 
 			let dids = store.listDids();
-			expect(version == 2 ? 10 : 4).toEqual(dids.size);
+			expect(version == 2 ? 10 : 4).toEqual(dids.length);
 
 			for (let did of dids) {
-				let alias = did.getMetadata().getAlias();
+				let alias = (await did.getMetadata()).getAlias();
 
 				if (alias === "Issuer") {
 					let vcs = store.listCredentials(did);
-					expect(1).toEqual(vcs.size);
+					expect(1).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User1") {
 					let vcs = store.listCredentials(did);
-					expect(version == 2 ? 5 : 4).toEqual(vcs.size);
+					expect(version == 2 ? 5 : 4).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User2") {
 					let vcs = store.listCredentials(did);
-					expect(1).toEqual(vcs.size);
+					expect(1).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User3") {
 					let vcs = store.listCredentials(did);
-					expect(0).toEqual(vcs.size);
+					expect(0).toEqual(vcs.length);
 				}
 
 				let doc = store.loadDid(did);
@@ -524,25 +524,25 @@ describe("DIDStore Tests", ()=>{
 		}).toThrow(); //WrongPasswordException
 	});
 
-	test("testNewDIDandGetDID", ()=>{
+	test("testNewDIDandGetDID", async ()=>{
 		let store = DIDStore.open(testData.getCompatibleData(2).getStoreDir());
 		let identity = store.loadRootIdentity();
 
-		let doc = identity.newDid(TestConfig.storePass);
+		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 
 		store.deleteDid(doc.getSubject());
 
 		let did = identity.getDid(1000);
 
-		doc = identity.newDid(TestConfig.storePass, 1000);
+		doc = await identity.newDid(TestConfig.storePass, 1000);
 		expect(doc).not.toBeNull();
 		expect(doc.getSubject().equals(did)).toBeTruthy();
 
 		store.deleteDid(doc.getSubject());
 	});
 
-	function createDataForPerformanceTest(store: DIDStore) {
+	async function createDataForPerformanceTest(store: DIDStore) {
 		let props = {
 			"name": "John",
 			"gender": "Male",
@@ -556,7 +556,7 @@ describe("DIDStore Tests", ()=>{
 
 		for (let i = 0; i < 10; i++) {
 			let alias = "my did " + i;
-			let doc = identity.newDid(TestConfig.storePass);
+			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
 			let issuer = new Issuer(doc);
 			let cb = issuer.issueFor(doc.getSubject());
@@ -585,7 +585,7 @@ describe("DIDStore Tests", ()=>{
 			createDataForPerformanceTest(store);
 
 			let dids = store.listDids();
-			expect(10).toEqual(dids.size);
+			expect(10).toEqual(dids.length);
 
 			let start = new Date().getTime();
 
@@ -606,7 +606,7 @@ describe("DIDStore Tests", ()=>{
 		});
 	});
 
-	test("testMultipleStore", ()=>{
+	test("testMultipleStore", async ()=>{
 		let stores: DIDStore[] = [];
 		let docs: DIDDocument[] = [];
 
@@ -619,7 +619,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		for (let i = 0; i < stores.length; i++) {
-			docs[i] = stores[i].loadRootIdentity().newDid(TestConfig.storePass);
+			docs[i] = await stores[i].loadRootIdentity().newDid(TestConfig.storePass);
 			expect(docs[i]).not.toBeNull();
 		}
 

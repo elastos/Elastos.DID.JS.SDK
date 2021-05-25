@@ -6,9 +6,6 @@ import {
 } from "jackson-js";
 import { DIDURL } from "./internals";
 import { DIDObject } from "./internals";
-import {
-    Map as ImmutableMap
-} from "immutable";
 import { JSONObject, JSONValue } from "./json";
 
 /**
@@ -25,7 +22,7 @@ export class DIDDocumentService implements DIDObject<string> {
     private static ID: string = "id";
     private static TYPE: string = "type";
     private static SERVICE_ENDPOINT: string = "serviceEndpoint";
-    
+
     @JsonProperty({ value: DIDDocumentService.ID })
     @JsonClassType({type: () => [DIDURL]})
     private id: DIDURL;
@@ -114,8 +111,8 @@ export class DIDDocumentService implements DIDObject<string> {
         this.properties[name] = value;
     }
 
-    public getProperties(): ImmutableMap<string, JSONValue> { // TODO: JSONObject instead of immutablemap?
+    public getProperties(): JSONObject {
         // TODO: make it unmodifiable recursively
-        return ImmutableMap(this.properties != null ? this.properties : {});
+        return this.properties != null ? this.properties : {};
     }
 }

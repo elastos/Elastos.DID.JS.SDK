@@ -19,6 +19,23 @@ import globals from 'rollup-plugin-node-globals';
 import alias from "@rollup/plugin-alias";
 import inject from "@rollup/plugin-inject";
 import size from 'rollup-plugin-size';
+import { visualizer } from 'rollup-plugin-visualizer';
+import replaceFiles from 'rollup-plugin-file-content-replace';
+
+import { writeFileSync } from "fs";
+
+// Very dirty way to get rid on unsupported languages BIP39 languages to reduce the bundle size.
+// rollup-plugin-file-content-replace wasn't able to stub language json files and found no better way
+// than this hack currently.
+// NOTE: as the node_modules/bip39 folder is modified, re-adding a languages requires reinstalling
+// the bip39 library.
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/chinese_traditional.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/czech.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/italian.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/japanese.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/korean.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/portuguese.json", "[]");
+writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/spanish.json", "[]");
 
 const commitHash = (function () {
 	try {
@@ -42,8 +59,8 @@ const banner = `/*
 
 const onwarn = warning => {
 	// eslint-disable-next-line no-console
-	//if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && warning.importer.indexOf('node_modules') < 0)
-	//	return; // TMP: don't get flooded by circular dependencies for now
+	if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && warning.importer.indexOf('node_modules') < 0 && warning.importer.indexOf("internals.ts") >= 0)
+		return; // TMP: don't get flooded by our "internals" circular dependencies for now
 
 	if (warning.code && warning.code === "THIS_IS_UNDEFINED")
 		return; // TMP: don't get flooded by this for now
@@ -61,7 +78,7 @@ const nodePlugins = [
 	resolve({
 		preferBuiltins: true
 	}),
-	json(),
+	json({}),
 	replace({
 		delimiters: ['', ''],
 		preventAssignment: true,
@@ -83,11 +100,10 @@ const nodePlugins = [
 			'LegacyTransportStream = require(\'winston-transport/legacy\')': 'LegacyTransportStream = null'
 		}
 	}),
-	commonjs({
-		include: 'node_modules/**',
-
+	commonjs({}),
+	typescript({
+		exclude: "*.browser.ts"
 	}),
-	typescript({}),
 	size()
 ];
 
@@ -163,6 +179,7 @@ export default command => {
 		input: 'src/index.ts',
 		onwarn,
 		external: [
+			//'browserfs'
 			/* 'readable-stream',
 			'readable-stream/transform' */
 		],
@@ -172,6 +189,13 @@ export default command => {
 			json(),
 			//collectLicenses(),
 			//writeLicense(),
+			// Replace some node files with their browser-specific versions.
+			// Ex: fs.browser.ts -> fs.ts
+			replaceFiles({
+				fileReplacements: [
+					{ replace: "fs.ts", with: "fs.browser.ts" }
+				]
+			}),
 			// Dirty circular dependency removal atttempt
 			replace({
 				delimiters: ['', ''],
@@ -217,8 +241,8 @@ export default command => {
 				"entries": [
 					{ "find": "buffer", "replacement": "buffer-es6" },
 					{ "find": "process", "replacement": "process-es6" },
-					{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
-					{ "find": "path", "replacement": "browserfs/dist/shims/path" },
+					//{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
+					{ "find": "path", "replacement": "path-browserify" },
 					{ "find": "crypto", "replacement": "crypto-browserify" },
 					{ "find": "util/", "replacement": "node_modules/util/util.js" },
 					{ "find": "util", "replacement": "node_modules/util/util.js" },
@@ -230,10 +254,10 @@ export default command => {
 				]
 			}),
 			resolve({
-				mainFields: ['browser', 'jsnext:main', 'main'],
+				mainFields: ['browser', 'module', 'jsnext:main', 'main'],
 				browser: true,
 				preferBuiltins: true,
-				dedupe: ['bn.js']
+				dedupe: ['bn.js', 'browserfs', 'buffer-es6', 'process-es6', 'crypto-browserify', 'assert', 'events']
 			}),
 			// Polyfills needed to replace readable-stream with stream (circular dep)
 			commonjs({
@@ -244,7 +268,9 @@ export default command => {
 				dynamicRequireTargets: [],
 			}),
 			globals(), // Defines process, Buffer, etc
-			typescript(),
+			typescript({
+				exclude: "*.node.ts"
+			}),
 			/* nodePolyfills({
 				stream: true
 				// crypto:true // Broken, the polyfill just doesn't work. We have to use crypto-browserify directly in our TS code instead.
@@ -252,14 +278,11 @@ export default command => {
 			inject({
 				"BrowserFS": "browserfs"
 			}),
-			size()
-			// LATER terser({ module: true, output: { comments: 'some' } }),
-			/* serve({ // For temporary local html debug in browser
-				contentBase:'',
-				headers: {
-					'Access-Control-Allow-Origin': '*'
-				}
-			}) */
+			size(),
+			visualizer({
+				filename: "./browser-bundle-stats.html"
+			}) // To visualize bundle dependencies sizes on a UI.
+			// LATER terser({ module: true, output: { comments: 'some' } })
 		],
 		treeshake,
 		strictDeprecations: true,
@@ -276,5 +299,5 @@ export default command => {
 		]
 	};
 
-	return [    commonJSBuild,  /* esmBuild,  */ /* browserBuilds */];
+	return [ commonJSBuild, esmBuild, browserBuilds];
 };

@@ -7,6 +7,7 @@ import commonJs from "@rollup/plugin-commonjs";
 import multiInput from 'rollup-plugin-multi-input';
 import json from '@rollup/plugin-json';
 import globals from 'rollup-plugin-node-globals';
+import inject from "@rollup/plugin-inject";
 import { resolve as pathResolve } from "path";
 import { readdirSync, writeFileSync, lstatSync, readFileSync, mkdirSync, existsSync } from 'fs';
 
@@ -32,7 +33,7 @@ async function populateDataContent(folder, entry) {
 // As the browser cannot access data files directly (load files, list files in folder...) we generate
 // a temporary file that mimics the data/ folder structure so that the tests can load all the data from a bundled
 // object instead. NodeJS keeps loading this from disk.
-let rootDataFolder = pathResolve(__dirname+"/tests/data");
+let rootDataFolder = pathResolve(__dirname+"/src/data");
 let dataBundle = {
     data: {}
 };
@@ -71,21 +72,22 @@ export default [
 				}
 			}),
             // Replace imports of nodejs DID library in tests, with the browser version
-            replace({
+            /* replace({
                 delimiters: ['', ''],
                 preventAssignment: true,
-                include: [
-                    'tests/**/*.ts'
-                ],
+                include: [ */
+                    //'tests/**/*.ts'
+                /* ],
                 values: {
                     '../dist/did': '../dist/es/did.browser',
                     '../../dist/did': '../../dist/es/did.browser',
                 }
-            }),
+            }), */
             resolve({
-                mainFields: ['browser', 'jsnext:main', 'main'],
+                mainFields: ['browser', 'module', 'jsnext:main', 'main'],
                 browser: true,
-                preferBuiltins: false
+                preferBuiltins: false,
+                dedupe: []
             }),
             commonJs({
                 esmExternals: true,
@@ -94,17 +96,28 @@ export default [
             globals(), // Defines fake values for nodejs' "process", etc.
             alias({
                 include: [".js",".ts"],
-				entries: [
+				"entries": [
+					//{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
+					{ "find": "crypto", "replacement": "crypto-browserify" },
+					{ "find": "stream", "replacement": "stream-browserify" },
+                    { "find": "http", "replacement": "http-browserify" },
+                    { "find": "https", "replacement": "http-browserify" },
+                    { "find": "process", "replacement": "process-browserify" },
+                    { "find": "url", "replacement": "url" },
+                    { "find": "os", "replacement": "os-browserify" },
                     { find: "buffer", replacement: "buffer-es6" },
                     { find: "path", replacement: "path-browserify" }
 				]
 			}),
             typescript({
-                tsconfig: "./tsconfig.browsertests.json" // Custom config to build only tests/ files
+                tsconfig: __dirname+"/tsconfig.browsertests.json" // Custom config to build only tests/ files
             }),
+            inject({
+				//"BrowserFS": "browserfs"
+			}),
             // Serve the generated tests JS file to be ran from the browser
             serve({
-                contentBase: '',
+                contentBase: __dirname,
                 //open: true,
                 openPage: '/public/browser-tests.html',
                 headers: {
