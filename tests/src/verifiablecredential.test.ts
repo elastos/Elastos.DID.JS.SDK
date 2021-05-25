@@ -501,55 +501,54 @@ describe('let Tests', () => {
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 		}
     });
-/*
-    @ParameterizedTest
-    @CsvSource({
-    	"2,foobar,license",
-    	"2,foobar,services",
-    	"2,foo,email"})
-    test('testDeclareAfterRevokeWithDifferentKey(int version, String did, String vc)
-			throws DIDException, IOException {
-	   	TestData.CompatibleData cd = testData.getCompatibleData(version);
+
+    test('testDeclareAfterRevokeWithDifferentKey', () => {
+
+		let csvSource = [
+			{did:"foobar", vc:"license"},
+			{did:"foobar", vc:"services"},
+			{did:"foo", vc:"email"}
+		];
+
+		let cd = testData.getCompatibleData(2);
 	   	cd.loadAll();
 
-		let credential = cd.getCredential(did, vc);
-		assertFalse(credential.wasDeclared());
-		assertFalse(credential.isRevoked());
+		for (let csv of csvSource) {
+			let credential = cd.getCredential(csv.did, csv.vc);
+			expect(credential.wasDeclared()).toBeFalsy();
+			expect(credential.isRevoked()).toBeFalsy();
 
-		// Sign key for customized DID
-		let doc = credential.getSubject().getId().resolve();
-		let signKey = null;
-		int index = 0;
-		if (doc.getControllerCount() > 1) {
-			Random rnd = new Random();
-			index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
-			signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+			// Sign key for customized DID
+			let doc = credential.getSubject().getId().resolve();
+			let signKey = null;
+			let index = 0;
+			if (doc.getControllerCount() > 1) {
+				index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+			}
+
+			credential.revoke(signKey, null, TestConfig.storePass);
+
+			expect(credential.wasDeclared()).toBeFalsy();
+			expect(credential.isRevoked()).toBeTruthy();
+
+			let resolved = VerifiableCredential.resolve(credential.getId());
+			expect(resolved).toBeNull();
+
+			if (doc.getControllerCount() > 1) {
+				index = ++index % doc.getControllerCount();
+				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+			}
+
+			expect(credential.declare(signKey, TestConfig.storePass)).toThrow(CredentialRevokedException);
+
+			let bio = VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
+			expect(bio).not.toBeNull();
+			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 		}
-
-		credential.revoke(signKey, TestConfig.storePass);
-
-		assertFalse(credential.wasDeclared());
-		assertTrue(credential.isRevoked());
-
-		let resolved = VerifiableCredential.resolve(credential.getId());
-		assertNull(resolved);
-
-		if (doc.getControllerCount() > 1) {
-			index = ++index % doc.getControllerCount();
-			signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
-		}
-
-		final let key = signKey;
-		assertThrows(CredentialRevokedException.class, () -> {
-			credential.declare(key, TestConfig.storePass);
-	    });
-
-		CredentialBiography bio = VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
-		assertNotNull(bio);
-		assertEquals(1, bio.getAllTransactions().size());
-		assertEquals(IDChainRequest.Operation.REVOKE, bio.getTransaction(0).getRequest().getOperation());
-    }
-
+    });
+/*
     @ParameterizedTest
     @CsvSource({
     	"1,user1,twitter",
