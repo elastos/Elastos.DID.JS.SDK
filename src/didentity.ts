@@ -178,12 +178,17 @@ export namespace DIDEntity {
 
 	export class SerializeContext {
 		private normalized: boolean;
-		private did: DID;
+		// We use a stringified DID instead of a DID because jackson does deep cloning on its context,
+		// which includes our custom SerializeContext. But then, lodash deepClones tries to clone our DID,
+		// which contains circular dependencies, therefore leading to infinite loop in deepClone. This
+		// is not related to serialization or deserialization itself.
+		private did: string;
 		private objectMapper: ObjectMapper;
 
 		public constructor(normalized: boolean = false, objectMapper: ObjectMapper, did?: DID) {
 			this.normalized = normalized;
-			this.did = did;
+			if (did)
+				this.did = did.toString();
 			this.objectMapper = objectMapper;
 		}
 
@@ -201,11 +206,12 @@ export namespace DIDEntity {
 		}
 
 		public getDid(): DID  {
-			return this.did;
+			return DID.from(this.did);
 		}
 
 		public setDid(did: DID): void {
-			this.did = did;
+			if (did)
+				this.did = did.toString();
 		}
 	}
 
