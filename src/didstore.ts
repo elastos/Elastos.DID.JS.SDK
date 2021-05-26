@@ -345,6 +345,9 @@ import { BASE64 } from "./internals";
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 			let rootPrivateKey = this.loadRootIdentityPrivateKey(id, storepass);
+			if (!rootPrivateKey)
+				throw new DIDStoreCryptoException("Unable to load root private key for id "+id+". Null private key returned.");
+
 			let key = rootPrivateKey.deriveWithPath(path);
 
 			return key;
