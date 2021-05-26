@@ -14,7 +14,9 @@
           "--runInBand",
           "--detectOpenHandles",
           "--silent=true",
-          "${workspaceRoot}/src/did.test",
+          "${workspaceRoot}/src/issuer.test",
+          "-t",
+          "New Issuer Test With Sign Key"
         ],
         "runtimeArgs": [
           "--nolazy"

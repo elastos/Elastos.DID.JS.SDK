@@ -49,7 +49,6 @@ describe("Issuer Tests", ()=>{
 		let signKey = issuerDoc.getDefaultPublicKeyId();
 		let issuer = Issuer.newWithDID(issuerDoc.getSubject(), store, signKey);
 
-
 		expect(issuer.getDid()).toEqual(issuerDoc.getSubject())
 		expect(issuer.getSignKey()).toEqual(signKey)
 	})
