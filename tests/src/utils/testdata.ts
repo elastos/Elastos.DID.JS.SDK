@@ -699,8 +699,7 @@ export class InstantData {
 			    twitter: "@john"
 			};
 
-			// Java was: db.addCredential("#profile", props, TestConfig.storePass);
-			db.createAndAddCredential(DIDURL.newWithUrl("#profile"), [], props, null, TestConfig.storePass);
+			db.createAndAddCredential(TestConfig.storePass, "#profile", props);
 
 			doc = db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
