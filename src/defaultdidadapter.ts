@@ -26,6 +26,8 @@ import { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
 import { XMLHttpRequest } from "xhr2"; // Thx xhr2 library already abstracts real nodejs implementation VS browser map on existing XMLHttpRequest. No additional code size here for browsers.
+import { request as httpsRequest } from "https";
+import { request as httpRequest } from "http";
 
 const log = new Logger("DefaultDIDAdapter");
 
@@ -67,13 +69,48 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	// "main" java implementation to rework synchronous calls and we will also migrate to Promises/Async.
 	protected async performRequest(url: URL, body: string): Promise<JSONObject> {
 		return new Promise((resolve, reject) => {
-			var request = new XMLHttpRequest();
+			// Use a different module if we call http or https
+			let requestMethod = (url.protocol.indexOf("https") === 0 ? httpsRequest : httpRequest);
+
+			let req = requestMethod({
+				protocol: url.protocol,
+				hostname: url.hostname,
+				port: url.port,
+				path: url.pathname,
+				method: 'POST',
+
+				headers: {
+					"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
+					"Content-Type": "application/json",
+					"Accept": "application/json",
+					"Access-Control-Allow-Origin": "*"
+				}
+			}, (res)=>{
+				let wholeData = "";
+				res.on('data', d => {
+					// Concatenate data that can reach us in several pieces.
+					wholeData += d;
+				})
+				res.on("end", () => {
+					let responseJSON = JSON.parse(wholeData);
+					resolve(responseJSON);
+				})
+			});
+			req.on('error', error => {
+				reject(new ResolveException("HTTP error", error));
+			});
+			req.write(body);
+			req.end();
+
+			/* var request = new XMLHttpRequest();
 			request.open('POST', url.toString());
 			request.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
 			request.setRequestHeader("Content-Type", "application/json");
 			request.setRequestHeader("Accept", "application/json");
+			request.setRequestHeader("Access-Control-Allow-Origin", "*");
 			request.onreadystatechange = function() {
-				if (this.readyState === XMLHttpRequest.DONE) {
+				// In case of error, onerror is called but the state also becomes "DONE" with status 0
+				if (this.readyState === XMLHttpRequest.DONE && request.status > 0) {
 					if (request.status < 200 || request.status > 299) {
 						log.error("HTTP request error, status: "+request.status+", message: "+request.statusText);
 						reject(new ResolveException("HTTP error with status: " + request.status));
@@ -89,7 +126,10 @@ export class DefaultDIDAdapter implements DIDAdapter {
 					}
 				}
 			}
-			request.send(body);
+			request.onerror = function(r, e) {
+				reject(new ResolveException("Http error in performRequest(): ", e));
+			}
+			request.send(body); */
 		});
 	}
 

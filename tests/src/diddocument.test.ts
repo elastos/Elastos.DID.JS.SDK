@@ -26,7 +26,8 @@ import {
 	DIDDocumentPublicKey,
 	DIDURL,
 	DIDStore,
-	runningInBrowser
+	runningInBrowser,
+	DID
 } from "@elastosfoundation/did-js-sdk";
 import {
 	TestData,
@@ -39,6 +40,7 @@ import {
 	assertArrayEquals,
 	assertNull
 } from "./utils/utils";
+import { TestConfig } from "./utils/testconfig";
 
 function testGetPublicKey(version: number, testData: TestData) {
 	let doc: DIDDocument = testData.getCompatibleData(version).getDocument("user1");
@@ -128,15 +130,15 @@ describe('DIDDocument Tests', () => {
 	});
 
 
-	test('testGetPublicKeyWithMultiControllerCid1', () => {
+	test('Test Get PublicKey With Multi Controller Cid1', () => {
 		let cd: CompatibleData = testData.getCompatibleData(2);
 
 		let user1: DIDDocument = cd.getDocument("user1");
 		let user2: DIDDocument = cd.getDocument("user2");
 		let user3: DIDDocument = cd.getDocument("user3");
 		let doc: DIDDocument = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
 		assertEquals(7, doc.getPublicKeyCount());
@@ -170,204 +172,212 @@ describe('DIDDocument Tests', () => {
 
 		// PublicKey getter.
 		let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		let id: DIDURL = DIDURL.newWithDID(user1.getSubject(), "#primary");
 		pk = doc.getPublicKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		id = DIDURL.newWithDID(user1.getSubject(), "#key2");
 		pk = doc.getPublicKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		id = DIDURL.newWithDID(doc.getSubject(), "#key2");
 		pk = doc.getPublicKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		id = DIDURL.newWithDID(doc.getSubject(), "#key3");
 		pk = doc.getPublicKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		id = doc.getDefaultPublicKeyId();
 		assertNull(id);
 
 		// Key not exist, should fail.
 		pk = doc.getPublicKey("#notExist");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		id = DIDURL.newWithDID(doc.getController(), "#notExist");
 		pk = doc.getPublicKey(id);
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Selector
 		id = user1.getDefaultPublicKeyId();
 		pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.length);
-		assertEquals(id, pks[0].getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
 		pks = doc.selectPublicKeys(id, null);
-		assertEquals(1, pks.length);
-		assertEquals(id, pks[0].getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
 		pks = doc.selectPublicKeys(null,
 				Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(7, pks.length);
+		expect(pks.size).toBe(7);
 
 		pks = doc.selectPublicKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
 				Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.length);
-		assertEquals(DIDURL.newWithDID(user1.getSubject(), "#key2"), pks[0].getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key2"));
 
 		pks = doc.selectPublicKeys(DIDURL.newWithDID(doc.getSubject(), "#key3"), null);
-		assertEquals(1, pks.length);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#key3"), pks[0].getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
 	});
-	/*
-	@Test
-	public void testGetPublicKeyWithMultiControllerCid2() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
 
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
-		DIDDocument user3 = cd.getDocument("user3");
-		DIDDocument doc = cd.getDocument("baz");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+	test('Test Get Public Key With Multi Controller Cid2', ()=>{
+		let cd = testData.getCompatibleData(2);
 
-		// Count and list.
-		assertEquals(5, doc.getPublicKeyCount());
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
+		let user3 = cd.getDocument("user3");
+		let doc = cd.getDocument("baz");
 
-		List<PublicKey> pks = doc.getPublicKeys();
-		assertEquals(5, pks.size());
+		expect(doc).not.toBeNull()
+		expect(doc.isValid()).toBeTruthy();
 
-		List<DIDURL> ids = new ArrayList<DIDURL>(5);
-		for (PublicKey pk : pks)
-			ids.add(pk.getId());
+		expect(doc.getPublicKeyCount()).toEqual(5)
 
-		Collections.sort(ids);
 
-		List<DIDURL> refs = new ArrayList<DIDURL>(5);
-		refs.add(user1.getDefaultPublicKeyId());
-		refs.add(user2.getDefaultPublicKeyId());
-		refs.add(user3.getDefaultPublicKeyId());
-		refs.add(DIDURL.newWithDID(user1.getSubject(), "#key2"));
-		refs.add(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+		let pks = doc.getPublicKeys();
+		expect(pks.size).toEqual(5);
+		
+		let ids = new Array<DIDURL>(5);
+		
+		pks.forEach((pk) =>{
+			ids.push(pk.getId());
+		})
+			
 
-		Collections.sort(refs);
+		ids.sort()
 
-		assertArrayEquals(refs.toArray(), ids.toArray());
+		let refs = new Array<DIDURL>(5);
+		refs.push(user1.getDefaultPublicKeyId());
+		refs.push(user2.getDefaultPublicKeyId());
+		refs.push(user3.getDefaultPublicKeyId());
+		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key2"));
+		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+
+		refs.sort();
+
+		expect(refs).toEqual(ids)
 
 		// PublicKey getter.
-		PublicKey pk = doc.getPublicKey("#primary");
-		assertNull(pk);
+		let pk = doc.getPublicKey("#primary");
+		expect(pk).toBeNull();
+		
 
-		DIDURL id = DIDURL.newWithDID(user1.getSubject(), "#primary");
+		let id = DIDURL.newWithDID(user1.getSubject(), "#primary");
 		pk = doc.getPublicKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+
+		expect(pk).not.toBeNull()
+		expect(id).toEqual(pk.getId())
+		
+		
 
 		id = DIDURL.newWithDID(user1.getSubject(), "#key2");
 		pk = doc.getPublicKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+
+		expect(pk).not.toBeNull()
+		expect(id).toEqual(pk.getId())
 
 		id = doc.getDefaultPublicKeyId();
-		assertNull(id);
+		expect(id).toBeNull()
 
 		// Key not exist, should fail.
 		pk = doc.getPublicKey("#notExist");
-		assertNull(pk);
+		expect(pk).toBeNull()
 
 		id = DIDURL.newWithDID(user2.getSubject(), "#notExist");
 		pk = doc.getPublicKey(id);
-		assertNull(pk);
+		expect(pk).toBeNull()
 
 		// Selector
 		id = user2.getDefaultPublicKeyId();
 		pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
 
+		expect(pks.size).toEqual(1);
+		expect(pks.get(0).getId()).toEqual(id);
+		
 		id = user3.getDefaultPublicKeyId();
 		pks = doc.selectPublicKeys(id, null);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
+		expect(pks.size).toEqual(1);
+		expect(pks.get(0).getId()).toEqual(id);
 
-		pks = doc.selectPublicKeys((DIDURL) null, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(5, pks.size());
+		pks = doc.selectPublicKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
+		expect(pks.size).toEqual(5);
 
 		pks = doc.selectPublicKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
 				Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(user1.getSubject(), "#key2"), pks.get(0).getId());
+		expect(pks.size).toEqual(1);
+
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key2"));
 
 		pks = doc.selectPublicKeys(DIDURL.newWithDID(user1.getSubject(), "#key3"), null);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(user1.getSubject(), "#key3"), pks.get(0).getId());
-	}
+		expect(pks.size).toEqual(1);
+		expect(DIDURL.newWithDID(user1.getSubject(), "#key3")).toEqual(pks.get(0).getId())
+	})
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testAddPublicKey(int version) throws DIDException, IOException {
+	test("Test Add PublicKey", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit();
+		let doc: DIDDocument = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull()
+		expect(doc.isValid()).toBeTruthy()
+		
+		let db = doc.edit();
 
 		// Add 2 public keys
-		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
-		HDKey key = TestData.generateKeypair();
+		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let key = TestData.generateKeypair();
 		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
 		db.addPublicKey("#test2", doc.getSubject().toString(), key.getPublicKeyBase58());
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull()
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
-		PublicKey pk = doc.getPublicKey("#test1");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test1"), pk.getId());
+		let pk = doc.getPublicKey("#test1");
+		expect(pk).not.toBeNull()
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"))
 
 		pk = doc.getPublicKey("#test2");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test2"), pk.getId());
+		expect(pk).not.toBeNull()
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"));
+		
 
 		// Check the final count.
-		assertEquals(6, doc.getPublicKeyCount());
-		assertEquals(3, doc.getAuthenticationKeyCount());
-		assertEquals(1, doc.getAuthorizationKeyCount());
-	}
+		expect(doc.getPublicKeyCount()).toBe(6)
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		expect(doc.getAuthorizationKeyCount()).toBe(1)
+	})
 
-	@Test
-	public void testAddPublicKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	test("Test Add PublicKey With Cid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit(user1);
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull()
+		expect(doc.isValid()).toBeTruthy();
+		
+		let db = doc.edit(user1);
 
 		// Add 2 public keys
-		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
-		HDKey key = TestData.generateKeypair();
+		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let key = TestData.generateKeypair();
 		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
@@ -375,102 +385,94 @@ describe('DIDDocument Tests', () => {
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user2.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+
+		expect(doc).not.toBeNull()
+		expect(doc.isValid()).toBeTruthy();
 
 		// Check existence
-		PublicKey pk = doc.getPublicKey("#test1");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test1"), pk.getId());
+		let pk = doc.getPublicKey("#test1");
+		expect(pk).not.toBeNull()
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"))
 
 		pk = doc.getPublicKey("#test2");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test2"), pk.getId());
+		expect(pk).not.toBeNull()
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"))
+		
 
 		// Check the final count.
-		assertEquals(9, doc.getPublicKeyCount());
-		assertEquals(7, doc.getAuthenticationKeyCount());
-		assertEquals(0, doc.getAuthorizationKeyCount());
-	}
+		expect(doc.getPublicKeyCount()).toBe(9)
+		expect(doc.getAuthenticationKeyCount()).toBe(7)
+		expect(doc.getAuthorizationKeyCount()).toBe(0)
+		
+	})
 
-	@ParameterizedTest
-	@ValueSource(ints = {1, 2})
-	public void testRemovePublicKey(int version) throws DIDException, IOException {
+	test("Test Remove PublicKey", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull()
+		expect(doc.isValid()).toBeTruthy();
 
-		DIDDocumentBuilder db = doc.edit();
+		let db = doc.edit();
 
 		// recovery used by authorization, should failed.
-		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
-		assertThrows(UnsupportedOperationException.class, () -> {
-			db.removePublicKey(id);
-	    });
+		let id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
+		expect(() =>{db.removePublicKey(id)}).toThrowError()
 
 		// force remove public key, should success
 		db.removePublicKey(id, true);
-
 		db.removePublicKey("#key2", true);
 
 		// Key not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removePublicKey("#notExistKey", true);
-	    });
+		expect(() =>{db.removePublicKey("#notExistKey", true);}).toThrowError()
+		
 
 		// Can not remove default publickey, should fail.
-		final DIDDocument d = doc;
-		assertThrows(UnsupportedOperationException.class, () -> {
-			db.removePublicKey(d.getDefaultPublicKeyId(), true);
-	    });
+		let d = doc;
+		expect(() =>{db.removePublicKey(d.getDefaultPublicKeyId(), true);}).toThrowError()
+		
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull()
+		expect(doc.isValid()).toBeTruthy();
 
 		// Check existence
-		PublicKey pk = doc.getPublicKey("#recovery");
-		assertNull(pk);
+		let pk = doc.getPublicKey("#recovery");
+		expect(pk).toBeNull()
 
 		pk = doc.getPublicKey("#key2");
-		assertNull(pk);
+		expect(pk).toBeNull()
 
 		// Check the final count.
-		assertEquals(2, doc.getPublicKeyCount());
-		assertEquals(2, doc.getAuthenticationKeyCount());
-		assertEquals(0, doc.getAuthorizationKeyCount());
-	}
+		expect(doc.getPublicKeyCount()).toBe(2)
+		expect(doc.getAuthenticationKeyCount()).toBe(2)
+		expect(doc.getAuthorizationKeyCount()).toBe(0)
+		
+	})
 
-	@Test
-	public void testRemovePublicKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	test("Test Remove PublicKey With Cid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit(user2);
+		let db = doc.edit(user2);
 
 		// Can not remove the controller's key
-		DIDURL key2 = DIDURL.newWithDID(user1.getSubject(), "#key2");
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removePublicKey(key2);
-	    });
+		let key2 = DIDURL.newWithDID(user1.getSubject(), "#key2");
+		expect(()=>{db.removePublicKey(key2);}).toThrowError()
 
 		// key2 used by authentication, should failed.
-		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key2");
-		assertThrows(UnsupportedOperationException.class, () -> {
-			db.removePublicKey(id);
-	    });
+		let id = DIDURL.newWithDID(doc.getSubject(), "#key2");
+		expect(()=>{db.removePublicKey(id);}).toThrowError()
 
 		// force remove public key, should success
 		db.removePublicKey(id, true);
@@ -478,329 +480,325 @@ describe('DIDDocument Tests', () => {
 		db.removePublicKey("#key3", true);
 
 		// Key not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removePublicKey("#notExistKey", true);
-	    });
+		expect(()=>{db.removePublicKey("#notExistKey", true);}).toThrowError()
+		
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user1.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
-		PublicKey pk = doc.getPublicKey("#key2");
-		assertNull(pk);
+		let pk = doc.getPublicKey("#key2");
+		expect(pk).toBeNull();
 
 		pk = doc.getPublicKey("#key3");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Check the final count.
-		assertEquals(5, doc.getPublicKeyCount());
-		assertEquals(5, doc.getAuthenticationKeyCount());
-		assertEquals(0, doc.getAuthorizationKeyCount());
-	}
+		expect(doc.getPublicKeyCount()).toEqual(5);
+		expect(doc.getAuthenticationKeyCount()).toEqual(5);
+		expect(doc.getAuthorizationKeyCount()).toEqual(0);
+	})
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testGetAuthenticationKey(int version) throws DIDException, IOException {
+	test("testGetAuthenticationKey", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
-		assertEquals(3, doc.getAuthenticationKeyCount());
+		expect(doc.getAuthenticationKeyCount()).toEqual(3)
+		
 
-		List<PublicKey> pks = doc.getAuthenticationKeys();
-		assertEquals(3, pks.size());
+		let pks = doc.getAuthenticationKeys();
+		expect(pks.size).toEqual(3)
 
-		for (PublicKey pk : pks) {
-			assertEquals(doc.getSubject(), pk.getId().getDid());
-			assertEquals(Constants.DEFAULT_PUBLICKEY_TYPE, pk.getType());
-
-			assertEquals(doc.getSubject(), pk.getController());
-
-			assertTrue(pk.getId().getFragment().equals("primary")
-					|| pk.getId().getFragment().equals("key2")
-					|| pk.getId().getFragment().equals("key3"));
-		}
+		pks.forEach(pk => {
+			expect(pk.getId().getDid()).toEqual(doc.getSubject());
+			expect(pk.getType()).toEqual(Constants.DEFAULT_PUBLICKEY_TYPE);
+			expect(pk.getController()).toEqual(doc.getSubject())
+			expect(pk.getId().getFragment() == "primary"
+		     	|| pk.getId().getFragment() == "key2"
+			    || pk.getId().getFragment() == "key3").toBeTruthy()
+		});
+		
+		
 
 		// AuthenticationKey getter
-		PublicKey pk = doc.getAuthenticationKey("#primary");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#primary"), pk.getId());
+		let pk = doc.getAuthenticationKey("#primary");
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject()))
+		
 
-		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key3");
+		let id = DIDURL.newWithDID(doc.getSubject(), "#key3");
 		pk = doc.getAuthenticationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		// Key not exist, should fail.
 		pk = doc.getAuthenticationKey("#notExist");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		id = DIDURL.newWithDID(doc.getSubject(), "#notExist");
 		pk = doc.getAuthenticationKey(id);
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// selector
 		id = DIDURL.newWithDID(doc.getSubject(), "#key3");
 		pks = doc.selectAuthenticationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
-
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
+		
 		pks = doc.selectAuthenticationKeys(id, null);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
-		pks = doc.selectAuthenticationKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(3, pks.size());
+		pks = doc.selectAuthenticationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
+		expect(pks.size).toEqual(3)
 
 		pks = doc.selectAuthenticationKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#key2"), pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#key2"))
 
 		pks = doc.selectAuthenticationKeys("#key2", null);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#key2"), pks.get(0).getId());
-	}
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#key2"))
+	})
 
-	@Test
-	public void testGetAuthenticationKeyWithCid() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	test("testGetAuthenticationKeyWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 
-		DIDDocument issuer = cd.getDocument("issuer");
-		DIDDocument doc = cd.getDocument("examplecorp");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let issuer = cd.getDocument("issuer");
+		let doc = cd.getDocument("examplecorp");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
-		assertEquals(1, doc.getAuthenticationKeyCount());
+		expect(doc.getAuthenticationKeyCount()).toBe(1)
 
-		List<PublicKey> pks = doc.getAuthenticationKeys();
-		assertEquals(1, pks.size());
+		let pks = doc.getAuthenticationKeys();
+		expect(pks.size).toEqual(1)
+		expect( pks.get(0).getId()).toEqual(issuer.getDefaultPublicKeyId())
 
-		assertEquals(issuer.getDefaultPublicKeyId(), pks.get(0).getId());
+		let pk = doc.getAuthenticationKey("#primary");
+		expect(pk).toBeNull();
 
-		PublicKey pk = doc.getAuthenticationKey("#primary");
-		assertNull(pk);
-
-		DIDURL id = DIDURL.newWithDID(doc.getController(), "#primary");
+		let id = DIDURL.newWithDID(doc.getController(), "#primary");
 		pk = doc.getAuthenticationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		// Key not exist, should fail.
 		pk = doc.getAuthenticationKey("#notExist");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		id = DIDURL.newWithDID(doc.getController(), "#notExist");
 		pk = doc.getAuthenticationKey(id);
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Selector
 		id = doc.getDefaultPublicKeyId();
 		pks = doc.selectAuthenticationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(doc.getController(), "#primary"),
-				pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getController(), "#primary"))
 
 		pks = doc.selectPublicKeys(id, null);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(doc.getController(), "#primary"),
-				pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getController(), "#primary"))
 
-		pks = doc.selectAuthenticationKeys((DIDURL) null,
-				Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-	}
+		pks = doc.selectAuthenticationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
+		expect(pks.size).toEqual(1)
+	})
 
-	@Test
-	public void testGetAuthenticationKeyWithMultiControllerCid1() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	test("testGetAuthenticationKeyWithMultiControllerCid1", ()=>{
+		let cd = testData.getCompatibleData(2);
 
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
-		DIDDocument user3 = cd.getDocument("user3");
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
+		let user3 = cd.getDocument("user3");
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
-		assertEquals(7, doc.getAuthenticationKeyCount());
+		expect(doc.getAuthenticationKeyCount()).toBe(7);
 
-		List<PublicKey> pks = doc.getAuthenticationKeys();
-		assertEquals(7, pks.size());
+		let pks = doc.getAuthenticationKeys();
+		expect(pks.size).toBe(7);
 
-		List<DIDURL> ids = new ArrayList<DIDURL>(5);
-		for (PublicKey pk : pks)
-			ids.add(pk.getId());
+		let ids = new Array<DIDURL>(7);
+	    pks.forEach(pk => {
+			ids.push(pk.getId());
+		});
+			
 
-		Collections.sort(ids);
+		ids.sort()
 
-		List<DIDURL> refs = new ArrayList<DIDURL>(5);
-		refs.add(user1.getDefaultPublicKeyId());
-		refs.add(user2.getDefaultPublicKeyId());
-		refs.add(user3.getDefaultPublicKeyId());
-		refs.add(DIDURL.newWithDID(user1.getSubject(), "#key2"));
-		refs.add(DIDURL.newWithDID(user1.getSubject(), "#key3"));
-		refs.add(DIDURL.newWithDID(doc.getSubject(), "#key2"));
-		refs.add(DIDURL.newWithDID(doc.getSubject(), "#key3"));
+		
+		let refs = new Array<DIDURL>(7);
+		refs.push(user1.getDefaultPublicKeyId());
+		refs.push(user2.getDefaultPublicKeyId());
+		refs.push(user3.getDefaultPublicKeyId());
+		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key2"));
+		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+		refs.push(DIDURL.newWithDID(doc.getSubject(), "#key2"));
+		refs.push(DIDURL.newWithDID(doc.getSubject(), "#key3"));
 
-		Collections.sort(refs);
+		refs.sort()
 
-		assertArrayEquals(refs.toArray(), ids.toArray());
+		expect(refs).toEqual(ids)
+		
 
 		// PublicKey getter.
-		PublicKey pk = doc.getAuthenticationKey("#primary");
-		assertNull(pk);
+		let pk = doc.getAuthenticationKey("#primary");
+		expect(pk).toBeNull();
 
-		DIDURL id = DIDURL.newWithDID(user1.getSubject(), "#primary");
+		let id = DIDURL.newWithDID(user1.getSubject(), "#primary");
 		pk = doc.getAuthenticationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		id = DIDURL.newWithDID(user1.getSubject(), "#key2");
 		pk = doc.getAuthenticationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		id = DIDURL.newWithDID(doc.getSubject(), "#key2");
 		pk = doc.getAuthenticationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		id = DIDURL.newWithDID(doc.getSubject(), "#key3");
 		pk = doc.getAuthenticationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		// Key not exist, should fail.
 		pk = doc.getAuthenticationKey("#notExist");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		id = DIDURL.newWithDID(doc.getController(), "#notExist");
 		pk = doc.getAuthenticationKey(id);
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Selector
 		id = user1.getDefaultPublicKeyId();
 		pks = doc.selectAuthenticationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
 		pks = doc.selectAuthenticationKeys(id, null);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
-		pks = doc.selectAuthenticationKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(7, pks.size());
+		pks = doc.selectAuthenticationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
+		expect(pks.size).toBe(7);
 
 		pks = doc.selectAuthenticationKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
 				Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(user1.getSubject(), "#key2"), pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key2"));
 
 		pks = doc.selectAuthenticationKeys(DIDURL.newWithDID(doc.getSubject(), "#key3"), null);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#key3"), pks.get(0).getId());
-	}
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+	})
+	test("testGetAuthenticationKeyWithMultiControllerCid2", ()=>{
+		let cd = testData.getCompatibleData(2);
 
-	@Test
-	public void testGetAuthenticationKeyWithMultiControllerCid2() throws IOException, DIDException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
+		let user3 = cd.getDocument("user3");
 
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
-		DIDDocument user3 = cd.getDocument("user3");
-		DIDDocument doc = cd.getDocument("baz");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("baz");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
 		assertEquals(5, doc.getAuthenticationKeyCount());
 
-		List<PublicKey> pks = doc.getAuthenticationKeys();
-		assertEquals(5, pks.size());
+		let pks = doc.getAuthenticationKeys();
+		expect(pks.size).toEqual(5)
 
-		List<DIDURL> ids = new ArrayList<DIDURL>(5);
-		for (PublicKey pk : pks)
-			ids.add(pk.getId());
+		let ids = new Array<DIDURL>(5);
+	    pks.forEach(pk => {
+			ids.push(pk.getId());
+		});
 
-		Collections.sort(ids);
+		ids.sort()
 
-		List<DIDURL> refs = new ArrayList<DIDURL>(5);
-		refs.add(user1.getDefaultPublicKeyId());
-		refs.add(user2.getDefaultPublicKeyId());
-		refs.add(user3.getDefaultPublicKeyId());
-		refs.add(DIDURL.newWithDID(user1.getSubject(), "#key2"));
-		refs.add(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+		let refs = new Array<DIDURL>(5);
+		refs.push(user1.getDefaultPublicKeyId());
+		refs.push(user2.getDefaultPublicKeyId());
+		refs.push(user3.getDefaultPublicKeyId());
+		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key2"));
+		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key3"));
 
-		Collections.sort(refs);
+		refs.sort()
 
-		assertArrayEquals(refs.toArray(), ids.toArray());
+		expect(refs).toEqual(ids)
 
 		// PublicKey getter.
-		PublicKey pk = doc.getAuthenticationKey("#primary");
-		assertNull(pk);
+		let pk = doc.getAuthenticationKey("#primary");
+		expect(pk).toBeNull();
 
-		DIDURL id = DIDURL.newWithDID(user1.getSubject(), "#primary");
+		let id = DIDURL.newWithDID(user1.getSubject(), "#primary");
 		pk = doc.getAuthenticationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		id = DIDURL.newWithDID(user1.getSubject(), "#key2");
 		pk = doc.getAuthenticationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		// Key not exist, should fail.
 		pk = doc.getAuthenticationKey("#notExist");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		id = DIDURL.newWithDID(user2.getSubject(), "#notExist");
 		pk = doc.getPublicKey(id);
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Selector
 		id = user2.getDefaultPublicKeyId();
 		pks = doc.selectAuthenticationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
 		id = user3.getDefaultPublicKeyId();
 		pks = doc.selectAuthenticationKeys(id, null);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
-		pks = doc.selectAuthenticationKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(5, pks.size());
+		pks = doc.selectAuthenticationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
+		expect(pks.size).toEqual(5)
 
 		pks = doc.selectAuthenticationKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
 				Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(user1.getSubject(), "#key2"), pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key2"));
 
 		pks = doc.selectAuthenticationKeys(DIDURL.newWithDID(user1.getSubject(), "#key3"), null);
-		assertEquals(1, pks.size());
-		assertEquals(DIDURL.newWithDID(user1.getSubject(), "#key3"), pks.get(0).getId());
-	}
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testAddAuthenticationKey(int version) throws DIDException, IOException {
+	})
+	test("testAddAuthenticationKey", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit();
+		let db = doc.edit();
 
 		// Add 2 public keys for test.
-		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
-		HDKey key = TestData.generateKeypair();
+		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let key = TestData.generateKeypair();
 		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
@@ -820,58 +818,53 @@ describe('DIDDocument Tests', () => {
 		db.addAuthenticationKey("#test4", key.getPublicKeyBase58());
 
 		// Try to add a non existing key, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.addAuthenticationKey("#notExistKey");
-		});
+		expect(() =>{db.addAuthenticationKey("#notExistKey");}).toThrowError()
+		
 
 		// Try to add a key not owned by self, should fail.
-		assertThrows(IllegalUsage.class, () -> {
-			db.addAuthenticationKey("#recovery");
-		});
+		expect(() =>{db.addAuthenticationKey("#recovery");}).toThrowError()
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
-		PublicKey pk = doc.getAuthenticationKey("#test1");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test1"), pk.getId());
+		let pk = doc.getAuthenticationKey("#test1");
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"));
 
 		pk = doc.getAuthenticationKey("#test2");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test2"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"))
 
 		pk = doc.getAuthenticationKey("#test3");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test3"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test3"))
 
 		pk = doc.getAuthenticationKey("#test4");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test4"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test4"))
 
 		// Check the final count.
-		assertEquals(8, doc.getPublicKeyCount());
-		assertEquals(7, doc.getAuthenticationKeyCount());
-		assertEquals(1, doc.getAuthorizationKeyCount());
-	}
+		expect(doc.getPublicKeyCount()).toBe(8)
+		expect(doc.getAuthenticationKeyCount()).toBe(7);
+		expect(doc.getAuthorizationKeyCount()).toBe(1);
+	})
+	test("testAddAuthenticationKeyWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 
-	@Test
-	public void testAddAuthenticationKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
-
-		DIDDocument user1 = cd.getDocument("user1");
+		let user1 = cd.getDocument("user1");
 		cd.getDocument("user2");
-		DIDDocument user3 = cd.getDocument("user3");
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let user3 = cd.getDocument("user3");
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit(user1);
+		let db = doc.edit(user1);
 
 		// Add 2 public keys for test.
-		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
-		HDKey key = TestData.generateKeypair();
+		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let key = TestData.generateKeypair();
 		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
@@ -891,63 +884,56 @@ describe('DIDDocument Tests', () => {
 		db.addAuthenticationKey("#test4", key.getPublicKeyBase58());
 
 		// Try to add a controller's key, should fail.
-		DIDURL key3 = DIDURL.newWithDID(user1.getSubject(), "#testkey");
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.addAuthenticationKey(key3);
-		});
+		let key3 = DIDURL.newWithDID(user1.getSubject(), "#testkey");
+		expect(()=>{db.addAuthenticationKey(key3);}).toThrowError()
 
 		// Try to add a non existing key, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.addAuthenticationKey("#notExistKey");
-		});
+		expect(()=>{db.addAuthenticationKey("#notExistKey");}).toThrowError()
 
 		// Try to add a key not owned by self, should fail.
-		DIDURL recovery = DIDURL.newWithDID(user1.getSubject(), "#recovery");
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.addAuthenticationKey(recovery);
-		});
+		let recovery = DIDURL.newWithDID(user1.getSubject(), "#recovery");
+		expect(()=>{db.addAuthenticationKey(recovery);}).toThrowError()
+		
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user3.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
-		PublicKey pk = doc.getAuthenticationKey("#test1");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test1"), pk.getId());
+		let pk = doc.getAuthenticationKey("#test1");
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"));
 
 		pk = doc.getAuthenticationKey("#test2");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test2"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"))
 
 		pk = doc.getAuthenticationKey("#test3");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test3"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test3"))
 
 		pk = doc.getAuthenticationKey("#test4");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test4"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test4"))
 
 		// Check the final count.
-		assertEquals(11, doc.getPublicKeyCount());
-		assertEquals(11, doc.getAuthenticationKeyCount());
-		assertEquals(0, doc.getAuthorizationKeyCount());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-    public void testRemoveAuthenticationKey(int version) throws DIDException, IOException {
+		
+		expect(doc.getPublicKeyCount()).toBe(11);
+		expect(doc.getAuthenticationKeyCount()).toBe(11);
+		expect(doc.getAuthorizationKeyCount()).toBe(0);
+	})
+	test("testRemoveAuthenticationKey", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit();
+		let db = doc.edit();
 
 		// Add 2 public keys for test
-		HDKey key = TestData.generateKeypair();
+		let key = TestData.generateKeypair();
 		db.addAuthenticationKey(
 				DIDURL.newWithDID(doc.getSubject(), "#test1"),
 				key.getPublicKeyBase58());
@@ -961,56 +947,51 @@ describe('DIDDocument Tests', () => {
 			.removeAuthenticationKey("#key2");
 
 		// Key not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeAuthenticationKey("#notExistKey");
-		});
+		expect(()=>{db.removeAuthenticationKey("#notExistKey");}).toThrowError();
 
 		// Default publickey, can not remove, should fail.
-		DIDURL id = doc.getDefaultPublicKeyId();
-		assertThrows(UnsupportedOperationException.class, () -> {
-			db.removeAuthenticationKey(id);
-		});
+		let id = doc.getDefaultPublicKeyId();
+		expect(()=>{db.removeAuthenticationKey(id);}).toThrowError();
+		
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
-		PublicKey pk = doc.getAuthenticationKey("#test1");
-		assertNull(pk);
+		let pk = doc.getAuthenticationKey("#test1");
+		expect(pk).toBeNull();
 
 		pk = doc.getAuthenticationKey("#test2");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		pk = doc.getAuthenticationKey("#key2");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Check the final count.
-		assertEquals(6, doc.getPublicKeyCount());
-		assertEquals(2, doc.getAuthenticationKeyCount());
-		assertEquals(1, doc.getAuthorizationKeyCount());
-	}
-
-	@Test
-	public void testRemoveAuthenticationKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+		expect(doc.getPublicKeyCount()).toBe(6);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		expect(doc.getAuthorizationKeyCount()).toBe(1);
+	})
+	test("testRemoveAuthenticationKeyWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		assertEquals(7, doc.getPublicKeyCount());
-		assertEquals(7, doc.getAuthenticationKeyCount());
-		assertEquals(0, doc.getAuthorizationKeyCount());
+		expect(doc.getPublicKeyCount()).toBe(7);
+		expect(doc.getAuthenticationKeyCount()).toBe(7);
+		expect(doc.getAuthorizationKeyCount()).toBe(0);
 
-		DIDDocumentBuilder db = doc.edit(user1);
+		let db = doc.edit(user1);
 
 		// Remote keys
 		db.removeAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#key2"))
@@ -1019,93 +1000,85 @@ describe('DIDDocument Tests', () => {
 		db.removePublicKey("#key3");
 
 		// Key not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeAuthenticationKey("#notExistKey");
-		});
+		expect(()=>{db.removeAuthenticationKey("#notExistKey");}).toThrowError();
+		
 
 		// Remove controller's key, should fail.
-		DIDURL key2 = DIDURL.newWithDID(user1.getSubject(), "#key2");
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeAuthenticationKey(key2);
-		});
+		let key2 = DIDURL.newWithDID(user1.getSubject(), "#key2");
+		expect(()=>{db.removeAuthenticationKey(key2);}).toThrowError();
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user2.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
-		PublicKey pk = doc.getAuthenticationKey("#key2");
-		assertNull(pk);
+		let pk = doc.getAuthenticationKey("#key2");
+		expect(pk).toBeNull();
 
 		pk = doc.getAuthenticationKey("#key3");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Check the final count.
-		assertEquals(6, doc.getPublicKeyCount());
-		assertEquals(5, doc.getAuthenticationKeyCount());
-		assertEquals(0, doc.getAuthorizationKeyCount());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testGetAuthorizationKey(int version) throws DIDException, IOException {
+		expect(doc.getPublicKeyCount()).toBe(6);
+		expect(doc.getAuthenticationKeyCount()).toBe(5);
+		expect(doc.getAuthorizationKeyCount()).toBe(0);
+	})
+	test("testGetAuthorizationKey", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
-		assertEquals(1, doc.getAuthorizationKeyCount());
+		expect(doc.getAuthorizationKeyCount()).toBe(1);
 
-		List<PublicKey> pks = doc.getAuthorizationKeys();
-		assertEquals(1, pks.size());
+		let pks = doc.getAuthorizationKeys();
+		expect(pks.size).toEqual(1)
 
-		for (PublicKey pk : pks) {
-			assertEquals(doc.getSubject(), pk.getId().getDid());
-			assertEquals(Constants.DEFAULT_PUBLICKEY_TYPE, pk.getType());
+		pks.forEach(pk => {
+			expect(pk.getId().getDid()).toEqual(doc.getSubject());
+			expect(pk.getType()).toEqual(Constants.DEFAULT_PUBLICKEY_TYPE);
+			expect(pk.getController()).not.toEqual(doc.getSubject());
+			expect(pk.getId().getFragment()).toEqual("recovery")
+		});
 
-			assertNotEquals(doc.getSubject(), pk.getController());
-
-			assertTrue(pk.getId().getFragment().equals("recovery"));
-		}
+		
 
 		// AuthorizationKey getter
-		PublicKey pk = doc.getAuthorizationKey("#recovery");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#recovery"), pk.getId());
+		let pk = doc.getAuthorizationKey("#recovery");
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#recovery"));
 
-		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
+		let id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
 		pk = doc.getAuthorizationKey(id);
-		assertNotNull(pk);
-		assertEquals(id, pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(id)
 
 		// Key not exist, should fail.
 		pk = doc.getAuthorizationKey("#notExistKey");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		id = DIDURL.newWithDID(doc.getSubject(), "#notExistKey");
 		pk = doc.getAuthorizationKey(id);
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Selector
 		id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
 		pks = doc.selectAuthorizationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
 		pks = doc.selectAuthorizationKeys(id, null);
-		assertEquals(1, pks.size());
-		assertEquals(id, pks.get(0).getId());
+		expect(pks.size).toEqual(1)
+		expect(pks.get(0).getId()).toEqual(id)
 
-		pks = doc.selectAuthorizationKeys((DIDURL)null, Constants.DEFAULT_PUBLICKEY_TYPE);
-		assertEquals(1, pks.size());
-	}
-
-	@Test
-	public void testGetAuthorizationKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+		pks = doc.selectAuthorizationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
+		expect(pks.size).toEqual(1)
+	})
+	test("testGetAuthorizationKeyWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1114,31 +1087,28 @@ describe('DIDDocument Tests', () => {
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
-		assertEquals(0, doc.getAuthorizationKeyCount());
+		expect(doc.getAuthorizationKeyCount()).toBe(0);
 
-		List<PublicKey> pks = doc.getAuthorizationKeys();
-		assertEquals(0, pks.size());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testAddAuthorizationKey(int version) throws DIDException, IOException {
+		let pks = doc.getAuthorizationKeys();
+		expect(pks.size).toBe(0);
+	})
+	test("testAddAuthorizationKey", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit();
+		let db = doc.edit();
 
 		// Add 2 public keys for test.
-		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
-		HDKey key = TestData.generateKeypair();
+		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let key = TestData.generateKeypair();
 		db.addPublicKey(id,
 				new DID(DID.METHOD, key.getAddress()),
 				key.getPublicKeyBase58());
@@ -1165,62 +1135,57 @@ describe('DIDDocument Tests', () => {
 				key.getPublicKeyBase58());
 
 		// Try to add a non existing key, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.addAuthorizationKey("#notExistKey");
-		});
+		expect(()=>{db.addAuthorizationKey("#notExistKey");}).toThrowError();
 
 		// Try to add key owned by self, should fail.
-		assertThrows(IllegalUsage.class, () -> {
-			db.addAuthorizationKey("#key2");
-		});
+		expect(()=>{db.addAuthorizationKey("#key2");}).toThrowError();
+		
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		PublicKey pk = doc.getAuthorizationKey("#test1");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test1"), pk.getId());
+		let pk = doc.getAuthorizationKey("#test1");
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"));
 
 		pk = doc.getAuthorizationKey("#test2");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test2"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"))
 
 		pk = doc.getAuthorizationKey("#test3");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test3"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test3"))
 
 		pk = doc.getAuthorizationKey("#test4");
-		assertNotNull(pk);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#test4"), pk.getId());
+		expect(pk).not.toBeNull();
+		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test4"))
 
 		// Check the final key count.
-		assertEquals(8, doc.getPublicKeyCount());
-		assertEquals(3, doc.getAuthenticationKeyCount());
-		assertEquals(5, doc.getAuthorizationKeyCount());
-	}
-
-	@Test
-	public void testAddAuthorizationKeyWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+		expect(doc.getPublicKeyCount()).toBe(8)
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		expect(doc.getAuthorizationKeyCount()).toBe(5)
+	})
+	test("testAddAuthorizationKeyWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DID did = doc.getSubject();
-		DIDDocumentBuilder db = doc.edit(user1);
+		let did = doc.getSubject();
+		let db = doc.edit(user1);
 
 		// Add 2 public keys for test.
-		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
-		HDKey key = TestData.generateKeypair();
+		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let key = TestData.generateKeypair();
 		db.addPublicKey(id,
 				new DID(DID.METHOD, key.getAddress()),
 				key.getPublicKeyBase58());
@@ -1230,62 +1195,53 @@ describe('DIDDocument Tests', () => {
 				new DID(DID.METHOD, key.getAddress()).toString(),
 				key.getPublicKeyBase58());
 
-		assertThrows(NotPrimitiveDIDException.class, () -> {
-			db.addAuthorizationKey(DIDURL.newWithDID(did, "#test1"));
-		});
-
-		assertThrows(NotPrimitiveDIDException.class, () -> {
-			db.addAuthorizationKey("#test2");
-		});
+		expect(()=>{db.addAuthorizationKey(DIDURL.newWithDID(did, "#test1"));}).toThrowError()
+		
+		expect(()=>{db.addAuthorizationKey("#test2");}).toThrowError()
 
 		// Try to add a non existing key, should fail.
-		assertThrows(NotPrimitiveDIDException.class, () -> {
-			db.addAuthorizationKey("#notExistKey");
-		});
+		expect(()=>{db.addAuthorizationKey("#notExistKey");}).toThrowError()
+		
 
 		// Try to add controller's, should fail.
-		DIDURL recovery = DIDURL.newWithDID(user1.getSubject(), "#recovery");
-		assertThrows(NotPrimitiveDIDException.class, () -> {
-			db.addAuthorizationKey(recovery);
-		});
+		let recovery = DIDURL.newWithDID(user1.getSubject(), "#recovery");
+		expect(()=>{db.addAuthorizationKey(recovery);}).toThrowError()
+		
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user2.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		PublicKey pk = doc.getAuthorizationKey("#test1");
-		assertNull(pk);
+		let pk = doc.getAuthorizationKey("#test1");
+		expect(pk).toBeNull();
 
 		pk = doc.getAuthorizationKey("#test2");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		pk = doc.getAuthorizationKey("#test3");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		pk = doc.getAuthorizationKey("#test4");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Check the final key count.
-		assertEquals(9, doc.getPublicKeyCount());
-		assertEquals(7, doc.getAuthenticationKeyCount());
-		assertEquals(0, doc.getAuthorizationKeyCount());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testRemoveAuthorizationKey(int version) throws DIDException, IOException {
+		expect(doc.getPublicKeyCount()).toBe(9);
+		expect(doc.getAuthenticationKeyCount()).toBe(7);
+		expect(doc.getAuthorizationKeyCount()).toBe(0);
+	})
+	test("testRemoveAuthorizationKey", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit();
+		let db = doc.edit();
 
 		// Add 2 keys for test.
-		DIDURL id = DIDURL.newWithDID(db.getSubject(), "#test1");
-		HDKey key = TestData.generateKeypair();
+		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let key = TestData.generateKeypair();
 		db.addAuthorizationKey(id,
 				new DID(DID.METHOD, key.getAddress()),
 				key.getPublicKeyBase58());
@@ -1300,87 +1256,84 @@ describe('DIDDocument Tests', () => {
 			.removeAuthorizationKey("#recovery");
 
 		// Key not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeAuthorizationKey("#notExistKey");
-		});
+		expect(()=>{db.removeAuthorizationKey("#notExistKey");}).toThrowError()
+		
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
-		PublicKey pk = doc.getAuthorizationKey("#test1");
-		assertNull(pk);
+		let pk = doc.getAuthorizationKey("#test1");
+		expect(pk).toBeNull();
 
 		pk = doc.getAuthorizationKey("#test2");
-		assertNotNull(pk);
+		expect(pk).not.toBeNull();
 
 		pk = doc.getAuthorizationKey("#recovery");
-		assertNull(pk);
+		expect(pk).toBeNull();
 
 		// Check the final count.
-		assertEquals(6, doc.getPublicKeyCount());
-		assertEquals(3, doc.getAuthenticationKeyCount());
-		assertEquals(1, doc.getAuthorizationKeyCount());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testGetCredential(int version) throws DIDException, IOException {
+		expect(doc.getPublicKeyCount()).toBe(6)
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		expect(doc.getAuthorizationKeyCount()).toBe(1);
+	})
+	test("testGetCredential", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
-		assertEquals(2, doc.getCredentialCount());
-		List<VerifiableCredential> vcs = doc.getCredentials();
-		assertEquals(2, vcs.size());
+		expect(doc.getCredentialCount()).toBe(2);
 
-		for (VerifiableCredential vc : vcs) {
-			assertEquals(doc.getSubject(), vc.getId().getDid());
-			assertEquals(doc.getSubject(), vc.getSubject().getId());
+		let vcs = doc.getCredentials();
+		expect(vcs.size).toBe(2);
 
-			assertTrue(vc.getId().getFragment().equals("profile")
-					|| vc.getId().getFragment().equals("email"));
-		}
+		vcs.forEach(vc => {
+			expect(vc.getId().getDid()).toEqual(doc.getSubject())
+			expect(vc.getSubject().getId()).toEqual(doc.getSubject())
+			expect(vc.getId().getFragment() == "profile"
+			    || vc.getId().getFragment() == "email").toBeTruthy()
+		});
+
+		
 
 		// Credential getter.
-		VerifiableCredential vc = doc.getCredential("#profile");
-		assertNotNull(vc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#profile"), vc.getId());
+		let vc = doc.getCredential("#profile");
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
 
 		vc = doc.getCredential(DIDURL.newWithDID(doc.getSubject(), "#email"));
-		assertNotNull(vc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#email"), vc.getId());
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#email"));
 
 		// Credential not exist.
 		vc = doc.getCredential("#notExistVc");
-		assertNull(vc);
+		expect(vc).toBeNull();
 
 		// Credential selector.
 		vcs = doc.selectCredentials(DIDURL.newWithDID(doc.getSubject(), "#profile"),
 				"SelfProclaimedCredential");
-		assertEquals(1, vcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#profile"),
-				vcs.get(0).getId());
+		expect(vcs.size).toBe(1);
+		expect(vcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		
 
 		vcs = doc.selectCredentials(DIDURL.newWithDID(doc.getSubject(), "#profile"), null);
-		assertEquals(1, vcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#profile"), vcs.get(0).getId());
+		expect(vcs.size).toBe(1);
+		expect(vcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
 
-		vcs = doc.selectCredentials((DIDURL) null, "SelfProclaimedCredential");
-		assertEquals(1, vcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#profile"), vcs.get(0).getId());
+		vcs = doc.selectCredentials(null, "SelfProclaimedCredential");
+		expect(vcs.size).toBe(1);
+		expect(vcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
 
-		vcs = doc.selectCredentials((DIDURL) null, "TestingCredential");
-		assertEquals(0, vcs.size());
-	}
+		vcs = doc.selectCredentials(null, "TestingCredential");
+		expect(vcs.size).toBe(0);
+	})
 
-    @Test
-	public void testGetCredentialWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	test("testGetCredentialWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1389,221 +1342,209 @@ describe('DIDDocument Tests', () => {
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
-		assertEquals(2, doc.getCredentialCount());
-		List<VerifiableCredential> vcs = doc.getCredentials();
-		assertEquals(2, vcs.size());
+		expect(doc.getCredentialCount()).toBe(2);
+		let vcs = doc.getCredentials();
+		expect(vcs.size).toBe(2);
 
-		for (VerifiableCredential vc : vcs) {
-			assertEquals(doc.getSubject(), vc.getId().getDid());
-			assertEquals(doc.getSubject(), vc.getSubject().getId());
+		vcs.forEach(vc => {
+			expect(vc.getId().getDid()).toEqual(doc.getSubject())
+			expect(vc.getSubject().getId()).toEqual(doc.getSubject())
+			expect(vc.getId().getFragment() == "profile"
+			    || vc.getId().getFragment() == "email").toBeTruthy()
+		});
 
-			assertTrue(vc.getId().getFragment().equals("profile")
-					|| vc.getId().getFragment().equals("email"));
-		}
+	
 
 		// Credential getter.
-		VerifiableCredential vc = doc.getCredential("#profile");
-		assertNotNull(vc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#profile"), vc.getId());
+		let vc = doc.getCredential("#profile");
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
 
 		vc = doc.getCredential(DIDURL.newWithDID(doc.getSubject(), "#email"));
-		assertNotNull(vc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#email"), vc.getId());
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#email"));
 
 		// Credential not exist.
 		vc = doc.getCredential("#notExistVc");
-		assertNull(vc);
+		expect(vc).toBeNull();
 
 		// Credential selector.
 		vcs = doc.selectCredentials(DIDURL.newWithDID(doc.getSubject(), "#profile"),
 				"SelfProclaimedCredential");
-		assertEquals(1, vcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#profile"), vcs.get(0).getId());
+		expect(vcs.size).toBe(1);
+		expect(vcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
 
 		vcs = doc.selectCredentials(DIDURL.newWithDID(doc.getSubject(), "#profile"), null);
-		assertEquals(1, vcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#profile"), vcs.get(0).getId());
+		expect(vcs.size).toBe(1);
+		expect(vcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
 
-		vcs = doc.selectCredentials((DIDURL) null, "SelfProclaimedCredential");
-		assertEquals(1, vcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#profile"), vcs.get(0).getId());
+		vcs = doc.selectCredentials(null, "SelfProclaimedCredential");
+		expect(vcs.size).toBe(1);
+		expect(vcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
 
-		vcs = doc.selectCredentials((DIDURL) null, "TestingCredential");
-		assertEquals(0, vcs.size());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testAddCredential(int version) throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+		vcs = doc.selectCredentials(null, "TestingCredential");
+		expect(vcs.size).toBe(0);
+	})
+	test("testAddCredential", ()=>{
+		let cd = testData.getCompatibleData(2);
 
 		testData.getRootIdentity();
 
-		DIDDocument doc = cd.getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit();
+		let db = doc.edit();
 
 		// Add credentials.
-		VerifiableCredential vc = cd.getCredential("user1", "passport");
+		let vc = cd.getCredential("user1", "passport");
 		db.addCredential(vc);
 
 		vc = cd.getCredential("user1", "twitter");
 		db.addCredential(vc);
 
-		final VerifiableCredential fvc = vc;
+		let fvc = vc;
 		// Credential already exist, should fail.
-		assertThrows(DIDObjectAlreadyExistException.class, () -> {
-			db.addCredential(fvc);
-		});
+		expect(()=>{db.addCredential(fvc);}).toThrowError();
+		
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check new added credential.
 		vc = doc.getCredential("#passport");
-		assertNotNull(vc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#passport"), vc.getId());
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#passport"));
 
-		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
+		let id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
 		vc = doc.getCredential(id);
-		assertNotNull(vc);
-		assertEquals(id, vc.getId());
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(id);
 
 		// Should contains 3 credentials.
-		assertEquals(4, doc.getCredentialCount());
-	}
-
-    @Test
-	public void testAddCredentialWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+		expect(doc.getCredentialCount()).toBe(4);
+	})
+	test("testAddCredentialWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit(user1);
+		let db = doc.edit(user1);
 
 		// Add credentials.
-		VerifiableCredential vc = cd.getCredential("foobar", "license");
+		let vc = cd.getCredential("foobar", "license");
 		db.addCredential(vc);
 
 		vc = cd.getCredential("foobar", "services");
 		db.addCredential(vc);
 
-		final VerifiableCredential fvc = vc;
+		let fvc = vc;
 		// Credential already exist, should fail.
-		assertThrows(DIDObjectAlreadyExistException.class, () -> {
-			db.addCredential(fvc);
-		});
+		expect(()=>{db.addCredential(fvc);}).toThrowError();
+		
 
 		// Credential not belongs to current did, should fail.
-		assertThrows(IllegalUsage.class, () -> {
-			db.addCredential(cd.getCredential("user1", "passport"));
-		});
+		expect(()=>{db.addCredential(cd.getCredential("user1", "passport"));}).toThrowError();
+		
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user2.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check new added credential.
 		vc = doc.getCredential("#license");
-		assertNotNull(vc);
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#license"));
 		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#license"), vc.getId());
 
-		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#services");
+		let id = DIDURL.newWithDID(doc.getSubject(), "#services");
 		vc = doc.getCredential(id);
-		assertNotNull(vc);
-		assertEquals(id, vc.getId());
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(id);
 
-		assertEquals(4, doc.getCredentialCount());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testAddSelfClaimedCredential(int version) throws DIDException, IOException {
+		expect(doc.getCredentialCount()).toBe(4);
+	})
+	test("testAddSelfClaimedCredential", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit();
+		let db = doc.edit();
 
 		// Add credentials.
-		Map<String, Object> subject = new HashMap<String, Object>();
-		subject.put("passport", "S653258Z07");
+		let subject = Map<string, any>();
+		subject.set("passport", "S653258Z07");
 		db.addCredential("#passport", subject, TestConfig.storePass);
 
-		String json = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\"}";
+		let json = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\"}";
 		db.addCredential("#name", json, TestConfig.storePass);
 
 		json = "{\"twitter\":\"@john\"}";
 		db.addCredential("#twitter", json, TestConfig.storePass);
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check new added credential.
-		VerifiableCredential vc = doc.getCredential("#passport");
-		assertNotNull(vc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#passport"), vc.getId());
-		assertTrue(vc.isSelfProclaimed());
+		let vc = doc.getCredential("#passport");
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#passport"));
+		expect(vc.isSelfProclaimed()).toBeTruthy();
 
-		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#name");
+		let id = DIDURL.newWithDID(doc.getSubject(), "#name");
 		vc = doc.getCredential(id);
-		assertNotNull(vc);
-		assertEquals(id, vc.getId());
-		assertTrue(vc.isSelfProclaimed());
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(id);
+		expect(vc.isSelfProclaimed()).toBeTruthy();
 
 		id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
 		vc = doc.getCredential(id);
-		assertNotNull(vc);
-		assertEquals(id, vc.getId());
-		assertTrue(vc.isSelfProclaimed());
-
-		assertEquals(5, doc.getCredentialCount());
-	}
-
-    @Test
-	public void testAddSelfClaimedCredentialWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(id);
+		expect(vc.isSelfProclaimed()).toBeTruthy();
+		expect(doc.getCredentialCount()).toBe(5);
+	})
+	test("testAddSelfClaimedCredentialWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit(user2);
+		let db = doc.edit(user2);
 
 		// Add credentials.
-		Map<String, Object> subject = new HashMap<String, Object>();
-		subject.put("foo", "bar");
+		let subject = Map<string, any>();
+		subject.set("foo", "bar");
 		db.addCredential("#testvc", subject, TestConfig.storePass);
 
-		String json = "{\"name\":\"Foo Bar\",\"alternateName\":\"Jason Holtslander\"}";
+		let json = "{\"name\":\"Foo Bar\",\"alternateName\":\"Jason Holtslander\"}";
 		db.addCredential("#name", json, TestConfig.storePass);
 
 		json = "{\"twitter\":\"@foobar\"}";
@@ -1611,44 +1552,41 @@ describe('DIDDocument Tests', () => {
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user1.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check new added credential.
-		VerifiableCredential vc = doc.getCredential("#testvc");
-		assertNotNull(vc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#testvc"), vc.getId());
-		assertTrue(vc.isSelfProclaimed());
+		let vc = doc.getCredential("#testvc");
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#testvc"));
+		expect(vc.isSelfProclaimed()).toBeTruthy();
 
-		DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#name");
+		let id = DIDURL.newWithDID(doc.getSubject(), "#name");
 		vc = doc.getCredential(id);
-		assertNotNull(vc);
-		assertEquals(id, vc.getId());
-		assertTrue(vc.isSelfProclaimed());
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(id);
+		expect(vc.isSelfProclaimed()).toBeTruthy();
 
 		id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
 		vc = doc.getCredential(id);
-		assertNotNull(vc);
-		assertEquals(id, vc.getId());
-		assertTrue(vc.isSelfProclaimed());
+		expect(vc).not.toBeNull();
+		expect(vc.getId()).toEqual(id);
+		expect(vc.isSelfProclaimed()).toBeTruthy();
 
-		assertEquals(5, doc.getCredentialCount());
-	}
+		expect(doc.getCredentialCount()).toBe(5);
+	})
+	test("testRemoveCredential", ()=>{
+		testData.getRootIdentity();
+    	let cd = testData.getCompatibleData(2);
 
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testRemoveCredential(int version) throws DIDException, IOException {
-    	testData.getRootIdentity();
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
+		let doc = cd.getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocument doc = cd.getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit();
+		let db = doc.edit();
 
 		// Add test credentials.
-		VerifiableCredential vc = cd.getCredential("user1", "passport");
+		let vc = cd.getCredential("user1", "passport");
 		db.addCredential(vc);
 
 		vc = cd.getCredential("user1", "twitter");
@@ -1660,46 +1598,42 @@ describe('DIDDocument Tests', () => {
 		db.removeCredential(DIDURL.newWithDID(doc.getSubject(), "#twitter"));
 
 		// Credential not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeCredential("#notExistCredential");
-		});
+		expect(()=>{db.removeCredential("#notExistCredential");}).toThrowError();
+		
 
-		DID did = doc.getSubject();
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeCredential(DIDURL.newWithDID(did, "#notExistCredential"));
-		});
+		let did = doc.getSubject();
+		expect(()=>{db.removeCredential(DIDURL.newWithDID(did, "#notExistCredential"));}).toThrowError();
+		
 
 		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
 		vc = doc.getCredential("#profile");
-		assertNull(vc);
+		expect(vc).toBeNull();
 
 		vc = doc.getCredential(DIDURL.newWithDID(doc.getSubject(), "#twitter"));
-		assertNull(vc);
+		expect(vc).toBeNull();
 
 		// Check the final count.
-		assertEquals(2, doc.getCredentialCount());
-	}
-
-    @Test
-	public void testRemoveCredentialWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+		expect(doc.getCredentialCount()).toBe(2);
+	})
+	test("testRemoveCredentialWithCid", ()=>{
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		DIDDocument user2 = cd.getDocument("user2");
+		let user1 = cd.getDocument("user1");
+		let user2 = cd.getDocument("user2");
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
-		DIDDocumentBuilder db = doc.edit(user1);
+		let db = doc.edit(user1);
 
 		// Remove credentials
 		db.removeCredential("#profile");
@@ -1707,107 +1641,101 @@ describe('DIDDocument Tests', () => {
 		db.removeCredential(DIDURL.newWithDID(doc.getSubject(), "#email"));
 
 		// Credential not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeCredential("#notExistCredential");
-		});
+		expect(()=>{db.removeCredential("#notExistCredential");}).toThrowError();
+		
 
-		DID did = doc.getSubject();
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeCredential(DIDURL.newWithDID(did, "#notExistCredential"));
-		});
+		let did = doc.getSubject();
+		expect(()=>{db.removeCredential(DIDURL.newWithDID(did, "#notExistCredential"));}).toThrowError();
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user2.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Check existence
-		VerifiableCredential vc = doc.getCredential("#profile");
-		assertNull(vc);
+		let vc = doc.getCredential("#profile");
+		expect(vc).toBeNull();
 
 		vc = doc.getCredential(DIDURL.newWithDID(doc.getSubject(), "#email"));
-		assertNull(vc);
+		expect(vc).toBeNull();
 
 		// Check the final count.
-		assertEquals(0, doc.getCredentialCount());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testGetService(int version) throws DIDException, IOException {
+		expect(doc.getCredentialCount()).toBe(0);
+	})
+	test("testGetService", ()=>{
 		testData.getRootIdentity();
 
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = testData.getCompatibleData(2).getDocument("user1");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list
-		assertEquals(3, doc.getServiceCount());
-		List<Service> svcs = doc.getServices();
-		assertEquals(3, svcs.size());
+		expect(doc.getServiceCount()).toBe(3);
+		let svcs = doc.getServices();
+		expect(svcs.size).toBe(3);
 
-		for (Service svc : svcs) {
-			assertEquals(doc.getSubject(), svc.getId().getDid());
-
-			assertTrue(svc.getId().getFragment().equals("openid")
-					|| svc.getId().getFragment().equals("vcr")
-					|| svc.getId().getFragment().equals("carrier"));
-		}
+		svcs.forEach(svc => {
+			expect(svc.getId().getDid()).toEqual(doc.getSubject())
+			expect(svc.getId().getFragment() == "openid"
+			    || svc.getId().getFragment() == "vcr" 
+			    || svc.getId().getFragment() == "carrier" ).toBeTruthy()
+		});
+		
 
 		// Service getter, should success.
-		Service svc = doc.getService("#openid");
-		assertNotNull(svc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#openid"), svc.getId());
-		assertEquals("OpenIdConnectVersion1.0Service", svc.getType());
-		assertEquals("https://openid.example.com/", svc.getServiceEndpoint());
-		Map<String, Object> props = svc.getProperties();
-		assertTrue(props.isEmpty());
+		let svc = doc.getService("#openid");
+		expect(svc).not.toBeNull();
+		expect(svc.getId()).toEqual(doc.getSubject())
+		expect(svc.getType()).toEqual("OpenIdConnectVersion1.0Service")
+		expect(svc.getServiceEndpoint()).toEqual("https://openid.example.com/")
+		
+		
+		let props = svc.getProperties();
+		expect(props.isEmpty()).toBeTruthy()
 
 		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
-		assertNotNull(svc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#vcr"), svc.getId());
+		expect(svc).not.toBeNull();
+		expect(svc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
 		props = svc.getProperties();
-		assertTrue(props.isEmpty());
+		expect(props.isEmpty()).toBeTruthy()
 
 		// Service not exist, should fail.
 		svc = doc.getService("#notExistService");
-		assertNull(svc);
+		expect(svc).toBeNull();
 
 		// Service selector.
 		svcs = doc.selectServices("#vcr", "CredentialRepositoryService");
-		assertEquals(1, svcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#vcr"), svcs.get(0).getId());
+		expect(svcs.size).toBe(1);
+		expect(svcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
 
 		svcs = doc.selectServices(DIDURL.newWithDID(doc.getSubject(), "#openid"), null);
-		assertEquals(1, svcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#openid"),
-				svcs.get(0).getId());
+		expect(svcs.size).toBe(1);
+		expect(svcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#openid"))
+		
 
-		svcs = doc.selectServices((DIDURL) null, "CarrierAddress");
-		assertEquals(1, svcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#carrier"),
-				svcs.get(0).getId());
+		svcs = doc.selectServices(null, "CarrierAddress");
+		expect(svcs.size).toBe(1);
+		expect(svcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#carrier"))
+		
 		props = svcs.get(0).getProperties();
-		if (version == 1) {
-			assertTrue(props.isEmpty());
-		} else {
-			assertEquals(12, props.size());
-			assertEquals("lalala...", props.get("foobar"));
-			assertEquals("Lalala...", props.get("FOOBAR"));
-		}
+		expect(svcs.size).toBe(1);
+		expect(props.size).toBe(12);
+		expect(props.get("foobar")).toEqual("lalala...")
+		expect(props.get("FOOBAR")).toEqual("Lalala...")
+		
 
 		// Service not exist, should return a empty list.
 		svcs = doc.selectServices("#notExistService",
 				"CredentialRepositoryService");
-		assertEquals(0, svcs.size());
+		expect(svcs.size).toBe(0);
 
-		svcs = doc.selectServices((DIDURL)null, "notExistType");
-		assertEquals(0, svcs.size());
-	}
+		svcs = doc.selectServices(null, "notExistType");
+		expect(svcs.size).toBe(0);
 
-    @Test
-	public void testGetServiceWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
+	})
+	test("testGetServiceWithCid", ()=>{
+		
+		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
 		cd.getDocument("issuer");
@@ -1816,2339 +1744,2265 @@ describe('DIDDocument Tests', () => {
 		cd.getDocument("user3");
 		cd.getDocument("examplecorp");
 
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
+		let doc = cd.getDocument("foobar");
+		expect(doc).not.toBeNull();
+		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list
-		assertEquals(2, doc.getServiceCount());
-		List<Service> svcs = doc.getServices();
-		assertEquals(2, svcs.size());
+		expect(doc.getServiceCount()).toBe(2);
 
-		for (Service svc : svcs) {
-			assertEquals(doc.getSubject(), svc.getId().getDid());
+		let svcs = doc.getServices();
+		expect(svcs.size).toBe(2);
 
-			assertTrue(svc.getId().getFragment().equals("vault")
-					|| svc.getId().getFragment().equals("vcr"));
-		}
+		svcs.forEach(svc => {
+			expect(svc.getId().getDid()).toEqual(doc.getSubject())
+			expect(svc.getId().getFragment() == "vault"
+			    || svc.getId().getFragment() == "vcr" ).toBeTruthy()
+		});
+
+	
 
 		// Service getter, should success.
-		Service svc = doc.getService("#vault");
-		assertNotNull(svc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#vault"), svc.getId());
-		assertEquals("Hive.Vault.Service", svc.getType());
-		assertEquals("https://foobar.com/vault", svc.getServiceEndpoint());
-		Map<String, Object> props = svc.getProperties();
-		assertTrue(props.isEmpty());
+		let svc = doc.getService("#vault");
+		expect(svc).not.toBeNull();
+		expect(svc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vault"))
+		expect(svc.getType()).toEqual("Hive.Vault.Service")
+		expect(svc.getServiceEndpoint()).toEqual("https://foobar.com/vault")
+		
+		let props = svc.getProperties();
+		expect(props.isEmpty()).toBeTruthy()
 
 		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
-		assertNotNull(svc);
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#vcr"), svc.getId());
+		expect(svc).not.toBeNull();
+		expect(svc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
 		props = svc.getProperties();
-		assertEquals(12, props.size());
-		assertEquals("lalala...", props.get("foobar"));
-		assertEquals("Lalala...", props.get("FOOBAR"));
+		expect(props.size).toBe(12);
+		expect(props.get("foobar")).toEqual("lalala...")
+		expect(props.get("FOOBAR")).toEqual("Lalala...")
 
 		// Service not exist, should fail.
 		svc = doc.getService("#notExistService");
-		assertNull(svc);
+		expect(svc).toBeNull();
 
 		// Service selector.
 		svcs = doc.selectServices("#vcr", "CredentialRepositoryService");
-		assertEquals(1, svcs.size());
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#vcr"), svcs.get(0).getId());
+		expect(svcs.size).toBe(1);
+		expect(svcs.get(0).getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
 
 		svcs = doc.selectServices(DIDURL.newWithDID(doc.getSubject(), "#openid"), null);
-		assertEquals(0, svcs.size());
+		expect(svcs.size).toBe(0);
 
 		// Service not exist, should return a empty list.
 		svcs = doc.selectServices("#notExistService", "CredentialRepositoryService");
-		assertEquals(0, svcs.size());
-
-		svcs = doc.selectServices((DIDURL)null, "notExistType");
-		assertEquals(0, svcs.size());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testAddService(int version) throws DIDException, IOException {
-		testData.getRootIdentity();
-
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit();
-
-		// Add services
-		db.addService("#test-svc-1", "Service.Testing",
-				"https://www.elastos.org/testing1");
-
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
-				"Service.Testing", "https://www.elastos.org/testing2");
-
-		// Service id already exist, should failed.
-		assertThrows(DIDObjectAlreadyExistException.class, () -> {
-			db.addService("#vcr", "test", "https://www.elastos.org/test");
-		});
-
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		// Check the final count
-		assertEquals(5, doc.getServiceCount());
-
-		// Try to select new added 2 services
-		List<Service> svcs = doc.selectServices((DIDURL)null, "Service.Testing");
-		assertEquals(2, svcs.size());
-		assertEquals("Service.Testing", svcs.get(0).getType());
-		assertEquals("Service.Testing", svcs.get(1).getType());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testAddServiceWithDescription(int version) throws DIDException, IOException {
-		testData.getRootIdentity();
-
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("abc", "helloworld");
-		map.put("foo", 123);
-		map.put("bar", "foobar");
-		map.put("foobar", "lalala...");
-		map.put("date", Calendar.getInstance().getTime());
-		map.put("ABC", "Helloworld");
-		map.put("FOO", 678);
-		map.put("BAR", "Foobar");
-		map.put("FOOBAR", "Lalala...");
-		map.put("DATE", Calendar.getInstance().getTime());
-
-		Map<String, Object> props = new HashMap<String, Object>();
-		props.put("abc", "helloworld");
-		props.put("foo", 123);
-		props.put("bar", "foobar");
-		props.put("foobar", "lalala...");
-		props.put("date", Calendar.getInstance().getTime());
-		props.put("map", map);
-		props.put("ABC", "Helloworld");
-		props.put("FOO", 678);
-		props.put("BAR", "Foobar");
-		props.put("FOOBAR", "Lalala...");
-		props.put("DATE", Calendar.getInstance().getTime());
-		props.put("MAP", map);
-
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit();
-
-		// Add services
-		db.addService("#test-svc-1", "Service.Testing",
-				"https://www.elastos.org/testing1", props);
-
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
-				"Service.Testing", "https://www.elastos.org/testing2", props);
-
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-3"),
-				"Service.Testing", "https://www.elastos.org/testing3");
-
-		// Service id already exist, should failed.
-		assertThrows(DIDObjectAlreadyExistException.class, () -> {
-			db.addService("#vcr", "test", "https://www.elastos.org/test", props);
-		});
-
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		// Check the final count
-		assertEquals(6, doc.getServiceCount());
-
-		// Try to select new added 2 services
-		List<Service> svcs = doc.selectServices((DIDURL)null, "Service.Testing");
-		assertEquals(3, svcs.size());
-		assertEquals("Service.Testing", svcs.get(0).getType());
-		assertTrue(!svcs.get(0).getProperties().isEmpty());
-		assertEquals("Service.Testing", svcs.get(1).getType());
-		assertTrue(!svcs.get(1).getProperties().isEmpty());
-		assertEquals("Service.Testing", svcs.get(2).getType());
-		assertTrue(svcs.get(2).getProperties().isEmpty());
-	}
-
-    @Test
-	public void testAddServiceWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
-
-		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		cd.getDocument("user2");
-		DIDDocument user3 = cd.getDocument("user3");
-		cd.getDocument("examplecorp");
-
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit(user3);
-
-		// Add services
-		db.addService("#test-svc-1", "Service.Testing",
-				"https://www.elastos.org/testing1");
-
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
-				"Service.Testing", "https://www.elastos.org/testing2");
-
-		// Service id already exist, should failed.
-		assertThrows(DIDObjectAlreadyExistException.class, () -> {
-			db.addService("#vcr", "test", "https://www.elastos.org/test");
-		});
-
-		doc = db.seal(TestConfig.storePass);
-		doc = user1.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		// Check the final count
-		assertEquals(4, doc.getServiceCount());
-
-		// Try to select new added 2 services
-		List<Service> svcs = doc.selectServices((DIDURL)null, "Service.Testing");
-		assertEquals(2, svcs.size());
-		assertEquals("Service.Testing", svcs.get(0).getType());
-		assertEquals("Service.Testing", svcs.get(1).getType());
-	}
-
-    @Test
-	public void testAddServiceWithCidAndDescription() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
-
-		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		cd.getDocument("user2");
-		DIDDocument user3 = cd.getDocument("user3");
-		cd.getDocument("examplecorp");
-
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit(user3);
-
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("abc", "helloworld");
-		map.put("foo", 123);
-		map.put("bar", "foobar");
-		map.put("foobar", "lalala...");
-		map.put("date", Calendar.getInstance().getTime());
-		map.put("ABC", "Helloworld");
-		map.put("FOO", 678);
-		map.put("BAR", "Foobar");
-		map.put("FOOBAR", "Lalala...");
-		map.put("DATE", Calendar.getInstance().getTime());
-
-		Map<String, Object> props = new HashMap<String, Object>();
-		props.put("abc", "helloworld");
-		props.put("foo", 123);
-		props.put("bar", "foobar");
-		props.put("foobar", "lalala...");
-		props.put("date", Calendar.getInstance().getTime());
-		props.put("map", map);
-		props.put("ABC", "Helloworld");
-		props.put("FOO", 678);
-		props.put("BAR", "Foobar");
-		props.put("FOOBAR", "Lalala...");
-		props.put("DATE", Calendar.getInstance().getTime());
-		props.put("MAP", map);
-
-		// Add services
-		db.addService("#test-svc-1", "Service.Testing",
-				"https://www.elastos.org/testing1", props);
-
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
-				"Service.Testing", "https://www.elastos.org/testing2", props);
-
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-3"),
-				"Service.Testing", "https://www.elastos.org/testing3");
-
-		// Service id already exist, should failed.
-		assertThrows(DIDObjectAlreadyExistException.class, () -> {
-			db.addService("#vcr", "test", "https://www.elastos.org/test", props);
-		});
-
-		doc = db.seal(TestConfig.storePass);
-		doc = user1.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		// Check the final count
-		assertEquals(5, doc.getServiceCount());
-
-		// Try to select new added 2 services
-		List<Service> svcs = doc.selectServices((DIDURL)null, "Service.Testing");
-		assertEquals(3, svcs.size());
-		assertEquals("Service.Testing", svcs.get(0).getType());
-		assertTrue(!svcs.get(0).getProperties().isEmpty());
-		assertEquals("Service.Testing", svcs.get(1).getType());
-		assertTrue(!svcs.get(1).getProperties().isEmpty());
-		assertEquals("Service.Testing", svcs.get(2).getType());
-		assertTrue(svcs.get(2).getProperties().isEmpty());
-	}
-
-    @ParameterizedTest
-    @ValueSource(ints = {1, 2})
-	public void testRemoveService(int version) throws DIDException, IOException {
-		testData.getRootIdentity();
-
-		DIDDocument doc = testData.getCompatibleData(version).getDocument("user1");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit();
-
-		// remove services
-		db.removeService("#openid");
-
-		db.removeService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
-
-		// Service not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeService("#notExistService");
-		});
-
-		doc = db.seal(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		Service svc = doc.getService("#openid");
-		assertNull(svc);
-
-		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
-		assertNull(svc);
-
-		// Check the final count
-		assertEquals(1, doc.getServiceCount());
-	}
-
-    @Test
-	public void testRemoveServiceWithCid() throws DIDException, IOException {
-		TestData.CompatibleData cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
-
-		cd.getDocument("issuer");
-		DIDDocument user1 = cd.getDocument("user1");
-		cd.getDocument("user2");
-		DIDDocument user3 = cd.getDocument("user3");
-		cd.getDocument("examplecorp");
-
-		DIDDocument doc = cd.getDocument("foobar");
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		DIDDocumentBuilder db = doc.edit(user1);
-
-		// remove services
-		db.removeService("#vault");
-
-		db.removeService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
-
-		// Service not exist, should fail.
-		assertThrows(DIDObjectNotExistException.class, () -> {
-			db.removeService("#notExistService");
-		});
-
-		doc = db.seal(TestConfig.storePass);
-		doc = user3.sign(doc, TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		Service svc = doc.getService("#openid");
-		assertNull(svc);
-
-		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
-		assertNull(svc);
-
-		// Check the final count
-		assertEquals(0, doc.getServiceCount());
-	}
-
-    @ParameterizedTest
-    @CsvSource({
-    	"1,issuer",
-    	"1,user1",
-    	"1,user2",
-    	"1,user3",
-    	"2,examplecorp",
-    	"2,foobar",
-    	"2,foo",
-    	"2,bar",
-    	"2,baz"
-    })
-	public void testParseAndSerializeDocument(int version, String did)
-			throws DIDException, IOException {
-    	TestData.CompatibleData cd = testData.getCompatibleData(version);
-    	cd.loadAll();
-
-    	String compactJson = cd.getDocumentJson(did, "compact");
-		DIDDocument compact = DIDDocumentparse(compactJson);
-		assertNotNull(compact);
-		assertTrue(compact.isValid());
-
-	   	String normalizedJson = cd.getDocumentJson(did, "normalized");
-		DIDDocument normalized = DIDDocumentparse(normalizedJson);
-		assertNotNull(normalized);
-		assertTrue(normalized.isValid());
-
-		DIDDocument doc = cd.getDocument(did);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		assertEquals(normalizedJson, compact.toString(true));
-		assertEquals(normalizedJson, normalized.toString(true));
-		assertEquals(normalizedJson, doc.toString(true));
-
-		// Don't check the compact mode for the old versions
-		if (cd.isLatestVersion()) {
-			assertEquals(compactJson, compact.toString(false));
-			assertEquals(compactJson, normalized.toString(false));
-			assertEquals(compactJson, doc.toString(false));
-		}
-	}
-
-	@Test
-	public void testSignAndVerify() throws DIDException, IOException {
-		RootIdentity identity = testData.getRootIdentity();
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		byte[] data = new byte[1024];
-		DIDURL pkid = DIDURL.newWithDID(doc.getSubject(), "#primary");
-
-		for (int i = 0; i < 10; i++) {
-			Arrays.fill(data, (byte) i);
-
-			String sig = doc.sign(pkid, TestConfig.storePass, data);
-			boolean result = doc.verify(pkid, sig, data);
-			assertTrue(result);
-
-			data[0] = 0xF;
-			result = doc.verify(pkid, sig, data);
-			assertFalse(result);
-
-			sig = doc.sign(TestConfig.storePass, data);
-			result = doc.verify(sig, data);
-			assertTrue(result);
-
-			data[0] = (byte) i;
-			result = doc.verify(sig, data);
-			assertFalse(result);
-		}
-	}
-
-	@Test
-	public void testDerive() throws DIDException, IOException {
-		RootIdentity identity = testData.getRootIdentity();
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		for (int i = 0; i < 1000; i++) {
-			String strKey = doc.derive(i, TestConfig.storePass);
-			HDKey key = HDKey.deserializeBase58(strKey);
-
-			byte[] binKey = Base58.decode(strKey);
-			byte[] sk = Arrays.copyOfRange(binKey, 46, 78);
-
-			assertEquals(key.getPrivateKeyBytes().length, sk.length);
-			assertArrayEquals(key.getPrivateKeyBytes(), sk);
-		}
-	}
-
-	@Test
-	public void testDeriveFromIdentifier() throws DIDException, IOException {
-		String identifier = "org.elastos.did.test";
-
-		RootIdentity identity = testData.getRootIdentity();
-		DIDDocument doc = identity.newDid(TestConfig.storePass);
-		assertNotNull(doc);
-		assertTrue(doc.isValid());
-
-		for (int i = -100; i < 100; i++) {
-			String strKey = doc.derive(identifier, i, TestConfig.storePass);
-			HDKey key = HDKey.deserializeBase58(strKey);
-
-			byte[] binKey = Base58.decode(strKey);
-			byte[] sk = Arrays.copyOfRange(binKey, 46, 78);
-
-			assertEquals(key.getPrivateKeyBytes().length, sk.length);
-			assertArrayEquals(key.getPrivateKeyBytes(), sk);
-		}
-	}
-
-	@Test
-	public void testCreateCustomizedDid() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument controller = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	DIDDocument resolved = controller.getSubject().resolve();
-    	assertNull(resolved);
-
-    	controller.publish(TestConfig.storePass);
-
-    	resolved = controller.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(controller.getSubject(), resolved.getSubject());
-    	assertEquals(controller.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld");
-    	DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(controller.getSubject(), doc.getController());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(controller.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-    }
-
-	@Test
-	public void testCreateMultisigCustomizedDid() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl1.isValid());
-    	ctrl1.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = ctrl1.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl1.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl2.isValid());
-    	ctrl2.publish(TestConfig.storePass);
-
-    	resolved = ctrl2.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl2.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl3.isValid());
-    	ctrl3.publish(TestConfig.storePass);
-
-    	resolved = ctrl3.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl3.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld3");
-    	DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-    			2, TestConfig.storePass);
-    	assertFalse(doc.isValid());
-
-    	final DIDDocument d = doc;
-    	assertThrows(AlreadySignedException.class, () -> {
-    		ctrl1.sign(d, TestConfig.storePass);
-    	});
-
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(3, doc.getControllerCount());
-    	List<DID> ctrls = new ArrayList<DID>();
-    	ctrls.add(ctrl1.getSubject());
-    	ctrls.add(ctrl2.getSubject());
-    	ctrls.add(ctrl3.getSubject());
-    	Collections.sort(ctrls);
-    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-    }
-
-	@Test
-	public void testUpdateDid() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Update again
-    	db = doc.edit();
-    	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(3, doc.getPublicKeyCount());
-    	assertEquals(3, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-	}
-
-	@Test
-	public void testUpdateCustomizedDid() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument controller = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	DIDDocument resolved = controller.getSubject().resolve();
-    	assertNull(resolved);
-
-    	controller.publish(TestConfig.storePass);
-
-    	resolved = controller.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(controller.getSubject(), resolved.getSubject());
-    	assertEquals(controller.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld");
-    	DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(controller.getSubject(), doc.getController());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(controller.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Update again
-    	db = doc.edit();
-    	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(3, doc.getPublicKeyCount());
-    	assertEquals(3, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-    }
-
-	@Test
-	public void testUpdateMultisigCustomizedDid() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl1.isValid());
-    	ctrl1.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = ctrl1.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl1.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl2.isValid());
-    	ctrl2.publish(TestConfig.storePass);
-
-    	resolved = ctrl2.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl2.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl3.isValid());
-    	ctrl3.publish(TestConfig.storePass);
-
-    	resolved = ctrl3.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl3.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld3");
-    	DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-    			2, TestConfig.storePass);
-    	assertFalse(doc.isValid());
-
-    	final DIDDocument d = doc;
-    	assertThrows(AlreadySignedException.class, () -> {
-    		ctrl1.sign(d, TestConfig.storePass);
-    	});
-
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(3, doc.getControllerCount());
-    	List<DID> ctrls = new ArrayList<DID>();
-    	ctrls.add(ctrl1.getSubject());
-    	ctrls.add(ctrl2.getSubject());
-    	ctrls.add(ctrl3.getSubject());
-    	Collections.sort(ctrls);
-    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit(ctrl2);
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	doc = ctrl1.sign(doc, TestConfig.storePass);
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-    	assertEquals(4, resolved.getPublicKeyCount());
-    	assertEquals(4, resolved.getAuthenticationKeyCount());
-
-    	// Update again
-    	db = doc.edit(ctrl3);
-    	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-    	assertEquals(5, resolved.getPublicKeyCount());
-    	assertEquals(5, resolved.getAuthenticationKeyCount());
-	}
-
-	@Test
-	public void testTransferCustomizedDidAfterCreate() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument controller = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	DIDDocument resolved = controller.getSubject().resolve();
-    	assertNull(resolved);
-
-    	controller.publish(TestConfig.storePass);
-
-    	resolved = controller.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(controller.getSubject(), resolved.getSubject());
-    	assertEquals(controller.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld");
-    	DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(controller.getSubject(), doc.getController());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(controller.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// create new controller
-    	DIDDocument newController = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	resolved = newController.getSubject().resolve();
-    	assertNull(resolved);
-
-    	newController.publish(TestConfig.storePass);
-
-    	resolved = newController.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(newController.getSubject(), resolved.getSubject());
-    	assertEquals(newController.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// create the transfer ticket
-    	doc.setEffectiveController(controller.getSubject());
-    	TransferTicket ticket = doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
-    	assertTrue(ticket.isValid());
-
-    	// create new document for customized DID
-    	doc = newController.newCustomizedDid(did, true, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(newController.getSubject(), doc.getController());
-
-    	// transfer
-    	doc.publish(ticket, TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(newController.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-    }
-
-	@Test
-	public void testTransferCustomizedDidAfterUpdate() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument controller = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	DIDDocument resolved = controller.getSubject().resolve();
-    	assertNull(resolved);
-
-    	controller.publish(TestConfig.storePass);
-
-    	resolved = controller.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(controller.getSubject(), resolved.getSubject());
-    	assertEquals(controller.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld");
-    	DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(controller.getSubject(), doc.getController());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(controller.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// create new controller
-    	DIDDocument newController = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	resolved = newController.getSubject().resolve();
-    	assertNull(resolved);
-
-    	newController.publish(TestConfig.storePass);
-
-    	resolved = newController.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(newController.getSubject(), resolved.getSubject());
-    	assertEquals(newController.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// create the transfer ticket
-    	TransferTicket ticket = controller.createTransferTicket(did, newController.getSubject(), TestConfig.storePass);
-    	assertTrue(ticket.isValid());
-
-    	// create new document for customized DID
-    	doc = newController.newCustomizedDid(did, true, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(newController.getSubject(), doc.getController());
-
-    	// transfer
-    	doc.publish(ticket, TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(newController.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-    }
-
-	@Test
-	public void testTransferMultisigCustomizedDidAfterCreate() throws DIDException, IOException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl1.isValid());
-    	ctrl1.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = ctrl1.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl1.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl2.isValid());
-    	ctrl2.publish(TestConfig.storePass);
-
-    	resolved = ctrl2.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl2.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl3.isValid());
-    	ctrl3.publish(TestConfig.storePass);
-
-    	resolved = ctrl3.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl3.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld3");
-    	DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-    			2, TestConfig.storePass);
-    	assertFalse(doc.isValid());
-
-    	final DIDDocument d = doc;
-    	assertThrows(AlreadySignedException.class, () -> {
-    		ctrl1.sign(d, TestConfig.storePass);
-    	});
-
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(3, doc.getControllerCount());
-    	List<DID> ctrls = new ArrayList<DID>();
-    	ctrls.add(ctrl1.getSubject());
-    	ctrls.add(ctrl2.getSubject());
-    	ctrls.add(ctrl3.getSubject());
-    	Collections.sort(ctrls);
-    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// new controllers for the did
-    	TestData.InstantData td = testData.getInstantData();
-    	td.getIssuerDocument();
-    	DIDDocument u1 = td.getUser1Document();
-    	DIDDocument u2 = td.getUser2Document();
-    	DIDDocument u3 = td.getUser3Document();
-    	DIDDocument u4 = td.getUser4Document();
-
-    	// transfer ticket
-    	TransferTicket ticket = ctrl1.createTransferTicket(did, u1.getSubject(), TestConfig.storePass);
-    	ticket = ctrl2.sign(ticket, TestConfig.storePass);
-    	assertTrue(ticket.isValid());
-
-    	doc = u1.newCustomizedDid(did, new DID[] {u2.getSubject(), u3.getSubject(), u4.getSubject()},
-    				3, true, TestConfig.storePass);
-    	doc = u2.sign(doc, TestConfig.storePass);
-    	doc = u3.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(4, doc.getControllerCount());
-    	assertEquals("3:4", doc.getMultiSignature().toString());
-
-    	// transfer
-    	doc.publish(ticket, TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-	}
-
-	@Test
-	public void testTransferMultisigCustomizedDidAfterUpdate() throws DIDException, IOException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl1.isValid());
-    	ctrl1.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = ctrl1.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl1.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl2.isValid());
-    	ctrl2.publish(TestConfig.storePass);
-
-    	resolved = ctrl2.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl2.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl3.isValid());
-    	ctrl3.publish(TestConfig.storePass);
-
-    	resolved = ctrl3.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl3.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld3");
-    	DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-    			2, TestConfig.storePass);
-    	assertFalse(doc.isValid());
-
-    	final DIDDocument d = doc;
-    	assertThrows(AlreadySignedException.class, () -> {
-    		ctrl1.sign(d, TestConfig.storePass);
-    	});
-
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(3, doc.getControllerCount());
-    	List<DID> ctrls = new ArrayList<DID>();
-    	ctrls.add(ctrl1.getSubject());
-    	ctrls.add(ctrl2.getSubject());
-    	ctrls.add(ctrl3.getSubject());
-    	Collections.sort(ctrls);
-    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit(ctrl2);
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	doc = ctrl1.sign(doc, TestConfig.storePass);
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-    	assertEquals(4, resolved.getPublicKeyCount());
-    	assertEquals(4, resolved.getAuthenticationKeyCount());
-
-    	// new controllers for the did
-    	TestData.InstantData td = testData.getInstantData();
-    	td.getIssuerDocument();
-    	DIDDocument u1 = td.getUser1Document();
-    	DIDDocument u2 = td.getUser2Document();
-    	DIDDocument u3 = td.getUser3Document();
-    	DIDDocument u4 = td.getUser4Document();
-
-    	// transfer ticket
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	TransferTicket ticket = doc.createTransferTicket(u1.getSubject(), TestConfig.storePass);
-    	ticket = ctrl2.sign(ticket, TestConfig.storePass);
-    	assertTrue(ticket.isValid());
-
-    	doc = u1.newCustomizedDid(did, new DID[] {u2.getSubject(), u3.getSubject(), u4.getSubject()},
-    				3, true, TestConfig.storePass);
-    	doc = u2.sign(doc, TestConfig.storePass);
-    	doc = u3.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(4, doc.getControllerCount());
-    	assertEquals("3:4", doc.getMultiSignature().toString());
-
-    	// transfer
-    	doc.publish(ticket, TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-	}
-
-	@Test
-	public void testUpdateDidWithoutPrevSignature() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.getMetadata().setPreviousSignature(null);
-
-    	// Update again
-    	db = doc.edit();
-    	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(3, doc.getPublicKeyCount());
-    	assertEquals(3, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-	}
-
-	@Test
-	public void testUpdateDidWithoutSignature() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.getMetadata().setSignature(null);
-
-    	// Update again
-    	db = doc.edit();
-    	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(3, doc.getPublicKeyCount());
-    	assertEquals(3, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	DIDDocument d = doc;
-    	Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
-    		d.publish(TestConfig.storePass);
-    	});
-    	assertEquals(d.getSubject().toString(), e.getMessage());
-	}
-
-	@Test
-	public void testUpdateDidWithoutAllSignatures() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.getMetadata().setPreviousSignature(null);
-    	doc.getMetadata().setSignature(null);
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	DIDDocument d = doc;
-    	Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
-    		d.publish(TestConfig.storePass);
-    	});
-    	assertEquals(d.getSubject().toString(), e.getMessage());
-	}
-
-	@Test
-	public void testForceUpdateDidWithoutAllSignatures() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.getMetadata().setPreviousSignature(null);
-    	doc.getMetadata().setSignature(null);
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-	}
-
-	@Test
-	public void testUpdateDidWithWrongPrevSignature() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-		doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.getMetadata().setPreviousSignature("1234567890");
-
-    	// Update
-    	db = doc.edit();
-    	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(3, doc.getPublicKeyCount());
-    	assertEquals(3, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-		doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-	}
-
-	@Test
-	public void testUpdateDidWithWrongSignature() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-   		doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.getMetadata().setSignature("1234567890");
-
-    	// Update
-    	db = doc.edit();
-    	key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(3, doc.getPublicKeyCount());
-    	assertEquals(3, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	DIDDocument d = doc;
-    	Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
-    		d.publish(TestConfig.storePass);
-    	});
-    	assertEquals(d.getSubject().toString(), e.getMessage());
-	}
-
-	@Test
-	public void testForceUpdateDidWithWrongPrevSignature() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.getMetadata().setPreviousSignature("1234567890");
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-	}
-
-	@Test
-	public void testForceUpdateDidWithWrongSignature() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.getMetadata().setSignature("1234567890");
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-	}
-
-	@Test
-	public void testDeactivateSelfAfterCreate() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.deactivate(TestConfig.storePass);
-
-    	doc = doc.getSubject().resolve();
-    	assertTrue(doc.isDeactivated());
-	}
-
-	@Test
-	public void testDeactivateSelfAfterUpdate() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	doc.deactivate(TestConfig.storePass);
-    	doc = doc.getSubject().resolve();
-    	assertTrue(doc.isDeactivated());
-	}
-
-	@Test
-	public void testDeactivateCustomizedDidAfterCreate() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument controller = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	DIDDocument resolved = controller.getSubject().resolve();
-    	assertNull(resolved);
-
-    	controller.publish(TestConfig.storePass);
-
-    	resolved = controller.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(controller.getSubject(), resolved.getSubject());
-    	assertEquals(controller.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld");
-    	DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(controller.getSubject(), doc.getController());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(controller.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Deactivate
-    	doc.deactivate(TestConfig.storePass);
-    	doc = doc.getSubject().resolve();
-    	assertTrue(doc.isDeactivated());
-    }
-
-	@Test
-	public void testDeactivateCustomizedDidAfterUpdate() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument controller = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	DIDDocument resolved = controller.getSubject().resolve();
-    	assertNull(resolved);
-
-    	controller.publish(TestConfig.storePass);
-
-    	resolved = controller.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(controller.getSubject(), resolved.getSubject());
-    	assertEquals(controller.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld");
-    	DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(controller.getSubject(), doc.getController());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(controller.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Deactivate
-    	doc.deactivate(TestConfig.storePass);
-    	doc = doc.getSubject().resolve();
-    	assertTrue(doc.isDeactivated());
-    }
-
-	@Test
-	public void testDeactivateCidAfterCreateByController() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument controller = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	DIDDocument resolved = controller.getSubject().resolve();
-    	assertNull(resolved);
-
-    	controller.publish(TestConfig.storePass);
-
-    	resolved = controller.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(controller.getSubject(), resolved.getSubject());
-    	assertEquals(controller.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld");
-    	DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(controller.getSubject(), doc.getController());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(controller.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Deactivate
-    	controller.deactivate(did, TestConfig.storePass);
-    	doc = did.resolve();
-    	assertTrue(doc.isDeactivated());
-    }
-
-	@Test
-	public void testDeactivateCidAfterUpdateByController() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument controller = identity.newDid(TestConfig.storePass);
-    	assertTrue(controller.isValid());
-
-    	DIDDocument resolved = controller.getSubject().resolve();
-    	assertNull(resolved);
-
-    	controller.publish(TestConfig.storePass);
-
-    	resolved = controller.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(controller.getSubject(), resolved.getSubject());
-    	assertEquals(controller.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld");
-    	DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(controller.getSubject(), doc.getController());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(controller.getSubject(), resolved.getController());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	assertEquals(2, doc.getPublicKeyCount());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	// Deactivate
-    	controller.deactivate(did, TestConfig.storePass);
-    	doc = did.resolve();
-    	assertTrue(doc.isDeactivated());
-    }
-
-	@Test
-	public void testDeactivateMultisigCustomizedDidAfterCreate() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl1.isValid());
-    	ctrl1.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = ctrl1.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl1.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl2.isValid());
-    	ctrl2.publish(TestConfig.storePass);
-
-    	resolved = ctrl2.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl2.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl3.isValid());
-    	ctrl3.publish(TestConfig.storePass);
-
-    	resolved = ctrl3.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl3.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld3");
-    	DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-    			2, TestConfig.storePass);
-    	assertFalse(doc.isValid());
-
-    	final DIDDocument d = doc;
-    	assertThrows(AlreadySignedException.class, () -> {
-    		ctrl1.sign(d, TestConfig.storePass);
-    	});
-
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(3, doc.getControllerCount());
-    	List<DID> ctrls = new ArrayList<DID>();
-    	ctrls.add(ctrl1.getSubject());
-    	ctrls.add(ctrl2.getSubject());
-    	ctrls.add(ctrl3.getSubject());
-    	Collections.sort(ctrls);
-    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Deactivate
-    	doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
-    	doc = doc.getSubject().resolve();
-    	assertTrue(doc.isDeactivated());
-	}
-
-	@Test
-	public void testDeactivateMultisigCustomizedDidAfterUpdate() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl1.isValid());
-    	ctrl1.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = ctrl1.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl1.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl2.isValid());
-    	ctrl2.publish(TestConfig.storePass);
-
-    	resolved = ctrl2.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl2.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl3.isValid());
-    	ctrl3.publish(TestConfig.storePass);
-
-    	resolved = ctrl3.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl3.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld3");
-    	DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-    			2, TestConfig.storePass);
-    	assertFalse(doc.isValid());
-
-    	final DIDDocument d = doc;
-    	assertThrows(AlreadySignedException.class, () -> {
-    		ctrl1.sign(d, TestConfig.storePass);
-    	});
-
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(3, doc.getControllerCount());
-    	List<DID> ctrls = new ArrayList<DID>();
-    	ctrls.add(ctrl1.getSubject());
-    	ctrls.add(ctrl2.getSubject());
-    	ctrls.add(ctrl3.getSubject());
-    	Collections.sort(ctrls);
-    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit(ctrl2);
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	doc = ctrl1.sign(doc, TestConfig.storePass);
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-    	assertEquals(4, resolved.getPublicKeyCount());
-    	assertEquals(4, resolved.getAuthenticationKeyCount());
-
-    	// Deactivate
-    	doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
-    	doc = doc.getSubject().resolve();
-    	assertTrue(doc.isDeactivated());
-	}
-
-	@Test
-	public void testDeactivateMultisigCidAfterCreateByController() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl1.isValid());
-    	ctrl1.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = ctrl1.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl1.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl2.isValid());
-    	ctrl2.publish(TestConfig.storePass);
-
-    	resolved = ctrl2.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl2.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl3.isValid());
-    	ctrl3.publish(TestConfig.storePass);
-
-    	resolved = ctrl3.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl3.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld3");
-    	DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-    			2, TestConfig.storePass);
-    	assertFalse(doc.isValid());
-
-    	final DIDDocument d = doc;
-    	assertThrows(AlreadySignedException.class, () -> {
-    		ctrl1.sign(d, TestConfig.storePass);
-    	});
-
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(3, doc.getControllerCount());
-    	List<DID> ctrls = new ArrayList<DID>();
-    	ctrls.add(ctrl1.getSubject());
-    	ctrls.add(ctrl2.getSubject());
-    	ctrls.add(ctrl3.getSubject());
-    	Collections.sort(ctrls);
-    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Deactivate
-    	ctrl1.deactivate(did, TestConfig.storePass);
-    	doc = did.resolve();
-    	assertTrue(doc.isDeactivated());
-	}
-
-	@Test
-	public void testDeactivateMultisigCidAfterUpdateByController() throws DIDException {
-    	RootIdentity identity = testData.getRootIdentity();
-
-    	// Create normal DID first
-    	DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl1.isValid());
-    	ctrl1.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = ctrl1.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl1.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl1.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl2.isValid());
-    	ctrl2.publish(TestConfig.storePass);
-
-    	resolved = ctrl2.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl2.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl2.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-       	DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-    	assertTrue(ctrl3.isValid());
-    	ctrl3.publish(TestConfig.storePass);
-
-    	resolved = ctrl3.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(ctrl3.getSubject(), resolved.getSubject());
-    	assertEquals(ctrl3.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Create customized DID
-    	DID did = new DID("did:elastos:helloworld3");
-    	DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-    			2, TestConfig.storePass);
-    	assertFalse(doc.isValid());
-
-    	final DIDDocument d = doc;
-    	assertThrows(AlreadySignedException.class, () -> {
-    		ctrl1.sign(d, TestConfig.storePass);
-    	});
-
-    	doc = ctrl2.sign(doc, TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	assertEquals(did, doc.getSubject());
-    	assertEquals(3, doc.getControllerCount());
-    	List<DID> ctrls = new ArrayList<DID>();
-    	ctrls.add(ctrl1.getSubject());
-    	ctrls.add(ctrl2.getSubject());
-    	ctrls.add(ctrl3.getSubject());
-    	Collections.sort(ctrls);
-    	assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
-
-    	resolved = did.resolve();
-    	assertNull(resolved);
-
-    	doc.setEffectiveController(ctrl1.getSubject());
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = did.resolve();
-    	assertNotNull(resolved);
-    	assertEquals(did, resolved.getSubject());
-    	assertEquals(doc.getProof().getSignature(),
-    			resolved.getProof().getSignature());
-
-    	assertTrue(resolved.isValid());
-
-    	// Update
-    	DIDDocumentBuilder db = doc.edit(ctrl2);
-    	HDKey key = TestData.generateKeypair();
-    	db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-    	doc = db.seal(TestConfig.storePass);
-    	doc = ctrl1.sign(doc, TestConfig.storePass);
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-    	assertEquals(4, resolved.getPublicKeyCount());
-    	assertEquals(4, resolved.getAuthenticationKeyCount());
-
-    	// Deactivate
-    	ctrl2.deactivate(did, TestConfig.storePass);
-    	doc = did.resolve();
-    	assertTrue(doc.isDeactivated());
-	}
-
-	@Test
-	public void testDeactivateWithAuthorization1() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	DIDDocument target = identity.newDid(TestConfig.storePass);
-    	DIDDocumentBuilder db = target.edit();
-    	db.authorizationDid("#recovery", doc.getSubject().toString());
-    	target = db.seal(TestConfig.storePass);
-    	assertNotNull(target);
-    	assertEquals(1, target.getAuthorizationKeyCount());
-    	assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
-    	store.storeDid(target);
-
-    	target.publish(TestConfig.storePass);
-
-    	resolved = target.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(target.toString(), resolved.toString());
-
-    	doc.deactivate(target.getSubject(), TestConfig.storePass);
-    	target = target.getSubject().resolve();
-    	assertTrue(target.isDeactivated());
-
-    	doc = doc.getSubject().resolve();
-    	assertFalse(doc.isDeactivated());
-	}
-
-	@Test
-	public void testDeactivateWithAuthorization2() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
-    	db.addAuthenticationKey(id, key.getPublicKeyBase58());
-    	store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
-    	doc = db.seal(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	DIDDocument target = identity.newDid(TestConfig.storePass);
-    	db = target.edit();
-    	db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
-    			key.getPublicKeyBase58());
-    	target = db.seal(TestConfig.storePass);
-    	assertNotNull(target);
-    	assertEquals(1, target.getAuthorizationKeyCount());
-    	assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
-    	store.storeDid(target);
-
-    	target.publish(TestConfig.storePass);
-
-    	resolved = target.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(target.toString(), resolved.toString());
-
-    	doc.deactivate(target.getSubject(), id, TestConfig.storePass);
-    	target = target.getSubject().resolve();
-    	assertTrue(target.isDeactivated());
-
-    	doc = doc.getSubject().resolve();
-    	assertFalse(doc.isDeactivated());
-	}
-
-	@Test
-	public void testDeactivateWithAuthorization3() throws DIDException {
-		RootIdentity identity = testData.getRootIdentity();
-
-    	DIDDocument doc = identity.newDid(TestConfig.storePass);
-    	DIDDocumentBuilder db = doc.edit();
-    	HDKey key = TestData.generateKeypair();
-    	DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
-    	db.addAuthenticationKey(id, key.getPublicKeyBase58());
-    	store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
-    	doc = db.seal(TestConfig.storePass);
-    	assertTrue(doc.isValid());
-    	assertEquals(2, doc.getAuthenticationKeyCount());
-    	store.storeDid(doc);
-
-    	doc.publish(TestConfig.storePass);
-
-    	DIDDocument resolved = doc.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(doc.toString(), resolved.toString());
-
-    	DIDDocument target = identity.newDid(TestConfig.storePass);
-    	db = target.edit();
-    	db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
-    			key.getPublicKeyBase58());
-    	target = db.seal(TestConfig.storePass);
-    	assertNotNull(target);
-    	assertEquals(1, target.getAuthorizationKeyCount());
-    	assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
-    	store.storeDid(target);
-
-    	target.publish(TestConfig.storePass);
-
-    	resolved = target.getSubject().resolve();
-    	assertNotNull(resolved);
-    	assertEquals(target.toString(), resolved.toString());
-
-    	doc.deactivate(target.getSubject(), TestConfig.storePass);
-    	target = target.getSubject().resolve();
-    	assertTrue(target.isDeactivated());
-
-    	doc = doc.getSubject().resolve();
-    	assertFalse(doc.isDeactivated());
-	}
-}
+		expect(svcs.size).toBe(0);
+
+		svcs = doc.selectServices(null, "notExistType");
+		expect(svcs.size).toBe(0);
+	})
+	test("testAddService", ()=>{
+		// testData.getRootIdentity();
+
+		// let doc = testData.getCompatibleData(2).getDocument("user1");
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// let db = doc.edit();
+
+		// // Add services
+		// db.addService("#test-svc-1", "Service.Testing",
+		// 		"https://www.elastos.org/testing1");
+
+		// db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
+		// 		"Service.Testing", "https://www.elastos.org/testing2");
+
+		// // Service id already exist, should failed.
+		// assertThrows(DIDObjectAlreadyExistException.class, () -> {
+		// 	db.addService("#vcr", "test", "https://www.elastos.org/test");
+		// });
+
+		// doc = db.seal(TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// // Check the final count
+		// assertEquals(5, doc.getServiceCount());
+
+		// // Try to select new added 2 services
+		// List<Service> svcs = doc.selectServices(null, "Service.Testing");
+		// expect(svcs.size).toBe(2);
+		// assertEquals("Service.Testing", svcs.get(0).getType());
+		// assertEquals("Service.Testing", svcs.get(1).getType());
+	})
+	test("testAddServiceWithDescription", ()=>{
+		// testData.getRootIdentity();
+
+		// Map<String, Object> map = new HashMap<String, Object>();
+		// map.put("abc", "helloworld");
+		// map.put("foo", 123);
+		// map.put("bar", "foobar");
+		// map.put("foobar", "lalala...");
+		// map.put("date", Calendar.getInstance().getTime());
+		// map.put("ABC", "Helloworld");
+		// map.put("FOO", 678);
+		// map.put("BAR", "Foobar");
+		// map.put("FOOBAR", "Lalala...");
+		// map.put("DATE", Calendar.getInstance().getTime());
+
+		// Map<String, Object> props = new HashMap<String, Object>();
+		// props.put("abc", "helloworld");
+		// props.put("foo", 123);
+		// props.put("bar", "foobar");
+		// props.put("foobar", "lalala...");
+		// props.put("date", Calendar.getInstance().getTime());
+		// props.put("map", map);
+		// props.put("ABC", "Helloworld");
+		// props.put("FOO", 678);
+		// props.put("BAR", "Foobar");
+		// props.put("FOOBAR", "Lalala...");
+		// props.put("DATE", Calendar.getInstance().getTime());
+		// props.put("MAP", map);
+
+		// let doc = testData.getCompatibleData(2).getDocument("user1");
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// let db = doc.edit();
+
+		// // Add services
+		// db.addService("#test-svc-1", "Service.Testing",
+		// 		"https://www.elastos.org/testing1", props);
+
+		// db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
+		// 		"Service.Testing", "https://www.elastos.org/testing2", props);
+
+		// db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-3"),
+		// 		"Service.Testing", "https://www.elastos.org/testing3");
+
+		// // Service id already exist, should failed.
+		// assertThrows(DIDObjectAlreadyExistException.class, () -> {
+		// 	db.addService("#vcr", "test", "https://www.elastos.org/test", props);
+		// });
+
+		// doc = db.seal(TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// // Check the final count
+		// assertEquals(6, doc.getServiceCount());
+
+		// // Try to select new added 2 services
+		// List<Service> svcs = doc.selectServices(null, "Service.Testing");
+		// expect(svcs.size).toBe(3);
+		// assertEquals("Service.Testing", svcs.get(0).getType());
+		// assertTrue(!svcs.get(0).getProperties().isEmpty());
+		// assertEquals("Service.Testing", svcs.get(1).getType());
+		// assertTrue(!svcs.get(1).getProperties().isEmpty());
+		// assertEquals("Service.Testing", svcs.get(2).getType());
+		// assertTrue(svcs.get(2).getProperties().isEmpty());
+	})
+	test("testAddServiceWithCid", ()=>{
+		// let cd = testData.getCompatibleData(2);
+		// testData.getRootIdentity();
+
+		// cd.getDocument("issuer");
+		// let user1 = cd.getDocument("user1");
+		// cd.getDocument("user2");
+		// let user3 = cd.getDocument("user3");
+		// cd.getDocument("examplecorp");
+
+		// let doc = cd.getDocument("foobar");
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// DIDDocumentBuilder db = doc.edit(user3);
+
+		// // Add services
+		// db.addService("#test-svc-1", "Service.Testing",
+		// 		"https://www.elastos.org/testing1");
+
+		// db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
+		// 		"Service.Testing", "https://www.elastos.org/testing2");
+
+		// // Service id already exist, should failed.
+		// assertThrows(DIDObjectAlreadyExistException.class, () -> {
+		// 	db.addService("#vcr", "test", "https://www.elastos.org/test");
+		// });
+
+		// doc = db.seal(TestConfig.storePass);
+		// doc = user1.sign(doc, TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// // Check the final count
+		// assertEquals(4, doc.getServiceCount());
+
+		// // Try to select new added 2 services
+		// List<Service> svcs = doc.selectServices(null, "Service.Testing");
+		// expect(svcs.size).toBe(2);
+		// assertEquals("Service.Testing", svcs.get(0).getType());
+		// assertEquals("Service.Testing", svcs.get(1).getType());
+	})
+	test("testAddServiceWithCidAndDescription", ()=>{
+		// let cd = testData.getCompatibleData(2);
+		// testData.getRootIdentity();
+
+		// cd.getDocument("issuer");
+		// let user1 = cd.getDocument("user1");
+		// cd.getDocument("user2");
+		// let user3 = cd.getDocument("user3");
+		// cd.getDocument("examplecorp");
+
+		// let doc = cd.getDocument("foobar");
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// DIDDocumentBuilder db = doc.edit(user3);
+
+		// Map<String, Object> map = new HashMap<String, Object>();
+		// map.put("abc", "helloworld");
+		// map.put("foo", 123);
+		// map.put("bar", "foobar");
+		// map.put("foobar", "lalala...");
+		// map.put("date", Calendar.getInstance().getTime());
+		// map.put("ABC", "Helloworld");
+		// map.put("FOO", 678);
+		// map.put("BAR", "Foobar");
+		// map.put("FOOBAR", "Lalala...");
+		// map.put("DATE", Calendar.getInstance().getTime());
+
+		// Map<String, Object> props = new HashMap<String, Object>();
+		// props.put("abc", "helloworld");
+		// props.put("foo", 123);
+		// props.put("bar", "foobar");
+		// props.put("foobar", "lalala...");
+		// props.put("date", Calendar.getInstance().getTime());
+		// props.put("map", map);
+		// props.put("ABC", "Helloworld");
+		// props.put("FOO", 678);
+		// props.put("BAR", "Foobar");
+		// props.put("FOOBAR", "Lalala...");
+		// props.put("DATE", Calendar.getInstance().getTime());
+		// props.put("MAP", map);
+
+		// // Add services
+		// db.addService("#test-svc-1", "Service.Testing",
+		// 		"https://www.elastos.org/testing1", props);
+
+		// db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
+		// 		"Service.Testing", "https://www.elastos.org/testing2", props);
+
+		// db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-3"),
+		// 		"Service.Testing", "https://www.elastos.org/testing3");
+
+		// // Service id already exist, should failed.
+		// assertThrows(DIDObjectAlreadyExistException.class, () -> {
+		// 	db.addService("#vcr", "test", "https://www.elastos.org/test", props);
+		// });
+
+		// doc = db.seal(TestConfig.storePass);
+		// doc = user1.sign(doc, TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// // Check the final count
+		// assertEquals(5, doc.getServiceCount());
+
+		// // Try to select new added 2 services
+		// List<Service> svcs = doc.selectServices(null, "Service.Testing");
+		// expect(svcs.size).toBe(3);
+		// assertEquals("Service.Testing", svcs.get(0).getType());
+		// assertTrue(!svcs.get(0).getProperties().isEmpty());
+		// assertEquals("Service.Testing", svcs.get(1).getType());
+		// assertTrue(!svcs.get(1).getProperties().isEmpty());
+		// assertEquals("Service.Testing", svcs.get(2).getType());
+		// assertTrue(svcs.get(2).getProperties().isEmpty());
+	})
+	test("testRemoveService", ()=>{
+		// testData.getRootIdentity();
+
+		// let doc = testData.getCompatibleData(2).getDocument("user1");
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// let db = doc.edit();
+
+		// // remove services
+		// db.removeService("#openid");
+
+		// db.removeService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+
+		// // Service not exist, should fail.
+		// assertThrows(DIDObjectNotExistException.class, () -> {
+		// 	db.removeService("#notExistService");
+		// });
+
+		// doc = db.seal(TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// let svc = doc.getService("#openid");
+		// expect(svc).toBeNull();
+
+		// svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+		// expect(svc).toBeNull();
+
+		// // Check the final count
+		// assertEquals(1, doc.getServiceCount());
+	})
+	test("testRemoveServiceWithCid", ()=>{
+		// let cd = testData.getCompatibleData(2);
+		// testData.getRootIdentity();
+
+		// cd.getDocument("issuer");
+		// let user1 = cd.getDocument("user1");
+		// cd.getDocument("user2");
+		// let user3 = cd.getDocument("user3");
+		// cd.getDocument("examplecorp");
+
+		// let doc = cd.getDocument("foobar");
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// let db = doc.edit(user1);
+
+		// // remove services
+		// db.removeService("#vault");
+
+		// db.removeService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+
+		// // Service not exist, should fail.
+		// assertThrows(DIDObjectNotExistException.class, () -> {
+		// 	db.removeService("#notExistService");
+		// });
+
+		// doc = db.seal(TestConfig.storePass);
+		// doc = user3.sign(doc, TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// let svc = doc.getService("#openid");
+		// expect(svc).toBeNull();
+
+		// svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+		// expect(svc).toBeNull();
+
+		// // Check the final count
+		// assertEquals(0, doc.getServiceCount());
+
+	})
+
+	test.each([
+	"examplecorp",
+	"foobar",
+	"foo",
+	"bar",
+	"baz"])("testParseAndSerializeDocument", (did)=>{
+		// let version = 2;
+		// let cd = testData.getCompatibleData(version);
+    	// cd.loadAll();
+
+    	// let compactJson = cd.getDocumentJson(did, "compact");
+		// let compact = DIDDocumentparse(compactJson);
+		// assertNotNull(compact);
+		// assertTrue(compact.isValid());
+
+	   	// let normalizedJson = cd.getDocumentJson(did, "normalized");
+		// let normalized = DIDDocumentparse(normalizedJson);
+		// assertNotNull(normalized);
+		// assertTrue(normalized.isValid());
+
+		// let doc = cd.getDocument(did);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// assertEquals(normalizedJson, compact.toString(true));
+		// assertEquals(normalizedJson, normalized.toString(true));
+		// assertEquals(normalizedJson, doc.toString(true));
+
+		// // Don't check the compact mode for the old versions
+		// if (cd.isLatestVersion()) {
+		// 	assertEquals(compactJson, compact.toString(false));
+		// 	assertEquals(compactJson, normalized.toString(false));
+		// 	assertEquals(compactJson, doc.toString(false));
+		// }
+	})
+
+	test("testSignAndVerify", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// byte[] data = new byte[1024];
+		// DIDURL pkid = DIDURL.newWithDID(doc.getSubject(), "#primary");
+
+		// for (int i = 0; i < 10; i++) {
+		// 	Arrays.fill(data, (byte) i);
+
+		// 	String sig = doc.sign(pkid, TestConfig.storePass, data);
+		// 	boolean result = doc.verify(pkid, sig, data);
+		// 	assertTrue(result);
+
+		// 	data[0] = 0xF;
+		// 	result = doc.verify(pkid, sig, data);
+		// 	assertFalse(result);
+
+		// 	sig = doc.sign(TestConfig.storePass, data);
+		// 	result = doc.verify(sig, data);
+		// 	assertTrue(result);
+
+		// 	data[0] = (byte) i;
+		// 	result = doc.verify(sig, data);
+		// 	assertFalse(result);
+		// }
+	})
+	test("testDerive", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// for (int i = 0; i < 1000; i++) {
+		// 	String strKey = doc.derive(i, TestConfig.storePass);
+		// 	HDKey key = HDKey.deserializeBase58(strKey);
+
+		// 	byte[] binKey = Base58.decode(strKey);
+		// 	byte[] sk = Arrays.copyOfRange(binKey, 46, 78);
+
+		// 	assertEquals(key.getPrivateKeyBytes().length, sk.length);
+		// 	assertArrayEquals(key.getPrivateKeyBytes(), sk);
+		// }
+	})
+	test("testDeriveFromIdentifier", ()=>{
+		// String identifier = "org.elastos.did.test";
+
+		// RootIdentity identity = testData.getRootIdentity();
+		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// expect(doc).not.toBeNull();
+		// expect(doc.isValid()).toBeTruthy()
+
+		// for (int i = -100; i < 100; i++) {
+		// 	String strKey = doc.derive(identifier, i, TestConfig.storePass);
+		// 	HDKey key = HDKey.deserializeBase58(strKey);
+
+		// 	byte[] binKey = Base58.decode(strKey);
+		// 	byte[] sk = Arrays.copyOfRange(binKey, 46, 78);
+
+		// 	assertEquals(key.getPrivateKeyBytes().length, sk.length);
+		// 	assertArrayEquals(key.getPrivateKeyBytes(), sk);
+		// }
+	})
+	test("testCreateCustomizedDid", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument controller = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// DIDDocument resolved = controller.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// controller.publish(TestConfig.storePass);
+
+    	// resolved = controller.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(controller.getSubject(), resolved.getSubject());
+    	// assertEquals(controller.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld");
+    	// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(controller.getSubject(), doc.getController());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(controller.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+	})
+	test("testCreateMultisigCustomizedDid", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl1.isValid());
+    	// ctrl1.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = ctrl1.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl1.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl2.isValid());
+    	// ctrl2.publish(TestConfig.storePass);
+
+    	// resolved = ctrl2.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl2.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl3.isValid());
+    	// ctrl3.publish(TestConfig.storePass);
+
+    	// resolved = ctrl3.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl3.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld3");
+    	// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    	// 		2, TestConfig.storePass);
+    	// assertFalse(doc.isValid());
+
+    	// final DIDDocument d = doc;
+    	// assertThrows(AlreadySignedException.class, () -> {
+    	// 	ctrl1.sign(d, TestConfig.storePass);
+    	// });
+
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(3, doc.getControllerCount());
+    	// List<DID> ctrls = new ArrayList<DID>();
+    	// ctrls.add(ctrl1.getSubject());
+    	// ctrls.add(ctrl2.getSubject());
+    	// ctrls.add(ctrl3.getSubject());
+    	// Collections.sort(ctrls);
+    	// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+	})
+	test("testUpdateDid", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Update again
+    	// db = doc.edit();
+    	// key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(3, doc.getPublicKeyCount());
+    	// expect(doc.getAuthenticationKeyCount()).toBe(3)
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+	})
+	test("testUpdateCustomizedDid", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument controller = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// DIDDocument resolved = controller.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// controller.publish(TestConfig.storePass);
+
+    	// resolved = controller.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(controller.getSubject(), resolved.getSubject());
+    	// assertEquals(controller.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld");
+    	// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(controller.getSubject(), doc.getController());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(controller.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Update again
+    	// db = doc.edit();
+    	// key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(3, doc.getPublicKeyCount());
+    	// expect(doc.getAuthenticationKeyCount()).toBe(3)
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+	})
+	test("testUpdateMultisigCustomizedDid", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl1.isValid());
+    	// ctrl1.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = ctrl1.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl1.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl2.isValid());
+    	// ctrl2.publish(TestConfig.storePass);
+
+    	// resolved = ctrl2.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl2.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl3.isValid());
+    	// ctrl3.publish(TestConfig.storePass);
+
+    	// resolved = ctrl3.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl3.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld3");
+    	// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    	// 		2, TestConfig.storePass);
+    	// assertFalse(doc.isValid());
+
+    	// final DIDDocument d = doc;
+    	// assertThrows(AlreadySignedException.class, () -> {
+    	// 	ctrl1.sign(d, TestConfig.storePass);
+    	// });
+
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(3, doc.getControllerCount());
+    	// List<DID> ctrls = new ArrayList<DID>();
+    	// ctrls.add(ctrl1.getSubject());
+    	// ctrls.add(ctrl2.getSubject());
+    	// ctrls.add(ctrl3.getSubject());
+    	// Collections.sort(ctrls);
+    	// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Update
+    	// DIDDocumentBuilder db = doc.edit(ctrl2);
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// doc = ctrl1.sign(doc, TestConfig.storePass);
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+    	// assertEquals(4, resolved.getPublicKeyCount());
+    	// assertEquals(4, resolved.getAuthenticationKeyCount());
+
+    	// // Update again
+    	// db = doc.edit(ctrl3);
+    	// key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+    	// assertEquals(5, resolved.getPublicKeyCount());
+    	// assertEquals(5, resolved.getAuthenticationKeyCount());
+	})
+	test("testTransferCustomizedDidAfterCreate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument controller = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// DIDDocument resolved = controller.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// controller.publish(TestConfig.storePass);
+
+    	// resolved = controller.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(controller.getSubject(), resolved.getSubject());
+    	// assertEquals(controller.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld");
+    	// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(controller.getSubject(), doc.getController());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(controller.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // create new controller
+    	// DIDDocument newController = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// resolved = newController.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// newController.publish(TestConfig.storePass);
+
+    	// resolved = newController.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(newController.getSubject(), resolved.getSubject());
+    	// assertEquals(newController.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // create the transfer ticket
+    	// doc.setEffectiveController(controller.getSubject());
+    	// TransferTicket ticket = doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
+    	// assertTrue(ticket.isValid());
+
+    	// // create new document for customized DID
+    	// doc = newController.newCustomizedDid(did, true, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(newController.getSubject(), doc.getController());
+
+    	// // transfer
+    	// doc.publish(ticket, TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(newController.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+	})
+	test("testTransferCustomizedDidAfterUpdate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument controller = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// DIDDocument resolved = controller.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// controller.publish(TestConfig.storePass);
+
+    	// resolved = controller.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(controller.getSubject(), resolved.getSubject());
+    	// assertEquals(controller.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld");
+    	// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(controller.getSubject(), doc.getController());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(controller.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // create new controller
+    	// DIDDocument newController = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// resolved = newController.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// newController.publish(TestConfig.storePass);
+
+    	// resolved = newController.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(newController.getSubject(), resolved.getSubject());
+    	// assertEquals(newController.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // create the transfer ticket
+    	// TransferTicket ticket = controller.createTransferTicket(did, newController.getSubject(), TestConfig.storePass);
+    	// assertTrue(ticket.isValid());
+
+    	// // create new document for customized DID
+    	// doc = newController.newCustomizedDid(did, true, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(newController.getSubject(), doc.getController());
+
+    	// // transfer
+    	// doc.publish(ticket, TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(newController.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+	})
+	test("testTransferMultisigCustomizedDidAfterCreate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl1.isValid());
+    	// ctrl1.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = ctrl1.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl1.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl2.isValid());
+    	// ctrl2.publish(TestConfig.storePass);
+
+    	// resolved = ctrl2.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl2.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl3.isValid());
+    	// ctrl3.publish(TestConfig.storePass);
+
+    	// resolved = ctrl3.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl3.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld3");
+    	// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    	// 		2, TestConfig.storePass);
+    	// assertFalse(doc.isValid());
+
+    	// final DIDDocument d = doc;
+    	// assertThrows(AlreadySignedException.class, () -> {
+    	// 	ctrl1.sign(d, TestConfig.storePass);
+    	// });
+
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(3, doc.getControllerCount());
+    	// List<DID> ctrls = new ArrayList<DID>();
+    	// ctrls.add(ctrl1.getSubject());
+    	// ctrls.add(ctrl2.getSubject());
+    	// ctrls.add(ctrl3.getSubject());
+    	// Collections.sort(ctrls);
+    	// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // new controllers for the did
+    	// TestData.InstantData td = testData.getInstantData();
+    	// td.getIssuerDocument();
+    	// DIDDocument u1 = td.getUser1Document();
+    	// DIDDocument u2 = td.getUser2Document();
+    	// DIDDocument u3 = td.getUser3Document();
+    	// DIDDocument u4 = td.getUser4Document();
+
+    	// // transfer ticket
+    	// TransferTicket ticket = ctrl1.createTransferTicket(did, u1.getSubject(), TestConfig.storePass);
+    	// ticket = ctrl2.sign(ticket, TestConfig.storePass);
+    	// assertTrue(ticket.isValid());
+
+    	// doc = u1.newCustomizedDid(did, new DID[] {u2.getSubject(), u3.getSubject(), u4.getSubject()},
+    	// 			3, true, TestConfig.storePass);
+    	// doc = u2.sign(doc, TestConfig.storePass);
+    	// doc = u3.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(4, doc.getControllerCount());
+    	// assertEquals("3:4", doc.getMultiSignature().toString());
+
+    	// // transfer
+    	// doc.publish(ticket, TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+	})
+	test("testTransferMultisigCustomizedDidAfterUpdate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl1.isValid());
+    	// ctrl1.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = ctrl1.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl1.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl2.isValid());
+    	// ctrl2.publish(TestConfig.storePass);
+
+    	// resolved = ctrl2.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl2.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl3.isValid());
+    	// ctrl3.publish(TestConfig.storePass);
+
+    	// resolved = ctrl3.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl3.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld3");
+    	// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    	// 		2, TestConfig.storePass);
+    	// assertFalse(doc.isValid());
+
+    	// final DIDDocument d = doc;
+    	// assertThrows(AlreadySignedException.class, () -> {
+    	// 	ctrl1.sign(d, TestConfig.storePass);
+    	// });
+
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(3, doc.getControllerCount());
+    	// List<DID> ctrls = new ArrayList<DID>();
+    	// ctrls.add(ctrl1.getSubject());
+    	// ctrls.add(ctrl2.getSubject());
+    	// ctrls.add(ctrl3.getSubject());
+    	// Collections.sort(ctrls);
+    	// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Update
+    	// DIDDocumentBuilder db = doc.edit(ctrl2);
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// doc = ctrl1.sign(doc, TestConfig.storePass);
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+    	// assertEquals(4, resolved.getPublicKeyCount());
+    	// assertEquals(4, resolved.getAuthenticationKeyCount());
+
+    	// // new controllers for the did
+    	// TestData.InstantData td = testData.getInstantData();
+    	// td.getIssuerDocument();
+    	// DIDDocument u1 = td.getUser1Document();
+    	// DIDDocument u2 = td.getUser2Document();
+    	// DIDDocument u3 = td.getUser3Document();
+    	// DIDDocument u4 = td.getUser4Document();
+
+    	// // transfer ticket
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// TransferTicket ticket = doc.createTransferTicket(u1.getSubject(), TestConfig.storePass);
+    	// ticket = ctrl2.sign(ticket, TestConfig.storePass);
+    	// assertTrue(ticket.isValid());
+
+    	// doc = u1.newCustomizedDid(did, new DID[] {u2.getSubject(), u3.getSubject(), u4.getSubject()},
+    	// 			3, true, TestConfig.storePass);
+    	// doc = u2.sign(doc, TestConfig.storePass);
+    	// doc = u3.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(4, doc.getControllerCount());
+    	// assertEquals("3:4", doc.getMultiSignature().toString());
+
+    	// // transfer
+    	// doc.publish(ticket, TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+	})
+	test("testUpdateDidWithoutPrevSignature", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.getMetadata().setPreviousSignature(null);
+
+    	// // Update again
+    	// db = doc.edit();
+    	// key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(3, doc.getPublicKeyCount());
+    	// expect(doc.getAuthenticationKeyCount()).toBe(3)
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+	})
+	test("testUpdateDidWithoutSignature", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.getMetadata().setSignature(null);
+
+    	// // Update again
+    	// db = doc.edit();
+    	// key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(3, doc.getPublicKeyCount());
+    	// expect(doc.getAuthenticationKeyCount()).toBe(3)
+    	// store.storeDid(doc);
+
+    	// DIDDocument d = doc;
+    	// Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
+    	// 	d.publish(TestConfig.storePass);
+    	// });
+    	// assertEquals(d.getSubject().toString(), e.getMessage());
+	})
+	test("testUpdateDidWithoutAllSignatures", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.getMetadata().setPreviousSignature(null);
+    	// doc.getMetadata().setSignature(null);
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// DIDDocument d = doc;
+    	// Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
+    	// 	d.publish(TestConfig.storePass);
+    	// });
+    	// assertEquals(d.getSubject().toString(), e.getMessage());
+	})
+	test("testForceUpdateDidWithoutAllSignatures", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.getMetadata().setPreviousSignature(null);
+    	// doc.getMetadata().setSignature(null);
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+	})
+	test("testUpdateDidWithWrongPrevSignature", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+		// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.getMetadata().setPreviousSignature("1234567890");
+
+    	// // Update
+    	// db = doc.edit();
+    	// key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(3, doc.getPublicKeyCount());
+    	// expect(doc.getAuthenticationKeyCount()).toBe(3)
+    	// store.storeDid(doc);
+
+		// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+	})
+	test("testUpdateDidWithWrongSignature", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+   		// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.getMetadata().setSignature("1234567890");
+
+    	// // Update
+    	// db = doc.edit();
+    	// key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(3, doc.getPublicKeyCount());
+    	// expect(doc.getAuthenticationKeyCount()).toBe(3)
+    	// store.storeDid(doc);
+
+    	// DIDDocument d = doc;
+    	// Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
+    	// 	d.publish(TestConfig.storePass);
+    	// });
+    	// assertEquals(d.getSubject().toString(), e.getMessage());
+	})
+	test("testForceUpdateDidWithWrongPrevSignature", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.getMetadata().setPreviousSignature("1234567890");
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+	})
+	test("testForceUpdateDidWithWrongSignature", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.getMetadata().setSignature("1234567890");
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+	})
+	test("testDeactivateSelfAfterCreate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.deactivate(TestConfig.storePass);
+
+    	// doc = doc.getSubject().resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateSelfAfterUpdate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// doc.deactivate(TestConfig.storePass);
+    	// doc = doc.getSubject().resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateCustomizedDidAfterCreate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument controller = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// DIDDocument resolved = controller.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// controller.publish(TestConfig.storePass);
+
+    	// resolved = controller.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(controller.getSubject(), resolved.getSubject());
+    	// assertEquals(controller.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld");
+    	// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(controller.getSubject(), doc.getController());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(controller.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Deactivate
+    	// doc.deactivate(TestConfig.storePass);
+    	// doc = doc.getSubject().resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateCustomizedDidAfterUpdate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument controller = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// DIDDocument resolved = controller.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// controller.publish(TestConfig.storePass);
+
+    	// resolved = controller.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(controller.getSubject(), resolved.getSubject());
+    	// assertEquals(controller.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld");
+    	// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(controller.getSubject(), doc.getController());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(controller.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Deactivate
+    	// doc.deactivate(TestConfig.storePass);
+    	// doc = doc.getSubject().resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateCidAfterCreateByController", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument controller = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// DIDDocument resolved = controller.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// controller.publish(TestConfig.storePass);
+
+    	// resolved = controller.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(controller.getSubject(), resolved.getSubject());
+    	// assertEquals(controller.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld");
+    	// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(controller.getSubject(), doc.getController());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(controller.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Deactivate
+    	// controller.deactivate(did, TestConfig.storePass);
+    	// doc = did.resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateCidAfterUpdateByController", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument controller = identity.newDid(TestConfig.storePass);
+    	// assertTrue(controller.isValid());
+
+    	// DIDDocument resolved = controller.getSubject().resolve();
+    	// assertNull(resolved);
+
+    	// controller.publish(TestConfig.storePass);
+
+    	// resolved = controller.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(controller.getSubject(), resolved.getSubject());
+    	// assertEquals(controller.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld");
+    	// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(controller.getSubject(), doc.getController());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(controller.getSubject(), resolved.getController());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Update
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// assertEquals(2, doc.getPublicKeyCount());
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// // Deactivate
+    	// controller.deactivate(did, TestConfig.storePass);
+    	// doc = did.resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateMultisigCustomizedDidAfterCreate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl1.isValid());
+    	// ctrl1.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = ctrl1.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl1.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl2.isValid());
+    	// ctrl2.publish(TestConfig.storePass);
+
+    	// resolved = ctrl2.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl2.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl3.isValid());
+    	// ctrl3.publish(TestConfig.storePass);
+
+    	// resolved = ctrl3.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl3.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld3");
+    	// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    	// 		2, TestConfig.storePass);
+    	// assertFalse(doc.isValid());
+
+    	// final DIDDocument d = doc;
+    	// assertThrows(AlreadySignedException.class, () -> {
+    	// 	ctrl1.sign(d, TestConfig.storePass);
+    	// });
+
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(3, doc.getControllerCount());
+    	// List<DID> ctrls = new ArrayList<DID>();
+    	// ctrls.add(ctrl1.getSubject());
+    	// ctrls.add(ctrl2.getSubject());
+    	// ctrls.add(ctrl3.getSubject());
+    	// Collections.sort(ctrls);
+    	// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Deactivate
+    	// doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
+    	// doc = doc.getSubject().resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateMultisigCustomizedDidAfterUpdate", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl1.isValid());
+    	// ctrl1.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = ctrl1.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl1.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl2.isValid());
+    	// ctrl2.publish(TestConfig.storePass);
+
+    	// resolved = ctrl2.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl2.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl3.isValid());
+    	// ctrl3.publish(TestConfig.storePass);
+
+    	// resolved = ctrl3.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl3.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld3");
+    	// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    	// 		2, TestConfig.storePass);
+    	// assertFalse(doc.isValid());
+
+    	// final DIDDocument d = doc;
+    	// assertThrows(AlreadySignedException.class, () -> {
+    	// 	ctrl1.sign(d, TestConfig.storePass);
+    	// });
+
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(3, doc.getControllerCount());
+    	// List<DID> ctrls = new ArrayList<DID>();
+    	// ctrls.add(ctrl1.getSubject());
+    	// ctrls.add(ctrl2.getSubject());
+    	// ctrls.add(ctrl3.getSubject());
+    	// Collections.sort(ctrls);
+    	// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Update
+    	// DIDDocumentBuilder db = doc.edit(ctrl2);
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// doc = ctrl1.sign(doc, TestConfig.storePass);
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+    	// assertEquals(4, resolved.getPublicKeyCount());
+    	// assertEquals(4, resolved.getAuthenticationKeyCount());
+
+    	// // Deactivate
+    	// doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
+    	// doc = doc.getSubject().resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateMultisigCidAfterCreateByController", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl1.isValid());
+    	// ctrl1.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = ctrl1.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl1.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl2.isValid());
+    	// ctrl2.publish(TestConfig.storePass);
+
+    	// resolved = ctrl2.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl2.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl3.isValid());
+    	// ctrl3.publish(TestConfig.storePass);
+
+    	// resolved = ctrl3.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl3.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld3");
+    	// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    	// 		2, TestConfig.storePass);
+    	// assertFalse(doc.isValid());
+
+    	// final DIDDocument d = doc;
+    	// assertThrows(AlreadySignedException.class, () -> {
+    	// 	ctrl1.sign(d, TestConfig.storePass);
+    	// });
+
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(3, doc.getControllerCount());
+    	// List<DID> ctrls = new ArrayList<DID>();
+    	// ctrls.add(ctrl1.getSubject());
+    	// ctrls.add(ctrl2.getSubject());
+    	// ctrls.add(ctrl3.getSubject());
+    	// Collections.sort(ctrls);
+    	// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Deactivate
+    	// ctrl1.deactivate(did, TestConfig.storePass);
+    	// doc = did.resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateMultisigCidAfterUpdateByController", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// // Create normal DID first
+    	// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl1.isValid());
+    	// ctrl1.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = ctrl1.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl1.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl1.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl2.isValid());
+    	// ctrl2.publish(TestConfig.storePass);
+
+    	// resolved = ctrl2.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl2.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl2.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+       	// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
+    	// assertTrue(ctrl3.isValid());
+    	// ctrl3.publish(TestConfig.storePass);
+
+    	// resolved = ctrl3.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(ctrl3.getSubject(), resolved.getSubject());
+    	// assertEquals(ctrl3.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Create customized DID
+    	// DID did = new DID("did:elastos:helloworld3");
+    	// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
+    	// 		2, TestConfig.storePass);
+    	// assertFalse(doc.isValid());
+
+    	// final DIDDocument d = doc;
+    	// assertThrows(AlreadySignedException.class, () -> {
+    	// 	ctrl1.sign(d, TestConfig.storePass);
+    	// });
+
+    	// doc = ctrl2.sign(doc, TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// assertEquals(did, doc.getSubject());
+    	// assertEquals(3, doc.getControllerCount());
+    	// List<DID> ctrls = new ArrayList<DID>();
+    	// ctrls.add(ctrl1.getSubject());
+    	// ctrls.add(ctrl2.getSubject());
+    	// ctrls.add(ctrl3.getSubject());
+    	// Collections.sort(ctrls);
+    	// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+
+    	// resolved = did.resolve();
+    	// assertNull(resolved);
+
+    	// doc.setEffectiveController(ctrl1.getSubject());
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = did.resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(did, resolved.getSubject());
+    	// assertEquals(doc.getProof().getSignature(),
+    	// 		resolved.getProof().getSignature());
+
+    	// assertTrue(resolved.isValid());
+
+    	// // Update
+    	// DIDDocumentBuilder db = doc.edit(ctrl2);
+    	// let key = TestData.generateKeypair();
+    	// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+    	// doc = db.seal(TestConfig.storePass);
+    	// doc = ctrl1.sign(doc, TestConfig.storePass);
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+    	// assertEquals(4, resolved.getPublicKeyCount());
+    	// assertEquals(4, resolved.getAuthenticationKeyCount());
+
+    	// // Deactivate
+    	// ctrl2.deactivate(did, TestConfig.storePass);
+    	// doc = did.resolve();
+    	// assertTrue(doc.isDeactivated());
+	})
+	test("testDeactivateWithAuthorization1", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// DIDDocument target = identity.newDid(TestConfig.storePass);
+    	// DIDDocumentBuilder db = target.edit();
+    	// db.authorizationDid("#recovery", doc.getSubject().toString());
+    	// target = db.seal(TestConfig.storePass);
+    	// assertNotNull(target);
+    	// assertEquals(1, target.getAuthorizationKeyCount());
+    	// assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
+    	// store.storeDid(target);
+
+    	// target.publish(TestConfig.storePass);
+
+    	// resolved = target.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(target.toString(), resolved.toString());
+
+    	// doc.deactivate(target.getSubject(), TestConfig.storePass);
+    	// target = target.getSubject().resolve();
+    	// assertTrue(target.isDeactivated());
+
+    	// doc = doc.getSubject().resolve();
+    	// assertFalse(doc.isDeactivated());
+	})
+	test("testDeactivateWithAuthorization2", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
+    	// db.addAuthenticationKey(id, key.getPublicKeyBase58());
+    	// store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+    	// doc = db.seal(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// DIDDocument target = identity.newDid(TestConfig.storePass);
+    	// db = target.edit();
+    	// db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
+    	// 		key.getPublicKeyBase58());
+    	// target = db.seal(TestConfig.storePass);
+    	// assertNotNull(target);
+    	// assertEquals(1, target.getAuthorizationKeyCount());
+    	// assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
+    	// store.storeDid(target);
+
+    	// target.publish(TestConfig.storePass);
+
+    	// resolved = target.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(target.toString(), resolved.toString());
+
+    	// doc.deactivate(target.getSubject(), id, TestConfig.storePass);
+    	// target = target.getSubject().resolve();
+    	// assertTrue(target.isDeactivated());
+
+    	// doc = doc.getSubject().resolve();
+    	// assertFalse(doc.isDeactivated());
+	})
+	test("testDeactivateWithAuthorization3", ()=>{
+		// RootIdentity identity = testData.getRootIdentity();
+
+    	// DIDDocument doc = identity.newDid(TestConfig.storePass);
+    	// let db = doc.edit();
+    	// let key = TestData.generateKeypair();
+    	// DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
+    	// db.addAuthenticationKey(id, key.getPublicKeyBase58());
+    	// store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+    	// doc = db.seal(TestConfig.storePass);
+    	// expect(doc.isValid()).toBeTruthy()
+    	// assertEquals(2, doc.getAuthenticationKeyCount());
+    	// store.storeDid(doc);
+
+    	// doc.publish(TestConfig.storePass);
+
+    	// DIDDocument resolved = doc.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(doc.toString(), resolved.toString());
+
+    	// DIDDocument target = identity.newDid(TestConfig.storePass);
+    	// db = target.edit();
+    	// db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
+    	// 		key.getPublicKeyBase58());
+    	// target = db.seal(TestConfig.storePass);
+    	// assertNotNull(target);
+    	// assertEquals(1, target.getAuthorizationKeyCount());
+    	// assertEquals(doc.getSubject(), target.getAuthorizationKeys().get(0).getController());
+    	// store.storeDid(target);
+
+    	// target.publish(TestConfig.storePass);
+
+    	// resolved = target.getSubject().resolve();
+    	// assertNotNull(resolved);
+    	// assertEquals(target.toString(), resolved.toString());
+
+    	// doc.deactivate(target.getSubject(), TestConfig.storePass);
+    	// target = target.getSubject().resolve();
+    	// assertTrue(target.isDeactivated());
+
+    	// doc = doc.getSubject().resolve();
+    	// assertFalse(doc.isDeactivated());
+	})
+	
+
+
+	
+
+/*
+	
+
  */
 });
+
+
