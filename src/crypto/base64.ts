@@ -35,4 +35,11 @@ export class BASE64 {
         return jsrsasign.hextob64(hexValue);
     }
 
+    // TODO: Should clean up the above mess conversion methods.
+
+    // All base64 contents inside the DID objects are base64 URL safe mode.
+    // Decode the base64 URL safe input into the string encoded in hex.
+    public static decode(b64uString: string): string {
+        return jsrsasign.b64utohex(b64uString);
+    }
 }

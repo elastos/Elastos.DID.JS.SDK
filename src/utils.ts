@@ -44,7 +44,7 @@ export function hashCode(input: string | number | boolean): number {
 }
 
 export function base64Decode(input: string): string {
-    return BASE64.fromString(input);
+    return BASE64.decode(input);
 }
 
 export function sha256(input: string): string {

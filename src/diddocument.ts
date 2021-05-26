@@ -1559,9 +1559,9 @@ import { VerifiableCredential } from "./internals";
         }
 
         let binkey = pk.getPublicKeyBytes();
-        let sig = base64Decode(signature);
+        let sig = Buffer.from(base64Decode(signature), "hex");
 
-        return EcdsaSigner.verify(binkey, Buffer.from(sig), digest);
+        return EcdsaSigner.verify(binkey, sig, digest);
     }
 
     /* public JwtBuilder jwtBuilder() {
