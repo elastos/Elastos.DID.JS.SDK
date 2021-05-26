@@ -25,7 +25,6 @@ import { IllegalArgumentException, NetworkException, ResolveException, Unsupport
 import { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
-import { XMLHttpRequest } from "xhr2"; // Thx xhr2 library already abstracts real nodejs implementation VS browser map on existing XMLHttpRequest. No additional code size here for browsers.
 import { request as httpsRequest } from "https";
 import { request as httpRequest } from "http";
 
