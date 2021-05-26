@@ -620,7 +620,7 @@ describe('let Tests', () => {
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeFalsy();
 
-			let doc = sd.getUser1Document();
+			let doc = await sd.getUser1Document();
 			VerifiableCredential.revoke(id, doc, null, TestConfig.storePass);
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeFalsy();
@@ -684,7 +684,7 @@ describe('let Tests', () => {
 		];
 
 	   	for (let csv of csvSource) {
-			let credential = sd.getCredential(csv.did, csv.vc);
+			let credential = await sd.getCredential(csv.did, csv.vc);
 
 			// Sign key for customized DID
 			let doc = await credential.getSubject().getId().resolve();
@@ -714,7 +714,7 @@ describe('let Tests', () => {
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 	   	}
 
-	   	let doc = sd.getUser1Document();
+	   	let doc = await sd.getUser1Document();
 	   	let did = doc.getSubject();
 	   	let ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
@@ -728,7 +728,7 @@ describe('let Tests', () => {
 	   		expect(vc.isRevoked()).toBeFalsy();
 	   	}
 
-	   	doc = sd.getFooBarDocument();
+	   	doc = await sd.getFooBarDocument();
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
@@ -741,7 +741,7 @@ describe('let Tests', () => {
 	   		expect(vc.isRevoked()).toBeFalsy();
 	   	}
 
-	   	doc = sd.getFooDocument();
+	   	doc = await sd.getFooDocument();
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
@@ -754,13 +754,13 @@ describe('let Tests', () => {
 	   		expect(vc.isRevoked()).toBeFalsy();
 	   	}
 
-	   	doc = sd.getBarDocument();
+	   	doc = await sd.getBarDocument();
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).toBeNull();
 
 	   	for (let csv of csvSource) {
-			let credential = sd.getCredential(csv.did, csv.vc);
+			let credential = await sd.getCredential(csv.did, csv.vc);
 
 			// Sign key for customized DID
 			doc = await credential.getSubject().getId().resolve();
@@ -778,7 +778,7 @@ describe('let Tests', () => {
 			expect(resolved.isRevoked()).toBeTruthy();
 	   	}
 
-	   	doc = sd.getUser1Document();
+	   	doc = await sd.getUser1Document();
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
@@ -791,7 +791,7 @@ describe('let Tests', () => {
 	   		expect(vc.isRevoked()).toBeTruthy();
 	   	}
 
-	   	doc = sd.getFooBarDocument();
+	   	doc = await sd.getFooBarDocument();
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
@@ -804,7 +804,7 @@ describe('let Tests', () => {
 	   		expect(vc.isRevoked()).toBeTruthy();
 	   	}
 
-	   	doc = sd.getFooDocument();
+	   	doc = await sd.getFooDocument();
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
@@ -817,7 +817,7 @@ describe('let Tests', () => {
 	   		expect(vc.isRevoked()).toBeTruthy();
 	   	}
 
-	   	doc = sd.getBarDocument();
+	   	doc = await sd.getBarDocument();
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).toBeNull();
@@ -826,7 +826,7 @@ describe('let Tests', () => {
     test('testListPagination', async () => {
     	let sd = testData.getInstantData();
 
-    	let doc = sd.getUser1Document();
+    	let doc = await sd.getUser1Document();
     	let did = doc.getSubject();
 
     	let selfIssuer = new Issuer(doc);
