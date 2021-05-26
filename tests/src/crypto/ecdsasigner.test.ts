@@ -174,12 +174,12 @@ describe('ECSDA Signer Tests', () => {
 
 		let pkBytes = Base58.decode(pkBase58);
 
-		var sigToTest = Buffer.from(BASE64.toHex(expectedSig1), "hex")
+		var sigToTest = Buffer.from(BASE64.decode(expectedSig1), "hex")
 
 		let isSig1Valid = EcdsaSigner.verifyData(pkBytes , sigToTest, Buffer.from(input, "utf-8"))
 		expect(isSig1Valid).toBeTruthy()
 
-		var sigToTest2 = Buffer.from(BASE64.toHex(expectedSig2), "hex")
+		var sigToTest2 = Buffer.from(BASE64.decode(expectedSig2), "hex")
 
 		let isSig2Valid = EcdsaSigner.verifyData(pkBytes, sigToTest2, Buffer.from(input, "utf-8"))
 		expect(isSig2Valid).toBeTruthy()
