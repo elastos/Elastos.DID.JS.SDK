@@ -57,6 +57,8 @@ export class TestData {
 			DIDTestExtension.setup();
 
 			this.store = DIDStore.open(TestConfig.storeRoot);
+			if (!this.store)
+				throw new Error("TestData failed to initialize the store (null or undefined)");
 		}
 		catch(e) {
 			// Catch errors here because Jest will silence them. So we print them to get more clues.

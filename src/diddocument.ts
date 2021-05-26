@@ -1681,7 +1681,7 @@ import { VerifiableCredential } from "./internals";
     }
 
     public async publishWithTicket(ticket: TransferTicket, inputSignKey: DIDURL | string | null, storepass: string, adapter: DIDTransactionAdapter = null) {
-        checkArgument(ticket.isValid(), "Invalid ticket");
+        checkArgument(await ticket.isValid(), "Invalid ticket");
         checkArgument(ticket.getSubject().equals(this.getSubject()), "Ticket mismatch with current DID");
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkIsCustomized();

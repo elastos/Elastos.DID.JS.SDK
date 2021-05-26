@@ -179,7 +179,7 @@ describe('let Tests', () => {
 		expect(vc.isValid()).toBeTruthy();
     });
 
-    
+
     test('testSelfProclaimedCredentialFromCid', () => {
     	let cd = testData.getCompatibleData(2);
     	cd.loadAll();
@@ -208,7 +208,7 @@ describe('let Tests', () => {
 		expect(vc.isValid()).toBeTruthy();
     });
 
-	test('testParseAndSerializeJsonCredential', () => {		
+	test('testParseAndSerializeJsonCredential', () => {
 		let csvSource = [
 			{did:"user1", vc:"twitter"},
 			{did:"user1", vc:"passport"},
@@ -244,7 +244,7 @@ describe('let Tests', () => {
 		}
 	});
 
-    test('testDeclareCrendential', () => {
+    test('testDeclareCrendential', async () => {
 		let csvSource = [
 			{did:"user1", vc:"twitter"},
 			{did:"user1", vc:"passport"},
@@ -256,15 +256,15 @@ describe('let Tests', () => {
 
 		let cd = testData.getCompatibleData(2);
 		cd.loadAll();
-		
+
 		for (let csv of csvSource) {
 			let credential = cd.getCredential(csv.did, csv.vc);
 			// Sign key for customized DID
-			let doc = credential.getSubject().getId().resolve();
+			let doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				let index = (randomInt(Number.MAX_VALUE)) % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			credential.declare(signKey, TestConfig.storePass);
@@ -287,8 +287,8 @@ describe('let Tests', () => {
 		}
 	});
 
-    
-    test('testDeclareCrendentials', () => {
+
+    test('testDeclareCrendentials', async () => {
 	   	let sd = testData.getInstantData();
 
 		let csvSource = [
@@ -302,13 +302,13 @@ describe('let Tests', () => {
 		];
 
 	   	for (let csv of csvSource) {
-			let credential = sd.getCredential(csv.did, csv.vc);
+			let credential = await sd.getCredential(csv.did, csv.vc);
 			// Sign key for customized DID
-			let doc = credential.getSubject().getId().resolve();
+			let doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			credential.declare(signKey, TestConfig.storePass);
@@ -331,7 +331,7 @@ describe('let Tests', () => {
 	   	}
     });
 
-    test('testRevokeCrendential', () => {
+    test('testRevokeCrendential', async () => {
 
 		let csvSource = [
 			{did:"user1", vc:"twitter"},
@@ -351,11 +351,11 @@ describe('let Tests', () => {
 			expect(credential.wasDeclared()).toBeFalsy();
 
 			// Sign key for customized DID
-			let doc = credential.getSubject().getId().resolve();
+			let doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			credential.declare(signKey, TestConfig.storePass);
@@ -391,7 +391,7 @@ describe('let Tests', () => {
 		}
     });
 
-    test('testRevokeCrendentialWithDifferentKey', () => {
+    test('testRevokeCrendentialWithDifferentKey', async () => {
 
 		let csvSource = [
 			{did:"foobar", vc:"license"},
@@ -408,12 +408,12 @@ describe('let Tests', () => {
 			expect(credential.wasDeclared).toBeFalsy();
 
 			// Sign key for customized DID
-			let doc = credential.getSubject().getId().resolve();
+			let doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
 			let index = 0;
 			if (doc.getControllerCount() > 1) {
 				index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			credential.declare(signKey, TestConfig.storePass);
@@ -434,7 +434,7 @@ describe('let Tests', () => {
 
 			if (doc.getControllerCount() > 1) {
 				index = ++index % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			credential.revoke(signKey, null, TestConfig.storePass);
@@ -458,7 +458,7 @@ describe('let Tests', () => {
 		}
     });
 
-    test('testDeclareAfterRevoke', () => {
+    test('testDeclareAfterRevoke', async () => {
 
 		let csvSource = [
 			{did:"user1", vc:"twitter"},
@@ -478,11 +478,11 @@ describe('let Tests', () => {
 			expect(credential.isRevoked()).toBeFalsy();
 
 			// Sign key for customized DID
-			let doc = credential.getSubject().getId().resolve();
+			let doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			credential.revoke(signKey, null, TestConfig.storePass);
@@ -502,7 +502,7 @@ describe('let Tests', () => {
 		}
     });
 
-    test('testDeclareAfterRevokeWithDifferentKey', () => {
+    test('testDeclareAfterRevokeWithDifferentKey', async () => {
 
 		let csvSource = [
 			{did:"foobar", vc:"license"},
@@ -519,12 +519,12 @@ describe('let Tests', () => {
 			expect(credential.isRevoked()).toBeFalsy();
 
 			// Sign key for customized DID
-			let doc = credential.getSubject().getId().resolve();
+			let doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
 			let index = 0;
 			if (doc.getControllerCount() > 1) {
 				index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			credential.revoke(signKey, null, TestConfig.storePass);
@@ -537,7 +537,7 @@ describe('let Tests', () => {
 
 			if (doc.getControllerCount() > 1) {
 				index = ++index % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			expect(credential.declare(signKey, TestConfig.storePass)).toThrow(CredentialRevokedException);
@@ -678,7 +678,7 @@ describe('let Tests', () => {
 		assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(1).getRequest().getOperation());
     }
 
-    
+
     test('testListCrendentials() throws DIDException {
 	   	TestData.InstantData sd = testData.getInstantData();
 
@@ -833,7 +833,7 @@ describe('let Tests', () => {
 	   	assertNull(ids);
     }
 
-    
+
     test('testListPagination() throws DIDException {
     	TestData.InstantData sd = testData.getInstantData();
 

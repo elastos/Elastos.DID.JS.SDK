@@ -248,7 +248,7 @@ export class DIDDocumentBuilder {
         return this;
     }
 
-    private addPublicKey(key: DIDDocumentPublicKey) {
+    public addPublicKey(key: DIDDocumentPublicKey) {
         if (this.document.publicKeys == null) {
             this.document.publicKeys = new Map<DIDURL, DIDDocumentPublicKey>();
         } else {
@@ -351,7 +351,7 @@ export class DIDDocumentBuilder {
     }
 
     // Java: addAuthenticationKey()
-    public addExistingAuthenticationKey(id: DIDURL): DIDDocumentBuilder {
+    public addExistingAuthenticationKey(id: DIDURL | string): DIDDocumentBuilder {
         checkArgument(id != null, "Invalid publicKey id");
 
         if (this.document.publicKeys == null || this.document.publicKeys.size == 0)

@@ -208,10 +208,10 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			return this.signer;
 
 		if (this.getOperation().equals(IDChainRequest.Operation.DECLARE))
-			this.signer = this.getCredential().getSubject().getId().resolve();
+			this.signer = await this.getCredential().getSubject().getId().resolve();
 		else {
 			if (this.getCredential() != null)
-				this.signer = this.getCredential().getSubject().getId().resolve();
+				this.signer = await this.getCredential().getSubject().getId().resolve();
 			else
 				this.signer = await this.getProof().getVerificationMethod().getDid().resolve();
 		}

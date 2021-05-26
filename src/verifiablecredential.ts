@@ -206,12 +206,12 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 *
 	 * @return the expires time
 	 */
-	public getExpirationDate(): Date {
+	public async getExpirationDate(): Promise<Date> {
 		if (this.expirationDate != null)
 			return this.expirationDate;
 		else {
 			try {
-				let controllerDoc = this.subject.getId().resolve();
+				let controllerDoc = await this.subject.getId().resolve();
 				if (controllerDoc != null)
 					return controllerDoc.getExpires();
 			} catch (e) {
@@ -354,7 +354,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 				return true;
 		}
 
-		let controllerDoc = this.subject.getId().resolve();
+		let controllerDoc = await this.subject.getId().resolve();
 		if (controllerDoc != null && controllerDoc.isExpired())
 			return true;
 
@@ -398,7 +398,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			return false;
 
 		if (!this.isSelfProclaimed()) {
-			let controllerDoc = this.subject.getId().resolve();
+			let controllerDoc = await this.subject.getId().resolve();
 			if (controllerDoc != null && !controllerDoc.isGenuine())
 				return false;
 		}
@@ -454,7 +454,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 
 		if (!this.isSelfProclaimed()) {
-			let controllerDoc = this.subject.getId().resolve();
+			let controllerDoc = await this.subject.getId().resolve();
 			if (controllerDoc != null && !controllerDoc.isValid())
 				return false;
 		}
@@ -477,7 +477,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return false;
 	}
 
-	public declare(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null) {
+	public async declare(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null): Promise<void> {
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 		this.checkAttachedStore();
 
@@ -504,7 +504,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		let owner = this.getStore().loadDid(this.getSubject().getId());
 		if (owner == null) {
 			// Fail-back: resolve the owner's document
-			owner = this.getSubject().getId().resolve();
+			owner = await this.getSubject().getId().resolve();
 			if (owner == null)
 				throw new DIDNotFoundException(this.getSubject().getId().toString());
 
@@ -548,7 +548,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 		this.checkAttachedStore();
 
-		let owner = this.getSubject().getId().resolve();
+		let owner = await this.getSubject().getId().resolve();
 		if (owner == null) {
 			log.error("Publish failed because the credential owner is not published.");
 			throw new DIDNotFoundException(this.getSubject().getId().toString());
@@ -577,7 +577,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			signer = this.getStore().loadDid(signerDid);
 			if (signer == null) {
 				// Fail-back: resolve the owner's document
-				signer = this.getSubject().getId().resolve();
+				signer = await this.getSubject().getId().resolve();
 				if (signer == null)
 					throw new DIDNotFoundException(this.getSubject().getId().toString());
 

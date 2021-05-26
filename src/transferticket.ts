@@ -158,9 +158,9 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		return this._proofs;
 	}
 
-	private getDocument(): DIDDocument {
+	private async getDocument(): Promise<DIDDocument> {
 		if (this.doc == null)
-			this.doc = this.id.resolve();
+			this.doc = await this.id.resolve();
 
 		return this.doc;
 	}
@@ -169,8 +169,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return true is the ticket is genuine else false
 	 */
-	public isGenuine(): boolean {
-		let doc = this.getDocument();
+	public async isGenuine(): Promise<boolean> {
+		let doc = await this.getDocument();
 		if (doc == null)
 			return false;
 
@@ -220,8 +220,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return true is the ticket is valid else false
 	 */
-	public isValid(): boolean {
-		let doc = this.getDocument();
+	public async isValid(): Promise<boolean> {
+		let doc = await this.getDocument();
 		if (doc == null)
 			return false;
 
@@ -244,11 +244,11 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return true is the ticket is qualified else false
 	 */
-	public isQualified(): boolean {
+	public async isQualified(): Promise<boolean> {
 		if (this.proofs == null || this.proofs.size == 0)
 			return false;
 
-		let  multisig = this.getDocument().getMultiSignature();
+		let  multisig = (await this.getDocument()).getMultiSignature();
 		return this.proofs.size == (multisig == null ? 1 : multisig.m());
 	}
 
@@ -285,7 +285,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		Collections.sort(this._proofs);
 	}
 
-	public seal(controller: DIDDocument, storepass: string) {
+	public async seal(controller: DIDDocument, storepass: string): Promise<void> {
 		try {
 			if (this.isQualified())
 				return;
@@ -295,7 +295,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 					throw new NoEffectiveControllerException(controller.getSubject().toString());
 			} else {
 				try {
-					if (!this.getDocument().hasController(controller.getSubject()))
+					if (!(await this.getDocument()).hasController(controller.getSubject()))
 						throw new NotControllerException(controller.getSubject().toString());
 				} catch (e) {
 					// DIDResolveException
