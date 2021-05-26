@@ -55,7 +55,7 @@ class URLSerializer extends Serializer {
 		if (!serializeContext.isNormalized())
 			base = serializeContext.getDid() != null ? serializeContext.getDid() : id.getDid();
 
-		return URLSerializer.mapper(context).stringify(id.toString(base));
+		return id.toString(base);
 	}
 }
 

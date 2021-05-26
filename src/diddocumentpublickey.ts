@@ -34,6 +34,7 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
     public id: DIDURL;
     @JsonSerialize({using: TypeSerializerFilter.filter})
     @JsonProperty({ value: DIDDocumentPublicKey.TYPE })
+    @JsonClassType({type: () => [String]})
     public type: string;
     @JsonSerialize({using: DIDDocumentPublicKeySerializerFilter.filter})
     @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER })
