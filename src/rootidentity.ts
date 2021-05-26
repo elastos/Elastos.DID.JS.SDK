@@ -2,8 +2,8 @@ import crypto from "crypto"
 import { AbstractMetadata } from "./internals";
 import { HDKey } from "./internals";
 import { DID } from "./internals";
-import { DIDDocument } from "./internals";
-import { DIDStore } from "./internals";
+import type { DIDDocument } from "./internals";
+import type { DIDStore } from "./internals";
 import { DIDURL } from "./internals";
 import {
 	DIDAlreadyExistException,
@@ -20,7 +20,7 @@ import {
 	promisify
 } from "./internals";
 import { DefaultConflictHandle } from "./internals";
-import { ConflictHandle } from "./internals";
+import type { ConflictHandle } from "./internals";
 import { DIDDocumentBuilder } from "./internals";
 
 const log = new Logger("RootIdentity");

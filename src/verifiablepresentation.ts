@@ -24,14 +24,14 @@ import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonProperty
 import { Collections } from "./internals";
 import { Constants } from "./constants";
 import { DID } from "./internals";
-import { DIDDocument } from "./internals";
+import type { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
-import { DIDStore } from "./internals";
+import type { DIDStore } from "./internals";
 import { DIDURL } from "./internals";
 import { ParentException, AlreadySealedException, IllegalArgumentException, DIDNotFoundException, DIDObjectAlreadyExistException, IllegalUsage, InvalidKeyException, MalformedPresentationException } from "./exceptions/exceptions";
 import { checkArgument, promisify } from "./internals";
 import { VerifiableCredential } from "./internals";
-import {
+import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";

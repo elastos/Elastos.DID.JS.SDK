@@ -1,6 +1,6 @@
 import { JsonCreator, JsonInclude, JsonIncludeType } from "jackson-js";
 import { AbstractMetadata } from "./internals";
-import { DIDStore } from "./internals";
+import type { DIDStore } from "./internals";
 import { DIDStoreException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";

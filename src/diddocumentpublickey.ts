@@ -4,12 +4,12 @@ import {
     JsonSerialize,
     JsonClassType
 } from "jackson-js";
-import { Comparable } from "./comparable";
+import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { Base58 } from "./internals";
 import { DID } from "./internals";
 import { DIDDocumentPublicKeySerializerFilter } from "./internals";
-import { DIDObject } from "./internals";
+import type { DIDObject } from "./internals";
 import { DIDURL } from "./internals";
 import { TypeSerializerFilter } from "./internals";
 
@@ -34,6 +34,7 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
     public id: DIDURL;
     @JsonSerialize({using: TypeSerializerFilter.filter})
     @JsonProperty({ value: DIDDocumentPublicKey.TYPE })
+    @JsonClassType({type: () => [String]})
     public type: string;
     @JsonSerialize({using: DIDDocumentPublicKeySerializerFilter.filter})
     @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER })

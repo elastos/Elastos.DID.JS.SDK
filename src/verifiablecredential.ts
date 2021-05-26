@@ -25,7 +25,7 @@ import {
 	JsonAnySetter, JsonClassType, JsonFilter, JsonGetter, JsonInclude,
 	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize
 } from "jackson-js";
-import {
+import type {
 	JsonStringifierTransformerContext
 } from "jackson-js/dist/@types";
 import { CredentialBiography, CredentialBiographyStatus } from "./internals";
@@ -35,11 +35,11 @@ import { Constants } from "./constants";
 import { CredentialMetadata } from "./internals";
 import { DID } from "./internals";
 import { DIDBackend } from "./internals";
-import { DIDDocument } from "./internals";
+import type { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
-import { DIDObject } from "./internals";
-import { DIDStore } from "./internals";
-import { DIDTransactionAdapter } from "./didtransactionadapter";
+import type { DIDObject } from "./internals";
+import type { DIDStore } from "./internals";
+import type { DIDTransactionAdapter } from "./didtransactionadapter";
 import { DIDURL } from "./internals";
 import {
 	AlreadySealedException,
@@ -55,8 +55,8 @@ import {
 	UnknownInternalException
 } from "./exceptions/exceptions";
 import { TypeSerializerFilter } from "./internals";
-import { Issuer } from "./internals";
-import {
+import type { Issuer } from "./internals";
+import type {
 	JSONObject,
 	JSONValue
 } from "./json";

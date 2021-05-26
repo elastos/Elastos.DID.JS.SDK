@@ -21,6 +21,7 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "rootDirs": ["src/"],
-    "typeRoots": ["node_modules/@types"]
+    "typeRoots": ["node_modules/@types"],
+    "importsNotUsedAsValues": "error"
   }
 }

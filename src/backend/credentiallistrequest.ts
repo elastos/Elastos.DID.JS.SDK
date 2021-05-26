@@ -23,7 +23,7 @@
 import { JsonClassType, JsonCreator, JsonIdentityInfo, JsonInclude, JsonIncludeType, JsonProperty, ObjectIdGenerator } from "jackson-js";
 import { DID } from "../internals";
 import { DIDURL } from "../internals";
-import { Hashable } from "../hashable";
+import type { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
 import { hashCode } from "../internals";
 

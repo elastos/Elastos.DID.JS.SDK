@@ -21,8 +21,8 @@
  */
 
 import { JsonCreator } from "jackson-js";
-import { DID } from "../internals";
-import { DIDRequest } from "./didrequest";
+import type { DID } from "../internals";
+import type { DIDRequest } from "./didrequest";
 import { IDTransaction } from "./idtransaction";
 
 /**

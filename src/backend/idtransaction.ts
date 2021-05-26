@@ -23,7 +23,7 @@
 import { JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
 import { DIDEntity } from "../internals";
 import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
-import { IDChainRequest } from "./idchaindrequest";
+import type { IDChainRequest } from "./idchaindrequest";
 
 @JsonPropertyOrder({value: [
 	IDTransaction.TXID,

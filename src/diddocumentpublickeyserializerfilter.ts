@@ -1,7 +1,7 @@
-import {
+import type {
     JsonStringifierTransformerContext,
 } from "jackson-js/dist/@types";
-import { DID } from "./internals";
+import type { DID } from "./internals";
 import {
     PropertySerializerFilter,
 } from "./internals";

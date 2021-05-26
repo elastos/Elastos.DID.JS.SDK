@@ -20,9 +20,9 @@
  * SOFTWARE.
  */
 
-import { DIDAdapter } from "./internals";
+import type { DIDAdapter } from "./internals";
 import { IllegalArgumentException, NetworkException, ResolveException, UnsupportedOperationException } from "./exceptions/exceptions";
-import { JSONObject } from "./json";
+import type { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
 import { request as httpsRequest } from "https";

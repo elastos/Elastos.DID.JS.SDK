@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { Hashable } from "./hashable";
+import type { Hashable } from "./hashable";
 
 type Loadable<K,V> = (key: K) => {value: V, meta?: LRUCacheMeta};
 type AsyncLoadable<K,V> = (key: K) => Promise<{value: V, meta?: LRUCacheMeta}>;

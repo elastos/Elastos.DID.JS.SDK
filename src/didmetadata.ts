@@ -21,9 +21,9 @@
  */
 
 import { AbstractMetadata } from "./internals";
-import { Cloneable } from "./cloneable";
-import { DID } from "./internals";
-import { DIDStore } from "./internals";
+import type { Cloneable } from "./cloneable";
+import type { DID } from "./internals";
+import type { DIDStore } from "./internals";
 import { DIDStoreException } from "./exceptions/exceptions";
 
 /**

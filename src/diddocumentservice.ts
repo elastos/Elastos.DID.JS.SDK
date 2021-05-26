@@ -5,8 +5,8 @@ import {
     JsonAnySetter
 } from "jackson-js";
 import { DIDURL } from "./internals";
-import { DIDObject } from "./internals";
-import { JSONObject, JSONValue } from "./json";
+import type { DIDObject } from "./internals";
+import type { JSONObject, JSONValue } from "./json";
 
 /**
  * A Service may represent any type of service the subject

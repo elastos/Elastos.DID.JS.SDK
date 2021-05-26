@@ -27,9 +27,9 @@ import {
     isEmpty,
     hashCode
 } from "./internals";
-import { DIDDocument } from "./internals";
+import type { DIDDocument } from "./internals";
 import { DIDBackend } from "./internals";
-import { DIDBiography } from "./internals";
+import type { DIDBiography } from "./internals";
 import {
     JsonSerialize,
     JsonDeserialize,
@@ -41,7 +41,7 @@ import {
     Serializer,
     Deserializer
 } from "./internals";
-import {
+import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
@@ -110,8 +110,14 @@ export class DID {
         return new DID(null, null, true);
     }
 
-    public static from(did: string): DID | null {
-        return isEmpty(did) ? null : new DID(did);
+    public static from(did: DID | string | null): DID | null {
+        if (!did)
+            return null;
+
+        if (did instanceof DID)
+            return did;
+
+        return did.length == 0 ? null : new DID(did);
     }
 
     public getMethod(): string | null {

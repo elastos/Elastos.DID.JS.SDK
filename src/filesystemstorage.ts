@@ -24,7 +24,7 @@ import { CredentialMetadata } from "./internals";
 import { DID } from "./internals";
 import { DIDDocument } from "./internals";
 import { DIDMetadata } from "./internals";
-import { DIDStorage, ReEncryptor } from "./internals";
+import type { DIDStorage, ReEncryptor } from "./internals";
 import { DIDURL } from "./internals";
 import { DIDStorageException } from "./exceptions/exceptions";
 import { Logger } from "./logger";

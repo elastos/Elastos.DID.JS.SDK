@@ -20,19 +20,19 @@
  * SOFTWARE.
  */
 
-import { ObjectMapper } from "jackson-js";
-import {
+import { JsonIgnoreType, JsonStringifier, ObjectMapper } from "jackson-js";
+import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
-import { Class } from "./class";
+import type { Class } from "./class";
 import { DID } from "./internals";
 import {
 	DIDSyntaxException,
 	UnknownInternalException,
 	InvalidDateFormat
 } from "./exceptions/exceptions";
-import { JSONObject } from "./json";
+import type { JSONObject } from "./json";
 import { checkArgument } from "./internals";
 
 /**
@@ -187,8 +187,7 @@ export namespace DIDEntity {
 
 		public constructor(normalized: boolean = false, objectMapper: ObjectMapper, did?: DID) {
 			this.normalized = normalized;
-			if (did)
-				this.did = did.toString();
+			this.did = did ? did.toString() : null;
 			this.objectMapper = objectMapper;
 		}
 
@@ -210,8 +209,7 @@ export namespace DIDEntity {
 		}
 
 		public setDid(did: DID): void {
-			if (did)
-				this.did = did.toString();
+			this.did = did ? did.toString() : null;
 		}
 	}
 

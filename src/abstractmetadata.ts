@@ -20,17 +20,17 @@
  * SOFTWARE.
  */
 
-import { Cloneable } from "./cloneable";
+import type { Cloneable } from "./cloneable";
 import { DIDEntity } from "./internals";
-import { DIDStore } from "./internals";
-import { JSONObject, JSONValue } from "./json";
+import type { DIDStore } from "./internals";
+import type { JSONObject, JSONValue } from "./json";
 import { checkArgument } from "./internals";
 import { JsonIgnore, JsonInclude, JsonIncludeType, JsonClassType, JsonAnySetter, JsonAnyGetter, JsonProperty, JsonIgnoreType, JsonManagedReference, JsonIdentityInfo, JsonUnwrapped, JsonTypeId, JsonIgnoreProperties } from "jackson-js";
 
 /**
  * The class defines the base interface of Meta data.
  */
-export abstract class AbstractMetadata extends DIDEntity<any> implements Cloneable<AbstractMetadata> {
+export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> implements Cloneable<AbstractMetadata> {
 	private static ALIAS = "alias";
 
 	protected static USER_EXTRA_PREFIX = "UX-";

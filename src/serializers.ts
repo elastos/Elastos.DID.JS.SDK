@@ -1,11 +1,11 @@
-import {
+import type {
     JsonStringifierTransformerContext,
     JsonParserTransformerContext
 } from "jackson-js/dist/@types";
 import { DIDEntity } from "./internals";
-import { DID } from "./internals";
+import type { DID } from "./internals";
 import { Constants } from "./constants";
-import { ObjectMapper } from "jackson-js";
+import type { ObjectMapper } from "jackson-js";
 
 export class Serializer {
 
@@ -17,8 +17,8 @@ export class Serializer {
         return Serializer.context(context).getObjectMapper();
     }
 
-    public static serialize (value: any, context: JsonStringifierTransformerContext): string {
-        return Serializer.mapper(context).stringify(value);
+    public static serialize (value: any, context: JsonStringifierTransformerContext): any {
+        return value;
     }
 }
 
@@ -35,15 +35,15 @@ export class Deserializer {
 
 export class PropertySerializerFilter<T> extends Serializer {
 
-    public static filter (value: any, context: JsonStringifierTransformerContext): string | null {
+    public static filter (value: any, context: JsonStringifierTransformerContext): any {
         return PropertySerializerFilter.serialize(value, context);
     }
 
-    public static serialize (value: any, context: JsonStringifierTransformerContext): string | null {
+    public static serialize (value: any, context: JsonStringifierTransformerContext): any {
         let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
 
         if ((serializeContext && serializeContext.isNormalized()) || PropertySerializerFilter.include(value, context)) {
-            return serializeContext.getObjectMapper().stringify(value);
+            return value;
         }
 
         return null;

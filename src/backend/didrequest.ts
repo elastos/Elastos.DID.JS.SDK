@@ -24,9 +24,9 @@ import { JsonCreator } from "jackson-js";
 import { BASE64 } from "../internals";
 import { DID } from "../internals";
 import { DIDDocument } from "../internals";
-import { DIDURL } from "../internals";
+import type { DIDURL } from "../internals";
 import { InvalidKeyException, MalformedIDChainRequestException, UnknownInternalException } from "../exceptions/exceptions";
-import { TransferTicket } from "../internals";
+import type { TransferTicket } from "../internals";
 import { IDChainRequest } from "./idchaindrequest";
 
 /**

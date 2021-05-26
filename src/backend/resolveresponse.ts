@@ -24,7 +24,7 @@ import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty,
 import { DIDEntity } from "../internals";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 import { ResolveError } from "./resolveerror";
-import { ResolveResult } from "./resolveresult";
+import type { ResolveResult } from "./resolveresult";
 
 export class RpcConstants {
 	public static ID = "id";
@@ -102,7 +102,7 @@ export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T>
 	public static emptyInstance(): ResolveResponse) {
 		let newInstance = new ResolveResponse(id, error);
 		newInstance.jsonRpcVersion = jsonVersion;
-		return newInstance;		
+		return newInstance;
 	}
 */
 	public getResponseId(): string {
