@@ -1,4 +1,4 @@
-import {
+import type {
     JsonParserTransformerContext
 } from "jackson-js/dist/@types";
 import { DIDDocumentPublicKey } from "./internals";

@@ -1,23 +1,51 @@
 // Internal dependencies
+
+// Common utils classes
 export * from "./logger";
-export * from "./didentity";
+
 export * from "./serializers"; // Should be before filters
-export * from "./filters"; // Should be before DIDDocumentPublicKey
-export * from "./didurl";
-export * from "./did";
+export * from "./filters"; // Should be before all DID objects
+
+
+// Serializer helper classes
+export * from "./didentity";
 export * from "./diddocumentpublickeyreferenceserializer";
 export * from "./diddocumentpublickeyreferencedeserializer";
 export * from "./diddocumentpublickeyserializerfilter";
-export * from "./diddocumentmultisignature"; // Should be before DIDDocument
-export * from "./diddocumentpublickey"; // Should be before DIDDocument
-export * from "./diddocument"; // Should be before DIDExport (DIDStore)
-export * from "./abstractmetadata"; // Should be before DIDMetadata
-export * from "./didmetadata"; // Should be before DIDExport (DIDStore)
-export * from "./credentialmetadata";
-export * from "./verifiablecredential"; // Should be before DIDExport (DIDStore)
-export * from "./didstore";
-export * from "./collections";
+
+// Abstract metadata object shoud be efore all metadata objects
+export * from "./abstractmetadata";
+export * from "./didmetadata"; // Should be before DIDExport (DIDStore) and DIDDocument
+export * from "./didstoremetadata";
+
+// DID/URL
+export * from "./didurl";
+export * from "./did";
+
+export * from "./didobject";
+
+// DID objects that could be embedded inside the DIDDocument.
+// Should be before DIDDocument
+export * from "./diddocumentmultisignature";
+export * from "./diddocumentpublickey"; // Should be before diddocumentpublickeyreference
 export * from "./diddocumentpublickeyreference";
+export * from "./diddocumentservice";
+export * from "./diddocumentproof";
+export * from "./credentialmetadata";
+export * from "./verifiablecredential";
+
+// DIDDocument, the primary class for DID
+export * from "./diddocument"; // Should be before DIDExport (DIDStore)
+
+export * from "./transferticket";
+
+export * from "./verifiablepresentation";
+
+export * from "./didstore";
+
+export * from "./issuer";
+
+export * from "./collections";
 export * from "./crypto/bytebuffer";
 export * from "./crypto/md5";
 export * from "./crypto/ecdsasigner";
@@ -32,10 +60,6 @@ export * from "./defaultconflicthandle";
 export * from "./hdkey-secp256r1/secp256r1";
 export * from "./didbackend";
 export * from "./conflicthandle";
-export * from "./issuer";
-export * from "./didstoremetadata";
-export * from "./diddocumentservice";
-export * from "./transferticket";
 export * from "./didstorage";
 export * from "./backend/idtransaction";
 export * from "./backend/resolverequest";
@@ -60,10 +84,7 @@ export * from "./backend/simulatedidchainadapter";
 export * from "./backend/simulatedidchain";
 export * from "./diddocumentbuilder";
 export * from "./rootidentity";
-export * from "./didobject";
-export * from "./verifiablepresentation";
 export * from "./filesystemstorage";
 export * from "./didadapter";
-export * from "./diddocumentproof";
 export * from "./utils";
 export * from "./lrucache";

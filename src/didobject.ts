@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DIDURL } from "./internals";
+import type { DIDURL } from "./internals";
 
 /**
  * The class is the base object for PublicKey and Credential.

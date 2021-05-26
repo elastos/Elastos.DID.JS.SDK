@@ -1,4 +1,4 @@
-import { DIDDocument } from "./internals";
+import type { DIDDocument } from "./internals";
 
 /**
  * The interface for ConflictHandle to indicate how to resolve the conflict,

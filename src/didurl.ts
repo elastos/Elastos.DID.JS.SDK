@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { AbstractMetadata } from "./internals";
+import type { AbstractMetadata } from "./internals";
 import { DID } from "./internals";
 import {
 	ParentException,
@@ -32,7 +32,7 @@ import {
 	checkNotNull,
 	hashCode
 } from "./internals";
-import {
+import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
@@ -40,8 +40,8 @@ import {
 	JsonSerialize,
     JsonDeserialize,
 } from "jackson-js";
-import { Hashable } from "./hashable";
-import { Comparable } from "./comparable";
+import type { Hashable } from "./hashable";
+import type { Comparable } from "./comparable";
 import {
     Serializer,
     Deserializer

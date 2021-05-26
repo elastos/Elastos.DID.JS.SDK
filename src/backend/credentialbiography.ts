@@ -23,13 +23,13 @@
 import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue, JsonSerialize, JsonDeserialize } from "jackson-js";
 import { DIDURL } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
-import { CredentialTransaction } from "./credentialtransaction";
+import type { CredentialTransaction } from "./credentialtransaction";
 import { ResolveResult } from "./resolveresult";
 import {
     Serializer,
     Deserializer
 } from "../internals";
-import {
+import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
@@ -51,7 +51,7 @@ class CredentialBiographyStatusDeserializer extends Deserializer {
 			default:
 				throw new IllegalArgumentException("Invalid CredentialBiographyStatus");
 		}
-	}	
+	}
 }
 
 @JsonSerialize({using: CredentialBiographyStatusSerializer.serialize})

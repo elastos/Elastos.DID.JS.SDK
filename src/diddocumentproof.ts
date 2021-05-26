@@ -6,7 +6,7 @@ import {
     JsonSerialize,
     JsonClassType
 } from "jackson-js";
-import { Comparable } from "./comparable";
+import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { DIDURL } from "./internals";
 import { TypeSerializerFilter } from "./internals";
@@ -24,7 +24,7 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
     public static CREATOR: string = "creator";
     public static CREATED: string = "created";
     public static SIGNATURE_VALUE: string = "signatureValue";
-    
+
     @JsonSerialize({using: TypeSerializerFilter.serialize})
     @JsonProperty({ value: DIDDocumentProof.TYPE })
     private type: string;

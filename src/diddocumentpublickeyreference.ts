@@ -1,8 +1,8 @@
 import {
     JsonDeserialize, JsonSerialize
 } from "jackson-js";
-import { Comparable } from "./comparable";
-import { DIDDocumentPublicKey } from "./internals";
+import type { Comparable } from "./comparable";
+import type { DIDDocumentPublicKey } from "./internals";
 import { DIDDocumentPublicKeyReferenceDeserializer } from "./internals";
 import { DIDDocumentPublicKeyReferenceSerializer } from "./internals";
 import { DIDURL } from "./internals";

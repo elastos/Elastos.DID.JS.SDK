@@ -21,15 +21,15 @@
  */
 
 import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonValue, JsonSetter } from "jackson-js";
-import { Class } from "../class";
+import type { Class } from "../class";
 import { Constants } from "../constants";
 import { BASE64 } from "../internals";
-import { DID } from "../internals";
-import { DIDDocument } from "../internals";
+import type { DID } from "../internals";
+import type { DIDDocument } from "../internals";
 import { DIDEntity } from "../internals";
 import { DIDURL } from "../internals";
 import { IllegalArgumentException } from "../exceptions/exceptions";
-import { JSONObject } from "../json";
+import type { JSONObject } from "../json";
 import { TransferTicket } from "../internals";
 import { checkArgument } from "../internals";
 

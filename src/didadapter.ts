@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-import { JSONObject } from "./json";
-import { DIDTransactionAdapter } from "./didtransactionadapter";
+import type { JSONObject } from "./json";
+import type { DIDTransactionAdapter } from "./didtransactionadapter";
 
 /**
  * The interface to provide DID Adapter method to publish DID Document.

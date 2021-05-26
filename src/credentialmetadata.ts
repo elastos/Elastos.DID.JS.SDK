@@ -21,9 +21,9 @@
  */
 
 import { AbstractMetadata } from "./internals";
-import { Cloneable } from "./cloneable";
-import { DIDStore } from "./internals";
-import { DIDURL } from "./internals";
+import type { Cloneable } from "./cloneable";
+import type { DIDStore } from "./internals";
+import type { DIDURL } from "./internals";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
 

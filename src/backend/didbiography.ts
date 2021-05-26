@@ -29,7 +29,7 @@ import {
     Serializer,
     Deserializer
 } from "../internals";
-import {
+import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
@@ -51,7 +51,7 @@ class DIDBiographyStatusDeserializer extends Deserializer {
 			default:
 				throw new IllegalArgumentException("Invalid DIDBiographyStatus");
 		}
-	}	
+	}
 }
 
 @JsonSerialize({using: DIDBiographyStatusSerializer.serialize})

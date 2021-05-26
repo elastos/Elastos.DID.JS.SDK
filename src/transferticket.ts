@@ -22,11 +22,11 @@
 
 import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "jackson-js";
 import { Collections } from "./internals";
-import { Comparable } from "./comparable";
+import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { EcdsaSigner } from "./internals";
-import { DID } from "./internals";
-import { DIDDocument } from "./internals";
+import type { DID } from "./internals";
+import type { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
 import { DIDURL } from "./internals";
 import { DIDResolveException, NotCustomizedDIDException, DIDStoreException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";

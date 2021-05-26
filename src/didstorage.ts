@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-import { CredentialMetadata } from "./internals";
-import { DID } from "./internals";
-import { DIDDocument } from "./internals";
-import { DIDMetadata } from "./internals";
-import { DIDURL } from "./internals";
-import { RootIdentity } from "./internals";
-import { VerifiableCredential } from "./internals";
-import { DIDStoreMetadata } from "./internals";
+import type { CredentialMetadata } from "./internals";
+import type { DID } from "./internals";
+import type { DIDDocument } from "./internals";
+import type { DIDMetadata } from "./internals";
+import type { DIDURL } from "./internals";
+import type { RootIdentity } from "./internals";
+import type { VerifiableCredential } from "./internals";
+import type { DIDStoreMetadata } from "./internals";
 /**
  * The inferface to change password.
  */

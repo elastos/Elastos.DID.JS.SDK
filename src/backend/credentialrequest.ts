@@ -21,7 +21,7 @@
  */
 
 import { JsonCreator } from "jackson-js";
-import { DIDDocument } from "../internals";
+import type { DIDDocument } from "../internals";
 import { DIDURL } from "../internals";
 import { base64Decode } from "../internals";
 import {

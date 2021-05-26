@@ -1,11 +1,11 @@
-import {
+import type {
     JsonStringifierTransformerContext,
     JsonParserTransformerContext
 } from "jackson-js/dist/@types";
 import { DIDEntity } from "./internals";
-import { DID } from "./internals";
+import type { DID } from "./internals";
 import { Constants } from "./constants";
-import { ObjectMapper } from "jackson-js";
+import type { ObjectMapper } from "jackson-js";
 
 export class Serializer {
 

@@ -10,7 +10,7 @@ import { DIDDocumentPublicKey } from "./internals";
 import { DIDDocumentPublicKeyReference } from "./internals";
 import { DIDDocumentService } from "./internals";
 import { DIDMetadata } from "./internals";
-import { DIDStore } from "./internals";
+import type { DIDStore } from "./internals";
 import { DIDURL } from "./internals";
 import {
     AlreadySealedException, AlreadySignedException,
@@ -19,10 +19,10 @@ import {
     NotControllerException, NotCustomizedDIDException, NotPrimitiveDIDException, UnknownInternalException
 } from "./exceptions/exceptions";
 import { Issuer } from "./internals";
-import { JSONObject } from "./json";
+import type { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
-import { VerifiableCredential } from "./internals";
+import type { VerifiableCredential } from "./internals";
 
 /**
 * Builder object to create or modify the DIDDocument.

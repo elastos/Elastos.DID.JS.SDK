@@ -21,8 +21,8 @@
  */
 
 import { JsonCreator } from "jackson-js";
-import { DIDURL } from "../internals";
-import { CredentialRequest } from "./credentialrequest";
+import type { DIDURL } from "../internals";
+import type { CredentialRequest } from "./credentialrequest";
 import { IDTransaction } from "./idtransaction";
 
 export class CredentialTransaction extends IDTransaction<CredentialTransaction, CredentialRequest> {

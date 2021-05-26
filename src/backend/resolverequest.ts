@@ -21,9 +21,9 @@
  */
 
 import { JsonClassType, JsonGetter, JsonIgnore, JsonProperty, JsonPropertyOrder, JsonSetter } from "jackson-js";
-import { Class } from "../class";
+import type { Class } from "../class";
 import { DIDEntity } from "../internals";
-import { Hashable } from "../hashable";
+import type { Hashable } from "../hashable";
 import { hashCode } from "../internals";
 
 @JsonPropertyOrder({
@@ -44,6 +44,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
 	private method: string;
 
 	// Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnore()
+	@JsonIgnore()
 	private _params: P;
 
 	protected constructor(requestId: string, method: string) {

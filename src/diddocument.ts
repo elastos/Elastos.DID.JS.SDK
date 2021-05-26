@@ -34,7 +34,7 @@ import { Constants } from "./constants";
 import { ByteBuffer } from "./internals";
 import { EcdsaSigner } from "./internals";
 import { HDKey } from "./internals";
-import { KeyPair } from "./crypto/keypair";
+import type { KeyPair } from "./crypto/keypair";
 import { SHA256 } from "./internals";
 import { DID } from "./internals";
 import { DIDBackend } from "./internals";
@@ -46,8 +46,8 @@ import { DIDDocumentPublicKeyReference } from "./internals";
 import { DIDDocumentService } from "./internals";
 import { DIDEntity } from "./internals";
 import { DIDMetadata } from "./internals";
-import { DIDStore } from "./internals";
-import { DIDTransactionAdapter } from "./didtransactionadapter";
+import type { DIDStore } from "./internals";
+import type { DIDTransactionAdapter } from "./didtransactionadapter";
 import { DIDURL } from "./internals";
 import {
     AlreadySignedException,
@@ -93,6 +93,7 @@ import { VerifiableCredential } from "./internals";
     DIDDocument.SERVICE,
     DIDDocument.EXPIRES,
     DIDDocument.PROOF ]})
+ @JsonInclude({value: JsonIncludeType.NON_EMPTY})
  export class DIDDocument extends DIDEntity<DIDDocument> {
 
     private static log = new Logger("DIDDocument");
@@ -107,64 +108,65 @@ import { VerifiableCredential } from "./internals";
     private static EXPIRES: string = "expires";
     private static PROOF: string = "proof";
 
+    @JsonProperty({ value: DIDDocument.ID })
+    @JsonClassType({type: () => [DID]})
     private subject: DID;
 
     // TODO: Convert from java - @JsonFormat(with:{JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
     @JsonProperty({ value: DIDDocument.CONTROLLER })
-    @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DID]]})
     public controllers?: DID[];
 
     @JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
-    @JsonInclude({ value: JsonIncludeType.NON_NULL })
     @JsonClassType({type: () => [DIDDocumentMultiSignature]})
     public multisig?: DIDDocumentMultiSignature;
 
     @JsonProperty({ value: DIDDocument.PUBLICKEY })
-    @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentPublicKey]]})
     public _publickeys?: DIDDocumentPublicKey[];
 
     @JsonProperty({ value: DIDDocument.AUTHENTICATION })
-    @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
     public _authentications?: DIDDocumentPublicKeyReference[];
 
     @JsonProperty({ value: DIDDocument.AUTHORIZATION })
-    @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
     public _authorizations?: DIDDocumentPublicKeyReference[];
 
     @JsonProperty({ value: DIDDocument.VERIFIABLE_CREDENTIAL })
-    @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [VerifiableCredential]]})
     public _credentials?: VerifiableCredential[];
 
     @JsonProperty({ value: DIDDocument.SERVICE })
-    @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentService]]})
     public _services?: DIDDocumentService[];
 
     @JsonProperty({ value: DIDDocument.EXPIRES })
-    @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     public expires?: Date;
 
     @JsonProperty({ value: DIDDocument.PROOF })
-    @JsonInclude({ value: JsonIncludeType.NON_EMPTY })
     @JsonClassType({type: () => [Array, [DIDDocumentProof]]})
     public _proofs?: DIDDocumentProof[];
 
     // Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnore()
+    @JsonIgnore()
     public defaultPublicKey?: DIDDocumentPublicKey;
 
     // Internal properties for DIDDocumentBuilder
+    @JsonIgnore()
     public controllerDocs?: Map<DID, DIDDocument>;
+    @JsonIgnore()
     public publicKeys?: Map<DIDURL, DIDDocumentPublicKey>;
+    @JsonIgnore()
     public credentials?: Map<DIDURL, VerifiableCredential>;
+    @JsonIgnore()
     public services?: Map<DIDURL, DIDDocumentService>;
+    @JsonIgnore()
     public proofs?: Map<DID, DIDDocumentProof>;
+    @JsonIgnore()
     public effectiveController?: DID;
 
+    @JsonIgnore()
     private metadata?: DIDMetadata;
 
     /**
@@ -183,8 +185,7 @@ import { VerifiableCredential } from "./internals";
      * @param doc the document be copied
      */
     public static clone(doc: DIDDocument, withProof: boolean) {
-        let newInstance: DIDDocument = new DIDDocument();
-        newInstance.subject = doc.subject;
+        let newInstance: DIDDocument = new DIDDocument(doc.subject);
         newInstance.controllers = doc.controllers;
         newInstance.controllerDocs = doc.controllerDocs;
         newInstance.effectiveController = doc.effectiveController;
@@ -1607,12 +1608,12 @@ import { VerifiableCredential } from "./internals";
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
-        let did = inputDID instanceof DID ? inputDID : DID.from(inputDID);
+        let did = DID.from(inputDID);
         let controllers = [];
 
         if (inputControllers && inputControllers.length ) {
             inputControllers.forEach(function (ctrl) {
-                let controller: DID = typeof ctrl === "string" ? new DID(ctrl) : ctrl;
+                let controller: DID = DID.from(ctrl);
                 if (!controller.equals(this.getSubject()) && !controllers.includes(ctrl))
                     controllers.push (controller);
 
