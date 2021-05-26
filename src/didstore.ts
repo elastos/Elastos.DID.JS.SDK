@@ -1036,7 +1036,7 @@ import { BASE64 } from "./internals";
 				for (let vcId of vcIds) {
 					let localVc = this.storage.loadCredential(vcId);
 
-					let resolvedVc = VerifiableCredential.resolve(vcId, localVc.getIssuer());
+					let resolvedVc = await VerifiableCredential.resolve(vcId, localVc.getIssuer());
 					if (resolvedVc == null)
 						continue;
 

@@ -406,11 +406,11 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return true;
 	}
 
-	public isRevoked(): boolean {
+	public async isRevoked(): Promise<boolean> {
 		if (this.getMetadata().isRevoked())
 			return true;
 
-		let bio = DIDBackend.getInstance().resolveCredentialBiography(
+		let bio = await DIDBackend.getInstance().resolveCredentialBiography(
 			this.getId(), this.getIssuer());
 		let revoked = bio.getStatus().equals(CredentialBiographyStatus.REVOKED);
 
@@ -463,8 +463,8 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 	}
 
-	public wasDeclared(): boolean {
-		let bio = DIDBackend.getInstance().resolveCredentialBiography(this.getId(), this.getIssuer());
+	public async wasDeclared(): Promise<boolean> {
+		let bio = await DIDBackend.getInstance().resolveCredentialBiography(this.getId(), this.getIssuer());
 
 		if (bio.getStatus() == CredentialBiographyStatus.NOT_FOUND)
 			return false;
@@ -606,7 +606,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, adapter);
 	}
 
-	public static revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null) {
+	public static async revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null): Promise<void> {
 		checkArgument(id != null, "Invalid credential id");
 		checkArgument(signer != null, "Invalid issuer's document");
 		checkArgument(storepass && storepass != null, "Invalid storepass");
@@ -614,7 +614,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (!signer.getMetadata().attachedStore())
 			throw new NotAttachedWithStoreException(signer.getSubject().toString());
 
-		let bio = DIDBackend.getInstance().resolveCredentialBiography(id, signer.getSubject());
+		let bio = await DIDBackend.getInstance().resolveCredentialBiography(id, signer.getSubject());
 		if (bio.getStatus().equals(CredentialBiographyStatus.REVOKED)) {
 			log.error("Publish failed because the credential is revoked.");
 			throw new CredentialRevokedException(id.toString());
@@ -681,7 +681,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return the VerifiableCredential object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	public static resolve(id: DIDURL | string, issuer: DID | string  = null, force: boolean = false): VerifiableCredential {
+	public static async resolve(id: DIDURL | string, issuer: DID | string  = null, force: boolean = false): Promise<VerifiableCredential> {
 		if (id == null)
 			throw new IllegalArgumentException();
 
@@ -691,14 +691,14 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (typeof issuer === "string")
 			issuer = DID.from(issuer);
 
-		let vc = DIDBackend.getInstance().resolveCredential(id, issuer, force);
+		let vc = await DIDBackend.getInstance().resolveCredential(id, issuer, force);
 		if (vc != null)
 			id.setMetadata(vc.getMetadata());
 
 		return vc;
 	}
 
-	public static resolveBiography(id: DIDURL, issuer: DID): CredentialBiography {
+	public static async resolveBiography(id: DIDURL, issuer: DID): Promise<CredentialBiography> {
 		checkArgument(id != null, "Invalid credential id");
 
 		return DIDBackend.getInstance().resolveCredentialBiography(id, issuer);

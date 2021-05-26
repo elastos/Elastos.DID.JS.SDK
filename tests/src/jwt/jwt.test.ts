@@ -79,7 +79,7 @@ public class JwtTest {
  		doc = db.seal(TestConfig.storePass);
  		testData.getStore().storeDid(doc);
 
- 		doc.publish(TestConfig.storePass);
+ 		await doc.publish(TestConfig.storePass);
     }
 
     @AfterEach

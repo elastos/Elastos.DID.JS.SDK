@@ -67,24 +67,24 @@ describe('IDChainOperations Tests', () => {
 
 	describe('Order 1', () => {
 		test('testCreateAndResolve', async () => {
-			// Create new DID and publish to ID sidechain.
-			let doc = await identity.newDid(TestConfig.storePass);
-			let did = doc.getSubject();
+				// Create new DID and publish to ID sidechain.
+				let doc = await identity.newDid(TestConfig.storePass);
+				let did = doc.getSubject();
 
-			log.debug("Publishing new DID {}...", did);
-			let start = Date.now();
-			doc.publish(TestConfig.storePass);
-			let duration = (Date.now() - start + 500) / 1000;
-			log.debug("Publish new DID {}...OK({}s)", did, duration);
+				log.debug("Publishing new DID {}...", did);
+				let start = Date.now();
+				await doc.publish(TestConfig.storePass);
+				let duration = (Date.now() - start + 500) / 1000;
+				log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
-			let resolved = await did.resolve();
-			expect(resolved).not.toBeNull();
-			expect(did.equals(resolved.getSubject())).toBeTruthy();
-			expect(resolved.isValid()).toBeTruthy();
-			expect(doc.toString(true)).toEqual(resolved.toString(true));
+				testData.waitForWalletAvailable();
+				let resolved = await did.resolve();
+				expect(resolved).not.toBeNull();
+				expect(did.equals(resolved.getSubject())).toBeTruthy();
+				expect(resolved.isValid()).toBeTruthy();
+				expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-			dids.push(did); // 0
+				dids.push(did); // 0
 		});
 	});
 
@@ -119,7 +119,7 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Publishing new DID and resolve {}...", did);
 
 			let start = Date.now();
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 			testData.waitForWalletAvailable();
 			let resolved = await did.resolve(true);
 
@@ -159,7 +159,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
@@ -219,7 +219,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
@@ -416,7 +416,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Publishing new DID {}...", did);
 			let start = Date.now();
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
@@ -470,7 +470,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
@@ -547,7 +547,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 

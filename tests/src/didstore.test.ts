@@ -107,7 +107,7 @@ describe("DIDStore Tests", ()=>{
 			let resolved = await doc.getSubject().resolve();
 			expect(resolved).toBeNull();
 
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 
 			file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
 			expect(file.exists()).toBeTruthy();
@@ -140,7 +140,7 @@ describe("DIDStore Tests", ()=>{
 			let alias = "my did " + i;
 			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 			dids.push(doc.getSubject());
 		}
 
@@ -390,7 +390,7 @@ describe("DIDStore Tests", ()=>{
 			let resolved = await doc.getSubject().resolve();
 			expect(resolved).toBeNull();
 
-			doc.publish(TestConfig.storePass);
+			await doc.publish(TestConfig.storePass);
 
 			let file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
 			expect(file.exists()).toBeTruthy();

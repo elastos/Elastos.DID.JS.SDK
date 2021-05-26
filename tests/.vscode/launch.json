@@ -13,10 +13,10 @@
           "--no-cache",
           "--runInBand",
           "--detectOpenHandles",
-          //"--silent=true",
-          "${workspaceRoot}/src/rootidentity.test",
+          "--silent=true",
+          "${workspaceRoot}/src/idchainoperations.test",
           "-t",
-          "testGetDid"
+          "Order 1"
         ],
         "runtimeArgs": [
           "--nolazy"

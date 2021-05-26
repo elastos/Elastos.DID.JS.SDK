@@ -85,7 +85,7 @@ describe("RootIdentity Tests", ()=>{
     	let resolved = await doc.getSubject().resolve();
     	expect(resolved).toBeNull();
 
-    	doc.publish(TestConfig.storePass);
+    	await doc.publish(TestConfig.storePass);
 
     	resolved = await doc.getSubject().resolve();
     	expect(resolved).not.toBeNull();
@@ -108,7 +108,7 @@ describe("RootIdentity Tests", ()=>{
     	let resolved = await doc.getSubject().resolve();
     	expect(resolved).toBeNull();
 
-    	doc.publish(TestConfig.storePass);
+    	await doc.publish(TestConfig.storePass);
 
     	resolved = await doc.getSubject().resolve();
     	expect(resolved).not.toBeNull();

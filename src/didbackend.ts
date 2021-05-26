@@ -311,7 +311,7 @@ export class DIDBackend {
 		return doc;
 	}
 
-	public resolveCredentialBiography(id: DIDURL, issuer: DID = null, force: boolean = false): CredentialBiography {
+	public async resolveCredentialBiography(id: DIDURL, issuer: DID = null, force: boolean = false): Promise<CredentialBiography> {
 		log.info("Resolving credential {}, issuer={}...", id, issuer);
 
 		let request = new CredentialResolveRequest(this.generateRequestId());
@@ -321,17 +321,17 @@ export class DIDBackend {
 			this.cache.invalidate(request);
 
 		try {
-			return this.cache.get(request) as CredentialBiography;
+			return this.cache.getAsync(request) as Promise<CredentialBiography>;
 		} catch (e) {
 			// ExecutionException
 			throw new DIDResolveException(e);
 		}
 	}
 
-	public resolveCredential(id: DIDURL, issuer: DID = null, force: boolean= false): VerifiableCredential {
+	public async resolveCredential(id: DIDURL, issuer: DID = null, force: boolean= false): Promise<VerifiableCredential> {
 		log.debug("Resolving credential {}...", id);
 
-		let bio = this.resolveCredentialBiography(id, issuer, force);
+		let bio = await this.resolveCredentialBiography(id, issuer, force);
 
 		let tx: CredentialTransaction = null;
 		if (bio.getStatus().equals(CredentialBiographyStatus.VALID)) {

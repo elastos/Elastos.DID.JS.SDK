@@ -43,8 +43,8 @@ import {
 } from "./utils/utils";
 import { TestConfig } from "./utils/testconfig";
 
-function testGetPublicKey(version: number, testData: TestData) {
-	let doc: DIDDocument = testData.getCompatibleData(version).getDocument("user1");
+async function testGetPublicKey(version: number, testData: TestData) {
+	let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
 	expect(doc).not.toBeNull();
 	expect(doc.isValid()).toBeTruthy();
 
@@ -131,13 +131,13 @@ describe('DIDDocument Tests', () => {
 	});
 
 
-	test('Test Get PublicKey With Multi Controller Cid1', () => {
+	test('Test Get PublicKey With Multi Controller Cid1', async () => {
 		let cd: CompatibleData = testData.getCompatibleData(2);
 
-		let user1: DIDDocument = cd.getDocument("user1");
-		let user2: DIDDocument = cd.getDocument("user2");
-		let user3: DIDDocument = cd.getDocument("user3");
-		let doc: DIDDocument = cd.getDocument("foobar");
+		let user1: DIDDocument = await cd.getDocument("user1");
+		let user2: DIDDocument = await cd.getDocument("user2");
+		let user3: DIDDocument = await cd.getDocument("user3");
+		let doc: DIDDocument = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -230,13 +230,13 @@ describe('DIDDocument Tests', () => {
 		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
 	});
 
-	test('Test Get Public Key With Multi Controller Cid2', ()=>{
+	test('Test Get Public Key With Multi Controller Cid2', async ()=>{
 		let cd = testData.getCompatibleData(2);
 
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		let user3 = cd.getDocument("user3");
-		let doc = cd.getDocument("baz");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		let user3 = await cd.getDocument("user3");
+		let doc = await cd.getDocument("baz");
 
 		expect(doc).not.toBeNull()
 		expect(doc.isValid()).toBeTruthy();
@@ -323,10 +323,10 @@ describe('DIDDocument Tests', () => {
 		expect(DIDURL.newWithDID(user1.getSubject(), "#key3")).toEqual(pks[0].getId())
 	})
 
-	test("Test Add PublicKey", ()=>{
+	test("Test Add PublicKey", async ()=>{
 		testData.getRootIdentity();
 
-		let doc: DIDDocument = testData.getCompatibleData(2).getDocument("user1");
+		let doc: DIDDocument = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull()
 		expect(doc.isValid()).toBeTruthy()
 
@@ -360,17 +360,17 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthorizationKeyCount()).toBe(1)
 	})
 
-	test("Test Add PublicKey With Cid", ()=>{
+	test("Test Add PublicKey With Cid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull()
 		expect(doc.isValid()).toBeTruthy();
 
@@ -407,10 +407,10 @@ describe('DIDDocument Tests', () => {
 
 	})
 
-	test("Test Remove PublicKey", ()=>{
+	test("Test Remove PublicKey", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull()
 		expect(doc.isValid()).toBeTruthy();
 
@@ -451,17 +451,17 @@ describe('DIDDocument Tests', () => {
 
 	})
 
-	test("Test Remove PublicKey With Cid", ()=>{
+	test("Test Remove PublicKey With Cid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -502,10 +502,10 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthorizationKeyCount()).toEqual(0);
 	})
 
-	test("testGetAuthenticationKey", ()=>{
+	test("testGetAuthenticationKey", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -525,13 +525,10 @@ describe('DIDDocument Tests', () => {
 			    || pk.getId().getFragment() == "key3").toBeTruthy()
 		});
 
-
-
 		// AuthenticationKey getter
 		let pk = doc.getAuthenticationKey("#primary");
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject()))
-
 
 		let id = DIDURL.newWithDID(doc.getSubject(), "#key3");
 		pk = doc.getAuthenticationKey(id);
@@ -568,11 +565,11 @@ describe('DIDDocument Tests', () => {
 		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#key2"))
 	})
 
-	test("testGetAuthenticationKeyWithCid", ()=>{
-		let cd = testData.getCompatibleData(2);
+	test("testGetAuthenticationKeyWithCid", async ()=>{
+		let cd = await testData.getCompatibleData(2);
 
-		let issuer = cd.getDocument("issuer");
-		let doc = cd.getDocument("examplecorp");
+		let issuer = await cd.getDocument("issuer");
+		let doc = await cd.getDocument("examplecorp");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -613,13 +610,13 @@ describe('DIDDocument Tests', () => {
 		expect(pks.length).toEqual(1)
 	})
 
-	test("testGetAuthenticationKeyWithMultiControllerCid1", ()=>{
+	test("testGetAuthenticationKeyWithMultiControllerCid1", async ()=>{
 		let cd = testData.getCompatibleData(2);
 
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		let user3 = cd.getDocument("user3");
-		let doc = cd.getDocument("foobar");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		let user3 = await cd.getDocument("user3");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -707,14 +704,14 @@ describe('DIDDocument Tests', () => {
 		expect(pks.length).toEqual(1)
 		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
 	})
-	test("testGetAuthenticationKeyWithMultiControllerCid2", ()=>{
+	test("testGetAuthenticationKeyWithMultiControllerCid2", async ()=>{
 		let cd = testData.getCompatibleData(2);
 
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		let user3 = cd.getDocument("user3");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		let user3 = await cd.getDocument("user3");
 
-		let doc = cd.getDocument("baz");
+		let doc = await cd.getDocument("baz");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -788,10 +785,10 @@ describe('DIDDocument Tests', () => {
 		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
 
 	})
-	test("testAddAuthenticationKey", ()=>{
+	test("testAddAuthenticationKey", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -851,13 +848,13 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(7);
 		expect(doc.getAuthorizationKeyCount()).toBe(1);
 	})
-	test("testAddAuthenticationKeyWithCid", ()=>{
+	test("testAddAuthenticationKeyWithCid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 
-		let user1 = cd.getDocument("user1");
-		cd.getDocument("user2");
-		let user3 = cd.getDocument("user3");
-		let doc = cd.getDocument("foobar");
+		let user1 = await cd.getDocument("user1");
+		await cd.getDocument("user2");
+		let user3 = await cd.getDocument("user3");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -924,10 +921,10 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(11);
 		expect(doc.getAuthorizationKeyCount()).toBe(0);
 	})
-	test("testRemoveAuthenticationKey", ()=>{
+	test("testRemoveAuthenticationKey", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -974,17 +971,17 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		expect(doc.getAuthorizationKeyCount()).toBe(1);
 	})
-	test("testRemoveAuthenticationKeyWithCid", ()=>{
+	test("testRemoveAuthenticationKeyWithCid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1025,10 +1022,10 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(5);
 		expect(doc.getAuthorizationKeyCount()).toBe(0);
 	})
-	test("testGetAuthorizationKey", ()=>{
+	test("testGetAuthorizationKey", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1078,17 +1075,17 @@ describe('DIDDocument Tests', () => {
 		pks = doc.selectAuthorizationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
 	})
-	test("testGetAuthorizationKeyWithCid", ()=>{
+	test("testGetAuthorizationKeyWithCid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		cd.getDocument("user1");
-		cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		await cd.getDocument("user1");
+		await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1098,10 +1095,10 @@ describe('DIDDocument Tests', () => {
 		let pks = doc.getAuthorizationKeys();
 		expect(pks.length).toBe(0);
 	})
-	test("testAddAuthorizationKey", ()=>{
+	test("testAddAuthorizationKey", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1167,17 +1164,17 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(3)
 		expect(doc.getAuthorizationKeyCount()).toBe(5)
 	})
-	test("testAddAuthorizationKeyWithCid", ()=>{
+	test("testAddAuthorizationKeyWithCid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1231,10 +1228,10 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(7);
 		expect(doc.getAuthorizationKeyCount()).toBe(0);
 	})
-	test("testRemoveAuthorizationKey", ()=>{
+	test("testRemoveAuthorizationKey", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1279,10 +1276,10 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(3)
 		expect(doc.getAuthorizationKeyCount()).toBe(1);
 	})
-	test("testGetCredential", ()=>{
+	test("testGetCredential", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1298,8 +1295,6 @@ describe('DIDDocument Tests', () => {
 			expect(vc.getId().getFragment() == "profile"
 			    || vc.getId().getFragment() == "email").toBeTruthy()
 		});
-
-
 
 		// Credential getter.
 		let vc = doc.getCredential("#profile");
@@ -1333,17 +1328,17 @@ describe('DIDDocument Tests', () => {
 		expect(vcs.length).toBe(0);
 	})
 
-	test("testGetCredentialWithCid", ()=>{
+	test("testGetCredentialWithCid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		cd.getDocument("user1");
-		cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		await cd.getDocument("user1");
+		await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1391,12 +1386,12 @@ describe('DIDDocument Tests', () => {
 		vcs = doc.selectCredentials(null, "TestingCredential");
 		expect(vcs.length).toBe(0);
 	})
-	test("testAddCredential", ()=>{
+	test("testAddCredential", async ()=>{
 		let cd = testData.getCompatibleData(2);
 
 		testData.getRootIdentity();
 
-		let doc = cd.getDocument("user1");
+		let doc = await cd.getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1431,17 +1426,17 @@ describe('DIDDocument Tests', () => {
 		// Should contains 3 credentials.
 		expect(doc.getCredentialCount()).toBe(4);
 	})
-	test("testAddCredentialWithCid", ()=>{
+	test("testAddCredentialWithCid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1481,10 +1476,10 @@ describe('DIDDocument Tests', () => {
 
 		expect(doc.getCredentialCount()).toBe(4);
 	})
-	test("testAddSelfClaimedCredential", ()=>{
+	test("testAddSelfClaimedCredential", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1525,17 +1520,17 @@ describe('DIDDocument Tests', () => {
 		expect(vc.isSelfProclaimed()).toBeTruthy();
 		expect(doc.getCredentialCount()).toBe(5);
 	})
-	test("testAddSelfClaimedCredentialWithCid", ()=>{
+	test("testAddSelfClaimedCredentialWithCid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1578,11 +1573,11 @@ describe('DIDDocument Tests', () => {
 
 		expect(doc.getCredentialCount()).toBe(5);
 	})
-	test("testRemoveCredential", ()=>{
+	test("testRemoveCredential", async ()=>{
 		testData.getRootIdentity();
     	let cd = testData.getCompatibleData(2);
 
-		let doc = cd.getDocument("user1");
+		let doc = await cd.getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1622,17 +1617,17 @@ describe('DIDDocument Tests', () => {
 		// Check the final count.
 		expect(doc.getCredentialCount()).toBe(2);
 	})
-	test("testRemoveCredentialWithCid", ()=>{
+	test("testRemoveCredentialWithCid", async ()=>{
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		let user1 = cd.getDocument("user1");
-		let user2 = cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		let user1 = await cd.getDocument("user1");
+		let user2 = await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1665,10 +1660,10 @@ describe('DIDDocument Tests', () => {
 		// Check the final count.
 		expect(doc.getCredentialCount()).toBe(0);
 	})
-	test("testGetService", ()=>{
+	test("testGetService", async ()=>{
 		testData.getRootIdentity();
 
-		let doc = testData.getCompatibleData(2).getDocument("user1");
+		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1735,18 +1730,18 @@ describe('DIDDocument Tests', () => {
 		expect(svcs.length).toBe(0);
 
 	})
-	test("testGetServiceWithCid", ()=>{
+	test("testGetServiceWithCid", async ()=>{
 
 		let cd = testData.getCompatibleData(2);
 		testData.getRootIdentity();
 
-		cd.getDocument("issuer");
-		cd.getDocument("user1");
-		cd.getDocument("user2");
-		cd.getDocument("user3");
-		cd.getDocument("examplecorp");
+		await cd.getDocument("issuer");
+		await cd.getDocument("user1");
+		await cd.getDocument("user2");
+		await cd.getDocument("user3");
+		await cd.getDocument("examplecorp");
 
-		let doc = cd.getDocument("foobar");
+		let doc = await cd.getDocument("foobar");
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
