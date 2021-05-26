@@ -606,7 +606,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, adapter);
 	}
 
-	public static revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public static revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null) {
 		checkArgument(id != null, "Invalid credential id");
 		checkArgument(signer != null, "Invalid issuer's document");
 		checkArgument(storepass && storepass != null, "Invalid storepass");
