@@ -40,7 +40,7 @@ export interface ReEncryptor {
 	 * @throws DIDStoreException DIDStore error.
 	 */
 	reEncrypt(data: string): string;
-};
+}
 
 /**
  * The interface for DIDStorage to support different file system.

@@ -167,7 +167,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	}
 
 	// Deep-copy constructor
-	private clone(url: DIDURL): DIDURL {
+	/* private clone(url: DIDURL): DIDURL {
 		let newInstance = new DIDURL();
 		newInstance.did = url.did;
 		newInstance.parameters = !url.parameters ? new Map() :
@@ -178,7 +178,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 		newInstance.fragment = url.fragment;
 
 		return newInstance;
-	}
+	} */
 
 	public static valueOf(inputBaseRefOrUrl: DID | string | null, url?: DIDURL | string): DIDURL {
 		if (!url) {
@@ -384,7 +384,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 		return output;
 	}
 
-	public equals(obj: Object): boolean {
+	public equals(obj: unknown): boolean {
 		if (obj == this)
 			return true;
 
@@ -431,8 +431,6 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 }
 
 export namespace DIDURL {
-
-
 	export class Builder {
 		private url: DIDURL;
 
@@ -441,7 +439,7 @@ export namespace DIDURL {
 			if (didOrDidUrl instanceof DID) {
 				didUrl = DIDURL.valueOf(didOrDidUrl);
 			}
-			else if (didOrDidUrl instanceof DID) {
+			else if (typeof didOrDidUrl === "string") {
 				didUrl = DIDURL.valueOfUrl(didOrDidUrl);
 			}
 			else {

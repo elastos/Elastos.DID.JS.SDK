@@ -78,23 +78,23 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		file = getFile("roots", identity.getId(), "private");;
+		file = getFile("roots", identity.getId(), "private");
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		file = getFile("roots", identity.getId(), "public");;
+		file = getFile("roots", identity.getId(), "public");
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		file = getFile("roots", identity.getId(), "index");;
+		file = getFile("roots", identity.getId(), "index");
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		file = getFile("roots", identity.getId(), ".metadata");;
+		file = getFile("roots", identity.getId(), ".metadata");
 		expect(file.exists()).toBeFalsy();
 
 		identity.setAlias("default");
-		file = getFile("roots", identity.getId(), ".metadata");;
+		file = getFile("roots", identity.getId(), ".metadata");
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 

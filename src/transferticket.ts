@@ -228,7 +228,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		if (!doc.isValid())
 			return false;
 
-		if (!this.isGenuine())
+		if (!await this.isGenuine())
 			return false;
 
 		if (this.txid !== doc.getMetadata().getTransactionId())
@@ -287,7 +287,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 	public async seal(controller: DIDDocument, storepass: string): Promise<void> {
 		try {
-			if (this.isQualified())
+			if (await this.isQualified())
 				return;
 
 			if (controller.isCustomizedDid()) {

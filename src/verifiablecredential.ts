@@ -481,22 +481,22 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 		this.checkAttachedStore();
 
-		if (!this.isGenuine()) {
+		if (!await this.isGenuine()) {
 			log.error("Publish failed because the credential is not genuine.");
 			throw new CredentialNotGenuineException(this.getId().toString());
 		}
 
-		if (this.isExpired()) {
+		if (await this.isExpired()) {
 			log.error("Publish failed because the credential is expired.");
 			throw new CredentialExpiredException(this.getId().toString());
 		}
 
-		if (this.isRevoked()) {
+		if (await this.isRevoked()) {
 			log.error("Publish failed because the credential is revoked.");
 			throw new CredentialRevokedException(this.getId().toString());
 		}
 
-		if (this.wasDeclared()) {
+		if (await this.wasDeclared()) {
 			log.error("Publish failed because the credential already declared.");
 			throw new CredentialAlreadyExistException(this.getId().toString());
 		}
@@ -562,7 +562,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 		issuer.getMetadata().attachStore(this.getStore());
 
-		if (this.isRevoked()) {
+		if (await this.isRevoked()) {
 			log.error("Publish failed because the credential is revoked.");
 			throw new CredentialRevokedException(this.getId().toString());
 		}
@@ -843,7 +843,7 @@ export namespace VerifiableCredential {
 		  * @param name the property name
 		  * @return the property value
 		  */
-		 public getProperty(name: string): Object {
+		 public getProperty(name: string): any {
 			 return this.properties[name];
 		 }
 

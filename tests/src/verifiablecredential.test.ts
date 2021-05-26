@@ -239,7 +239,7 @@ describe('let Tests', () => {
 
 			expect(compactJson).toEqual(normalized.toString(false));
 			expect(compactJson).toEqual(compact.toString(false));
-			expect(compactJson).toEqual(credential.toString(false));;
+			expect(compactJson).toEqual(credential.toString(false));
 		}
 	});
 

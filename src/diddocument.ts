@@ -862,7 +862,7 @@ import { VerifiableCredential } from "./internals";
                 continue;
 
             svcs.push(svc);
-        };
+        }
 
         return svcs;
     }

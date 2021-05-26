@@ -288,7 +288,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			if (!vc.getSubject().getId().equals(this.getHolder()))
 				return false;
 
-			if (!vc.isGenuine())
+			if (!await vc.isGenuine())
 				return false;
 		}
 
@@ -328,7 +328,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			if (!vc.getSubject().getId().equals(this.getHolder()))
 				return false;
 
-			if (!vc.isValid())
+			if (!await vc.isValid())
 				return false;
 		}
 

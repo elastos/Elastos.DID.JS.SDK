@@ -14,7 +14,7 @@ import * as fs from "./fs";
 	public static SEPARATOR = "/";
 
 	private fullPath: string;
-	private fileStats?: any;
+	private fileStats?: fs.Stats;
 
 	public constructor(path: File | string, subpath?: string) {
 		let fullPath: string = path instanceof File ? path.getAbsolutePath() : path as string;
@@ -216,8 +216,8 @@ import * as fs from "./fs";
 			  }
 			});
 			fs.rmdirSync(directoryPath);
-		  }
-		};
+		}
+	}
 
 	public toString() {
 		return this.fullPath;

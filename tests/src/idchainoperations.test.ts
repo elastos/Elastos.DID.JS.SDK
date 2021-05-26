@@ -67,24 +67,24 @@ describe('IDChainOperations Tests', () => {
 
 	describe('Order 1', () => {
 		test('testCreateAndResolve', async () => {
-				// Create new DID and publish to ID sidechain.
-				let doc = await identity.newDid(TestConfig.storePass);
-				let did = doc.getSubject();
+			// Create new DID and publish to ID sidechain.
+			let doc = await identity.newDid(TestConfig.storePass);
+			let did = doc.getSubject();
 
-				log.debug("Publishing new DID {}...", did);
-				let start = Date.now();
-				await doc.publish(TestConfig.storePass);
-				let duration = (Date.now() - start + 500) / 1000;
-				log.debug("Publish new DID {}...OK({}s)", did, duration);
+			log.debug("Publishing new DID {}...", did);
+			let start = Date.now();
+			await doc.publish(TestConfig.storePass);
+			let duration = (Date.now() - start + 500) / 1000;
+			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-				testData.waitForWalletAvailable();
-				let resolved = await did.resolve();
-				expect(resolved).not.toBeNull();
-				expect(did.equals(resolved.getSubject())).toBeTruthy();
-				expect(resolved.isValid()).toBeTruthy();
-				expect(doc.toString(true)).toEqual(resolved.toString(true));
+			testData.waitForWalletAvailable();
+			let resolved = await did.resolve();
+			expect(resolved).not.toBeNull();
+			expect(did.equals(resolved.getSubject())).toBeTruthy();
+			expect(resolved.isValid()).toBeTruthy();
+			expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-				dids.push(did); // 0
+			dids.push(did); // 0
 		});
 	});
 
@@ -110,7 +110,7 @@ describe('IDChainOperations Tests', () => {
 		});
 	});
 
-	describe('Order 3', async () => {
+	describe('Order 3', () => {
 		test('testCreateAndresolve2', async () => {
 			// Create new DID and publish to ID sidechain.
 			let doc = await identity.newDid(TestConfig.storePass);
@@ -774,7 +774,7 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 14', () => {
-		test('testSyncRootIdentityClean', () => {
+		test('testSyncRootIdentityClean', async () => {
 			let filePath = TestConfig.tempDir + "/cleanstore";
 			let path = new File(filePath);
 			Utils.deleteFile(path);
@@ -785,7 +785,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Synchronizing from IDChain...");
 			let start = Date.now();
-			rootIdentity.synchronize();
+			await rootIdentity.synchronize();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
@@ -828,10 +828,10 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 16', () => {
-		test('testSyncRootIdentityWithoutModification', () => {
+		test('testSyncRootIdentityWithoutModification', async () => {
 			log.debug("Synchronizing from IDChain...");
 			let start = Date.now();
-			identity.synchronize({
+			await identity.synchronize({
 				merge(c, l): DIDDocument {
 					expect(l.getProof().getSignature()).toEqual(c.getProof().getSignature());
 					expect(l.getLastModified().getTime()).toEqual(c.getLastModified().getTime());
@@ -888,7 +888,7 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 18', () => {
-		test('testSyncRootIdentityWithLocalModification1', () => {
+		test('testSyncRootIdentityWithLocalModification1', async () => {
 			// Sync to a clean store first
 			let filePath = TestConfig.tempDir + "/cleanstore";
 			let path = new File(filePath);
@@ -900,7 +900,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Synchronizing from IDChain...");
 			let start = Date.now();
-			rootIdentity.synchronize();
+			await rootIdentity.synchronize();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
@@ -924,7 +924,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Synchronizing again from IDChain...");
 			start = Date.now();
-			rootIdentity.synchronize();
+			await rootIdentity.synchronize();
 			duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
@@ -944,7 +944,7 @@ describe('IDChainOperations Tests', () => {
 	});
 
 	describe('Order 19', () => {
-		test('testSyncRootIdentityWithLocalModification2', () => {
+		test('testSyncRootIdentityWithLocalModification2', async () => {
 			// Sync to a clean store first
 			let filePath = TestConfig.tempDir + "/cleanstore";
 			let path = new File(filePath);
@@ -956,7 +956,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Synchronizing from IDChain...");
 			let start = Date.now();
-			rootIdentity.synchronize();
+			await rootIdentity.synchronize();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
@@ -981,7 +981,7 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Synchronizing again from IDChain...");
 			start = Date.now();
-			rootIdentity.synchronize({
+			await rootIdentity.synchronize({
 				merge(c, l) { return c; }
 			});
 			duration = (Date.now() - start + 500) / 1000;

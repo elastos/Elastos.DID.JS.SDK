@@ -21,6 +21,7 @@ import inject from "@rollup/plugin-inject";
 import size from 'rollup-plugin-size';
 import { visualizer } from 'rollup-plugin-visualizer';
 import replaceFiles from 'rollup-plugin-file-content-replace';
+import eslint from '@rollup/plugin-eslint';
 
 import { writeFileSync } from "fs";
 
@@ -117,6 +118,7 @@ export default command => {
 		plugins: [
 			...nodePlugins,
 			//!command.configTest && collectLicenses()
+			eslint()
 		],
 		// fsevents is a dependency of chokidar that cannot be bundled as it contains binary code
 		external: [

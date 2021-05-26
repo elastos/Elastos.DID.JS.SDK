@@ -73,8 +73,7 @@ class DIDDeserializer extends Deserializer {
 @JsonSerialize({using:  DIDSerializer.serialize})
 @JsonDeserialize({using:  DIDDeserializer.deserialize})
 export class DID {
-
-    public static METHOD: string = "elastos";
+    public static METHOD = "elastos";
 
     private method: string | null;
     private methodSpecificId: string | null;
@@ -157,7 +156,7 @@ export class DID {
      * @return the DIDDocument object
      * @throws DIDResolveException throw this exception if resolving did failed.
      */
-    public async resolve(force: boolean = false): Promise<DIDDocument> {
+    public async resolve(force = false): Promise<DIDDocument> {
         let doc = await DIDBackend.getInstance().resolveDid(this, force);
         if (doc != null)
             this.setMetadata(doc.getMetadata());
@@ -183,7 +182,7 @@ export class DID {
         return hashCode(DID.METHOD) + hashCode(this.methodSpecificId);
     }
 
-    public equals(obj: Object): boolean {
+    public equals(obj: unknown): boolean {
         if (obj == this)
             return true;
 

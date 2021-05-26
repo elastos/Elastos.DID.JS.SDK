@@ -75,7 +75,7 @@ export class RootIdentity {
 	 *              force = false, must not create new private identity if there is private identity.
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static createFromMnemonic(mnemonic: string, passphrase: string, store: DIDStore, storepass: string, overwrite: boolean = false): RootIdentity {
+	public static createFromMnemonic(mnemonic: string, passphrase: string, store: DIDStore, storepass: string, overwrite = false): RootIdentity {
 		checkArgument(mnemonic != null && mnemonic !== "", "Invalid mnemonic");
 		checkArgument(store != null, "Invalid DID store");
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -110,7 +110,7 @@ export class RootIdentity {
 	 *              force = false, must not create new private identity if there is private identity.
 	 * @throws DIDStoreException there is private identity if user need unforce mode.
 	 */
-	public static createFromPrivateKey(extentedPrivateKey: string, store: DIDStore, storepass: string, overwrite: boolean = false): RootIdentity {
+	public static createFromPrivateKey(extentedPrivateKey: string, store: DIDStore, storepass: string, overwrite = false): RootIdentity {
 		checkArgument(extentedPrivateKey != null && extentedPrivateKey !== "",
 				"Invalid extended private key");
 		checkArgument(store != null, "Invalid DID store");
@@ -178,7 +178,7 @@ export class RootIdentity {
 		return this.metadata.getDefaultDid();
 	}
 
-	public setDefaultDid(did: DID | String) {
+	public setDefaultDid(did: DID | string) {
 		if (did instanceof DID)
 			this.metadata.setDefaultDid(did);
 		else
@@ -273,7 +273,7 @@ export class RootIdentity {
 	 * @return the DIDDocument content related to the new DID
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
-	public async newDid(storepass: string, index: number = undefined, overwrite: boolean = false): Promise<DIDDocument> {
+	public async newDid(storepass: string, index: number = undefined, overwrite = false): Promise<DIDDocument> {
 		checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 		let shouldIncrementIndexAfterCompletion = false;
@@ -373,8 +373,7 @@ export class RootIdentity {
 							localDoc.getMetadata().getSignature())) {
 				finalDoc.getMetadata().merge(localDoc.getMetadata());
 			} else {
-				log.debug("{} on-chain copy conflict with local copy.",
-						did.toString());
+				log.debug("{} on-chain copy conflict with local copy.", did.toString());
 
 				// Local copy was modified
 				finalDoc = handle.merge(resolvedDoc, localDoc);
@@ -402,7 +401,7 @@ export class RootIdentity {
 	 * @throws DIDResolveException synchronize did faile with resolve error.
 	 * @throws DIDStoreException there is no private identity in DIDStore.
 	 */
-	public synchronize(handle: ConflictHandle = null) {
+	public async synchronize(handle: ConflictHandle = null): Promise<void> {
 		log.info("Synchronize root identity {}...", this.getId());
 
 		let lastIndex = this.getIndex() - 1;
@@ -410,7 +409,7 @@ export class RootIdentity {
 		let i = 0;
 
 		while (i < lastIndex || blanks < 20) {
-			let exists = this.synchronizeIndex(i, handle);
+			let exists = await this.synchronizeIndex(i, handle);
 			if (exists) {
 				if (i > lastIndex)
 					lastIndex = i;
@@ -473,5 +472,5 @@ export namespace RootIdentity {
 				}
 			}
 		}
-	};
+	}
 }

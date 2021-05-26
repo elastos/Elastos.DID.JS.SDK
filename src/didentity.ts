@@ -185,7 +185,7 @@ export namespace DIDEntity {
 		private did: string;
 		private objectMapper: ObjectMapper;
 
-		public constructor(normalized: boolean = false, objectMapper: ObjectMapper, did?: DID) {
+		public constructor(normalized = false, objectMapper: ObjectMapper, did?: DID) {
 			this.normalized = normalized;
 			this.did = did ? did.toString() : null;
 			this.objectMapper = objectMapper;

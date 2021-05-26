@@ -389,7 +389,7 @@ export class InstantData {
 	private ttFooBar: TransferTicket;
 	private ttBaz: TransferTicket;
 
-	constructor(private testData: TestData) {}
+	constructor(private testData: TestData){}
 
 	public async getIssuerDocument(): Promise<DIDDocument> {
 		if (this.idIssuer == null) {

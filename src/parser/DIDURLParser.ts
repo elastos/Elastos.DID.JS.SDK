@@ -2,12 +2,9 @@
 
 
 export class DIDValues {
-
     constructor(readonly value: string, readonly method: string, readonly methodSpecificId: string) {
-        
     }
 
-    
     public get isEmpty() : boolean {
         return this.value === "" && this.method === "" && this.methodSpecificId === ""
     }
@@ -15,7 +12,6 @@ export class DIDValues {
     public static CreateEmpty(): DIDValues{
         return new DIDValues("", "", "")
     }
-    
 }
 
 export interface DIDURLValues{
@@ -41,12 +37,9 @@ export class DIDURLParser{
         }
     }
 
-
     private static extractDID(url: string): DIDValues{
-        
-
         let did = url;
-        let match = url.match(/[?#\/;]/g)
+        let match = url.match(/[?#/;]/g)
 
         if (match && match.length > 0) {
             let indexOf = url.indexOf(match[0])
@@ -84,12 +77,10 @@ export class DIDURLParser{
 
         let parameters = url.substring(startIn + 1)
 
-
-        
-        let match = parameters.match(/[?#\/]/g)
+        let match = parameters.match(/[?#/]/g)
         if (match && match.length > 0) {
             parameters = parameters.substring(0, parameters.indexOf(match[0]))
-        };
+        }
 
         let values = parameters.split(";")
 
@@ -105,7 +96,7 @@ export class DIDURLParser{
         let match = path.match(/[?#]/g)
         if (match && match.length > 0) {
             path = path.substring(0, path.indexOf(match[0]))
-        };
+        }
 
         return path
     }
@@ -119,7 +110,7 @@ export class DIDURLParser{
         let indexOf = queryValues.indexOf("#")
         if (indexOf >= 0) {
             queryValues = queryValues.substring(0, indexOf)
-        };
+        }
 
         let values = queryValues.split("&")
 

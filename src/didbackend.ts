@@ -218,7 +218,7 @@ export class DIDBackend {
 					+ "): " + response.getErrorMessage());
 	}
 
-	public resolveDidBiography(did: DID, all: boolean = true, force: boolean = false): Promise<DIDBiography> {
+	public resolveDidBiography(did: DID, all = true, force = false): Promise<DIDBiography> {
 		log.info("Resolving DID {}, all={}...", did.toString(), all);
 
 		let request = new DIDResolveRequest(this.generateRequestId());
@@ -244,7 +244,7 @@ export class DIDBackend {
 	 * @return the DIDDocument object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	public async resolveDid(did: DID, force: boolean = false): Promise<DIDDocument> {
+	public async resolveDid(did: DID, force = false): Promise<DIDDocument> {
 		log.debug("Resolving DID {}...", did.toString());
 
 		if (this.resolveHandle != null) {
@@ -283,7 +283,7 @@ export class DIDBackend {
 				}
 			}(tx.getRequest());
 
-			if (!request.isValid())
+			if (!await request.isValid())
 				throw new DIDResolveException("Invalid DID biography, transaction signature mismatch.");
 
 			tx = bio.getTransaction(1);
@@ -297,7 +297,7 @@ export class DIDBackend {
 			!tx.getRequest().getOperation().equals(IDChainRequest.Operation.TRANSFER))
 			throw new DIDResolveException("Invalid ID transaction, unknown operation.");
 
-		if (!tx.getRequest().isValid())
+		if (!await tx.getRequest().isValid())
 			throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
 
 		let doc = tx.getRequest().getDocument();
@@ -311,7 +311,7 @@ export class DIDBackend {
 		return doc;
 	}
 
-	public async resolveCredentialBiography(id: DIDURL, issuer: DID = null, force: boolean = false): Promise<CredentialBiography> {
+	public async resolveCredentialBiography(id: DIDURL, issuer: DID = null, force = false): Promise<CredentialBiography> {
 		log.info("Resolving credential {}, issuer={}...", id, issuer);
 
 		let request = new CredentialResolveRequest(this.generateRequestId());
@@ -347,7 +347,7 @@ export class DIDBackend {
 
 
 			if (bio.getTransactionCount() == 1) {
-				if (!tx.getRequest().isValid())
+				if (!await tx.getRequest().isValid())
 					throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
 
 				return null;
@@ -361,7 +361,7 @@ export class DIDBackend {
 					}
 				})(tx.getRequest());
 
-				if (!request.isValid())
+				if (!await request.isValid())
 					throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
 			}
 
@@ -374,7 +374,7 @@ export class DIDBackend {
 		if (!tx.getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE))
 			throw new DIDResolveException("Invalid credential transaction, unknown operation.");
 
-		if (!tx.getRequest().isValid())
+		if (!await tx.getRequest().isValid())
 			throw new DIDResolveException("Invalid credential transaction, signature mismatch.");
 
 		let vc = tx.getRequest().getCredential();

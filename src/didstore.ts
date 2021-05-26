@@ -1867,7 +1867,7 @@ throws MalformedExportDataException, DIDStoreException, IOException {
 }
 
 export namespace DIDStore {
-	export interface KeyObject extends Hashable, Comparable<KeyObject> {};
+	export interface KeyObject extends Hashable, Comparable<KeyObject> {}
 
 	export class Key implements Hashable {
 		private static TYPE_ROOT_IDENTITY = 0x00;
@@ -1884,7 +1884,7 @@ export namespace DIDStore {
 			return this.type + this.id.hashCode();
 		}
 
-		public equals(obj: Object): boolean {
+		public equals(obj: unknown): boolean {
 			if (obj == this)
 				return true;
 
@@ -1961,7 +1961,7 @@ export namespace DIDStore {
 		@JsonProperty({value: "created"})
 		private created: Date | null = null;
 		@JsonProperty({ value: "fingerprint"})
-		private fingerprint: String | null = null;
+		private fingerprint: string | null = null;
 
 		//@JsonCreator
 		public constructor(@JsonProperty({value: "type", required: true}) type: string,
