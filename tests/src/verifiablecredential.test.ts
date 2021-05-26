@@ -20,11 +20,10 @@
  * SOFTWARE.
  */
 
-import { DIDStore, DIDURL, Logger, VerifiableCredential, IDChainRequest } from "@elastosfoundation/did-js-sdk";
+import { DIDStore, DIDURL, Logger, VerifiableCredential, IDChainRequest, Exceptions } from "@elastosfoundation/did-js-sdk";
 import { randomInt } from "crypto";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
-import { CredentialRevokedException } from "../../typings/exceptions/exceptions";
 
 let testData: TestData;
 let store: DIDStore;
@@ -493,7 +492,7 @@ describe('let Tests', () => {
 			let resolved = VerifiableCredential.resolve(credential.getId());
 			expect(resolved).toBeNull();
 
-			expect(credential.declare(signKey, TestConfig.storePass)).toThrow(CredentialRevokedException);
+			expect(credential.declare(signKey, TestConfig.storePass)).toThrow(Exceptions.CredentialRevokedException);
 
 			let bio = VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
 			expect(bio).not.toBeNull();
@@ -540,7 +539,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			expect(credential.declare(signKey, TestConfig.storePass)).toThrow(CredentialRevokedException);
+			expect(credential.declare(signKey, TestConfig.storePass)).toThrow(Exceptions.CredentialRevokedException);
 
 			let bio = VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
 			expect(bio).not.toBeNull();

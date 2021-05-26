@@ -285,7 +285,7 @@ export class DIDDocumentBuilder {
      * @return the DID Document Builder object
      */
     // Java: addPublicKey()
-    public createAndAddPublicKey(id: DIDURL | string, type: string, pk: string, controller?: DID | string): DIDDocumentBuilder {
+    public createAndAddPublicKey(id: DIDURL | string, pk: string, controller?: DID | string, type: string = "ECDSAsecp256r1"): DIDDocumentBuilder {
         this.checkNotSealed();
 
         if (typeof id === "string")
@@ -404,7 +404,7 @@ export class DIDDocumentBuilder {
      * @param id the key id
      * @return the DID Document Builder
      */
-    public removeAuthenticationKey(id: DIDURL): DIDDocumentBuilder {
+    public removeAuthenticationKey(id: DIDURL | string): DIDDocumentBuilder {
         this.checkNotSealed();
         checkArgument(id != null, "Invalid publicKey id");
 
@@ -432,23 +432,13 @@ export class DIDDocumentBuilder {
     }
 
     /**
-     * Remove Authentication Key matched the given id.
-     *
-     * @param id the key id string
-     * @return the DID Document Builder
-     */
-    /* public removeAuthenticationKey(id: string): DIDDocumentBuilder {
-        return removeAuthenticationKey(canonicalId(id));
-    } */
-
-    /**
      * Add the exist Public Key matched the key id to be Authorization key.
      *
      * @param id the key id
      * @return the DID Document Builder
      */
     // Java: addAuthorizationKey
-    public addExistingAuthorizationKey(id: DIDURL): DIDDocumentBuilder {
+    public addExistingAuthorizationKey(id: DIDURL | string): DIDDocumentBuilder {
         this.checkNotSealed();
         checkArgument(id != null, "Invalid publicKey id");
 
@@ -474,16 +464,6 @@ export class DIDDocumentBuilder {
 
         return this;
     }
-
-    /**
-     * Add the exist Public Key matched the key id to be Authorization Key.
-     *
-     * @param id the key id string
-     * @return the DID Document Builder
-     */
-    /* public addAuthorizationKey(id: string): DIDDocumentBuilder {
-        return addAuthorizationKey(canonicalId(id));
-    } */
 
     /**
      * Add the PublicKey named key id to be Authorization Key.
@@ -646,11 +626,15 @@ export class DIDDocumentBuilder {
      * @throws DIDStoreException there is no DID store to attach.
      * @throws InvalidKeyException there is no authentication key.
      */
-    // TODO: Use our new "Json" type instead of a map
     // Java: addCredential()
-    public createAndAddCredential(id: DIDURL, types: string[] = null, subject: JSONObject = null, expirationDate: Date = null, storepass: string): DIDDocumentBuilder {
+    public createAndAddCredential(storepass: string, id: DIDURL | string, subject: JSONObject | string = null, types: string[] = null, expirationDate: Date = null): DIDDocumentBuilder {
         this.checkNotSealed();
-        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+        checkArgument(id != null, "Invalid publicKey id");
+
+        if (typeof id === "string")
+            id = DIDURL.valueOfUrl(id);
+
+        checkArgument((id.getDid() == null || id.getDid().equals(this.getSubject())),
             "Invalid publicKey id");
         checkArgument(storepass && storepass != null, "Invalid storepass");
 
@@ -731,7 +715,7 @@ export class DIDDocumentBuilder {
      * @param id the Credential id
      * @return the DID Document Builder
      */
-    public removeCredential(id: DIDURL): DIDDocumentBuilder {
+    public removeCredential(id: DIDURL | string): DIDDocumentBuilder {
         this.checkNotSealed();
         checkArgument(id != null, "Invalid credential id");
 

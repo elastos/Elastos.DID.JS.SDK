@@ -335,10 +335,10 @@ describe('DIDDocument Tests', () => {
 		// Add 2 public keys
 		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
 		let key = TestData.generateKeypair();
-		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
+		db.createAndAddPublicKey(id, key.getPublicKeyBase58(), db.getSubject());
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("#test2", doc.getSubject().toString(), key.getPublicKeyBase58());
+		db.createAndAddPublicKey("#test2", key.getPublicKeyBase58(), doc.getSubject().toString());
 
 		doc = db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull()
@@ -379,10 +379,10 @@ describe('DIDDocument Tests', () => {
 		// Add 2 public keys
 		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
 		let key = TestData.generateKeypair();
-		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
+		db.createAndAddPublicKey(id, key.getPublicKeyBase58(), db.getSubject());
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("#test2", doc.getSubject().toString(), key.getPublicKeyBase58());
+		db.createAndAddPublicKey("#test2", key.getPublicKeyBase58(), doc.getSubject().toString());
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user2.signWithDocument(doc, TestConfig.storePass);
@@ -800,10 +800,10 @@ describe('DIDDocument Tests', () => {
 		// Add 2 public keys for test.
 		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
 		let key = TestData.generateKeypair();
-		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
+		db.createAndAddPublicKey(id, key.getPublicKeyBase58(), db.getSubject());
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("#test2", doc.getSubject().toString(), key.getPublicKeyBase58());
+		db.createAndAddPublicKey("#test2", key.getPublicKeyBase58(), doc.getSubject().toString());
 
 		// Add by reference
 		db.addExistingAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#test1"));
@@ -866,10 +866,10 @@ describe('DIDDocument Tests', () => {
 		// Add 2 public keys for test.
 		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
 		let key = TestData.generateKeypair();
-		db.addPublicKey(id, db.getSubject(), key.getPublicKeyBase58());
+		db.createAndAddPublicKey(id, key.getPublicKeyBase58(), db.getSubject());
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("#test2", doc.getSubject().toString(), key.getPublicKeyBase58());
+		db.createAndAddPublicKey("#test2", key.getPublicKeyBase58(), doc.getSubject().toString());
 
 		// Add by reference
 		db.addExistingAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#test1"));
@@ -1110,14 +1110,14 @@ describe('DIDDocument Tests', () => {
 		// Add 2 public keys for test.
 		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
 		let key = TestData.generateKeypair();
-		db.addPublicKey(id,
-				new DID(DID.METHOD, key.getAddress()),
-				key.getPublicKeyBase58());
+		db.createAndAddPublicKey(id,
+				key.getPublicKeyBase58(),
+				new DID(DID.METHOD, key.getAddress()));
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("#test2",
-				new DID(DID.METHOD, key.getAddress()).toString(),
-				key.getPublicKeyBase58());
+		db.createAndAddPublicKey("#test2",
+				key.getPublicKeyBase58(),
+				new DID(DID.METHOD, key.getAddress()).toString());
 
 		// Add by reference
 		db.addExistingAuthorizationKey(DIDURL.newWithDID(doc.getSubject(), "#test1"));
@@ -1187,14 +1187,14 @@ describe('DIDDocument Tests', () => {
 		// Add 2 public keys for test.
 		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
 		let key = TestData.generateKeypair();
-		db.addPublicKey(id,
-				new DID(DID.METHOD, key.getAddress()),
-				key.getPublicKeyBase58());
+		db.createAndAddPublicKey(id,
+				key.getPublicKeyBase58(),
+				new DID(DID.METHOD, key.getAddress()));
 
 		key = TestData.generateKeypair();
-		db.addPublicKey("#test2",
-				new DID(DID.METHOD, key.getAddress()).toString(),
-				key.getPublicKeyBase58());
+		db.createAndAddPublicKey("#test2",
+				key.getPublicKeyBase58(),
+				new DID(DID.METHOD, key.getAddress()).toString());
 
 		expect(()=>{db.addExistingAuthorizationKey(DIDURL.newWithDID(did, "#test1"));}).toThrowError()
 
@@ -1491,15 +1491,16 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 
 		// Add credentials.
-		let subject = Map<string, any>();
-		subject.set("passport", "S653258Z07");
-		db.addCredential("#passport", subject, TestConfig.storePass);
+		let subject = {
+			"passport": "S653258Z07"
+		};
+		db.createAndAddCredential(TestConfig.storePass, "#passport", subject);
 
 		let json = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\"}";
-		db.addCredential("#name", json, TestConfig.storePass);
+		db.createAndAddCredential(TestConfig.storePass, "#name", json);
 
 		json = "{\"twitter\":\"@john\"}";
-		db.addCredential("#twitter", json, TestConfig.storePass);
+		db.createAndAddCredential(TestConfig.storePass, "#twitter", json);
 
 		doc = db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
@@ -1541,18 +1542,19 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(user2);
 
 		// Add credentials.
-		let subject = Map<string, any>();
-		subject.set("foo", "bar");
-		db.addCredential("#testvc", subject, TestConfig.storePass);
+		let subject = {
+			"foo": "bar"
+		};
+		db.createAndAddCredential(TestConfig.storePass, "#testvc", subject);
 
 		let json = "{\"name\":\"Foo Bar\",\"alternateName\":\"Jason Holtslander\"}";
-		db.addCredential("#name", json, TestConfig.storePass);
+		db.createAndAddCredential(TestConfig.storePass, "#name", json);
 
 		json = "{\"twitter\":\"@foobar\"}";
-		db.addCredential("#twitter", json, TestConfig.storePass);
+		db.createAndAddCredential(TestConfig.storePass, "#twitter", json);
 
 		doc = db.seal(TestConfig.storePass);
-		doc = user1.sign(doc, TestConfig.storePass);
+		doc = user1.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1649,7 +1651,7 @@ describe('DIDDocument Tests', () => {
 		expect(()=>{db.removeCredential(DIDURL.newWithDID(did, "#notExistCredential"));}).toThrowError();
 
 		doc = db.seal(TestConfig.storePass);
-		doc = user2.sign(doc, TestConfig.storePass);
+		doc = user2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1692,13 +1694,13 @@ describe('DIDDocument Tests', () => {
 
 
 		let props = svc.getProperties();
-		expect(props.isEmpty()).toBeTruthy()
+		expect(Object.keys(props).length === 0).toBeTruthy()
 
 		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
 		expect(svc).not.toBeNull();
 		expect(svc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
 		props = svc.getProperties();
-		expect(props.isEmpty()).toBeTruthy()
+		expect(Object.keys(props).length === 0).toBeTruthy()
 
 		// Service not exist, should fail.
 		svc = doc.getService("#notExistService");
@@ -1721,9 +1723,8 @@ describe('DIDDocument Tests', () => {
 		props = svcs[0].getProperties();
 		expect(svcs.length).toBe(1);
 		expect(props.length).toBe(12);
-		expect(props.get("foobar")).toEqual("lalala...")
-		expect(props.get("FOOBAR")).toEqual("Lalala...")
-
+		expect(props["foobar"]).toEqual("lalala...")
+		expect(props["FOOBAR"]).toEqual("Lalala...")
 
 		// Service not exist, should return a empty list.
 		svcs = doc.selectServices("#notExistService",
@@ -1771,15 +1772,15 @@ describe('DIDDocument Tests', () => {
 		expect(svc.getServiceEndpoint()).toEqual("https://foobar.com/vault")
 
 		let props = svc.getProperties();
-		expect(props.isEmpty()).toBeTruthy()
+		expect(Object.keys(props).length === 0).toBeTruthy()
 
 		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
 		expect(svc).not.toBeNull();
 		expect(svc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
 		props = svc.getProperties();
 		expect(props.length).toBe(12);
-		expect(props.get("foobar")).toEqual("lalala...")
-		expect(props.get("FOOBAR")).toEqual("Lalala...")
+		expect(props["foobar"]).toEqual("lalala...")
+		expect(props["FOOBAR"]).toEqual("Lalala...")
 
 		// Service not exist, should fail.
 		svc = doc.getService("#notExistService");
