@@ -13,10 +13,10 @@
           "--no-cache",
           "--runInBand",
           "--detectOpenHandles",
-          "--silent=true",
-          "${workspaceRoot}/src/issuer.test",
+          //"--silent=true",
+          "${workspaceRoot}/src/rootidentity.test",
           "-t",
-          "New Issuer Test With Sign Key"
+          "testGetDid"
         ],
         "runtimeArgs": [
           "--nolazy"
