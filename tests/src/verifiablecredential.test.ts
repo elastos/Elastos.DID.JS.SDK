@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DIDStore, DIDURL, Logger, VerifiableCredential, IDChainRequest, Exceptions } from "@elastosfoundation/did-js-sdk";
+import { DIDStore, DIDURL, Issuer, Logger, VerifiableCredential, IDChainRequest, Exceptions } from "@elastosfoundation/did-js-sdk";
 import { randomInt } from "crypto";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
@@ -822,120 +822,119 @@ describe('let Tests', () => {
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).toBeNull();
     });
-/*
 
-    test('testListPagination() throws DIDException {
-    	TestData.InstantData sd = testData.getInstantData();
+    test('testListPagination', async () => {
+    	let sd = testData.getInstantData();
 
     	let doc = sd.getUser1Document();
-    	DID did = doc.getSubject();
+    	let did = doc.getSubject();
 
-    	Issuer selfIssuer = new Issuer(doc);
+    	let selfIssuer = new Issuer(doc);
 
-    	for (int i = 0; i < 1028; i++) {
-    		log.trace("Creating test credential {}...", i);
+    	for (let i = 0; i < 1028; i++) {
+    		console.log("Creating test credential {}...", i);
 
     		let vc = selfIssuer.issueFor(did)
     				.id("#test" + i)
     				.type("SelfProclaimedCredential")
-    				.propertie("index", Integer.valueOf(i))
+    				.properties({"index": i})
     				.seal(TestConfig.storePass);
 
     		vc.getMetadata().attachStore(doc.getStore());
-    		vc.declare(TestConfig.storePass);
+    		vc.declare(null, TestConfig.storePass);
 
-    		assertTrue(vc.wasDeclared());
+    		expect(vc.wasDeclared()).toBeTruthy();
     	}
 
-    	int index = 1027;
-    	List<DIDURL> ids = VerifiableCredential.list(did);
-    	assertNotNull(ids);
-    	assertEquals(128, ids.size());
-	   	for (let id : ids) {
-	   		log.trace("Resolving credential {}...", id.getFragment());
+    	let index = 1027;
+    	let ids = await VerifiableCredential.list(did);
+    	expect(ids).not.toBeNull();
+		expect(ids.length).toEqual(128);
+		
+	   	for (let id of ids) {
+	   		console.log("Resolving credential {}...", id.getFragment());
 
 	   		let ref = DIDURL.newWithDID(did, "#test" + index--);
-	   		assertEquals(ref, id);
+	   		expect(ref.equals(id));
 
 	   		let vc = VerifiableCredential.resolve(id);
-
-	   		assertNotNull(vc);
-	   		assertEquals(ref, vc.getId());
-	   		assertTrue(vc.wasDeclared());
+			expect(vc).not.toBeNull();
+	   		expect(ref.equals(vc.getId()));
+	   		expect(vc.wasDeclared()).toBeTruthy();
 	   	}
 
     	index = 1027;
-    	ids = VerifiableCredential.list(did, 560);
-    	assertNotNull(ids);
-    	assertEquals(512, ids.size());
-	   	for (let id : ids) {
-	   		log.trace("Resolving credential {}...", id.getFragment());
+    	ids = await VerifiableCredential.list(did, 560);
+    	expect(ids).not.toBeNull();
+		expect(ids.length).toEqual(512);
+	   	for (let id of ids) {
+	   		console.log("Resolving credential {}...", id.getFragment());
 
 	   		let ref = DIDURL.newWithDID(did, "#test" + index--);
-	   		assertEquals(ref, id);
+	   		expect(ref.equals(id));
 
 	   		let vc = VerifiableCredential.resolve(id);
 
-	   		assertNotNull(vc);
-	   		assertEquals(ref, vc.getId());
-	   		assertTrue(vc.wasDeclared());
+	   		expect(vc).not.toBeNull();
+	   		expect(ref.equals(vc.getId()));
+	   		expect(vc.wasDeclared()).toBeTruthy();
 	   	}
 
-    	ids = VerifiableCredential.list(did, 1028, 100);
-    	assertNull(ids);
+    	ids = await VerifiableCredential.list(did, 1028, 100);
+    	expect(ids).toBeNull();
 
-    	int skip = 0;
-    	int limit = 256;
+    	let skip = 0;
+    	let limit = 256;
     	index = 1028;
     	while (true) {
-    		int resultSize = index >= limit ? limit : index;
-	    	ids = VerifiableCredential.list(did, skip, limit);
+    		let resultSize = index >= limit ? limit : index;
+	    	ids = await VerifiableCredential.list(did, skip, limit);
 	    	if (ids == null)
 	    		break;
 
-	    	assertEquals(resultSize, ids.size());
-		   	for (let id : ids) {
-		   		log.trace("Resolving credential {}...", id.getFragment());
+	    	expect(ids.length).toEqual(resultSize);
+		   	for (let id of ids) {
+		   		console.log("Resolving credential {}...", id.getFragment());
 
 		   		let ref = DIDURL.newWithDID(did, "#test" + --index);
-		   		assertEquals(ref, id);
+		   		expect(ref.equals(id));
 
 		   		let vc = VerifiableCredential.resolve(id);
 
-		   		assertNotNull(vc);
-		   		assertEquals(ref, vc.getId());
-		   		assertTrue(vc.wasDeclared());
+		   		expect(vc).not.toBeNull();
+		   		expect(ref.equals(vc.getId()));
+		   		expect(vc.wasDeclared()).toBeTruthy();
 		   	}
 
-		   	skip += ids.size();
+		   	skip += ids.length;
     	}
-    	assertEquals(0, index);
+    	expect(index).toEqual(0);
 
     	skip = 200;
     	limit = 100;
     	index = 828;
     	while (true) {
-    		int resultSize = index >= limit ? limit : index;
-	    	ids = VerifiableCredential.list(did, skip, limit);
+    		let resultSize = index >= limit ? limit : index;
+	    	ids = await VerifiableCredential.list(did, skip, limit);
 	    	if (ids == null)
 	    		break;
 
-	    	assertEquals(resultSize, ids.size());
-		   	for (let id : ids) {
-		   		log.trace("Resolving credential {}...", id.getFragment());
+	    	expect(ids.length).toEqual(resultSize);
+		   	for (let id of ids) {
+		   		console.log("Resolving credential {}...", id.getFragment());
 
 		   		let ref = DIDURL.newWithDID(did, "#test" + --index);
-		   		assertEquals(ref, id);
+		   		expect(ref.equals(id));
 
 		   		let vc = VerifiableCredential.resolve(id);
 
-		   		assertNotNull(vc);
-		   		assertEquals(ref, vc.getId());
-		   		assertTrue(vc.wasDeclared());
+		   		expect(vc).not.toBeNull();
+		   		expect(ref.equals(vc.getId()));
+		   		expect(vc.wasDeclared()).toBeTruthy();
 		   	}
 
-		   	skip += ids.size();
+		   	skip += ids.length;
     	}
-    	assertEquals(0, index);
-    }*/
+    	expect(index).toEqual(0);
+    });
 });
