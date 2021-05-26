@@ -589,7 +589,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			expect(credential.declare(signKey, TestConfig.storePass)).toThrow(CredentialRevokedException);
+			expect(credential.declare(signKey, TestConfig.storePass)).toThrow(Exceptions.CredentialRevokedException);
 
 			let bio = VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
 			expect(bio).not.toBeNull();
