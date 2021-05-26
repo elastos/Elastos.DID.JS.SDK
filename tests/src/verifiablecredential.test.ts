@@ -669,161 +669,160 @@ describe('let Tests', () => {
 		}
     });
 
-/*
-    test('testListCrendentials() throws DIDException {
-	   	TestData.InstantData sd = testData.getInstantData();
+	test('testListCrendentials', async () => {
 
-	   	String[][] vcds = {
-	   			{ "user1", "twitter" },
-	   			{ "user1", "passport" },
-	   			{ "user1", "json" },
-	   			{ "user1", "jobposition" },
-	   			{ "foobar", "license" },
-	   			{ "foobar", "services" },
-	   			{ "foo" , "email" }
-	   	};
+	   	let sd = testData.getInstantData();
 
-	   	for (String[] vcd : vcds) {
-			let credential = sd.getCredential(vcd[0], vcd[1]);
+		let csvSource = [
+			{did:"user1", vc:"twitter"},
+			{did:"user1", vc:"passport"},
+			{did:"user1", vc:"json"},
+			{did:"user1", vc:"jobposition"},
+			{did:"foobar", vc:"license"},
+			{did:"foobar", vc:"services"},
+			{did:"foo", vc:"email"}
+		];
+
+	   	for (let csv of csvSource) {
+			let credential = sd.getCredential(csv.did, csv.vc);
 
 			// Sign key for customized DID
-			let doc = credential.getSubject().getId().resolve();
+			let doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
-				Random rnd = new Random();
-				int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
 			credential.declare(signKey, TestConfig.storePass);
 
 			let id = credential.getId();
 			let resolved = VerifiableCredential.resolve(id);
-			assertNotNull(resolved);
+			expect(resolved).not.toBeNull();
 
-			assertEquals(credential.toString(), resolved.toString());
+			expect(credential.toString()).toEqual(resolved.toString());
 
-			CredentialMetadata metadata = resolved.getMetadata();
-			assertNotNull(metadata);
-			assertNotNull(metadata.getPublished());
-			assertNotNull(metadata.getTransactionId());
-			assertFalse(resolved.isRevoked());
+			let metadata = resolved.getMetadata();
+			expect(metadata).not.toBeNull();
+			expect(metadata.getPublished()).not.toBeNull();
+			expect(metadata.getTransactionId()).not.toBeNull();
+			expect(resolved.isRevoked()).toBeFalsy();
 
-			CredentialBiography bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
-			assertNotNull(bio);
-			assertEquals(1, bio.getAllTransactions().size());
-			assertEquals(IDChainRequest.Operation.DECLARE, bio.getTransaction(0).getRequest().getOperation());
+			let bio = VerifiableCredential.resolveBiography(id, credential.getIssuer());
+			expect(bio).not.toBeNull();
+			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 	   	}
 
 	   	let doc = sd.getUser1Document();
-	   	DID did = doc.getSubject();
-	   	List<DIDURL> ids = VerifiableCredential.list(did);
-	   	assertNotNull(ids);
-	   	assertEquals(4, ids.size());
-	   	for (let id : ids) {
+	   	let did = doc.getSubject();
+	   	let ids = await VerifiableCredential.list(did);
+	   	expect(ids).not.toBeNull();
+		expect(ids.length).toEqual(4);
+	   	
+	   	for (let id of ids) {
 	   		let vc = VerifiableCredential.resolve(id);
-	   		assertNotNull(vc);
-	   		assertEquals(id, vc.getId());
-	   		assertTrue(vc.wasDeclared());
-	   		assertFalse(vc.isRevoked());
+	   		expect(vc).not.toBeNull();
+			expect(id).toEqual(vc.getId());
+	   		expect(vc.wasDeclared()).toBeTruthy();
+	   		expect(vc.isRevoked()).toBeFalsy();
 	   	}
 
 	   	doc = sd.getFooBarDocument();
 	   	did = doc.getSubject();
-	   	ids = VerifiableCredential.list(did);
-	   	assertNotNull(ids);
-	   	assertEquals(2, ids.size());
-	   	for (let id : ids) {
+	   	ids = await VerifiableCredential.list(did);
+	   	expect(ids).not.toBeNull();
+		expect(ids.length).toEqual(2);
+	   	for (let id of ids) {
 	   		let vc = VerifiableCredential.resolve(id);
-	   		assertNotNull(vc);
-	   		assertEquals(id, vc.getId());
-	   		assertTrue(vc.wasDeclared());
-	   		assertFalse(vc.isRevoked());
+	   		expect(vc).not.toBeNull();
+			expect(id).toEqual(vc.getId());
+	   		expect(vc.wasDeclared()).toBeTruthy();
+	   		expect(vc.isRevoked()).toBeFalsy();
 	   	}
 
 	   	doc = sd.getFooDocument();
 	   	did = doc.getSubject();
-	   	ids = VerifiableCredential.list(did);
-	   	assertNotNull(ids);
-	   	assertEquals(1, ids.size());
-	   	for (let id : ids) {
+	   	ids = await VerifiableCredential.list(did);
+	   	expect(ids).not.toBeNull();
+		expect(ids.length).toEqual(1);
+	   	for (let id of ids) {
 	   		let vc = VerifiableCredential.resolve(id);
-	   		assertNotNull(vc);
-	   		assertEquals(id, vc.getId());
-	   		assertTrue(vc.wasDeclared());
-	   		assertFalse(vc.isRevoked());
+	   		expect(vc).not.toBeNull();
+			expect(id).toEqual(vc.getId());
+	   		expect(vc.wasDeclared()).toBeTruthy();
+	   		expect(vc.isRevoked()).toBeFalsy();
 	   	}
 
 	   	doc = sd.getBarDocument();
 	   	did = doc.getSubject();
-	   	ids = VerifiableCredential.list(did);
-	   	assertNull(ids);
+	   	ids = await VerifiableCredential.list(did);
+	   	expect(ids).toBeNull();
 
-	   	for (String[] vcd : vcds) {
-			let credential = sd.getCredential(vcd[0], vcd[1]);
+	   	for (let csv of csvSource) {
+			let credential = sd.getCredential(csv.did, csv.vc);
 
 			// Sign key for customized DID
-			doc = credential.getSubject().getId().resolve();
+			doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
-				Random rnd = new Random();
-				int index = (rnd.nextInt() & Integer.MAX_VALUE) % doc.getControllerCount();
-				signKey = doc.getControllers().get(index).resolve().getDefaultPublicKeyId();
+				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.revoke(signKey, TestConfig.storePass);
+			credential.revoke(signKey, null, TestConfig.storePass);
 
 			let id = credential.getId();
 			let resolved = VerifiableCredential.resolve(id);
-			assertNotNull(resolved);
-			assertTrue(resolved.isRevoked());
+			expect(resolved).not.toBeNull();
+			expect(resolved.isRevoked()).toBeTruthy();
 	   	}
 
 	   	doc = sd.getUser1Document();
 	   	did = doc.getSubject();
-	   	ids = VerifiableCredential.list(did);
-	   	assertNotNull(ids);
-	   	assertEquals(4, ids.size());
-	   	for (let id : ids) {
+	   	ids = await VerifiableCredential.list(did);
+	   	expect(ids).not.toBeNull();
+		expect(ids.length).toEqual(4);
+	   	for (let id of ids) {
 	   		let vc = VerifiableCredential.resolve(id);
-	   		assertNotNull(vc);
-	   		assertEquals(id, vc.getId());
-	   		assertTrue(vc.wasDeclared());
-	   		assertTrue(vc.isRevoked());
+	   		expect(vc).not.toBeNull();
+			expect(id).toEqual(vc.getId());
+	   		expect(vc.wasDeclared()).toBeTruthy();
+	   		expect(vc.isRevoked()).toBeTruthy();
 	   	}
 
 	   	doc = sd.getFooBarDocument();
 	   	did = doc.getSubject();
-	   	ids = VerifiableCredential.list(did);
-	   	assertNotNull(ids);
-	   	assertEquals(2, ids.size());
-	   	for (let id : ids) {
+	   	ids = await VerifiableCredential.list(did);
+	   	expect(ids).not.toBeNull();
+		expect(ids.length).toEqual(2);
+	   	for (let id of ids) {
 	   		let vc = VerifiableCredential.resolve(id);
-	   		assertNotNull(vc);
-	   		assertEquals(id, vc.getId());
-	   		assertTrue(vc.wasDeclared());
-	   		assertTrue(vc.isRevoked());
+	   		expect(vc).not.toBeNull();
+			expect(id).toEqual(vc.getId());
+	   		expect(vc.wasDeclared()).toBeTruthy();
+	   		expect(vc.isRevoked()).toBeTruthy();
 	   	}
 
 	   	doc = sd.getFooDocument();
 	   	did = doc.getSubject();
-	   	ids = VerifiableCredential.list(did);
-	   	assertNotNull(ids);
-	   	assertEquals(1, ids.size());
-	   	for (let id : ids) {
+	   	ids = await VerifiableCredential.list(did);
+	   	expect(ids).not.toBeNull();
+		expect(ids.length).toEqual(1);
+	   	for (let id of ids) {
 	   		let vc = VerifiableCredential.resolve(id);
-	   		assertNotNull(vc);
-	   		assertEquals(id, vc.getId());
-	   		assertTrue(vc.wasDeclared());
-	   		assertTrue(vc.isRevoked());
+	   		expect(vc).not.toBeNull();
+			expect(id).toEqual(vc.getId());
+	   		expect(vc.wasDeclared()).toBeTruthy();
+	   		expect(vc.isRevoked()).toBeTruthy();
 	   	}
 
 	   	doc = sd.getBarDocument();
 	   	did = doc.getSubject();
-	   	ids = VerifiableCredential.list(did);
-	   	assertNull(ids);
-    }
-
+	   	ids = await VerifiableCredential.list(did);
+	   	expect(ids).toBeNull();
+    });
+/*
 
     test('testListPagination() throws DIDException {
     	TestData.InstantData sd = testData.getInstantData();
