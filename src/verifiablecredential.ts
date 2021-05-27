@@ -22,7 +22,7 @@
 
 import dayjs, { Dayjs } from "dayjs";
 import {
-	JsonAnySetter, JsonClassType, JsonFilter, JsonGetter, JsonInclude,
+	JsonAnySetter, JsonClassType, JsonFilter, JsonGetter, JsonIgnore, JsonInclude,
 	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize
 } from "jackson-js";
 import type {
@@ -127,6 +127,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	@JsonClassType({type: () => [VerifiableCredential.Proof]})
 	public proof: VerifiableCredential.Proof;
 
+	@JsonIgnore()
 	public metadata: CredentialMetadata;
 
 	constructor() {

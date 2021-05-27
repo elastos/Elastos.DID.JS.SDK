@@ -2,7 +2,8 @@ import {
     JsonProperty,
     JsonPropertyOrder,
     JsonSerialize,
-    JsonClassType
+    JsonClassType,
+    JsonIgnore
 } from "jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
@@ -42,7 +43,9 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
     public controller: DID;
     @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58 })
     public publicKeyBase58: string;
+    @JsonIgnore()
     private authenticationKey: boolean;
+    @JsonIgnore()
     private authorizationKey: boolean;
 
     /**

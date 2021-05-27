@@ -480,7 +480,7 @@ import { BASE64 } from "./internals";
 		 * @param metadata the meta data
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		protected storeDidMetadata(did: DID, metadata: DIDMetadata) {
+		public storeDidMetadata(did: DID, metadata: DIDMetadata) {
 			checkArgument(did != null, "Invalid did");
 			checkArgument(metadata != null, "Invalid metadata");
 
@@ -862,26 +862,23 @@ import { BASE64 } from "./internals";
 		 public loadPrivateKey(id: DIDURL, storepass?: string): Buffer {
 			checkArgument(id != null, "Invalid private key id");
 
-			let encryptedKey: string = null;
-			if (storepass !== undefined) {
-				let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
-					let encryptedKey = this.storage.loadPrivateKey(id);
-					return {
-						value: encryptedKey != null ? encryptedKey : DIDStore.NULL
-					};
-				});
+			let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
+				let key = this.storage.loadPrivateKey(id);
+				return {
+					value: key != null ? key : DIDStore.NULL
+				};
+			});
 
-				encryptedKey = value == DIDStore.NULL ? null : value;
-			}
-			else {
-				checkArgument(storepass && storepass != null, "Invalid storepass");
-			}
+			let encryptedKey: string = value == DIDStore.NULL ? null : value;
 
-			if (encryptedKey == null) {
-				// fail-back to lazy private key generation
-				return RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
+			if (storepass == undefined) {
+				return encryptedKey ? Buffer.from(encryptedKey) : null;
 			} else {
-				return this.decrypt(encryptedKey, storepass);
+				checkArgument(storepass && storepass != null, "Invalid storepass");
+				if (encryptedKey)
+					return this.decrypt(encryptedKey, storepass);
+				else
+					return RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
 			}
 		}
 
@@ -897,10 +894,9 @@ import { BASE64 } from "./internals";
 		public containsPrivateKey(id: DIDURL | string): boolean {
 			checkArgument(id != null, "Invalid private key id");
 
-			if (id instanceof DIDURL)
-				return this.loadPrivateKey(id) != null;
-			else
-				return this.loadPrivateKey(DIDURL.valueOfUrl(id)) != null;
+			let keyId = id instanceof DIDURL ? id : DIDURL.valueOfUrl(id);
+			let key = this.loadPrivateKey(keyId);
+			return key != null;
 		}
 
 		/**
