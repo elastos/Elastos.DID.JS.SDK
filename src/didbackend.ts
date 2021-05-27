@@ -278,8 +278,8 @@ export class DIDBackend {
 					this.constructWithIDChainRequest(request);
 				}
 
-				async getSignerDocument() {
-					return this.getDocument() == null ? doc : this.getDocument();
+				getSignerDocument(): Promise<DIDDocument> {
+					return Promise.resolve(this.getDocument() == null ? doc : this.getDocument());
 				}
 			}(tx.getRequest());
 
@@ -311,7 +311,7 @@ export class DIDBackend {
 		return doc;
 	}
 
-	public async resolveCredentialBiography(id: DIDURL, issuer: DID = null, force = false): Promise<CredentialBiography> {
+	public resolveCredentialBiography(id: DIDURL, issuer: DID = null, force = false): Promise<CredentialBiography> {
 		log.info("Resolving credential {}, issuer={}...", id, issuer);
 
 		let request = new CredentialResolveRequest(this.generateRequestId());
@@ -328,7 +328,7 @@ export class DIDBackend {
 		}
 	}
 
-	public async resolveCredential(id: DIDURL, issuer: DID = null, force: boolean= false): Promise<VerifiableCredential> {
+	public async resolveCredential(id: DIDURL, issuer: DID = null, force = false): Promise<VerifiableCredential> {
 		log.debug("Resolving credential {}...", id);
 
 		let bio = await this.resolveCredentialBiography(id, issuer, force);

@@ -285,7 +285,7 @@ export class DIDDocumentBuilder {
      * @return the DID Document Builder object
      */
     // Java: addPublicKey()
-    public createAndAddPublicKey(id: DIDURL | string, pk: string, controller?: DID | string, type: string = "ECDSAsecp256r1"): DIDDocumentBuilder {
+    public createAndAddPublicKey(id: DIDURL | string, pk: string, controller?: DID | string, type = "ECDSAsecp256r1"): DIDDocumentBuilder {
         this.checkNotSealed();
 
         if (typeof id === "string")
@@ -313,7 +313,7 @@ export class DIDDocumentBuilder {
      * @param force the owner of public key
      * @return the DID Document Builder object
      */
-    public removePublicKey(id: DIDURL | string, force: boolean = false): DIDDocumentBuilder {
+    public removePublicKey(id: DIDURL | string, force = false): DIDDocumentBuilder {
         this.checkNotSealed();
         checkArgument(id != null, "Invalid publicKey id");
 
@@ -786,7 +786,7 @@ export class DIDDocumentBuilder {
     public removeService(id: DIDURL| string): DIDDocumentBuilder {
         this.checkNotSealed();
         checkArgument(id != null, "Invalid credential id");
-        
+
         if (typeof id === "string")
         id = this.canonicalId(id);
 

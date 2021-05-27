@@ -995,7 +995,7 @@ import { BASE64 } from "./internals";
 
 			let identities = this.storage.listRootIdentities();
 			for (let identity of identities) {
-				identity.synchronize(handle);
+				await identity.synchronize(handle);
 			}
 
 			let dids = this.storage.listDids();

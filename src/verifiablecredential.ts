@@ -681,7 +681,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return the VerifiableCredential object
 	 * @throws DIDResolveException throw this exception if resolving did failed.
 	 */
-	public static async resolve(id: DIDURL | string, issuer: DID | string  = null, force: boolean = false): Promise<VerifiableCredential> {
+	public static async resolve(id: DIDURL | string, issuer: DID | string  = null, force = false): Promise<VerifiableCredential> {
 		if (id == null)
 			throw new IllegalArgumentException();
 
@@ -698,7 +698,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return vc;
 	}
 
-	public static async resolveBiography(id: DIDURL, issuer: DID): Promise<CredentialBiography> {
+	public static resolveBiography(id: DIDURL, issuer: DID): Promise<CredentialBiography> {
 		checkArgument(id != null, "Invalid credential id");
 
 		return DIDBackend.getInstance().resolveCredentialBiography(id, issuer);
@@ -718,7 +718,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		return resolveBiography(id, null);
 	} */
 
-	public static async list(did: DID, skip: number = 0, limit: number = 0): Promise<DIDURL[]> {
+	public static list(did: DID, skip = 0, limit = 0): Promise<DIDURL[]> {
 		checkArgument(did != null, "Invalid did");
 		return DIDBackend.getInstance().listCredentials(did, skip, limit);
 	}

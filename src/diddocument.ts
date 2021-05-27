@@ -97,16 +97,16 @@ import { VerifiableCredential } from "./internals";
  export class DIDDocument extends DIDEntity<DIDDocument> {
 
     private static log = new Logger("DIDDocument");
-    private static ID: string = "id";
-    private static PUBLICKEY: string = "publicKey";
-    private static CONTROLLER: string = "controller";
-    private static MULTI_SIGNATURE: string = "multisig";
-    private static AUTHENTICATION: string = "authentication";
-    private static AUTHORIZATION: string = "authorization";
-    private static SERVICE: string = "service";
-    private static VERIFIABLE_CREDENTIAL: string = "verifiableCredential";
-    private static EXPIRES: string = "expires";
-    private static PROOF: string = "proof";
+    private static ID = "id";
+    private static PUBLICKEY = "publicKey";
+    private static CONTROLLER = "controller";
+    private static MULTI_SIGNATURE = "multisig";
+    private static AUTHENTICATION = "authentication";
+    private static AUTHORIZATION = "authorization";
+    private static SERVICE = "service";
+    private static VERIFIABLE_CREDENTIAL = "verifiableCredential";
+    private static EXPIRES = "expires";
+    private static PROOF = "proof";
 
     @JsonProperty({ value: DIDDocument.ID })
     @JsonClassType({type: () => [DID]})
@@ -938,8 +938,8 @@ import { VerifiableCredential } from "./internals";
      * @param withProof check the proof object or not
      * @throws MalformedDocumentException if the document object is invalid
      */
-    protected sanitize() {
-        this.sanitizeControllers();
+    protected async sanitize(): Promise<void> {
+        await this.sanitizeControllers();
         this.sanitizePublickKey();
         this.sanitizeCredential();
         this.sanitizeService();
@@ -1448,12 +1448,12 @@ import { VerifiableCredential } from "./internals";
 		return this.signWithId(null, storepass, ...data);
 	}
 
-    public signWithTicket(ticket: TransferTicket, storepass: string): TransferTicket {
+    public async signWithTicket(ticket: TransferTicket, storepass: string): Promise<TransferTicket> {
         checkArgument(ticket != null, "Invalid ticket");
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
-        ticket.seal(this, storepass);
+        await ticket.seal(this, storepass);
         return ticket;
     }
 
@@ -1599,7 +1599,7 @@ import { VerifiableCredential } from "./internals";
         return jpb;
     } */
 
-    public async newCustomized(inputDID: DID | string, multisig: number, storepass: string, force?: boolean): Promise<DIDDocument> {
+    public newCustomized(inputDID: DID | string, multisig: number, storepass: string, force?: boolean): Promise<DIDDocument> {
         return this.newCustomizedDidWithController(inputDID, [], 1, storepass, force);
     }
 
@@ -1634,9 +1634,9 @@ import { VerifiableCredential } from "./internals";
         DIDDocument.log.info("Creating new DID {} with controller {}...", did, this.getSubject());
 
         let docBuilder = DIDDocumentBuilder.newFromDID(did, this.getStore(), this);
-        controllers.forEach(function (ctrl) {
-            docBuilder.addController(ctrl);
-        });
+        for (let ctrl of controllers) {
+            await docBuilder.addController(ctrl);
+        }
 
         docBuilder.setMultiSignature(multisig);
 
@@ -1676,7 +1676,7 @@ import { VerifiableCredential } from "./internals";
         }
 
 		let ticket:TransferTicket = await TransferTicket.newForDIDDocument(source, to);
-		ticket.seal(this, storepass);
+		await ticket.seal(this, storepass);
 
 		return ticket;
     }
@@ -1725,7 +1725,7 @@ import { VerifiableCredential } from "./internals";
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public async publish(storepass: string, inputSignKey: DIDURL | string = null, force: boolean = false, adapter: DIDTransactionAdapter = null) {
+    public async publish(storepass: string, inputSignKey: DIDURL | string = null, force = false, adapter: DIDTransactionAdapter = null) {
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
@@ -1910,7 +1910,7 @@ import { VerifiableCredential } from "./internals";
             if (realSignKey == null || targetSignKey == null)
                 throw new InvalidKeyException("No matched authorization key.");
 
-            DIDBackend.getInstance().deactivateTargetDid(targetDoc, targetSignKey,
+            await DIDBackend.getInstance().deactivateTargetDid(targetDoc, targetSignKey,
                 this, realSignKey, storepass, adapter);
         } else {
             if (!targetDoc.hasController(this.getSubject()))
