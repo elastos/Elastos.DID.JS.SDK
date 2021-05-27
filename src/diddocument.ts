@@ -28,6 +28,7 @@ import {
     JsonClassType,
     JsonPropertyOrder,
     JsonIgnore,
+    JsonCreator,
 } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
@@ -174,9 +175,14 @@ import { VerifiableCredential } from "./internals";
      *
      * @param subject the owner of DIDDocument
      */
-    public constructor(@JsonProperty({ value: DIDDocument.ID, required: true }) subject?: DID) {
+    public constructor(subject?: DID) {
         super();
         this.subject = subject;
+    }
+
+    @JsonCreator()
+    public static jacksonCreator() {
+        return new DIDDocument(null);
     }
 
     /**
