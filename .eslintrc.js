@@ -31,7 +31,8 @@ module.exports = {
         "no-constant-condition": "off",
         "no-class-assign": "warn",
         "require-await": "error",
-
+        "no-async-promise-executor": "error",
+        "no-promise-executor-return": "error",
 
         // TS specific
         "@typescript-eslint/no-misused-promises": "error",
