@@ -30,6 +30,8 @@ module.exports = {
         "no-mixed-spaces-and-tabs": "off",
         "no-constant-condition": "off",
         "no-class-assign": "warn",
+        "require-await": "error",
+
 
         // TS specific
         "@typescript-eslint/no-misused-promises": "error",
@@ -40,6 +42,7 @@ module.exports = {
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-extra-semi": "warn",
-        "@typescript-eslint/no-this-alias": "off"
+        "@typescript-eslint/no-this-alias": "off",
+        "@typescript-eslint/no-floating-promises": "error"
     }
 };
