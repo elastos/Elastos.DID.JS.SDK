@@ -783,9 +783,12 @@ export class DIDDocumentBuilder {
      * @param id the Service id
      * @return the DID Document Builder
      */
-    public removeService(id: DIDURL): DIDDocumentBuilder {
+    public removeService(id: DIDURL| string): DIDDocumentBuilder {
         this.checkNotSealed();
         checkArgument(id != null, "Invalid credential id");
+        
+        if (typeof id === "string")
+        id = this.canonicalId(id);
 
         if (this.document.services == null || this.document.services.size == 0)
             throw new DIDObjectNotExistException(id.toString());
