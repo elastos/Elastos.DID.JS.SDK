@@ -46,7 +46,7 @@ describe('let Tests', () => {
     	let issuer = await cd.getDocument("issuer");
 		let user = await cd.getDocument("user1");
 
-		let vc = cd.getCredential("user1", "twitter");
+		let vc = await cd.getCredential("user1", "twitter");
 
 		expect(DIDURL.newWithDID(user.getSubject(), "#twitter").equals(vc.getId()));
 
@@ -123,7 +123,7 @@ describe('let Tests', () => {
 
     test('testKycCredentialToCid', async () => {
     	let cd = testData.getCompatibleData(2);
-    	cd.loadAll();
+    	await cd.loadAll();
 
     	let issuer = await cd.getDocument("issuer");
     	let foo = await cd.getDocument("foo");
@@ -151,12 +151,12 @@ describe('let Tests', () => {
 
     test('testKycCredentialFromCid', async () => {
     	let cd = testData.getCompatibleData(2);
-    	cd.loadAll();
+    	await cd.loadAll();
 
     	let exampleCorp = await cd.getDocument("examplecorp");
     	let foobar = await cd.getDocument("foobar");
 
-    	let vc = cd.getCredential("foobar", "license");
+    	let vc = await cd.getCredential("foobar", "license");
 
 		expect(DIDURL.newWithDID(foobar.getSubject(), "#license").equals(vc.getId()));
 
@@ -181,11 +181,11 @@ describe('let Tests', () => {
 
     test('testSelfProclaimedCredentialFromCid', async () => {
     	let cd = testData.getCompatibleData(2);
-    	cd.loadAll();
+    	await cd.loadAll();
 
     	let foobar = await cd.getDocument("foobar");
 
-    	let vc = cd.getCredential("foobar", "services");
+    	let vc = await cd.getCredential("foobar", "services");
 
 		expect(DIDURL.newWithDID(foobar.getSubject(), "#services").equals(vc.getId()));
 
@@ -207,7 +207,7 @@ describe('let Tests', () => {
 		expect(vc.isValid()).toBeTruthy();
     });
 
-	test('testParseAndSerializeJsonCredential', () => {
+	test('testParseAndSerializeJsonCredential', async () => {
 		let csvSource = [
 			{did:"user1", vc:"twitter"},
 			{did:"user1", vc:"passport"},
@@ -218,7 +218,7 @@ describe('let Tests', () => {
 		];
 
 	   	let cd = testData.getCompatibleData(2);
-	   	cd.loadAll();
+	   	await cd.loadAll();
 
 		for (let csv of csvSource) {
 			let normalizedJson = cd.getCredentialJson(csv.did, csv.vc, "normalized");
@@ -227,7 +227,7 @@ describe('let Tests', () => {
 			let compactJson = cd.getCredentialJson(csv.did, csv.vc, "compact");
 			let compact = VerifiableCredential.parseContent(compactJson);
 
-			let credential = cd.getCredential(csv.did, csv.vc);
+			let credential = await cd.getCredential(csv.did, csv.vc);
 
 			expect(credential.isExpired()).toBeFalsy();
 			expect(credential.isGenuine()).toBeTruthy();
@@ -243,7 +243,7 @@ describe('let Tests', () => {
 		}
 	});
 
-    test('testDeclareCrendential', async () => {
+    test('testDeclareCredential', async () => {
 		let csvSource = [
 			{did:"user1", vc:"twitter"},
 			{did:"user1", vc:"passport"},
@@ -254,10 +254,10 @@ describe('let Tests', () => {
 		];
 
 		let cd = testData.getCompatibleData(2);
-		cd.loadAll();
+		await cd.loadAll();
 
 		for (let csv of csvSource) {
-			let credential = cd.getCredential(csv.did, csv.vc);
+			let credential = await cd.getCredential(csv.did, csv.vc);
 			// Sign key for customized DID
 			let doc = await credential.getSubject().getId().resolve();
 			let signKey = null;
@@ -266,7 +266,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.declare(signKey, TestConfig.storePass);
+			await credential.declare(signKey, TestConfig.storePass);
 
 			let id = credential.getId();
 			let resolved = await VerifiableCredential.resolve(id);
@@ -287,7 +287,7 @@ describe('let Tests', () => {
 	});
 
 
-    test('testDeclareCrendentials', async () => {
+    test('testDeclareCredentials', async () => {
 	   	let sd = testData.getInstantData();
 
 		let csvSource = [
@@ -310,7 +310,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.declare(signKey, TestConfig.storePass);
+			await credential.declare(signKey, TestConfig.storePass);
 
 			let id = credential.getId();
 			let resolved = await VerifiableCredential.resolve(id);
@@ -330,7 +330,7 @@ describe('let Tests', () => {
 	   	}
     });
 
-    test('testRevokeCrendential', async () => {
+    test('testRevokeCredential', async () => {
 
 		let csvSource = [
 			{did:"user1", vc:"twitter"},
@@ -342,11 +342,10 @@ describe('let Tests', () => {
 		];
 
 		let cd = testData.getCompatibleData(2);
-	   	cd.loadAll();
+		await cd.loadAll();
 
 		for (let csv of csvSource) {
-
-			let credential = cd.getCredential(csv.did, csv.vc);
+			let credential = await cd.getCredential(csv.did, csv.vc);
 			expect(credential.wasDeclared()).toBeFalsy();
 
 			// Sign key for customized DID
@@ -357,7 +356,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.declare(signKey, TestConfig.storePass);
+			await credential.declare(signKey, TestConfig.storePass);
 
 			let id = credential.getId();
 			let resolved = await VerifiableCredential.resolve(id);
@@ -372,7 +371,7 @@ describe('let Tests', () => {
 
 			expect(credential.wasDeclared()).toBeTruthy();
 
-			credential.revoke(signKey, null, TestConfig.storePass);
+			await credential.revoke(signKey, null, TestConfig.storePass);
 
 			expect(credential.toString()).toEqual(resolved.toString());
 
@@ -390,7 +389,7 @@ describe('let Tests', () => {
 		}
     });
 
-    test('testRevokeCrendentialWithDifferentKey', async () => {
+    test('testRevokeCredentialWithDifferentKey', async () => {
 
 		let csvSource = [
 			{did:"foobar", vc:"license"},
@@ -399,11 +398,11 @@ describe('let Tests', () => {
 		];
 
 		let cd = testData.getCompatibleData(2);
-	   	cd.loadAll();
+		await cd.loadAll();
 
 		for (let csv of csvSource) {
 
-			let credential = cd.getCredential(csv.did, csv.vc);
+			let credential = await cd.getCredential(csv.did, csv.vc);
 			expect(credential.wasDeclared).toBeFalsy();
 
 			// Sign key for customized DID
@@ -415,7 +414,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.declare(signKey, TestConfig.storePass);
+			await credential.declare(signKey, TestConfig.storePass);
 
 			let id = credential.getId();
 			let resolved = await VerifiableCredential.resolve(id);
@@ -436,7 +435,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.revoke(signKey, null, TestConfig.storePass);
+			await credential.revoke(signKey, null, TestConfig.storePass);
 
 			resolved = await VerifiableCredential.resolve(id);
 			expect(resolved).not.toBeNull();
@@ -469,10 +468,10 @@ describe('let Tests', () => {
 		];
 
 	   	let cd = testData.getCompatibleData(2);
-	   	cd.loadAll();
+	   	await cd.loadAll();
 
 		for (let csv of csvSource) {
-			let credential = cd.getCredential(csv.did, csv.vc);
+			let credential = await cd.getCredential(csv.did, csv.vc);
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeFalsy();
 
@@ -484,7 +483,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.revoke(signKey, null, TestConfig.storePass);
+			await credential.revoke(signKey, null, TestConfig.storePass);
 
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeTruthy();
@@ -510,10 +509,10 @@ describe('let Tests', () => {
 		];
 
 		let cd = testData.getCompatibleData(2);
-	   	cd.loadAll();
+		await cd.loadAll();
 
 		for (let csv of csvSource) {
-			let credential = cd.getCredential(csv.did, csv.vc);
+			let credential = await cd.getCredential(csv.did, csv.vc);
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeFalsy();
 
@@ -526,7 +525,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.revoke(signKey, null, TestConfig.storePass);
+			await credential.revoke(signKey, null, TestConfig.storePass);
 
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeTruthy();
@@ -560,10 +559,10 @@ describe('let Tests', () => {
 		];
 
 		let cd = testData.getCompatibleData(2);
-	   	cd.loadAll();
+		await cd.loadAll();
 
 		for (let csv of csvSource) {
-			let credential = cd.getCredential(csv.did, csv.vc);
+			let credential = await cd.getCredential(csv.did, csv.vc);
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeFalsy();
 
@@ -576,7 +575,7 @@ describe('let Tests', () => {
 			} else
 				signKey = issuer.getDefaultPublicKeyId();
 
-			credential.revoke(signKey, null, TestConfig.storePass);
+			await credential.revoke(signKey, null, TestConfig.storePass);
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeTruthy();
 
@@ -612,16 +611,16 @@ describe('let Tests', () => {
 
 		let cd = testData.getCompatibleData(2);
 	   	let sd = testData.getInstantData();
-	   	cd.loadAll();
+	   	await cd.loadAll();
 
 		for (let csv of csvSource) {
-			let credential = cd.getCredential(csv.did, csv.vc);
+			let credential = await cd.getCredential(csv.did, csv.vc);
 			let id = credential.getId();
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeFalsy();
 
 			let doc = await sd.getUser1Document();
-			VerifiableCredential.revoke(id, doc, null, TestConfig.storePass);
+			await VerifiableCredential.revoke(id, doc, null, TestConfig.storePass);
 			expect(credential.wasDeclared()).toBeFalsy();
 			expect(credential.isRevoked()).toBeFalsy();
 			expect(VerifiableCredential.resolve(id)).toBeNull();
@@ -634,7 +633,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.declare(signKey, TestConfig.storePass);
+			await credential.declare(signKey, TestConfig.storePass);
 
 			let resolved = await VerifiableCredential.resolve(id);
 			expect(resolved).not.toBeNull();
@@ -649,7 +648,7 @@ describe('let Tests', () => {
 
 			expect(credential.wasDeclared()).toBeTruthy();
 
-			credential.revoke(signKey, null, TestConfig.storePass);
+			await credential.revoke(signKey, null, TestConfig.storePass);
 
 			resolved = await VerifiableCredential.resolve(id);
 			expect(resolved).not.toBeNull();
@@ -669,7 +668,7 @@ describe('let Tests', () => {
 		}
     });
 
-	test('testListCrendentials', async () => {
+	test('testListCredentials', async () => {
 
 	   	let sd = testData.getInstantData();
 
@@ -694,7 +693,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.declare(signKey, TestConfig.storePass);
+			await credential.declare(signKey, TestConfig.storePass);
 
 			let id = credential.getId();
 			let resolved = await VerifiableCredential.resolve(id);
@@ -770,7 +769,7 @@ describe('let Tests', () => {
 				signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
 			}
 
-			credential.revoke(signKey, null, TestConfig.storePass);
+			await credential.revoke(signKey, null, TestConfig.storePass);
 
 			let id = credential.getId();
 			let resolved = await VerifiableCredential.resolve(id);
@@ -841,7 +840,7 @@ describe('let Tests', () => {
     				.seal(TestConfig.storePass);
 
     		vc.getMetadata().attachStore(doc.getStore());
-    		vc.declare(null, TestConfig.storePass);
+    		await vc.declare(null, TestConfig.storePass);
 
     		expect(vc.wasDeclared()).toBeTruthy();
     	}

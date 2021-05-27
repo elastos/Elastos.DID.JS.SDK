@@ -33,12 +33,12 @@ let testData: TestData;
 let store: DIDStore;
 
 describe("DIDStore Tests", ()=>{
-	beforeEach(async ()=>{
+	beforeEach(() => {
 		testData = new TestData();
 		store = testData.getStore();
 	})
 
-	afterEach(()=>{
+	afterEach(() => {
 		testData.cleanup();
 	});
 
@@ -57,7 +57,7 @@ describe("DIDStore Tests", ()=>{
 		return new File(relPath);
 	}
 
-	test("testLoadRootIdentityFromEmptyStore", async ()=>{
+	test("testLoadRootIdentityFromEmptyStore", () => {
 		let file = getFile(".metadata");
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
@@ -202,7 +202,7 @@ describe("DIDStore Tests", ()=>{
 
 	test("testLoadCredentials", async ()=>{
 		// Store test data into current store
-		testData.getInstantData().getIssuerDocument();
+		await testData.getInstantData().getIssuerDocument();
 		let user = await testData.getInstantData().getUser1Document();
 
 		let vc = user.getCredential("#profile");
@@ -293,7 +293,7 @@ describe("DIDStore Tests", ()=>{
 		testData.getRootIdentity();
 
 		// Store test data into current store
-		testData.getInstantData().getIssuerDocument();
+		await testData.getInstantData().getIssuerDocument();
 		let user = await testData.getInstantData().getUser1Document();
 		let vc = user.getCredential("#profile");
 		vc.getMetadata().setAlias("MyProfile");
@@ -322,7 +322,7 @@ describe("DIDStore Tests", ()=>{
 
 	test("testDeleteCredential", async ()=>{
 		// Store test data into current store
-		testData.getInstantData().getIssuerDocument();
+		await testData.getInstantData().getIssuerDocument();
 		let user = await testData.getInstantData().getUser1Document();
 		let vc = user.getCredential("#profile");
 		vc.getMetadata().setAlias("MyProfile");
@@ -473,7 +473,7 @@ describe("DIDStore Tests", ()=>{
 			let data = Buffer.from("Hello World");
 
 			let cd = testData.getCompatibleData(version);
-			cd.loadAll();
+			await cd.loadAll();
 
 			let store = DIDStore.open(cd.getStoreDir());
 
@@ -519,8 +519,8 @@ describe("DIDStore Tests", ()=>{
 		let store = DIDStore.open(testData.getCompatibleData(2).getStoreDir());
 		let identity = store.loadRootIdentity();
 
-		expect(()=>{
-			identity.newDid("wrongpass");
+		expect(async ()=>{
+			await identity.newDid("wrongpass");
 		}).toThrow(); //WrongPasswordException
 	});
 
@@ -570,7 +570,7 @@ describe("DIDStore Tests", ()=>{
 	}
 
 	[false, true].forEach((cached)=>{
-		test("testStoreCachePerformance", ()=>{
+		test("testStoreCachePerformance", async ()=>{
 			Utils.deleteFile(new File(TestConfig.storeRoot));
 			let store: DIDStore = null;
 			if (cached)
@@ -582,7 +582,7 @@ describe("DIDStore Tests", ()=>{
 			RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
 					store, TestConfig.storePass, true);
 
-			createDataForPerformanceTest(store);
+			await createDataForPerformanceTest(store);
 
 			let dids = store.listDids();
 			expect(10).toEqual(dids.length);

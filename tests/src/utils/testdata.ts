@@ -269,9 +269,9 @@ export class CompatibleData {
 		return file
 	}
 
-	public getCredential(did: string, vc: string, type: string = null) : VerifiableCredential{
+	public async getCredential(did: string, vc: string, type: string = null) : Promise<VerifiableCredential> {
 		// Load DID document first for verification
-		this.getDocument(did);
+		await this.getDocument(did);
 		let baseKey = "res:vc:" + did + ":" + vc;
 		let key = type != null ? baseKey + ":" + type : baseKey;
 
@@ -302,9 +302,9 @@ export class CompatibleData {
 		return file;
 	}
 
-	public getPresentation(did: string,  vp: string,  type: string = null): VerifiablePresentation {
+	public async getPresentation(did: string,  vp: string,  type: string = null): Promise<VerifiablePresentation> {
 		// Load DID document first for verification
-		 this.getDocument(did);
+		await this.getDocument(did);
 
 		let baseKey = "res:vp:" + did + ":" + vp;
 		let key = type != null ? baseKey + ":" + type : baseKey;
@@ -341,19 +341,19 @@ export class CompatibleData {
 		return this.storePath;
 	}
 
-	public loadAll() {
-		this.getDocument("issuer");
-		this.getDocument("user1");
-		this.getDocument("user2");
-		this.getDocument("user3");
+	public async loadAll(): Promise<void> {
+		await this.getDocument("issuer");
+		await this.getDocument("user1");
+		await this.getDocument("user2");
+		await this.getDocument("user3");
 
 		if (this.version == 2) {
-			this.getDocument("user4");
-			this.getDocument("examplecorp");
-			this.getDocument("foobar");
-			this.getDocument("foo");
-			this.getDocument("bar");
-			this.getDocument("baz");
+			await this.getDocument("user4");
+			await this.getDocument("examplecorp");
+			await this.getDocument("foobar");
+			await this.getDocument("foo");
+			await this.getDocument("bar");
+			await this.getDocument("baz");
 		}
 	}
 }
@@ -444,7 +444,7 @@ export class InstantData {
 
 	public async getUser1Document(): Promise<DIDDocument> {
 		if (this.idUser1 == null) {
-			this.getIssuerDocument();
+			await this.getIssuerDocument();
 
 			let doc = await this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User1");
@@ -622,7 +622,7 @@ export class InstantData {
 
 	public async getUser1JobPositionCredential(): Promise<VerifiableCredential> {
 		if (this.vcUser1JobPosition == null) {
-			this.getExampleCorpDocument();
+			await this.getExampleCorpDocument();
 
 			let doc = await this.getUser1Document();
 
@@ -737,7 +737,7 @@ export class InstantData {
 
     public async getExampleCorpDocument() : Promise<DIDDocument> {
 		if (this.idExampleCorp == null) {
-			this.getIssuerDocument();
+			await this.getIssuerDocument();
 
 			let did = new DID("did:elastos:example");
 			let doc = await this.idIssuer.newCustomized(did, 1, TestConfig.storePass);
@@ -781,10 +781,10 @@ export class InstantData {
 
 	public async getFooBarDocument() : Promise<DIDDocument> {
 		if (this.idFooBar == null) {
-			this.getExampleCorpDocument();
-			this.getUser1Document();
-			this.getUser2Document();
-			this.getUser3Document();
+			await this.getExampleCorpDocument();
+			await this.getUser1Document();
+			await this.getUser2Document();
+			await this.getUser3Document();
 
 			let controllers = [this.idUser1.getSubject(),
 				               this.idUser2.getSubject(),
@@ -908,10 +908,10 @@ export class InstantData {
 
 	public async getFooBarLicenseCredential() : Promise<VerifiableCredential> {
 		if (this.vcFooBarLicense == null) {
-			this.getExampleCorpDocument();
-			this.getUser1Document();
-			this.getUser2Document();
-			this.getUser3Document();
+			await this.getExampleCorpDocument();
+			await this.getUser1Document();
+			await this.getUser2Document();
+			await this.getUser3Document();
 
 			let doc = await this.getFooBarDocument();
 
@@ -982,7 +982,7 @@ export class InstantData {
 			let user4 = await this.getUser4Document();
 
 			let tt = await this.idUser1.createTransferTicket(doc.getSubject(), TestConfig.storePass, user4.getSubject());
-			tt = this.idUser3.signWithTicket(tt, TestConfig.storePass);
+			tt = await this.idUser3.signWithTicket(tt, TestConfig.storePass);
 
 			this.ttFooBar = tt;
 		}
@@ -992,8 +992,8 @@ export class InstantData {
 
 	public async getFooDocument() : Promise<DIDDocument> {
 		if (this.idFoo == null) {
-			this.getUser1Document();
-			this.getUser2Document();
+			await this.getUser1Document();
+			await this.getUser2Document();
 
 			let controllers : DID[] = [this.idUser2.getSubject()];
 			let did = new DID("did:elastos:foo");
@@ -1013,7 +1013,7 @@ export class InstantData {
 
 	public async getFooEmailCredential() : Promise<VerifiableCredential> {
 		if (this.vcFooEmail == null) {
-			this.getIssuerDocument();
+			await this.getIssuerDocument();
 
 			let doc = await this.getFooDocument();
 
@@ -1040,9 +1040,9 @@ export class InstantData {
 
 	public async getBarDocument() : Promise<DIDDocument> {
 		if (this.idBar == null) {
-			this.getUser1Document();
-			this.getUser2Document();
-			this.getUser3Document();
+			await this.getUser1Document();
+			await this.getUser2Document();
+			await this.getUser3Document();
 
 			let controllers = [this.idUser2.getSubject(),
 				               this.idUser3.getSubject()];
@@ -1061,9 +1061,9 @@ export class InstantData {
 
 	public async getBazDocument(): Promise<DIDDocument> {
 		if (this.idBaz == null) {
-			this.getUser1Document();
-			this.getUser2Document();
-			this.getUser3Document();
+			await this.getUser1Document();
+			await this.getUser2Document();
+			await this.getUser3Document();
 
 			let controllers = [this.idUser2.getSubject(), this.idUser3.getSubject()];
 			let did = new DID("did:elastos:baz");
@@ -1090,7 +1090,7 @@ export class InstantData {
 		return this.ttBaz;
 	}
 
-	public async getDocument(did: string): Promise<DIDDocument> {
+	public getDocument(did: string): Promise<DIDDocument> {
 		switch (did) {
 			case "issuer":
 				return this.getIssuerDocument();
@@ -1127,7 +1127,7 @@ export class InstantData {
 			}
 	}
 
-	public async getCredential(did: string, vc: string) : Promise<VerifiableCredential> {
+	public getCredential(did: string, vc: string) : Promise<VerifiableCredential> {
 		switch (did) {
 			case "user1":
 				switch (vc) {
@@ -1173,7 +1173,7 @@ export class InstantData {
 			}
 	}
 
-	public async getPresentation(did: string, vp: string): Promise<VerifiablePresentation> {
+	public getPresentation(did: string, vp: string): Promise<VerifiablePresentation> {
 		switch (did) {
 			case "user1":
 				switch (vp) {

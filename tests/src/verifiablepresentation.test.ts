@@ -79,7 +79,7 @@ describe('VerifiablePresentation Tests', () => {
     	// For integrity check
 		await cd.getDocument("issuer");
 		let user = await cd.getDocument("user1");
-		let vp = cd.getPresentation("user1", "empty");
+		let vp = await cd.getPresentation("user1", "empty");
 
 		expect(vp.getId()).toBeNull();
 		expect(1).toEqual(vp.getType().length);
@@ -104,13 +104,13 @@ describe('VerifiablePresentation Tests', () => {
 		let entryParts = entry.split(',');
 		let did = entryParts[0];
 		let presentation = entryParts[1];
-		test('testParseAndSerializeNonempty', () => {
+		test('testParseAndSerializeNonempty', async () => {
 			let version = 2;
 			let cd = testData.getCompatibleData(2);
 			// For integrity check
-			cd.loadAll();
+			await cd.loadAll();
 
-			let vp = cd.getPresentation(did, presentation);
+			let vp = await cd.getPresentation(did, presentation);
 
 			expect(vp).not.toBeNull();
 			expect(vp.isGenuine()).toBeTruthy();
