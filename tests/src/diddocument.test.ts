@@ -143,7 +143,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		// Count and list.
-		assertEquals(7, doc.getPublicKeyCount());
+		expect(doc.getPublicKeyCount()).toBe(7);
 
 		let pks = doc.getPublicKeys();
 		assertEquals(7, pks.length);
@@ -2143,8 +2143,8 @@ describe('DIDDocument Tests', () => {
 		})
 
 	test("testSignAndVerify", () => {
-		// RootIdentity identity = testData.getRootIdentity();
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// let identity = testData.getRootIdentity();
+		// let doc = await identity.newDid(TestConfig.storePass);
 		// expect(doc).not.toBeNull();
 		// expect(doc.isValid()).toBeTruthy()
 
@@ -2172,8 +2172,8 @@ describe('DIDDocument Tests', () => {
 		// }
 	})
 	test("testDerive", () => {
-		// RootIdentity identity = testData.getRootIdentity();
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// let identity = testData.getRootIdentity();
+		// let doc = await identity.newDid(TestConfig.storePass);
 		// expect(doc).not.toBeNull();
 		// expect(doc.isValid()).toBeTruthy()
 
@@ -2191,8 +2191,8 @@ describe('DIDDocument Tests', () => {
 	test("testDeriveFromIdentifier", () => {
 		// String identifier = "org.elastos.did.test";
 
-		// RootIdentity identity = testData.getRootIdentity();
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// let identity = testData.getRootIdentity();
+		// let doc = await identity.newDid(TestConfig.storePass);
 		// expect(doc).not.toBeNull();
 		// expect(doc.isValid()).toBeTruthy()
 
@@ -2207,1701 +2207,1625 @@ describe('DIDDocument Tests', () => {
 		// 	assertArrayEquals(key.getPrivateKeyBytes(), sk);
 		// }
 	})
-	test("testCreateCustomizedDid", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testCreateCustomizedDid", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument controller = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		// Create normal DID first
+		let controller = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// DIDDocument resolved = controller.getSubject().resolve();
-		// assertNull(resolved);
+		let resolved = await controller.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
 
-		// resolved = controller.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(controller.getSubject(), resolved.getSubject());
-		// assertEquals(controller.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await controller.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		
+		expect(resolved.getSubject()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature())
+		
+		
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld");
+		let doc = await controller.newCustomized(did,1, TestConfig.storePass, false);
+		expect(doc.isValid()).toBeTruthy()
+		
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(controller.getSubject());
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld");
-		// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(controller.getSubject(), doc.getController());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
-
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(controller.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 	})
-	test("testCreateMultisigCustomizedDid", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testCreateMultisigCustomizedDid", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl1.isValid());
-		// ctrl1.publish(TestConfig.storePass);
+		// Create normal DID first
+		let ctrl1 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl1.isValid()).toBeTruthy()
+		await ctrl1.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = ctrl1.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl1.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl1.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let resolved = await ctrl1.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl1.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		
 
-		// assertTrue(resolved.isValid());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl2.isValid());
-		// ctrl2.publish(TestConfig.storePass);
+		let ctrl2 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl2.isValid()).toBeTruthy()
+		await ctrl2.publish(TestConfig.storePass);
 
-		// resolved = ctrl2.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl2.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl2.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await ctrl2.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl2.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature())
+		
 
-		// assertTrue(resolved.isValid());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl3.isValid());
-		// ctrl3.publish(TestConfig.storePass);
+		let ctrl3 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl3.isValid()).toBeTruthy()
+		await ctrl3.publish(TestConfig.storePass);
 
-		// resolved = ctrl3.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl3.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl3.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await ctrl3.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl3.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature())
+		
 
-		// assertTrue(resolved.isValid());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld3");
-		// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-		// 		2, TestConfig.storePass);
-		// assertFalse(doc.isValid());
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld3");
+		let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()], 2, TestConfig.storePass);
+		expect(doc.isValid()).toBeFalsy()
 
-		// final DIDDocument d = doc;
-		// assertThrows(AlreadySignedException.class, () -> {
-		// 	ctrl1.sign(d, TestConfig.storePass);
-		// });
+		const d = doc;
+		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
 
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		expect(doc.getControllerCount()).toBe(3);
+		
+		let ctrls = new Array<DID>();
+		ctrls.push(ctrl1.getSubject());
+		ctrls.push(ctrl2.getSubject());
+		ctrls.push(ctrl3.getSubject());
+		ctrls.sort()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(3, doc.getControllerCount());
-		// List<DID> ctrls = new ArrayList<DID>();
-		// ctrls.add(ctrl1.getSubject());
-		// ctrls.add(ctrl2.getSubject());
-		// ctrls.add(ctrl3.getSubject());
-		// Collections.sort(ctrls);
-		// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+		expect(ctrls).toEqual(doc.getControllers())
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// doc.publish(TestConfig.storePass);
+		doc.setEffectiveController(ctrl1.getSubject());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 	})
-	test("testUpdateDid", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testUpdateDid", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update again
-		// db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(3, doc.getPublicKeyCount());
-		// expect(doc.getAuthenticationKeyCount()).toBe(3)
-		// store.storeDid(doc);
+		// Update again
+		db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(3);
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 	})
-	test("testUpdateCustomizedDid", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testUpdateCustomizedDid", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument controller = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		// Create normal DID first
+		let controller = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// DIDDocument resolved = controller.getSubject().resolve();
-		// assertNull(resolved);
+		let resolved = await controller.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
 
-		// resolved = controller.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(controller.getSubject(), resolved.getSubject());
-		// assertEquals(controller.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await controller.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld");
+		
+		let doc = await controller.newCustomized(did,1, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(controller.getSubject());
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld");
-		// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(controller.getSubject(), doc.getController());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		
 
-		// doc.publish(TestConfig.storePass);
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(controller.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// assertTrue(resolved.isValid());
+		await doc.publish(TestConfig.storePass);
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.publish(TestConfig.storePass);
+		// Update again
+		db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(3);
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		store.storeDid(doc);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		await doc.publish(TestConfig.storePass);
 
-		// // Update again
-		// db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(3, doc.getPublicKeyCount());
-		// expect(doc.getAuthenticationKeyCount()).toBe(3)
-		// store.storeDid(doc);
-
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 	})
-	test("testUpdateMultisigCustomizedDid", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testUpdateMultisigCustomizedDid", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl1.isValid());
-		// ctrl1.publish(TestConfig.storePass);
+		// Create normal DID first
+		let ctrl1 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl1.isValid()).toBeTruthy()
+		await ctrl1.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = ctrl1.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl1.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl1.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let resolved = await ctrl1.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl1.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		let ctrl2 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl2.isValid()).toBeTruthy()
+		await ctrl2.publish(TestConfig.storePass);
 
-		// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl2.isValid());
-		// ctrl2.publish(TestConfig.storePass);
+		resolved = await ctrl2.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl2.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = ctrl2.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl2.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl2.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let ctrl3 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl3.isValid()).toBeTruthy()
+		await ctrl3.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await ctrl3.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl3.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl3.isValid());
-		// ctrl3.publish(TestConfig.storePass);
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld3");
+		
+		let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
+				2, TestConfig.storePass);
+		expect(doc.isValid()).toBeFalsy()
 
-		// resolved = ctrl3.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl3.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl3.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		const d = doc;
+		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		
 
-		// assertTrue(resolved.isValid());
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(3);
+		
+		let ctrls = new Array<DID>();
+		ctrls.push(ctrl1.getSubject());
+		ctrls.push(ctrl2.getSubject());
+		ctrls.push(ctrl3.getSubject());
+		ctrls.sort()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld3");
-		// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-		// 		2, TestConfig.storePass);
-		// assertFalse(doc.isValid());
+		expect(ctrls).toEqual(doc.getControllers())
 
-		// final DIDDocument d = doc;
-		// assertThrows(AlreadySignedException.class, () -> {
-		// 	ctrl1.sign(d, TestConfig.storePass);
-		// });
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		doc.setEffectiveController(ctrl1.getSubject());
+		await doc.publish(TestConfig.storePass);
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(3, doc.getControllerCount());
-		// List<DID> ctrls = new ArrayList<DID>();
-		// ctrls.add(ctrl1.getSubject());
-		// ctrls.add(ctrl2.getSubject());
-		// ctrls.add(ctrl3.getSubject());
-		// Collections.sort(ctrls);
-		// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		doc = ctrl1.signWithDocument(doc, TestConfig.storePass);
+		store.storeDid(doc);
 
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
+		expect(doc.getPublicKeyCount()).toBe(4);
+		expect(doc.getAuthenticationKeyCount()).toBe(4)
 
-		// assertTrue(resolved.isValid());
+		// Update again
+		db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl3);
+		key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		store.storeDid(doc);
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// doc = ctrl1.sign(doc, TestConfig.storePass);
-		// store.storeDid(doc);
+		await doc.publish(TestConfig.storePass);
 
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
-		// assertEquals(4, resolved.getPublicKeyCount());
-		// assertEquals(4, resolved.getAuthenticationKeyCount());
-
-		// // Update again
-		// db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl3);
-		// key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// store.storeDid(doc);
-
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
-		// assertEquals(5, resolved.getPublicKeyCount());
-		// assertEquals(5, resolved.getAuthenticationKeyCount());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
+		expect(doc.getPublicKeyCount()).toBe(5);
+		expect(doc.getAuthenticationKeyCount()).toBe(5)
 	})
-	test("testTransferCustomizedDidAfterCreate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testTransferCustomizedDidAfterCreate", async() => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument controller = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		// Create normal DID first
+		let controller = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// DIDDocument resolved = controller.getSubject().resolve();
-		// assertNull(resolved);
+		let resolved = await controller.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
 
-		// resolved = controller.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(controller.getSubject(), resolved.getSubject());
-		// assertEquals(controller.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await controller.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld");
+		let doc = await controller.newCustomized(did,1, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(controller.getSubject());
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld");
-		// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(controller.getSubject(), doc.getController());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		// create new controller
+		let newController = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(controller.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await newController.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// assertTrue(resolved.isValid());
+		await  controller.publish(TestConfig.storePass);
 
-		// // create new controller
-		// DIDDocument newController = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		resolved = await newController.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(newController.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(newController.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = newController.getSubject().resolve();
-		// assertNull(resolved);
+		// create the transfer ticket
+		doc.setEffectiveController(controller.getSubject());
+		let ticket = await doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
+		expect(async ()=>{return await ticket.isValid()}).toBeTruthy()
+		
 
-		// newController.publish(TestConfig.storePass);
+		// create new document for customized DID
+		doc = await newController.newCustomized(did, 1, TestConfig.storePass, true);
+		expect(doc.isValid()).toBeTruthy()
 
-		// resolved = newController.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(newController.getSubject(), resolved.getSubject());
-		// assertEquals(newController.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(newController.getSubject())
 
-		// assertTrue(resolved.isValid());
+		// transfer
+		await doc.publishWithTicket(ticket, DIDURL.newWithDID(doc.getController()), TestConfig.storePass);
 
-		// // create the transfer ticket
-		// doc.setEffectiveController(controller.getSubject());
-		// TransferTicket ticket = doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
-		// assertTrue(ticket.isValid());
-
-		// // create new document for customized DID
-		// doc = newController.newCustomizedDid(did, true, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
-
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(newController.getSubject(), doc.getController());
-
-		// // transfer
-		// doc.publish(ticket, TestConfig.storePass);
-
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(newController.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(newController.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 	})
-	test("testTransferCustomizedDidAfterUpdate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testTransferCustomizedDidAfterUpdate", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument controller = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		// Create normal DID first
+		let controller = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// DIDDocument resolved = controller.getSubject().resolve();
-		// assertNull(resolved);
+		let resolved = await controller.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
 
-		// resolved = controller.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(controller.getSubject(), resolved.getSubject());
-		// assertEquals(controller.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await controller.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld");
+		let doc = await controller.newCustomized(did,1, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(controller.getSubject());
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld");
-		// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(controller.getSubject(), doc.getController());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(controller.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		await doc.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// create new controller
+		let newController = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		resolved = await newController.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		await  controller.publish(TestConfig.storePass);
 
-		// // create new controller
-		// DIDDocument newController = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		resolved = await newController.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(newController.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(newController.getProof().getSignature())
+		
 
-		// resolved = newController.getSubject().resolve();
-		// assertNull(resolved);
+		expect(resolved.isValid()).toBeTruthy()
 
-		// newController.publish(TestConfig.storePass);
+		// create the transfer ticket
+		let ticket = await controller.createTransferTicket(did, TestConfig.storePass, newController.getSubject());
+		expect(ticket.isValid()).toBeTruthy()
 
-		// resolved = newController.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(newController.getSubject(), resolved.getSubject());
-		// assertEquals(newController.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		// create new document for customized DID
+		doc = await newController.newCustomized(did, 1, TestConfig.storePass, true);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(newController.getSubject())
 
-		// assertTrue(resolved.isValid());
+		// transfer
+		doc.publishWithTicket(ticket, DIDURL.newWithDID(doc.getSubject()), TestConfig.storePass);
 
-		// // create the transfer ticket
-		// TransferTicket ticket = controller.createTransferTicket(did, newController.getSubject(), TestConfig.storePass);
-		// assertTrue(ticket.isValid());
-
-		// // create new document for customized DID
-		// doc = newController.newCustomizedDid(did, true, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
-
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(newController.getSubject(), doc.getController());
-
-		// // transfer
-		// doc.publish(ticket, TestConfig.storePass);
-
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(newController.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(newController.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 	})
-	test("testTransferMultisigCustomizedDidAfterCreate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testTransferMultisigCustomizedDidAfterCreate", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl1.isValid());
-		// ctrl1.publish(TestConfig.storePass);
+		// Create normal DID first
+		let ctrl1 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl1.isValid()).toBeTruthy()
+		await ctrl1.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = ctrl1.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl1.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl1.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let resolved = await ctrl1.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl1.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		let ctrl2 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl2.isValid()).toBeTruthy()
+		await ctrl2.publish(TestConfig.storePass);
 
-		// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl2.isValid());
-		// ctrl2.publish(TestConfig.storePass);
+		resolved = await ctrl2.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl2.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = ctrl2.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl2.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl2.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let ctrl3 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl3.isValid()).toBeTruthy()
+		await ctrl3.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await ctrl3.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl3.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl3.isValid());
-		// ctrl3.publish(TestConfig.storePass);
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld3");
+		let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
+				2, TestConfig.storePass);
+		expect(doc.isValid()).toBeFalsy()
 
-		// resolved = ctrl3.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl3.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl3.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		const d = doc;
+		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		
 
-		// assertTrue(resolved.isValid());
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld3");
-		// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-		// 		2, TestConfig.storePass);
-		// assertFalse(doc.isValid());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(3);
+		
+		let ctrls = new Array<DID>();
+		ctrls.push(ctrl1.getSubject());
+		ctrls.push(ctrl2.getSubject());
+		ctrls.push(ctrl3.getSubject());
+		ctrls.sort()
 
-		// final DIDDocument d = doc;
-		// assertThrows(AlreadySignedException.class, () -> {
-		// 	ctrl1.sign(d, TestConfig.storePass);
-		// });
+		expect(ctrls).toEqual(doc.getControllers())
 
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(3, doc.getControllerCount());
-		// List<DID> ctrls = new ArrayList<DID>();
-		// ctrls.add(ctrl1.getSubject());
-		// ctrls.add(ctrl2.getSubject());
-		// ctrls.add(ctrl3.getSubject());
-		// Collections.sort(ctrls);
-		// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+		doc.setEffectiveController(ctrl1.getSubject());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		
 
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// doc.publish(TestConfig.storePass);
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		// new controllers for the did
+		let td = testData.getInstantData();
+		td.getIssuerDocument();
+		let u1 = await td.getUser1Document();
+		let u2 = await td.getUser2Document();
+		let u3 = await td.getUser3Document();
+		let u4 = await td.getUser4Document();
 
-		// assertTrue(resolved.isValid());
+		// transfer ticket
+		let ticket = await ctrl1.createTransferTicket(did, TestConfig.storePass, u1.getSubject());
+		ticket = ctrl2.signWithTicket(ticket, TestConfig.storePass);
+		expect(ticket.isValid()).toBeTruthy()
 
-		// // new controllers for the did
-		// TestData.InstantData td = testData.getInstantData();
-		// td.getIssuerDocument();
-		// DIDDocument u1 = td.getUser1Document();
-		// DIDDocument u2 = td.getUser2Document();
-		// DIDDocument u3 = td.getUser3Document();
-		// DIDDocument u4 = td.getUser4Document();
+		doc = await u1.newCustomizedDidWithController(did, [u2.getSubject(), u3.getSubject(), u4.getSubject()],
+					3, TestConfig.storePass, true);
+		doc = await u2.signWithDocument(doc, TestConfig.storePass);
+		doc = await u3.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// // transfer ticket
-		// TransferTicket ticket = ctrl1.createTransferTicket(did, u1.getSubject(), TestConfig.storePass);
-		// ticket = ctrl2.sign(ticket, TestConfig.storePass);
-		// assertTrue(ticket.isValid());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(4);
+		expect(doc.getMultiSignature().toString()).toEqual("3:4");
 
-		// doc = u1.newCustomizedDid(did, new DID[] {u2.getSubject(), u3.getSubject(), u4.getSubject()},
-		// 			3, true, TestConfig.storePass);
-		// doc = u2.sign(doc, TestConfig.storePass);
-		// doc = u3.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		// transfer
+		await doc.publishWithTicket(ticket, doc.getSubject().toString(), TestConfig.storePass);
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(4, doc.getControllerCount());
-		// assertEquals("3:4", doc.getMultiSignature().toString());
-
-		// // transfer
-		// doc.publish(ticket, TestConfig.storePass);
-
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 	})
-	test("testTransferMultisigCustomizedDidAfterUpdate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testTransferMultisigCustomizedDidAfterUpdate", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl1.isValid());
-		// ctrl1.publish(TestConfig.storePass);
+		// Create normal DID first
+		let ctrl1 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl1.isValid()).toBeTruthy()
+		await ctrl1.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = ctrl1.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl1.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl1.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let resolved = await ctrl1.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl1.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		let ctrl2 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl2.isValid()).toBeTruthy()
+		await ctrl2.publish(TestConfig.storePass);
 
-		// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl2.isValid());
-		// ctrl2.publish(TestConfig.storePass);
+		resolved = await ctrl2.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl2.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = ctrl2.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl2.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl2.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let ctrl3 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl3.isValid()).toBeTruthy()
+		await ctrl3.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await ctrl3.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl3.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl3.isValid());
-		// ctrl3.publish(TestConfig.storePass);
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld3");
+		let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
+				2, TestConfig.storePass);
+		expect(doc.isValid()).toBeFalsy()
 
-		// resolved = ctrl3.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl3.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl3.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		const d = doc;
+		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		// assertTrue(resolved.isValid());
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld3");
-		// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-		// 		2, TestConfig.storePass);
-		// assertFalse(doc.isValid());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(3);
+		
+		let ctrls = new Array<DID>();
+		ctrls.push(ctrl1.getSubject());
+		ctrls.push(ctrl2.getSubject());
+		ctrls.push(ctrl3.getSubject());
+		ctrls.sort()
 
-		// final DIDDocument d = doc;
-		// assertThrows(AlreadySignedException.class, () -> {
-		// 	ctrl1.sign(d, TestConfig.storePass);
-		// });
+		expect(ctrls).toEqual(doc.getControllers())
 
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(3, doc.getControllerCount());
-		// List<DID> ctrls = new ArrayList<DID>();
-		// ctrls.add(ctrl1.getSubject());
-		// ctrls.add(ctrl2.getSubject());
-		// ctrls.add(ctrl3.getSubject());
-		// Collections.sort(ctrls);
-		// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+		doc.setEffectiveController(ctrl1.getSubject());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// doc.publish(TestConfig.storePass);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		doc = ctrl1.signWithDocument(doc, TestConfig.storePass);
+		store.storeDid(doc);
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		await doc.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
+		expect(doc.getPublicKeyCount()).toBe(4);
+		expect(doc.getAuthenticationKeyCount()).toBe(4)
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// doc = ctrl1.sign(doc, TestConfig.storePass);
-		// store.storeDid(doc);
+		// new controllers for the did
+		let td = testData.getInstantData();
+		td.getIssuerDocument();
+		let u1 = await td.getUser1Document();
+		let u2 = await td.getUser2Document();
+		let u3 = await td.getUser3Document();
+		let u4 = await td.getUser4Document();
 
-		// doc.publish(TestConfig.storePass);
+		// transfer ticket
+		doc.setEffectiveController(ctrl1.getSubject());
+		
+		let ticket = await doc.createTransferTicket(u1.getSubject(), TestConfig.storePass);
+		ticket = ctrl2.signWithTicket(ticket, TestConfig.storePass);
+		expect(ticket.isValid()).toBeTruthy()
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
-		// assertEquals(4, resolved.getPublicKeyCount());
-		// assertEquals(4, resolved.getAuthenticationKeyCount());
+		doc = await u1.newCustomizedDidWithController(did, [u2.getSubject(), u3.getSubject(), u4.getSubject()],
+					3, TestConfig.storePass, true);
+		doc = await u2.signWithDocument(doc, TestConfig.storePass);
+		doc = await u3.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// // new controllers for the did
-		// TestData.InstantData td = testData.getInstantData();
-		// td.getIssuerDocument();
-		// DIDDocument u1 = td.getUser1Document();
-		// DIDDocument u2 = td.getUser2Document();
-		// DIDDocument u3 = td.getUser3Document();
-		// DIDDocument u4 = td.getUser4Document();
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(4);
+		expect(doc.getMultiSignature().toString()).toEqual("3:4");
 
-		// // transfer ticket
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// TransferTicket ticket = doc.createTransferTicket(u1.getSubject(), TestConfig.storePass);
-		// ticket = ctrl2.sign(ticket, TestConfig.storePass);
-		// assertTrue(ticket.isValid());
+		// transfer
+		await doc.publishWithTicket(ticket, doc.getSubject().toString(), TestConfig.storePass);
 
-		// doc = u1.newCustomizedDid(did, new DID[] {u2.getSubject(), u3.getSubject(), u4.getSubject()},
-		// 			3, true, TestConfig.storePass);
-		// doc = u2.sign(doc, TestConfig.storePass);
-		// doc = u3.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
-
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(4, doc.getControllerCount());
-		// assertEquals("3:4", doc.getMultiSignature().toString());
-
-		// // transfer
-		// doc.publish(ticket, TestConfig.storePass);
-
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 	})
-	test("testUpdateDidWithoutPrevSignature", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testUpdateDidWithoutPrevSignature", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.getMetadata().setPreviousSignature(null);
+		doc.getMetadata().setPreviousSignature(null);
 
-		// // Update again
-		// db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(3, doc.getPublicKeyCount());
-		// expect(doc.getAuthenticationKeyCount()).toBe(3)
-		// store.storeDid(doc);
+		// Update again
+		db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(3);
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 	})
-	test("testUpdateDidWithoutSignature", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testUpdateDidWithoutSignature", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.getMetadata().setSignature(null);
+		doc.getMetadata().setSignature(null);
 
-		// // Update again
-		// db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(3, doc.getPublicKeyCount());
-		// expect(doc.getAuthenticationKeyCount()).toBe(3)
-		// store.storeDid(doc);
+		// Update again
+		db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(3);
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		store.storeDid(doc);
 
-		// DIDDocument d = doc;
-		// Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
-		// 	d.publish(TestConfig.storePass);
-		// });
-		// assertEquals(d.getSubject().toString(), e.getMessage());
+		let d = doc;
+		expect(async ()=>{
+			try {
+				await d.publish(TestConfig.storePass);	
+				return ""
+			} catch (error) {
+				return error.toString()
+			}
+		}).toEqual(d.getSubject().toString())
+		
 	})
-	test("testUpdateDidWithoutAllSignatures", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testUpdateDidWithoutAllSignatures", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.getMetadata().setPreviousSignature(null);
-		// doc.getMetadata().setSignature(null);
+		doc.getMetadata().setPreviousSignature(null);
+		doc.getMetadata().setSignature(null);
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// DIDDocument d = doc;
-		// Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
-		// 	d.publish(TestConfig.storePass);
-		// });
-		// assertEquals(d.getSubject().toString(), e.getMessage());
+		let d = doc;
+		expect(async ()=>{
+			try {
+				await d.publish(TestConfig.storePass);	
+				return ""
+			} catch (error) {
+				return error.toString()
+			}
+		}).toEqual(d.getSubject().toString())
 	})
-	test("testForceUpdateDidWithoutAllSignatures", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testForceUpdateDidWithoutAllSignatures", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.getMetadata().setPreviousSignature(null);
-		// doc.getMetadata().setSignature(null);
+		doc.getMetadata().setPreviousSignature(null);
+		doc.getMetadata().setSignature(null);
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
+		doc.publish(TestConfig.storePass, doc.getDefaultPublicKeyId(), true);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 	})
-	test("testUpdateDidWithWrongPrevSignature", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testUpdateDidWithWrongPrevSignature", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.getMetadata().setPreviousSignature("1234567890");
+		doc.getMetadata().setPreviousSignature("1234567890");
 
-		// // Update
-		// db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(3, doc.getPublicKeyCount());
-		// expect(doc.getAuthenticationKeyCount()).toBe(3)
-		// store.storeDid(doc);
+		// Update
+		db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(3);
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 	})
-	test("testUpdateDidWithWrongSignature", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testUpdateDidWithWrongSignature", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.getMetadata().setSignature("1234567890");
+		doc.getMetadata().setSignature("1234567890");
 
-		// // Update
-		// db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(3, doc.getPublicKeyCount());
-		// expect(doc.getAuthenticationKeyCount()).toBe(3)
-		// store.storeDid(doc);
+		// Update
+		db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(3);
+		expect(doc.getAuthenticationKeyCount()).toBe(3)
+		store.storeDid(doc);
 
-		// DIDDocument d = doc;
-		// Exception e = assertThrows(DIDNotUpToDateException.class, () -> {
-		// 	d.publish(TestConfig.storePass);
-		// });
-		// assertEquals(d.getSubject().toString(), e.getMessage());
+		let d = doc;
+		expect(async ()=>{
+			try {
+				await d.publish(TestConfig.storePass);	
+				return ""
+			} catch (error) {
+				return error.toString()
+			}
+		}).toEqual(d.getSubject().toString())
 	})
-	test("testForceUpdateDidWithWrongPrevSignature", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testForceUpdateDidWithWrongPrevSignature", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.getMetadata().setPreviousSignature("1234567890");
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		doc.getMetadata().setPreviousSignature("1234567890");
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
+		doc.publish(TestConfig.storePass, doc.getDefaultPublicKeyId(), true);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 	})
-	test("testForceUpdateDidWithWrongSignature", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testForceUpdateDidWithWrongSignature", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.getMetadata().setSignature("1234567890");
+		doc.getMetadata().setSignature("1234567890");
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(doc.getDefaultPublicKeyId(), true, TestConfig.storePass);
+		doc.publish(TestConfig.storePass, doc.getDefaultPublicKeyId(), true);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 	})
-	test("testDeactivateSelfAfterCreate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateSelfAfterCreate", async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.deactivate(TestConfig.storePass);
+		await doc.deactivate(null, TestConfig.storePass);
 
-		// doc = doc.getSubject().resolve();
-		// assertTrue(doc.isDeactivated());
+		doc = await doc.getSubject().resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateSelfAfterUpdate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateSelfAfterUpdate",async () => {
+		let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		let doc = await identity.newDid(TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		let resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// doc.deactivate(TestConfig.storePass);
-		// doc = doc.getSubject().resolve();
-		// assertTrue(doc.isDeactivated());
+		await doc.deactivate(null, TestConfig.storePass);
+		doc = await doc.getSubject().resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateCustomizedDidAfterCreate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateCustomizedDidAfterCreate", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument controller = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		// Create normal DID first
+		let controller = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// DIDDocument resolved = controller.getSubject().resolve();
-		// assertNull(resolved);
+		let resolved = await controller.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
 
-		// resolved = controller.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(controller.getSubject(), resolved.getSubject());
-		// assertEquals(controller.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await controller.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld");
+		let doc = await controller.newCustomized(did,1, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(controller.getSubject());
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld");
-		// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(controller.getSubject(), doc.getController());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(controller.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
-
-		// // Deactivate
-		// doc.deactivate(TestConfig.storePass);
-		// doc = doc.getSubject().resolve();
-		// assertTrue(doc.isDeactivated());
+		// Deactivate
+		await doc.deactivate(null, TestConfig.storePass);
+		doc = await doc.getSubject().resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateCustomizedDidAfterUpdate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateCustomizedDidAfterUpdate", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument controller = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		// Create normal DID first
+		let controller = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// DIDDocument resolved = controller.getSubject().resolve();
-		// assertNull(resolved);
+		let resolved = await controller.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
 
-		// resolved = controller.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(controller.getSubject(), resolved.getSubject());
-		// assertEquals(controller.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await controller.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld");
+		let doc = await controller.newCustomized(did,1, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(controller.getSubject());
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld");
-		// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(controller.getSubject(), doc.getController());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(controller.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		await doc.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
-
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
-
-		// // Deactivate
-		// doc.deactivate(TestConfig.storePass);
-		// doc = doc.getSubject().resolve();
-		// assertTrue(doc.isDeactivated());
+		// Deactivate
+		await doc.deactivate(null, TestConfig.storePass);
+		doc = await doc.getSubject().resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateCidAfterCreateByController", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateCidAfterCreateByController", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument controller = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		// Create normal DID first
+		let controller = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// DIDDocument resolved = controller.getSubject().resolve();
-		// assertNull(resolved);
+		let resolved = await controller.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
 
-		// resolved = controller.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(controller.getSubject(), resolved.getSubject());
-		// assertEquals(controller.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await controller.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
+		
 
-		// assertTrue(resolved.isValid());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld");
-		// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld");
+		let doc = await controller.newCustomized(did,1, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(controller.getSubject(), doc.getController());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(controller.getSubject());
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(controller.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		
 
-		// assertTrue(resolved.isValid());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// // Deactivate
-		// controller.deactivate(did, TestConfig.storePass);
-		// doc = did.resolve();
-		// assertTrue(doc.isDeactivated());
+		// Deactivate
+		controller.deactivateTargetDID(did, null, TestConfig.storePass);
+		doc = await did.resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateCidAfterUpdateByController", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateCidAfterUpdateByController", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument controller = identity.newDid(TestConfig.storePass);
-		// assertTrue(controller.isValid());
+		// Create normal DID first
+		let controller = await identity.newDid(TestConfig.storePass);
+		expect(controller.isValid()).toBeTruthy()
 
-		// DIDDocument resolved = controller.getSubject().resolve();
-		// assertNull(resolved);
+		let resolved = await controller.getSubject().resolve();
+		expect(resolved).toBeNull()
 
-		// controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
 
-		// resolved = controller.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(controller.getSubject(), resolved.getSubject());
-		// assertEquals(controller.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await controller.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
+		
 
-		// assertTrue(resolved.isValid());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld");
-		// DIDDocument doc = controller.newCustomizedDid(did, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld");
+		let doc = await controller.newCustomized(did,1, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(controller.getSubject(), doc.getController());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getController()).toEqual(controller.getSubject());
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(controller.getSubject(), resolved.getController());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getController()).toEqual(controller.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		
 
-		// assertTrue(resolved.isValid());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// assertEquals(2, doc.getPublicKeyCount());
-		// assertEquals(2, doc.getAuthenticationKeyCount());
-		// store.storeDid(doc);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		expect(doc.getPublicKeyCount()).toBe(2);
+		expect(doc.getAuthenticationKeyCount()).toBe(2);
+		store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
 
-		// // Deactivate
-		// controller.deactivate(did, TestConfig.storePass);
-		// doc = did.resolve();
-		// assertTrue(doc.isDeactivated());
+		// Deactivate
+		controller.deactivateTargetDID(did, null, TestConfig.storePass);
+		doc = await did.resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateMultisigCustomizedDidAfterCreate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateMultisigCustomizedDidAfterCreate", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl1.isValid());
-		// ctrl1.publish(TestConfig.storePass);
+		// Create normal DID first
+		let ctrl1 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl1.isValid()).toBeTruthy()
+		await ctrl1.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = ctrl1.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl1.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl1.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let resolved = await ctrl1.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl1.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		let ctrl2 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl2.isValid()).toBeTruthy()
+		await ctrl2.publish(TestConfig.storePass);
 
-		// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl2.isValid());
-		// ctrl2.publish(TestConfig.storePass);
+		resolved = await ctrl2.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl2.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = ctrl2.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl2.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl2.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let ctrl3 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl3.isValid()).toBeTruthy()
+		await ctrl3.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await ctrl3.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl3.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl3.isValid());
-		// ctrl3.publish(TestConfig.storePass);
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld3");
+		let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
+				2, TestConfig.storePass);
+		expect(doc.isValid()).toBeFalsy()
 
-		// resolved = ctrl3.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl3.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl3.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		const d = doc;
+		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		// assertTrue(resolved.isValid());
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(3);
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld3");
-		// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-		// 		2, TestConfig.storePass);
-		// assertFalse(doc.isValid());
+		let ctrls = new Array<DID>();
+		ctrls.push(ctrl1.getSubject());
+		ctrls.push(ctrl2.getSubject());
+		ctrls.push(ctrl3.getSubject());
+		ctrls.sort()
 
-		// final DIDDocument d = doc;
-		// assertThrows(AlreadySignedException.class, () -> {
-		// 	ctrl1.sign(d, TestConfig.storePass);
-		// });
+		expect(ctrls).toEqual(doc.getControllers())
 
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(3, doc.getControllerCount());
-		// List<DID> ctrls = new ArrayList<DID>();
-		// ctrls.add(ctrl1.getSubject());
-		// ctrls.add(ctrl2.getSubject());
-		// ctrls.add(ctrl3.getSubject());
-		// Collections.sort(ctrls);
-		// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+		doc.setEffectiveController(ctrl1.getSubject());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
-
-		// // Deactivate
-		// doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
-		// doc = doc.getSubject().resolve();
-		// assertTrue(doc.isDeactivated());
+		// Deactivate
+		doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
+		doc = await doc.getSubject().resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateMultisigCustomizedDidAfterUpdate", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateMultisigCustomizedDidAfterUpdate", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl1.isValid());
-		// ctrl1.publish(TestConfig.storePass);
+		// Create normal DID first
+		let ctrl1 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl1.isValid()).toBeTruthy()
+		await ctrl1.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = ctrl1.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl1.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl1.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let resolved = await ctrl1.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl1.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		let ctrl2 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl2.isValid()).toBeTruthy()
+		await ctrl2.publish(TestConfig.storePass);
 
-		// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl2.isValid());
-		// ctrl2.publish(TestConfig.storePass);
+		resolved = await ctrl2.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl2.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = ctrl2.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl2.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl2.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let ctrl3 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl3.isValid()).toBeTruthy()
+		await ctrl3.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await ctrl3.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl3.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl3.isValid());
-		// ctrl3.publish(TestConfig.storePass);
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld3");
+		let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
+				2, TestConfig.storePass);
+		expect(doc.isValid()).toBeFalsy()
 
-		// resolved = ctrl3.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl3.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl3.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		const d = doc;
+		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		// assertTrue(resolved.isValid());
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld3");
-		// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-		// 		2, TestConfig.storePass);
-		// assertFalse(doc.isValid());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(3);
+		
+		let ctrls = new Array<DID>();
+		ctrls.push(ctrl1.getSubject());
+		ctrls.push(ctrl2.getSubject());
+		ctrls.push(ctrl3.getSubject());
+		ctrls.sort()
 
-		// final DIDDocument d = doc;
-		// assertThrows(AlreadySignedException.class, () -> {
-		// 	ctrl1.sign(d, TestConfig.storePass);
-		// });
+		expect(ctrls).toEqual(doc.getControllers())
 
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(3, doc.getControllerCount());
-		// List<DID> ctrls = new ArrayList<DID>();
-		// ctrls.add(ctrl1.getSubject());
-		// ctrls.add(ctrl2.getSubject());
-		// ctrls.add(ctrl3.getSubject());
-		// Collections.sort(ctrls);
-		// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+		doc.setEffectiveController(ctrl1.getSubject());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		
 
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// doc.publish(TestConfig.storePass);
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		doc = ctrl1.signWithDocument(doc, TestConfig.storePass);
+		store.storeDid(doc);
 
-		// assertTrue(resolved.isValid());
+		await doc.publish(TestConfig.storePass);
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// doc = ctrl1.sign(doc, TestConfig.storePass);
-		// store.storeDid(doc);
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
+		expect(doc.getPublicKeyCount()).toBe(4);
+		expect(doc.getAuthenticationKeyCount()).toBe(4)
 
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
-		// assertEquals(4, resolved.getPublicKeyCount());
-		// assertEquals(4, resolved.getAuthenticationKeyCount());
-
-		// // Deactivate
-		// doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
-		// doc = doc.getSubject().resolve();
-		// assertTrue(doc.isDeactivated());
+		// Deactivate
+		doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
+		doc = await doc.getSubject().resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateMultisigCidAfterCreateByController", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateMultisigCidAfterCreateByController", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl1.isValid());
-		// ctrl1.publish(TestConfig.storePass);
+		// Create normal DID first
+		let ctrl1 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl1.isValid()).toBeTruthy()
+		await ctrl1.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = ctrl1.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl1.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl1.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let resolved = await ctrl1.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl1.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		let ctrl2 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl2.isValid()).toBeTruthy()
+		await ctrl2.publish(TestConfig.storePass);
 
-		// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl2.isValid());
-		// ctrl2.publish(TestConfig.storePass);
+		resolved = await ctrl2.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl2.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = ctrl2.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl2.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl2.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let ctrl3 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl3.isValid()).toBeTruthy()
+		await ctrl3.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await ctrl3.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl3.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl3.isValid());
-		// ctrl3.publish(TestConfig.storePass);
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld3");
+		let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
+				2, TestConfig.storePass);
+		expect(doc.isValid()).toBeFalsy()
 
-		// resolved = ctrl3.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl3.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl3.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		const d = doc;
+		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		// assertTrue(resolved.isValid());
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld3");
-		// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-		// 		2, TestConfig.storePass);
-		// assertFalse(doc.isValid());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(3);
+		
+		let ctrls = new Array<DID>();
+		ctrls.push(ctrl1.getSubject());
+		ctrls.push(ctrl2.getSubject());
+		ctrls.push(ctrl3.getSubject());
+		ctrls.sort()
 
-		// final DIDDocument d = doc;
-		// assertThrows(AlreadySignedException.class, () -> {
-		// 	ctrl1.sign(d, TestConfig.storePass);
-		// });
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		doc.setEffectiveController(ctrl1.getSubject());
+		await doc.publish(TestConfig.storePass);
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(3, doc.getControllerCount());
-		// List<DID> ctrls = new ArrayList<DID>();
-		// ctrls.add(ctrl1.getSubject());
-		// ctrls.add(ctrl2.getSubject());
-		// ctrls.add(ctrl3.getSubject());
-		// Collections.sort(ctrls);
-		// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
-
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
-
-		// assertTrue(resolved.isValid());
-
-		// // Deactivate
-		// ctrl1.deactivate(did, TestConfig.storePass);
-		// doc = did.resolve();
-		// assertTrue(doc.isDeactivated());
+		// Deactivate
+		ctrl1.deactivateTargetDID(did, null, TestConfig.storePass);
+		doc = await did.resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateMultisigCidAfterUpdateByController", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateMultisigCidAfterUpdateByController", async () => {
+		let identity = testData.getRootIdentity();
 
-		// // Create normal DID first
-		// DIDDocument ctrl1 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl1.isValid());
-		// ctrl1.publish(TestConfig.storePass);
+		// Create normal DID first
+		let ctrl1 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl1.isValid()).toBeTruthy()
+		await ctrl1.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = ctrl1.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl1.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl1.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let resolved = await ctrl1.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl1.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// assertTrue(resolved.isValid());
+		let ctrl2 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl2.isValid()).toBeTruthy()
+		await ctrl2.publish(TestConfig.storePass);
 
-		// DIDDocument ctrl2 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl2.isValid());
-		// ctrl2.publish(TestConfig.storePass);
+		resolved = await ctrl2.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl2.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// resolved = ctrl2.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl2.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl2.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		let ctrl3 = await identity.newDid(TestConfig.storePass);
+		expect(ctrl3.isValid()).toBeTruthy()
+		await ctrl3.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await ctrl3.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(ctrl3.getSubject())
+		expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature())
+		expect(resolved.isValid()).toBeTruthy()
 
-		// DIDDocument ctrl3 = identity.newDid(TestConfig.storePass);
-		// assertTrue(ctrl3.isValid());
-		// ctrl3.publish(TestConfig.storePass);
+		// Create customized DID
+		let did = new DID("did:elastos:helloworld3");
+		let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
+				2, TestConfig.storePass);
+		expect(doc.isValid()).toBeFalsy()
 
-		// resolved = ctrl3.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(ctrl3.getSubject(), resolved.getSubject());
-		// assertEquals(ctrl3.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		const d = doc;
+		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		// assertTrue(resolved.isValid());
+		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		expect(doc.isValid()).toBeTruthy()
 
-		// // Create customized DID
-		// DID did = new DID("did:elastos:helloworld3");
-		// DIDDocument doc = ctrl1.newCustomizedDid(did, new DID[] { ctrl2.getSubject(), ctrl3.getSubject() },
-		// 		2, TestConfig.storePass);
-		// assertFalse(doc.isValid());
+		expect(doc.getSubject()).toEqual(did);
+		expect(doc.getControllerCount()).toBe(3);
+		
+		let ctrls = new Array<DID>();
+		ctrls.push(ctrl1.getSubject());
+		ctrls.push(ctrl2.getSubject());
+		ctrls.push(ctrl3.getSubject());
+		ctrls.sort()
 
-		// final DIDDocument d = doc;
-		// assertThrows(AlreadySignedException.class, () -> {
-		// 	ctrl1.sign(d, TestConfig.storePass);
-		// });
+		expect(ctrls).toEqual(doc.getControllers())
 
-		// doc = ctrl2.sign(doc, TestConfig.storePass);
-		// expect(doc.isValid()).toBeTruthy()
+		resolved = await did.resolve();
+		expect(resolved).toBeNull()
 
-		// assertEquals(did, doc.getSubject());
-		// assertEquals(3, doc.getControllerCount());
-		// List<DID> ctrls = new ArrayList<DID>();
-		// ctrls.add(ctrl1.getSubject());
-		// ctrls.add(ctrl2.getSubject());
-		// ctrls.add(ctrl3.getSubject());
-		// Collections.sort(ctrls);
-		// assertArrayEquals(doc.getControllers().toArray(), ctrls.toArray());
+		doc.setEffectiveController(ctrl1.getSubject());
+		await doc.publish(TestConfig.storePass);
 
-		// resolved = did.resolve();
-		// assertNull(resolved);
+		resolved = await did.resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.getSubject()).toEqual(did)
+		expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(resolved.isValid()).toBeTruthy()
 
-		// doc.setEffectiveController(ctrl1.getSubject());
-		// doc.publish(TestConfig.storePass);
+		// Update
+		let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
+		let key = TestData.generateKeypair();
+		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+		doc = db.seal(TestConfig.storePass);
+		doc = ctrl1.signWithDocument(doc, TestConfig.storePass);
+		store.storeDid(doc);
 
-		// resolved = did.resolve();
-		// assertNotNull(resolved);
-		// assertEquals(did, resolved.getSubject());
-		// assertEquals(doc.getProof().getSignature(),
-		// 		resolved.getProof().getSignature());
+		await doc.publish(TestConfig.storePass);
 
-		// assertTrue(resolved.isValid());
+		resolved = await doc.getSubject().resolve();
+		expect(resolved).not.toBeNull()
+		expect(resolved.toString()).toEqual(doc.toString())
+		expect(doc.getPublicKeyCount()).toBe(4);
+		expect(doc.getAuthenticationKeyCount()).toBe(4)
 
-		// // Update
-		// let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
-		// let key = TestData.generateKeypair();
-		// db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		// doc = db.seal(TestConfig.storePass);
-		// doc = ctrl1.sign(doc, TestConfig.storePass);
-		// store.storeDid(doc);
-
-		// doc.publish(TestConfig.storePass);
-
-		// resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
-		// assertEquals(4, resolved.getPublicKeyCount());
-		// assertEquals(4, resolved.getAuthenticationKeyCount());
-
-		// // Deactivate
-		// ctrl2.deactivate(did, TestConfig.storePass);
-		// doc = did.resolve();
-		// assertTrue(doc.isDeactivated());
+		// Deactivate
+		ctrl2.deactivateTargetDID(did, null, TestConfig.storePass);
+		doc = await did.resolve();
+		expect(doc.isDeactivated()).toBeTruthy()
 	})
-	test("testDeactivateWithAuthorization1", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+	test("testDeactivateWithAuthorization1", async() => {
+		// let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// let doc = await identity.newDid(TestConfig.storePass);
 		// expect(doc.isValid()).toBeTruthy()
 
-		// doc.publish(TestConfig.storePass);
+		// await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		// let resolved = await doc.getSubject().resolve();
+		// expect(resolved).not.toBeNull()
+		// expect(resolved.toString()).toEqual(doc.toString())
 
-		// DIDDocument target = identity.newDid(TestConfig.storePass);
+		// DIDDocument target = await identity.newDid(TestConfig.storePass);
 		// let db = target.edit();
 		// db.authorizationDid("#recovery", doc.getSubject().toString());
 		// target = db.seal(TestConfig.storePass);
@@ -3913,20 +3837,20 @@ describe('DIDDocument Tests', () => {
 		// target.publish(TestConfig.storePass);
 
 		// resolved = target.getSubject().resolve();
-		// assertNotNull(resolved);
+		// expect(resolved).not.toBeNull()
 		// assertEquals(target.toString(), resolved.toString());
 
 		// doc.deactivate(target.getSubject(), TestConfig.storePass);
 		// target = target.getSubject().resolve();
 		// assertTrue(target.isDeactivated());
 
-		// doc = doc.getSubject().resolve();
+		// doc = await doc.getSubject().resolve();
 		// assertFalse(doc.isDeactivated());
 	})
 	test("testDeactivateWithAuthorization2", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+		// let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// let doc = await identity.newDid(TestConfig.storePass);
 		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		// let key = TestData.generateKeypair();
 		// DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
@@ -3934,16 +3858,16 @@ describe('DIDDocument Tests', () => {
 		// store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 		// doc = db.seal(TestConfig.storePass);
 		// expect(doc.isValid()).toBeTruthy()
-		// assertEquals(2, doc.getAuthenticationKeyCount());
+		// expect(doc.getAuthenticationKeyCount()).toBe(2);
 		// store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		// await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		// let resolved = await doc.getSubject().resolve();
+		// expect(resolved).not.toBeNull()
+		// expect(resolved.toString()).toEqual(doc.toString())
 
-		// DIDDocument target = identity.newDid(TestConfig.storePass);
+		// DIDDocument target = await identity.newDid(TestConfig.storePass);
 		// db = target.edit();
 		// db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
 		// 		key.getPublicKeyBase58());
@@ -3956,20 +3880,20 @@ describe('DIDDocument Tests', () => {
 		// target.publish(TestConfig.storePass);
 
 		// resolved = target.getSubject().resolve();
-		// assertNotNull(resolved);
+		// expect(resolved).not.toBeNull()
 		// assertEquals(target.toString(), resolved.toString());
 
 		// doc.deactivate(target.getSubject(), id, TestConfig.storePass);
 		// target = target.getSubject().resolve();
 		// assertTrue(target.isDeactivated());
 
-		// doc = doc.getSubject().resolve();
+		// doc = await doc.getSubject().resolve();
 		// assertFalse(doc.isDeactivated());
 	})
 	test("testDeactivateWithAuthorization3", () => {
-		// RootIdentity identity = testData.getRootIdentity();
+		// let identity = testData.getRootIdentity();
 
-		// DIDDocument doc = identity.newDid(TestConfig.storePass);
+		// let doc = await identity.newDid(TestConfig.storePass);
 		// let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		// let key = TestData.generateKeypair();
 		// DIDURL id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
@@ -3977,16 +3901,16 @@ describe('DIDDocument Tests', () => {
 		// store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 		// doc = db.seal(TestConfig.storePass);
 		// expect(doc.isValid()).toBeTruthy()
-		// assertEquals(2, doc.getAuthenticationKeyCount());
+		// expect(doc.getAuthenticationKeyCount()).toBe(2);
 		// store.storeDid(doc);
 
-		// doc.publish(TestConfig.storePass);
+		// await doc.publish(TestConfig.storePass);
 
-		// DIDDocument resolved = doc.getSubject().resolve();
-		// assertNotNull(resolved);
-		// assertEquals(doc.toString(), resolved.toString());
+		// let resolved = await doc.getSubject().resolve();
+		// expect(resolved).not.toBeNull()
+		// expect(resolved.toString()).toEqual(doc.toString())
 
-		// DIDDocument target = identity.newDid(TestConfig.storePass);
+		// DIDDocument target = await identity.newDid(TestConfig.storePass);
 		// db = target.edit();
 		// db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
 		// 		key.getPublicKeyBase58());
@@ -3999,14 +3923,14 @@ describe('DIDDocument Tests', () => {
 		// target.publish(TestConfig.storePass);
 
 		// resolved = target.getSubject().resolve();
-		// assertNotNull(resolved);
+		// expect(resolved).not.toBeNull()
 		// assertEquals(target.toString(), resolved.toString());
 
 		// doc.deactivate(target.getSubject(), TestConfig.storePass);
 		// target = target.getSubject().resolve();
 		// assertTrue(target.isDeactivated());
 
-		// doc = doc.getSubject().resolve();
+		// doc = await doc.getSubject().resolve();
 		// assertFalse(doc.isDeactivated());
 	})
 
