@@ -25,15 +25,13 @@ import {ec as EC} from "elliptic"
 import { KeyPair } from "./keypair";
 
 export class EcdsaSigner {
-	
+
 	public static sign(privateKey: Buffer | string, digest: Buffer): Buffer {
 		var ec = new EC('p256');
 		var key = ec.keyFromPrivate(privateKey, 'hex')
 		var signature = key.sign(digest);
-		return Buffer.from(signature.r.toString("hex") + signature.s.toString("hex"), "hex");
+		return Buffer.from(signature.r.toString("hex", 64) + signature.s.toString("hex", 64), "hex");
 	}
-
-
 
 	public static signData(privateKey: Buffer | string, ...data: Buffer[]): Buffer {
 		return this.sign(privateKey, SHA256.encodeToBuffer(...data));
@@ -41,7 +39,7 @@ export class EcdsaSigner {
 
 	public static verify(publicKey: Buffer | string, signature: Buffer, data: Buffer): boolean {
 		var ec = new EC('p256');
-		
+
 		var key = ec.keyFromPublic(publicKey, 'hex');
 
 		var rs = { r: signature.slice(0, 32).toString("hex"), s: signature.slice(32).toString("hex") };
@@ -57,5 +55,5 @@ export class EcdsaSigner {
 		return SHA256.encodeToBuffer(...inputs)
 	}
 
-	
+
 }
