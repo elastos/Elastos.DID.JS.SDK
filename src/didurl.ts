@@ -60,13 +60,11 @@ class URLSerializer extends Serializer {
 }
 
 class URLDeserializer extends Deserializer {
-	public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
+	public static deserialize(value: any, context: JsonParserTransformerContext): DIDURL {
 		try {
-			if (value && value.includes("{"))
-				throw new IllegalArgumentException(value);
 			return DIDURL.newWithUrl(value);
 		} catch (e) {
-			throw new ParentException("Invalid public key", e);
+			throw new ParentException("URLDeserializer deserialization exception", e);
 		}
 	}
 }

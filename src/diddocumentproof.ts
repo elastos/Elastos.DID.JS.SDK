@@ -4,7 +4,8 @@ import {
     JsonProperty,
     JsonPropertyOrder,
     JsonSerialize,
-    JsonClassType
+    JsonClassType,
+    JsonCreator
 } from "jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
@@ -30,6 +31,7 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
     private type: string;
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
     @JsonProperty({ value: DIDDocumentProof.CREATED })
+    @JsonClassType({ type: () => [Date] })
     private created: Date;
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
     @JsonProperty({ value: DIDDocumentProof.CREATOR })

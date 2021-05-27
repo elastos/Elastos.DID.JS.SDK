@@ -106,7 +106,11 @@ export class DID {
 
     @JsonCreator()
     public static jacksonCreator() {
-        return new DID(null, null, true);
+        // Already deserialized by our custom deserializer. Don't return an object here otherwise
+        // it will replace the deserialized one from the custom deserializer.
+        // Jackson seems to call BOTH the custom deserializer first, then call the creator (either "constructor",
+        // or the custom @JsonCreator method).
+        return null;
     }
 
     public static from(did: DID | string | null): DID | null {

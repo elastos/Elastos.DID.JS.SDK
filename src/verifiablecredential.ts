@@ -115,9 +115,11 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	@JsonClassType({type: () => [DID]})
 	public issuer: DID;
 	@JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
+	@JsonClassType({type: () => [Date]})
 	public issuanceDate: Date;
 	@JsonProperty({value:VerifiableCredential.EXPIRATION_DATE})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
+	@JsonClassType({type: () => [Date]})
 	public expirationDate: Date;
 	@JsonProperty({value:VerifiableCredential.CREDENTIAL_SUBJECT})
 	@JsonClassType({type: () => [VerifiableCredential.Subject]})
@@ -873,13 +875,17 @@ export namespace VerifiableCredential {
 	 export class Proof {
 		 @JsonSerialize({using: TypeSerializerFilter.filter})
 		 @JsonProperty({value: VerifiableCredential.TYPE})
+		 @JsonClassType({type: ()=>[String]})
 		 public type: string;
 		 @JsonProperty({value: VerifiableCredential.CREATED})
 		 @JsonInclude({value: JsonIncludeType.NON_NULL})
+		 @JsonClassType({type: ()=>[Date]})
 		 public created: Date;
 		 @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD})
+		 @JsonClassType({type: ()=>[DIDURL]})
 		 public verificationMethod: DIDURL;
 		 @JsonProperty({value: VerifiableCredential.SIGNATURE})
+		 @JsonClassType({type: ()=>[String]})
 		 public signature: string;
 
 		 /**

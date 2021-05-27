@@ -71,6 +71,7 @@ import { Logger } from "./logger";
 import { TransferTicket } from "./internals";
 import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
+import { ComparableMap } from "./comparablemap";
 
 /**
  * The DIDDocument represents the DID information.
@@ -143,13 +144,13 @@ import { VerifiableCredential } from "./internals";
     public _services?: DIDDocumentService[];
 
     @JsonProperty({ value: DIDDocument.EXPIRES })
+    @JsonClassType({type: () => [Date]})
     public expires?: Date;
 
     @JsonProperty({ value: DIDDocument.PROOF })
     @JsonClassType({type: () => [Array, [DIDDocumentProof]]})
     public _proofs?: DIDDocumentProof[];
 
-    // Normally not needed any more since we use the DEFAULT_VIEW_INCLUSION option @JsonIgnore()
     @JsonIgnore()
     public defaultPublicKey?: DIDDocumentPublicKey;
 
@@ -959,7 +960,7 @@ import { VerifiableCredential } from "./internals";
     private async sanitizeControllers() {
         if (this.controllers == null || this.controllers.length == 0) {
             this.controllers = [];
-            this.controllerDocs = new Map();
+            this.controllerDocs = new ComparableMap();
 
             if (this.multisig != null)
                 throw new MalformedDocumentException("Invalid multisig property");
@@ -967,7 +968,7 @@ import { VerifiableCredential } from "./internals";
             return;
         }
 
-        this.controllerDocs = new Map<DID, DIDDocument>();
+        this.controllerDocs = new ComparableMap<DID, DIDDocument>();
         try {
             for (let did of this.controllers) {
                 let doc = await did.resolve();
@@ -999,7 +1000,7 @@ import { VerifiableCredential } from "./internals";
     }
 
     private sanitizePublickKey() {
-        let pks = new Map<DIDURL, DIDDocumentPublicKey>();
+        let pks = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
 
         if (this._publickeys != null && this._publickeys.length > 0) {
             for (let pk of this._publickeys) {
@@ -1135,7 +1136,7 @@ import { VerifiableCredential } from "./internals";
             this.publicKeys = pks;
             this._publickeys = Array.from(pks.values());
         } else {
-            this.publicKeys = new Map();
+            this.publicKeys = new ComparableMap();
             this._publickeys = [];
         }
 
@@ -1168,11 +1169,11 @@ import { VerifiableCredential } from "./internals";
     private sanitizeCredential() {
         if (this._credentials == null || this._credentials.length == 0) {
             this._credentials = [];
-            this.credentials = new Map();
+            this.credentials = new ComparableMap();
             return;
         }
 
-        let vcs = new Map<DIDURL, VerifiableCredential>();
+        let vcs = new ComparableMap<DIDURL, VerifiableCredential>();
         for (let vc of this._credentials) {
             if (vc.getId() == null)
                 throw new MalformedDocumentException("Missing credential id.");
@@ -1207,11 +1208,11 @@ import { VerifiableCredential } from "./internals";
     private sanitizeService() {
         if (this._services == null || this._services.length == 0) {
             this._services = [];
-            this.services = new Map();
+            this.services = new ComparableMap();
             return;
         }
 
-        let svcs = new Map<DIDURL, DIDDocumentService>();
+        let svcs = new ComparableMap<DIDURL, DIDDocumentService>();
         for (let svc of this._services) {
             if (svc.getId().getDid() == null) {
                 svc.getId().setDid(this.getSubject());
@@ -1240,7 +1241,7 @@ import { VerifiableCredential } from "./internals";
         if (this._proofs == null || this._proofs.length == 0)
             throw new MalformedDocumentException("Missing document proof");
 
-        this.proofs = new Map<DID, DIDDocumentProof>();
+        this.proofs = new ComparableMap<DID, DIDDocumentProof>();
 
         for (let proof of this._proofs) {
             if (proof.getCreator() == null) {
@@ -1408,15 +1409,15 @@ import { VerifiableCredential } from "./internals";
         let doc = new DIDDocument(this.subject);
 
         doc.controllers = Array.from(this.controllers);
-        doc.controllerDocs = new Map<DID, DIDDocument>(this.controllerDocs);
+        doc.controllerDocs = new ComparableMap<DID, DIDDocument>(this.controllerDocs);
         if (this.multisig != null)
             doc.multisig = DIDDocumentMultiSignature.newFromMultiSignature(this.multisig);
-        doc.publicKeys = new Map<DIDURL, DIDDocumentPublicKey>(this.publicKeys);
+        doc.publicKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.publicKeys);
         doc.defaultPublicKey = this.defaultPublicKey;
-        doc.credentials = new Map<DIDURL, VerifiableCredential>(this.credentials);
-        doc.services = new Map<DIDURL, DIDDocumentService>(this.services);
+        doc.credentials = new ComparableMap<DIDURL, VerifiableCredential>(this.credentials);
+        doc.services = new ComparableMap<DIDURL, DIDDocumentService>(this.services);
         doc.expires = this.expires;
-        doc.proofs = new Map<DID, DIDDocumentProof>(this.proofs);
+        doc.proofs = new ComparableMap<DID, DIDDocumentProof>(this.proofs);
 
         let metadata: DIDMetadata = this.getMetadata().clone();
         doc.setMetadata(metadata);
