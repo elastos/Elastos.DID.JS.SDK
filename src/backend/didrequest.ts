@@ -216,8 +216,8 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 
 	public setPayload(docOrString: DIDDocument | string) {
 		if (docOrString instanceof DIDDocument) {
-			this.did = this.doc.getSubject();
 			this.doc = docOrString;
+			this.did = this.doc.getSubject();
 
 			if (!this.getHeader().getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
 				let json = this.doc.toString(true);

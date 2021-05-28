@@ -49,7 +49,7 @@ export class DIDDocumentService implements DIDObject<string> {
         this.endpoint = endpoint;
         this.properties = properties ? properties : {};
 
-        if (properties.size > 0) {
+        if (this.properties.size > 0) {
             delete this.properties[DIDDocumentService.ID];
             delete this.properties[DIDDocumentService.TYPE];
             delete this.properties[DIDDocumentService.SERVICE_ENDPOINT];
