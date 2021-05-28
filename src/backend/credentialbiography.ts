@@ -57,23 +57,6 @@ class CredentialBiographyStatusDeserializer extends Deserializer {
 @JsonSerialize({using: CredentialBiographyStatusSerializer.serialize})
 @JsonDeserialize({using: CredentialBiographyStatusDeserializer.deserialize})
 export class CredentialBiographyStatus {
-	/**
-	 * The credential is valid.
-	 */
-	public static VALID = new CredentialBiographyStatus(0, "valid");
-	/**
-	 * The credential is expired.
-	 */
-	//public static EXPIRED = new CredentialBiographyStatus("expired", 1);
-	/**
-	 * The credential is revoked.
-	 */
-	public static REVOKED = new CredentialBiographyStatus(2, "revoked");
-	/**
-	 * The credential is not published.
-	 */
-	public static NOT_FOUND = new CredentialBiographyStatus(3, "not_found");
-
 	protected name: string;
 	protected value: number;
 
@@ -94,6 +77,25 @@ export class CredentialBiographyStatus {
 	public equals(status: CredentialBiographyStatus): boolean {
 		return this.value == status.value;
 	}
+}
+
+export namespace CredentialBiographyStatus {
+	/**
+	 * The credential is valid.
+	 */
+	export const VALID = new CredentialBiographyStatus(0, "valid");
+	 /**
+	  * The credential is expired.
+	  */
+	 //public static EXPIRED = new CredentialBiographyStatus("expired", 1);
+	 /**
+	  * The credential is revoked.
+	  */
+	export const REVOKED = new CredentialBiographyStatus(2, "revoked");
+	 /**
+	  * The credential is not published.
+	  */
+	export const NOT_FOUND = new CredentialBiographyStatus(3, "not_found");
 }
 
 @JsonPropertyOrder({value: [
