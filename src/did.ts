@@ -98,7 +98,7 @@ export class DID {
             checkEmpty(did, "Invalid DID string");
             this.method = null;
             this.methodSpecificId = null;
-            let didParsed = DIDURLParser.NewFromURL(methodOrDID)
+            let didParsed = DIDURLParser.newFromURL(methodOrDID)
             this.method = didParsed.did.method;
             this.methodSpecificId = didParsed.did.methodSpecificId;
         }

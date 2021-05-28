@@ -16,6 +16,7 @@ tests/**/*.js
 log.txt
 *.sublime-project
 *.sublime-workspace
+*.code-workspace
 npm-debug.log*
 
 .idea/

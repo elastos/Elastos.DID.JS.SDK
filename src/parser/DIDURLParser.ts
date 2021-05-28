@@ -25,7 +25,7 @@ export interface DIDURLValues{
 
 export class DIDURLParser{
 
-    public static NewFromURL(url: string): DIDURLValues{
+    public static newFromURL(url: string): DIDURLValues{
 
         return {
             url,
