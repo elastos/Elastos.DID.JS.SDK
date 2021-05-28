@@ -2,7 +2,8 @@ import {
     JsonClassType,
     JsonProperty,
     JsonPropertyOrder,
-    JsonAnySetter
+    JsonAnySetter,
+    JsonCreator
 } from "jackson-js";
 import { DIDURL } from "./internals";
 import type { DIDObject } from "./internals";
@@ -19,17 +20,18 @@ import type { JSONObject, JSONValue } from "./json";
     ]
 })
 export class DIDDocumentService implements DIDObject<string> {
-    private static ID: string = "id";
-    private static TYPE: string = "type";
-    private static SERVICE_ENDPOINT: string = "serviceEndpoint";
+    private static ID = "id";
+    private static TYPE = "type";
+    private static SERVICE_ENDPOINT = "serviceEndpoint";
 
     @JsonProperty({ value: DIDDocumentService.ID })
     @JsonClassType({type: () => [DIDURL]})
-    private id: DIDURL;
+    public id: DIDURL;
     @JsonProperty({ value: DIDDocumentService.TYPE }) @JsonClassType({ type: () => [String] })
-    private type: string;
+    public type: string;
     @JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT }) @JsonClassType({ type: () => [String] })
-    private endpoint: string;
+    public endpoint: string;
+
     private properties: JSONObject;
 
     /**
@@ -39,11 +41,9 @@ export class DIDDocumentService implements DIDObject<string> {
      * @param type the type of Service
      * @param endpoint the address of service point
      */
-    constructor(@JsonProperty({ value: DIDDocumentService.ID, required: true }) id: DIDURL,
-        @JsonProperty({ value: DIDDocumentService.TYPE, required: true }) type: string,
-        @JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT, required: true }) endpoint: string,
-        properties?: JSONObject) {
-        this.id = id;
+    constructor(id?: DIDURL, type?: string, endpoint?: string, properties?: JSONObject) {
+
+     this.id = id;
         this.type = type;
         this.endpoint = endpoint;
         this.properties = properties ? properties : {};
@@ -53,6 +53,11 @@ export class DIDDocumentService implements DIDObject<string> {
             delete this.properties[DIDDocumentService.TYPE];
             delete this.properties[DIDDocumentService.SERVICE_ENDPOINT];
         }
+    }
+
+    @JsonCreator()
+    public static jacksonCreator() {
+        return new DIDDocumentService();
     }
 
     /**
