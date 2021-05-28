@@ -140,6 +140,7 @@ describe("RootIdentity Tests", ()=>{
 
 	    for (let i = 0; i < 100; i++) {
 		    let doc = await identity.newDid(TestConfig.storePass, i);
+
 		    expect(doc.isValid()).toBeTruthy();
 
 		    let did = identity.getDid(i);

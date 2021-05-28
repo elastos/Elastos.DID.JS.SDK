@@ -27,9 +27,11 @@ export class DIDDocumentService implements DIDObject<string> {
     @JsonProperty({ value: DIDDocumentService.ID })
     @JsonClassType({type: () => [DIDURL]})
     public id: DIDURL;
-    @JsonProperty({ value: DIDDocumentService.TYPE }) @JsonClassType({ type: () => [String] })
+    @JsonProperty({ value: DIDDocumentService.TYPE })
+    @JsonClassType({ type: () => [String] })
     public type: string;
-    @JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT }) @JsonClassType({ type: () => [String] })
+    @JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT })
+    @JsonClassType({ type: () => [String] })
     public endpoint: string;
 
     private properties: JSONObject;
@@ -42,8 +44,7 @@ export class DIDDocumentService implements DIDObject<string> {
      * @param endpoint the address of service point
      */
     constructor(id?: DIDURL, type?: string, endpoint?: string, properties?: JSONObject) {
-
-     this.id = id;
+        this.id = id;
         this.type = type;
         this.endpoint = endpoint;
         this.properties = properties ? properties : {};
@@ -117,7 +118,6 @@ export class DIDDocumentService implements DIDObject<string> {
     }
 
     public getProperties(): JSONObject {
-        // TODO: make it unmodifiable recursively
         return this.properties != null ? this.properties : {};
     }
 }

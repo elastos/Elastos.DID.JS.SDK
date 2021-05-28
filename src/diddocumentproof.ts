@@ -38,6 +38,7 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
     @JsonClassType({type: () => [DIDURL]})
     public creator: DIDURL;
     @JsonProperty({ value: DIDDocumentProof.SIGNATURE_VALUE })
+    @JsonClassType({type: () => [String]})
     private signature: string;
 
     /**
@@ -49,11 +50,11 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
      * @param signature the signature string
      */
     // Java: @JsonCreator
-    constructor(@JsonProperty({ value: DIDDocumentProof.CREATOR }) creator: DIDURL,
-        @JsonProperty({ value: DIDDocumentProof.SIGNATURE_VALUE, required: true }) signature: string,
-        @JsonProperty({ value: DIDDocumentProof.TYPE }) type?: string,
-        @JsonProperty({ value: DIDDocumentProof.CREATED, required: true }) created?: Date) {
-
+    constructor(
+        @JsonProperty({value: "creator"}) creator: DIDURL,
+        @JsonProperty({value: "signature"}) signature: string,
+        @JsonProperty({value: "type"}) type?: string,
+        @JsonProperty({value: "created"}) created?: Date) {
         this.type = type ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 
         if (created === undefined)

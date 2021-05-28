@@ -29,6 +29,10 @@ import {
     JsonPropertyOrder,
     JsonIgnore,
     JsonCreator,
+    JsonFormat,
+    JsonFormatShape,
+    JsonDeserialize,
+    JsonCreatorMode
 } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
@@ -72,6 +76,7 @@ import { TransferTicket } from "./internals";
 import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
+import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
 
 /**
  * The DIDDocument represents the DID information.
@@ -148,7 +153,7 @@ import { ComparableMap } from "./comparablemap";
     public expires?: Date;
 
     @JsonProperty({ value: DIDDocument.PROOF })
-    @JsonClassType({type: () => [Array, [DIDDocumentProof]]})
+    //@JsonDeserialize({ using: DIDDocumentProofDeserializer.deserialize })
     public _proofs?: DIDDocumentProof[];
 
     @JsonIgnore()
@@ -181,10 +186,26 @@ import { ComparableMap } from "./comparablemap";
         this.subject = subject;
     }
 
+    // Add custom deserialization fields to the method params here + assign.
+    // Jackson does the rest automatically.
     @JsonCreator()
-    public static jacksonCreator() {
-        return new DIDDocument(null);
+    public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any) {
+        let doc = new DIDDocument(null);
+        doc._proofs = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [DIDDocumentProof]})];
+        return doc;
     }
+
+    // Use the delegating mode to receive the whole object as a single JS object.
+    // This seems to be the only way to receive already deserialized fields such as _proofs without
+    // jackson doing a double deserialization when trying to resolve the constructor
+    // parameters.
+    /* @JsonCreator({mode: JsonCreatorMode.PROPERTIES})
+    public static jacksonCreator(deserializedData: any) {
+        let doc = new DIDDocument(null);
+        doc._proofs = deserializedData._proofs; // set only the manually deserialized fields here ?
+        //Object.assign(doc, deserializedData);
+        return doc;
+    } */
 
     /**
      * Copy constructor.

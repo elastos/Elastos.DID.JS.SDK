@@ -218,7 +218,10 @@ export namespace DIDEntity {
 			return dateObj ? dateObj.toISOString() : null;
 		}
 
-		static deserialize(key: string, dateStr: string, context: JsonParserTransformerContext): Date {
+		static deserialize(key: string, dateStr: string /* | Date */, context: JsonParserTransformerContext): Date {
+			/* if (dateStr instanceof Date)
+				return dateStr; */
+
 			if (dateStr && isNaN(Date.parse(dateStr)))
 				throw new InvalidDateFormat(dateStr);
 			return dateStr ? new Date(dateStr + (dateStr.slice(dateStr.length - 1) == 'Z' ? '':'Z')) : null;
