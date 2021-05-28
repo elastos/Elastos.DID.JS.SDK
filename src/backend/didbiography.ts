@@ -57,19 +57,6 @@ class DIDBiographyStatusDeserializer extends Deserializer {
 @JsonSerialize({using: DIDBiographyStatusSerializer.serialize})
 @JsonDeserialize({using: DIDBiographyStatusDeserializer.deserialize})
 export class DIDBiographyStatus {
-	/**
-	 * The credential is valid.
-	 */
-	public static VALID = new DIDBiographyStatus(0, "valid");
-	/**
-	 * The credential is deactivated.
-	 */
-	public static DEACTIVATED = new DIDBiographyStatus(2, "deactivated");
-	/**
-	 * The credential is not published.
-	 */
-	public static NOT_FOUND = new DIDBiographyStatus(3, "not_found");
-
 	protected name: string;
 	protected value: number;
 
@@ -90,6 +77,22 @@ export class DIDBiographyStatus {
 	public equals(status: DIDBiographyStatus): boolean {
 		return this.value == status.value;
 	}
+}
+
+export namespace DIDBiographyStatus {
+	/**
+	 * The credential is valid.
+	 */
+	export const VALID = new DIDBiographyStatus(0, "valid");
+	 /**
+	  * The credential is deactivated.
+	  */
+	export const DEACTIVATED = new DIDBiographyStatus(2, "deactivated");
+	 /**
+	  * The credential is not published.
+	  */
+	export const NOT_FOUND = new DIDBiographyStatus(3, "not_found");
+
 }
 
 /**
