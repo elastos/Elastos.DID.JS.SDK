@@ -66,7 +66,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	// NOTE: synchronous HTTP calls are deprecated and wrong practice. Though, as JAVA SDK currently
 	// mainly uses synchronous calls, we don't want to diverge our code from that. We then wait for the
 	// "main" java implementation to rework synchronous calls and we will also migrate to Promises/Async.
-	protected performRequest(url: URL, body: string): Promise<JSONObject> {
+	protected performRequest(url: URL, body?: string): Promise<JSONObject> {
 		return new Promise((resolve, reject) => {
 			// Use a different module if we call http or https
 			let requestMethod = (url.protocol.indexOf("https") === 0 ? httpsRequest : httpRequest);
@@ -91,14 +91,19 @@ export class DefaultDIDAdapter implements DIDAdapter {
 					wholeData += d;
 				})
 				res.on("end", () => {
-					let responseJSON = JSON.parse(wholeData);
-					resolve(responseJSON);
+					if (wholeData !== null && wholeData.length > 0) {
+						let responseJSON = JSON.parse(wholeData);
+						resolve(responseJSON);
+					} else {
+						resolve({})
+					}
 				})
 			});
 			req.on('error', error => {
 				reject(new ResolveException("HTTP error", error));
 			});
-			req.write(body);
+			if (body)
+				req.write(body);
 			req.end();
 
 			/* var request = new XMLHttpRequest();

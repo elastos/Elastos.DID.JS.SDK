@@ -429,8 +429,7 @@ export class SimulatedIDChain {
 	public getAdapter(): DIDAdapter {
 		try {
 			return new SimulatedIDChainAdapter(
-				"http://"+this.host+":"+this.port+"/resolve",
-				"http://"+this.host+":"+this.port+"/idtx"
+				"http://"+this.host+":"+this.port
 			);
 		} catch (e) {
 			log.error("INTERNAL - error create DIDAdapter", e);

@@ -24,8 +24,9 @@ import { HDKey } from "./crypto/hdkey";
 import { Base58 } from "./crypto/base58";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import type { JSONObject, JSONValue } from "./json";
-import { SimulatedIDChain } from "./internals";
 import { DefaultDIDAdapter } from "./internals";
+import { SimulatedIDChain } from "./internals";
+import { SimulatedIDChainAdapter } from "./internals";
 import { runningInBrowser } from "./utils";
 
 /**
@@ -87,6 +88,7 @@ export {
 	IDChainRequest,
 	DefaultDIDAdapter,
 	SimulatedIDChain,
+	SimulatedIDChainAdapter,
 	Exceptions,
 
 	// TODO - others
