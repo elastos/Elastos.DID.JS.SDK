@@ -1134,7 +1134,7 @@ import { ComparableMap } from "./comparablemap";
         // for customized DID with controller, could be no public keys
         if (pks.size > 0) {
             this.publicKeys = pks;
-            this._publickeys = Array.from(pks.values());
+            this._publickeys = pks.valuesAsSortedArray();
         } else {
             this.publicKeys = new ComparableMap();
             this._publickeys = [];
