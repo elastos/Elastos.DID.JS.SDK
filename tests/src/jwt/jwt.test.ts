@@ -80,6 +80,7 @@ public class JwtTest {
  		testData.getStore().storeDid(doc);
 
  		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
     }
 
     @AfterEach

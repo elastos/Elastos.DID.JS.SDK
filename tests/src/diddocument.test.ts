@@ -43,6 +43,7 @@ import {
 	assertNull
 } from "./utils/utils";
 import { TestConfig } from "./utils/testconfig";
+import { DIDTestExtension } from "./utils/didtestextension";
 
 async function testGetPublicKey(version: number, testData: TestData) {
 	let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
@@ -2216,6 +2217,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await controller.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2238,6 +2240,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2253,6 +2256,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl1.isValid()).toBeTruthy()
 		await ctrl1.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await ctrl1.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2266,6 +2270,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl2 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl2.isValid()).toBeTruthy()
 		await ctrl2.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl2.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2278,6 +2283,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl3 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl3.isValid()).toBeTruthy()
 		await ctrl3.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl3.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2314,6 +2320,7 @@ describe('DIDDocument Tests', () => {
 
 		doc.setEffectiveController(ctrl1.getSubject());
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2328,6 +2335,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2343,6 +2351,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2358,6 +2367,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2374,6 +2384,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await controller.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2393,6 +2404,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2413,6 +2425,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2428,6 +2441,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2440,6 +2454,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl1.isValid()).toBeTruthy()
 		await ctrl1.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await ctrl1.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2450,6 +2465,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl2 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl2.isValid()).toBeTruthy()
 		await ctrl2.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl2.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2460,6 +2476,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl3 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl3.isValid()).toBeTruthy()
 		await ctrl3.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl3.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2496,6 +2513,7 @@ describe('DIDDocument Tests', () => {
 
 		doc.setEffectiveController(ctrl1.getSubject());
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2512,6 +2530,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2528,6 +2547,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2546,6 +2566,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await controller.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2564,6 +2585,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2579,7 +2601,8 @@ describe('DIDDocument Tests', () => {
 		resolved = await newController.getSubject().resolve();
 		expect(resolved).toBeNull()
 
-		await  controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await newController.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2621,6 +2644,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await controller.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2639,6 +2663,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2657,6 +2682,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2669,7 +2695,8 @@ describe('DIDDocument Tests', () => {
 		resolved = await newController.getSubject().resolve();
 		expect(resolved).toBeNull()
 
-		await  controller.publish(TestConfig.storePass);
+		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await newController.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2706,6 +2733,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl1.isValid()).toBeTruthy()
 		await ctrl1.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await ctrl1.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2716,6 +2744,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl2 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl2.isValid()).toBeTruthy()
 		await ctrl2.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl2.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2726,6 +2755,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl3 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl3.isValid()).toBeTruthy()
 		await ctrl3.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl3.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2762,6 +2792,7 @@ describe('DIDDocument Tests', () => {
 
 		doc.setEffectiveController(ctrl1.getSubject());
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2810,6 +2841,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl1.isValid()).toBeTruthy()
 		await ctrl1.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await ctrl1.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2820,6 +2852,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl2 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl2.isValid()).toBeTruthy()
 		await ctrl2.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl2.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2830,6 +2863,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl3 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl3.isValid()).toBeTruthy()
 		await ctrl3.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl3.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2865,6 +2899,7 @@ describe('DIDDocument Tests', () => {
 
 		doc.setEffectiveController(ctrl1.getSubject());
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2881,6 +2916,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2929,6 +2965,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2944,6 +2981,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2961,6 +2999,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2973,6 +3012,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -2988,6 +3028,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3008,6 +3049,7 @@ describe('DIDDocument Tests', () => {
 		expect(async ()=>{
 			try {
 				await d.publish(TestConfig.storePass);
+				await DIDTestExtension.awaitStandardPublishingDelay();
 				return ""
 			} catch (error) {
 				return error.toString()
@@ -3022,6 +3064,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3043,6 +3086,7 @@ describe('DIDDocument Tests', () => {
 		expect(async ()=>{
 			try {
 				await d.publish(TestConfig.storePass);
+				await DIDTestExtension.awaitStandardPublishingDelay();
 				return ""
 			} catch (error) {
 				return error.toString()
@@ -3056,6 +3100,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3074,6 +3119,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass, doc.getDefaultPublicKeyId(), true);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3086,6 +3132,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3101,6 +3148,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3118,6 +3166,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3130,6 +3179,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3145,6 +3195,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3165,6 +3216,7 @@ describe('DIDDocument Tests', () => {
 		expect(async ()=>{
 			try {
 				await d.publish(TestConfig.storePass);
+				await DIDTestExtension.awaitStandardPublishingDelay();
 				return ""
 			} catch (error) {
 				return error.toString()
@@ -3178,6 +3230,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3194,6 +3247,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass, doc.getDefaultPublicKeyId(), true);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3206,6 +3260,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3223,6 +3278,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass, doc.getDefaultPublicKeyId(), true);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3235,6 +3291,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3252,6 +3309,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3267,6 +3325,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3287,6 +3346,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await controller.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3305,6 +3365,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3329,6 +3390,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await controller.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3347,6 +3409,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3365,6 +3428,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3386,6 +3450,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await controller.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3406,6 +3471,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3432,6 +3498,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await controller.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await controller.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3453,6 +3520,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).toBeNull()
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3473,6 +3541,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3490,6 +3559,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl1.isValid()).toBeTruthy()
 		await ctrl1.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await ctrl1.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3500,6 +3570,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl2 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl2.isValid()).toBeTruthy()
 		await ctrl2.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl2.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3510,6 +3581,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl3 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl3.isValid()).toBeTruthy()
 		await ctrl3.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl3.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3544,6 +3616,7 @@ describe('DIDDocument Tests', () => {
 
 		doc.setEffectiveController(ctrl1.getSubject());
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3563,6 +3636,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl1.isValid()).toBeTruthy()
 		await ctrl1.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await ctrl1.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3573,6 +3647,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl2 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl2.isValid()).toBeTruthy()
 		await ctrl2.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl2.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3583,6 +3658,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl3 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl3.isValid()).toBeTruthy()
 		await ctrl3.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl3.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3618,6 +3694,7 @@ describe('DIDDocument Tests', () => {
 
 		doc.setEffectiveController(ctrl1.getSubject());
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3636,6 +3713,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3655,6 +3733,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl1.isValid()).toBeTruthy()
 		await ctrl1.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await ctrl1.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3665,6 +3744,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl2 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl2.isValid()).toBeTruthy()
 		await ctrl2.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl2.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3675,6 +3755,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl3 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl3.isValid()).toBeTruthy()
 		await ctrl3.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl3.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3708,6 +3789,7 @@ describe('DIDDocument Tests', () => {
 
 		doc.setEffectiveController(ctrl1.getSubject());
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3727,6 +3809,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl1.isValid()).toBeTruthy()
 		await ctrl1.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		let resolved = await ctrl1.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3737,6 +3820,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl2 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl2.isValid()).toBeTruthy()
 		await ctrl2.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl2.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3747,6 +3831,7 @@ describe('DIDDocument Tests', () => {
 		let ctrl3 = await identity.newDid(TestConfig.storePass);
 		expect(ctrl3.isValid()).toBeTruthy()
 		await ctrl3.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await ctrl3.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3782,6 +3867,7 @@ describe('DIDDocument Tests', () => {
 
 		doc.setEffectiveController(ctrl1.getSubject());
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3798,6 +3884,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await doc.getSubject().resolve();
 		expect(resolved).not.toBeNull()
@@ -3817,6 +3904,7 @@ describe('DIDDocument Tests', () => {
 		// expect(doc.isValid()).toBeTruthy()
 
 		// await doc.publish(TestConfig.storePass);
+		// await DIDTestExtension.awaitStandardPublishingDelay();
 
 		// let resolved = await doc.getSubject().resolve();
 		// expect(resolved).not.toBeNull()
@@ -3832,6 +3920,7 @@ describe('DIDDocument Tests', () => {
 		// store.storeDid(target);
 
 		// target.publish(TestConfig.storePass);
+		// await DIDTestExtension.awaitStandardPublishingDelay();
 
 		// resolved = target.getSubject().resolve();
 		// expect(resolved).not.toBeNull()
@@ -3859,6 +3948,7 @@ describe('DIDDocument Tests', () => {
 		// store.storeDid(doc);
 
 		// await doc.publish(TestConfig.storePass);
+		// await DIDTestExtension.awaitStandardPublishingDelay();
 
 		// let resolved = await doc.getSubject().resolve();
 		// expect(resolved).not.toBeNull()
@@ -3875,6 +3965,7 @@ describe('DIDDocument Tests', () => {
 		// store.storeDid(target);
 
 		// target.publish(TestConfig.storePass);
+		// await DIDTestExtension.awaitStandardPublishingDelay();
 
 		// resolved = target.getSubject().resolve();
 		// expect(resolved).not.toBeNull()
@@ -3902,6 +3993,7 @@ describe('DIDDocument Tests', () => {
 		// store.storeDid(doc);
 
 		// await doc.publish(TestConfig.storePass);
+		// await DIDTestExtension.awaitStandardPublishingDelay();
 
 		// let resolved = await doc.getSubject().resolve();
 		// expect(resolved).not.toBeNull()
@@ -3918,6 +4010,7 @@ describe('DIDDocument Tests', () => {
 		// store.storeDid(target);
 
 		// target.publish(TestConfig.storePass);
+		// await DIDTestExtension.awaitStandardPublishingDelay();
 
 		// resolved = target.getSubject().resolve();
 		// expect(resolved).not.toBeNull()

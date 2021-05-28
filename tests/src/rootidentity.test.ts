@@ -1,4 +1,5 @@
 import { Logger, DIDStore, RootIdentity, DIDDocument, DID } from "@elastosfoundation/did-js-sdk";
+import { DIDTestExtension } from "./utils/didtestextension";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
 
@@ -86,6 +87,7 @@ describe("RootIdentity Tests", ()=>{
     	expect(resolved).toBeNull();
 
     	await doc.publish(TestConfig.storePass);
+		await DIDTestExtension.awaitStandardPublishingDelay();
 
     	resolved = await doc.getSubject().resolve();
     	expect(resolved).not.toBeNull();
@@ -109,7 +111,8 @@ describe("RootIdentity Tests", ()=>{
     	expect(resolved).toBeNull();
 
     	await doc.publish(TestConfig.storePass);
-
+		await DIDTestExtension.awaitStandardPublishingDelay();
+		
     	resolved = await doc.getSubject().resolve();
     	expect(resolved).not.toBeNull();
     	expect(doc.getSubject()).toEqual(resolved.getSubject());
@@ -138,7 +141,7 @@ describe("RootIdentity Tests", ()=>{
 	test("testGetDid", async () => {
 	    let identity = testData.getRootIdentity();
 
-	    for (let i = 0; i < 100; i++) {
+	    for (let i = 0; i < 10; i++) { // TODO: was 100
 		    let doc = await identity.newDid(TestConfig.storePass, i);
 
 		    expect(doc.isValid()).toBeTruthy();

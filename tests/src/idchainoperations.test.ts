@@ -34,6 +34,7 @@ import {
 	File } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
 import { Utils } from "./utils/utils";
+import { DIDTestExtension } from "./utils/didtestextension";
 
 const log = new Logger("IDChainOperationsTest");
 
@@ -61,8 +62,6 @@ describe('IDChainOperations Tests', () => {
     	store = testData.getStore();
     	mnemonic = testData.getMnemonic();
     	identity = testData.getRootIdentity();
-
-		testData.waitForWalletAvailable();
     });
 
 	describe('Order 1', () => {
@@ -74,10 +73,10 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Publishing new DID {}...", did);
 			let start = Date.now();
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			let resolved = await did.resolve();
 			expect(resolved).not.toBeNull();
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
@@ -96,7 +95,8 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Publishing new DID {}...", did);
 			let start = Date.now();
-			await doc.publish(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
@@ -120,7 +120,7 @@ describe('IDChainOperations Tests', () => {
 
 			let start = Date.now();
 			await doc.publish(TestConfig.storePass);
-			testData.waitForWalletAvailable();
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let resolved = await did.resolve(true);
 
 			let duration = (Date.now() - start + 500) / 1000;
@@ -160,10 +160,10 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			resolved = await did.resolve();
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
@@ -220,10 +220,10 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			resolved = await did.resolve();
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
@@ -284,11 +284,11 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			await doc.publish(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			resolved = await did.resolve(true);
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
@@ -344,10 +344,10 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			resolved = await did.resolve(true);
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toReturn;
@@ -417,10 +417,10 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Publishing new DID {}...", did);
 			let start = Date.now();
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			let resolved = await did.resolve();
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -471,10 +471,10 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			resolved = await did.resolve();
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
@@ -548,10 +548,10 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			resolved = await did.resolve();
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
@@ -620,11 +620,11 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Publishing new DID {}...", did);
 			let s1 = Date.now();
-			await doc.publish(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - s1 + 500) / 1000;
 			log.debug("Publish new DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			let resolved = await did.resolve(true);
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
 			expect(resolved.isValid()).toBeTruthy();
@@ -675,11 +675,11 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			await doc.publish(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			resolved = await did.resolve(true);
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();
@@ -733,11 +733,11 @@ describe('IDChainOperations Tests', () => {
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
-			await doc.publish(TestConfig.storePass)
+			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Update DID {}...OK({}s)", did, duration);
 
-			testData.waitForWalletAvailable();
 			resolved = await did.resolve(true);
 			expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
 			expect(did.equals(resolved.getSubject())).toBeTruthy();

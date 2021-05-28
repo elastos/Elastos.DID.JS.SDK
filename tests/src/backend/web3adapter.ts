@@ -124,6 +124,10 @@ export class Web3Adapter extends DefaultDIDAdapter {
 		this.lastTxHash = txHash;
 	}
 
+	public awaitStandardPublishingDelay(): Promise<void> {
+		return new Promise(resolve => {setTimeout(resolve, 10000)});
+	}
+
 	/*public boolean isAvailable() {
 		if (lastTxHash == null)
 			return true;

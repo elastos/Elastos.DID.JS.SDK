@@ -22,11 +22,13 @@ const config: InitialOptionsTsJest = {
       }
     ]
   ],
+  testEnvironment: "node",
+  testRunner: "jest-circus/runner",
   globals: {
     "ts-jest": {
       "tsconfig": "./tsconfig.json"
     }
   },
-  testTimeout: 60000
+  testTimeout: 500000
 }
 export default config

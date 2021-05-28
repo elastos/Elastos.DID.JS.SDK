@@ -8,7 +8,7 @@
     "types": "npm run clean && tsc --emitDeclarationOnly --outDir typings/ --project tsconfig.types.json",
     "tsc:build": "rollup -c",
     "tsc:w": "tsc -w",
-    "test:node": "JEST_CIRCUS=1 jest --silent=true --verbose --config jest.node.config.ts",
+    "test:node": "JEST_CIRCUS=1 jest --silent=false --verbose --runInBand --detectOpenHandles --config jest.node.config.ts",
     "test:node:debug": "JEST_CIRCUS=1 node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
     "test:node-no-jest": "rollup -c rollup.no-jest.config.js && node generated/tests-no-jest.js",
     "test:browser": "npm run clean && rollup -c rollup.browsertests.config.js"

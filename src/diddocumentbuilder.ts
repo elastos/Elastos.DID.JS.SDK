@@ -130,7 +130,7 @@ export class DIDDocumentBuilder {
     }
 
     private checkNotSealed() {
-        if (document == null)
+        if (this.document == null)
             throw new AlreadySealedException();
     }
 

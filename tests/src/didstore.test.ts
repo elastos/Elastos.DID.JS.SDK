@@ -22,6 +22,7 @@
 
 import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity, runningInBrowser } from "@elastosfoundation/did-js-sdk";
 import { DIDStore, File, Logger } from "@elastosfoundation/did-js-sdk";
+import { DIDTestExtension } from "./utils/didtestextension";
 
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
@@ -108,6 +109,7 @@ describe("DIDStore Tests", ()=>{
 			expect(resolved).toBeNull();
 
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
 			expect(file.exists()).toBeTruthy();
@@ -141,6 +143,7 @@ describe("DIDStore Tests", ()=>{
 			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			dids.push(doc.getSubject());
 		}
 
@@ -391,7 +394,8 @@ describe("DIDStore Tests", ()=>{
 			expect(resolved).toBeNull();
 
 			await doc.publish(TestConfig.storePass);
-
+			await DIDTestExtension.awaitStandardPublishingDelay();
+			
 			let file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
 			expect(file.exists()).toBeTruthy();
 			expect(file.isFile()).toBeTruthy();

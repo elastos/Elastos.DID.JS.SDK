@@ -247,10 +247,12 @@ export class CompatibleData {
 			case "bar":
 			case "baz":
 				await doc.publish(TestConfig.storePass, (await this.getDocument("user1")).getDefaultPublicKeyId());
+				await DIDTestExtension.awaitStandardPublishingDelay();
 				break;
 
 			default:
 				await doc.publish(TestConfig.storePass);
+				await DIDTestExtension.awaitStandardPublishingDelay();
 			}
 		}
 
@@ -435,6 +437,7 @@ export class InstantData {
 			doc = db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			this.idIssuer = doc;
 		}
@@ -535,6 +538,7 @@ export class InstantData {
 			doc = db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			this.idUser1 = doc;
 		}
@@ -704,6 +708,7 @@ export class InstantData {
 			doc = db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			this.idUser2 = doc;
 		}
@@ -716,6 +721,7 @@ export class InstantData {
 			let doc = await this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User3");
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			this.idUser3 = doc;
 		}
@@ -728,6 +734,7 @@ export class InstantData {
 			let doc = await this.testData.identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User4");
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			this.idUser4 = doc;
 		}
@@ -772,6 +779,7 @@ export class InstantData {
 			doc = db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			this.idExampleCorp = doc;
 		}
@@ -873,6 +881,7 @@ export class InstantData {
 			doc = this.idUser3.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass, signKey);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			this.idFooBar = doc;
 		}
@@ -1003,6 +1012,7 @@ export class InstantData {
 
 			doc.setEffectiveController(this.idUser2.getSubject());
 			await doc.publish(TestConfig.storePass);
+			await DIDTestExtension.awaitStandardPublishingDelay();
 			doc.setEffectiveController(null);
 
 			this.idFoo = doc;
@@ -1052,6 +1062,7 @@ export class InstantData {
 			doc = this.idUser3.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass, this.idUser3.getDefaultPublicKeyId());
+			await DIDTestExtension.awaitStandardPublishingDelay();
 
 			this.idBar = doc;
 		}
@@ -1070,7 +1081,8 @@ export class InstantData {
 			let doc = await this.idUser1.newCustomizedDidWithController(did, controllers, 1, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass, this.idUser1.getDefaultPublicKeyId());
-
+			await DIDTestExtension.awaitStandardPublishingDelay();
+			
 			this.idBaz = doc;
 		}
 
