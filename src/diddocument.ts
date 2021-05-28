@@ -191,7 +191,10 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
     @JsonCreator()
     public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any) {
         let doc = new DIDDocument(null);
-        doc._proofs = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [DIDDocumentProof]})];
+        if (_proofs instanceof Array)
+            doc._proofs = _proofs.map((p) => DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [DIDDocumentProof]}));
+        else
+            doc._proofs = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [DIDDocumentProof]})];
         return doc;
     }
 
