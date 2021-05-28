@@ -21,7 +21,7 @@
  */
 
 import type { DIDAdapter } from "@elastosfoundation/did-js-sdk";
-import { DIDBackend, SimulatedIDChain } from "@elastosfoundation/did-js-sdk";
+import { DIDBackend, SimulatedIDChain, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
 import { Web3Adapter } from "../backend/web3adapter";
 import { TestConfig } from "./testconfig";
 
@@ -35,9 +35,13 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 
 		// if (name.equals("IDChainOperationsTest")) {
 			// When run the IDChainOperationsTest only
-			DIDTestExtension.adapter = new Web3Adapter(
-				rpcEndpoint, TestConfig.contractAddress,
-				TestConfig.walletPath, TestConfig.walletPassword);
+
+			//DIDTestExtension.adapter = new Web3Adapter(
+			//	rpcEndpoint, TestConfig.contractAddress,
+			//	TestConfig.walletPath, TestConfig.walletPassword);
+
+			DIDTestExtension.adapter = new SimulatedIDChainAdapter(
+				"http://127.0.0.1:9123");
 		// }
 
 		if (DIDTestExtension.adapter == null) {
@@ -78,10 +82,11 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 	    //}
 	} */
 
-	/* public static void resetData() {
-		simChain.reset();
+	public static async resetData() {
+		if (DIDTestExtension.adapter instanceof SimulatedIDChainAdapter)
+			(DIDTestExtension.adapter as SimulatedIDChainAdapter).resetData();
 	}
-*/
+
 	public static getAdapter(): DIDAdapter {
 		return DIDTestExtension.adapter;
 	}

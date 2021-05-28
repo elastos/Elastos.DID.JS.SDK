@@ -21,26 +21,32 @@
  */
 
 import { DefaultDIDAdapter } from "../internals";
+import { checkArgument } from "../internals";
+import { DIDTransactionException } from "../exceptions/exceptions"
 
 export class SimulatedIDChainAdapter extends DefaultDIDAdapter {
-	private idtxEndpoint: string;
+	private serverURL: URL;
+	private idtxEndpoint: URL;
 
-	public constructor(resolver: string, idtx: string) {
-		super(resolver);
-		this.idtxEndpoint = idtx;
+	public constructor(endpoint: string) {
+		super(new URL("/resolve", new URL(endpoint)).toString());
+		this.serverURL = new URL(endpoint);
+		this.idtxEndpoint = new URL("/idtx", this.serverURL);
 	}
 
-	/* @Override
-	public void createIdTransaction(String payload, String memo)
-			throws DIDTransactionException {
-		checkArgument(payload != null && !payload.isEmpty(), "Invalid payload");
-
+	public async createIdTransaction(payload: string, memo: string) {
+		checkArgument(payload !== null && payload.length > 0, "Invalid payload");
+		console.log("TTTT>>>> ", payload);
 		try {
-			InputStream is = performRequest(idtxEndpoint, payload);
-			if (is != null)
-				is.close();
-		} catch (IOException e) {
+			let ret = await this.performRequest(this.idtxEndpoint, payload);
+		} catch (e) {
 			throw new DIDTransactionException("Create ID transaction failed.", e);
 		}
-	} */
+	}
+
+	public async resetData() {
+		let resetURL = new URL("/reset", this.serverURL);
+
+		await this.performRequest(this.idtxEndpoint);
+	}
 }
