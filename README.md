@@ -15,6 +15,11 @@
 
 ## Running tests
 
+Start the simulated DID chain once:
+
+- From the tests/ folder:
+- `npm run simchain`
+
 Several independant options:
 
 - In vscode, Menu -> Run -> **Start debugging**

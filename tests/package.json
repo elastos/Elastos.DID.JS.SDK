@@ -11,7 +11,8 @@
     "test:node": "JEST_CIRCUS=1 jest --silent=false --verbose --runInBand --detectOpenHandles --config jest.node.config.ts",
     "test:node:debug": "JEST_CIRCUS=1 node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
     "test:node-no-jest": "rollup -c rollup.no-jest.config.js && node generated/tests-no-jest.js",
-    "test:browser": "npm run clean && rollup -c rollup.browsertests.config.js"
+    "test:browser": "npm run clean && rollup -c rollup.browsertests.config.js",
+    "simchain": "java -jar tools/did.jar simchain"
   },
   "dependencies": {
     "@elastosfoundation/did-js-sdk": "^2.0.0",
