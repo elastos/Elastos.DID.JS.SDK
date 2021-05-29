@@ -1457,7 +1457,7 @@ describe('DIDDocument Tests', () => {
 
 
 		// Credential not belongs to current did, should fail.
-		expect(async () => { db.addCredential(await cd.getCredential("user1", "passport")); }).toThrowError();
+		await expect(async () => { db.addCredential(await cd.getCredential("user1", "passport")); }).toThrowError();
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user2.signWithDocument(doc, TestConfig.storePass);
@@ -2613,8 +2613,7 @@ describe('DIDDocument Tests', () => {
 		// create the transfer ticket
 		doc.setEffectiveController(controller.getSubject());
 		let ticket = await doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
-		expect(async ()=>{return await ticket.isValid()}).toBeTruthy()
-
+		await expect(async ()=>{return await ticket.isValid()}).toBeTruthy();
 
 		// create new document for customized DID
 		doc = await newController.newCustomized(did, 1, TestConfig.storePass, true);
@@ -3046,7 +3045,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		let d = doc;
-		expect(async ()=>{
+		await expect(async ()=>{
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3083,7 +3082,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		let d = doc;
-		expect(async ()=>{
+		await expect(async ()=>{
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3213,7 +3212,7 @@ describe('DIDDocument Tests', () => {
 		store.storeDid(doc);
 
 		let d = doc;
-		expect(async ()=>{
+		await expect(async ()=>{
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
