@@ -85,7 +85,7 @@ public class JwtTest {
 
     @AfterEach
     public void afterEach() {
-    	testData.cleanup();
+    	await testData.cleanup();
     }
 
     public static void printJwt(String token) {

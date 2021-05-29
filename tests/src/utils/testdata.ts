@@ -27,7 +27,7 @@ import {
 	VerifiableCredential, VerifiablePresentation,
 	TransferTicket, Issuer, DIDURL, DID, Exceptions,
 	File, HDKey, JSONObject, JSONValue, runningInBrowser,
-	DIDDocumentBuilder
+	DIDDocumentBuilder, DIDBackend
 } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./testconfig";
 import { importBundledBrowserData } from "./browserdataimport";
@@ -67,12 +67,12 @@ export class TestData {
 		}
 	}
 
-	public cleanup() {
+	public async cleanup(): Promise<void> {
 		if (this.store != null)
 			this.store.close();
 
-		/* DIDTestExtension.resetData();
-		DIDBackend.getInstance().clearCache(); */
+		await DIDTestExtension.resetData();
+		DIDBackend.getInstance().clearCache();
 	}
 
 	public static generateKeypair(): HDKey {
@@ -1082,7 +1082,7 @@ export class InstantData {
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass, this.idUser1.getDefaultPublicKeyId());
 			await DIDTestExtension.awaitStandardPublishingDelay();
-			
+
 			this.idBaz = doc;
 		}
 

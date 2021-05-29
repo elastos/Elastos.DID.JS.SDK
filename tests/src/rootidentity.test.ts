@@ -14,8 +14,8 @@ describe("RootIdentity Tests", ()=>{
     	store = testData.getStore();
     });
 
-    afterEach(() => {
-    	testData.cleanup();
+    afterEach(async () => {
+    	await testData.cleanup();
     });
 
 	test("testInitPrivateIdentity", () => {
@@ -112,7 +112,7 @@ describe("RootIdentity Tests", ()=>{
 
     	await doc.publish(TestConfig.storePass);
 		await DIDTestExtension.awaitStandardPublishingDelay();
-		
+
     	resolved = await doc.getSubject().resolve();
     	expect(resolved).not.toBeNull();
     	expect(doc.getSubject()).toEqual(resolved.getSubject());
@@ -129,7 +129,8 @@ describe("RootIdentity Tests", ()=>{
 	    expect(doc.isValid()).toBeTruthy();
 	    expect(did.equals(doc.getSubject())).toBeTruthy();
 
-		expect(identity.newDid(TestConfig.storePass)).toThrowError("DID already exists in the store.");
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		expect(() => identity.newDid(TestConfig.storePass)).rejects.toThrowError("DID already exists in the store.");
 
 	    let success = store.deleteDid(did);
 	    expect(success).toBeTruthy();

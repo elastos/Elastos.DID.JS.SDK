@@ -90,7 +90,7 @@ public class MnemonicTest {
 
     @AfterEach
     public void afterEach() {
-    	testData.cleanup();
+    	await testData.cleanup();
     }
 
     @Test

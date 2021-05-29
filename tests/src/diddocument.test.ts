@@ -123,8 +123,8 @@ describe('DIDDocument Tests', () => {
 		store = testData.getStore();
 	});
 
-	afterAll(() => {
-		testData.cleanup();
+	afterAll(async () => {
+		await testData.cleanup();
 	});
 
 	test('Test Get Public Key', async () => {

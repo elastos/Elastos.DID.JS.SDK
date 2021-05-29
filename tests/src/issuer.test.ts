@@ -41,8 +41,8 @@ describe("Issuer Tests", ()=>{
     	testDoc = await testData.getInstantData().getUser1Document();
 	})
 
-	afterEach(()=>{
-		testData.cleanup();
+	afterEach(async ()=>{
+		await testData.cleanup();
 	})
 
 	test('New Issuer Test With Sign Key', () => {
@@ -344,7 +344,7 @@ public class IssuerTest {
 
     @AfterEach
     public void afterEach() {
-    	testData.cleanup();
+    	await testData.cleanup();
     }
 
 	@Test

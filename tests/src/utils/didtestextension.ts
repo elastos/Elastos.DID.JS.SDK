@@ -84,7 +84,7 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 
 	public static async resetData() {
 		if (DIDTestExtension.adapter instanceof SimulatedIDChainAdapter)
-			(DIDTestExtension.adapter as SimulatedIDChainAdapter).resetData();
+			await (DIDTestExtension.adapter as SimulatedIDChainAdapter).resetData();
 	}
 
 	public static getAdapter(): DIDAdapter {

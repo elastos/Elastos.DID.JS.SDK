@@ -39,8 +39,8 @@ describe("DIDStore Tests", ()=>{
 		store = testData.getStore();
 	})
 
-	afterEach(() => {
-		testData.cleanup();
+	afterEach(async () => {
+		await testData.cleanup();
 	});
 
 	// Java: @ExtendWith(DIDTestExtension.class)

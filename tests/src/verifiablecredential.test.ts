@@ -35,8 +35,8 @@ describe('let Tests', () => {
     	testData = new TestData();
     });
 
-    afterEach(() => {
-    	testData.cleanup();
+    afterEach(async () => {
+    	await testData.cleanup();
     });
 
 	test('testKycCredential', async () => {

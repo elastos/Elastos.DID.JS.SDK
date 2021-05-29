@@ -33,8 +33,8 @@ describe('VerifiablePresentation Tests', () => {
     	store = testData.getStore();
     });
 
-    afterEach(() => {
-    	testData.cleanup();
+    afterEach(async () => {
+    	await testData.cleanup();
     });
 
 	test('testReadPresentationNonempty', async () => {

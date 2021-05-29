@@ -54,8 +54,8 @@ describe('IDChainOperations Tests', () => {
     	dids = [];
     });
 
-    afterAll(() => {
-    	testData.cleanup();
+    afterAll(async () => {
+    	await testData.cleanup();
     });
 
     beforeEach(() => {

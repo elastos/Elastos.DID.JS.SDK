@@ -36,7 +36,6 @@ export class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 
 	public async createIdTransaction(payload: string, memo: string) {
 		checkArgument(payload !== null && payload.length > 0, "Invalid payload");
-		console.log("TTTT>>>> ", payload);
 		try {
 			let ret = await this.performRequest(this.idtxEndpoint, payload);
 		} catch (e) {
@@ -44,9 +43,9 @@ export class SimulatedIDChainAdapter extends DefaultDIDAdapter {
 		}
 	}
 
-	public async resetData() {
+	public async resetData(): Promise<void> {
 		let resetURL = new URL("/reset", this.serverURL);
 
-		await this.performRequest(this.idtxEndpoint);
+		await this.performRequest(resetURL);
 	}
 }
