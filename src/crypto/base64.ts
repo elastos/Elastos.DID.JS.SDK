@@ -1,45 +1,59 @@
-import jsrsasign from "jsrsasign"
+
 export class BASE64 {
+
     public static fromString(value: string, useURLFormat: boolean = false): string{
-        if (useURLFormat) return jsrsasign.stob64u(value);
-        return jsrsasign.stob64(value);
+        let base64string = Buffer.from(value, "utf-8").toString("base64");
+        if (useURLFormat) base64string = this.convertToURI(base64string)
+        return base64string
     }
-    public static fromHex(hexString: string, useURLFormat: boolean = false): string{
-        if (useURLFormat) return jsrsasign.hextob64u(hexString);
-        return jsrsasign.hextob64(hexString);
+    public static fromHex(hexString: string): string{
+       return this.encode(hexString)
     }
     public static fromUrlFormat(b64uString: string): string{
-        return jsrsasign.b64utob64(b64uString);
+        return this.convertFromURI(b64uString)
     }
     public static toUrlFormat(b64String: string): string{
-        return jsrsasign.b64tob64u(b64String);
+        return this.convertToURI(b64String)
     }
-    private static getB64(value: string) : string{
-         if (value.endsWith("=")) return jsrsasign.b64utob64(value)
-         return value;
+   
+    public static toHex(b64String: string): string{
+        return this.decode(b64String)
     }
-    public static toHex(base64String: string): string{
-        return jsrsasign.b64tohex(this.getB64(base64String))
-    }
-    public static toString(base64String: string): string{
-        return jsrsasign.b64toutf8(this.getB64(base64String))
-    }
-
-    public static toByteArray(base64String: string): number[]{
-        return jsrsasign.b64toBA(this.getB64(base64String))
+    public static toString(b64String: string): string{
+        let b64str = b64String
+        if (!b64str.endsWith("=")) b64str = this.convertFromURI(b64str)
+        return Buffer.from(b64str, "base64").toString("utf-8")
     }
 
-    public static fromByteArray(byteArray: number[], useURLFormat: boolean = false): string{
-        let hexValue = jsrsasign.BAtohex(byteArray);
-        if (useURLFormat) return jsrsasign.hextob64u(hexValue);
-        return jsrsasign.hextob64(hexValue);
-    }
+   
+
+   
 
     // TODO: Should clean up the above mess conversion methods.
 
     // All base64 contents inside the DID objects are base64 URL safe mode.
     // Decode the base64 URL safe input into the string encoded in hex.
     public static decode(b64uString: string): string {
-        return jsrsasign.b64utohex(b64uString);
+        let b64str = b64uString
+        if (!b64str.endsWith("=")) b64str = this.convertFromURI(b64str)
+        return Buffer.from(b64str, "base64").toString("hex");
+    }
+
+    
+
+
+    public static encode(hexToBase64: string): string{
+        let b64str = Buffer.from(hexToBase64, "hex").toString("base64");
+        return  this.convertToURI(b64str)
+    }
+
+ 
+
+    private static convertToURI(b64str: string) : string{
+        return b64str.replace(/[+\/]/g, (item) => item == '+' ? '-' : '_').replace(/=+$/m, '');
+    }
+    
+    private static convertFromURI(b64ustr: string) : string{
+        return b64ustr.replace(/[-_]/g, (item) => item == '-' ? '+' : '\/') + '='
     }
 }

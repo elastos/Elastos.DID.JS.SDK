@@ -960,7 +960,7 @@ import { BASE64 } from "./internals";
 			let sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
 			key = null;
 
-			return BASE64.fromHex(sig.toString("hex"), true);
+			return BASE64.fromHex(sig.toString("hex"));
 		}
 
 		/**
