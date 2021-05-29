@@ -24,14 +24,14 @@ export class HDKey {
     static HARDENED_OFFSET = 0x80000000;
 
     static fromMasterSeed(seedBuffer: Buffer, versions?: Version) {
-        var I = crypto
+        const I = crypto
             .createHmac('sha512', MASTER_SECRET)
             .update(seedBuffer)
             .digest();
-        var IL = I.slice(0, 32);
-        var IR = I.slice(32);
+        const IL = I.slice(0, 32);
+        const IR = I.slice(32);
 
-        var hdkey = new HDKey(versions);
+        const hdkey = new HDKey(versions);
         hdkey.chainCode = IR;
         hdkey.privateKey = IL;
 
@@ -42,11 +42,11 @@ export class HDKey {
     static fromExtendedKey(base58key: string, versions?: any) {
         // => version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
         versions = versions || BITCOIN_VERSIONS;
-        var hdkey = new HDKey(versions);
+        const hdkey = new HDKey(versions);
 
-        var keyBuffer = bs58check.decode(base58key);
+        const keyBuffer = bs58check.decode(base58key);
 
-        var version = keyBuffer.readUInt32BE(0);
+        const version = keyBuffer.readUInt32BE(0);
         assert.ok(
             version === versions.private || version === versions.public,
             'Version mismatch: does not match private or public'
@@ -57,7 +57,7 @@ export class HDKey {
         hdkey.index = keyBuffer.readUInt32BE(9);
         hdkey.chainCode = keyBuffer.slice(13, 45);
 
-        var key = keyBuffer.slice(45);
+        const key = keyBuffer.slice(45);
         if (key.readUInt8(0) === 0) {
             // private
             assert.ok(version === versions.private, 'Version mismatch: version does not match private');
@@ -263,12 +263,12 @@ export class HDKey {
 
 function serialize(hdkey: HDKey, version: number, key: Buffer) {
     // => version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
-    var buffer = Buffer.allocUnsafe(LEN);
+    const buffer = Buffer.allocUnsafe(LEN);
 
     buffer.writeUInt32BE(version, 0);
     buffer.writeUInt8(hdkey.depth, 4);
 
-    var fingerprint = hdkey.depth ? hdkey.parentFingerprint : 0x00000000;
+    const fingerprint = hdkey.depth ? hdkey.parentFingerprint : 0x00000000;
     buffer.writeUInt32BE(fingerprint, 5);
     buffer.writeUInt32BE(hdkey.index, 9);
 
@@ -279,7 +279,7 @@ function serialize(hdkey: HDKey, version: number, key: Buffer) {
 }
 
 function hash160(buf: Buffer) {
-    var sha = crypto
+    const sha = crypto
         .createHash('sha256')
         .update(buf)
         .digest();

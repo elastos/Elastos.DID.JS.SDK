@@ -70,7 +70,7 @@ export class LRUCache<K extends Hashable | string, V> {
       // run maintenance after
       let hash = this.getHash(key);
 
-      var item = this.items[hash];
+      let item = this.items[hash];
 
       if (item) {
         // replace existing
@@ -114,7 +114,7 @@ export class LRUCache<K extends Hashable | string, V> {
       // fetch key and return value
       // move object to head of list
       let hash = this.getHash(key)
-      var item = this.items[hash];
+      let item = this.items[hash];
 
       if (item && item.expires && (Date.now() / 1000 >= item.expires)) {
         this.invalidate(key);
@@ -149,7 +149,7 @@ export class LRUCache<K extends Hashable | string, V> {
       // fetch key and return value
       // move object to head of list
       let hash = this.getHash(key)
-      var item = this.items[hash];
+      let item = this.items[hash];
 
       if (item && item.expires && (Date.now() / 1000 >= item.expires)) {
         this.invalidate(key);
@@ -202,7 +202,7 @@ export class LRUCache<K extends Hashable | string, V> {
     public invalidate(key: K) {
       // remove key from cache
       let hash = this.getHash(key);
-      var item = this.items[hash];
+      let item = this.items[hash];
       if (!item)
         return false;
 
@@ -226,7 +226,7 @@ export class LRUCache<K extends Hashable | string, V> {
       // return true if key is present in cache
       // (do not change order)
       let hash = this.getHash(key);
-      var item = this.items[hash];
+      let item = this.items[hash];
       if (!item) return false;
       if (item.expires && (Date.now() / 1000 >= item.expires)) {
         return false;
@@ -261,7 +261,7 @@ export class LRUCache<K extends Hashable | string, V> {
       // will contain any metadata user added when key was set
       // (this still moves object to front of list)
       let hash = this.getHash(key);
-      var item = this.items[hash];
+      let item = this.items[hash];
       if (!item)
         return null;
 

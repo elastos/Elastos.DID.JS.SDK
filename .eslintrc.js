@@ -29,11 +29,12 @@ module.exports = {
         "no-var": "off",
         "no-empty": "off",
         "no-mixed-spaces-and-tabs": "off",
-        "no-constant-condition": "off",
+        "no-constant-condition": "warn",
         "no-class-assign": "warn",
         "require-await": "error",
         "no-async-promise-executor": "error",
         "no-promise-executor-return": "error",
+        "no-non-null-assertion": "off",
 
         // Node
         "node/no-unsupported-features/es-syntax": "off",
@@ -46,9 +47,11 @@ module.exports = {
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-inferrable-types": "warn",
         "@typescript-eslint/no-namespace": "off",
-        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-explicit-any": "warn",
         "@typescript-eslint/no-extra-semi": "warn",
         "@typescript-eslint/no-this-alias": "off",
-        "@typescript-eslint/no-floating-promises": "error"
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-empty-interface": "off"
     }
 };

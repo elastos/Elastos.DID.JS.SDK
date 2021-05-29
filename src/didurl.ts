@@ -125,7 +125,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 				if (!url.startsWith("did:")) {
 					let noSep = true;
 					let chars: string[] = url.split("");
-					for (var ch of chars) {
+					for (let ch of chars) {
 						if (DIDURL.SEPS.indexOf(ch) >= 0) {
 							noSep = false;
 							break;

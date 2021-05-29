@@ -54,7 +54,7 @@ export class ByteBuffer {
     }
 
     public reallocate() {
-        var new_array = new Uint8Array(this.size() * 2);
+        const new_array = new Uint8Array(this.size() * 2);
         new_array.set(this.buffer);
         this.buffer = new_array;
     }
@@ -87,8 +87,8 @@ export class ByteBuffer {
         if (0xFFFF < num) {
             throw num + " is over short value";
         }
-        var lower = (0x00FF & num);
-        var upper = (0xFF00 & num) >> 8;
+        const lower = (0x00FF & num);
+        const upper = (0xFF00 & num) >> 8;
         this.put(lower);
         this.put(upper);
     }
@@ -102,8 +102,8 @@ export class ByteBuffer {
         if (this.buffer.length < index + 2) {
             return 0;
         }
-        var lower = this.buffer[index];
-        var upper = this.buffer[index + 1];
+        const lower = this.buffer[index];
+        const upper = this.buffer[index + 1];
         return (upper << 8) + lower;
     }
 
@@ -112,10 +112,10 @@ export class ByteBuffer {
         if (0xFFFFFFFF < num) {
             throw num + " is over integer value";
         }
-        var b0 = (0x000000FF & num);
-        var b1 = (0x0000FF00 & num) >> 8;
-        var b2 = (0x00FF0000 & num) >> 16;
-        var b3 = (0xFF000000 & num) >> 24;
+        const b0 = (0x000000FF & num);
+        const b1 = (0x0000FF00 & num) >> 8;
+        const b2 = (0x00FF0000 & num) >> 16;
+        const b3 = (0xFF000000 & num) >> 24;
         this.put(b0);
         this.put(b1);
         this.put(b2);
@@ -134,23 +134,23 @@ export class ByteBuffer {
         if (this.buffer.length < index + 4) {
             return 0;
         }
-        var b0 = this.buffer[index];
-        var b1 = this.buffer[index + 1];
-        var b2 = this.buffer[index + 2];
-        var b3 = this.buffer[index + 3];
+        const b0 = this.buffer[index];
+        const b1 = this.buffer[index + 1];
+        const b2 = this.buffer[index + 2];
+        const b3 = this.buffer[index + 3];
         return (b3 << 24) + (b2 << 16) + (b1 << 8) + b0;
     }
 
     public readInt() {
         if (!this.hasRemaining()) throw new OutOfBoundException("Buffer exhausted");
-        var pos = this.position;
+        const pos = this.position;
         this.position += 4;
         return this.getInt(pos);
     }
 
     public putString(str: string) {
-        var bytes = this.stringToUtf8Bytes(str);
-        for (var i = 0; i < bytes.length; i++) {
+        const bytes = this.stringToUtf8Bytes(str);
+        for (let i = 0; i < bytes.length; i++) {
             this.put(bytes[i]);
         }
         // put null character as terminal character
@@ -158,11 +158,12 @@ export class ByteBuffer {
     }
 
     public getString(index: number) {
-        var buf = [],
+        let buf = [],
             ch;
         if (index == null) {
             index = this.position;
         }
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (this.buffer.length < index + 1) {
                 break;
@@ -186,15 +187,15 @@ export class ByteBuffer {
      */
     private stringToUtf8Bytes(str: string): Uint8Array {
         // Max size of 1 character is 4 bytes
-        var bytes = new Uint8Array(str.length * 4);
-        var i = 0, j = 0;
+        const bytes = new Uint8Array(str.length * 4);
+        let i = 0, j = 0;
         while (i < str.length) {
-            var unicode_code;
-            var utf16_code = str.charCodeAt(i++);
+            let unicode_code;
+            const utf16_code = str.charCodeAt(i++);
             if (utf16_code >= 0xD800 && utf16_code <= 0xDBFF) {
                 // surrogate pair
-                var upper = utf16_code;           // high surrogate
-                var lower = str.charCodeAt(i++);  // low surrogate
+                const upper = utf16_code;           // high surrogate
+                const lower = str.charCodeAt(i++);  // low surrogate
                 if (lower >= 0xDC00 && lower <= 0xDFFF) {
                     unicode_code =
                         (upper - 0xD800) * (1 << 10) + (1 << 16) +
@@ -239,9 +240,9 @@ export class ByteBuffer {
      * @return {String} String encoded by UTF-16
      */
     private utf8BytesToString(bytes: Uint8Array[]): string {
-        var str = "";
-        var code, b1, b2, b3, b4, upper, lower;
-        var i = 0;
+        let str = "";
+        let code, b1, b2, b3, b4, upper, lower;
+        let i = 0;
         while (i < bytes.length) {
             b1 = bytes[i++];
             if (b1 < 0x80) {
