@@ -84,9 +84,9 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 
 	private did?: DID;
 	private parameters: Map<string, string> = new Map();
-	private path: string = "";
+	private path = "";
 	private query: Map<string, string> = new Map();
-	private fragment: string = "";
+	private fragment = "";
 	private metadata?: AbstractMetadata;
 
 	// Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
@@ -123,7 +123,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 			} else {
 				// Compatible with v1, support fragment without leading '#'
 				if (!url.startsWith("did:")) {
-					let noSep: boolean = true;
+					let noSep = true;
 					let chars: string[] = url.split("");
 					for (var ch of chars) {
 						if (DIDURL.SEPS.indexOf(ch) >= 0) {
@@ -217,7 +217,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	private mapToString(map: Map<string, string>, sep: string): string {
 		let init = true;
 
-		let str: string = "";
+		let str = "";
 		map.forEach((value, key)=> {
 			if (init)
 				init = false;
@@ -363,7 +363,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	}
 
 	public toString(base: DID = null): string {
-		let output: string = "";
+		let output = "";
 		if (this.did != null && (base == null || !this.did.equals(base)))
 			output += this.did;
 

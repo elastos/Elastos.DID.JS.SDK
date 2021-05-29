@@ -31,9 +31,8 @@ describe('DIDURL Tests', () => {
 	let testURL = testDID + params + path + query + fragment;
 	let urlParsed: DIDURLValues;
 
-
 	beforeEach(()=>{
-		urlParsed = DIDURLParser.NewFromURL(testURL)
+		urlParsed = DIDURLParser.newFromURL(testURL)
 	})
 
 	test('Test parse DID', () => {
@@ -65,6 +64,4 @@ describe('DIDURL Tests', () => {
     test('Test parse fragment', () => {
         expect(urlParsed.fragment).toBe("testfragment")
     })
-
-
 })

@@ -39,7 +39,7 @@ export class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 		super(requestId, CredentialListRequest.METHOD_NAME);
 	}
 
-	public setParameters(didOrParams: DID | Parameters, skip: number = 0, limit: number = 0) {
+	public setParameters(didOrParams: DID | Parameters, skip = 0, limit = 0) {
 		if (didOrParams instanceof DID)
 			super.setParameters(new Parameters(didOrParams, skip, limit));
 		else
@@ -81,7 +81,7 @@ class Parameters implements Hashable {
 	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
 	public limit: number;
 
-	public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip: number = 0, limit: number = 0) {
+	public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip = 0, limit = 0) {
 		this.did = did;
 		this.skip = skip;
 		this.limit = limit;
@@ -94,7 +94,7 @@ class Parameters implements Hashable {
 		return hash;
 	}
 
-	public equals(o: Object): boolean {
+	public equals(o: unknown): boolean {
 		if (!(o instanceof Parameters))
 			return false;
 

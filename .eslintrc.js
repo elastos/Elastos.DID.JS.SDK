@@ -5,10 +5,11 @@ module.exports = {
         project: "./tsconfig.json"
     },
     plugins: [
-      '@typescript-eslint',
+      '@typescript-eslint'
     ],
     extends: [
       'eslint:recommended',
+      'plugin:node/recommended',
       'plugin:@typescript-eslint/recommended',
     ],
     rules: {
@@ -20,11 +21,11 @@ module.exports = {
         "semi": "off",
         "spaced-comment": "off",
         "brace-style": "off",
-        "lines-between-class-members": "off",
-        "node/no-deprecated-api": "off",
-        "eol-last": "off",
+        "lines-between-class-members": "off", // Jump lines between class properties - useless
+        "node/no-deprecated-api": "warn",
+        "eol-last": "warn",
         "curly": "off",
-        "prefer-const": "off",
+        "prefer-const": "warn",
         "no-var": "off",
         "no-empty": "off",
         "no-mixed-spaces-and-tabs": "off",
@@ -33,6 +34,10 @@ module.exports = {
         "require-await": "error",
         "no-async-promise-executor": "error",
         "no-promise-executor-return": "error",
+
+        // Node
+        "node/no-unsupported-features/es-syntax": "off",
+        "node/no-missing-import": "off",
 
         // TS specific
         "@typescript-eslint/no-misused-promises": "error",

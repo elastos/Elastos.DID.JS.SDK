@@ -25,10 +25,10 @@ import { TypeSerializerFilter } from "./internals";
     ]
 })
 export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDocumentPublicKey> {
-    private static ID: string = "id";
-    private static TYPE: string = "type";
-    private static CONTROLLER: string = "controller";
-    private static PUBLICKEY_BASE58: string = "publicKeyBase58";
+    private static ID = "id";
+    private static TYPE = "type";
+    private static CONTROLLER = "controller";
+    private static PUBLICKEY_BASE58 = "publicKeyBase58";
 
     @JsonProperty({ value: DIDDocumentPublicKey.ID })
     @JsonClassType({type: () => [DIDURL]})
