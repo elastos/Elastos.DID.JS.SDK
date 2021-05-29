@@ -47,7 +47,7 @@ module.exports = {
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-inferrable-types": "warn",
         "@typescript-eslint/no-namespace": "off",
-        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-extra-semi": "warn",
         "@typescript-eslint/no-this-alias": "off",
         "@typescript-eslint/no-floating-promises": "error",

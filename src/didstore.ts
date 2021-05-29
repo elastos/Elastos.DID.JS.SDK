@@ -960,8 +960,7 @@ import { BASE64 } from "./internals";
 			let sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
 			key = null;
 
-			// TODO: check this! not sure buffer.toString() is what we need here, beware the encodings...
-			return BASE64.fromHex(sig.toString("hex"))
+			return BASE64.fromHex(sig.toString("hex"), true);
 		}
 
 		/**
