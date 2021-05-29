@@ -59,7 +59,7 @@ import { BASE64 } from "./internals";
 	private static CACHE_INITIAL_CAPACITY = 16;
 	private static CACHE_MAX_CAPACITY = 128;
 
-	private static NULL = new Object();
+	private static NULL = null;
 
 	private static DID_EXPORT = "did.elastos.export/2.0";
 
@@ -270,7 +270,7 @@ import { BASE64 } from "./internals";
 					}
 				});
 
-				return value == DIDStore.NULL ? null : value;
+				return value === DIDStore.NULL ? null : value;
 			} catch (e) {
 				// ExecutionException
 				throw new DIDStoreException("Load root identity failed: " + id, e);
@@ -327,7 +327,7 @@ import { BASE64 } from "./internals";
 					return {value: encryptedKey != null ? encryptedKey : DIDStore.NULL};
 				});
 
-				if (value != DIDStore.NULL) {
+				if (value !== DIDStore.NULL) {
 					let keyData = this.decrypt(value, storepass);
 					return HDKey.deserialize(keyData);
 				} else {
@@ -449,7 +449,7 @@ import { BASE64 } from "./internals";
 					}
 				});
 
-				return value == DIDStore.NULL ? null : value;
+				return value === DIDStore.NULL ? null : value;
 			} catch (e) {
 				// ExecutionException
 				throw new DIDStoreException("Load did document failed: " + did, e);
@@ -513,7 +513,7 @@ import { BASE64 } from "./internals";
 					return {value: metadata};
 				});
 
-				return value == DIDStore.NULL ? null : value;
+				return value === DIDStore.NULL ? null : value;
 			} catch (e) {
 				// ExecutionException
 				throw new DIDStoreException("Load did metadata failed: " + did, e);
@@ -632,7 +632,7 @@ import { BASE64 } from "./internals";
 					}
 				});
 
-				return value == DIDStore.NULL ? null : value;
+				return value === DIDStore.NULL ? null : value;
 			} catch (e) {
 				// ExecutionException
 				throw new DIDStoreException("Load credential failed: " + id, e);
@@ -731,7 +731,7 @@ import { BASE64 } from "./internals";
 					return {value: metadata};
 				});
 
-				return value == DIDStore.NULL ? null : value;
+				return value === DIDStore.NULL ? null : value;
 			} catch (e) {
 				// ExecutionException
 				throw new DIDStoreException("Load Credential metadata failed: " + id, e);
@@ -869,7 +869,7 @@ import { BASE64 } from "./internals";
 				};
 			});
 
-			let encryptedKey: string = value == DIDStore.NULL ? null : value;
+			let encryptedKey: string = value === DIDStore.NULL ? null : value;
 
 			if (storepass == undefined) {
 				return encryptedKey ? Buffer.from(encryptedKey) : null;

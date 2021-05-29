@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity, runningInBrowser } from "@elastosfoundation/did-js-sdk";
+import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity, runningInBrowser, Exceptions } from "@elastosfoundation/did-js-sdk";
 import { DIDStore, File, Logger } from "@elastosfoundation/did-js-sdk";
 import { DIDTestExtension } from "./utils/didtestextension";
 
@@ -99,7 +99,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
 			let alias = "my did " + i;
 			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
@@ -138,7 +138,7 @@ describe("DIDStore Tests", ()=>{
 
 		// Create test DIDs
 		let dids: DID[] = [];
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
 			let alias = "my did " + i;
 			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
@@ -147,7 +147,7 @@ describe("DIDStore Tests", ()=>{
 			dids.push(doc.getSubject());
 		}
 
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
 			if (i % 5 != 0)
 				continue;
 
@@ -395,7 +395,7 @@ describe("DIDStore Tests", ()=>{
 
 			await doc.publish(TestConfig.storePass);
 			await DIDTestExtension.awaitStandardPublishingDelay();
-			
+
 			let file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
 			expect(file.exists()).toBeTruthy();
 			expect(file.isFile()).toBeTruthy();
@@ -519,13 +519,13 @@ describe("DIDStore Tests", ()=>{
 		});
 	//});
 
-	test("testNewDIDWithWrongPass", ()=>{
+	test("testNewDIDWithWrongPass", async ()=>{
 		let store = DIDStore.open(testData.getCompatibleData(2).getStoreDir());
 		let identity = store.loadRootIdentity();
 
-		expect(async ()=>{
+		await expect(async ()=>{
 			await identity.newDid("wrongpass");
-		}).toThrow(); //WrongPasswordException
+		}).rejects.toThrowError(Exceptions.WrongPasswordException);
 	});
 
 	test("testNewDIDandGetDID", async ()=>{

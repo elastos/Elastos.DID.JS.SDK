@@ -142,7 +142,7 @@ describe("RootIdentity Tests", ()=>{
 	test("testGetDid", async () => {
 	    let identity = testData.getRootIdentity();
 
-	    for (let i = 0; i < 10; i++) { // TODO: was 100
+	    for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
 		    let doc = await identity.newDid(TestConfig.storePass, i);
 
 		    expect(doc.isValid()).toBeTruthy();
