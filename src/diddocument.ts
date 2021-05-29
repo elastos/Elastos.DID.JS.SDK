@@ -149,6 +149,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
     public _services?: DIDDocumentService[];
 
     @JsonProperty({ value: DIDDocument.EXPIRES })
+    @JsonInclude({ value: JsonIncludeType.NON_NULL}) // Need to force to NON_NULL because it inherits from class NON_EMPTY and jackson seems to consider Date objects as "empty" in utils_1.isEmptyValue()...
     @JsonClassType({type: () => [Date]})
     public expires?: Date;
 
