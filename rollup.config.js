@@ -118,9 +118,7 @@ export default command => {
 		plugins: [
 			...nodePlugins,
 			//!command.configTest && collectLicenses()
-			eslint({
-				fix: true
-			})
+			eslint()
 		],
 		// fsevents is a dependency of chokidar that cannot be bundled as it contains binary code
 		external: [

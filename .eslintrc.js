@@ -23,9 +23,9 @@ module.exports = {
         "brace-style": "off",
         "lines-between-class-members": "off", // Jump lines between class properties - useless
         "node/no-deprecated-api": "warn",
-        "eol-last": "warn",
+        "eol-last": "off",
         "curly": "off",
-        "prefer-const": "warn",
+        "prefer-const": "off",
         "no-var": "off",
         "no-empty": "off",
         "no-mixed-spaces-and-tabs": "off",
