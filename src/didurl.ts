@@ -110,7 +110,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	public static newWithDID(did: DID, url?: DIDURL | string) {
 		let newInstance: DIDURL = new DIDURL();
 
-		if (!url){
+		if (did && !url){
 			newInstance.did = did;
 		} else {
 			if (url instanceof DIDURL) {
