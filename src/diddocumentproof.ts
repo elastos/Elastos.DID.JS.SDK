@@ -15,11 +15,7 @@ import { TypeSerializerFilter } from "./internals";
 /**
  * The Proof represents the proof content of DID Document.
  */
-@JsonPropertyOrder({
-    value: [
-        DIDDocumentProof.TYPE, DIDDocumentProof.CREATED, DIDDocumentProof.CREATOR, DIDDocumentProof.SIGNATURE_VALUE
-    ]
-})
+@JsonPropertyOrder({value: ["type", "created", "creator", "signature"]})
 export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
     public static TYPE: string = "type";
     public static CREATOR: string = "creator";
@@ -52,7 +48,7 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
     // Java: @JsonCreator
     constructor(
         @JsonProperty({value: "creator"}) creator: DIDURL,
-        @JsonProperty({value: "signature"}) signature: string,
+        @JsonProperty({value: "signatureValue"}) signature: string,
         @JsonProperty({value: "type"}) type?: string,
         @JsonProperty({value: "created"}) created?: Date) {
         this.type = type ? type : Constants.DEFAULT_PUBLICKEY_TYPE;

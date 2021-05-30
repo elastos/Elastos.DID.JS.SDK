@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator } from "jackson-js";
+import { JsonCreator, JsonIgnore } from "jackson-js";
 import { BASE64 } from "../internals";
 import { DID } from "../internals";
 import { DIDDocument } from "../internals";
@@ -34,7 +34,9 @@ import { IDChainRequest } from "./idchaindrequest";
  */
  @JsonCreator()
 export class DIDRequest extends IDChainRequest<DIDRequest> {
+	@JsonIgnore()
 	private did: DID;
+	@JsonIgnore()
 	private doc: DIDDocument;
 
 	private static newWithOperation(operation: IDChainRequest.Operation): DIDRequest {

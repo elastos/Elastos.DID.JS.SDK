@@ -26,13 +26,7 @@ import { DIDEntity } from "../internals";
 import type { Hashable } from "../hashable";
 import { hashCode } from "../internals";
 
-@JsonPropertyOrder({
-	value: [
-		ResolveRequest.ID,
-		ResolveRequest.METHOD,
-		ResolveRequest.PARAMETERS
-	]
-})
+@JsonPropertyOrder({ value: ["requestId", "method"]})
 export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T> {
 	protected static ID = "id";
 	protected static METHOD = "method";

@@ -36,11 +36,7 @@ import { checkArgument } from "../internals";
 /**
  * The class records the information of IDChain Request.
  */
-@JsonPropertyOrder({value: [
-	IDChainRequest.HEADER,
-	IDChainRequest.PAYLOAD,
-	IDChainRequest.PROOF
-]})
+@JsonPropertyOrder({value: ["header", "payload", "proof"]})
 export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	/**
 	 * The specification string of IDChain DID Request
@@ -237,10 +233,10 @@ export namespace IDChainRequest {
 		}
 	}
 	@JsonPropertyOrder({value: [
-		IDChainRequest.SPECIFICATION,
-		IDChainRequest.OPERATION,
-		IDChainRequest.PREVIOUS_TXID,
-		IDChainRequest.TICKET
+		"specification",
+		"operation",
+		"previousTxid",
+		"ticket"
 	]})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	@JsonCreator()
@@ -317,11 +313,7 @@ export namespace IDChainRequest {
 		}
 	}
 
-	@JsonPropertyOrder({value:[
-		IDChainRequest.TYPE,
-		IDChainRequest.VERIFICATION_METHOD,
-		IDChainRequest.SIGNATURE
-	]})
+	@JsonPropertyOrder({value:["type", "verificationMethod", "signature"]})
 	export class Proof {
 		@JsonProperty({value: IDChainRequest.TYPE})
 		private type: string;

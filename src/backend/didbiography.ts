@@ -98,11 +98,7 @@ export namespace DIDBiographyStatus {
 /**
  * The class records the resolved content.
  */
-@JsonPropertyOrder({value: [
-	DIDBiography.DID,
-	DIDBiography.STATUS,
-	DIDBiography.TRANSACTION
-]})
+@JsonPropertyOrder({value: ["did", "status", "txs"]})
 @JsonInclude({value: JsonIncludeType.NON_NULL})
 export class DIDBiography extends ResolveResult<DIDBiography> {
 	protected static DID = "did";

@@ -63,13 +63,12 @@ class NormalizedURLDeserializer extends Deserializer {
  * their own.
  */
 @JsonPropertyOrder({value: [
-	VerifiablePresentation.ID,
-	VerifiablePresentation.TYPE,
-	VerifiablePresentation.HOLDER,
-	VerifiablePresentation.CREATED,
-	VerifiablePresentation.VERIFIABLE_CREDENTIAL,
-	VerifiablePresentation.PROOF
-]})
+	"id",
+	"type",
+	"holder",
+	"created",
+	"_credentials",
+	"proof" ]})
 export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	/**
 	 * Default presentation type
@@ -551,12 +550,11 @@ export namespace VerifiablePresentation {
 	 * The default proof type is ECDSAsecp256r1.
 	 */
 	 @JsonPropertyOrder({value: [
-		 VerifiablePresentation.TYPE,
-		 VerifiablePresentation.VERIFICATION_METHOD,
-		 VerifiablePresentation.REALM,
-		 VerifiablePresentation.NONCE,
-		 VerifiablePresentation.SIGNATURE
-	 ]})
+		 "type",
+		 "verificationMethod",
+		 "realm",
+		 "nonce",
+		 "signature" ]})
 	 export class Proof {
 		 @JsonProperty({value: VerifiablePresentation.TYPE})
 		 private type: string;

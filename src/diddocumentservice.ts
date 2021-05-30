@@ -14,11 +14,7 @@ import type { JSONObject, JSONValue } from "./json";
  * wishes to advertise, including decentralized identity management services
  * for further discovery, authentication, authorization, or interaction.
  */
-@JsonPropertyOrder({
-    value: [
-        DIDDocumentService.ID, DIDDocumentService.TYPE, DIDDocumentService.SERVICE_ENDPOINT
-    ]
-})
+@JsonPropertyOrder({value: ["id", "type", "endpoint"]})
 export class DIDDocumentService implements DIDObject<string> {
     private static ID = "id";
     private static TYPE = "type";
