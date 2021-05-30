@@ -101,7 +101,12 @@ export class HDKey {
 	}
 
     public serializePublicKeyBase58(): string {
-		return this.key.publicExtendedKey;
+		let buffer = Base58.decode(this.key.publicExtendedKey)
+		let base58Buffer = Buffer.alloc(82)
+		buffer.copy(base58Buffer)
+		let hash = SHA256.hashTwice(buffer)
+		hash.copy(base58Buffer, 78, 0, 4)
+		return Base58.encode(base58Buffer);
     }
 
 	public static deserialize(keyData: Buffer): HDKey {

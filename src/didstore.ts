@@ -335,7 +335,10 @@ import { BASE64 } from "./internals";
 				}
 			} catch (e) {
 				// ExecutionException
-				throw new DIDStoreException("Load root identity private key failed: " + id, e);
+				if (e instanceof WrongPasswordException)
+					throw e;
+				else
+					throw new DIDStoreException("Load root identity private key failed: " + id, e);
 			}
 		}
 
