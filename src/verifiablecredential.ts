@@ -22,7 +22,7 @@
 
 import dayjs, { Dayjs } from "dayjs";
 import {
-	JsonAnySetter, JsonClassType, JsonFilter, JsonGetter, JsonIgnore, JsonInclude,
+	JsonAnySetter, JsonAnyGetter, JsonClassType, JsonFilter, JsonGetter, JsonIgnore, JsonInclude,
 	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize
 } from "jackson-js";
 import type {
@@ -60,6 +60,7 @@ import type {
 	JSONObject,
 	JSONValue
 } from "./json";
+import { sortJSONObject } from "./json";
 import { Logger } from "./logger";
 import {
 	PropertySerializerFilter
@@ -759,6 +760,7 @@ export namespace VerifiableCredential {
 	 @JsonPropertyOrder({value: ["id"]})
 	 export class Subject {
 		private id: DID;
+		@JsonIgnore()
 		private properties: JSONObject;
 
 		 /**
@@ -798,9 +800,11 @@ export namespace VerifiableCredential {
 		  * @return a String to Object map include all application defined
 		  *         properties
 		  */
-		 @JsonPropertyOrder({alphabetic: true})
-		 private _getProperties(): JSONObject {
-			 return this.properties;
+		 @JsonAnyGetter()
+		 @JsonClassType({type: () => [String, Object]})
+		 //@JsonPropertyOrder({ alphabetic: true })
+		 private getAllProperties(): JSONObject {
+			 return sortJSONObject(this.properties);
 		 }
 
 		 /**
