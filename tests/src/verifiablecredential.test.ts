@@ -304,6 +304,8 @@ describe('let Tests', () => {
 			let credential = await sd.getCredential(csv.did, csv.vc);
 			// Sign key for customized DID
 			let doc = await credential.getSubject().getId().resolve();
+			expect(doc).not.toBeNull();
+
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
@@ -627,6 +629,8 @@ describe('let Tests', () => {
 			expect(VerifiableCredential.resolve(id, doc.getSubject())).toBeNull();
 
 			doc = await credential.getSubject().getId().resolve();
+			expect(doc).not.toBeNull();
+
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
@@ -687,6 +691,8 @@ describe('let Tests', () => {
 
 			// Sign key for customized DID
 			let doc = await credential.getSubject().getId().resolve();
+			expect(doc).not.toBeNull();
+
 			let signKey = null;
 			if (doc.getControllerCount() > 1) {
 				let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
