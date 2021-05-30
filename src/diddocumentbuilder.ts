@@ -896,6 +896,7 @@ export class DIDDocumentBuilder {
             this.document._authorizations = [];
         } else {
             this.document._publickeys = Array.from(this.document.publicKeys.values());
+            Collections.sort(this.document._publickeys);
 
             this.document._authentications = [];
             this.document._authorizations = [];
@@ -910,9 +911,13 @@ export class DIDDocumentBuilder {
 
             if (this.document._authentications.length == 0)
                 this.document._authentications = [];
+            else
+                Collections.sort(this.document._authentications);
 
-            if (this.document._authentications.length == 0)
+            if (this.document._authorizations.length == 0)
                 this.document._authorizations = [];
+            else
+                Collections.sort(this.document._authorizations);
         }
 
         if (this.document.credentials == null || this.document.credentials.size == 0) {
@@ -920,6 +925,7 @@ export class DIDDocumentBuilder {
             this.document._credentials = [];
         } else {
             this.document._credentials = Array.from(this.document.credentials.values());
+            this.document._credentials.sort((vc1, vc2) => { return vc1.getId().compareTo(vc2.getId()); });
         }
 
         if (this.document.services == null || this.document.services.size == 0) {
@@ -927,6 +933,7 @@ export class DIDDocumentBuilder {
             this.document._services = [];
         } else {
             this.document._services = Array.from(this.document.services.values());
+            Collections.sort(this.document._services);
         }
 
         if (this.document.proofs == null || this.document.proofs.size == 0) {

@@ -3,11 +3,15 @@ import {
     JsonProperty,
     JsonPropertyOrder,
     JsonAnySetter,
-    JsonCreator
+    JsonCreator,
+    JsonIgnore,
+    JsonAnyGetter
 } from "jackson-js";
 import { DIDURL } from "./internals";
 import type { DIDObject } from "./internals";
 import type { JSONObject, JSONValue } from "./json";
+import { sortJSONObject } from "./json";
+import type { Comparable } from "./comparable";
 
 /**
  * A Service may represent any type of service the subject
@@ -15,7 +19,7 @@ import type { JSONObject, JSONValue } from "./json";
  * for further discovery, authentication, authorization, or interaction.
  */
 @JsonPropertyOrder({value: ["id", "type", "endpoint"]})
-export class DIDDocumentService implements DIDObject<string> {
+export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocumentService> {
     private static ID = "id";
     private static TYPE = "type";
     private static SERVICE_ENDPOINT = "serviceEndpoint";
@@ -30,6 +34,7 @@ export class DIDDocumentService implements DIDObject<string> {
     @JsonClassType({ type: () => [String] })
     public endpoint: string;
 
+    @JsonIgnore()
     private properties: JSONObject;
 
     /**
@@ -91,9 +96,11 @@ export class DIDDocumentService implements DIDObject<string> {
      * @return a String to object map include all application defined
      *         properties
      */
-    @JsonPropertyOrder({ alphabetic: true })
-    private _getProperties(): JSONObject {
-        return this.properties;
+    @JsonAnyGetter()
+    @JsonClassType({type: () => [String, Object]})
+    //@JsonPropertyOrder({ alphabetic: true })
+    private getAllProperties(): JSONObject {
+        return sortJSONObject(this.properties);
     }
 
     /**
@@ -115,5 +122,28 @@ export class DIDDocumentService implements DIDObject<string> {
 
     public getProperties(): JSONObject {
         return this.properties != null ? this.properties : {};
+    }
+
+    public equals(ref: DIDDocumentService): boolean {
+        if (this == ref)
+            return true;
+
+        return (this.getId().equals(ref.getId()) &&
+            this.getType() === ref.getType() &&
+            this.getServiceEndpoint() === ref.getServiceEndpoint())
+    }
+
+    public compareTo(svc: DIDDocumentService): number {
+        let rc: number = this.id.compareTo(svc.id);
+
+        if (rc != 0)
+            return rc;
+        else
+            rc = this.type.localeCompare(svc.type);
+
+        if (rc != 0)
+            return rc;
+        else
+            return this.endpoint.localeCompare(svc.endpoint);
     }
 }

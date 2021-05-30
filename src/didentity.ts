@@ -215,7 +215,7 @@ export namespace DIDEntity {
 
 	export class DateSerializer {
 		static serialize(key: string, dateObj: Date, context: JsonStringifierTransformerContext): string {
-			return dateObj ? dateObj.toISOString() : null;
+			return dateObj ? dateObj.toISOString().split('.')[0]+"Z" : null;
 		}
 
 		static deserialize(key: string, dateStr: string /* | Date */, context: JsonParserTransformerContext): Date {
