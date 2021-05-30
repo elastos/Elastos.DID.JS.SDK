@@ -83,14 +83,13 @@ export class IssuerSerializerFilter extends PropertySerializerFilter<DID> {
  * describe properties of the credential.
  */
 @JsonPropertyOrder({value:[
-	VerifiableCredential.ID,
-	VerifiableCredential.TYPE,
-	VerifiableCredential.ISSUER,
-	VerifiableCredential.ISSUANCE_DATE,
-	VerifiableCredential.EXPIRATION_DATE,
-	VerifiableCredential.CREDENTIAL_SUBJECT,
-	VerifiableCredential.PROOF
-]})
+	"id",
+	"type",
+	"issuer",
+	"issuanceDate",
+	"expirationDate",
+	"subject",
+	"proof" ]})
 // TODO: convert from java - @JsonFilter("credentialFilter")
 export class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject<string> {
 	public static ID = "id";
@@ -757,7 +756,7 @@ export namespace VerifiableCredential {
      * In order to support the JSON serialization, all values should be
      * JSON serializable.
 	 */
-	 @JsonPropertyOrder({value: [VerifiableCredential.ID]})
+	 @JsonPropertyOrder({value: ["id"]})
 	 export class Subject {
 		private id: DID;
 		private properties: JSONObject;
@@ -870,7 +869,7 @@ export namespace VerifiableCredential {
 	  *
 	  * The default proof type is ECDSAsecp256r1.
 	  */
-	 @JsonPropertyOrder({value: [VerifiableCredential.TYPE, VerifiableCredential.CREATED, VerifiableCredential.VERIFICATION_METHOD, VerifiableCredential.SIGNATURE ]})
+	 @JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
 	 @JsonFilter({value: "credentialProofFilter"})
 	 export class Proof {
 		 @JsonSerialize({using: TypeSerializerFilter.filter})

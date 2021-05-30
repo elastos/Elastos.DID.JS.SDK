@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "jackson-js";
+import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonIgnore, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "jackson-js";
 import { Collections } from "./internals";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
@@ -42,7 +42,9 @@ import { checkArgument } from "./internals";
  * The new owner(s) can use this ticket create a transfer transaction, get
  * the subject DID's ownership.
  */
-@JsonPropertyOrder({value:[TransferTicket.ID, TransferTicket.TO, TransferTicket.TXID, TransferTicket.PROOF]})
+// The values should be the real class field names, not the final JSON output field names.
+// Or keep the class field names same with the JSON field namas.
+@JsonPropertyOrder({value:["id", "to", "txid", "_proofs"]})
 @JsonCreator()
 export class TransferTicket extends DIDEntity<TransferTicket> {
 	public static ID = "id";
@@ -56,6 +58,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 	@JsonProperty({value:TransferTicket.ID})
 	private id: DID;
+	@JsonIgnore()
 	private doc: DIDDocument;
 
 	@JsonProperty({value:TransferTicket.TO})
@@ -352,7 +355,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
  *
  * The default proof type is ECDSAsecp256r1.
  */
- @JsonPropertyOrder({value: [TransferTicket.TYPE, TransferTicket.CREATED, TransferTicket.VERIFICATION_METHOD, TransferTicket.SIGNATURE]})
+ @JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
  @JsonCreator()
  export class Proof implements Comparable<Proof> {
 	 @JsonProperty({value: TransferTicket.TYPE})

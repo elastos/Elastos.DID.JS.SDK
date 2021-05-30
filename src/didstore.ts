@@ -1936,8 +1936,14 @@ export namespace DIDStore {
 		select(id: DIDURL): boolean;
 	}
 
-	@JsonPropertyOrder({ value: ["type", "id", "document", "credential", "privatekey",
-							 "created", "fingerprint"]})
+	@JsonPropertyOrder({ value: [
+		"type",
+		"id",
+		"document",
+		"credentials",
+		"privatekeys",
+		"created",
+		"fingerprint"]})
 	@JsonInclude({value : JsonIncludeType.NON_NULL})
 	export class DIDExport extends DIDEntity<DIDExport> {
 		@JsonProperty({ value: "type"})

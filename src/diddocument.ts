@@ -29,6 +29,7 @@ import {
     JsonPropertyOrder,
     JsonIgnore,
     JsonCreator,
+    JsonSerialize,
     JsonFormat,
     JsonFormatShape,
     JsonDeserialize,
@@ -89,17 +90,19 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
  * services. One document must be have one subject, and at least one public
  * key.
  */
+// The values should be the real class field names, not the final JSON output field names.
+// Or keep the class field names same with the JSON field namas.
  @JsonPropertyOrder({value: [
-    DIDDocument.ID,
-    DIDDocument.CONTROLLER,
-    DIDDocument.MULTI_SIGNATURE,
-    DIDDocument.PUBLICKEY,
-    DIDDocument.AUTHENTICATION,
-    DIDDocument.AUTHORIZATION,
-    DIDDocument.VERIFIABLE_CREDENTIAL,
-    DIDDocument.SERVICE,
-    DIDDocument.EXPIRES,
-    DIDDocument.PROOF ]})
+    "subject",
+    "controllers",
+    "multisig",
+    "_publickeys",
+    "_authentications",
+    "_authorizations",
+    "_credentials",
+    "_services",
+    "expires",
+    "_proofs" ]})
  @JsonInclude({value: JsonIncludeType.NON_EMPTY})
  export class DIDDocument extends DIDEntity<DIDDocument> {
 

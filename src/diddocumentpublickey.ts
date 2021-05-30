@@ -19,11 +19,7 @@ import { TypeSerializerFilter } from "./internals";
  * other cryptographic operations, which are the basis for purposes such as
  * authentication or establishing secure communication with service endpoints.
  */
-@JsonPropertyOrder({
-    value: [
-        DIDDocumentPublicKey.ID, DIDDocumentPublicKey.TYPE, DIDDocumentPublicKey.CONTROLLER, DIDDocumentPublicKey.PUBLICKEY_BASE58
-    ]
-})
+@JsonPropertyOrder({value: ["id", "type", "controller", "publicKeyBase58"]})
 export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDocumentPublicKey> {
     private static ID = "id";
     private static TYPE = "type";

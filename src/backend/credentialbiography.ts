@@ -98,11 +98,7 @@ export namespace CredentialBiographyStatus {
 	export const NOT_FOUND = new CredentialBiographyStatus(3, "not_found");
 }
 
-@JsonPropertyOrder({value: [
-	 CredentialBiography.ID,
-	CredentialBiography.STATUS,
-	CredentialBiography.TRANSACTION
-]})
+@JsonPropertyOrder({value: ["id", "status", "txs"]})
 @JsonCreator()
 export class CredentialBiography extends ResolveResult<CredentialBiography> {
 	protected static ID = "id";

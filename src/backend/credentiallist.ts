@@ -26,12 +26,7 @@ import type { DIDURL } from "../internals";
 import { MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
 
-@JsonPropertyOrder({
-	value: [
-		CredentialList.DID,
-		CredentialList.CREDENTIALS
-	]
-})
+@JsonPropertyOrder({value: ["did", "credentialIds"]})
 @JsonCreator()
 export class CredentialList extends ResolveResult<CredentialList> {
 	protected static DID = "did";

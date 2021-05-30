@@ -36,7 +36,7 @@ export class RpcConstants {
 	public static ERROR_DATA = "data";
 }
 
-@JsonPropertyOrder({value: [RpcConstants.ERROR_CODE, RpcConstants.ERROR_MESSAGE, RpcConstants.ERROR_DATA ]})
+@JsonPropertyOrder({value: ["code", "message", "data" ]})
 @JsonCreator()
 export class JsonRpcError {
 	@JsonProperty({value: RpcConstants.ERROR_CODE}) @JsonClassType({type: ()=>[Number]})
@@ -65,12 +65,7 @@ export class JsonRpcError {
 	}
 }
 
-@JsonPropertyOrder({value: [
-	RpcConstants.ID,
-	RpcConstants.JSON_RPC,
-	RpcConstants.RESULT,
-	RpcConstants.ERROR
-]})
+@JsonPropertyOrder({value: ["id", "jsonrpc", "result", "error"]})
 @JsonInclude({value: JsonIncludeType.NON_NULL})
 export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
 	protected static JSON_RPC_VERSION = "2.0";
