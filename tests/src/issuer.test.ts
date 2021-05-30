@@ -75,7 +75,7 @@ describe("Issuer Tests", ()=>{
 		expect(()=>{Issuer.newWithDocument(doc, signKey)}).toThrowError()
 	})
 
-	test('Issue Kyc Credential Test', () => {
+	test('Issue Kyc Credential Test', async () => {
 
 		let props = {
 		    name: "John",
@@ -112,14 +112,12 @@ describe("Issuer Tests", ()=>{
 		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com")
 		expect(vc.getSubject().getProperty("twitter")).toEqual("@john")
 
-		expect(vc.isExpired()).toBeFalsy()
-		expect(vc.isGenuine()).toBeTruthy()
-		expect(vc.isValid()).toBeTruthy()
-
-
+		await expect(await vc.isExpired()).toBeFalsy()
+		await expect(await vc.isGenuine()).toBeTruthy()
+		await expect(await vc.isValid()).toBeTruthy()
 	})
 
-	test('Issue Self Proclaimed Credential Test', () => {
+	test('Issue Self Proclaimed Credential Test', async () => {
 
 		let props = {
 			name: "Testing Issuer",
@@ -152,9 +150,9 @@ describe("Issuer Tests", ()=>{
 		expect(vc.getSubject().getProperty("language")).toEqual("English")
 		expect(vc.getSubject().getProperty("email")).toEqual("issuer@example.com")
 
-		expect(vc.isExpired()).toBeFalsy()
-		expect(vc.isGenuine()).toBeTruthy()
-		expect(vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy()
+		await expect(await vc.isGenuine()).toBeTruthy()
+		await expect(await vc.isValid()).toBeTruthy()
 
 	})
 
@@ -196,9 +194,9 @@ describe("Issuer Tests", ()=>{
 		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com")
 		expect(vc.getSubject().getProperty("twitter")).toEqual("@john")
 
-		expect(vc.isExpired()).toBeFalsy()
-		expect(vc.isGenuine()).toBeTruthy()
-		expect(vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy()
+		await expect(await vc.isGenuine()).toBeTruthy()
+		await expect(await vc.isValid()).toBeTruthy()
 
 
 	})
@@ -241,9 +239,9 @@ describe("Issuer Tests", ()=>{
 		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com")
 		expect(vc.getSubject().getProperty("twitter")).toEqual("@john")
 
-		expect(vc.isExpired()).toBeFalsy()
-		expect(vc.isGenuine()).toBeTruthy()
-		expect(vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy()
+		await expect(await vc.isGenuine()).toBeTruthy()
+		await expect(await vc.isValid()).toBeTruthy()
 
 
 	})
@@ -282,12 +280,12 @@ describe("Issuer Tests", ()=>{
 		expect(vc.getSubject().getProperty("language")).toEqual("English")
 		expect(vc.getSubject().getProperty("email")).toEqual("issuer@example.com")
 
-		expect(vc.isExpired()).toBeFalsy()
-		expect(vc.isGenuine()).toBeTruthy()
-		expect(vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy()
+		await expect(await vc.isGenuine()).toBeTruthy()
+		await expect(await vc.isValid()).toBeTruthy()
 	})
 
-	test('Issue Json Props Credential Test', () => {
+	test('Issue Json Props Credential Test', async () => {
 		let props = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
 		let issuer = new Issuer(issuerDoc);
@@ -316,12 +314,10 @@ describe("Issuer Tests", ()=>{
 
 		expect(vc.getSubject().getProperties()).not.toBeNull()
 
-		expect(vc.isExpired()).toBeFalsy()
-		expect(vc.isGenuine()).toBeTruthy()
-		expect(vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy()
+		await expect(await vc.isGenuine()).toBeTruthy()
+		await expect(await vc.isValid()).toBeTruthy()
 	})
-
-
 })
 
 /* @ExtendWith(DIDTestExtension.class)

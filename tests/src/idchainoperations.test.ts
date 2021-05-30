@@ -185,12 +185,12 @@ describe('IDChainOperations Tests', () => {
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 
 			tx = txs[1];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 		});
 	});
 
@@ -245,17 +245,17 @@ describe('IDChainOperations Tests', () => {
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 
 			tx = txs[1];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 
 			tx = txs[2];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 		});
 	});
 
@@ -309,12 +309,12 @@ describe('IDChainOperations Tests', () => {
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 
 			tx = txs[1];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 		});
 	});
 
@@ -369,17 +369,17 @@ describe('IDChainOperations Tests', () => {
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 
 			tx = txs[1];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 
 			tx = txs[2];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 		});
 	});
 
@@ -759,17 +759,17 @@ describe('IDChainOperations Tests', () => {
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 
 			tx = txs[1];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 
 			tx = txs[2];
 			expect(did.equals(tx.getDid())).toBeTruthy();
 			expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-			expect(tx.getRequest().isValid()).toBeTruthy();
+			await expect(await tx.getRequest().isValid()).toBeTruthy();
 		});
 	});
 

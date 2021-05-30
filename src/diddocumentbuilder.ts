@@ -634,6 +634,7 @@ export class DIDDocumentBuilder {
         if (typeof id === "string")
             id = DIDURL.valueOfUrl(id);
 
+        checkArgument(id != null, "Invalid publicKey id");
         checkArgument((id.getDid() == null || id.getDid().equals(this.getSubject())),
             "Invalid publicKey id");
         checkArgument(storepass && storepass != null, "Invalid storepass");

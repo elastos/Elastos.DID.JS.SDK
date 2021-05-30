@@ -265,7 +265,7 @@ describe("DIDStore Tests", ()=>{
 		expect("MyProfile").toEqual(vc.getMetadata().getAlias());
 		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 		expect(id.equals(vc.getId())).toBeTruthy();
-		expect(vc.isValid()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 
 		// try with full id string
 		vc = store.loadCredential(id.toString());
@@ -273,7 +273,7 @@ describe("DIDStore Tests", ()=>{
 		expect("MyProfile").toEqual(vc.getMetadata().getAlias());
 		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 		expect(id.equals(vc.getId())).toBeTruthy();
-		expect(vc.isValid()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 
 		id = DIDURL.valueOf(user.getSubject(), "#twitter");
 		vc = store.loadCredential(id.toString());
@@ -281,7 +281,7 @@ describe("DIDStore Tests", ()=>{
 		expect("Twitter").toEqual(vc.getMetadata().getAlias());
 		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 		expect(id.equals(vc.getId())).toBeTruthy();
-		expect(vc.isValid()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 
 		vc = store.loadCredential(DIDURL.valueOf(user.getSubject(), "#notExist"));
 		expect(vc).toBeNull();

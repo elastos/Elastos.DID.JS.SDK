@@ -2117,7 +2117,7 @@ describe('DIDDocument Tests', () => {
 			"baz"]
 
 		for(const did of dids){
-			
+
 
 			let compactJson = cd.getDocumentJson(did, "compact");
 			let compact = DIDDocument.parse<DIDDocument>(compactJson, DIDDocument);
@@ -2147,7 +2147,7 @@ describe('DIDDocument Tests', () => {
 			}
 		}
 
-		
+
 	})
 
 	test("testSignAndVerify", async () => {
@@ -3923,14 +3923,14 @@ describe('DIDDocument Tests', () => {
 
 		let target = await identity.newDid(TestConfig.storePass);
 		let db = DIDDocumentBuilder.newFromDocument(target).edit();
-		db.authorizationDid(DIDURL.newWithUrl("#recovery"), doc.getSubject(), null);
+		await db.authorizationDid(DIDURL.newWithUrl("#recovery"), doc.getSubject(), null);
 		target = db.seal(TestConfig.storePass);
 		expect(target).not.toBeNull()
 		expect(target.getAuthorizationKeyCount()).toBe(1)
 		expect(target.getAuthorizationKeys()[0].getController()).toEqual(doc.getSubject())
 		store.storeDid(target);
 
-		target.publish(TestConfig.storePass);
+		await target.publish(TestConfig.storePass);
 		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await target.getSubject().resolve();
@@ -3974,7 +3974,7 @@ describe('DIDDocument Tests', () => {
 		expect(target.getAuthorizationKeys()[0].getController()).toEqual(doc.getSubject())
 		store.storeDid(target);
 
-		target.publish(TestConfig.storePass);
+		await target.publish(TestConfig.storePass);
 		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await target.getSubject().resolve();
@@ -4019,7 +4019,7 @@ describe('DIDDocument Tests', () => {
 		expect(target.getAuthorizationKeys()[0].getController()).toEqual(doc.getSubject())
 		store.storeDid(target);
 
-		target.publish(TestConfig.storePass);
+		await target.publish(TestConfig.storePass);
 		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await target.getSubject().resolve();
@@ -4032,16 +4032,5 @@ describe('DIDDocument Tests', () => {
 
 		doc = await doc.getSubject().resolve();
 		expect(doc.isDeactivated()).toBeFalsy()
-	})
-
-
-
-
-
-	/*
-
-
-	 */
+	});
 });
-
-
