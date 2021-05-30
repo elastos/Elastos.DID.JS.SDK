@@ -54,7 +54,7 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 	}
 
 	/**
-     * Method that await a specific duration until a DID is supposed to be "published".
+     * Method that awaits a specific duration until a DID is supposed to be "published".
      * The simulated ID chain adapter may return quickly, while a web3 adapter may await a few
      * blocks for the transaction to be handled by the blockchain.
      */

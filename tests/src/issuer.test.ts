@@ -242,8 +242,6 @@ describe("Issuer Tests", ()=>{
 		await expect(await vc.isExpired()).toBeFalsy()
 		await expect(await vc.isGenuine()).toBeTruthy()
 		await expect(await vc.isValid()).toBeTruthy()
-
-
 	})
 
 	test('Issue SelfProclaimed Credential From Cid Test', async () => {

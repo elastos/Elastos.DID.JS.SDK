@@ -31,6 +31,7 @@ export class DIDDocumentBuilder {
 
     private static log = new Logger("DIDDocumentBuilder");
 
+    private sourceDocument?: DIDDocument; // Document used to create this builder.
     private document: DIDDocument;
     private controllerDoc: DIDDocument;
 
@@ -45,6 +46,7 @@ export class DIDDocumentBuilder {
     public static newFromDID(did: DID, store: DIDStore, controller?: DIDDocument) {
         let builder = new DIDDocumentBuilder();
         builder.document = new DIDDocument(did);
+        builder.sourceDocument = builder.document;
 
         if (controller !== undefined) {
             builder.document.controllers = [];
@@ -72,6 +74,7 @@ export class DIDDocumentBuilder {
      */
     public static newFromDocument(doc: DIDDocument, controller?: DIDDocument): DIDDocumentBuilder {
         let builder = new DIDDocumentBuilder();
+        builder.sourceDocument = doc;
         builder.document = doc.copy();
         if (controller !== undefined) {
             builder.document.effectiveController = controller.getSubject();
@@ -90,7 +93,7 @@ export class DIDDocumentBuilder {
             if (!controller.getMetadata().attachedStore())
                 controller.getMetadata().attachStore(this.document.getMetadata().getStore());
 
-            if (!this.document.hasController(controller.getSubject()))
+            if (!this.sourceDocument.hasController(controller.getSubject()))
                 throw new NotControllerException(controller.getSubject().toString());
 
             this.document.effectiveController = controller.getSubject();
@@ -103,10 +106,10 @@ export class DIDDocumentBuilder {
 
                 return this;
             } else {
-                if (this.document.getEffectiveController() == null)
-                    throw new NoEffectiveControllerException();
+                if (this.sourceDocument.getEffectiveController() == null)
+                    throw new NoEffectiveControllerException("Unable to edit a customized DIDDocument without effective controller");
 
-                return this.edit(this.document.getEffectiveControllerDocument());
+                return this.edit(this.sourceDocument.getEffectiveControllerDocument());
             }
         }
     }
