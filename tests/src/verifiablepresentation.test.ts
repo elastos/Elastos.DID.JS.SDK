@@ -229,13 +229,16 @@ describe('VerifiablePresentation Tests', () => {
 
 		expect(vp).not.toBeNull();
 
-		expect(vp.getId()).toBeNull();
+		expect(vp.getId()).toBeFalsy(); // null or undefined
 		expect(1).toEqual(vp.getType().length);
 		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeNull();
+		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeFalsy(); // null or undefined
+
+		let resolved = await vp.getHolder().resolve();
+		expect(resolved).not.toBeNull();
 
 		await expect(await vp.isGenuine()).toBeTruthy();
 		await expect(await vp.isValid()).toBeTruthy();
@@ -263,7 +266,10 @@ describe('VerifiablePresentation Tests', () => {
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeNull();
+		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeFalsy(); // null or undefined
+
+		let resolved = await vp.getHolder().resolve();
+		expect(resolved).not.toBeNull();
 
 		await expect(await vp.isGenuine()).toBeTruthy();
 		await expect(await vp.isValid()).toBeTruthy();

@@ -89,7 +89,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	@JsonProperty({value: VerifiablePresentation.ID})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	@JsonClassType({type: () => [DIDURL]})
-	public id: DIDURL;
+	public id: DIDURL = null;
 	@JsonProperty({value: VerifiablePresentation.TYPE})
 	// TODO JAVA: @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
 	public type: string[];
