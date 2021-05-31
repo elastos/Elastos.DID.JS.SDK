@@ -31,7 +31,7 @@ import { IDTransaction } from "./idtransaction";
 export class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
 	@JsonProperty({value: IDTransaction.OPERATION})
 	@JsonClassType({type: () => [DIDRequest]})
-	protected request: DIDRequest;
+	declare protected request: DIDRequest;
 
 	@JsonCreator()
 	static toDIDTransaction(): DIDTransaction {

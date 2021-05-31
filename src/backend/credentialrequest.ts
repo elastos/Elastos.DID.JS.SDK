@@ -39,13 +39,13 @@ import { IDChainRequest } from "./idchaindrequest";
 export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	@JsonProperty({value: IDChainRequest.HEADER})
 	@JsonClassType({type: () => [IDChainRequest.Header]})
-	protected header: IDChainRequest.Header;
+	declare protected header: IDChainRequest.Header;
 	@JsonProperty({value: IDChainRequest.PAYLOAD})
 	@JsonClassType({type: () => [String]})
-	protected payload: string;
+	declare protected payload: string;
 	@JsonProperty({value: IDChainRequest.PROOF})
 	@JsonClassType({type: () => [IDChainRequest.Proof]})
-	protected proof: IDChainRequest.Proof;
+	declare protected proof: IDChainRequest.Proof;
 
 	private id: DIDURL;
 	private vc: VerifiableCredential;
