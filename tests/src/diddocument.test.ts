@@ -26,7 +26,6 @@ import {
 	DIDDocumentPublicKey,
 	DIDURL,
 	DIDStore,
-	runningInBrowser,
 	DID,
 	DIDDocumentBuilder,
 	JSONObject,
@@ -39,8 +38,6 @@ import {
 } from "./utils/testdata";
 import {
 	assertEquals,
-	assertTrue,
-	assertNotNull,
 	assertArrayEquals,
 	assertNull
 } from "./utils/utils";

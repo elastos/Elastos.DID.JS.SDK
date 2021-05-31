@@ -20,10 +20,13 @@
  * SOFTWARE.
  */
 
-import { DID, DIDURL, DIDStore } from "@elastosfoundation/did-js-sdk";
+import {
+	DID,
+	DIDURL
+} from "@elastosfoundation/did-js-sdk";
 
-const verifyNewDidCreation = (valueToValidate: string) =>{
-	let url: DIDURL = DIDURL.newWithDID(null, valueToValidate);
+const verifyNewDidCreation = (valueToValidate: string, base: DID = null) =>{
+	let url: DIDURL = DIDURL.newWithDID(base, valueToValidate);
 	expect(url.toString()).toBe(valueToValidate);
 }
 
@@ -44,55 +47,80 @@ describe('DIDURL Tests', () => {
 	})
 
 	test('Test Constructor with Canonical URL', () => {
-		verifyNewDidCreation(testDID)
+		verifyNewDidCreation(testDID);
 
-		verifyNewDidCreation(testDID + params)
+		verifyNewDidCreation(testDID + params);
 
-		verifyNewDidCreation(testDID + path)
+		verifyNewDidCreation(testDID + path);
 
-		verifyNewDidCreation(testDID + query)
+		verifyNewDidCreation(testDID + query);
 
-		verifyNewDidCreation(testDID + fragment)
+		verifyNewDidCreation(testDID + fragment);
 
-		verifyNewDidCreation(testDID + params + path)
+		verifyNewDidCreation(testDID + params + path);
 
-		verifyNewDidCreation(testDID + params + path + query)
+		verifyNewDidCreation(testDID + params + path + query);
 
-		verifyNewDidCreation(testDID + params + path + query + fragment)
+		verifyNewDidCreation(testDID + params + path + query + fragment);
 
-		verifyNewDidCreation(testDID + path + query + fragment)
+		verifyNewDidCreation(testDID + path + query + fragment);
 
-		verifyNewDidCreation(testDID + params + query + fragment)
+		verifyNewDidCreation(testDID + params + query + fragment);
 
-		verifyNewDidCreation(testDID + params + path + fragment)
+		verifyNewDidCreation(testDID + params + path + fragment);
 
-		verifyNewDidCreation(testDID + params + path + query)
+		verifyNewDidCreation(testDID + params + path + query);
 
+	});
+
+	test('Test Constructor with Base and Relative URL', () => {
+
+		verifyNewDidCreation(params, did);
+
+		verifyNewDidCreation(path, did);
+
+		verifyNewDidCreation(query, did);
+
+		verifyNewDidCreation(fragment, did);
+
+		verifyNewDidCreation(params + path, did);
+
+		verifyNewDidCreation(params + path + query, did);
+
+		verifyNewDidCreation(params + path + query + fragment, did);
+
+		verifyNewDidCreation(path + query + fragment, did);
+
+		verifyNewDidCreation(params + query + fragment, did);
+
+		verifyNewDidCreation(params + path + fragment, did);
+
+		verifyNewDidCreation(params + path + query, did);
 	});
 
 	test('Test Constructor with Relative URL', () => {
 
-		verifyNewDidCreation(params)
+		verifyNewDidCreation(params);
 
-		verifyNewDidCreation(path)
+		verifyNewDidCreation(path);
 
-		verifyNewDidCreation(query)
+		verifyNewDidCreation(query);
 
-		verifyNewDidCreation(fragment)
+		verifyNewDidCreation(fragment);
 
-		verifyNewDidCreation(params + path)
+		verifyNewDidCreation(params + path);
 
-		verifyNewDidCreation(params + path + query)
+		verifyNewDidCreation(params + path + query);
 
-		verifyNewDidCreation(params + path + query + fragment)
+		verifyNewDidCreation(params + path + query + fragment);
 
-		verifyNewDidCreation(path + query + fragment)
+		verifyNewDidCreation(path + query + fragment);
 
-		verifyNewDidCreation(params + query + fragment)
+		verifyNewDidCreation(params + query + fragment);
 
-		verifyNewDidCreation(params + path + fragment)
+		verifyNewDidCreation(params + path + fragment);
 
-		verifyNewDidCreation(params + path + query)
+		verifyNewDidCreation(params + path + query);
 	});
 
 
@@ -138,8 +166,6 @@ describe('DIDURL Tests', () => {
 
 		expect(() => {DIDURL.newWithUrl("did:example:1234567890" + params + path + query + "#")}).toThrowError();
 	})
-
-
 
 	test('Test GetDID', () => {
 		expect(url.getDid().toString()).toBe(testDID);
@@ -225,310 +251,3 @@ describe('DIDURL Tests', () => {
 	})
 
 })
-
-/* public class DIDURLTest {
-	private static final String testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-	private static final String params = ";elastos:foo=testvalue;bar=123;keyonly;elastos:foobar=12345";
-	private static final String path = "/path/to/the/resource";
-	private static final String query = "?qkey=qvalue&qkeyonly&test=true";
-	private static final String fragment = "#testfragment";
-	private static final String testURL = testDID + params + path + query + fragment;
-
-	private DID did;
-	private DIDURL url;
-
-    @BeforeEach
-    public void setup() throws MalformedDIDURLException {
-    	did = new DID(testDID);
-    	url = new DIDURL(testURL);
-    }
-
-	@Test
-	public void testConstructorWithCanonicalURL() throws MalformedDIDURLException {
-		String testURL = testDID;
-		DIDURL url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + path;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + query;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + fragment;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path + query;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path + query + fragment;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + path + query + fragment;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + query + fragment;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path + fragment;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path + query;
-		url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-	}
-
-	@Test
-	public void testConstructorWithBaseAndRelativeURL() throws MalformedDIDURLException {
-		String testURL = testDID;
-		DIDURL url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params;
-		url = new DIDURL(did, params);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + path;
-		url = new DIDURL(did, path);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + query;
-		url = new DIDURL(did, query);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + fragment;
-		url = new DIDURL(did, fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path;
-		url = new DIDURL(did, params + path);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path + query;
-		url = new DIDURL(did, params + path + query);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path + query + fragment;
-		url = new DIDURL(did, params + path + query + fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + path + query + fragment;
-		url = new DIDURL(did, path + query + fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + query + fragment;
-		url = new DIDURL(did, params + query + fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path + fragment;
-		url = new DIDURL(did, params + path + fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = testDID + params + path + query;
-		url = new DIDURL(did, params + path + query);
-		assertEquals(testURL, url.toString());
-	}
-
-	@Test
-	public void testConstructorWithRelativeURL() throws MalformedDIDURLException {
-		String testURL = params;
-		url = new DIDURL(params);
-		assertEquals(testURL, url.toString());
-
-		testURL = path;
-		url = new DIDURL(path);
-		assertEquals(testURL, url.toString());
-
-		testURL = query;
-		url = new DIDURL(query);
-		assertEquals(testURL, url.toString());
-
-		testURL = fragment;
-		url = new DIDURL(fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = params + path;
-		url = new DIDURL(params + path);
-		assertEquals(testURL, url.toString());
-
-		testURL = params + path + query;
-		url = new DIDURL(params + path + query);
-		assertEquals(testURL, url.toString());
-
-		testURL = params + path + query + fragment;
-		url = new DIDURL(params + path + query + fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = path + query + fragment;
-		url = new DIDURL(path + query + fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = params + query + fragment;
-		url = new DIDURL(params + query + fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = params + path + fragment;
-		url = new DIDURL(params + path + fragment);
-		assertEquals(testURL, url.toString());
-
-		testURL = params + path + query;
-		url = new DIDURL(params + path + query);
-		assertEquals(testURL, url.toString());
-	}
-
-	@Test
-	public void testCompatibleWithPlainFragment() {
-		String testURL = testDID + "#test";
-		DIDURL url = new DIDURL(testURL);
-		assertEquals(testURL, url.toString());
-		assertEquals("test", url.getFragment());
-
-		url = new DIDURL(did, "test");
-		assertEquals(testURL, url.toString());
-		assertEquals("test", url.getFragment());
-
-		url = new DIDURL("test");
-		assertEquals("test", url.getFragment());
-	}
-
-	@Test
-	public void testConstructorError1() {
-		assertThrows(MalformedDIDURLException.class, () -> {
-			new DIDURL("did:elastos:1234567890;" + params + path + query + fragment);
-		});
-	}
-
-	@Test
-	public void testConstructorError2() {
-		assertThrows(MalformedDIDURLException.class, () -> {
-			new DIDURL("did:example:1234567890" + params + path + query + fragment);
-		});
-	}
-
-	@Test
-	public void testConstructorError3() {
-		assertThrows(MalformedDIDURLException.class, () -> {
-			new DIDURL("did:elastos::1234567890" + path + query + fragment);
-		});
-	}
-
-	@Test
-	public void testConstructorError4() {
-		assertThrows(MalformedDIDURLException.class, () -> {
-			new DIDURL("did:example:1234567890" + params + path + "?" + "#" + fragment);
-		});
-	}
-
-	@Test
-	public void testConstructorError5() {
-		assertThrows(MalformedDIDURLException.class, () -> {
-			new DIDURL("did:example:1234567890" + params + path + query + "#");
-		});
-	}
-
-	@Test
-	public void testGetDid() {
-		assertEquals(testDID, url.getDid().toString());
-	}
-
-	@Test
-	public void testGetParameters() {
-		assertEquals(params.substring(1), url.getParametersString());
-	}
-
-	@Test
-	public void testGetParameter() {
-		assertEquals("testvalue", url.getParameter("elastos:foo"));
-		assertNull(url.getParameter("foo"));
-		assertEquals("123", url.getParameter("bar"));
-		assertEquals("12345", url.getParameter("elastos:foobar"));
-		assertNull(url.getParameter("foobar"));
-		assertNull(url.getParameter("keyonly"));
-	}
-
-	@Test
-	public void testHasParameter() {
-		assertTrue(url.hasParameter("elastos:foo"));
-		assertTrue(url.hasParameter("bar"));
-		assertTrue(url.hasParameter("elastos:foobar"));
-		assertTrue(url.hasParameter("keyonly"));
-
-		assertFalse(url.hasParameter("notexist"));
-		assertFalse(url.hasParameter("foo"));
-		assertFalse(url.hasParameter("boobar"));
-	}
-
-	@Test
-	public void testGetPath() {
-		assertEquals(path, url.getPath());
-	}
-
-	@Test
-	public void testGetQuery() {
-		assertEquals(query.substring(1), url.getQueryString());
-	}
-
-	@Test
-	public void testGetQueryParameter() {
-		assertEquals("qvalue", url.getQueryParameter("qkey"));
-		assertEquals("true", url.getQueryParameter("test"));
-		assertNull(url.getQueryParameter("qkeyonly"));
-	}
-
-	@Test
-	public void testHasQueryParameter() {
-		assertTrue(url.hasQueryParameter("qkeyonly"));
-		assertTrue(url.hasQueryParameter("qkey"));
-		assertTrue(url.hasQueryParameter("test"));
-
-		assertFalse(url.hasQueryParameter("notexist"));
-	}
-
-	@Test
-	public void testGetFragment() {
-		assertEquals(fragment.substring(1), url.getFragment());
-	}
-
-	@Test
-	public void testToString() {
-		assertEquals(testURL, url.toString());
-	}
-
-	@Test
-	public void testHashCode() throws MalformedDIDURLException {
-		DIDURL other = new DIDURL(testURL);
-		assertEquals(url.hashCode(), other.hashCode());
-
-		other = new DIDURL("did:elastos:1234567890#test");
-		assertNotEquals(url.hashCode(), other.hashCode());
-	}
-
-	@SuppressWarnings("unlikely-arg-type")
-	@Test
-	public void testEquals() throws MalformedDIDURLException {
-		DIDURL other = new DIDURL(testURL);
-		assertTrue(url.equals(other));
-		assertTrue(url.equals(testURL));
-
-		other = new DIDURL("did:elastos:1234567890#test");
-		assertFalse(url.equals(other));
-		assertFalse(url.equals("did:elastos:1234567890#test"));
-	}
-}
- */
