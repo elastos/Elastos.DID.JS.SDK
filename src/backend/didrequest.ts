@@ -83,11 +83,11 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
 	 */
-	public static create(doc: DIDDocument, signKey: DIDURL, storepass: string): DIDRequest {
+	public static async create(doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<DIDRequest> {
 		let request = DIDRequest.newWithOperation(IDChainRequest.Operation.CREATE);
 		request.setPayload(doc);
 		try {
-			request.seal(signKey, storepass);
+			await request.seal(signKey, storepass);
 		} catch (ignore) {
 			// MalformedIDChainRequestException
 			throw new UnknownInternalException(ignore);
@@ -106,11 +106,11 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
 	 */
-	public static update(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string): DIDRequest {
+	public static async update(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string): Promise<DIDRequest> {
 		let request = DIDRequest.newWithPreviousTxId(IDChainRequest.Operation.UPDATE, previousTxid);
 		request.setPayload(doc);
 		try {
-			request.seal(signKey, storepass);
+			await request.seal(signKey, storepass);
 		} catch (ignore) {
 			// MalformedIDChainRequestException
 			throw new UnknownInternalException(ignore);
@@ -129,11 +129,11 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
 	 */
-	public static transfer(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string): DIDRequest {
+	public static async transfer(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string): Promise<DIDRequest> {
 		let request = DIDRequest.newWithTransferTicket(IDChainRequest.Operation.TRANSFER, ticket);
 		request.setPayload(doc);
 		try {
-			request.seal(signKey, storepass);
+			await request.seal(signKey, storepass);
 		} catch (ignore) {
 			// MalformedIDChainRequestException
 			throw new UnknownInternalException(ignore);
@@ -152,11 +152,11 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
 	 */
-	public static deactivate(doc: DIDDocument, signKey: DIDURL, storepass: string): DIDRequest {
+	public static async deactivate(doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<DIDRequest> {
 		let request = DIDRequest.newWithOperation(IDChainRequest.Operation.DEACTIVATE);
 		request.setPayload(doc);
 		try {
-			request.seal(signKey, storepass);
+			await request.seal(signKey, storepass);
 		} catch (ignore) {
 			// MalformedIDChainRequestException
 			throw new UnknownInternalException(ignore);
@@ -177,11 +177,11 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 * @throws DIDStoreException there is no store to attach
 	 */
 	// NOTE: Also deactivate() in Java
-	public static deactivateTarget(target: DIDDocument, targetSignKey: DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): DIDRequest {
+	public static async deactivateTarget(target: DIDDocument, targetSignKey: DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<DIDRequest> {
 		let request = DIDRequest.newWithOperation(IDChainRequest.Operation.DEACTIVATE);
 		request.setPayload(target);
 		try {
-			request.sealTarget(targetSignKey, doc, signKey, storepass);
+			await request.sealTarget(targetSignKey, doc, signKey, storepass);
 		} catch (ignore) {
 			// MalformedIDChainRequestException
 			throw new UnknownInternalException(ignore);
@@ -244,7 +244,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		}
 	}
 
-	public sanitize() {
+	public async sanitize(): Promise<void> {
 		let header = this.getHeader();
 
 		if (header == null)
@@ -283,7 +283,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		try {
 			if (!header.getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
 				let json = BASE64.toString(payload)
-				this.doc = DIDDocument.parse(json, DIDDocument);
+				this.doc = await DIDDocument.parse(json, DIDDocument);
 				this.did = this.doc.getSubject();
 			} else {
 				this.did = new DID(payload);
@@ -296,19 +296,19 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		proof.qualifyVerificationMethod(this.did);
 	}
 
-	private seal(signKey: DIDURL, storepass: string) {
+	private async seal(signKey: DIDURL, storepass: string): Promise<void> {
 		if (!this.doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key.");
 
 		if (this.getPayload() == null || this.getPayload() === "")
 			throw new MalformedIDChainRequestException("Missing payload");
 
-		let signature = this.doc.signWithId(signKey, storepass, ...this.getSigningInputs());
+		let signature = await this.doc.signWithId(signKey, storepass, ...this.getSigningInputs());
 		this.setProof(new DIDRequest.Proof(signKey, signature));
 	}
 
 	// NOTE: Also seal() in Java
-	private sealTarget(targetSignKey: DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string) {
+	private async sealTarget(targetSignKey: DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<void> {
 		if (!this.doc.isAuthorizationKey(targetSignKey))
 			throw new InvalidKeyException("Not an authorization key: " + targetSignKey);
 
@@ -318,7 +318,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		if (!this.getPayload() || this.getPayload() == null)
 			throw new MalformedIDChainRequestException("Missing payload");
 
-		let signature = doc.signWithId(signKey, storepass, ...this.getSigningInputs());
+		let signature = await doc.signWithId(signKey, storepass, ...this.getSigningInputs());
 		this.setProof(new DIDRequest.Proof(targetSignKey, signature));
 	}
 

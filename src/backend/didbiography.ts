@@ -173,7 +173,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 		this.txs.push(tx);
 	}
 
-	public sanitize() {
+	public async sanitize(): Promise<void> {
 		if (this.did == null)
 			throw new MalformedResolveResultException("Missing did");
 
@@ -183,7 +183,7 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
 
 			try {
 				for (let tx of this.txs)
-					tx.sanitize();
+					await tx.sanitize();
 			} catch (e) {
 				// MalformedIDChainTransactionException
 				throw new MalformedResolveResultException("Invalid transaction", e);

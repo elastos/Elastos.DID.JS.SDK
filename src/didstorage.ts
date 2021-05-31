@@ -50,7 +50,7 @@ export interface DIDStorage {
 
 	storeMetadata(metadata: DIDStoreMetadata);
 
-	loadMetadata(): DIDStoreMetadata;
+	loadMetadata(): Promise<DIDStoreMetadata>;
 
 	storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata);
 
@@ -61,7 +61,7 @@ export interface DIDStorage {
 	 * @return the meta data
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	loadRootIdentityMetadata(id: string): RootIdentity.Metadata;
+	loadRootIdentityMetadata(id: string): Promise<RootIdentity.Metadata>;
 
 	/**
 	 * Store private identity.
@@ -113,7 +113,7 @@ export interface DIDStorage {
 	 * @return the meta data
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	loadDidMetadata(did: DID): DIDMetadata;
+	loadDidMetadata(did: DID): Promise<DIDMetadata>;
 
 	/**
 	 * Store DID Document.
@@ -130,7 +130,7 @@ export interface DIDStorage {
 	 * @return the DID Document object
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	loadDid(did: DID): DIDDocument;
+	loadDid(did: DID): Promise<DIDDocument>;
 
 	/**
      * Delete the specified DID.
@@ -168,7 +168,7 @@ export interface DIDStorage {
 	 * @return the meta data for Credential
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	loadCredentialMetadata(id: DIDURL): CredentialMetadata;
+	loadCredentialMetadata(id: DIDURL): Promise<CredentialMetadata>;
 
 	/**
 	 * Store the specified Credential.
@@ -186,7 +186,7 @@ export interface DIDStorage {
 	 * @return the Credential object
 	 * @throws DIDStorageException DIDStorage error.
 	 */
-	loadCredential(id: DIDURL): VerifiableCredential;
+	loadCredential(id: DIDURL): Promise<VerifiableCredential>;
 
 	/**
 	 * Judge whether does DIDStore contain any credential owned the specific DID.

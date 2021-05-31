@@ -339,7 +339,7 @@ describe('DIDDocument Tests', () => {
 		key = TestData.generateKeypair();
 		db.createAndAddPublicKey("#test2", key.getPublicKeyBase58(), doc.getSubject().toString());
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull()
 		expect(doc.isValid()).toBeTruthy()
 
@@ -383,8 +383,8 @@ describe('DIDDocument Tests', () => {
 		key = TestData.generateKeypair();
 		db.createAndAddPublicKey("#test2", key.getPublicKeyBase58(), doc.getSubject().toString());
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user2.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user2.signWithDocument(doc, TestConfig.storePass);
 
 		expect(doc).not.toBeNull()
 		expect(doc.isValid()).toBeTruthy();
@@ -432,7 +432,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.removePublicKey(d.getDefaultPublicKeyId(), true); }).toThrowError()
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull()
 		expect(doc.isValid()).toBeTruthy();
 
@@ -483,8 +483,8 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.removePublicKey("#notExistKey", true); }).toThrowError()
 
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user1.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user1.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -821,7 +821,7 @@ describe('DIDDocument Tests', () => {
 		// Try to add a key not owned by self, should fail.
 		expect(() => { db.addExistingAuthenticationKey("#recovery"); }).toThrowError()
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -892,8 +892,8 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addExistingAuthenticationKey(recovery); }).toThrowError()
 
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user3.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user3.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -951,7 +951,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.removeAuthenticationKey(id); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1004,8 +1004,8 @@ describe('DIDDocument Tests', () => {
 		let key2 = DIDURL.from("#key2", user1.getSubject());
 		expect(() => { db.removeAuthenticationKey(key2); }).toThrowError();
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user2.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1138,7 +1138,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addExistingAuthorizationKey("#key2"); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1205,8 +1205,8 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addExistingAuthorizationKey(recovery); }).toThrowError()
 
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user2.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1256,7 +1256,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.removeAuthorizationKey("#notExistKey"); }).toThrowError()
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1408,7 +1408,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addCredential(fvc); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1456,8 +1456,8 @@ describe('DIDDocument Tests', () => {
 		// Credential not belongs to current did, should fail.
 		await expect(async () => { db.addCredential(await cd.getCredential("user1", "passport")); }).toThrowError();
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user2.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1495,7 +1495,7 @@ describe('DIDDocument Tests', () => {
 		json = "{\"twitter\":\"@john\"}";
 		db.createAndAddCredential(TestConfig.storePass, "#twitter", json);
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1546,8 +1546,8 @@ describe('DIDDocument Tests', () => {
 		json = "{\"twitter\":\"@foobar\"}";
 		db.createAndAddCredential(TestConfig.storePass, "#twitter", json);
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user1.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user1.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1601,7 +1601,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.removeCredential(DIDURL.from("#notExistCredential", did)); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1643,8 +1643,8 @@ describe('DIDDocument Tests', () => {
 		let did = doc.getSubject();
 		expect(() => { db.removeCredential(DIDURL.from("#notExistCredential", did)); }).toThrowError();
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user2.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1814,7 +1814,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addService("#vcr", "test", "https://www.elastos.org/test"); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1879,7 +1879,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addService("#vcr", "test", "https://www.elastos.org/test", props); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -1931,8 +1931,8 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addService("#vcr", "test", "https://www.elastos.org/test"); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user1.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user1.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -2003,8 +2003,8 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addService("#vcr", "test", "https://www.elastos.org/test", props); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user1.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user1.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -2046,7 +2046,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.removeService("#notExistService"); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -2084,8 +2084,8 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.removeService("#notExistService"); }).toThrowError();
 
 
-		doc = db.seal(TestConfig.storePass);
-		doc = user3.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await user3.signWithDocument(doc, TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
 
@@ -2115,13 +2115,13 @@ describe('DIDDocument Tests', () => {
 
 
 			let compactJson = cd.getDocumentJson(did, "compact");
-			let compact = DIDDocument.parse<DIDDocument>(compactJson, DIDDocument);
+			let compact = await DIDDocument.parse<DIDDocument>(compactJson, DIDDocument);
 			expect(compact).not.toBeNull()
 			expect(compact.isValid()).toBeTruthy()
 
 
 			let normalizedJson = cd.getDocumentJson(did, "normalized");
-			let normalized = DIDDocument.parse<DIDDocument>(normalizedJson, DIDDocument);
+			let normalized = await DIDDocument.parse<DIDDocument>(normalizedJson, DIDDocument);
 			expect(normalized).not.toBeNull()
 			expect(normalized.isValid()).toBeTruthy()
 
@@ -2157,7 +2157,7 @@ describe('DIDDocument Tests', () => {
 		for (let i = 0; i < 10; i++) {
 			data.fill(i)
 
-			let sig = doc.signWithId(pkid, TestConfig.storePass, data);
+			let sig = await doc.signWithId(pkid, TestConfig.storePass, data);
 			let result = doc.verify(pkid, sig, data);
 			expect(result).toBeTruthy()
 
@@ -2165,7 +2165,7 @@ describe('DIDDocument Tests', () => {
 			result = doc.verify(pkid, sig, data);
 			expect(result).toBeFalsy()
 
-			sig = doc.signWithStorePass(TestConfig.storePass, data);
+			sig = await doc.signWithStorePass(TestConfig.storePass, data);
 			result = doc.verify(pkid, sig, data);
 			expect(result).toBeTruthy()
 
@@ -2184,7 +2184,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		for (let i = 0; i < 10; i++) {
-			let strKey = doc.derive(i, TestConfig.storePass);
+			let strKey = await doc.derive(i, TestConfig.storePass);
 			let key = HDKey.deserializeBase58(strKey);
 
 			let binKey = Base58.decode(strKey);
@@ -2202,7 +2202,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		for (let i = -100; i < 100; i++) {
-			let strKey = doc.derive(i, TestConfig.storePass);
+			let strKey = await doc.derive(i, TestConfig.storePass);
 			let key = HDKey.deserializeBase58(strKey);
 
 			let binKey = Base58.decode(strKey);
@@ -2307,7 +2307,7 @@ describe('DIDDocument Tests', () => {
 		const d = doc;
 		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 		expect(doc.getSubject()).toEqual(did);
 
@@ -2351,7 +2351,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -2367,7 +2367,7 @@ describe('DIDDocument Tests', () => {
 		db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(3);
 		expect(doc.getAuthenticationKeyCount()).toBe(3)
 		store.storeDid(doc);
@@ -2425,7 +2425,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -2441,7 +2441,7 @@ describe('DIDDocument Tests', () => {
 		db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(3);
 		expect(doc.getAuthenticationKeyCount()).toBe(3)
 		store.storeDid(doc);
@@ -2501,7 +2501,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
 
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 		expect(doc.getSubject()).toEqual(did);
 		expect(doc.getControllerCount()).toBe(3);
@@ -2531,8 +2531,8 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
-		doc = ctrl1.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await ctrl1.signWithDocument(doc, TestConfig.storePass);
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
@@ -2548,8 +2548,8 @@ describe('DIDDocument Tests', () => {
 		db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl3);
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
@@ -2681,7 +2681,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -2778,7 +2778,7 @@ describe('DIDDocument Tests', () => {
 		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
 
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 
 		expect(doc.getSubject()).toEqual(did);
@@ -2885,7 +2885,7 @@ describe('DIDDocument Tests', () => {
 		const d = doc;
 		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 
 		expect(doc.getSubject()).toEqual(did);
@@ -2916,8 +2916,8 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
-		doc = ctrl1.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await ctrl1.signWithDocument(doc, TestConfig.storePass);
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
@@ -2980,7 +2980,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -2998,7 +2998,7 @@ describe('DIDDocument Tests', () => {
 		db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(3);
 		expect(doc.getAuthenticationKeyCount()).toBe(3)
 		store.storeDid(doc);
@@ -3027,7 +3027,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3045,7 +3045,7 @@ describe('DIDDocument Tests', () => {
 		db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(3);
 		expect(doc.getAuthenticationKeyCount()).toBe(3)
 		store.storeDid(doc);
@@ -3082,7 +3082,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3118,7 +3118,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3147,7 +3147,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3165,7 +3165,7 @@ describe('DIDDocument Tests', () => {
 		db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(3);
 		expect(doc.getAuthenticationKeyCount()).toBe(3)
 		store.storeDid(doc);
@@ -3194,7 +3194,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3212,7 +3212,7 @@ describe('DIDDocument Tests', () => {
 		db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(3);
 		expect(doc.getAuthenticationKeyCount()).toBe(3)
 		store.storeDid(doc);
@@ -3246,7 +3246,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3277,7 +3277,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3324,7 +3324,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3427,7 +3427,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3540,7 +3540,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.getPublicKeyCount()).toBe(2);
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3603,7 +3603,7 @@ describe('DIDDocument Tests', () => {
 		const d = doc;
 		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 		expect(doc.getSubject()).toEqual(did);
 		expect(doc.getControllerCount()).toBe(3);
@@ -3680,7 +3680,7 @@ describe('DIDDocument Tests', () => {
 		const d = doc;
 		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 
 		expect(doc.getSubject()).toEqual(did);
@@ -3713,8 +3713,8 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
-		doc = ctrl1.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await ctrl1.signWithDocument(doc, TestConfig.storePass);
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
@@ -3777,7 +3777,7 @@ describe('DIDDocument Tests', () => {
 		const d = doc;
 		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 
 		expect(doc.getSubject()).toEqual(did);
@@ -3853,7 +3853,7 @@ describe('DIDDocument Tests', () => {
 		const d = doc;
 		expect(() => { ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
 
-		doc = ctrl2.signWithDocument(doc, TestConfig.storePass);
+		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 
 		expect(doc.getSubject()).toEqual(did);
@@ -3884,8 +3884,8 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
-		doc = db.seal(TestConfig.storePass);
-		doc = ctrl1.signWithDocument(doc, TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
+		doc = await ctrl1.signWithDocument(doc, TestConfig.storePass);
 		store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
@@ -3918,7 +3918,7 @@ describe('DIDDocument Tests', () => {
 		let target = await identity.newDid(TestConfig.storePass);
 		let db = DIDDocumentBuilder.newFromDocument(target).edit();
 		await db.authorizationDid(new DIDURL("#recovery"), doc.getSubject(), null);
-		target = db.seal(TestConfig.storePass);
+		target = await db.seal(TestConfig.storePass);
 		expect(target).not.toBeNull()
 		expect(target.getAuthorizationKeyCount()).toBe(1)
 		expect(target.getAuthorizationKeys()[0].getController()).toEqual(doc.getSubject())
@@ -3947,7 +3947,7 @@ describe('DIDDocument Tests', () => {
 
 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
 		store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -3962,7 +3962,7 @@ describe('DIDDocument Tests', () => {
 		let target = await identity.newDid(TestConfig.storePass);
 		db = DIDDocumentBuilder.newFromDocument(target).edit();
 		db.addAuthorizationKey("#recovery", doc.getSubject().toString(), key.getPublicKeyBase58());
-		target = db.seal(TestConfig.storePass);
+		target = await db.seal(TestConfig.storePass);
 		expect(target).not.toBeNull()
 		expect(target.getAuthorizationKeyCount()).toBe(1)
 		expect(target.getAuthorizationKeys()[0].getController()).toEqual(doc.getSubject())
@@ -3991,7 +3991,7 @@ describe('DIDDocument Tests', () => {
 		let id = DIDURL.from("#key-2", doc.getSubject());
 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
 		store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
-		doc = db.seal(TestConfig.storePass);
+		doc = await db.seal(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
 		expect(doc.getAuthenticationKeyCount()).toBe(2);
 		store.storeDid(doc);
@@ -4007,7 +4007,7 @@ describe('DIDDocument Tests', () => {
 		db = DIDDocumentBuilder.newFromDocument(target).edit();
 		db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
 			key.getPublicKeyBase58());
-		target = db.seal(TestConfig.storePass);
+		target = await db.seal(TestConfig.storePass);
 		expect(target).not.toBeNull()
 		expect(target.getAuthorizationKeyCount()).toBe(1)
 		expect(target.getAuthorizationKeys()[0].getController()).toEqual(doc.getSubject())

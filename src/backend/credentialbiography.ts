@@ -167,7 +167,7 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 		this.txs.push(tx);
 	}
 
-	public sanitize() {
+	public async sanitize(): Promise<void> {
 		if (this.id == null)
 			throw new MalformedResolveResultException("Missing id");
 
@@ -177,7 +177,7 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 
 			try {
 				for (let tx of this.txs)
-					tx.sanitize();
+					await tx.sanitize();
 			} catch (e) {
 				// MalformedIDChainTransactionException
 				throw new MalformedResolveResultException("Invalid transaction", e);

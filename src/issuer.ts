@@ -64,7 +64,7 @@ export class Issuer {
 	 * @throws DIDStoreException there is no store to attatch
 	 * @throws InvalidKeyException the sign key is not an authenication key.
 	 */
-	public static newWithDocument(doc: DIDDocument, signKey?: DIDURL | string) {
+	public static newWithDocument(doc: DIDDocument, signKey?: DIDURL | string): Issuer {
 		checkArgument(doc != null, "Invalid document");
 
         if (signKey) {
@@ -78,11 +78,11 @@ export class Issuer {
         }
 	}
 
-    public static newWithDID(did: DID, store: DIDStore, signKey?: DIDURL | string) {
+    public static async newWithDID(did: DID, store: DIDStore, signKey?: DIDURL | string): Promise<Issuer> {
 		checkArgument(did != null, "Invalid did");
 		checkArgument(store != null, "Invalid store");
 
-        let didDoc: DIDDocument = store.loadDid(did);
+        let didDoc: DIDDocument = await store.loadDid(did);
 
         if (signKey) {
             if (signKey instanceof DIDURL) {
@@ -122,7 +122,7 @@ export class Issuer {
 		return this.signKey;
 	}
 
-	public sign(storepass: string, data: Buffer): string {
+	public sign(storepass: string, data: Buffer): Promise<string> {
 		return this.self.signWithId(this.signKey, storepass, data);
 	}
 

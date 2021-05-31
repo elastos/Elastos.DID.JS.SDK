@@ -259,7 +259,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @param withProof check the proof object or not
 	 * @throws MalformedCredentialException if the credential object is invalid
 	 */
-	public sanitize() {
+	public sanitize(): Promise<void> {
 		if (this.id == null)
 			throw new MalformedCredentialException("Missing credential id");
 
@@ -289,6 +289,8 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		if (this.proof.verificationMethod.getDid() == null)
 			this.proof.verificationMethod.setDid(this.issuer);
+
+		return null; // Silence the promise warning, not a real return
 	}
 
 	/**
@@ -504,7 +506,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			throw new CredentialAlreadyExistException(this.getId().toString());
 		}
 
-		let owner = this.getStore().loadDid(this.getSubject().getId());
+		let owner = await this.getStore().loadDid(this.getSubject().getId());
 		if (owner == null) {
 			// Fail-back: resolve the owner's document
 			owner = await this.getSubject().getId().resolve();
@@ -524,7 +526,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			signKey = owner.getDefaultPublicKeyId();
 		}
 
-		DIDBackend.getInstance().declareCredential(this, owner, signKey, storepass, adapter);
+		await DIDBackend.getInstance().declareCredential(this, owner, signKey, storepass, adapter);
 	}
 
 	/* public declare(signKey: DIDURL, storepass: string) {
@@ -577,7 +579,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			let signerDid: DID = (signKey != null && signKey.getDid() != null) ?
 					signKey.getDid() : this.getSubject().getId();
 
-			signer = this.getStore().loadDid(signerDid);
+			signer = await this.getStore().loadDid(signerDid);
 			if (signer == null) {
 				// Fail-back: resolve the owner's document
 				signer = await this.getSubject().getId().resolve();
@@ -606,7 +608,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			signKey = signer.getDefaultPublicKeyId();
 		}
 
-		DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, adapter);
+		await DIDBackend.getInstance().revokeCredential(this, signer, signKey, storepass, adapter);
 	}
 
 	public static async revoke(id: DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null): Promise<void> {
@@ -641,7 +643,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			signKey = signer.getDefaultPublicKeyId();
 		}
 
-		DIDBackend.getInstance().revokeCredential(id, signer, signKey, storepass, adapter);
+		await DIDBackend.getInstance().revokeCredential(id, signer, signKey, storepass, adapter);
 	}
 
 	/* public static void revoke(id: DIDURL, DIDDocument issuer, signKey: DIDURL, storepass: string) {
@@ -734,7 +736,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return the VerifiableCredential object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public static parseContent(content: string): VerifiableCredential {
+	public static parseContent(content: string): Promise<VerifiableCredential> {
 		try {
 			return this.parse(content, VerifiableCredential);
 		} catch (e) {
@@ -1119,14 +1121,14 @@ export namespace VerifiableCredential {
 		 * @throws MalformedCredentialException if the Credential is malformed
 		 * @throws DIDStoreException if an error occurs when access DID store
 		 */
-		public seal(storepass: string): VerifiableCredential {
+		public async seal(storepass: string): Promise<VerifiableCredential> {
 			this.checkNotSealed();
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
 			this.sanitize();
 
 			let json = this.credential.serialize(true);
-			let sig = this.issuer.sign(storepass, Buffer.from(json));
+			let sig = await this.issuer.sign(storepass, Buffer.from(json));
 			let proof = new VerifiableCredential.Proof(this.issuer.getSignKey(), sig);
 			this.credential.proof = proof;
 

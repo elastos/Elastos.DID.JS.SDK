@@ -55,7 +55,6 @@ import { BASE64 } from "./internals";
  // The @JsonIgnoreType() decorator is mandatory to avoid the cyclic references
  @JsonIgnoreType()
  export class DIDStore {
-
 	private static CACHE_INITIAL_CAPACITY = 16;
 	private static CACHE_MAX_CAPACITY = 128;
 
@@ -80,8 +79,6 @@ import { BASE64 } from "./internals";
 		});
 
 		this.storage = storage;
-		this.metadata = storage.loadMetadata();
-		this.metadata.attachStore(this);
 
 		log.info("DID store opened: {}, cache(init:{}, max:{})",
 			storage.getLocation(), initialCacheCapacity, maxCacheCapacity);
@@ -101,12 +98,16 @@ import { BASE64 } from "./internals";
 		 * NOTE: Java uses a root folder but in our case we use a "context" string to separate various
 		 * DID Stores, as we don't have a concept of "folder" isolation.
 		 */
-		public static open(context: string, initialCacheCapacity: number = DIDStore.CACHE_INITIAL_CAPACITY, maxCacheCapacity: number = DIDStore.CACHE_MAX_CAPACITY): DIDStore {
+		public static async open(context: string, initialCacheCapacity: number = DIDStore.CACHE_INITIAL_CAPACITY, maxCacheCapacity: number = DIDStore.CACHE_MAX_CAPACITY): Promise<DIDStore> {
 			checkArgument(context != null, "Invalid store context");
 			checkArgument(maxCacheCapacity >= initialCacheCapacity, "Invalid cache capacity spec");
 
 			let storage = new FileSystemStorage(context);
-			return new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
+			await storage.init();
+			let store = new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
+			store.metadata = await storage.loadMetadata();
+			store.metadata.attachStore(store);
+			return store;
 		}
 
 		public close() {
@@ -242,7 +243,7 @@ import { BASE64 } from "./internals";
 		 * @return the HDKey object(private identity)
 		 * @throws DIDStoreException there is invalid private identity in DIDStore.
 		 */
-		public loadRootIdentity(id: string = undefined): RootIdentity {
+		public async loadRootIdentity(id: string = undefined): Promise<RootIdentity> {
 			if (id === undefined) {
 				id = this.metadata.getDefaultRootIdentity();
 				if (id == null || id === "") {
@@ -260,10 +261,10 @@ import { BASE64 } from "./internals";
 			checkArgument(id != null && id !== "", "Invalid id");
 
 			try {
-				let value = this.cache.get(DIDStore.Key.forRootIdentity(id), ()=>{
+				let value = await this.cache.getAsync(DIDStore.Key.forRootIdentity(id), async ()=>{
 					let identity = this.storage.loadRootIdentity(id);
 					if (identity != null) {
-						identity.setMetadata(this.loadRootIdentityMetadata(id));
+						identity.setMetadata(await this.loadRootIdentityMetadata(id));
 						return {value: identity};
 					} else {
 						return {value: DIDStore.NULL};
@@ -387,10 +388,10 @@ import { BASE64 } from "./internals";
 			this.storage.storeRootIdentityMetadata(id, metadata);
 		}
 
-		protected loadRootIdentityMetadata(id: string): RootIdentity.Metadata {
+		protected async loadRootIdentityMetadata(id: string): Promise<RootIdentity.Metadata> {
 			checkArgument(id != null && id !== "", "Invalid id");
 
-			let metadata = this.storage.loadRootIdentityMetadata(id);
+			let metadata = await this.storage.loadRootIdentityMetadata(id);
 			if (metadata != null) {
 				metadata.setId(id);
 				metadata.attachStore(this);
@@ -407,12 +408,12 @@ import { BASE64 } from "./internals";
 		 * @param doc the DIDDocument object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public storeDid(doc: DIDDocument) {
+		public async storeDid(doc: DIDDocument): Promise<void> {
 			checkArgument(doc != null, "Invalid doc");
 
 			this.storage.storeDid(doc);
 			if (doc.getStore() != this) {
-				let metadata = this.loadDidMetadata(doc.getSubject());
+				let metadata = await this.loadDidMetadata(doc.getSubject());
 				doc.getMetadata().merge(metadata);
 				this.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
@@ -420,7 +421,7 @@ import { BASE64 } from "./internals";
 			}
 
 			for (let vc of doc.getCredentials())
-				this.storeCredential(vc);
+				await this.storeCredential(vc);
 
 			this.cache.put(DIDStore.Key.forDidDocument(doc.getSubject()), doc);
 		}
@@ -432,7 +433,7 @@ import { BASE64 } from "./internals";
 		 * @return the DIDDocument object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public loadDid(didOrString: DID | string): DIDDocument {
+		public async loadDid(didOrString: DID | string): Promise<DIDDocument> {
 			checkArgument(didOrString != null, "Invalid did");
 
 			let did: DID;
@@ -442,10 +443,10 @@ import { BASE64 } from "./internals";
 				did = didOrString;
 
 			try {
-				let value = this.cache.get(DIDStore.Key.forDidDocument(did), () => {
-					let doc = this.storage.loadDid(did);
+				let value = await this.cache.getAsync(DIDStore.Key.forDidDocument(did), async () => {
+					let doc = await this.storage.loadDid(did);
 					if (doc != null) {
-						doc.setMetadata(this.loadDidMetadata(did));
+						doc.setMetadata(await this.loadDidMetadata(did));
 						return {value: doc};
 					} else {
 						return {value: DIDStore.NULL};
@@ -500,12 +501,12 @@ import { BASE64 } from "./internals";
 		 * @return the Meta data
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		protected loadDidMetadata(did: DID): DIDMetadata {
+		protected async loadDidMetadata(did: DID): Promise<DIDMetadata> {
 			checkArgument(did != null, "Invalid did");
 
 			try {
-				let value = this.cache.get(DIDStore.Key.forDidMetadata(did), () => {
-					let metadata = this.storage.loadDidMetadata(did);
+				let value = await this.cache.getAsync(DIDStore.Key.forDidMetadata(did), async () => {
+					let metadata = await this.storage.loadDidMetadata(did);
 					if (metadata != null) {
 						metadata.setDid(did);
 						metadata.attachStore(this);
@@ -522,7 +523,6 @@ import { BASE64 } from "./internals";
 				throw new DIDStoreException("Load did metadata failed: " + did, e);
 			}
 		}
-
 
 		/**
 		 * Delete the specified DID.
@@ -562,18 +562,18 @@ import { BASE64 } from "./internals";
 		 * @return the DID array.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public listDids(): DID[] {
+		public async listDids(): Promise<DID[]> {
 			let dids = this.storage.listDids();
 			for (let did of dids) {
-				let metadata = this.loadDidMetadata(did);
+				let metadata = await this.loadDidMetadata(did);
 				did.setMetadata(metadata);
 			}
 
 			return dids;
 		}
 
-		public selectDids(filter: DIDStore.DIDFilter): DID[] {
-			let dids = this.listDids();
+		public async selectDids(filter: DIDStore.DIDFilter): Promise<DID[]> {
+			let dids = await this.listDids();
 
 			if (filter != null) {
 				let dest: DID[] = []
@@ -595,12 +595,12 @@ import { BASE64 } from "./internals";
 		 * @param credential the Credential object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public storeCredential(credential: VerifiableCredential) {
+		public async storeCredential(credential: VerifiableCredential): Promise<void> {
 			checkArgument(credential != null, "Invalid credential");
 
 			this.storage.storeCredential(credential);
 			if (credential.getMetadata().getStore() != this) {
-				let metadata = this.loadCredentialMetadata(credential.getId());
+				let metadata = await this.loadCredentialMetadata(credential.getId());
 				credential.getMetadata().merge(metadata);
 				this.storeCredentialMetadata(credential.getId(), credential.getMetadata());
 
@@ -618,17 +618,17 @@ import { BASE64 } from "./internals";
 		 * @return the Credential object
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public loadCredential(id: DIDURL | string): VerifiableCredential {
+		public async loadCredential(id: DIDURL | string): Promise<VerifiableCredential> {
 			checkArgument(id != null, "Invalid credential id");
 
 			if (typeof id === "string")
 				id = DIDURL.from(id);
 
 			try {
-				let value = this.cache.get(DIDStore.Key.forCredential(id), ()=>{
-					let vc = this.storage.loadCredential(id as DIDURL);
+				let value = await this.cache.getAsync(DIDStore.Key.forCredential(id), async ()=>{
+					let vc = await this.storage.loadCredential(id as DIDURL);
 					if (vc != null) {
-						vc.setMetadata(this.loadCredentialMetadata(id as DIDURL));
+						vc.setMetadata(await this.loadCredentialMetadata(id as DIDURL));
 						return {value: vc};
 					} else {
 						return {value: DIDStore.NULL};
@@ -718,12 +718,12 @@ import { BASE64 } from "./internals";
 		 * @return the meta data for Credential
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		 protected loadCredentialMetadata(id: DIDURL): CredentialMetadata {
+		 protected async loadCredentialMetadata(id: DIDURL): Promise<CredentialMetadata> {
 			checkArgument(id != null, "Invalid credential id");
 
 			try {
-				let value = this.cache.get(DIDStore.Key.forCredentialMetadata(id), () => {
-					let metadata = this.storage.loadCredentialMetadata(id);
+				let value = await this.cache.getAsync(DIDStore.Key.forCredentialMetadata(id), async () => {
+					let metadata = await this.storage.loadCredentialMetadata(id);
 					if (metadata != null) {
 						metadata.setId(id);
 						metadata.attachStore(this);
@@ -771,7 +771,7 @@ import { BASE64 } from "./internals";
 		 * @return the Credential array owned the specified DID.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public listCredentials(didOrString: DID | string): DIDURL[] {
+		public async listCredentials(didOrString: DID | string): Promise<DIDURL[]> {
 			checkArgument(didOrString != null, "Invalid did");
 
 			let did: DID;
@@ -782,7 +782,7 @@ import { BASE64 } from "./internals";
 
 			let ids = this.storage.listCredentials(did);
 			for (let id of ids) {
-				let metadata = this.loadCredentialMetadata(id);
+				let metadata = await this.loadCredentialMetadata(id);
 				id.setMetadata(metadata);
 			}
 
@@ -798,7 +798,7 @@ import { BASE64 } from "./internals";
 		 * @return the Credential array
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public selectCredentials(didOrString: DID | string, filter: DIDStore.CredentialFilter): DIDURL[] {
+		public async selectCredentials(didOrString: DID | string, filter: DIDStore.CredentialFilter): Promise<DIDURL[]> {
 			checkArgument(didOrString != null, "Invalid did");
 
 			let did: DID;
@@ -807,7 +807,7 @@ import { BASE64 } from "./internals";
 			else
 				did = DID.from(didOrString);
 
-			let vcs = this.listCredentials(did);
+			let vcs = await this.listCredentials(did);
 
 			if (filter != null) {
 				let dest: DIDURL[] = [];
@@ -854,7 +854,7 @@ import { BASE64 } from "./internals";
 		 * @return the original private key
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		 public loadPrivateKey(id: DIDURL, storepass?: string): Buffer {
+		 public async loadPrivateKey(id: DIDURL, storepass?: string): Promise<Buffer> {
 			checkArgument(id != null, "Invalid private key id");
 
 			let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
@@ -873,7 +873,7 @@ import { BASE64 } from "./internals";
 				if (encryptedKey)
 					return this.decrypt(encryptedKey, storepass);
 				else
-					return RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
+					return await RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
 			}
 		}
 
@@ -942,12 +942,12 @@ import { BASE64 } from "./internals";
 		 * @return the signature string
 		 * @throws DIDStoreException can not get DID Document if no specified sign key.
 		 */
-		public sign(id: DIDURL, storepass: string, digest: Buffer): string {
+		public async sign(id: DIDURL, storepass: string, digest: Buffer): Promise<string> {
 			checkArgument(id != null, "Invalid private key id");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 			checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
-			let key = HDKey.deserialize(this.loadPrivateKey(id, storepass));
+			let key = HDKey.deserialize(await this.loadPrivateKey(id, storepass));
 			let sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
 			key = null;
 
@@ -986,7 +986,7 @@ import { BASE64 } from "./internals";
 
 			let dids = this.storage.listDids();
 			for (let did of dids) {
-				let localDoc = this.storage.loadDid(did);
+				let localDoc = await this.storage.loadDid(did);
 				if (localDoc.isCustomizedDid()) {
 					let resolvedDoc = await did.resolve();
 					if (resolvedDoc == null)
@@ -1020,7 +1020,7 @@ import { BASE64 } from "./internals";
 
 				let vcIds = this.storage.listCredentials(did);
 				for (let vcId of vcIds) {
-					let localVc = this.storage.loadCredential(vcId);
+					let localVc = await this.storage.loadCredential(vcId);
 
 					let resolvedVc = await VerifiableCredential.resolve(vcId, localVc.getIssuer());
 					if (resolvedVc == null)
@@ -1032,17 +1032,17 @@ import { BASE64 } from "./internals";
 			}
 		}
 
-		public exportDid(did: DID | string, password: string, storepass: string): DIDStore.DIDExport {
+		public async exportDid(did: DID | string, password: string, storepass: string): Promise<DIDStore.DIDExport> {
 			if (typeof did === "string")
 				did = DID.from(did);
 
 			// All objects should load directly from storage,
 			// avoid affects the cached objects.
-			let doc = this.storage.loadDid(did);
+			let doc = await this.storage.loadDid(did);
 			if (doc == null)
 				throw new DIDStoreException("Export DID " + did + " failed, not exist.");
 
-			doc.setMetadata(this.storage.loadDidMetadata(did));
+			doc.setMetadata(await this.storage.loadDidMetadata(did));
 
 			log.debug("Exporting {}...", did.toString());
 
@@ -1050,13 +1050,13 @@ import { BASE64 } from "./internals";
 			de.setDocument(doc);
 
 			if (this.storage.containsCredentials(did)) {
-				let ids = Array.from(this.listCredentials(did));
+				let ids = Array.from(await this.listCredentials(did));
 				ids.sort();
 				for (let id of ids) {
 					log.debug("Exporting credential {}...", id.toString());
 
-					let vc = this.storage.loadCredential(id);
-					vc.setMetadata(this.storage.loadCredentialMetadata(id));
+					let vc = await this.storage.loadCredential(id);
+					vc.setMetadata(await this.storage.loadCredentialMetadata(id));
 					de.addCredential(vc);
 				}
 			}

@@ -261,7 +261,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @param withProof check the proof object or not
 	 * @throws MalformedDocumentException if the document object is invalid
 	 */
-	protected sanitize() {
+	protected sanitize(): Promise<void> {
 		if (this._proofs == null || this._proofs.length == 0)
 			throw new MalformedTransferTicketException("Missing ticket proof");
 
@@ -286,6 +286,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 		this._proofs = Array.from(this.proofs).map(([k, v]) => v);
 		Collections.sort(this._proofs);
+
+		return null;
 	}
 
 	public async seal(controller: DIDDocument, storepass: string): Promise<void> {
@@ -322,7 +324,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		this._proofs = null;
 
 		let json = this.serialize(true);
-		let sig = controller.signWithStorePass(storepass, Buffer.from(json));
+		let sig = await controller.signWithStorePass(storepass, Buffer.from(json));
 		let proof = Proof.newWithDIDURL(signKey, sig);
 		this.proofs.set(proof.getVerificationMethod().getDid(), proof);
 
@@ -337,9 +339,9 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 * @return the TransferTicket object.
 	 * @throws DIDSyntaxException if a parse error occurs.
 	 */
-	public static parseContent(content: string): TransferTicket {
+	public static async parseContent(content: string): Promise<TransferTicket> {
 		try {
-			return DIDEntity.parse<TransferTicket>(content, TransferTicket);
+			return await DIDEntity.parse<TransferTicket>(content, TransferTicket);
 		} catch (e) {
 			// DIDSyntaxException
 			if (e instanceof MalformedTransferTicketException)

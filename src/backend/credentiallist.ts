@@ -68,7 +68,8 @@ export class CredentialList extends ResolveResult<CredentialList> {
 		this.credentialIds.push(id);
 	}
 
-	public sanitize() {
+	// eslint-disable-next-line require-await
+	public async sanitize(): Promise<void> {
 		if (this.did == null)
 			throw new MalformedResolveResultException("Missing did");
 	}

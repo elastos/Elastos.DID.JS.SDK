@@ -166,10 +166,10 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 		let newInstance = new DIDURL();
 		newInstance.did = url.did;
 		newInstance.parameters = !url.parameters ? new Map() :
-				new Map<String, String>(url.parameters);
+				new Map<string, string>(url.parameters);
 		newInstance.path = url.path;
 		newInstance.query = !url.query ? new Map() :
-				new Map<String, String>(url.query);
+				new Map<string, string>(url.query);
 		newInstance.fragment = url.fragment;
 
 		return newInstance;

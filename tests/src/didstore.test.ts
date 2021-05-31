@@ -129,7 +129,7 @@ describe("DIDStore Tests", ()=>{
 			expect(resolved.isValid()).toBeTruthy();
 		}
 
-		let dids = store.listDids();
+		let dids = await store.listDids();
 		expect(dids.length).toEqual(100);
 	});
 
@@ -163,7 +163,7 @@ describe("DIDStore Tests", ()=>{
 			expect(deleted).toBeFalsy();
 		}
 
-		let remains = store.listDids();
+		let remains = await store.listDids();
 		expect(80).toEqual(remains.length);
 	});
 
@@ -189,17 +189,17 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		let doc = store.loadDid(issuer.getSubject());
+		let doc = await store.loadDid(issuer.getSubject());
 		expect(issuer.getSubject().equals(doc.getSubject())).toBeTruthy();
 		expect(issuer.getProof().getSignature()).toEqual(doc.getProof().getSignature());
 		expect(doc.isValid()).toBeTruthy();
 
-		doc = store.loadDid(test.getSubject().toString());
+		doc = await store.loadDid(test.getSubject().toString());
 		expect(issuer.getSubject().equals(doc.getSubject())).toBeTruthy();
 		expect(issuer.getProof().getSignature()).toEqual(doc.getProof().getSignature());
 		expect(doc.isValid()).toBeTruthy();
 
-		let dids = store.listDids();
+		let dids = await store.listDids();
 		expect(dids.length).toEqual(2);
 	});
 
@@ -261,14 +261,14 @@ describe("DIDStore Tests", ()=>{
 		expect(file.isFile()).toBeTruthy();
 
 		let id = DIDURL.from("#profile", user.getSubject());
-		vc = store.loadCredential(id);
+		vc = await store.loadCredential(id);
 		expect("MyProfile").toEqual(vc.getMetadata().getAlias());
 		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 		expect(id.equals(vc.getId())).toBeTruthy();
 		await expect(await vc.isValid()).toBeTruthy();
 
 		// try with full id string
-		vc = store.loadCredential(id.toString());
+		vc = await store.loadCredential(id.toString());
 		expect(vc).not.toBeNull();
 		expect("MyProfile").toEqual(vc.getMetadata().getAlias());
 		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
@@ -276,14 +276,14 @@ describe("DIDStore Tests", ()=>{
 		await expect(await vc.isValid()).toBeTruthy();
 
 		id = DIDURL.from("#twitter", user.getSubject());
-		vc = store.loadCredential(id.toString());
+		vc = await store.loadCredential(id.toString());
 		expect(vc).not.toBeNull();
 		expect("Twitter").toEqual(vc.getMetadata().getAlias());
 		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 		expect(id.equals(vc.getId())).toBeTruthy();
 		await expect(await vc.isValid()).toBeTruthy();
 
-		vc = store.loadCredential(DIDURL.from("#notExist", user.getSubject()));
+		vc = await store.loadCredential(DIDURL.from("#notExist", user.getSubject()));
 		expect(vc).toBeNull();
 
 		id = DIDURL.from("#twitter", user.getSubject());
@@ -307,7 +307,7 @@ describe("DIDStore Tests", ()=>{
 		vc = await testData.getInstantData().getUser1PassportCredential();
 		vc.getMetadata().setAlias("Passport");
 
-		let vcs = store.listCredentials(user.getSubject());
+		let vcs = await store.listCredentials(user.getSubject());
 		expect(4).toEqual(vcs.length);
 
 		for (let id of vcs) {
@@ -419,12 +419,12 @@ describe("DIDStore Tests", ()=>{
 			expect(resolved.isValid()).toBeTruthy();
 		}
 
-		let dids = store.listDids();
+		let dids = await store.listDids();
 		expect(10).toEqual(dids.length);
 
 		store.changePassword(TestConfig.storePass, "newpasswd");
 
-		dids = store.listDids();
+		dids = await store.listDids();
 		expect(10).toEqual(dids.length);
 
 		for (let i = 0; i < 10; i++) {
@@ -634,14 +634,14 @@ describe("DIDStore Tests", ()=>{
 		}
 	});
 
-	test("testOpenStoreOnExistEmptyFolder", ()=>{
+	test("testOpenStoreOnExistEmptyFolder", async ()=>{
 		let emptyFolder = new File(TestConfig.tempDir + File.SEPARATOR + "DIDTest-EmptyStore");
 		if (emptyFolder.exists())
 			emptyFolder.delete();
 
 		emptyFolder.createDirectory();
 
-		let store = DIDStore.open(emptyFolder.getAbsolutePath());
+		let store = await DIDStore.open(emptyFolder.getAbsolutePath());
 		expect(store).not.toBeNull();
 
 		store.close();

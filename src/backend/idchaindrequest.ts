@@ -146,7 +146,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 
 	protected abstract getSignerDocument(): Promise<DIDDocument>;
 
-	public sanitize() {
+	public async sanitize(): Promise<void> {
 	}
 
 	/**
@@ -178,7 +178,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 		return doc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), ...this.getSigningInputs());
 	}
 
-	public static parse<T extends DIDEntity<unknown>>(content: JSONObject, clazz: Class<T>): T {
+	public static parse<T extends DIDEntity<unknown>>(content: JSONObject, clazz: Class<T>): Promise<T> {
 		return DIDEntity.parse(content, clazz);
 	}
 }
@@ -315,12 +315,12 @@ export namespace IDChainRequest {
 		}
 
 		@JsonSetter({value: IDChainRequest.TICKET})
-		private setTicket(ticket: string) {
+		private async setTicket(ticket: string): Promise<void> {
 			checkArgument(ticket != null && ticket !== "", "Invalid ticket");
 
 			let json = BASE64.toString(ticket)
 			try {
-				this.transferTicket = TransferTicket.parseContent(json);
+				this.transferTicket = await TransferTicket.parseContent(json);
 			} catch (e) {
 				// MalformedTransferTicketException
 				throw new IllegalArgumentException("Invalid ticket", e);
