@@ -66,11 +66,11 @@ describe('VerifiablePresentation Tests', () => {
 					|| vc.getId().getFragment() === "passport").toBeTruthy();
 		}
 
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#profile"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#email"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#twitter"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#passport"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeNull();
+		expect(vp.getCredential(new DIDURL("#profile", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#email", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#twitter", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#passport", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
 		await expect(await vp.isGenuine()).toBeTruthy();
 		await expect(await vp.isValid()).toBeTruthy();
@@ -91,7 +91,7 @@ describe('VerifiablePresentation Tests', () => {
 		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeNull();
+		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
 		await expect(await vp.isGenuine()).toBeTruthy();
 		await expect(await vp.isValid()).toBeTruthy();
@@ -165,11 +165,11 @@ describe('VerifiablePresentation Tests', () => {
 					|| vc.getId().getFragment() === "passport").toBeTruthy();
 		}
 
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#profile"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#email"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#twitter"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#passport"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeNull();
+		expect(vp.getCredential(new DIDURL("#profile", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#email", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#twitter", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#passport", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
 		await expect(await vp.isGenuine()).toBeTruthy();
 		await expect(await vp.isValid()).toBeTruthy();
@@ -194,7 +194,7 @@ describe('VerifiablePresentation Tests', () => {
 
 		expect(vp).not.toBeNull();
 
-		expect(DIDURL.newWithDID(doc.getSubject(), "#test-vp").equals(vp.getId())).toBeTruthy();
+		expect(new DIDURL("#test-vp", doc.getSubject()).equals(vp.getId())).toBeTruthy();
 		expect(2).toEqual(vp.getType().length);
 		expect("TestPresentation").toEqual(vp.getType()[0]);
 		expect("Trail").toEqual(vp.getType()[1]);
@@ -211,11 +211,11 @@ describe('VerifiablePresentation Tests', () => {
 					|| vc.getId().getFragment() === "passport").toBeTruthy();
 		}
 
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#profile"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#email"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#twitter"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#passport"))).not.toBeNull();
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeNull();
+		expect(vp.getCredential(new DIDURL("#profile", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#email", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#twitter", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#passport", vp.getHolder()))).not.toBeNull();
+		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
 		await expect(await vp.isGenuine()).toBeTruthy();
 		await expect(await vp.isValid()).toBeTruthy();
@@ -239,7 +239,7 @@ describe('VerifiablePresentation Tests', () => {
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeFalsy(); // null or undefined
+		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeFalsy(); // null or undefined
 
 		let resolved = await vp.getHolder().resolve();
 		expect(resolved).not.toBeNull();
@@ -262,7 +262,7 @@ describe('VerifiablePresentation Tests', () => {
 
 		expect(vp).not.toBeNull();
 
-		expect(DIDURL.newWithDID(doc.getSubject(), "#test-vp").equals(vp.getId())).toBeTruthy();
+		expect(new DIDURL("#test-vp", doc.getSubject()).equals(vp.getId())).toBeTruthy();
 		expect(3).toEqual(vp.getType().length);
 		expect("Baz").toEqual(vp.getType()[0]);
 		expect("FooBar").toEqual(vp.getType()[1]);
@@ -270,7 +270,7 @@ describe('VerifiablePresentation Tests', () => {
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
 		expect(0).toEqual(vp.getCredentialCount());
-		expect(vp.getCredential(DIDURL.newWithDID(vp.getHolder(), "#notExist"))).toBeFalsy(); // null or undefined
+		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeFalsy(); // null or undefined
 
 		let resolved = await vp.getHolder().resolve();
 		expect(resolved).not.toBeNull();
