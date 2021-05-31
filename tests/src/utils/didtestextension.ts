@@ -62,6 +62,17 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
 		if (DIDTestExtension.adapter instanceof Web3Adapter) {
 			await DIDTestExtension.adapter.awaitStandardPublishingDelay();
 		}
+		else if (DIDTestExtension.adapter instanceof SimulatedIDChainAdapter) {
+			// TODO: Normally we shouldn't have to wait because the simchain should
+			// return from the "publish" api call only when the document is really
+			// "published". But it seems like if we call publish/resolve too fast this
+			// doesn't work.  To be checked.
+			return new Promise(resolve => {
+				setTimeout(() => {
+					resolve();
+				}, 2000);
+			})
+		}
 	}
 
 	/* public void close() throws Throwable {

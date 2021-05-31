@@ -1,7 +1,7 @@
 
 export class BASE64 {
 
-    public static fromString(value: string, useURLFormat: boolean = false): string{
+    public static fromString(value: string, useURLFormat = false): string{
         let base64string = Buffer.from(value, "utf-8").toString("base64");
         if (useURLFormat) base64string = this.convertToURI(base64string)
         return base64string
@@ -15,7 +15,7 @@ export class BASE64 {
     public static toUrlFormat(b64String: string): string{
         return this.convertToURI(b64String)
     }
-   
+
     public static toHex(b64String: string): string{
         return this.decode(b64String)
     }
@@ -25,9 +25,9 @@ export class BASE64 {
         return Buffer.from(b64str, "base64").toString("utf-8")
     }
 
-   
 
-   
+
+
 
     // TODO: Should clean up the above mess conversion methods.
 
@@ -39,7 +39,7 @@ export class BASE64 {
         return Buffer.from(b64str, "base64").toString("hex");
     }
 
-    
+
 
 
     public static encode(hexToBase64: string): string{
@@ -47,13 +47,13 @@ export class BASE64 {
         return  this.convertToURI(b64str)
     }
 
- 
+
 
     private static convertToURI(b64str: string) : string{
-        return b64str.replace(/[+\/]/g, (item) => item == '+' ? '-' : '_').replace(/=+$/m, '');
+        return b64str.replace(/[+/]/g, (item) => item == '+' ? '-' : '_').replace(/=+$/m, '');
     }
-    
+
     private static convertFromURI(b64ustr: string) : string{
-        return b64ustr.replace(/[-_]/g, (item) => item == '-' ? '+' : '\/') + '='
+        return b64ustr.replace(/[-_]/g, (item) => item == '-' ? '+' : '/') + '='
     }
 }

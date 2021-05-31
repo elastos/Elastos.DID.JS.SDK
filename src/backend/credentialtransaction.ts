@@ -20,12 +20,16 @@
  * SOFTWARE.
  */
 
-import { JsonCreator } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
 import type { DIDURL } from "../internals";
-import type { CredentialRequest } from "./credentialrequest";
+import { CredentialRequest } from "./credentialrequest";
 import { IDTransaction } from "./idtransaction";
 
 export class CredentialTransaction extends IDTransaction<CredentialTransaction, CredentialRequest> {
+	@JsonProperty({value: IDTransaction.OPERATION})
+	@JsonClassType({type: () => [CredentialRequest]})
+	protected request: CredentialRequest;
+
 	protected CredentialTransaction() {}
 
 	/**

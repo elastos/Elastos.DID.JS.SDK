@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
 import type { DIDDocument } from "../internals";
 import { DIDURL } from "../internals";
 import { base64Decode } from "../internals";
@@ -37,6 +37,16 @@ import { IDChainRequest } from "./idchaindrequest";
  */
 @JsonCreator()
 export class CredentialRequest extends IDChainRequest<CredentialRequest> {
+	@JsonProperty({value: IDChainRequest.HEADER})
+	@JsonClassType({type: () => [IDChainRequest.Header]})
+	protected header: IDChainRequest.Header;
+	@JsonProperty({value: IDChainRequest.PAYLOAD})
+	@JsonClassType({type: () => [String]})
+	protected payload: string;
+	@JsonProperty({value: IDChainRequest.PROOF})
+	@JsonClassType({type: () => [IDChainRequest.Proof]})
+	protected proof: IDChainRequest.Proof;
+
 	private id: DIDURL;
 	private vc: VerifiableCredential;
 	private signer: DIDDocument;

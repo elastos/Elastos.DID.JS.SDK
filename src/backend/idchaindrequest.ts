@@ -20,10 +20,13 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty, JsonFormat, JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonValue, JsonSetter } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty, JsonFormat,
+	JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder,
+	JsonValue, JsonSetter, JsonSerialize, JsonDeserialize
+} from "jackson-js";
 import type { Class } from "../class";
 import { Constants } from "../constants";
-import { BASE64 } from "../internals";
+import { BASE64, Serializer, DIDBiographyStatus } from "../internals";
 import type { DID } from "../internals";
 import type { DIDDocument } from "../internals";
 import { DIDEntity } from "../internals";
@@ -32,6 +35,8 @@ import { IllegalArgumentException } from "../exceptions/exceptions";
 import type { JSONObject } from "../json";
 import { TransferTicket } from "../internals";
 import { checkArgument } from "../internals";
+import type { JsonParserTransformerContext, JsonStringifierTransformerContext } from "jackson-js/dist/@types";
+import { Deserializer } from "../serializers";
 
 /**
  * The class records the information of IDChain Request.
@@ -61,12 +66,9 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 	public static VERIFICATION_METHOD = "verificationMethod";
 	public static SIGNATURE = "signature";
 
-	@JsonProperty({value: IDChainRequest.HEADER})
-	private header: IDChainRequest.Header;
-	@JsonProperty({value: IDChainRequest.PAYLOAD})
-	private payload: string;
-	@JsonProperty({value: IDChainRequest.PROOF})
-	private proof: IDChainRequest.Proof;
+	protected header: IDChainRequest.Header;
+	protected payload: string;
+	protected proof: IDChainRequest.Proof;
 
 	protected IDChainRequest() {}
 
@@ -182,10 +184,22 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 }
 
 export namespace IDChainRequest {
+	class OperationSerializer extends Serializer {
+		public static serialize(value: Operation, context: JsonStringifierTransformerContext): string {
+			return value ? String(value) : null;
+		}
+	}
+	class OperationDeserializer extends Deserializer {
+		public static deserialize(value: string | number, context: JsonParserTransformerContext): Operation {
+			return Operation.fromString(String(value));
+		}
+	}
 
 	/**
 	 * The IDChain Request Operation
 	 */
+	 @JsonSerialize({using: OperationSerializer.serialize})
+	 @JsonDeserialize({using: OperationDeserializer.deserialize})
 	 export class Operation {
 		/**
 		 * Create a new DID
@@ -242,14 +256,18 @@ export namespace IDChainRequest {
 	@JsonCreator()
 	export class Header {
 		@JsonProperty({value: IDChainRequest.SPECIFICATION})
+		@JsonClassType({type: () => [String]})
 		private specification: string;
 		@JsonProperty({value: IDChainRequest.OPERATION})
+		@JsonClassType({type: () => [Operation]})
 		private operation: Operation;
 		@JsonProperty({value: IDChainRequest.PREVIOUS_TXID})
 		@JsonInclude({value: JsonIncludeType.NON_NULL})
+		@JsonClassType({type: () => [String]})
 		private previousTxid: string;
 		@JsonProperty({value: IDChainRequest.TICKET})
 		@JsonInclude({value: JsonIncludeType.NON_NULL})
+		@JsonClassType({type: () => [String]})
 		private ticket: string;
 		private transferTicket: TransferTicket;
 
@@ -316,10 +334,13 @@ export namespace IDChainRequest {
 	@JsonPropertyOrder({value:["type", "verificationMethod", "signature"]})
 	export class Proof {
 		@JsonProperty({value: IDChainRequest.TYPE})
+		@JsonClassType({type: () => [String]})
 		private type: string;
 		@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD})
+		@JsonClassType({type: () => [DIDURL]})
 		private verificationMethod: DIDURL;
 		@JsonProperty({value: IDChainRequest.SIGNATURE})
+		@JsonClassType({type: () => [String]})
 		private signature: string;
 
 		// Java: @JsonCreator()

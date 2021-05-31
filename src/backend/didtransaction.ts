@@ -20,15 +20,19 @@
  * SOFTWARE.
  */
 
-import { JsonCreator } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
 import type { DID } from "../internals";
-import type { DIDRequest } from "./didrequest";
+import { DIDRequest } from "./didrequest";
 import { IDTransaction } from "./idtransaction";
 
 /**
  * The class records the information of the specified DID's transaction.
  */
 export class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
+	@JsonProperty({value: IDTransaction.OPERATION})
+	@JsonClassType({type: () => [DIDRequest]})
+	protected request: DIDRequest;
+
 	@JsonCreator()
 	static toDIDTransaction(): DIDTransaction {
 		return new DIDTransaction();

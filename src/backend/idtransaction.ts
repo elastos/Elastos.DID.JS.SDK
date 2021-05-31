@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
 import { DIDEntity } from "../internals";
 import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
 import type { IDChainRequest } from "./idchaindrequest";
@@ -32,11 +32,12 @@ export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 	protected static OPERATION = "operation";
 
 	@JsonProperty({value: IDTransaction.TXID})
+	@JsonClassType({type: () => [String]})
 	private txId: string;
 	@JsonProperty({value: IDTransaction.TIMESTAMP})
+	@JsonClassType({type: () => [Date]})
 	private timestamp: Date;
-	@JsonProperty({value: IDTransaction.OPERATION})
-	private request: R;
+	protected request: R;
 
 	/**
 	 * Constructs the DIDTransaction with the given value.

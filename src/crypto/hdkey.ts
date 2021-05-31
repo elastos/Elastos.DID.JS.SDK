@@ -48,9 +48,6 @@ export class HDKey {
 	// Pre-derive publickey path: m/44'/0'/0'
 	public static PRE_DERIVED_PUBLICKEY_PATH = "m/44'/0'/0'" //"44H/0H/0H";
 
-
-
-
 	public static newWithMnemonic(mnemonic: string, passphrase: string): HDKey {
 		let seed = Mnemonic.toSeed(mnemonic, passphrase)
 		return HDKey.newWithSeed(seed);
@@ -65,7 +62,7 @@ export class HDKey {
 	}
 
 	private constructor(private key: DeterministicKey) {
- }
+ 	}
 
 	public getPrivateKeyBytes(): Buffer {
 		return this.key.privateKey;
@@ -159,13 +156,11 @@ export class HDKey {
 		return extendedPublicKeyBytes
 	}
 
-
-
 	public deriveWithPath(path: string): HDKey {
 		return new HDKey(this.key.derive(path));
 	}
 
-	public deriveWithIndex(index: number, hardened: boolean = false): HDKey {
+	public deriveWithIndex(index: number, hardened = false): HDKey {
 		if (hardened) index += HDKey.HARDENED_BIT;
 		return new HDKey(this.key.deriveChild(index));
 	}
@@ -176,8 +171,6 @@ export class HDKey {
 	// 	return new KeyPair("", "")
 	// }
 
-
-
 	private static getRedeemScript(pk: Buffer): Buffer {
 		let script = Buffer.alloc(35)
 		script[0] = 33;
@@ -185,8 +178,6 @@ export class HDKey {
 		script[34] = HDKey.PADDING_STANDARD;
 		return script;
 	}
-
-
 
 	private static getBinAddressFromBuffer(pk: Buffer): Buffer {
 		let script = this.getRedeemScript(pk);
@@ -209,9 +200,6 @@ export class HDKey {
 	}
 
 	public getAddress(): string {
-
-
-
 		let binAddress = this.getBinAddress()
 
 		return Base58.encode(binAddress);
