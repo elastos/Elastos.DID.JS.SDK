@@ -56,7 +56,7 @@ describe('let Tests', () => {
 
 		let vc = await cd.getCredential("user1", "twitter");
 
-		expect(DIDURL.newWithDID(user.getSubject(), "#twitter").equals(vc.getId()));
+		expect(new DIDURL("#twitter", user.getSubject()).equals(vc.getId()));
 
 		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
 		expect(vc.getType().indexOf("TwitterCredential") >= 0).toBeTruthy();
@@ -81,7 +81,7 @@ describe('let Tests', () => {
     	let user = await cd.getDocument("user1");
 		let vc = await cd.getCredential("user1", "passport");
 
-		expect(DIDURL.newWithDID(user.getSubject(), "#passport").equals(vc.getId()));
+		expect(new DIDURL("#passport", user.getSubject()).equals(vc.getId()));
 
 		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
 		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
@@ -108,7 +108,7 @@ describe('let Tests', () => {
     	let user = await cd.getDocument("user1");
 		let vc = await cd.getCredential("user1", "json");
 
-		expect(DIDURL.newWithDID(user.getSubject(), "#json").equals(vc.getId()));
+		expect(new DIDURL("#json", user.getSubject()).equals(vc.getId()));
 
 		expect(vc.getType().indexOf("JsonCredential") >= 0).toBeTruthy();
 		expect(vc.getType().indexOf("TestCredential") >= 0).toBeTruthy();
@@ -138,7 +138,7 @@ describe('let Tests', () => {
 
     	let vc = await cd.getCredential("foo", "email");
 
-		expect(DIDURL.newWithDID(foo.getSubject(), "#email").equals(vc.getId()));
+		expect(new DIDURL("#email", foo.getSubject()).equals(vc.getId()));
 
 		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
 		expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeTruthy();
@@ -166,7 +166,7 @@ describe('let Tests', () => {
 
     	let vc = await cd.getCredential("foobar", "license");
 
-		expect(DIDURL.newWithDID(foobar.getSubject(), "#license").equals(vc.getId()));
+		expect(new DIDURL("#license", foobar.getSubject()).equals(vc.getId()));
 
 		expect(vc.getType().indexOf("LicenseCredential") >= 0).toBeTruthy();
 		expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeTruthy();
@@ -195,7 +195,7 @@ describe('let Tests', () => {
 
     	let vc = await cd.getCredential("foobar", "services");
 
-		expect(DIDURL.newWithDID(foobar.getSubject(), "#services").equals(vc.getId()));
+		expect(new DIDURL("#services", foobar.getSubject()).equals(vc.getId()));
 
 		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
 		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
@@ -867,7 +867,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		console.log("Resolving credential {}...", id.getFragment());
 
-	   		let ref = DIDURL.newWithDID(did, "#test" + index--);
+	   		let ref = new DIDURL("#test" + index--, did);
 	   		expect(ref.equals(id));
 
 	   		let vc = await VerifiableCredential.resolve(id);
@@ -883,7 +883,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		console.log("Resolving credential {}...", id.getFragment());
 
-	   		let ref = DIDURL.newWithDID(did, "#test" + index--);
+	   		let ref = new DIDURL("#test" + index--, did);
 	   		expect(ref.equals(id));
 
 	   		let vc = await VerifiableCredential.resolve(id);
@@ -910,7 +910,7 @@ describe('let Tests', () => {
 		   	for (let id of ids) {
 		   		console.log("Resolving credential {}...", id.getFragment());
 
-		   		let ref = DIDURL.newWithDID(did, "#test" + --index);
+		   		let ref = new DIDURL("#test" + --index, did);
 		   		expect(ref.equals(id));
 
 		   		let vc = await VerifiableCredential.resolve(id);
@@ -938,7 +938,7 @@ describe('let Tests', () => {
 		   	for (let id of ids) {
 		   		console.log("Resolving credential {}...", id.getFragment());
 
-		   		let ref = DIDURL.newWithDID(did, "#test" + --index);
+		   		let ref = new DIDURL("#test" + --index, did);
 		   		expect(ref.equals(id));
 
 		   		let vc = await VerifiableCredential.resolve(id);
