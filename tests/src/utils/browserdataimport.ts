@@ -1,4 +1,3 @@
-import { TestConfig } from "./testconfig";
 import browserBundledData from "../../generated/browserdata.json";
 import { File } from "@elastosfoundation/did-js-sdk";
 import { runningInBrowser } from "@elastosfoundation/did-js-sdk";
