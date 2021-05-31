@@ -29,6 +29,8 @@ import { SimulatedIDChain } from "./internals";
 import { SimulatedIDChainAdapter } from "./internals";
 import { runningInBrowser } from "./utils";
 
+Logger.setLogLevel(Logger.TRACE);
+
 /**
  * Global initializer. For now, needed by the browser to initialize BrowserFS before running anything else.
  * TODO: Make sure this can't be called twice - possibly replace with a "promisifiable" subscriber event.
