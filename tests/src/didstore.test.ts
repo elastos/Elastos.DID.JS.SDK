@@ -34,9 +34,9 @@ let testData: TestData;
 let store: DIDStore;
 
 describe("DIDStore Tests", ()=>{
-	beforeEach(() => {
+	beforeEach(async () => {
 		testData = new TestData();
-		store = testData.getStore();
+		store = await testData.getStore();
 	})
 
 	afterEach(async () => {
@@ -430,7 +430,7 @@ describe("DIDStore Tests", ()=>{
 		for (let i = 0; i < 10; i++) {
 			let alias = "my did " + i;
 			let did = identity.getDid(i);
-			let doc = store.loadDid(did);
+			let doc = await store.loadDid(did);
 			expect(doc).not.toBeNull();
 			expect(doc.isValid()).toBeTruthy();
 
@@ -463,7 +463,7 @@ describe("DIDStore Tests", ()=>{
 			expect(doc.isValid()).toBeTruthy();
 		}
 
-		let dids = store.listDids();
+		let dids = await store.listDids();
 		expect(10).toEqual(dids.length);
 
 		expect(() => {
@@ -479,9 +479,9 @@ describe("DIDStore Tests", ()=>{
 			let cd = testData.getCompatibleData(version);
 			await cd.loadAll();
 
-			let store = DIDStore.open(cd.getStoreDir());
+			let store = await DIDStore.open(cd.getStoreDir());
 
-			let dids = store.listDids();
+			let dids = await store.listDids();
 			expect(version == 2 ? 10 : 4).toEqual(dids.length);
 
 			for (let did of dids) {
@@ -588,7 +588,7 @@ describe("DIDStore Tests", ()=>{
 
 			await createDataForPerformanceTest(store);
 
-			let dids = store.listDids();
+			let dids = await store.listDids();
 			expect(10).toEqual(dids.length);
 
 			let start = new Date().getTime();
@@ -655,7 +655,7 @@ describe("DIDStore Tests", ()=>{
 		testData.getInstantData().getUser1PassportCredential();
 		testData.getInstantData().getUser1TwitterCredential();
 
-		let did = store.listDids().get(0);
+		let did = await store.listDids().get(0);
 
 		let tempDir = File.open(TestConfig.tempDir);
 		tempDir.mkdirs();
