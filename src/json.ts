@@ -11,7 +11,7 @@ export interface JSONArray extends Array<string|number|boolean|JSONObject|JSONAr
 
 export function sortJSONObject(obj: JSONObject): JSONObject {
     let keys = Object.keys(obj);
-    let sortedKeys = keys.sort((key1, key2) => {
+    keys.sort((key1, key2) => {
         // return key1.localeCompare(key2, "en", {sensitivity: 'variant', caseFirst: "upper"});
         if (key1 < key2) return -1;
         if (key1 > key2) return 1;
@@ -23,7 +23,7 @@ export function sortJSONObject(obj: JSONObject): JSONObject {
     for(var index in keys){
         let key = keys[index];
         let value = obj[key];
-        if (value instanceof Map) {
+        if (Object.keys(value).length > 0 && !(value instanceof Array)) { // Objects with properties only.
             sortedObj[key] = sortJSONObject(value as JSONObject);
         } else {
             sortedObj[key] = value;
