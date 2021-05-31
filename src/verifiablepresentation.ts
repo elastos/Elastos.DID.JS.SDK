@@ -48,7 +48,7 @@ class NormalizedURLSerializer extends Serializer {
 class NormalizedURLDeserializer extends Deserializer {
 	public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
 		try {
-			return DIDURL.newWithUrl(value);
+			return new DIDURL(value);
 		} catch (e) {
 			throw new ParentException("Invalid public key");
 		}
@@ -204,9 +204,9 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		checkArgument(id != null, "Invalid credential id");
 
 		if (typeof id === "string")
-			id = DIDURL.valueOf(this.getHolder(), id)
+			id = DIDURL.from(id, this.getHolder())
 		else if (id.getDid() == null)
-			id = DIDURL.valueOf(this.getHolder(), id);
+			id = DIDURL.from(id, this.getHolder());
 
 		return this.credentials.get(id);
 	}
@@ -376,7 +376,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			did = DID.from(did);
 
 		if (typeof signKey === "string")
-			signKey = DIDURL.valueOf(did, signKey);
+			signKey = DIDURL.from(signKey, did);
 
 		let holder = store.loadDid(did);
 		if (holder == null)
@@ -429,11 +429,11 @@ export namespace VerifiablePresentation {
 			checkArgument(id != null, "Invalid id");
 
 			if (typeof id === "string")
-				id = DIDURL.valueOf(this.holder.getSubject(), id);
+				id = DIDURL.from(id, this.holder.getSubject());
 
 			checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.holder.getSubject())), "Invalid id");
 
-			this.presentation.id = DIDURL.valueOf(this.holder.getSubject(), id);
+			this.presentation.id = DIDURL.from(id, this.holder.getSubject());
 			return this;
 		}
 

@@ -192,7 +192,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 				this.vc = VerifiableCredential.parseContent(json);
 				this.id = this.vc.getId();
 			} else {
-				this.id = DIDURL.valueOfUrl(payload);
+				this.id = DIDURL.from(payload);
 			}
 		} catch (e) {
 			// DIDException

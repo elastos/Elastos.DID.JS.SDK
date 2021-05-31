@@ -71,7 +71,7 @@ export class Issuer {
             if (signKey instanceof DIDURL) {
                 return new Issuer(doc, signKey);
             } else {
-                return new Issuer(doc, DIDURL.valueOf(doc.getSubject(), signKey));
+                return new Issuer(doc, DIDURL.from(signKey, doc.getSubject()));
             }
         } else {
             return new Issuer(doc);
@@ -88,7 +88,7 @@ export class Issuer {
             if (signKey instanceof DIDURL) {
                 return new Issuer(didDoc, signKey);
             } else {
-                return new Issuer(didDoc, DIDURL.valueOf(did, signKey));
+                return new Issuer(didDoc, DIDURL.from(signKey, did));
             }
         } else {
             return new Issuer(didDoc);

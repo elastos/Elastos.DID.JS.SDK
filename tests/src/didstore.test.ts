@@ -260,7 +260,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		let id = DIDURL.valueOf(user.getSubject(), "#profile");
+		let id = DIDURL.from("#profile", user.getSubject());
 		vc = store.loadCredential(id);
 		expect("MyProfile").toEqual(vc.getMetadata().getAlias());
 		expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
@@ -275,7 +275,7 @@ describe("DIDStore Tests", ()=>{
 		expect(id.equals(vc.getId())).toBeTruthy();
 		await expect(await vc.isValid()).toBeTruthy();
 
-		id = DIDURL.valueOf(user.getSubject(), "#twitter");
+		id = DIDURL.from("#twitter", user.getSubject());
 		vc = store.loadCredential(id.toString());
 		expect(vc).not.toBeNull();
 		expect("Twitter").toEqual(vc.getMetadata().getAlias());
@@ -283,13 +283,13 @@ describe("DIDStore Tests", ()=>{
 		expect(id.equals(vc.getId())).toBeTruthy();
 		await expect(await vc.isValid()).toBeTruthy();
 
-		vc = store.loadCredential(DIDURL.valueOf(user.getSubject(), "#notExist"));
+		vc = store.loadCredential(DIDURL.from("#notExist", user.getSubject()));
 		expect(vc).toBeNull();
 
-		id = DIDURL.valueOf(user.getSubject(), "#twitter");
+		id = DIDURL.from("#twitter", user.getSubject());
 		expect(store.containsCredential(id)).toBeTruthy();
 		expect(store.containsCredential(id.toString())).toBeTruthy();
-		expect(store.containsCredential(DIDURL.valueOf(user.getSubject(), "#notExists"))).toBeFalsy();
+		expect(store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
 	});
 
 	test("testListCredentials", async ()=>{
@@ -357,10 +357,10 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		let deleted = store.deleteCredential(DIDURL.valueOf(user.getSubject(), "#twitter"));
+		let deleted = store.deleteCredential(DIDURL.from("#twitter", user.getSubject()));
 		expect(deleted).toBeTruthy();
 
-		deleted = store.deleteCredential(DIDURL.valueOf(user.getSubject(), "#passport").toString());
+		deleted = store.deleteCredential(DIDURL.from("#passport", user.getSubject()).toString());
 		expect(deleted).toBeTruthy();
 
 		deleted = store.deleteCredential(user.getSubject().toString() + "#notExist");
@@ -374,10 +374,10 @@ describe("DIDStore Tests", ()=>{
 				"credentials", "#passport");
 		expect(file.exists()).toBeFalsy();
 
-		expect(store.containsCredential(DIDURL.valueOf(user.getSubject(), "#email"))).toBeTruthy();
+		expect(store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
 		expect(store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
 
-		expect(store.containsCredential(DIDURL.valueOf(user.getSubject(), "#twitter"))).toBeFalsy();
+		expect(store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
 		expect(store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
 	});
 
@@ -598,7 +598,7 @@ describe("DIDStore Tests", ()=>{
 					let doc = store.loadDid(did);
 					expect(did.equals(doc.getSubject())).toBeTruthy();
 
-					let id = DIDURL.valueOf(did, "#cred-1");
+					let id = DIDURL.from("#cred-1", did);
 					let vc = store.loadCredential(id);
 					expect(id.equals(vc.getId())).toBeTruthy();
 				}

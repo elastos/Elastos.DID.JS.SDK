@@ -26,8 +26,8 @@ import {
 } from "@elastosfoundation/did-js-sdk";
 
 const verifyNewDidCreation = (valueToValidate: string, base: DID = null) =>{
-	let url: DIDURL = DIDURL.newWithDID(base, valueToValidate);
-	expect(url.toString()).toBe(valueToValidate);
+	let url: DIDURL = new DIDURL(valueToValidate, base);
+	expect(url.toString()).toBe((base ? base.toString() : "") + valueToValidate);
 }
 
 describe('DIDURL Tests', () => {
@@ -43,7 +43,7 @@ describe('DIDURL Tests', () => {
 
 	beforeEach(()=>{
 		did = new DID(testDID);
-		url = DIDURL.newWithUrl(testURL);
+		url = new DIDURL(testURL);
 	})
 
 	test('Test Constructor with Canonical URL', () => {
@@ -127,44 +127,44 @@ describe('DIDURL Tests', () => {
 	test('Test compatible with plain fragment', () => {
 
 		let testURL = testDID + "#test";
-		let url = DIDURL.newWithUrl(testURL);
+		let url = new DIDURL(testURL);
 
 		expect(url.toString()).toBe(testURL);
 		expect(url.getFragment()).toBe("test");
 
-		url = DIDURL.newWithDID(did, "test")
+		url = new DIDURL("test", did)
 
 		expect(url.toString()).toBe(testURL);
 		expect(url.getFragment()).toBe("test");
 
-		url = DIDURL.newWithUrl("test")
+		url = new DIDURL("test")
 		expect(url.getFragment()).toBe("test");
 
 	});
 
 
 	test('Test Constructor Error 1', () => {
-		expect(() => {DIDURL.newWithUrl("did:elastos:1234567890;" + params + path + query + fragment)}).toThrowError();
+		expect(() => {new DIDURL("did:elastos:1234567890;" + params + path + query + fragment)}).toThrowError();
 	})
 
 	test('Test Constructor Error 2', () => {
 
-		expect(() => {DIDURL.newWithUrl("did:example:1234567890" + params + path + query + fragment)}).toThrowError();
+		expect(() => {new DIDURL("did:example:1234567890" + params + path + query + fragment)}).toThrowError();
 	})
 
 	test('Test Constructor Error 3', () => {
 
-		expect(() => {DIDURL.newWithUrl("did:elastos::1234567890" + params + path + query + fragment)}).toThrowError();
+		expect(() => {new DIDURL("did:elastos::1234567890" + params + path + query + fragment)}).toThrowError();
 	})
 
 	test('Test Constructor Error 4', () => {
 
-		expect(() => {DIDURL.newWithUrl("did:example:1234567890" + params + path + "?" + "#" + fragment)}).toThrowError();
+		expect(() => {new DIDURL("did:example:1234567890" + params + path + "?" + "#" + fragment)}).toThrowError();
 	})
 
 	test('Test Constructor Error 5', () => {
 
-		expect(() => {DIDURL.newWithUrl("did:example:1234567890" + params + path + query + "#")}).toThrowError();
+		expect(() => {new DIDURL("did:example:1234567890" + params + path + query + "#")}).toThrowError();
 	})
 
 	test('Test GetDID', () => {
@@ -230,21 +230,21 @@ describe('DIDURL Tests', () => {
 	})
 
 	test('Test HashCode', () => {
-		let other = DIDURL.newWithUrl(testURL);
+		let other = new DIDURL(testURL);
 		expect(other.hashCode()).toBe(url.hashCode());
 
-		other = DIDURL.newWithUrl("did:elastos:1234567890#test");
+		other = new DIDURL("did:elastos:1234567890#test");
 		expect(other.hashCode()).not.toBe(url.hashCode());
 	})
 
 	test('Test Equals', () => {
-		let other = DIDURL.newWithUrl(testURL);
+		let other = new DIDURL(testURL);
 
 
 		expect(url.equals(other)).toBeTruthy()
 		expect(url.equals(testURL)).toBeTruthy()
 
-		other = DIDURL.newWithUrl("did:elastos:1234567890#test");
+		other = new DIDURL("did:elastos:1234567890#test");
 		expect(url.equals(other)).toBeFalsy();
 		expect(url.equals("did:elastos:1234567890#test")).toBeFalsy()
 

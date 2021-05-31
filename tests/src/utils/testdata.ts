@@ -235,9 +235,9 @@ export class CompatibleData {
 				let start = did.length + 4;
 				let end = kf.length - 3;
 				let fragment = kf.substring(start, end);
-				let id = DIDURL.newWithDID(doc.getSubject(), "#" + fragment);
+				let id = new DIDURL("#" + fragment, doc.getSubject());
 
-				let sk = HDKey.deserializeBase58(this.fileContent(kf)).serialize();
+				let sk = HDKey.deserializeBase58(this.fileContent(this.dataPath + "/" + kf)).serialize();
 				this.testData.store.storePrivateKey(id, sk, TestConfig.storePass);
 			}
 
@@ -419,18 +419,18 @@ export class InstantData {
 			db.addCredential(vc);
 
 			let key = TestData.generateKeypair();
-			let id = DIDURL.valueOf(doc.getSubject(), "#key2");
+			let id = DIDURL.from("#key2", doc.getSubject());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 			this.testData.store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 
 			// No private key for testKey
 			key = TestData.generateKeypair();
-			id = DIDURL.valueOf(doc.getSubject(), "#testKey");
+			id = DIDURL.from("#testKey", doc.getSubject());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 
 			// No private key for recovery
 			key = TestData.generateKeypair();
-			id = DIDURL.valueOf(doc.getSubject(), "#recovery");
+			id = DIDURL.from("#recovery", doc.getSubject());
 			db.addAuthorizationKey(id, new DID("did:elastos:" + key.getAddress()),
 					key.getPublicKeyBase58());
 
@@ -457,12 +457,12 @@ export class InstantData {
 
 			let temp = TestData.generateKeypair();
 			db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
-			this.testData.store.storePrivateKey(DIDURL.valueOf(doc.getSubject(), "#key2"),
+			this.testData.store.storePrivateKey(DIDURL.from("#key2", doc.getSubject()),
 					temp.serialize(), TestConfig.storePass);
 
 			temp = TestData.generateKeypair();
 			db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
-			this.testData.store.storePrivateKey(DIDURL.valueOf(doc.getSubject(), "#key3"),
+			this.testData.store.storePrivateKey(DIDURL.from("#key3", doc.getSubject()),
 					temp.serialize(), TestConfig.storePass);
 
 			temp = TestData.generateKeypair();
@@ -550,7 +550,7 @@ export class InstantData {
 		if (this.vcUser1Passport == null) {
 			let doc = await this.getUser1Document();
 
-			let id = DIDURL.newWithDID(doc.getSubject(), "#passport");
+			let id = new DIDURL("#passport", doc.getSubject());
 
 			let selfIssuer = new Issuer(doc);
 			let cb = selfIssuer.issueFor(doc.getSubject());
@@ -577,7 +577,7 @@ export class InstantData {
 		if (this.vcUser1Twitter == null) {
 			let doc = await this.getUser1Document();
 
-			let id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
+			let id = new DIDURL("#twitter", doc.getSubject());
 
 			let kycIssuer = new Issuer(this.idIssuer);
 			let cb = kycIssuer.issueFor(doc.getSubject());
@@ -604,7 +604,7 @@ export class InstantData {
 		if (this.vcUser1Json == null) {
 			let doc = await this.getUser1Document();
 
-			let id = DIDURL.newWithDID(doc.getSubject(), "#json");
+			let id = new DIDURL("#json", doc.getSubject());
 
 			let kycIssuer = new Issuer(this.idIssuer);
 			let cb = kycIssuer.issueFor(doc.getSubject());
@@ -630,7 +630,7 @@ export class InstantData {
 
 			let doc = await this.getUser1Document();
 
-			let id = DIDURL.newWithDID(doc.getSubject(), "#email");
+			let id = new DIDURL("#email", doc.getSubject());
 
 			let kycIssuer = new Issuer(this.idExampleCorp);
 			let cb = kycIssuer.issueFor(doc.getSubject());
@@ -767,13 +767,13 @@ export class InstantData {
 			db.addCredential(vc);
 
 			let key = TestData.generateKeypair();
-			let id = DIDURL.newWithDID(doc.getSubject(), "#key2");
+			let id = new DIDURL("#key2", doc.getSubject());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 			this.testData.store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 
 			// No private key for testKey
 			key = TestData.generateKeypair();
-			id = DIDURL.newWithDID(doc.getSubject(), "#testKey");
+			id = new DIDURL("#testKey", doc.getSubject());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 
 			doc = db.seal(TestConfig.storePass);
@@ -806,12 +806,12 @@ export class InstantData {
 
 			let temp = TestData.generateKeypair();
 			db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
-			this.testData.store.storePrivateKey(DIDURL.newWithDID(doc.getSubject(), "#key2"),
+			this.testData.store.storePrivateKey(DIDURL.from("#key2", doc.getSubject()),
 					temp.serialize(), TestConfig.storePass);
 
 			temp = TestData.generateKeypair();
 			db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
-			this.testData.store.storePrivateKey(DIDURL.newWithDID(doc.getSubject(), "#key3"),
+			this.testData.store.storePrivateKey(DIDURL.from("#key3", doc.getSubject()),
 					temp.serialize(), TestConfig.storePass);
 
 			db.addService("#vault", "Hive.Vault.Service",
@@ -893,7 +893,7 @@ export class InstantData {
 		if (this.vcFooBarServices == null) {
 			let doc = await this.getFooBarDocument();
 
-			let id = DIDURL.newWithDID(doc.getSubject(), "#services");
+			let id = new DIDURL("#services", doc.getSubject());
 
 			let selfIssuer = new Issuer(doc, this.idUser1.getDefaultPublicKeyId());
 			let cb = selfIssuer.issueFor(doc.getSubject());
@@ -924,7 +924,7 @@ export class InstantData {
 
 			let doc = await this.getFooBarDocument();
 
-			let id = DIDURL.newWithDID(doc.getSubject(), "#license");
+			let id = new DIDURL("#license", doc.getSubject());
 
 			let kycIssuer = new Issuer(this.idExampleCorp);
 			let cb = kycIssuer.issueFor(doc.getSubject());
@@ -973,7 +973,7 @@ export class InstantData {
 			let doc = await this.getFooBarDocument();
 
 			let pb = VerifiablePresentation.createFor(
-					doc.getSubject(), DIDURL.newWithUrl("did:elastos:foobar#key2"), this.testData.store);
+					doc.getSubject(), new DIDURL("did:elastos:foobar#key2"), this.testData.store);
 
 			let vp = pb.realm("https://example.com/")
 					.nonce("873172f58701a9ee686f0630204fee59")
@@ -1027,7 +1027,7 @@ export class InstantData {
 
 			let doc = await this.getFooDocument();
 
-			let id = DIDURL.newWithDID(doc.getSubject(), "#email");
+			let id = new DIDURL("#email", doc.getSubject());
 
 			let kycIssuer = new Issuer(this.idIssuer);
 			let cb = kycIssuer.issueFor(doc.getSubject());
