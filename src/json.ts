@@ -23,7 +23,7 @@ export function sortJSONObject(obj: JSONObject): JSONObject {
     for(var index in keys){
         let key = keys[index];
         let value = obj[key];
-        if (Object.keys(value).length > 0 && !(value instanceof Array)) { // Objects with properties only.
+        if (typeof value === "object" && Object.keys(value).length > 0 && !(value instanceof Array)) { // Objects with properties only.
             sortedObj[key] = sortJSONObject(value as JSONObject);
         } else {
             sortedObj[key] = value;

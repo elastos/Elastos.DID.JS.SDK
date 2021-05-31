@@ -30,7 +30,7 @@ export class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDB
 	@JsonProperty({value: RpcConstants.RESULT})
 	@JsonClassType({type: ()=>[DIDBiography]})
 	protected result: DIDBiography;
-	
+
 	constructor(responseId: string, resultOrError: DIDBiography | ResolveError | JsonRpcError) {
 		super();
 		this.jsonrpc = ResolveResponse.JSON_RPC_VERSION;
@@ -56,15 +56,15 @@ export class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDB
 		return this.result;
 	}
 
-	protected sanitize() {
-		super.sanitize();
+	protected async sanitize(): Promise<void> {
+		await super.sanitize();
 
 		if (this.result == null && this.error == null)
 			throw new MalformedResolveResponseException("Missing result or error");
 
 		if (this.result != null) {
 			try {
-				this.result.sanitize();
+				await this.result.sanitize();
 			} catch (e) {
 				// MalformedResolveResultException
 				throw new MalformedResolveResponseException("Invalid result", e);

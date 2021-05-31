@@ -28,5 +28,5 @@ export abstract class ResolveResult<T> extends DIDEntity<T> {
 	 *
 	 * @throws MalformedResolveResultException if the DID object is invalid
 	 */
-	public sanitize() {}
+	public async sanitize(): Promise<void> {}
 }

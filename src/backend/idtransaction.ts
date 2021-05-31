@@ -70,7 +70,7 @@ export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 		return this.request;
 	}
 
-	public sanitize() {
+	public async sanitize(): Promise<void> {
 		if (this.txId == null || this.txId === "")
 			throw new MalformedIDChainTransactionException("Missing txid");
 
@@ -81,7 +81,7 @@ export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
 			throw new MalformedIDChainTransactionException("Missing request");
 
 		try {
-			this.request.sanitize();
+			await this.request.sanitize();
 		} catch (e) {
 			// MalformedIDChainRequestException
 			throw new MalformedIDChainTransactionException("Invalid request", e);

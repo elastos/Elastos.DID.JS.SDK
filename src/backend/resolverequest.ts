@@ -112,7 +112,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
 		return this._params === rr._params; // TODO: PROBABLY BUGGY
 	}
 
-	public static parse<T extends DIDEntity<T>>(content: string, clazz: Class<T>): T {
+	public static parse<T extends DIDEntity<T>>(content: string, clazz: Class<T>): Promise<T> {
 		return DIDEntity.parse(content, clazz);
 	}
 }

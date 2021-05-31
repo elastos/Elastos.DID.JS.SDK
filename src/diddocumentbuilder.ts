@@ -629,7 +629,7 @@ export class DIDDocumentBuilder {
      * @throws InvalidKeyException there is no authentication key.
      */
     // Java: addCredential()
-    public createAndAddCredential(storepass: string, id: DIDURL | string, subject: JSONObject | string = null, types: string[] = null, expirationDate: Date = null): DIDDocumentBuilder {
+    public async createAndAddCredential(storepass: string, id: DIDURL | string, subject: JSONObject | string = null, types: string[] = null, expirationDate: Date = null): Promise<DIDDocumentBuilder> {
         this.checkNotSealed();
         checkArgument(id != null, "Invalid publicKey id");
 
@@ -650,7 +650,7 @@ export class DIDDocumentBuilder {
             expirationDate = this.document.getExpires();
 
         try {
-            let vc = cb.id(this.canonicalId(id))
+            let vc = await cb.id(this.canonicalId(id))
                 .type(...types)
                 .properties(subject)
                 .expirationDate(expirationDate)
@@ -956,7 +956,7 @@ export class DIDDocumentBuilder {
      * @throws MalformedDocumentException if the DIDDocument is malformed
      * @throws DIDStoreException if an error occurs when access DID store
      */
-    public seal(storepass: string): DIDDocument {
+    public async seal(storepass: string): Promise<DIDDocument> {
         this.checkNotSealed();
         checkArgument(storepass && storepass != null, "Invalid storepass");
 
@@ -969,7 +969,7 @@ export class DIDDocumentBuilder {
             throw new AlreadySignedException(signerDoc.getSubject().toString());
 
         let json = this.document.serialize(true);
-        let sig = this.document.signWithId(signKey, storepass, Buffer.from(json));
+        let sig = await this.document.signWithId(signKey, storepass, Buffer.from(json));
         let proof = new DIDDocumentProof(signKey, sig);
         this.document.proofs.set(proof.getCreator().getDid(), proof);
         this.document._proofs = Array.from(this.document.proofs.values());

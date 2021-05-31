@@ -117,9 +117,11 @@ export class FileSystemStorage implements DIDStorage {
 	constructor(context: string) {
 		this.storeRoot = new File(context);
 		this.currentDataDir = FileSystemStorage.DATA_DIR;
+	}
 
+	public async init(): Promise<void> {
 		if (this.storeRoot.exists())
-			this.checkStore();
+			await this.checkStore();
 		else
 			this.initializeStore();
 	}
@@ -138,7 +140,7 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	private checkStore() {
+	private async checkStore(): Promise<void> {
 		log.debug("Checking DID store at {}", this.storeRoot.getAbsolutePath());
 
 		if (this.storeRoot.isFile()) {
@@ -177,7 +179,7 @@ export class FileSystemStorage implements DIDStorage {
 
 		try {
 			let metadataContent = metadataFile.readText();
-			let metadata = DIDStoreMetadata.parse<DIDStoreMetadata>(metadataContent, DIDStoreMetadata);
+			let metadata = await DIDStoreMetadata.parse<DIDStoreMetadata>(metadataContent, DIDStoreMetadata);
 
 			if (metadata.getType() !== DIDStoreMetadata.DID_STORE_TYPE)
 				throw new DIDStorageException("Unknown DIDStore type");
@@ -253,12 +255,12 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	public loadMetadata(): DIDStoreMetadata {
+	public async loadMetadata(): Promise<DIDStoreMetadata> {
 		try {
 			let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
 			let metadata: DIDStoreMetadata = null;
 			if (file.exists())
-				metadata = DIDStoreMetadata.parse<DIDStoreMetadata>(file.readText(), DIDStoreMetadata);
+				metadata = await DIDStoreMetadata.parse<DIDStoreMetadata>(file.readText(), DIDStoreMetadata);
 
 			return metadata;
 		} catch (e) {
@@ -289,12 +291,12 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	public loadRootIdentityMetadata(id: string): RootIdentity.Metadata {
+	public async loadRootIdentityMetadata(id: string): Promise<RootIdentity.Metadata> {
 		try {
 			let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
 			let metadata: RootIdentity.Metadata = null;
 			if (file.exists())
-				metadata = RootIdentity.Metadata.parse<RootIdentity.Metadata>(file.readText(), RootIdentity.Metadata);
+				metadata = await RootIdentity.Metadata.parse<RootIdentity.Metadata>(file.readText(), RootIdentity.Metadata);
 
 			return metadata;
 		} catch (e) {
@@ -452,12 +454,12 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	public loadDidMetadata(did: DID): DIDMetadata {
+	public async loadDidMetadata(did: DID): Promise<DIDMetadata> {
 		try {
 			let file = this.getDidMetadataFile(did, false);
 			let metadata: DIDMetadata = null;
 			if (file.exists())
-				metadata = DIDMetadata.parse<DIDMetadata>(file.readText(), DIDMetadata);
+				metadata = await DIDMetadata.parse<DIDMetadata>(file.readText(), DIDMetadata);
 
 			return metadata;
 		} catch (e) {
@@ -476,13 +478,13 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	public loadDid(did: DID): DIDDocument {
+	public async loadDid(did: DID): Promise<DIDDocument> {
 		try {
 			let file = this.getDidFile(did, false);
 			if (!file.exists())
 				return null;
 
-			return DIDDocument.parse<DIDDocument>(file.readText(), DIDDocument);
+			return await DIDDocument.parse<DIDDocument>(file.readText(), DIDDocument);
 		} catch (e) {
 			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load DID document error: " + did, e);
@@ -553,13 +555,13 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	public loadCredentialMetadata(id: DIDURL): CredentialMetadata {
+	public async loadCredentialMetadata(id: DIDURL): Promise<CredentialMetadata> {
 		try {
 			let file = this.getCredentialMetadataFile(id, false);
 			if (!file.exists())
 				return null;
 
-			return CredentialMetadata.parse<CredentialMetadata>(file.readText(), CredentialMetadata);
+			return await CredentialMetadata.parse<CredentialMetadata>(file.readText(), CredentialMetadata);
 		} catch (e) {
 			// DIDSyntaxException | IOException
 			throw new DIDStorageException("Load credential metadata error: " + id, e);
@@ -576,7 +578,7 @@ export class FileSystemStorage implements DIDStorage {
 		}
 	}
 
-	public loadCredential(id: DIDURL): VerifiableCredential {
+	public loadCredential(id: DIDURL): Promise<VerifiableCredential> {
 		try {
 			let file = this.getCredentialFile(id, false);
 			if (!file.exists())

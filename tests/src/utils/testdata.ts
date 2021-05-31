@@ -55,10 +55,6 @@ export class TestData {
 			importBundledBrowserData();
 
 			DIDTestExtension.setup();
-
-			this.store = DIDStore.open(TestConfig.storeRoot);
-			if (!this.store)
-				throw new Error("TestData failed to initialize the store (null or undefined)");
 		}
 		catch(e) {
 			// Catch errors here because Jest will silence them. So we print them to get more clues.
@@ -85,7 +81,13 @@ export class TestData {
 		return this.rootKey.deriveWithPath(HDKey.DERIVE_PATH_PREFIX + this.index++);
 	}
 
-	public getStore(): DIDStore {
+	public async getStore(): Promise<DIDStore> {
+		if (!this.store) {
+			this.store = await DIDStore.open(TestConfig.storeRoot);
+			if (!this.store)
+				throw new Error("TestData failed to initialize the store (null or undefined)");
+		}
+
     	return this.store;
 	}
 
@@ -222,7 +224,7 @@ export class CompatibleData {
 			return this.data[key];
 
 		// load the document
-		let doc = DIDDocument.parseContent(this.getDidFile(did, type));
+		let doc = await DIDDocument.parseContent(this.getDidFile(did, type));
 
 		if (!(baseKey in this.data)) {
 			// If not stored before, store it and load private keys
@@ -280,7 +282,7 @@ export class CompatibleData {
 		if (this.data[key] !== null && this.data[key] !== undefined)
 			return this.data[key];
 
-		let credential = VerifiableCredential.parseContent(this.getCredentialFile(did, vc, type));
+		let credential = await VerifiableCredential.parseContent(this.getCredentialFile(did, vc, type));
 
 		this.testData.store.storeCredential(credential);
 
@@ -410,7 +412,7 @@ export class InstantData {
 				email: "issuer@example.com"
 			}
 
-			let vc = cb.id("#profile")
+			let vc = await cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -434,7 +436,7 @@ export class InstantData {
 			db.addAuthorizationKey(id, new DID("did:elastos:" + key.getAddress()),
 					key.getPublicKeyBase58());
 
-			doc = db.seal(TestConfig.storePass);
+			doc = await db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass);
 			await DIDTestExtension.awaitStandardPublishingDelay();
@@ -515,7 +517,7 @@ export class InstantData {
 				"twitter": "@john"
 			}
 
-			let vcProfile = cb.id("#profile")
+			let vcProfile = await cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -527,7 +529,7 @@ export class InstantData {
 				"email": "john@example.com"
 			};
 
-			let vcEmail = cb.id("#email")
+			let vcEmail = await cb.id("#email")
 					.type("BasicProfileCredential",
 							"InternetAccountCredential", "EmailCredential")
 					.properties(props)
@@ -535,7 +537,7 @@ export class InstantData {
 
 			db.addCredential(vcProfile);
 			db.addCredential(vcEmail);
-			doc = db.seal(TestConfig.storePass);
+			doc = await db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass);
 			await DIDTestExtension.awaitStandardPublishingDelay();
@@ -560,7 +562,7 @@ export class InstantData {
 				"passpord": "S653258Z07"
 			}
 
-			let vcPassport = cb.id(id)
+			let vcPassport = await cb.id(id)
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -586,7 +588,7 @@ export class InstantData {
 				"twitter": "@john"
 			}
 
-			let vcTwitter = cb.id(id)
+			let vcTwitter = await cb.id(id)
 					.type("InternetAccountCredential", "TwitterCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -611,7 +613,7 @@ export class InstantData {
 
 			let jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
-			let vcJson = cb.id(id)
+			let vcJson = await cb.id(id)
 					.type("TestCredential", "JsonCredential")
 					.properties(jsonProps)
 					.seal(TestConfig.storePass);
@@ -639,7 +641,7 @@ export class InstantData {
 				title: "CEO"
 			};
 
-			let vc = cb.id(id)
+			let vc = await cb.id(id)
 					.type("JobPositionCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -654,9 +656,9 @@ export class InstantData {
 		if (this.vpUser1Nonempty == null) {
 			let doc = await this.getUser1Document();
 
-			let pb = VerifiablePresentation.createFor(doc.getSubject(), null, this.testData.store);
+			let pb = await VerifiablePresentation.createFor(doc.getSubject(), null, this.testData.store);
 
-			let vp = pb
+			let vp = await pb
 					.credentials(doc.getCredential("#profile"), doc.getCredential("#email"))
 					.credentials(await this.getUser1PassportCredential())
 					.credentials(await this.getUser1TwitterCredential())
@@ -675,9 +677,9 @@ export class InstantData {
 		if (this.vpUser1Empty == null) {
 			let doc = await this.getUser1Document();
 
-			let pb = VerifiablePresentation.createFor(doc.getSubject(), null, this.testData.store);
+			let pb = await VerifiablePresentation.createFor(doc.getSubject(), null, this.testData.store);
 
-			let vp = pb.realm("https://example.com/")
+			let vp = await pb.realm("https://example.com/")
 			.nonce("873172f58701a9ee686f0630204fee59")
 			.seal(TestConfig.storePass);
 
@@ -705,7 +707,7 @@ export class InstantData {
 
 			db.createAndAddCredential(TestConfig.storePass, "#profile", props);
 
-			doc = db.seal(TestConfig.storePass);
+			doc = await db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass);
 			await DIDTestExtension.awaitStandardPublishingDelay();
@@ -758,7 +760,7 @@ export class InstantData {
 				email: "contact@example.com"
 			};
 
-			let vc = cb.id("#profile")
+			let vc = await cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -776,7 +778,7 @@ export class InstantData {
 			id = new DIDURL("#testKey", doc.getSubject());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
 
-			doc = db.seal(TestConfig.storePass);
+			doc = await db.seal(TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass);
 			await DIDTestExtension.awaitStandardPublishingDelay();
@@ -857,7 +859,7 @@ export class InstantData {
 			    email: "contact@foobar.com"
 			};
 
-			let vcProfile = cb.id("#profile")
+			let vcProfile = await cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -869,7 +871,7 @@ export class InstantData {
 			    email: "foobar@example.com"
 			};
 
-			let vcEmail = cb.id("#email")
+			let vcEmail = await cb.id("#email")
 					.type("BasicProfileCredential",
 							"InternetAccountCredential", "EmailCredential")
 					.properties(props)
@@ -877,8 +879,8 @@ export class InstantData {
 
 			db.addCredential(vcProfile);
 			db.addCredential(vcEmail);
-			doc = db.seal(TestConfig.storePass);
-			doc = this.idUser3.signWithDocument(doc, TestConfig.storePass);
+			doc = await db.seal(TestConfig.storePass);
+			doc = await this.idUser3.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass, signKey);
 			await DIDTestExtension.awaitStandardPublishingDelay();
@@ -903,7 +905,7 @@ export class InstantData {
 			    Outsourceing: "https://foobar.com/outsourcing"
 			};
 
-			let vc = cb.id(id)
+			let vc = await cb.id(id)
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -934,7 +936,7 @@ export class InstantData {
 			    scope: "Consulting"
 			};
 
-			let vc = cb.id(id)
+			let vc = await cb.id(id)
 					.type("LicenseCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -950,10 +952,10 @@ export class InstantData {
 		if (this.vpFooBarNonempty == null) {
 			let doc = await this.getFooBarDocument();
 
-			let pb = VerifiablePresentation.createFor(
+			let pb = await VerifiablePresentation.createFor(
 					doc.getSubject(), this.idUser1.getDefaultPublicKeyId(), this.testData.store);
 
-			let vp = pb
+			let vp = await pb
 					.credentials(doc.getCredential("#profile"),
 							doc.getCredential("#email"))
 					.credentials(await this.getFooBarServiceCredential())
@@ -972,10 +974,10 @@ export class InstantData {
 		if (this.vpFooBarEmpty == null) {
 			let doc = await this.getFooBarDocument();
 
-			let pb = VerifiablePresentation.createFor(
+			let pb = await VerifiablePresentation.createFor(
 					doc.getSubject(), new DIDURL("did:elastos:foobar#key2"), this.testData.store);
 
-			let vp = pb.realm("https://example.com/")
+			let vp = await pb.realm("https://example.com/")
 					.nonce("873172f58701a9ee686f0630204fee59")
 					.seal(TestConfig.storePass);
 
@@ -1007,7 +1009,7 @@ export class InstantData {
 			let controllers : DID[] = [this.idUser2.getSubject()];
 			let did = new DID("did:elastos:foo");
 			let doc = await this.idUser1.newCustomizedDidWithController(did, controllers, 2, TestConfig.storePass);
-			doc = this.idUser2.signWithDocument(doc, TestConfig.storePass);
+			doc = await this.idUser2.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 
 			doc.setEffectiveController(this.idUser2.getSubject());
@@ -1036,7 +1038,7 @@ export class InstantData {
 			    email: "foo@example.com"
 			};
 
-			let vc = cb.id(id)
+			let vc = await cb.id(id)
 					.type("InternetAccountCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -1058,8 +1060,8 @@ export class InstantData {
 				               this.idUser3.getSubject()];
 			let did = new DID("did:elastos:bar");
 			let doc = await this.idUser1.newCustomizedDidWithController(did, controllers, 3, TestConfig.storePass);
-			doc = this.idUser2.signWithDocument(doc, TestConfig.storePass);
-			doc = this.idUser3.signWithDocument(doc, TestConfig.storePass);
+			doc = await this.idUser2.signWithDocument(doc, TestConfig.storePass);
+			doc = await this.idUser3.signWithDocument(doc, TestConfig.storePass);
 			this.testData.store.storeDid(doc);
 			await doc.publish(TestConfig.storePass, this.idUser3.getDefaultPublicKeyId());
 			await DIDTestExtension.awaitStandardPublishingDelay();

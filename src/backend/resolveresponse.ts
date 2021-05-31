@@ -112,7 +112,8 @@ export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T>
 		return this.error.getMessage();
 	}
 
-	protected sanitize() {
+	// eslint-disable-next-line require-await
+	protected async sanitize(): Promise<void> {
 		if (this.jsonrpc == null || this.jsonrpc !== ResolveResponse.JSON_RPC_VERSION)
 			throw new MalformedResolveResponseException("Invalid JsonRPC version");
 	}

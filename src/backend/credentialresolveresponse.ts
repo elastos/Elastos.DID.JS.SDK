@@ -56,15 +56,15 @@ export class CredentialResolveResponse extends ResolveResponse<CredentialResolve
 		return this.result;
 	}
 
-	protected sanitize() {
-		super.sanitize();
+	protected async sanitize(): Promise<void> {
+		await super.sanitize();
 
 		if (this.result == null && this.error == null)
 			throw new MalformedResolveResponseException("Missing result or error");
 
 		if (this.result != null) {
 			try {
-				this.result.sanitize();
+				await this.result.sanitize();
 			} catch (e) {
 				// MalformedResolveResultException
 				throw new MalformedResolveResponseException("Invalid result", e);

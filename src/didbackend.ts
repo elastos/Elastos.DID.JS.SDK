@@ -178,19 +178,19 @@ export class DIDBackend {
 
 		let requestJson = request.serialize(true);
 		let resolvedJson = await this.getAdapter().resolve(requestJson);
-		let response: ResolveResponse<any, any>  = null;
+		let response: ResolveResponse<any, any> = null;
 		try {
 			switch (request.getMethod()) {
 			case DIDResolveRequest.METHOD_NAME:
-				response = DIDResolveResponse.parse(resolvedJson, DIDResolveResponse);
+				response = await DIDResolveResponse.parse(resolvedJson, DIDResolveResponse);
 				break;
 
 			case CredentialResolveRequest.METHOD_NAME:
-				response = CredentialResolveResponse.parse(resolvedJson, CredentialResolveResponse);
+				response = await CredentialResolveResponse.parse(resolvedJson, CredentialResolveResponse);
 				break;
 
 			case CredentialListRequest.METHOD_NAME:
-				response = CredentialListResponse.parse(resolvedJson, CredentialListResponse);
+				response = await CredentialListResponse.parse(resolvedJson, CredentialListResponse);
 				break;
 
 			default:
@@ -447,8 +447,8 @@ export class DIDBackend {
 	 * @throws DIDTransactionException publishing did failed because of did transaction error.
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	public createDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		let request = DIDRequest.create(doc, signKey, storepass);
+	public async createDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
+		let request = await DIDRequest.create(doc, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
@@ -463,14 +463,14 @@ export class DIDBackend {
 	 * @throws DIDTransactionException publishing did failed because of did transaction error.
 	 * @throws DIDStoreException did document does not attach store or there is no sign key to get.
 	 */
-	public updateDid(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		let request = DIDRequest.update(doc, previousTxid, signKey, storepass);
+	public async updateDid(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
+		let request = await DIDRequest.update(doc, previousTxid, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
 
-	public transferDid(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		let request = DIDRequest.transfer(doc, ticket, signKey, storepass);
+	public async transferDid(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
+		let request = await DIDRequest.transfer(doc, ticket, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
@@ -484,8 +484,8 @@ export class DIDBackend {
      * @throws DIDTransactionException publishing did failed because of did transaction error.
      * @throws DIDStoreException did document does not attach store or there is no sign key to get.
      */
-	public deactivateDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		let request = DIDRequest.deactivate(doc, signKey, storepass);
+	public async deactivateDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
+		let request = await DIDRequest.deactivate(doc, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
@@ -509,23 +509,23 @@ export class DIDBackend {
 		this.invalidDidCache(target.getSubject());
 	}
 
-	public declareCredential(vc: VerifiableCredential, signer: DIDDocument,
-			signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
-		let request = CredentialRequest.declare(vc, signer, signKey, storepass);
+	public async declareCredential(vc: VerifiableCredential, signer: DIDDocument,
+			signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
+		let request = await CredentialRequest.declare(vc, signer, signKey, storepass);
 		this.createTransaction(request, adapter);
 		this.invalidCredentialCache(vc.getId(), null);
 		this.invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
 
-	public revokeCredential(vc: VerifiableCredential | DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter) {
+	public async revokeCredential(vc: VerifiableCredential | DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		if (vc instanceof VerifiableCredential) {
-			let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
+			let request = await CredentialRequest.revoke(vc, signer, signKey, storepass);
 			this.createTransaction(request, adapter);
 			this.invalidCredentialCache(vc.getId(), null);
 			this.invalidCredentialCache(vc.getId(), vc.getIssuer());
 		}
 		else {
-			let request = CredentialRequest.revoke(vc, signer, signKey, storepass);
+			let request = await CredentialRequest.revoke(vc, signer, signKey, storepass);
 			this.createTransaction(request, adapter);
 			this.invalidCredentialCache(vc, null);
 			this.invalidCredentialCache(vc, signer.getSubject());

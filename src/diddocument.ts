@@ -533,7 +533,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
         return key.getJCEKeyPair();
     }
 
-    private getKeyPairWithPass(id: DIDURL, storepass: string): KeyPair {
+    private async getKeyPairWithPass(id: DIDURL, storepass: string): Promise<KeyPair> {
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
@@ -549,7 +549,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
         if (!this.getMetadata().getStore().containsPrivateKey(id))
             throw new InvalidKeyException("No private key: " + id);
 
-        let key = HDKey.deserialize(this.getMetadata().getStore().loadPrivateKey(
+        let key = HDKey.deserialize(await this.getMetadata().getStore().loadPrivateKey(
                 id, storepass));
 
         return key.getJCEKeyPair();
@@ -564,12 +564,12 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
      *         32 bytes long start from position 46)
      * @throws DIDStoreException there is no DID store to get root private key
      */
-    public derive(index: number, storepass: string): string {
+    public async derive(index: number, storepass: string): Promise<string> {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
         this.checkAttachedStore();
         this.checkIsPrimitive();
 
-        let key = HDKey.deserialize(this.getMetadata().getStore().loadPrivateKey(
+        let key = HDKey.deserialize(await this.getMetadata().getStore().loadPrivateKey(
             this.getDefaultPublicKeyId(), storepass));
 
         return key.deriveWithIndex(index).serializeBase58();
@@ -608,12 +608,12 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
      * @return the extended derived private key
      * @throws DIDStoreException there is no DID store to get root private key
      */
-    public deriveFromIdentifier(identifier: string, securityCode: number, storepass: string): string {
+    public async deriveFromIdentifier(identifier: string, securityCode: number, storepass: string): Promise<string> {
         checkArgument(identifier && identifier != null, "Invalid identifier");
         this.checkAttachedStore();
         this.checkIsPrimitive();
 
-        let key = HDKey.deserialize(this.getMetadata().getStore().loadPrivateKey(
+        let key = HDKey.deserialize(await this.getMetadata().getStore().loadPrivateKey(
             this.getDefaultPublicKeyId(), storepass));
 
         let path = this.mapToDerivePath(identifier, securityCode);
@@ -975,7 +975,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
     protected async sanitize(): Promise<void> {
         await this.sanitizeControllers();
         this.sanitizePublickKey();
-        this.sanitizeCredential();
+        await this.sanitizeCredential();
         this.sanitizeService();
 
         if (this.expires == null)
@@ -1193,7 +1193,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
             throw new MalformedDocumentException("Missing default public key.");
     }
 
-    private sanitizeCredential() {
+    private async sanitizeCredential(): Promise<void> {
         if (this._credentials == null || this._credentials.length == 0) {
             this._credentials = [];
             this.credentials = new ComparableMap();
@@ -1219,7 +1219,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
                 vc.getSubject().setId(this.getSubject());
 
             try {
-                vc.sanitize();
+                await vc.sanitize();
             } catch (e) {
                 // DIDSyntaxException
                 throw new MalformedDocumentException("Invalid credential: " + vc.getId(), e);
@@ -1462,7 +1462,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key
      */
-    public signWithId(id: DIDURL | string | null, storepass: string, ...data: Buffer[]): string {
+    public signWithId(id: DIDURL | string | null, storepass: string, ...data: Buffer[]): Promise<string> {
         checkArgument(storepass && storepass != null, "Invalid storepass");
         checkArgument(data != null && data.length > 0, "Invalid input data");
         this.checkAttachedStore();
@@ -1478,7 +1478,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
         return this.signDigest(signId, storepass, digest);
     }
 
-	public signWithStorePass(storepass: string, ...data: Buffer[]): string {
+	public signWithStorePass(storepass: string, ...data: Buffer[]): Promise<string> {
 		return this.signWithId(null, storepass, ...data);
 	}
 
@@ -1491,7 +1491,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
         return ticket;
     }
 
-    public signWithDocument(doc: DIDDocument, storepass: string): DIDDocument {
+    public signWithDocument(doc: DIDDocument, storepass: string): Promise<DIDDocument> {
         checkArgument(doc != null, "Invalid document");
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
@@ -1532,7 +1532,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
      * @throws InvalidKeyException if the sign key is invalid
      * @throws DIDStoreException there is no DIDStore to get private key
      */
-    public signDigest(id: DIDURL | string | null, storepass: string, digest: Buffer): string {
+    public signDigest(id: DIDURL | string | null, storepass: string, digest: Buffer): Promise<string> {
         checkArgument(storepass && storepass != null, "Invalid storepass");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
         this.checkAttachedStore();
@@ -1675,8 +1675,8 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
         docBuilder.setMultiSignature(multisig);
 
         try {
-            doc = docBuilder.seal(storepass);
-            this.getStore().storeDid(doc);
+            doc = await docBuilder.seal(storepass);
+            await this.getStore().storeDid(doc);
             return doc;
         } catch (ignore) {
             throw new UnknownInternalException(ignore);
@@ -1743,7 +1743,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
                 throw new InvalidKeyException(signKey.toString());
         }
 
-        DIDBackend.getInstance().transferDid(this, ticket, signKey, storepass, adapter);
+        await DIDBackend.getInstance().transferDid(this, ticket, signKey, storepass, adapter);
     }
 
     /**
@@ -1759,7 +1759,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
      * @throws DIDStoreException there is no activated DID or no lastest DID Document in DIDStore.
      * @throws InvalidKeyException there is no an authentication key.
      */
-    public async publish(storepass: string, inputSignKey: DIDURL | string = null, force = false, adapter: DIDTransactionAdapter = null) {
+    public async publish(storepass: string, inputSignKey: DIDURL | string = null, force = false, adapter: DIDTransactionAdapter = null): Promise<void> {
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
@@ -1835,10 +1835,10 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
 
         if (!lastTxid || lastTxid == null) {
             DIDDocument.log.info("Try to publish[create] {}...", this.getSubject());
-            DIDBackend.getInstance().createDid(this, signKey, storepass, adapter);
+            await DIDBackend.getInstance().createDid(this, signKey, storepass, adapter);
         } else {
             DIDDocument.log.info("Try to publish[update] {}...", this.getSubject());
-            DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
+            await DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
         }
 
         this.getMetadata().setPreviousSignature(reolvedSignautre);
@@ -1877,10 +1877,10 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
                 throw new InvalidKeyException(signKey.toString());
         }
 
-        DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
+        await DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
 
         if (this.getSignature() !== doc.getSignature())
-            this.getStore().storeDid(doc);
+            await this.getStore().storeDid(doc);
     }
 
     /**
@@ -1957,10 +1957,10 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
                     throw new InvalidKeyException(signKey.toString());
             }
 
-            DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, adapter);
+            await DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, adapter);
 
             if (this.getStore().containsDid(target))
-                this.getStore().storeDid(targetDoc);
+                await this.getStore().storeDid(targetDoc);
         }
     }
 
@@ -1971,7 +1971,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
      * @return the DIDDocument object.
      * @throws MalformedDocumentException if a parse error occurs.
      */
-    public static parseContent(content: string): DIDDocument {
+    public static parseContent(content: string): Promise<DIDDocument> {
         try {
             return DIDEntity.parse(content, DIDDocument);
         } catch (e) {

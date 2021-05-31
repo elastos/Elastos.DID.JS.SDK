@@ -58,7 +58,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 *
 	 * @throws DIDSyntaxException if the DID object is invalid
 	 */
-	protected sanitize() {}
+	protected async sanitize(): Promise<void> {}
 
 	// TODO: CHECK THIS! NOT SURE THIS REALLY CLONES INHERITING CLASSES (FIELDS, METHODS) WELL
 	public clone(): DIDEntity<T> {
@@ -122,7 +122,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	 * @return the parsed DID object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public static parse <T extends DIDEntity<T>>(source: JSONObject | string, clazz: Class<T>): T {
+	public static async parse <T extends DIDEntity<T>>(source: JSONObject | string, clazz: Class<T>): Promise<T> {
 		checkArgument(source && source !== "", "Invalid JSON content");
 		checkArgument(clazz && clazz !== null, "Invalid result class object");
 
@@ -138,7 +138,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 		try {
 			mapper.defaultParserContext.mainCreator = () => [clazz];
 			let obj = mapper.parse<T>(content);
-			obj.sanitize();
+			await obj.sanitize();
 			return obj;
 		} catch (e) {
 			throw new DIDSyntaxException("Invalid JSON syntax", e);

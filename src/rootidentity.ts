@@ -232,8 +232,8 @@ export class RootIdentity {
 		return did;
 	}
 
-	public static lazyCreateDidPrivateKey(id: DIDURL, store: DIDStore, storepass: string): Buffer {
-		let doc = store.loadDid(id.getDid());
+	public static async lazyCreateDidPrivateKey(id: DIDURL, store: DIDStore, storepass: string): Promise<Buffer> {
+		let doc = await store.loadDid(id.getDid());
 		if (doc == null) {
 			log.error("INTERNAL - Missing document for DID: {}", id.getDid());
 			throw new DIDStoreException("Missing document for DID: " + id.getDid());
@@ -285,7 +285,7 @@ export class RootIdentity {
 		checkArgument(index >= 0, "Invalid index");
 
 		let did = this.getDid(index);
-		let doc = this.getStore().loadDid(did);
+		let doc = await this.getStore().loadDid(did);
 		if (doc != null) {
 			if (doc.isDeactivated())
 				throw new DIDDeactivatedException(did.toString());
@@ -312,8 +312,8 @@ export class RootIdentity {
 
 			let db = DIDDocumentBuilder.newFromDID(did, this.getStore());
 			db.addAuthenticationKey(id, key.getPublicKeyBase58());
-			doc = db.seal(storepass);
-			this.getStore().storeDid(doc);
+			doc = await db.seal(storepass);
+			await this.getStore().storeDid(doc);
 
 			if (shouldIncrementIndexAfterCompletion)
 				this.incrementIndex();
@@ -362,7 +362,7 @@ export class RootIdentity {
 
 		log.debug("Synchronize {}/{}..exists, got the on-chain copy.", did.toString(), index);
 		let finalDoc = resolvedDoc;
-		let localDoc = this.getStore().loadDid(did);
+		let localDoc = await this.getStore().loadDid(did);
 		if (localDoc != null) {
 			// Update metadata off-store, then store back
 			localDoc.getMetadata().detachStore();
@@ -390,7 +390,7 @@ export class RootIdentity {
 		metadata.setRootIdentityId(this.getId());
 		metadata.setIndex(index);
 
-		this.getStore().storeDid(finalDoc);
+		await this.getStore().storeDid(finalDoc);
 		return true;
 	}
 

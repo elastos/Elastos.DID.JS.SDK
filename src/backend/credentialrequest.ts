@@ -84,13 +84,13 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
 	 */
-	public static declare(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string): CredentialRequest {
+	public static async declare(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string): Promise<CredentialRequest> {
 		let request = CredentialRequest.newWithOperation(IDChainRequest.Operation.DECLARE);
 		request.setPayload(vc);
 		request.setSigner(signer);
 
 		try {
-			request.seal(signer, signKey, storepass);
+			await request.seal(signer, signKey, storepass);
 		} catch (ignore) {
 			// MalformedIDChainRequestException
 			throw new UnknownInternalException(ignore);
@@ -109,13 +109,13 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 	 * @return the IDChainRequest object
 	 * @throws DIDStoreException there is no store to attach.
 	 */
-	public static revoke(vc: VerifiableCredential | DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): CredentialRequest {
+	public static async revoke(vc: VerifiableCredential | DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<CredentialRequest> {
 		let request = CredentialRequest.newWithOperation(IDChainRequest.Operation.REVOKE);
 		request.setPayload(vc);
 		request.setSigner(doc);
 
 		try {
-			request.seal(doc, signKey, storepass);
+			await request.seal(doc, signKey, storepass);
 		} catch (ignore) {
 			// MalformedIDChainRequestException
 			throw new UnknownInternalException(ignore);
@@ -161,7 +161,8 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		}
 	}
 
-	public sanitize() {
+	// eslint-disable-next-line require-await
+	public async sanitize(): Promise<void> {
 		let header = this.getHeader();
 
 		if (header == null)
@@ -189,7 +190,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 			if (header.getOperation().equals(IDChainRequest.Operation.DECLARE)) {
 				let json = base64Decode(payload);
 
-				this.vc = VerifiableCredential.parseContent(json);
+				this.vc = await VerifiableCredential.parseContent(json);
 				this.id = this.vc.getId();
 			} else {
 				this.id = DIDURL.from(payload);
@@ -202,14 +203,14 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
 		proof.qualifyVerificationMethod(this.id.getDid());
 	}
 
-	public seal(doc: DIDDocument, signKey: DIDURL, storepass: string) {
+	public async seal(doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<void> {
 		if (!doc.isAuthenticationKey(signKey))
 			throw new InvalidKeyException("Not an authentication key.");
 
 		if (this.getPayload() == null || this.getPayload() === "")
 			throw new MalformedIDChainRequestException("Missing payload");
 
-		let signature = doc.signWithId(signKey, storepass, ...this.getSigningInputs());
+		let signature = await doc.signWithId(signKey, storepass, ...this.getSigningInputs());
 		this.setProof(new IDChainRequest.Proof(signKey, signature));
 	}
 

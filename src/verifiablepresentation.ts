@@ -226,7 +226,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @param withProof check the proof object or not
 	 * @throws MalformedPresentationException if the presentation object is invalid
 	 */
-	protected sanitize() {
+	protected async sanitize(): Promise<void> {
+		console.log("TMP DEBUG PRES", this);
 		if (this.type == null || this.type.length == 0)
 			throw new MalformedPresentationException("Missing presentation type");
 
@@ -236,7 +237,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		if (this._credentials != null && this._credentials.length > 0) {
 			for (let vc of this._credentials) {
 				try {
-					vc.sanitize();
+					await vc.sanitize();
 				} catch (e) {
 					// MalformedCredentialException
 					throw new MalformedPresentationException("credential invalid: " + vc.getId(), e);
@@ -347,7 +348,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return the VerifiablePresentation object
 	 * @throws DIDSyntaxException if a parse error occurs
 	 */
-	public static parseContent(content: string): VerifiablePresentation {
+	public static parseContent(content: string): Promise<VerifiablePresentation> {
 		try {
 			return this.parse(content, VerifiablePresentation);
 		} catch (e) {
@@ -368,7 +369,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws DIDStoreException can not load DID
 	 * @throws InvalidKeyException if the signKey is invalid
 	 */
-	public static createFor(did: DID | string, signKey: DIDURL | string | null, store: DIDStore): VerifiablePresentation.Builder {
+	public static async createFor(did: DID | string, signKey: DIDURL | string | null, store: DIDStore): Promise<VerifiablePresentation.Builder> {
 		checkArgument(did != null, "Invalid did");
 		checkArgument(store != null, "Invalid store");
 
@@ -378,7 +379,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		if (typeof signKey === "string")
 			signKey = DIDURL.from(signKey, did);
 
-		let holder = store.loadDid(did);
+		let holder = await store.loadDid(did);
 		if (holder == null)
 			throw new DIDNotFoundException(did.toString());
 
@@ -515,7 +516,7 @@ export namespace VerifiablePresentation {
 		 * @throws MalformedPresentationException if the presentation is invalid
 		 * @throws DIDStoreException if an error occurs when access DID store
 		 */
-		public seal(storepass: string): VerifiablePresentation  {
+		public async seal(storepass: string): Promise<VerifiablePresentation>  {
 			this.checkNotSealed();
 			checkArgument(storepass && storepass != null, "Invalid storepass");
 
@@ -531,7 +532,7 @@ export namespace VerifiablePresentation {
 			this.presentation._credentials = Array.from(this.presentation.credentials.values());
 
 			let json = this.presentation.serialize(true);
-			let sig = this.holder.signWithId(this.signKey, storepass, Buffer.from(json),
+			let sig = await this.holder.signWithId(this.signKey, storepass, Buffer.from(json),
 					Buffer.from(this._realm), Buffer.from(this._nonce));
 			let proof = new Proof(this.signKey, this._realm, this._nonce, sig);
 			this.presentation.proof = proof;
