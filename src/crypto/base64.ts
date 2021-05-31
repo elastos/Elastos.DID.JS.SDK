@@ -1,10 +1,9 @@
 
 export class BASE64 {
 
-    public static fromString(value: string, useURLFormat: boolean = false): string{
+    public static fromString(value: string): string{
         let base64string = Buffer.from(value, "utf-8").toString("base64");
-        if (useURLFormat) base64string = this.convertToURI(base64string)
-        return base64string
+        return  this.convertToURI(base64string)
     }
     public static fromHex(hexString: string): string{
        return this.encode(hexString)
