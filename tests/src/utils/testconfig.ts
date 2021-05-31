@@ -23,9 +23,10 @@
 //import testConfig from "../assets/test.config.json";
 
 import { join } from "path";
-import { File, Exceptions, runningInBrowser, Logger } from "@elastosfoundation/did-js-sdk";
-const ParentException = Exceptions.ParentException;
-
+import { 
+	runningInBrowser, 
+	Logger 
+} from "@elastosfoundation/did-js-sdk";
 import testConfigFile from "../assets/test.config.json";
 
 export class TestConfig {
