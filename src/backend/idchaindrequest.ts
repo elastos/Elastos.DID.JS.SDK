@@ -201,31 +201,6 @@ export namespace IDChainRequest {
 	 @JsonSerialize({using: OperationSerializer.serialize})
 	 @JsonDeserialize({using: OperationDeserializer.deserialize})
 	 export class Operation {
-		/**
-		 * Create a new DID
-		 */
-		public static CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
-		/**
-		 * Update an exist DID
-		 */
-		public static UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
-		/**
-		 * Transfer the DID' ownership
-		 */
-		public static TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
-		/**
-		 * Deactivate a DID
-		 */
-		public static DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
-		/**
-		 * Declare a credential
-		 */
-		public static DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
-		/**
-		 * Revoke a credential
-		 */
-		public static REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
-
 		constructor(private name: string, private specification: string) {}
 
 		public getSpecification(): string {
@@ -246,6 +221,34 @@ export namespace IDChainRequest {
 			return this.name === operation.name;
 		}
 	}
+
+	export namespace Operation {
+	    /**
+		 * Create a new DID
+		 */
+			export const CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
+			 /**
+			  * Update an exist DID
+			  */
+			export const UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
+			 /**
+			  * Transfer the DID' ownership
+			  */
+			export const TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
+			 /**
+			  * Deactivate a DID
+			  */
+			export const DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
+			 /**
+			  * Declare a credential
+			  */
+			export const DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
+			 /**
+			  * Revoke a credential
+			  */
+			export const REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
+	}
+	 
 	@JsonPropertyOrder({value: [
 		"specification",
 		"operation",

@@ -28,7 +28,7 @@ import { IDTransaction } from "./idtransaction";
 export class CredentialTransaction extends IDTransaction<CredentialTransaction, CredentialRequest> {
 	@JsonProperty({value: IDTransaction.OPERATION})
 	@JsonClassType({type: () => [CredentialRequest]})
-	protected request: CredentialRequest;
+	declare protected request: CredentialRequest;
 
 	protected CredentialTransaction() {}
 
