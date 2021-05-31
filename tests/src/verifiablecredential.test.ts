@@ -20,7 +20,15 @@
  * SOFTWARE.
  */
 
-import { DIDStore, DIDURL, Issuer, Logger, VerifiableCredential, IDChainRequest, Exceptions } from "@elastosfoundation/did-js-sdk";
+import { 
+	DIDStore, 
+	DIDURL, 
+	Issuer, 
+	Logger, 
+	VerifiableCredential, 
+	IDChainRequest, 
+	Exceptions 
+} from "@elastosfoundation/did-js-sdk";
 import { randomInt } from "crypto";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";

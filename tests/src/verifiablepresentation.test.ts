@@ -20,7 +20,11 @@
  * SOFTWARE.
  */
 
-import { DIDURL, DIDStore, VerifiablePresentation } from "@elastosfoundation/did-js-sdk";
+import { 
+	DIDURL, 
+	DIDStore, 
+	VerifiablePresentation 
+} from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
 
