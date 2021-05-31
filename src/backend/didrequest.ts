@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonIgnore } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonIgnore, JsonProperty } from "jackson-js";
 import { BASE64 } from "../internals";
 import { DID } from "../internals";
 import { DIDDocument } from "../internals";
@@ -34,6 +34,16 @@ import { IDChainRequest } from "./idchaindrequest";
  */
  @JsonCreator()
 export class DIDRequest extends IDChainRequest<DIDRequest> {
+	@JsonProperty({value: IDChainRequest.HEADER})
+	@JsonClassType({type: () => [IDChainRequest.Header]})
+	declare protected header: IDChainRequest.Header;
+	@JsonProperty({value: IDChainRequest.PAYLOAD})
+	@JsonClassType({type: () => [String]})
+	declare protected payload: string;
+	@JsonProperty({value: IDChainRequest.PROOF})
+	@JsonClassType({type: () => [IDChainRequest.Proof]})
+	declare protected proof: IDChainRequest.Proof;
+
 	@JsonIgnore()
 	private did: DID;
 	@JsonIgnore()

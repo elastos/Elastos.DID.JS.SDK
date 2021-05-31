@@ -26,6 +26,7 @@ import { DIDURL } from "../internals";
 import type { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
 import { hashCode } from "../internals";
+
 @JsonCreator()
 export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Parameters> {
 	public static PARAMETER_DID = "did";
@@ -37,7 +38,7 @@ export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Paramet
 		super(requestId, DIDResolveRequest.METHOD_NAME);
 	}
 
-	public setParameters(didOrStringOrParams: DID | string | Parameters, all: boolean = false) {
+	public setParameters(didOrStringOrParams: DID | string | Parameters, all = false) {
 		if (didOrStringOrParams instanceof DID)
 			super.setParameters(new Parameters(didOrStringOrParams, all));
 		else if (didOrStringOrParams instanceof Parameters)
@@ -70,7 +71,7 @@ class Parameters implements Hashable {
 	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
 	public all: boolean;
 
-	public constructor(@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: DID, all: boolean = false) {
+	public constructor(@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: DID, all = false) {
 		this.did = did;
 		this.all = all;
 	}
@@ -81,7 +82,7 @@ class Parameters implements Hashable {
 		return hash;
 	}
 
-	public equals(o: Object): boolean {
+	public equals(o: unknown): boolean {
 		if (!(o instanceof Parameters))
 			return false;
 

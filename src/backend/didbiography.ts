@@ -92,7 +92,6 @@ export namespace DIDBiographyStatus {
 	  * The credential is not published.
 	  */
 	export const NOT_FOUND = new DIDBiographyStatus(3, "not_found");
-
 }
 
 /**
