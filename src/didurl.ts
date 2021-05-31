@@ -39,6 +39,7 @@ import type {
 import {
 	JsonSerialize,
     JsonDeserialize,
+	JsonCreator,
 } from "jackson-js";
 import type { Hashable } from "./hashable";
 import type { Comparable } from "./comparable";
@@ -62,7 +63,7 @@ class URLSerializer extends Serializer {
 class URLDeserializer extends Deserializer {
 	public static deserialize(value: any, context: JsonParserTransformerContext): DIDURL {
 		try {
-			return DIDURL.newWithUrl(value);
+			return new DIDURL(value);
 		} catch (e) {
 			throw new ParentException("URLDeserializer deserialization exception", e);
 		}
@@ -90,36 +91,22 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	private metadata?: AbstractMetadata;
 
 	// Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
-	public constructor() {}
+	//public constructor() {}
 
-	public static newWithUrl(url: DIDURL | string): DIDURL {
-		if (url && url instanceof DIDURL) {
-			let newInstance = new DIDURL();
-			let urlParameters = url.parameters;
-			let urlQuery = url.query;
-			newInstance.parameters = urlParameters.size == 0 ? new Map() : new Map(urlParameters);
-			newInstance.query = urlQuery.size == 0 ? new Map() : new Map(urlQuery);
-			newInstance.did =  url.did;
-			newInstance.path = url.path;
-			newInstance.fragment = url.fragment;
-			return newInstance;
-		}
-		return DIDURL.newWithDID(null, url as string)
+	@JsonCreator()
+	public static jsonConstructor(): DIDURL {
+		return null;
 	}
 
-	public static newWithDID(did: DID, url?: DIDURL | string) {
-		let newInstance: DIDURL = new DIDURL();
-
-		if (did && !url){
-			newInstance.did = did;
-		} else {
-			if (url instanceof DIDURL) {
-				newInstance.did = !url.did || url.did == null ? did : url.did;
-				newInstance.parameters = url.parameters;
-				newInstance.path = url.path;
-				newInstance.query = url.query;
-				newInstance.fragment = url.fragment;
-				newInstance.metadata = url.metadata;
+	public constructor(url?: DIDURL | string, baseRef?: DID) {
+		if (url) {
+			if(url instanceof DIDURL) {
+				this.did = (!url.did && baseRef) ? baseRef : url.did;
+				this.parameters = url.parameters;
+				this.path = url.path;
+				this.query = url.query;
+				this.fragment = url.fragment;
+				this.metadata = url.metadata;
 			} else {
 				// Compatible with v1, support fragment without leading '#'
 				if (!url.startsWith("did:")) {
@@ -138,34 +125,44 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 
 				try {
 					let urlParsed = DIDURLParser.newFromURL(url);
-					if (!urlParsed.did.isEmpty)	newInstance.setDid(new DID(urlParsed.did.value));
-					newInstance.setFragment(urlParsed.fragment);
-					newInstance.setPath(urlParsed.path);
-					newInstance.setParameters(urlParsed.params);
-					newInstance.setQuery(urlParsed.query);
 
+					if (urlParsed.did.isEmpty)
+						this.did = baseRef ? baseRef : null;
+					else
+						this.did = new DID(urlParsed.did.method, urlParsed.did.methodSpecificId);
 
-					if (!newInstance.parameters)
-						newInstance.parameters = new Map();
-
-					if (!newInstance)
-						newInstance.query = new Map();
-
+					this.parameters = urlParsed.params;
+					this.path = urlParsed.path;
+					this.query = urlParsed.query;
+					this.fragment = urlParsed.fragment;
 				} catch (e) {
 					throw new MalformedDIDURLException(url, e);
 				}
-
-				if ((!newInstance.did || newInstance.did == null) && did)
-					newInstance.did = did;
 			}
+		} else {
+			if (baseRef)
+				this.did = baseRef;
 		}
+	}
 
+	public static fromDID(did: DID): DIDURL {
+		return new DIDURL(null, did);
+	}
 
-		return newInstance;
+	public static from(url: DIDURL | string, baseRef?: DID | string): DIDURL | null {
+		if (!url)
+			return null;
+
+		let base = baseRef ? DID.from(baseRef) : null;
+
+		if (url instanceof DIDURL)
+			return base ? new DIDURL(url, base) : url;
+		else
+			return new DIDURL(url, base);
 	}
 
 	// Deep-copy constructor
-	/* private clone(url: DIDURL): DIDURL {
+	public static clone(url: DIDURL): DIDURL {
 		let newInstance = new DIDURL();
 		newInstance.did = url.did;
 		newInstance.parameters = !url.parameters ? new Map() :
@@ -176,24 +173,6 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 		newInstance.fragment = url.fragment;
 
 		return newInstance;
-	} */
-
-	public static valueOf(inputBaseRefOrUrl: DID | string | null, url?: DIDURL | string): DIDURL {
-		if (!url) {
-			if (typeof inputBaseRefOrUrl === "string")
-				return inputBaseRefOrUrl ? DIDURL.newWithUrl(inputBaseRefOrUrl) : null;
-			else if (inputBaseRefOrUrl instanceof DID)
-				return DIDURL.newWithDID(inputBaseRefOrUrl);
-			else
-				throw new IllegalArgumentException("DID is mandatory without an URL");
-		}
-		let baseRef: DID = typeof inputBaseRefOrUrl === "string" ? DID.from(inputBaseRefOrUrl) : inputBaseRefOrUrl as DID;
-		return url ? DIDURL.newWithDID(baseRef, url) : null;
-	}
-
-	// Note: in java this was also a valueOf().
-	public static valueOfUrl(url: string): DIDURL {
-		return (url == null || url !== "") ? null : DIDURL.valueOf(null, url);
 	}
 
 	/**
@@ -435,16 +414,16 @@ export namespace DIDURL {
 		public constructor(didOrDidUrl: DIDURL | DID | string) {
 			let didUrl: DIDURL;
 			if (didOrDidUrl instanceof DID) {
-				didUrl = DIDURL.valueOf(didOrDidUrl);
+				didUrl = DIDURL.fromDID(didOrDidUrl as DID);
 			}
 			else if (typeof didOrDidUrl === "string") {
-				didUrl = DIDURL.valueOfUrl(didOrDidUrl);
+				didUrl = DIDURL.from(didOrDidUrl);
 			}
 			else {
 				didUrl = didOrDidUrl as DIDURL;
 			}
 
-			this.url = DIDURL.valueOf(didUrl.getDid());
+			this.url.setDid(didUrl.getDid());
 			this.url.setParameters(didUrl.getParameters());
 			this.url.setPath(didUrl.getPath());
 			this.url.setQuery(didUrl.getQuery());
@@ -544,7 +523,7 @@ export namespace DIDURL {
 		}
 
 		public build(): DIDURL {
-			return DIDURL.valueOf(null, this.url);
+			return DIDURL.clone(this.url);
 		}
 	}
 }

@@ -67,7 +67,7 @@ describe("Issuer Tests", ()=>{
 
 	test('New Issuer Test With Invalid Key', () => {
 
-		let signKey = DIDURL.newWithDID(issuerDoc.getSubject(), "#testKey");
+		let signKey = new DIDURL("#testKey", issuerDoc.getSubject());
 		let doc = issuerDoc;
 
 		expect(() =>{Issuer.newWithDocument(doc, signKey)}).toThrowError()
@@ -75,7 +75,7 @@ describe("Issuer Tests", ()=>{
 
 	test('New Issuer Test With Invalid Key 2', () => {
 
-		let signKey = DIDURL.newWithDID(issuerDoc.getSubject(), "#recovery");
+		let signKey = new DIDURL("#recovery", issuerDoc.getSubject());
 		let doc = issuerDoc;
 		expect(()=>{Issuer.newWithDocument(doc, signKey)}).toThrowError()
 	})
@@ -99,7 +99,7 @@ describe("Issuer Tests", ()=>{
 				   .properties(props)
 				   .seal(TestConfig.storePass);
 
-		let vcId = DIDURL.newWithDID(testDoc.getSubject(), "#testCredential");
+		let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
 		expect(vcId).toEqual(vc.getId())
 
@@ -139,7 +139,7 @@ describe("Issuer Tests", ()=>{
 				   .properties(props)
 				   .seal(TestConfig.storePass);
 
-		let vcId = DIDURL.newWithDID(testDoc.getSubject(), "#myCredential");
+		let vcId = new DIDURL("#myCredential", testDoc.getSubject());
 
 		expect(vcId).toEqual(vc.getId())
 
@@ -181,7 +181,7 @@ describe("Issuer Tests", ()=>{
 				   .properties(props)
 				   .seal(TestConfig.storePass);
 
-		let vcId = DIDURL.newWithDID(testDoc.getSubject(), "#testCredential");
+		let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
 		expect(vcId).toEqual(vc.getId())
 
@@ -226,7 +226,7 @@ describe("Issuer Tests", ()=>{
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		let vcId = DIDURL.newWithDID(testDoc.getSubject(), "#testCredential");
+		let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
 		expect(vcId).toEqual(vc.getId())
 
@@ -267,7 +267,7 @@ describe("Issuer Tests", ()=>{
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		let vcId = DIDURL.newWithDID(issuerDoc.getSubject(), "#myCredential");
+		let vcId = new DIDURL("#myCredential", issuerDoc.getSubject());
 
 		expect(vcId).toEqual(vc.getId())
 
@@ -299,7 +299,7 @@ describe("Issuer Tests", ()=>{
 			.properties(props)
 			.seal(TestConfig.storePass);
 
-		let vcId = DIDURL.newWithDID(issuerDoc.getSubject(), "#myCredential");
+		let vcId = new DIDURL("#myCredential", issuerDoc.getSubject());
 
 		expect(vcId).toEqual(vc.getId())
 

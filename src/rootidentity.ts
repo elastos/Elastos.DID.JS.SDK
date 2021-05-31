@@ -307,7 +307,7 @@ export class RootIdentity {
 
 		let key = this.getStore().derive(this.getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
 		try {
-			let id = DIDURL.valueOf(did, "#primary");
+			let id = DIDURL.from("#primary", did);
 			this.getStore().storePrivateKey(id, key.serialize(), storepass);
 
 			let db = DIDDocumentBuilder.newFromDID(did, this.getStore());

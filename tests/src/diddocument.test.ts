@@ -73,22 +73,22 @@ async function testGetPublicKey(version: number, testData: TestData) {
 	// PublicKey getter.
 	let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");
 	expect(pk).not.toBeNull();
-	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pk.getId());
+	expect(DIDURL.from("#primary", doc.getSubject())).toEqual(pk.getId());
 
-	let id: DIDURL = DIDURL.newWithDID(doc.getSubject(), "#key2");
+	let id: DIDURL = DIDURL.from("#key2", doc.getSubject());
 	pk = doc.getPublicKey(id);
 	expect(pk).not.toBeNull();
 	expect(pk.getId()).toEqual(id);
 
 	id = doc.getDefaultPublicKeyId();
 	expect(id).not.toBeNull();
-	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(id);
+	expect(DIDURL.from("#primary", doc.getSubject())).toEqual(id);
 
 	// Key not exist, should fail.
 	pk = doc.getPublicKey("#notExist");
 	expect(pk).toBeNull();
 
-	id = DIDURL.newWithDID(doc.getSubject(), "#notExist");
+	id = DIDURL.from("#notExist", doc.getSubject());
 	pk = doc.getPublicKey(id);
 	expect(pk).toBeNull();
 
@@ -96,22 +96,22 @@ async function testGetPublicKey(version: number, testData: TestData) {
 	id = doc.getDefaultPublicKeyId();
 	pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 	expect(pks.length).toEqual(1);
-	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pks[0].getId());
+	expect(DIDURL.from("#primary", doc.getSubject())).toEqual(pks[0].getId());
 
 	pks = doc.selectPublicKeys(id, null);
 	expect(pks.length).toEqual(1);
-	expect(DIDURL.newWithDID(doc.getSubject(), "#primary")).toEqual(pks[0].getId());
+	expect(DIDURL.from("#primary", doc.getSubject())).toEqual(pks[0].getId());
 
 	pks = doc.selectPublicKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
 	expect(pks.length).toEqual(4);
 
 	pks = doc.selectPublicKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
 	expect(pks.length).toEqual(1);
-	expect(DIDURL.newWithDID(doc.getSubject(), "#key2")).toEqual(pks[0].getId());
+	expect(DIDURL.from("#key2", doc.getSubject())).toEqual(pks[0].getId());
 
 	pks = doc.selectPublicKeys("#key3", null);
 	expect(pks.length).toEqual(1);
-	expect(DIDURL.newWithDID(doc.getSubject(), "#key3")).toEqual(pks[0].getId());
+	expect(DIDURL.from("#key3", doc.getSubject())).toEqual(pks[0].getId());
 }
 
 describe('DIDDocument Tests', () => {
@@ -161,10 +161,10 @@ describe('DIDDocument Tests', () => {
 		refs.push(user1.getDefaultPublicKeyId());
 		refs.push(user2.getDefaultPublicKeyId());
 		refs.push(user3.getDefaultPublicKeyId());
-		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key2"));
-		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key3"));
-		refs.push(DIDURL.newWithDID(doc.getSubject(), "#key2"));
-		refs.push(DIDURL.newWithDID(doc.getSubject(), "#key3"));
+		refs.push(DIDURL.from("#key2", user1.getSubject()));
+		refs.push(DIDURL.from("#key3", user1.getSubject(), ));
+		refs.push(DIDURL.from("#key2", doc.getSubject()));
+		refs.push(DIDURL.from("#key3", doc.getSubject()));
 
 		refs.sort((e1, e2) => {
 			return e1.compareTo(e2);
@@ -176,22 +176,22 @@ describe('DIDDocument Tests', () => {
 		let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");
 		expect(pk).toBeNull();
 
-		let id: DIDURL = DIDURL.newWithDID(user1.getSubject(), "#primary");
+		let id: DIDURL = DIDURL.from("#primary", user1.getSubject());
 		pk = doc.getPublicKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
 
-		id = DIDURL.newWithDID(user1.getSubject(), "#key2");
+		id = DIDURL.from("#key2", user1.getSubject());
 		pk = doc.getPublicKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
 
-		id = DIDURL.newWithDID(doc.getSubject(), "#key2");
+		id = DIDURL.from("#key2", doc.getSubject());
 		pk = doc.getPublicKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
 
-		id = DIDURL.newWithDID(doc.getSubject(), "#key3");
+		id = DIDURL.from("#key3", doc.getSubject());
 		pk = doc.getPublicKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
@@ -203,7 +203,7 @@ describe('DIDDocument Tests', () => {
 		pk = doc.getPublicKey("#notExist");
 		expect(pk).toBeNull();
 
-		id = DIDURL.newWithDID(doc.getController(), "#notExist");
+		id = DIDURL.from("#notExist", doc.getController());
 		pk = doc.getPublicKey(id);
 		expect(pk).toBeNull();
 
@@ -221,14 +221,14 @@ describe('DIDDocument Tests', () => {
 			Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toBe(7);
 
-		pks = doc.selectPublicKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
+		pks = doc.selectPublicKeys(DIDURL.from("#key2", user1.getSubject()),
 			Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key2"));
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key2", user1.getSubject()));
 
-		pks = doc.selectPublicKeys(DIDURL.newWithDID(doc.getSubject(), "#key3"), null);
+		pks = doc.selectPublicKeys(DIDURL.from("#key3", doc.getSubject()), null);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key3", user1.getSubject()));
 	});
 
 	test('Test Get Public Key With Multi Controller Cid2', async () => {
@@ -261,8 +261,8 @@ describe('DIDDocument Tests', () => {
 		refs.push(user1.getDefaultPublicKeyId());
 		refs.push(user2.getDefaultPublicKeyId());
 		refs.push(user3.getDefaultPublicKeyId());
-		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key2"));
-		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+		refs.push(DIDURL.from("#key2", user1.getSubject()));
+		refs.push(DIDURL.from("#key3", user1.getSubject()));
 
 		refs.sort();
 
@@ -273,15 +273,13 @@ describe('DIDDocument Tests', () => {
 		expect(pk).toBeNull();
 
 
-		let id = DIDURL.newWithDID(user1.getSubject(), "#primary");
+		let id = DIDURL.from("#primary", user1.getSubject());
 		pk = doc.getPublicKey(id);
 
 		expect(pk).not.toBeNull()
 		expect(id).toEqual(pk.getId())
 
-
-
-		id = DIDURL.newWithDID(user1.getSubject(), "#key2");
+		id = DIDURL.from("#key2", user1.getSubject());
 		pk = doc.getPublicKey(id);
 
 		expect(pk).not.toBeNull()
@@ -294,7 +292,7 @@ describe('DIDDocument Tests', () => {
 		pk = doc.getPublicKey("#notExist");
 		expect(pk).toBeNull()
 
-		id = DIDURL.newWithDID(user2.getSubject(), "#notExist");
+		id = DIDURL.from("#notExist", user2.getSubject());
 		pk = doc.getPublicKey(id);
 		expect(pk).toBeNull()
 
@@ -313,15 +311,15 @@ describe('DIDDocument Tests', () => {
 		pks = doc.selectPublicKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(5);
 
-		pks = doc.selectPublicKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
+		pks = doc.selectPublicKeys(DIDURL.from("#key2", user1.getSubject()),
 			Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1);
 
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key2"));
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key2", user1.getSubject()));
 
-		pks = doc.selectPublicKeys(DIDURL.newWithDID(user1.getSubject(), "#key3"), null);
+		pks = doc.selectPublicKeys(DIDURL.from("#key3", user1.getSubject()), null);
 		expect(pks.length).toEqual(1);
-		expect(DIDURL.newWithDID(user1.getSubject(), "#key3")).toEqual(pks[0].getId())
+		expect(DIDURL.from("#key3", user1.getSubject())).toEqual(pks[0].getId())
 	})
 
 	test("Test Add PublicKey", async () => {
@@ -334,7 +332,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 
 		// Add 2 public keys
-		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let id = DIDURL.from("#test1", db.getSubject());
 		let key = TestData.generateKeypair();
 		db.createAndAddPublicKey(id, key.getPublicKeyBase58(), db.getSubject());
 
@@ -348,11 +346,11 @@ describe('DIDDocument Tests', () => {
 		// Check existence
 		let pk = doc.getPublicKey("#test1");
 		expect(pk).not.toBeNull()
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test1", doc.getSubject()))
 
 		pk = doc.getPublicKey("#test2");
 		expect(pk).not.toBeNull()
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"));
+		expect(pk.getId()).toEqual(DIDURL.from("#test2", doc.getSubject()));
 
 
 		// Check the final count.
@@ -378,7 +376,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
 
 		// Add 2 public keys
-		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let id = DIDURL.from("#test1", db.getSubject());
 		let key = TestData.generateKeypair();
 		db.createAndAddPublicKey(id, key.getPublicKeyBase58(), db.getSubject());
 
@@ -394,11 +392,11 @@ describe('DIDDocument Tests', () => {
 		// Check existence
 		let pk = doc.getPublicKey("#test1");
 		expect(pk).not.toBeNull()
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test1", doc.getSubject()))
 
 		pk = doc.getPublicKey("#test2");
 		expect(pk).not.toBeNull()
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test2", doc.getSubject()))
 
 
 		// Check the final count.
@@ -418,7 +416,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 
 		// recovery used by authorization, should failed.
-		let id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
+		let id = DIDURL.from("#recovery", doc.getSubject());
 		expect(() => { db.removePublicKey(id) }).toThrowError()
 
 		// force remove public key, should success
@@ -469,11 +467,11 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(user2);
 
 		// Can not remove the controller's key
-		let key2 = DIDURL.newWithDID(user1.getSubject(), "#key2");
+		let key2 = DIDURL.from("#key2", user1.getSubject());
 		expect(() => { db.removePublicKey(key2); }).toThrowError()
 
 		// key2 used by authentication, should failed.
-		let id = DIDURL.newWithDID(doc.getSubject(), "#key2");
+		let id = DIDURL.from("#key2", doc.getSubject());
 		expect(() => { db.removePublicKey(id); }).toThrowError()
 
 		// force remove public key, should success
@@ -529,9 +527,9 @@ describe('DIDDocument Tests', () => {
 		// AuthenticationKey getter
 		let pk = doc.getAuthenticationKey("#primary");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject()))
+		expect(pk.getId()).toEqual(DIDURL.from("#primary", doc.getSubject()));
 
-		let id = DIDURL.newWithDID(doc.getSubject(), "#key3");
+		let id = DIDURL.from("#key3", doc.getSubject());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
@@ -540,12 +538,12 @@ describe('DIDDocument Tests', () => {
 		pk = doc.getAuthenticationKey("#notExist");
 		expect(pk).toBeNull();
 
-		id = DIDURL.newWithDID(doc.getSubject(), "#notExist");
+		id = DIDURL.from("#notExist", doc.getSubject());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).toBeNull();
 
 		// selector
-		id = DIDURL.newWithDID(doc.getSubject(), "#key3");
+		id = DIDURL.from("#key3", doc.getSubject());
 		pks = doc.selectAuthenticationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
 		expect(pks[0].getId()).toEqual(id)
@@ -559,11 +557,11 @@ describe('DIDDocument Tests', () => {
 
 		pks = doc.selectAuthenticationKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#key2"))
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key2", doc.getSubject()))
 
 		pks = doc.selectAuthenticationKeys("#key2", null);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#key2"))
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key2", doc.getSubject()))
 	})
 
 	test("testGetAuthenticationKeyWithCid", async () => {
@@ -584,7 +582,7 @@ describe('DIDDocument Tests', () => {
 		let pk = doc.getAuthenticationKey("#primary");
 		expect(pk).toBeNull();
 
-		let id = DIDURL.newWithDID(doc.getController(), "#primary");
+		let id = DIDURL.from("#primary", doc.getController());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
@@ -593,7 +591,7 @@ describe('DIDDocument Tests', () => {
 		pk = doc.getAuthenticationKey("#notExist");
 		expect(pk).toBeNull();
 
-		id = DIDURL.newWithDID(doc.getController(), "#notExist");
+		id = DIDURL.from("#notExist", doc.getController());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).toBeNull();
 
@@ -601,11 +599,11 @@ describe('DIDDocument Tests', () => {
 		id = doc.getDefaultPublicKeyId();
 		pks = doc.selectAuthenticationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(doc.getController(), "#primary"))
+		expect(pks[0].getId()).toEqual(DIDURL.from("#primary", doc.getController()))
 
 		pks = doc.selectPublicKeys(id, null);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(doc.getController(), "#primary"))
+		expect(pks[0].getId()).toEqual(DIDURL.from("#primary", doc.getController()))
 
 		pks = doc.selectAuthenticationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
@@ -640,10 +638,10 @@ describe('DIDDocument Tests', () => {
 		refs.push(user1.getDefaultPublicKeyId());
 		refs.push(user2.getDefaultPublicKeyId());
 		refs.push(user3.getDefaultPublicKeyId());
-		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key2"));
-		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key3"));
-		refs.push(DIDURL.newWithDID(doc.getSubject(), "#key2"));
-		refs.push(DIDURL.newWithDID(doc.getSubject(), "#key3"));
+		refs.push(DIDURL.from("#key2", user1.getSubject()));
+		refs.push(DIDURL.from("#key3", user1.getSubject()));
+		refs.push(DIDURL.from("#key2", doc.getSubject()));
+		refs.push(DIDURL.from("#key3", doc.getSubject()));
 
 		refs.sort()
 
@@ -654,22 +652,22 @@ describe('DIDDocument Tests', () => {
 		let pk = doc.getAuthenticationKey("#primary");
 		expect(pk).toBeNull();
 
-		let id = DIDURL.newWithDID(user1.getSubject(), "#primary");
+		let id = DIDURL.from("#primary", user1.getSubject());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
 
-		id = DIDURL.newWithDID(user1.getSubject(), "#key2");
+		id = DIDURL.from("#key2", user1.getSubject());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
 
-		id = DIDURL.newWithDID(doc.getSubject(), "#key2");
+		id = DIDURL.from("#key2", doc.getSubject());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
 
-		id = DIDURL.newWithDID(doc.getSubject(), "#key3");
+		id = DIDURL.from("#key3", doc.getSubject());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
@@ -678,7 +676,7 @@ describe('DIDDocument Tests', () => {
 		pk = doc.getAuthenticationKey("#notExist");
 		expect(pk).toBeNull();
 
-		id = DIDURL.newWithDID(doc.getController(), "#notExist");
+		id = DIDURL.from("#notExist", doc.getController());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).toBeNull();
 
@@ -695,15 +693,15 @@ describe('DIDDocument Tests', () => {
 		pks = doc.selectAuthenticationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toBe(7);
 
-		pks = doc.selectAuthenticationKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
+		pks = doc.selectAuthenticationKeys(DIDURL.from("#key2", user1.getSubject()),
 			Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
 
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key2"));
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key2", user1.getSubject()));
 
-		pks = doc.selectAuthenticationKeys(DIDURL.newWithDID(doc.getSubject(), "#key3"), null);
+		pks = doc.selectAuthenticationKeys(DIDURL.from("#key3", doc.getSubject()), null);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key3", user1.getSubject()));
 	})
 	test("testGetAuthenticationKeyWithMultiControllerCid2", async () => {
 		let cd = testData.getCompatibleData(2);
@@ -733,8 +731,8 @@ describe('DIDDocument Tests', () => {
 		refs.push(user1.getDefaultPublicKeyId());
 		refs.push(user2.getDefaultPublicKeyId());
 		refs.push(user3.getDefaultPublicKeyId());
-		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key2"));
-		refs.push(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+		refs.push(DIDURL.from("#key2", user1.getSubject()));
+		refs.push(DIDURL.from("#key3", user1.getSubject()));
 
 		refs.sort()
 
@@ -744,12 +742,12 @@ describe('DIDDocument Tests', () => {
 		let pk = doc.getAuthenticationKey("#primary");
 		expect(pk).toBeNull();
 
-		let id = DIDURL.newWithDID(user1.getSubject(), "#primary");
+		let id = DIDURL.from("#primary", user1.getSubject());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
 
-		id = DIDURL.newWithDID(user1.getSubject(), "#key2");
+		id = DIDURL.from("#key2", user1.getSubject());
 		pk = doc.getAuthenticationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
@@ -758,7 +756,7 @@ describe('DIDDocument Tests', () => {
 		pk = doc.getAuthenticationKey("#notExist");
 		expect(pk).toBeNull();
 
-		id = DIDURL.newWithDID(user2.getSubject(), "#notExist");
+		id = DIDURL.from("#notExist", user2.getSubject());
 		pk = doc.getPublicKey(id);
 		expect(pk).toBeNull();
 
@@ -776,14 +774,14 @@ describe('DIDDocument Tests', () => {
 		pks = doc.selectAuthenticationKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(5)
 
-		pks = doc.selectAuthenticationKeys(DIDURL.newWithDID(user1.getSubject(), "#key2"),
+		pks = doc.selectAuthenticationKeys(DIDURL.from("#key2", user1.getSubject()),
 			Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key2"));
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key2", user1.getSubject()));
 
-		pks = doc.selectAuthenticationKeys(DIDURL.newWithDID(user1.getSubject(), "#key3"), null);
+		pks = doc.selectAuthenticationKeys(DIDURL.from("#key3", user1.getSubject()), null);
 		expect(pks.length).toEqual(1)
-		expect(pks[0].getId()).toEqual(DIDURL.newWithDID(user1.getSubject(), "#key3"));
+		expect(pks[0].getId()).toEqual(DIDURL.from("#key3", user1.getSubject()));
 
 	})
 	test("testAddAuthenticationKey", async () => {
@@ -796,7 +794,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 
 		// Add 2 public keys for test.
-		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let id = DIDURL.from("#test1", db.getSubject());
 		let key = TestData.generateKeypair();
 		db.createAndAddPublicKey(id, key.getPublicKeyBase58(), db.getSubject());
 
@@ -804,13 +802,13 @@ describe('DIDDocument Tests', () => {
 		db.createAndAddPublicKey("#test2", key.getPublicKeyBase58(), doc.getSubject().toString());
 
 		// Add by reference
-		db.addExistingAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#test1"));
+		db.addExistingAuthenticationKey(DIDURL.from("#test1", doc.getSubject()));
 
 		db.addExistingAuthenticationKey("#test2");
 
 		// Add new keys
 		key = TestData.generateKeypair();
-		db.addAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#test3"),
+		db.addAuthenticationKey(DIDURL.from("#test3", doc.getSubject()),
 			key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
@@ -830,19 +828,19 @@ describe('DIDDocument Tests', () => {
 		// Check existence
 		let pk = doc.getAuthenticationKey("#test1");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"));
+		expect(pk.getId()).toEqual(DIDURL.from("#test1", doc.getSubject()));
 
 		pk = doc.getAuthenticationKey("#test2");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test2", doc.getSubject()))
 
 		pk = doc.getAuthenticationKey("#test3");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test3"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test3", doc.getSubject()))
 
 		pk = doc.getAuthenticationKey("#test4");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test4"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test4", doc.getSubject()))
 
 		// Check the final count.
 		expect(doc.getPublicKeyCount()).toBe(8)
@@ -862,7 +860,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
 
 		// Add 2 public keys for test.
-		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let id = DIDURL.from("#test1", db.getSubject());
 		let key = TestData.generateKeypair();
 		db.createAndAddPublicKey(id, key.getPublicKeyBase58(), db.getSubject());
 
@@ -870,27 +868,27 @@ describe('DIDDocument Tests', () => {
 		db.createAndAddPublicKey("#test2", key.getPublicKeyBase58(), doc.getSubject().toString());
 
 		// Add by reference
-		db.addExistingAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#test1"));
+		db.addExistingAuthenticationKey(DIDURL.from("#test1", doc.getSubject()));
 
 		db.addExistingAuthenticationKey("#test2");
 
 		// Add new keys
 		key = TestData.generateKeypair();
-		db.addAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#test3"),
+		db.addAuthenticationKey(DIDURL.from("#test3", doc.getSubject()),
 			key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#test4", key.getPublicKeyBase58());
 
 		// Try to add a controller's key, should fail.
-		let key3 = DIDURL.newWithDID(user1.getSubject(), "#testkey");
+		let key3 = DIDURL.from("#testkey", user1.getSubject());
 		expect(() => { db.addExistingAuthenticationKey(key3); }).toThrowError()
 
 		// Try to add a non existing key, should fail.
 		expect(() => { db.addExistingAuthenticationKey("#notExistKey"); }).toThrowError()
 
 		// Try to add a key not owned by self, should fail.
-		let recovery = DIDURL.newWithDID(user1.getSubject(), "#recovery");
+		let recovery = DIDURL.from("#recovery", user1.getSubject());
 		expect(() => { db.addExistingAuthenticationKey(recovery); }).toThrowError()
 
 
@@ -902,19 +900,19 @@ describe('DIDDocument Tests', () => {
 		// Check existence
 		let pk = doc.getAuthenticationKey("#test1");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"));
+		expect(pk.getId()).toEqual(DIDURL.from("#test1", doc.getSubject()));
 
 		pk = doc.getAuthenticationKey("#test2");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test2", doc.getSubject()))
 
 		pk = doc.getAuthenticationKey("#test3");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test3"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test3", doc.getSubject()))
 
 		pk = doc.getAuthenticationKey("#test4");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test4"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test4", doc.getSubject()))
 
 		// Check the final count.
 
@@ -934,14 +932,14 @@ describe('DIDDocument Tests', () => {
 		// Add 2 public keys for test
 		let key = TestData.generateKeypair();
 		db.addAuthenticationKey(
-			DIDURL.newWithDID(doc.getSubject(), "#test1"),
+			DIDURL.from("#test1", doc.getSubject()),
 			key.getPublicKeyBase58());
 
 		key = TestData.generateKeypair();
 		db.addAuthenticationKey("#test2", key.getPublicKeyBase58());
 
 		// Remote keys
-		db.removeAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#test1"))
+		db.removeAuthenticationKey(DIDURL.from("#test1", doc.getSubject()))
 			.removeAuthenticationKey("#test2")
 			.removeAuthenticationKey("#key2");
 
@@ -993,7 +991,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
 
 		// Remote keys
-		db.removeAuthenticationKey(DIDURL.newWithDID(doc.getSubject(), "#key2"))
+		db.removeAuthenticationKey(DIDURL.from("#key2", doc.getSubject()))
 			.removeAuthenticationKey("#key3");
 
 		db.removePublicKey("#key3");
@@ -1003,7 +1001,7 @@ describe('DIDDocument Tests', () => {
 
 
 		// Remove controller's key, should fail.
-		let key2 = DIDURL.newWithDID(user1.getSubject(), "#key2");
+		let key2 = DIDURL.from("#key2", user1.getSubject());
 		expect(() => { db.removeAuthenticationKey(key2); }).toThrowError();
 
 		doc = db.seal(TestConfig.storePass);
@@ -1048,9 +1046,9 @@ describe('DIDDocument Tests', () => {
 		// AuthorizationKey getter
 		let pk = doc.getAuthorizationKey("#recovery");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#recovery"));
+		expect(pk.getId()).toEqual(DIDURL.from("#recovery", doc.getSubject()));
 
-		let id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
+		let id = DIDURL.from("#recovery", doc.getSubject());
 		pk = doc.getAuthorizationKey(id);
 		expect(pk).not.toBeNull();
 		expect(pk.getId()).toEqual(id)
@@ -1059,12 +1057,12 @@ describe('DIDDocument Tests', () => {
 		pk = doc.getAuthorizationKey("#notExistKey");
 		expect(pk).toBeNull();
 
-		id = DIDURL.newWithDID(doc.getSubject(), "#notExistKey");
+		id = DIDURL.from("#notExistKey", doc.getSubject());
 		pk = doc.getAuthorizationKey(id);
 		expect(pk).toBeNull();
 
 		// Selector
-		id = DIDURL.newWithDID(doc.getSubject(), "#recovery");
+		id = DIDURL.from("#recovery", doc.getSubject());
 		pks = doc.selectAuthorizationKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 		expect(pks.length).toEqual(1)
 		expect(pks[0].getId()).toEqual(id)
@@ -1106,7 +1104,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 
 		// Add 2 public keys for test.
-		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let id = DIDURL.from("#test1", db.getSubject());
 		let key = TestData.generateKeypair();
 		db.createAndAddPublicKey(id,
 			key.getPublicKeyBase58(),
@@ -1118,13 +1116,13 @@ describe('DIDDocument Tests', () => {
 			new DID(DID.METHOD, key.getAddress()).toString());
 
 		// Add by reference
-		db.addExistingAuthorizationKey(DIDURL.newWithDID(doc.getSubject(), "#test1"));
+		db.addExistingAuthorizationKey(DIDURL.from("#test1", doc.getSubject()));
 
 		db.addExistingAuthorizationKey("#test2");
 
 		// Add new keys
 		key = TestData.generateKeypair();
-		db.addAuthorizationKey(DIDURL.newWithDID(doc.getSubject(), "#test3"),
+		db.addAuthorizationKey(DIDURL.from("#test3", doc.getSubject()),
 			new DID(DID.METHOD, key.getAddress()),
 			key.getPublicKeyBase58());
 
@@ -1146,19 +1144,19 @@ describe('DIDDocument Tests', () => {
 
 		let pk = doc.getAuthorizationKey("#test1");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test1"));
+		expect(pk.getId()).toEqual(DIDURL.from("#test1", doc.getSubject()));
 
 		pk = doc.getAuthorizationKey("#test2");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test2"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test2", doc.getSubject()))
 
 		pk = doc.getAuthorizationKey("#test3");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test3"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test3", doc.getSubject()))
 
 		pk = doc.getAuthorizationKey("#test4");
 		expect(pk).not.toBeNull();
-		expect(pk.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#test4"))
+		expect(pk.getId()).toEqual(DIDURL.from("#test4", doc.getSubject()))
 
 		// Check the final key count.
 		expect(doc.getPublicKeyCount()).toBe(8)
@@ -1183,7 +1181,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
 
 		// Add 2 public keys for test.
-		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let id = DIDURL.from("#test1", db.getSubject());
 		let key = TestData.generateKeypair();
 		db.createAndAddPublicKey(id,
 			key.getPublicKeyBase58(),
@@ -1194,7 +1192,7 @@ describe('DIDDocument Tests', () => {
 			key.getPublicKeyBase58(),
 			new DID(DID.METHOD, key.getAddress()).toString());
 
-		expect(() => { db.addExistingAuthorizationKey(DIDURL.newWithDID(did, "#test1")); }).toThrowError()
+		expect(() => { db.addExistingAuthorizationKey(DIDURL.from("#test1", did)); }).toThrowError()
 
 		expect(() => { db.addExistingAuthorizationKey("#test2"); }).toThrowError()
 
@@ -1203,7 +1201,7 @@ describe('DIDDocument Tests', () => {
 
 
 		// Try to add controller's, should fail.
-		let recovery = DIDURL.newWithDID(user1.getSubject(), "#recovery");
+		let recovery = DIDURL.from("#recovery", user1.getSubject());
 		expect(() => { db.addExistingAuthorizationKey(recovery); }).toThrowError()
 
 
@@ -1239,7 +1237,7 @@ describe('DIDDocument Tests', () => {
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 
 		// Add 2 keys for test.
-		let id = DIDURL.newWithDID(db.getSubject(), "#test1");
+		let id = DIDURL.from("#test1", db.getSubject());
 		let key = TestData.generateKeypair();
 		db.addAuthorizationKey(id,
 			new DID(DID.METHOD, key.getAddress()),
@@ -1251,7 +1249,7 @@ describe('DIDDocument Tests', () => {
 			key.getPublicKeyBase58());
 
 		// Remove keys.
-		db.removeAuthorizationKey(DIDURL.newWithDID(doc.getSubject(), "#test1"))
+		db.removeAuthorizationKey(DIDURL.from("#test1", doc.getSubject()))
 			.removeAuthorizationKey("#recovery");
 
 		// Key not exist, should fail.
@@ -1300,30 +1298,30 @@ describe('DIDDocument Tests', () => {
 		// Credential getter.
 		let vc = doc.getCredential("#profile");
 		expect(vc).not.toBeNull();
-		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		expect(vc.getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
 
-		vc = doc.getCredential(DIDURL.newWithDID(doc.getSubject(), "#email"));
+		vc = doc.getCredential(DIDURL.from("#email", doc.getSubject()));
 		expect(vc).not.toBeNull();
-		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#email"));
+		expect(vc.getId()).toEqual(DIDURL.from("#email", doc.getSubject()));
 
 		// Credential not exist.
 		vc = doc.getCredential("#notExistVc");
 		expect(vc).toBeNull();
 
 		// Credential selector.
-		vcs = doc.selectCredentials(DIDURL.newWithDID(doc.getSubject(), "#profile"),
+		vcs = doc.selectCredentials(DIDURL.from("#profile", doc.getSubject()),
 			"SelfProclaimedCredential");
 		expect(vcs.length).toBe(1);
-		expect(vcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		expect(vcs[0].getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
 
 
-		vcs = doc.selectCredentials(DIDURL.newWithDID(doc.getSubject(), "#profile"), null);
+		vcs = doc.selectCredentials(DIDURL.from("#profile", doc.getSubject()), null);
 		expect(vcs.length).toBe(1);
-		expect(vcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		expect(vcs[0].getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
 
 		vcs = doc.selectCredentials(null, "SelfProclaimedCredential");
 		expect(vcs.length).toBe(1);
-		expect(vcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		expect(vcs[0].getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
 
 		vcs = doc.selectCredentials(null, "TestingCredential");
 		expect(vcs.length).toBe(0);
@@ -1360,29 +1358,29 @@ describe('DIDDocument Tests', () => {
 		// Credential getter.
 		let vc = doc.getCredential("#profile");
 		expect(vc).not.toBeNull();
-		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		expect(vc.getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
 
-		vc = doc.getCredential(DIDURL.newWithDID(doc.getSubject(), "#email"));
+		vc = doc.getCredential(DIDURL.from("#email", doc.getSubject()));
 		expect(vc).not.toBeNull();
-		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#email"));
+		expect(vc.getId()).toEqual(DIDURL.from("#email", doc.getSubject()));
 
 		// Credential not exist.
 		vc = doc.getCredential("#notExistVc");
 		expect(vc).toBeNull();
 
 		// Credential selector.
-		vcs = doc.selectCredentials(DIDURL.newWithDID(doc.getSubject(), "#profile"),
+		vcs = doc.selectCredentials(DIDURL.from("#profile", doc.getSubject()),
 			"SelfProclaimedCredential");
 		expect(vcs.length).toBe(1);
-		expect(vcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		expect(vcs[0].getId()).toEqual(DIDURL.from("#profile", doc.getSubject(), ));
 
-		vcs = doc.selectCredentials(DIDURL.newWithDID(doc.getSubject(), "#profile"), null);
+		vcs = doc.selectCredentials(DIDURL.from("#profile", doc.getSubject()), null);
 		expect(vcs.length).toBe(1);
-		expect(vcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		expect(vcs[0].getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
 
 		vcs = doc.selectCredentials(null, "SelfProclaimedCredential");
 		expect(vcs.length).toBe(1);
-		expect(vcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#profile"));
+		expect(vcs[0].getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
 
 		vcs = doc.selectCredentials(null, "TestingCredential");
 		expect(vcs.length).toBe(0);
@@ -1417,9 +1415,9 @@ describe('DIDDocument Tests', () => {
 		// Check new added credential.
 		vc = doc.getCredential("#passport");
 		expect(vc).not.toBeNull();
-		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#passport"));
+		expect(vc.getId()).toEqual(DIDURL.from("#passport", doc.getSubject()));
 
-		let id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
+		let id = DIDURL.from("#twitter", doc.getSubject());
 		vc = doc.getCredential(id);
 		expect(vc).not.toBeNull();
 		expect(vc.getId()).toEqual(id);
@@ -1466,10 +1464,10 @@ describe('DIDDocument Tests', () => {
 		// Check new added credential.
 		vc = doc.getCredential("#license");
 		expect(vc).not.toBeNull();
-		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#license"));
-		assertEquals(DIDURL.newWithDID(doc.getSubject(), "#license"), vc.getId());
+		expect(vc.getId()).toEqual(DIDURL.from("#license", doc.getSubject()));
+		assertEquals(DIDURL.from("#license", doc.getSubject()), vc.getId());
 
-		let id = DIDURL.newWithDID(doc.getSubject(), "#services");
+		let id = DIDURL.from("#services", doc.getSubject());
 		vc = doc.getCredential(id);
 		expect(vc).not.toBeNull();
 		expect(vc.getId()).toEqual(id);
@@ -1504,16 +1502,16 @@ describe('DIDDocument Tests', () => {
 		// Check new added credential.
 		let vc = doc.getCredential("#passport");
 		expect(vc).not.toBeNull();
-		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#passport"));
+		expect(vc.getId()).toEqual(DIDURL.from("#passport", doc.getSubject()));
 		expect(vc.isSelfProclaimed()).toBeTruthy();
 
-		let id = DIDURL.newWithDID(doc.getSubject(), "#name");
+		let id = DIDURL.from("#name", doc.getSubject());
 		vc = doc.getCredential(id);
 		expect(vc).not.toBeNull();
 		expect(vc.getId()).toEqual(id);
 		expect(vc.isSelfProclaimed()).toBeTruthy();
 
-		id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
+		id = DIDURL.from("#twitter", doc.getSubject());
 		vc = doc.getCredential(id);
 		expect(vc).not.toBeNull();
 		expect(vc.getId()).toEqual(id);
@@ -1556,16 +1554,16 @@ describe('DIDDocument Tests', () => {
 		// Check new added credential.
 		let vc = doc.getCredential("#testvc");
 		expect(vc).not.toBeNull();
-		expect(vc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#testvc"));
+		expect(vc.getId()).toEqual(DIDURL.from("#testvc", doc.getSubject()));
 		expect(vc.isSelfProclaimed()).toBeTruthy();
 
-		let id = DIDURL.newWithDID(doc.getSubject(), "#name");
+		let id = DIDURL.from("#name", doc.getSubject());
 		vc = doc.getCredential(id);
 		expect(vc).not.toBeNull();
 		expect(vc.getId()).toEqual(id);
 		expect(vc.isSelfProclaimed()).toBeTruthy();
 
-		id = DIDURL.newWithDID(doc.getSubject(), "#twitter");
+		id = DIDURL.from("#twitter", doc.getSubject());
 		vc = doc.getCredential(id);
 		expect(vc).not.toBeNull();
 		expect(vc.getId()).toEqual(id);
@@ -1593,14 +1591,14 @@ describe('DIDDocument Tests', () => {
 		// Remove credentials
 		db.removeCredential("#profile");
 
-		db.removeCredential(DIDURL.newWithDID(doc.getSubject(), "#twitter"));
+		db.removeCredential(DIDURL.from("#twitter", doc.getSubject()));
 
 		// Credential not exist, should fail.
 		expect(() => { db.removeCredential("#notExistCredential"); }).toThrowError();
 
 
 		let did = doc.getSubject();
-		expect(() => { db.removeCredential(DIDURL.newWithDID(did, "#notExistCredential")); }).toThrowError();
+		expect(() => { db.removeCredential(DIDURL.from("#notExistCredential", did)); }).toThrowError();
 
 
 		doc = db.seal(TestConfig.storePass);
@@ -1611,7 +1609,7 @@ describe('DIDDocument Tests', () => {
 		vc = doc.getCredential("#profile");
 		expect(vc).toBeNull();
 
-		vc = doc.getCredential(DIDURL.newWithDID(doc.getSubject(), "#twitter"));
+		vc = doc.getCredential(DIDURL.from("#twitter", doc.getSubject()));
 		expect(vc).toBeNull();
 
 		// Check the final count.
@@ -1636,14 +1634,14 @@ describe('DIDDocument Tests', () => {
 		// Remove credentials
 		db.removeCredential("#profile");
 
-		db.removeCredential(DIDURL.newWithDID(doc.getSubject(), "#email"));
+		db.removeCredential(DIDURL.from("#email", doc.getSubject()));
 
 		// Credential not exist, should fail.
 		expect(() => { db.removeCredential("#notExistCredential"); }).toThrowError();
 
 
 		let did = doc.getSubject();
-		expect(() => { db.removeCredential(DIDURL.newWithDID(did, "#notExistCredential")); }).toThrowError();
+		expect(() => { db.removeCredential(DIDURL.from("#notExistCredential", did)); }).toThrowError();
 
 		doc = db.seal(TestConfig.storePass);
 		doc = user2.signWithDocument(doc, TestConfig.storePass);
@@ -1654,7 +1652,7 @@ describe('DIDDocument Tests', () => {
 		let vc = doc.getCredential("#profile");
 		expect(vc).toBeNull();
 
-		vc = doc.getCredential(DIDURL.newWithDID(doc.getSubject(), "#email"));
+		vc = doc.getCredential(DIDURL.from("#email", doc.getSubject()));
 		expect(vc).toBeNull();
 
 		// Check the final count.
@@ -1691,9 +1689,9 @@ describe('DIDDocument Tests', () => {
 		let props = svc.getProperties();
 		expect(Object.keys(props).length === 0).toBeTruthy()
 
-		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+		svc = doc.getService(DIDURL.from("#vcr", doc.getSubject()));
 		expect(svc).not.toBeNull();
-		expect(svc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
+		expect(svc.getId()).toEqual(DIDURL.from("#vcr", doc.getSubject()))
 		props = svc.getProperties();
 		expect(Object.keys(props).length === 0).toBeTruthy()
 
@@ -1704,16 +1702,16 @@ describe('DIDDocument Tests', () => {
 		// Service selector.
 		svcs = doc.selectServices("#vcr", "CredentialRepositoryService");
 		expect(svcs.length).toBe(1);
-		expect(svcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
+		expect(svcs[0].getId()).toEqual(DIDURL.from("#vcr", doc.getSubject()))
 
-		svcs = doc.selectServices(DIDURL.newWithDID(doc.getSubject(), "#openid"), null);
+		svcs = doc.selectServices(DIDURL.from("#openid", doc.getSubject()), null);
 		expect(svcs.length).toBe(1);
-		expect(svcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#openid"))
+		expect(svcs[0].getId()).toEqual(DIDURL.from("#openid", doc.getSubject()))
 
 
 		svcs = doc.selectServices(null, "CarrierAddress");
 		expect(svcs.length).toBe(1);
-		expect(svcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#carrier"))
+		expect(svcs[0].getId()).toEqual(DIDURL.from("#carrier", doc.getSubject()))
 
 		props = svcs[0].getProperties();
 		expect(svcs.length).toBe(1);
@@ -1762,16 +1760,16 @@ describe('DIDDocument Tests', () => {
 		// Service getter, should success.
 		let svc = doc.getService("#vault");
 		expect(svc).not.toBeNull();
-		expect(svc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vault"))
+		expect(svc.getId()).toEqual(DIDURL.from("#vault", doc.getSubject()))
 		expect(svc.getType()).toEqual("Hive.Vault.Service")
 		expect(svc.getServiceEndpoint()).toEqual("https://foobar.com/vault")
 
 		let props = svc.getProperties();
 		expect(Object.keys(props).length === 0).toBeTruthy()
 
-		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+		svc = doc.getService(DIDURL.from("#vcr", doc.getSubject()));
 		expect(svc).not.toBeNull();
-		expect(svc.getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
+		expect(svc.getId()).toEqual(DIDURL.from("#vcr", doc.getSubject()))
 		props = svc.getProperties();
 		expect(props.length).toBe(12);
 		expect(props["foobar"]).toEqual("lalala...")
@@ -1784,9 +1782,9 @@ describe('DIDDocument Tests', () => {
 		// Service selector.
 		svcs = doc.selectServices("#vcr", "CredentialRepositoryService");
 		expect(svcs.length).toBe(1);
-		expect(svcs[0].getId()).toEqual(DIDURL.newWithDID(doc.getSubject(), "#vcr"))
+		expect(svcs[0].getId()).toEqual(DIDURL.from("#vcr", doc.getSubject()))
 
-		svcs = doc.selectServices(DIDURL.newWithDID(doc.getSubject(), "#openid"), null);
+		svcs = doc.selectServices(DIDURL.from("#openid", doc.getSubject()), null);
 		expect(svcs.length).toBe(0);
 
 		// Service not exist, should return a empty list.
@@ -1809,7 +1807,7 @@ describe('DIDDocument Tests', () => {
 		db.addService("#test-svc-1", "Service.Testing",
 			"https://www.elastos.org/testing1");
 
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
+		db.addService(DIDURL.from("#test-svc-2", doc.getSubject()),
 			"Service.Testing", "https://www.elastos.org/testing2");
 
 		// Service id already exist, should failed.
@@ -1871,10 +1869,10 @@ describe('DIDDocument Tests', () => {
 		db.addService("#test-svc-1", "Service.Testing",
 			"https://www.elastos.org/testing1", props);
 
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
+		db.addService(DIDURL.from("#test-svc-2", doc.getSubject()),
 			"Service.Testing", "https://www.elastos.org/testing2", props);
 
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-3"),
+		db.addService(DIDURL.from("#test-svc-3", doc.getSubject()),
 			"Service.Testing", "https://www.elastos.org/testing3");
 
 		// Service id already exist, should failed.+
@@ -1926,7 +1924,7 @@ describe('DIDDocument Tests', () => {
 		db.addService("#test-svc-1", "Service.Testing",
 			"https://www.elastos.org/testing1");
 
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
+		db.addService(DIDURL.from("#test-svc-2", doc.getSubject()),
 			"Service.Testing", "https://www.elastos.org/testing2");
 
 		// Service id already exist, should failed.
@@ -1995,10 +1993,10 @@ describe('DIDDocument Tests', () => {
 		db.addService("#test-svc-1", "Service.Testing",
 			"https://www.elastos.org/testing1", props);
 
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-2"),
+		db.addService(DIDURL.from("#test-svc-2", doc.getSubject()),
 			"Service.Testing", "https://www.elastos.org/testing2", props);
 
-		db.addService(DIDURL.newWithDID(doc.getSubject(), "#test-svc-3"),
+		db.addService(DIDURL.from("#test-svc-3", doc.getSubject()),
 			"Service.Testing", "https://www.elastos.org/testing3");
 
 		// Service id already exist, should failed.
@@ -2042,7 +2040,7 @@ describe('DIDDocument Tests', () => {
 		// remove services
 		db.removeService("#openid");
 
-		db.removeService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+		db.removeService(DIDURL.from("#vcr", doc.getSubject()));
 
 		// Service not exist, should fail.
 		expect(() => { db.removeService("#notExistService"); }).toThrowError();
@@ -2055,7 +2053,7 @@ describe('DIDDocument Tests', () => {
 		let svc = doc.getService("#openid");
 		expect(svc).toBeNull();
 
-		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+		svc = doc.getService(DIDURL.from("#vcr", doc.getSubject()));
 		expect(svc).toBeNull();
 
 		// Check the final count
@@ -2080,7 +2078,7 @@ describe('DIDDocument Tests', () => {
 		// remove services
 		db.removeService("#vault");
 
-		db.removeService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+		db.removeService(DIDURL.from("#vcr", doc.getSubject()));
 
 		// Service not exist, should fail.
 		expect(() => { db.removeService("#notExistService"); }).toThrowError();
@@ -2094,7 +2092,7 @@ describe('DIDDocument Tests', () => {
 		let svc = doc.getService("#openid");
 		expect(svc).toBeNull();
 
-		svc = doc.getService(DIDURL.newWithDID(doc.getSubject(), "#vcr"));
+		svc = doc.getService(DIDURL.from("#vcr", doc.getSubject()));
 		expect(svc).toBeNull();
 
 		// Check the final count
@@ -2154,7 +2152,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeTruthy()
 
 		let data = Buffer.alloc(1024)
-		let pkid = DIDURL.newWithDID(doc.getSubject(), "#primary");
+		let pkid = DIDURL.from("#primary", doc.getSubject());
 
 		for (let i = 0; i < 10; i++) {
 			data.fill(i)
@@ -2178,7 +2176,6 @@ describe('DIDDocument Tests', () => {
 
 
 	})
-
 
 	test("testDerive", async () => {
 		let identity = testData.getRootIdentity();
@@ -2632,7 +2629,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getController()).toEqual(newController.getSubject())
 
 		// transfer
-		await doc.publishWithTicket(ticket, DIDURL.newWithDID(doc.getController()), TestConfig.storePass);
+		await doc.publishWithTicket(ticket, DIDURL.fromDID(doc.getController()), TestConfig.storePass);
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -2725,7 +2722,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getController()).toEqual(newController.getSubject())
 
 		// transfer
-		await doc.publishWithTicket(ticket, DIDURL.newWithDID(doc.getSubject()), TestConfig.storePass);
+		await doc.publishWithTicket(ticket, DIDURL.fromDID(doc.getSubject()), TestConfig.storePass);
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull()
@@ -3920,7 +3917,7 @@ describe('DIDDocument Tests', () => {
 
 		let target = await identity.newDid(TestConfig.storePass);
 		let db = DIDDocumentBuilder.newFromDocument(target).edit();
-		await db.authorizationDid(DIDURL.newWithUrl("#recovery"), doc.getSubject(), null);
+		await db.authorizationDid(new DIDURL("#recovery"), doc.getSubject(), null);
 		target = db.seal(TestConfig.storePass);
 		expect(target).not.toBeNull()
 		expect(target.getAuthorizationKeyCount()).toBe(1)
@@ -3934,7 +3931,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).not.toBeNull()
 		expect(resolved.toString()).toEqual(target.toString())
 
-		await doc.deactivate(DIDURL.newWithDID(target.getSubject()), TestConfig.storePass);
+		await doc.deactivate(DIDURL.fromDID(target.getSubject()), TestConfig.storePass);
 		target = await target.getSubject().resolve();
 		expect(target.isDeactivated()).toBeTruthy()
 
@@ -3946,7 +3943,7 @@ describe('DIDDocument Tests', () => {
 		let doc = await identity.newDid(TestConfig.storePass);
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
-		let id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
+		let id = DIDURL.from("#key-2", doc.getSubject());
 
 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
 		store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
@@ -3978,7 +3975,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).not.toBeNull()
 		expect(resolved.toString()).toEqual(target.toString())
 
-		await doc.deactivate(DIDURL.newWithDID(target.getSubject()), TestConfig.storePass);
+		await doc.deactivate(DIDURL.fromDID(target.getSubject()), TestConfig.storePass);
 		target = await target.getSubject().resolve();
 		expect(target.isDeactivated()).toBeTruthy()
 
@@ -3991,7 +3988,7 @@ describe('DIDDocument Tests', () => {
 		let doc = await identity.newDid(TestConfig.storePass);
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
-		let id = DIDURL.newWithDID(doc.getSubject(), "#key-2");
+		let id = DIDURL.from("#key-2", doc.getSubject());
 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
 		store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 		doc = db.seal(TestConfig.storePass);
@@ -4023,7 +4020,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).not.toBeNull()
 		expect(resolved.toString()).toEqual(target.toString())
 
-		await doc.deactivate(DIDURL.newWithDID(target.getSubject()), TestConfig.storePass);
+		await doc.deactivate(DIDURL.fromDID(target.getSubject()), TestConfig.storePass);
 		target = await target.getSubject().resolve();
 		expect(target.isDeactivated()).toBeTruthy()
 

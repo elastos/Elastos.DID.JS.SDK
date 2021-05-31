@@ -198,7 +198,7 @@ export class FileSystemStorage implements DIDStorage {
 
 	private static toDIDURL(did: DID, path: string): DIDURL {
 		path = path.replace('.', ';').replace('_', '/').replace('-', '?');
-		return DIDURL.valueOf(did, path);
+		return DIDURL.from(path, did);
 	}
 
 	private static copyFile(src: File, dest: File) {

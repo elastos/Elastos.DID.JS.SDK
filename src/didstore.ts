@@ -622,7 +622,7 @@ import { BASE64 } from "./internals";
 			checkArgument(id != null, "Invalid credential id");
 
 			if (typeof id === "string")
-				id = DIDURL.valueOf(id);
+				id = DIDURL.from(id);
 
 			try {
 				let value = this.cache.get(DIDStore.Key.forCredential(id), ()=>{
@@ -753,11 +753,7 @@ import { BASE64 } from "./internals";
 		public deleteCredential(idOrString: DIDURL | string): boolean {
 			checkArgument(idOrString != null, "Invalid credential id");
 
-			let id: DIDURL;
-			if (idOrString instanceof DIDURL)
-				id = idOrString;
-			else
-				id = DIDURL.valueOfUrl(idOrString);
+			let id = DIDURL.from(idOrString);
 
 			let success = this.storage.deleteCredential(id);
 			if (success) {
@@ -838,11 +834,7 @@ import { BASE64 } from "./internals";
 		 public storePrivateKey(idOrString: DIDURL | string, privateKey: Buffer, storepass: string) {
 			checkArgument(idOrString != null, "Invalid private key id");
 
-			let id: DIDURL;
-			if (idOrString instanceof DIDURL)
-				id = idOrString;
-			else
-				id = DIDURL.valueOfUrl(idOrString);
+			let id = DIDURL.from(idOrString);
 
 			checkArgument(privateKey != null && privateKey.length != 0, "Invalid private key");
 			checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -897,7 +889,7 @@ import { BASE64 } from "./internals";
 		public containsPrivateKey(id: DIDURL | string): boolean {
 			checkArgument(id != null, "Invalid private key id");
 
-			let keyId = id instanceof DIDURL ? id : DIDURL.valueOfUrl(id);
+			let keyId = id instanceof DIDURL ? id : DIDURL.from(id);
 			let key = this.loadPrivateKey(keyId);
 			return key != null;
 		}
@@ -931,11 +923,7 @@ import { BASE64 } from "./internals";
 		 public deletePrivateKey(idOrString: DIDURL | string): boolean {
 			checkArgument(idOrString != null, "Invalid private key id");
 
-			let id: DIDURL;
-			if (idOrString instanceof DIDURL)
-				id = idOrString;
-			else
-				id = DIDURL.valueOfUrl(idOrString);
+			let id = DIDURL.from(idOrString);
 
 			let success = this.storage.deletePrivateKey(id);
 			if (success)

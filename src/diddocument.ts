@@ -257,10 +257,9 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
             if (id == null || id.getDid() != null)
                 return id;
 
-            return DIDURL.valueOf(this.getSubject(), id);
-        }
-        else {
-            return DIDURL.valueOf(this.getSubject(), id);
+            return DIDURL.from(id, this.getSubject());
+        } else {
+            return DIDURL.from(id, this.getSubject());
         }
     }
 
