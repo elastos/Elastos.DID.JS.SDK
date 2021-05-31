@@ -117,13 +117,12 @@ export class DIDDocumentBuilder {
 
     private canonicalId(id: DIDURL | string): DIDURL {
         if (typeof id === "string") {
-            return DIDURL.valueOf(this.getSubject(), id);
-        }
-        else {
+            return DIDURL.from(id, this.getSubject());
+        } else {
             if (id == null || id.getDid() != null)
                 return id;
 
-            return DIDURL.valueOf(this.getSubject(), id);
+            return DIDURL.from(id, this.getSubject());
         }
     }
 
@@ -292,7 +291,7 @@ export class DIDDocumentBuilder {
         this.checkNotSealed();
 
         if (typeof id === "string")
-            id = DIDURL.newWithUrl(id);
+            id = DIDURL.from(id);
 
         if (controller === undefined)
             controller = null as DID;
@@ -635,7 +634,7 @@ export class DIDDocumentBuilder {
         checkArgument(id != null, "Invalid publicKey id");
 
         if (typeof id === "string")
-            id = DIDURL.valueOfUrl(id);
+            id = DIDURL.from(id);
 
         checkArgument(id != null, "Invalid publicKey id");
         checkArgument((id.getDid() == null || id.getDid().equals(this.getSubject())),

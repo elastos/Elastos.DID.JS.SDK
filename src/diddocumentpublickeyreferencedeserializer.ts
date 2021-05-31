@@ -16,7 +16,7 @@ export class DIDDocumentPublicKeyReferenceDeserializer extends Deserializer {
                 let jsonObj = JSON.parse(value);
                 return DIDDocumentPublicKeyReference.newWithKey(DIDDocumentPublicKeyReferenceDeserializer.mapper(context).parse<DIDDocumentPublicKey>(jsonObj.key, {mainCreator: () => [DIDDocumentPublicKey]}));
             }
-            return DIDDocumentPublicKeyReference.newWithURL(DIDURL.newWithUrl(value));
+            return DIDDocumentPublicKeyReference.newWithURL(DIDURL.from(value));
         } catch (e) {
             throw new ParentException("Invalid public key");
         }

@@ -29,6 +29,6 @@ const config: InitialOptionsTsJest = {
       "tsconfig": "./tsconfig.json"
     }
   },
-  testTimeout: 500000
+  testTimeout: 6000000
 }
 export default config

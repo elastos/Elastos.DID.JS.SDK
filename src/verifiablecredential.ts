@@ -571,7 +571,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		if (typeof signKey === "string")
-			signKey = DIDURL.valueOf(this.getSubject().getId(), signKey);
+			signKey = DIDURL.from(signKey, this.getSubject().getId());
 
 		if (signer == null) {
 			let signerDid: DID = (signKey != null && signKey.getDid() != null) ?
@@ -689,7 +689,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 			throw new IllegalArgumentException();
 
 		if (typeof id === "string")
-			id = DIDURL.valueOf(id);
+			id = DIDURL.from(id);
 
 		if (typeof issuer === "string")
 			issuer = DID.from(issuer);
@@ -991,12 +991,12 @@ export namespace VerifiableCredential {
 			checkArgument(id != null, "Invalid id");
 
 			if (typeof id === "string")
-				id = DIDURL.valueOf(id);
+				id = DIDURL.from(id);
 
 			checkArgument(id.getDid() == null || id.getDid().equals(this.target), "Invalid id");
 
 			if (id.getDid() == null)
-				id = DIDURL.valueOf(this.target, id);
+				id = DIDURL.from(id, this.target);
 
 			this.credential.id = id;
 			return this;

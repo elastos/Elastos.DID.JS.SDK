@@ -1,6 +1,5 @@
 
-
-
+// This value holder for DID fields maybe avoid circular reference
 export class DIDValues {
     constructor(readonly value: string, readonly method: string, readonly methodSpecificId: string) {
     }
@@ -51,8 +50,6 @@ export class DIDURLParser{
         if (!did.startsWith("did")){
             throw new Error("Invalid DID")
         }
-
-
 
         let didValues = did.split(":")
 

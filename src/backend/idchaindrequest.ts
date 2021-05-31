@@ -368,7 +368,7 @@ export namespace IDChainRequest {
 		public qualifyVerificationMethod(ref: DID) {
 			// TODO: need improve the impl
 			if (this.verificationMethod.getDid() == null)
-				this.verificationMethod = DIDURL.valueOf(ref, this.verificationMethod);
+				this.verificationMethod = DIDURL.from(this.verificationMethod, ref);
 		}
 
 		public getSignature(): string {

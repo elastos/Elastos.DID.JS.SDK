@@ -15,11 +15,11 @@ export class Logger {
     }
 
     debug(...data: any) {
-        console.log(this.format("debug", data));
+        // console.log(this.format("debug", data));
     }
 
     trace(...data: any) {
-        console.log(this.format("trace", data));
+        // console.log(this.format("trace", data));
     }
 
     warn(...data: any) {
