@@ -29,7 +29,7 @@ import { SimulatedIDChain } from "./internals";
 import { SimulatedIDChainAdapter } from "./internals";
 import { runningInBrowser } from "./utils";
 
-Logger.setLogLevel(Logger.TRACE);
+Logger.setLevel(Logger.TRACE);
 
 /**
  * Global initializer. For now, needed by the browser to initialize BrowserFS before running anything else.

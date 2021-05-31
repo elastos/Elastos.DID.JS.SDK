@@ -23,7 +23,7 @@
 //import testConfig from "../assets/test.config.json";
 
 import { join } from "path";
-import { File, Exceptions, runningInBrowser } from "@elastosfoundation/did-js-sdk";
+import { File, Exceptions, runningInBrowser, Logger } from "@elastosfoundation/did-js-sdk";
 const ParentException = Exceptions.ParentException;
 
 import testConfigFile from "../assets/test.config.json";
@@ -44,8 +44,6 @@ export class TestConfig {
 
 	public static tempDir: string;
 	public static storeRoot: string;
-
-	//public static Level level;
 
 	static initialize() {
 		let testConfig = this.loadConfiguration(this.TEST_CONFIG_FILE);
@@ -68,11 +66,7 @@ export class TestConfig {
 
 		this.storeRoot = testConfig.store.root || this.tempDir + "/DIDStore";
 
-		//level = Level.valueOf(config.getProperty("log.level", "info").toUpperCase());
-
-		// We use logback as the logging backend
-	    /* Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-	    root.setLevel(level); */
+		Logger.setLevel(Logger.TRACE);
 	}
 
 	private static loadConfiguration(configFile: string): any {

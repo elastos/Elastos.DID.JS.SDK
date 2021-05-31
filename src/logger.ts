@@ -18,7 +18,7 @@ export class Logger {
     private context: string;
     private static logLevel = Logger.TRACE;
 
-    public static setLogLevel(level: LogLevel) {
+    public static setLevel(level: LogLevel) {
         if (level <= Logger.TRACE && level >= Logger.INFO) {
             Logger.logLevel = level;
         }
