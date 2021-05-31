@@ -13,9 +13,9 @@ let testData: TestData;
 let store: DIDStore;
 
 describe("RootIdentity Tests", ()=>{
-    beforeEach(() => {
+    beforeEach(async () => {
     	testData = new TestData();
-    	store = testData.getStore();
+    	store = await testData.getStore();
     });
 
     afterEach(async () => {

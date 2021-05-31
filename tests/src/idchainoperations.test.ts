@@ -58,8 +58,8 @@ describe('IDChainOperations Tests', () => {
     	await testData.cleanup();
     });
 
-    beforeEach(() => {
-    	store = testData.getStore();
+    beforeEach(async () => {
+    	store = await testData.getStore();
     	mnemonic = testData.getMnemonic();
     	identity = testData.getRootIdentity();
     });

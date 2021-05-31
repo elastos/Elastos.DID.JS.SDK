@@ -20,15 +20,17 @@
  * SOFTWARE.
  */
 
-import { Mnemonic, RootIdentity } from "@elastosfoundation/did-js-sdk";
+import { Mnemonic, RootIdentity, DIDStore } from "@elastosfoundation/did-js-sdk";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
 
 describe('Mnemonic Tests', () => {
 	let testData: TestData;
+	let store: DIDStore;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		testData = new TestData();
+		store = await testData.getStore();
 	})
 
 	afterEach(async () => {
@@ -50,13 +52,12 @@ describe('Mnemonic Tests', () => {
 			expect(mc.isValid(mnemonic)).toBeTruthy()
 		    expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy()
 
-			let store = testData.getStore();
 			RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
 
 			expect(mc.isValid(mnemonic + "z")).toBeFalsy()
 			expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy()
 		});
-	})
+	});
 
 	test('Test french mnemonic', () => {
 		let mnemonic = "remarque séduire massif boire horde céleste exact dribbler pulpe prouesse vagabond opale";

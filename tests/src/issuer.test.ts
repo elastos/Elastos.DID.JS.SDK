@@ -39,7 +39,7 @@ describe("Issuer Tests", ()=>{
 
 	beforeEach(async ()=>{
 		testData = new TestData();
-    	store = testData.getStore();
+    	store = await testData.getStore();
     	testData.getRootIdentity();
 
     	issuerDoc = await testData.getInstantData().getIssuerDocument();
