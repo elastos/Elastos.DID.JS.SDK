@@ -1,4 +1,8 @@
-import { Logger, DIDStore, RootIdentity, DIDDocument, DID } from "@elastosfoundation/did-js-sdk";
+import {
+	Logger,
+	DIDStore,
+	RootIdentity
+} from "@elastosfoundation/did-js-sdk";
 import { DIDTestExtension } from "./utils/didtestextension";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
