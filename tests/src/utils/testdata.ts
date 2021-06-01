@@ -705,7 +705,7 @@ export class InstantData {
 			    twitter: "@john"
 			};
 
-			db.createAndAddCredential(TestConfig.storePass, "#profile", props);
+			await db.createAndAddCredential(TestConfig.storePass, "#profile", props);
 
 			doc = await db.seal(TestConfig.storePass);
 			await this.testData.store.storeDid(doc);
