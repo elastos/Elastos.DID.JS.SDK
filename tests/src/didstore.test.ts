@@ -512,7 +512,7 @@ describe("DIDStore Tests", ()=>{
 
 				let doc = await store.loadDid(did);
 				if (!doc.isCustomizedDid() || doc.getControllerCount() <= 1) {
-					let sig = doc.signWithStorePass(TestConfig.storePass, data);
+					let sig = await doc.signWithStorePass(TestConfig.storePass, data);
 					expect(doc.verify(null, sig, data)).toBeTruthy();
 				}
 			}

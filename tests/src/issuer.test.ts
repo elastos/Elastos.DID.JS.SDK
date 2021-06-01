@@ -50,16 +50,16 @@ describe("Issuer Tests", ()=>{
 		await testData.cleanup();
 	})
 
-	test('New Issuer Test With Sign Key', () => {
+	test('New Issuer Test With Sign Key', async () => {
 		let signKey = issuerDoc.getDefaultPublicKeyId();
-		let issuer = Issuer.newWithDID(issuerDoc.getSubject(), store, signKey);
+		let issuer = await Issuer.newWithDID(issuerDoc.getSubject(), store, signKey);
 
 		expect(issuer.getDid()).toEqual(issuerDoc.getSubject())
 		expect(issuer.getSignKey()).toEqual(signKey)
 	})
 
-	test('New Issuer Test Without Sign Key', () => {
-		let issuer = Issuer.newWithDID(issuerDoc.getSubject(), store);
+	test('New Issuer Test Without Sign Key', async () => {
+		let issuer = await Issuer.newWithDID(issuerDoc.getSubject(), store);
 
 		expect(issuer.getDid()).toEqual(issuerDoc.getSubject())
 		expect(issuer.getSignKey()).toEqual(issuerDoc.getDefaultPublicKeyId())

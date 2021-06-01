@@ -122,7 +122,7 @@ describe('VerifiablePresentation Tests', () => {
 
 			let normalizedJson = cd.getPresentationJson(did, presentation, "normalized");
 
-			let normalized = VerifiablePresentation.parseContent(normalizedJson);
+			let normalized = await VerifiablePresentation.parseContent(normalizedJson);
 			expect(normalized).not.toBeNull();
 			await expect(await normalized.isGenuine()).toBeTruthy();
 			await expect(await normalized.isValid()).toBeTruthy();
@@ -136,9 +136,9 @@ describe('VerifiablePresentation Tests', () => {
 		let td = await testData.getInstantData();
 		let doc = await td.getUser1Document();
 
-		let pb = VerifiablePresentation.createFor(doc.getSubject(), null, store);
+		let pb = await VerifiablePresentation.createFor(doc.getSubject(), null, store);
 
-		let vp = pb
+		let vp = await pb
 				.credentials(doc.getCredential("#profile"))
 				.credentials(doc.getCredential("#email"))
 				.credentials(await td.getUser1TwitterCredential())
@@ -179,9 +179,9 @@ describe('VerifiablePresentation Tests', () => {
 		let td = await testData.getInstantData();
 		let doc = await td.getUser1Document();
 
-		let pb = VerifiablePresentation.createFor(doc.getSubject(), null, store);
+		let pb = await VerifiablePresentation.createFor(doc.getSubject(), null, store);
 
-		let vp = pb
+		let vp = await pb
 				.id("#test-vp")
 				.type("Trail", "TestPresentation")
 				.credentials(doc.getCredential("#profile"))
@@ -224,9 +224,9 @@ describe('VerifiablePresentation Tests', () => {
 	test('testBuildEmpty', async () => {
 		let doc = await testData.getInstantData().getUser1Document();
 
-		let pb = VerifiablePresentation.createFor(doc.getSubject(), null, store);
+		let pb = await VerifiablePresentation.createFor(doc.getSubject(), null, store);
 
-		let vp = pb
+		let vp = await pb
 				.realm("https://example.com/")
 				.nonce("873172f58701a9ee686f0630204fee59")
 				.seal(TestConfig.storePass);
@@ -251,9 +251,9 @@ describe('VerifiablePresentation Tests', () => {
 	test('testBuildEmptyWithOptionsAttrs', async () => {
 		let doc = await testData.getInstantData().getUser1Document();
 
-		let pb = VerifiablePresentation.createFor(doc.getSubject(), null, store);
+		let pb = await VerifiablePresentation.createFor(doc.getSubject(), null, store);
 
-		let vp = pb
+		let vp = await pb
 				.id("#test-vp")
 				.type("HelloWorld", "FooBar", "Baz")
 				.realm("https://example.com/")
