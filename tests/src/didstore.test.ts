@@ -121,7 +121,7 @@ describe("DIDStore Tests", ()=>{
 
 			resolved = await doc.getSubject().resolve();
 			expect(resolved).not.toBeNull();
-			store.storeDid(resolved);
+			await store.storeDid(resolved);
 			expect(alias).toEqual(resolved.getMetadata().getAlias());
 			expect(doc.getSubject()).toEqual(resolved.getSubject());
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
@@ -410,7 +410,7 @@ describe("DIDStore Tests", ()=>{
 
 			resolved = await doc.getSubject().resolve();
 			expect(resolved).not.toBeNull();
-			store.storeDid(resolved);
+			await store.storeDid(resolved);
 			expect(alias).toEqual(resolved.getMetadata().getAlias());
 			expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(
@@ -488,29 +488,29 @@ describe("DIDStore Tests", ()=>{
 				let alias = (await did.getMetadata()).getAlias();
 
 				if (alias === "Issuer") {
-					let vcs = store.listCredentials(did);
+					let vcs = await store.listCredentials(did);
 					expect(1).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User1") {
-					let vcs = store.listCredentials(did);
+					let vcs = await store.listCredentials(did);
 					expect(version == 2 ? 5 : 4).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User2") {
-					let vcs = store.listCredentials(did);
+					let vcs = await store.listCredentials(did);
 					expect(1).toEqual(vcs.length);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User3") {
-					let vcs = store.listCredentials(did);
+					let vcs = await store.listCredentials(did);
 					expect(0).toEqual(vcs.length);
 				}
 
-				let doc = store.loadDid(did);
+				let doc = await store.loadDid(did);
 				if (!doc.isCustomizedDid() || doc.getControllerCount() <= 1) {
 					let sig = doc.signWithStorePass(TestConfig.storePass, data);
 					expect(doc.verify(null, sig, data)).toBeTruthy();
@@ -520,8 +520,8 @@ describe("DIDStore Tests", ()=>{
 	//});
 
 	test("testNewDIDWithWrongPass", async ()=>{
-		let store = DIDStore.open(testData.getCompatibleData(2).getStoreDir());
-		let identity = store.loadRootIdentity();
+		let store = await DIDStore.open(testData.getCompatibleData(2).getStoreDir());
+		let identity = await store.loadRootIdentity();
 
 		await expect(async ()=>{
 			await identity.newDid("wrongpass");
@@ -529,8 +529,8 @@ describe("DIDStore Tests", ()=>{
 	});
 
 	test("testNewDIDandGetDID", async ()=>{
-		let store = DIDStore.open(testData.getCompatibleData(2).getStoreDir());
-		let identity = store.loadRootIdentity();
+		let store = await DIDStore.open(testData.getCompatibleData(2).getStoreDir());
+		let identity = await store.loadRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc).not.toBeNull();
@@ -556,7 +556,7 @@ describe("DIDStore Tests", ()=>{
 			"twitter": "@john"
 		};
 
-		let identity = store.loadRootIdentity();
+		let identity = await store.loadRootIdentity();
 
 		for (let i = 0; i < 10; i++) {
 			let alias = "my did " + i;
@@ -564,12 +564,12 @@ describe("DIDStore Tests", ()=>{
 			doc.getMetadata().setAlias(alias);
 			let issuer = new Issuer(doc);
 			let cb = issuer.issueFor(doc.getSubject());
-			let vc = cb.id("#cred-1")
+			let vc = await cb.id("#cred-1")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
 
-			store.storeCredential(vc);
+			await store.storeCredential(vc);
 		}
 	}
 
@@ -578,9 +578,9 @@ describe("DIDStore Tests", ()=>{
 			Utils.deleteFile(new File(TestConfig.storeRoot));
 			let store: DIDStore = null;
 			if (cached)
-				store = DIDStore.open(TestConfig.storeRoot);
+				store = await DIDStore.open(TestConfig.storeRoot);
 			else
-				store = DIDStore.open(TestConfig.storeRoot, 0, 0);
+				store = await DIDStore.open(TestConfig.storeRoot, 0, 0);
 
 			let mnemonic = Mnemonic.getInstance().generate();
 			RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
@@ -595,11 +595,11 @@ describe("DIDStore Tests", ()=>{
 
 			for (let i = 0; i < 1000; i++) {
 				for (let did of dids) {
-					let doc = store.loadDid(did);
+					let doc = await store.loadDid(did);
 					expect(did.equals(doc.getSubject())).toBeTruthy();
 
 					let id = DIDURL.from("#cred-1", did);
-					let vc = store.loadCredential(id);
+					let vc = await store.loadCredential(id);
 					expect(id.equals(vc.getId())).toBeTruthy();
 				}
 			}
@@ -616,19 +616,19 @@ describe("DIDStore Tests", ()=>{
 
 		for (let i = 0; i < stores.length; i++) {
 			Utils.deleteFile(new File(TestConfig.storeRoot + i));
-			stores[i] = DIDStore.open(TestConfig.storeRoot + i);
+			stores[i] = await DIDStore.open(TestConfig.storeRoot + i);
 			expect(stores[i]).not.toBeNull();
 			let mnemonic = Mnemonic.getInstance().generate();
 			RootIdentity.createFromMnemonic(mnemonic, "", stores[i], TestConfig.storePass);
 		}
 
 		for (let i = 0; i < stores.length; i++) {
-			docs[i] = await stores[i].loadRootIdentity().newDid(TestConfig.storePass);
+			docs[i] = await (await stores[i].loadRootIdentity()).newDid(TestConfig.storePass);
 			expect(docs[i]).not.toBeNull();
 		}
 
 		for (let i = 0; i < stores.length; i++) {
-			let doc = stores[i].loadDid(docs[i].getSubject());
+			let doc = await stores[i].loadDid(docs[i].getSubject());
 			expect(doc).not.toBeNull();
 			expect(docs[i].toString(true)).toEqual(doc.toString(true));
 		}
