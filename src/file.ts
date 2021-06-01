@@ -192,9 +192,8 @@ import * as fs from "./fs";
 		if (this.exists()) {
 			if (this.isDirectory())
 				this.deleteDirectory(this.fullPath);
-				//rmdirSync(this.fullPath, { recursive: true });
 			else
-				console.error("TODO NOT IMPLEMENTED FROM JAVA - rmSync"); //rmSync(this.fullPath, { recursive: true, force: true });
+				fs.unlinkSync(this.fullPath);
 			this.fileStats = undefined;
 		}
 	}
