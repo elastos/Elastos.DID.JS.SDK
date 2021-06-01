@@ -401,7 +401,7 @@ describe('IDChainOperations Tests', () => {
 			    twitter: "@john"
 			};
 
-			let vc = cb.id("#profile")
+			let vc = await cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -455,7 +455,7 @@ describe('IDChainOperations Tests', () => {
 				passport: "S653258Z07"
 			};
 
-			let vc = cb.id("#passport")
+			let vc = await cb.id("#passport")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -532,7 +532,7 @@ describe('IDChainOperations Tests', () => {
 				Zoo: "Zoo"
 			};
 
-			let vc = cb.id("#test")
+			let vc = await cb.id("#test")
 					.type("TestCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -605,7 +605,7 @@ describe('IDChainOperations Tests', () => {
 				twitter: "@john"
 			};
 
-			let vc = cb.id("#profile")
+			let vc = await cb.id("#profile")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -660,7 +660,7 @@ describe('IDChainOperations Tests', () => {
 				passport: "S653258Z07"
 			};
 
-			let vc = cb.id("#passport")
+			let vc = await cb.id("#passport")
 					.type("BasicProfileCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);
@@ -718,7 +718,7 @@ describe('IDChainOperations Tests', () => {
 				Zoo: "Zoo"
 			};
 
-			let vc = cb.id("#test")
+			let vc = await cb.id("#test")
 					.type("TestCredential", "SelfProclaimedCredential")
 					.properties(props)
 					.seal(TestConfig.storePass);

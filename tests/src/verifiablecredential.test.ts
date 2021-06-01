@@ -230,10 +230,10 @@ describe('let Tests', () => {
 
 		for (let csv of csvSource) {
 			let normalizedJson = cd.getCredentialJson(csv.did, csv.vc, "normalized");
-			let normalized = VerifiableCredential.parseContent(normalizedJson);
+			let normalized = await VerifiableCredential.parseContent(normalizedJson);
 
 			let compactJson = cd.getCredentialJson(csv.did, csv.vc, "compact");
-			let compact = VerifiableCredential.parseContent(compactJson);
+			let compact = await VerifiableCredential.parseContent(compactJson);
 
 			let credential = await cd.getCredential(csv.did, csv.vc);
 
@@ -847,7 +847,7 @@ describe('let Tests', () => {
     	for (let i = 0; i < 1028; i++) {
     		console.log("Creating test credential {}...", i);
 
-    		let vc = selfIssuer.issueFor(did)
+    		let vc = await selfIssuer.issueFor(did)
     				.id("#test" + i)
     				.type("SelfProclaimedCredential")
     				.properties({"index": i})

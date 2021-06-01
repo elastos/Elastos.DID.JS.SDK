@@ -20,94 +20,127 @@
  * SOFTWARE.
  */
 
-test("stub", ()=> Promise.resolve(true));
+import { DIDDocument, RootIdentity, HDKey, DIDDocumentBuilder, DIDURL, DIDStore, Logger, BASE64 } from "@elastosfoundation/did-js-sdk";
+import { TestData } from "../utils/testdata";
+import { TestConfig } from "../utils/testconfig";
+import { DIDTestExtension } from "../utils/didtestextension";
+
+const logger = new Logger("JWTTests");
+
+function printJwt(token: string) {
+	if (Logger.getLevel() >= Logger.TRACE) {
+		let toks = token.split("\\.");
+
+		if (toks.length != 2 && toks.length != 3) {
+			logger.error("Invalid token: " + token);
+			return;
+		}
+
+		let sb = BASE64.decode(toks[0]) + '.' + BASE64.decode(toks[1]) + '.';
+		if (toks.length == 3)
+			sb += toks[2];
+
+		logger.trace("Token: {}", token);
+		logger.trace("Plain: {}", sb.toString());
+	}
+}
+
+describe('JWT Tests', () => {
+	const testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+	const testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+	let testData: TestData;
+	let identity: RootIdentity;
+	let doc: DIDDocument;
+	let key: HDKey;
+	let db: DIDDocumentBuilder;
+	let id: DIDURL;
+	let store: DIDStore;
+
+	beforeEach(async () => {
+		testData = new TestData();
+		identity = testData.getRootIdentity();
+		doc = await identity.newDid(TestConfig.storePass);
+		key = TestData.generateKeypair();
+		db = DIDDocumentBuilder.newFromDocument(doc).edit();
+		id = new DIDURL("#key2", doc.getSubject());
+		db.addAuthenticationKey(id, key.getPublicKeyBase58());
+		store = await testData.getStore();
+		store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+		doc = db.seal(TestConfig.storePass);
+		store.storeDid(doc);
+
+		await doc.publish(TestConfig.storePass);
+	    await DIDTestExtension.awaitStandardPublishingDelay();
+	});
+
+	afterAll(async () => {
+		await testData.cleanup();
+	});
+/*
+	test('JWT Test', () => {
+		Header h = JwtBuilder.createHeader();
+		h.setType(Header.JWT_TYPE)
+			.setContentType("json");
+		h.put("library", "Elastos DID");
+		h.put("version", "1.0");
+
+		Calendar cal = Calendar.getInstance();
+		cal.set(Calendar.MILLISECOND, 0);
+		Date iat = cal.getTime();
+		cal.add(Calendar.MONTH, -1);
+		Date nbf = cal.getTime();
+		cal.add(Calendar.MONTH, 4);
+		Date exp = cal.getTime();
+
+		Claims b = JwtBuilder.createClaims();
+		b.setSubject("JwtTest")
+			.setId("0")
+			.setAudience("Test cases")
+			.setIssuedAt(iat)
+			.setExpiration(exp)
+			.setNotBefore(nbf)
+			.put("foo", "bar");
+
+		String token = doc.jwtBuilder()
+				.setHeader(h)
+				.setClaims(b)
+				.compact();
+
+		assertNotNull(token);
+		printJwt(token);
+
+		JwtParser jp = doc.jwtParserBuilder().build();
+		Jwt<Claims> jwt = jp.parseClaimsJwt(token);
+		assertNotNull(jwt);
+
+		h = jwt.getHeader();
+		assertNotNull(h);
+		assertEquals("json", h.getContentType());
+		assertEquals(Header.JWT_TYPE, h.getType());
+		assertEquals("Elastos DID", h.get("library"));
+		assertEquals("1.0", h.get("version"));
+
+		Claims c = jwt.getBody();
+		assertNotNull(c);
+		assertEquals("JwtTest", c.getSubject());
+		assertEquals("0", c.getId());
+		assertEquals(doc.getSubject().toString(), c.getIssuer());
+		assertEquals("Test cases", c.getAudience());
+		assertEquals(iat, c.getIssuedAt());
+		assertEquals(exp, c.getExpiration());
+		assertEquals(nbf, c.getNotBefore());
+		assertEquals("bar", c.get("foo", String.class));
+	});
+
+	test('Test Constructor with invalid did string', () => {
+		expect(() =>{ new DID("id:elastos:1234567890")}).toThrowError()
+		expect(() =>{ new DID("did:example:1234567890")}).toThrowError()
+		expect(() =>{ new DID("did:elastos:")}).toThrowError()
+	});
+	*/
+});
 
 /*
-package org.elastos.did.jwt;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-
-import org.elastos.did.DIDDocument;
-import org.elastos.did.DIDURL;
-import org.elastos.did.RootIdentity;
-import org.elastos.did.VerifiableCredential;
-import org.elastos.did.crypto.Base64;
-import org.elastos.did.crypto.HDKey;
-import org.elastos.did.exception.DIDException;
-import org.elastos.did.utils.DIDTestExtension;
-import org.elastos.did.utils.TestConfig;
-import org.elastos.did.utils.TestData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-@ExtendWith(DIDTestExtension.class)
-public class JwtTest {
-	private static final int OPT = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
-
-	private TestData testData;
-	private DIDDocument doc;
-
-	private static final Logger log = LoggerFactory.getLogger(JwtTest.class);
-
-    @BeforeEach
-    public void beforeEach() throws DIDException {
-    	testData = new TestData();
- 		RootIdentity identity = testData.getRootIdentity();
- 		doc = identity.newDid(TestConfig.storePass);
-
- 		HDKey key = TestData.generateKeypair();
- 		DIDDocument.Builder db = doc.edit();
- 		DIDURL id = new DIDURL(doc.getSubject(), "#key2");
- 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
- 		testData.getStore().storePrivateKey(id, key.serialize(), TestConfig.storePass);
- 		doc = db.seal(TestConfig.storePass);
- 		testData.getStore().storeDid(doc);
-
- 		await doc.publish(TestConfig.storePass);
-		await DIDTestExtension.awaitStandardPublishingDelay();
-    }
-
-    @AfterEach
-    public void afterEach() {
-    	await testData.cleanup();
-    }
-
-    public static void printJwt(String token) {
-    	if (log.isTraceEnabled()) {
-			String [] toks = token.split("\\.");
-
-			if (toks.length != 2 && toks.length != 3) {
-				System.out.println("Invalid token: " + token);
-				return;
-			}
-
-			StringBuilder sb = new StringBuilder(512);
-			sb.append(new String(Base64.decode(toks[0], OPT))).append(".")
-				.append(new String(Base64.decode(toks[1], OPT))).append(".");
-			if (toks.length == 3)
-				sb.append(toks[2]);
-
-			log.trace("Token: {}", token);
-			log.trace("Plain: {}", sb.toString());
-    	}
-	}
-
 	@Test
 	public void jwtTest()
 			throws DIDException, IOException, JwtException {

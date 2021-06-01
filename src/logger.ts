@@ -24,6 +24,10 @@ export class Logger {
         }
     }
 
+    public static getLevel(): LogLevel {
+        return Logger.logLevel;
+    }
+
     constructor(context: string) {
         this.context = context ? context : "";
     }
