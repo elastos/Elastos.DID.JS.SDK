@@ -22,15 +22,15 @@ describe("RootIdentity Tests", ()=>{
     	await testData.cleanup();
     });
 
-	test("testInitPrivateIdentity", () => {
+	test("testInitPrivateIdentity", async () => {
     	expect(store.containsRootIdentities()).toBeFalsy();
 
     	let identity = testData.getRootIdentity();
     	expect(store.containsRootIdentities()).toBeTruthy();
 
-    	let store2 = DIDStore.open(TestConfig.storeRoot);
+    	let store2 = await DIDStore.open(TestConfig.storeRoot);
     	expect(store2.containsRootIdentities()).toBeTruthy();
-    	let identity2 = store2.loadRootIdentity();
+    	let identity2 = await store2.loadRootIdentity();
     	expect(identity2).not.toBeNull();
 
     	expect(identity.getPreDerivedPublicKey().serializePublicKeyBase58()).toEqual(
@@ -49,10 +49,10 @@ describe("RootIdentity Tests", ()=>{
     	RootIdentity.createFromMnemonic(mnemonic, "", store, TestConfig.storePass);
     	expect(store.containsRootIdentities()).toBeTruthy();
 
-    	let store2 = DIDStore.open(TestConfig.storeRoot);
+    	let store2 = await DIDStore.open(TestConfig.storeRoot);
     	expect(store2.containsRootIdentities()).toBeTruthy();
 
-    	let identity2 = store2.loadRootIdentity();
+    	let identity2 = await store2.loadRootIdentity();
 
     	let doc = await identity2.newDid(TestConfig.storePass);
     	expect(doc).not.toBeNull();
@@ -68,10 +68,10 @@ describe("RootIdentity Tests", ()=>{
     	RootIdentity.createFromPrivateKey(rootKey, store, TestConfig.storePass);
     	expect(store.containsRootIdentities()).toBeTruthy();
 
-    	let store2 = DIDStore.open(TestConfig.storeRoot);
+    	let store2 = await DIDStore.open(TestConfig.storeRoot);
     	expect(store2.containsRootIdentities()).toBeTruthy();
 
-    	let identity2 = store2.loadRootIdentity();
+    	let identity2 = await store2.loadRootIdentity();
 
     	let doc = await identity2.newDid(TestConfig.storePass);
     	expect(doc).not.toBeNull();
@@ -97,7 +97,7 @@ describe("RootIdentity Tests", ()=>{
     	expect(resolved).not.toBeNull();
 
     	// test alias
-    	store.storeDid(resolved);
+    	await store.storeDid(resolved);
     	expect(alias).toEqual(resolved.getMetadata().getAlias());
     	expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
     	expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
