@@ -33,19 +33,20 @@ import { randomInt } from "crypto";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
 
-let testData: TestData;
-let store: DIDStore;
-
 const log = new Logger("VerifiableCredentialTest");
 
 describe('let Tests', () => {
-    beforeEach(() => {
-    	testData = new TestData();
-    });
+	let testData: TestData;
+	let store: DIDStore;
 
-    afterEach(async () => {
-    	await testData.cleanup();
-    });
+	beforeEach(async () => {
+		testData = new TestData();
+		store = await testData.getStore();
+	});
+
+	afterEach(async () => {
+		await testData.cleanup();
+	});
 
 	test('testKycCredential', async () => {
 		let version = 2;
