@@ -423,6 +423,7 @@ export namespace DIDURL {
 				didUrl = didOrDidUrl as DIDURL;
 			}
 
+			this.url = new DIDURL();
 			this.url.setDid(didUrl.getDid());
 			this.url.setParameters(didUrl.getParameters());
 			this.url.setPath(didUrl.getPath());
