@@ -137,7 +137,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 4', () => {
 		test('testUpdateAndResolve', async () => {
 			// User the DID that created in previous case(1)
-			let doc = store.loadDid(dids[0]);
+			let doc = await store.loadDid(dids[0]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
@@ -155,7 +155,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(2).toEqual(doc.getPublicKeyCount());
 			expect(2).toEqual(doc.getAuthenticationKeyCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
@@ -197,7 +197,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 5', () => {
 		test('testUpdateAndResolveAgain', async () => {
 			// User the DID that created in previous case(1)
-			let doc = store.loadDid(dids[0]);
+			let doc = await store.loadDid(dids[0]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
@@ -215,7 +215,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(3).toEqual(doc.getPublicKeyCount());
 			expect(3).toEqual(doc.getAuthenticationKeyCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
@@ -262,7 +262,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 6', () => {
 		test('testUpdateAndresolve', async () => {
 			// User the DID that created in previous case(2)
-			let doc = store.loadDid(dids[1]);
+			let doc = await store.loadDid(dids[1]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
@@ -280,7 +280,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(2).toEqual(doc.getPublicKeyCount());
 			expect(2).toEqual(doc.getAuthenticationKeyCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
@@ -321,7 +321,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 7', () => {
 		test('testUpdateAndresolveAgain', async () => {
 			// User the DID that created in previous case(2)
-			let doc = store.loadDid(dids[1]);
+			let doc = await store.loadDid(dids[1]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
@@ -339,7 +339,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(3).toEqual(doc.getPublicKeyCount());
 			expect(3).toEqual(doc.getAuthenticationKeyCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
@@ -412,7 +412,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
 			expect(1).toEqual(doc.getCredentialCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Publishing new DID {}...", did);
 			let start = Date.now();
@@ -436,7 +436,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 9', () => {
 		test('testUpdateAndResolveWithCredentials', async () => {
 			// User the DID that created in previous case(8)
-			let doc = store.loadDid(dids[3]);
+			let doc = await store.loadDid(dids[3]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
@@ -466,7 +466,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
 			expect(2).toEqual(doc.getCredentialCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
@@ -508,7 +508,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 10', () => {
 		test('testUpdateAndResolveWithCredentialsAgain', async () => {
 			// User the DID that created in previous case(8)
-			let doc = store.loadDid(dids[3]);
+			let doc = await store.loadDid(dids[3]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
@@ -543,7 +543,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
 			expect(3).toEqual(doc.getCredentialCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
@@ -616,7 +616,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
 			expect(1).toEqual(doc.getCredentialCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Publishing new DID {}...", did);
 			let s1 = Date.now();
@@ -640,7 +640,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 12', () => {
 		test('testUpdateAndResolveWithCredentialsAsync', async () => {
 			// User the DID that created in previous case(11)
-			let doc = store.loadDid(dids[4]);
+			let doc = await store.loadDid(dids[4]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
@@ -671,7 +671,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
 			expect(2).toEqual(doc.getCredentialCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
@@ -694,7 +694,7 @@ describe('IDChainOperations Tests', () => {
 	describe('Order 13', () => {
 		test('testUpdateAndResolveWithCredentialsAsyncAgain', async () => {
 			// User the DID that created in previous case(11)
-			let doc = store.loadDid(dids[4]);
+			let doc = await store.loadDid(dids[4]);
 			expect(doc).not.toBeNull();
 			let did = doc.getSubject();
 
@@ -729,7 +729,7 @@ describe('IDChainOperations Tests', () => {
 			doc = db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
 			expect(3).toEqual(doc.getCredentialCount());
-			store.storeDid(doc);
+			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
 			let start = Date.now();
@@ -779,7 +779,7 @@ describe('IDChainOperations Tests', () => {
 			let path = new File(filePath);
 			Utils.deleteFile(path);
 
-			let cleanStore = DIDStore.open(filePath);
+			let cleanStore = await DIDStore.open(filePath);
 			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
 					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
@@ -789,7 +789,7 @@ describe('IDChainOperations Tests', () => {
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -806,7 +806,7 @@ describe('IDChainOperations Tests', () => {
 			let path = new File(filePath);
 			Utils.deleteFile(path);
 
-			let cleanStore = DIDStore.open(filePath);
+			let cleanStore = await DIDStore.open(filePath);
 			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
 					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
@@ -816,7 +816,7 @@ describe('IDChainOperations Tests', () => {
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -845,7 +845,7 @@ describe('IDChainOperations Tests', () => {
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-			let restoredDids: DID[] = Array.from(store.listDids());
+			let restoredDids: DID[] = Array.from(await store.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -876,7 +876,7 @@ describe('IDChainOperations Tests', () => {
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-			let restoredDids: DID[] = Array.from(store.listDids());
+			let restoredDids: DID[] = Array.from(await store.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -894,7 +894,7 @@ describe('IDChainOperations Tests', () => {
 			let path = new File(filePath);
 			Utils.deleteFile(path);
 
-			let cleanStore = DIDStore.open(filePath);
+			let cleanStore = await DIDStore.open(filePath);
 			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
 					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
@@ -904,7 +904,7 @@ describe('IDChainOperations Tests', () => {
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -915,11 +915,11 @@ describe('IDChainOperations Tests', () => {
 
 			// Modify a DID document
 			let modifiedDid = dids[0];
-			let doc = cleanStore.loadDid(modifiedDid);
+			let doc = await cleanStore.loadDid(modifiedDid);
 			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 			db.addService("#test1", "TestType", "http://test.com/");
 			doc = db.seal(TestConfig.storePass);
-			cleanStore.storeDid(doc);
+			await cleanStore.storeDid(doc);
 			let modifiedSignature = doc.getProof().getSignature();
 
 			log.debug("Synchronizing again from IDChain...");
@@ -928,7 +928,7 @@ describe('IDChainOperations Tests', () => {
 			duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
-			restoredDids = Array.from(cleanStore.listDids());
+			restoredDids = Array.from(await cleanStore.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -938,7 +938,7 @@ describe('IDChainOperations Tests', () => {
 			expect(originalDids).toEqual(restoredDids); // Array comparison
 
 			// Should keep the local modified copy after sync
-			doc = cleanStore.loadDid(modifiedDid);
+			doc = await cleanStore.loadDid(modifiedDid);
 			expect(modifiedSignature).toEqual(doc.getProof().getSignature());
 		});
 	});
@@ -950,7 +950,7 @@ describe('IDChainOperations Tests', () => {
 			let path = new File(filePath);
 			Utils.deleteFile(path);
 
-			let cleanStore = DIDStore.open(filePath);
+			let cleanStore = await DIDStore.open(filePath);
 			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
 					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
@@ -960,7 +960,7 @@ describe('IDChainOperations Tests', () => {
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -971,13 +971,13 @@ describe('IDChainOperations Tests', () => {
 
 			// Modify a DID document
 			let modifiedDid = dids[0];
-			let doc = cleanStore.loadDid(modifiedDid);
+			let doc = await cleanStore.loadDid(modifiedDid);
 			let originalSignature = doc.getSignature();
 
 			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 			db.addService("#Stest1", "TestType", "http://test.com/");
 			doc = db.seal(TestConfig.storePass);
-			cleanStore.storeDid(doc);
+			await cleanStore.storeDid(doc);
 
 			log.debug("Synchronizing again from IDChain...");
 			start = Date.now();
@@ -987,7 +987,7 @@ describe('IDChainOperations Tests', () => {
 			duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
-			restoredDids = Array.from(cleanStore.listDids());
+			restoredDids = Array.from(await cleanStore.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -997,7 +997,7 @@ describe('IDChainOperations Tests', () => {
 			expect(originalDids).toEqual(restoredDids); // Array comparison
 
 			// Should overwrite the local modified copy with chain copy after sync
-			doc = cleanStore.loadDid(modifiedDid);
+			doc = await cleanStore.loadDid(modifiedDid);
 			expect(originalSignature).toEqual(doc.getSignature());
 		});
 	});
@@ -1009,7 +1009,7 @@ describe('IDChainOperations Tests', () => {
 			let path = new File(filePath);
 			Utils.deleteFile(path);
 
-			let cleanStore = DIDStore.open(filePath);
+			let cleanStore = await DIDStore.open(filePath);
 			let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
 					TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
@@ -1019,7 +1019,7 @@ describe('IDChainOperations Tests', () => {
 			let duration = (Date.now() - start + 500) / 1000;
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
-			let restoredDids: DID[] = Array.from(cleanStore.listDids());
+			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -1030,13 +1030,13 @@ describe('IDChainOperations Tests', () => {
 
 			// Modify a DID document
 			let modifiedDid = dids[0];
-			let doc = cleanStore.loadDid(modifiedDid);
+			let doc = await cleanStore.loadDid(modifiedDid);
 			let originalSignature = doc.getSignature();
 
 			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 			db.addService("#test1", "TestType", "http://test.com/");
 			doc = db.seal(TestConfig.storePass);
-			cleanStore.storeDid(doc);
+			await cleanStore.storeDid(doc);
 
 			log.debug("Synchronizing again from IDChain...");
 			let start2 = Date.now();
@@ -1046,7 +1046,7 @@ describe('IDChainOperations Tests', () => {
 			duration = (Date.now() - start2 + 500) / 1000;
 			log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
-			restoredDids = Array.from(cleanStore.listDids());
+			restoredDids = Array.from(await cleanStore.listDids());
 			expect(5).toEqual(restoredDids.length);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
@@ -1056,7 +1056,7 @@ describe('IDChainOperations Tests', () => {
 			expect(originalDids).toEqual(restoredDids); // Array comparison
 
 			// Should overwrite the local modified copy with chain copy after sync
-			doc = cleanStore.loadDid(modifiedDid);
+			doc = await cleanStore.loadDid(modifiedDid);
 			expect(originalSignature).toEqual(doc.getSignature());
 		});
 	});
