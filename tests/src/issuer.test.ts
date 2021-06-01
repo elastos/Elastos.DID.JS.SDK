@@ -94,7 +94,7 @@ describe("Issuer Tests", ()=>{
 		let issuer = new Issuer(issuerDoc);
 
 		let cb = issuer.issueFor(testDoc.getSubject());
-		let vc  = cb.id("#testCredential")
+		let vc  = await cb.id("#testCredential")
 		           .type("BasicProfileCredential", "InternetAccountCredential")
 				   .properties(props)
 				   .seal(TestConfig.storePass);
@@ -134,7 +134,7 @@ describe("Issuer Tests", ()=>{
 		let issuer = new Issuer(issuerDoc);
 
 		let cb = issuer.issueFor(testDoc.getSubject());
-		let vc  = cb.id("#myCredential")
+		let vc  = await cb.id("#myCredential")
 		           .type("BasicProfileCredential", "SelfProclaimedCredential")
 				   .properties(props)
 				   .seal(TestConfig.storePass);
@@ -176,7 +176,7 @@ describe("Issuer Tests", ()=>{
 		let issuer = new Issuer(issuerDoc);
 
 		let cb = issuer.issueFor(testDoc.getSubject());
-		let vc  = cb.id("#testCredential")
+		let vc  = await cb.id("#testCredential")
 		           .type("BasicProfileCredential", "InternetAccountCredential")
 				   .properties(props)
 				   .seal(TestConfig.storePass);
@@ -221,7 +221,7 @@ describe("Issuer Tests", ()=>{
 		let issuer = new Issuer(issuerDoc);
 
 		let cb = issuer.issueFor(testDoc.getSubject());
-		let vc = cb.id("#testCredential")
+		let vc = await cb.id("#testCredential")
 			.type("BasicProfileCredential", "InternetAccountCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
@@ -262,7 +262,7 @@ describe("Issuer Tests", ()=>{
 		let issuer = new Issuer(issuerDoc);
 
 		let cb = issuer.issueFor(issuerDoc.getSubject());
-		let vc = cb.id("#myCredential")
+		let vc = await cb.id("#myCredential")
 			.type("BasicProfileCredential", "SelfProclaimedCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
@@ -294,7 +294,7 @@ describe("Issuer Tests", ()=>{
 		let issuer = new Issuer(issuerDoc);
 
 		let cb = issuer.issueFor(issuerDoc.getSubject());
-		let vc = cb.id("#myCredential")
+		let vc = await cb.id("#myCredential")
 			.type("BasicProfileCredential", "SelfProclaimedCredential")
 			.properties(props)
 			.seal(TestConfig.storePass);
