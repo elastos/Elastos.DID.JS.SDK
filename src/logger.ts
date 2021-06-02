@@ -28,6 +28,10 @@ export class Logger {
         return Logger.logLevel;
     }
 
+    public static levelIs(level: LogLevel) {
+        return level <= Logger.logLevel;
+    }
+
     constructor(context: string) {
         this.context = context ? context : "";
     }
