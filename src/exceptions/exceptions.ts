@@ -2,7 +2,7 @@ export class ParentException extends Error{
 	private causedBy?: Error;
 
     constructor(message?: string, causedBy?: Error) {
-        super(message + (causedBy ? "\nCaused by: " + causedBy.message : ""));
+        super(message + (causedBy ? "\nCaused by: " + causedBy.message + (causedBy.stack ? "\nCaused by: " + causedBy.stack : "") : ""));
         this.causedBy = causedBy;
         Object.setPrototypeOf(this, new.target.prototype);
     }
