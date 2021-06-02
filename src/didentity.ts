@@ -20,13 +20,16 @@
  * SOFTWARE.
  */
 
-import { JsonIgnoreType, JsonStringifier, ObjectMapper } from "jackson-js";
+import { ObjectMapper } from "jackson-js";
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
 import type { Class } from "./class";
-import { DID } from "./internals";
+import { 
+	DID, 
+	Logger 
+} from "./internals";
 import {
 	DIDSyntaxException,
 	UnknownInternalException,
@@ -125,14 +128,12 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 	public static async parse <T extends DIDEntity<T>>(source: JSONObject | string, clazz: Class<T>): Promise<T> {
 		checkArgument(source && source !== "", "Invalid JSON content");
 		checkArgument(clazz && clazz !== null, "Invalid result class object");
-
 		let content: string;
 		if (typeof source !== "string") {
 			content = JSON.stringify(source);
 		} else {
 			content = source;
 		}
-
 		let mapper = DIDEntity.getDefaultObjectMapper();
 
 		try {
@@ -141,7 +142,7 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
 			await obj.sanitize();
 			return obj;
 		} catch (e) {
-			throw new DIDSyntaxException("Invalid JSON syntax", e);
+			throw new DIDSyntaxException("Invalid JSON syntax" + (Logger.levelIs(Logger.DEBUG) ? (" (" + clazz.name + "): " + content) : ""), e);
 		}
 	}
 
