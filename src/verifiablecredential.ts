@@ -770,13 +770,15 @@ export namespace VerifiableCredential {
 	/**
      * The object keeps the credential subject contents.
      *
-     * This id field is mandatory, should be the contoller's DID.
+     * This id field is mandatory, should be the controller's DID.
      * All the other fields could be defined by the application.
      * In order to support the JSON serialization, all values should be
      * JSON serializable.
 	 */
 	 @JsonPropertyOrder({value: ["id"]})
 	 export class Subject {
+		@JsonProperty({value: VerifiableCredential.ID})
+		@JsonClassType({type: () => [DID]})
 		private id: DID;
 		@JsonIgnore()
 		private properties: JSONObject;
