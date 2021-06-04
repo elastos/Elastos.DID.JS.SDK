@@ -106,7 +106,7 @@ export class DIDBackend {
 			maxItems: maxCacheCapacity,
       		maxAge: cacheTtl/1000, //TimeUnit.MILLISECONDS,
 			asyncLoader: async (key) => {
-				log.trace("Cache loading {}...", key);
+				//log.trace("Cache loading {}...", key);
 				return {
 					value: await this.resolve(key)
 				};
