@@ -23,7 +23,7 @@
 import dayjs, { Dayjs } from "dayjs";
 import {
 	JsonAnySetter, JsonAnyGetter, JsonClassType, JsonFilter, JsonGetter, JsonIgnore, JsonInclude,
-	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize
+	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonCreator
 } from "jackson-js";
 import type {
 	JsonStringifierTransformerContext
@@ -108,7 +108,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	@JsonClassType({type: () => [DIDURL]})
 	public id: DIDURL;
 	@JsonProperty({value:VerifiableCredential.TYPE})
-	// TODO: migrate from java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY})
 	public type: string[];
 	@JsonSerialize({using: IssuerSerializerFilter.filter})
 	@JsonProperty({value:VerifiableCredential.ISSUER})
@@ -134,6 +133,23 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 	constructor() {
 		super();
+	}
+
+	// Add custom deserialization fields to the method params here + assign.
+    // Jackson does the rest automatically.
+    @JsonCreator()
+    public static jacksonCreator(@JsonProperty({value: VerifiableCredential.TYPE}) type?: any) {
+        let vc = new VerifiableCredential();
+
+        // Proofs
+        if (type) {
+            if (type instanceof Array)
+				vc.type = type.map((p) => VerifiableCredential.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [String]}));
+            else
+				vc.type = [VerifiableCredential.getDefaultObjectMapper().parse(JSON.stringify(type), {mainCreator: () => [String]})];
+        }
+
+		return vc;
 	}
 
 	/**

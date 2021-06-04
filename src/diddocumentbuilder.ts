@@ -23,6 +23,7 @@ import type { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
 import type { VerifiableCredential } from "./internals";
+import { ComparableMap } from "./comparablemap";
 
 /**
 * Builder object to create or modify the DIDDocument.
@@ -50,7 +51,7 @@ export class DIDDocumentBuilder {
 
         if (controller !== undefined) {
             builder.document.controllers = [];
-            builder.document.controllerDocs = new Map();
+            builder.document.controllerDocs = new ComparableMap();
 
             builder.document.controllers.push(controller.getSubject());
             builder.document.controllerDocs.set(controller.getSubject(), controller);
@@ -252,7 +253,7 @@ export class DIDDocumentBuilder {
 
     public addPublicKey(key: DIDDocumentPublicKey) {
         if (this.document.publicKeys == null) {
-            this.document.publicKeys = new Map<DIDURL, DIDDocumentPublicKey>();
+            this.document.publicKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
         } else {
             // Check the existence, both id and keyBase58
             for (let pk of this.document.publicKeys.values()) {
@@ -604,7 +605,7 @@ export class DIDDocumentBuilder {
             throw new IllegalUsage(vc.getSubject().getId().toString());
 
         if (this.document.credentials == null) {
-            this.document.credentials = new Map<DIDURL, VerifiableCredential>();
+            this.document.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
         } else {
             if (this.document.credentials.has(vc.getId()))
                 throw new DIDObjectAlreadyExistException(vc.getId().toString());
@@ -755,7 +756,7 @@ export class DIDDocumentBuilder {
 
         let svc = new DIDDocumentService(this.canonicalId(id), type, endpoint, properties);
         if (this.document.services == null)
-            this.document.services = new Map<DIDURL, DIDDocumentService>();
+            this.document.services = new ComparableMap<DIDURL, DIDDocumentService>();
         else {
             if (this.document.services.has(svc.getId()))
                 throw new DIDObjectAlreadyExistException("Service '"
@@ -883,13 +884,13 @@ export class DIDDocumentBuilder {
 
         if (this.document.controllers == null || this.document.controllers.length == 0) {
             this.document.controllers = [];
-            this.document.controllerDocs = new Map();
+            this.document.controllerDocs = new ComparableMap();
         } else {
             Collections.sort(this.document.controllers);
         }
 
         if (this.document.publicKeys == null || this.document.publicKeys.size == 0) {
-            this.document.publicKeys = new Map();
+            this.document.publicKeys = new ComparableMap();
             this.document._publickeys = [];
             this.document._authentications = [];
             this.document._authorizations = [];
@@ -920,7 +921,7 @@ export class DIDDocumentBuilder {
         }
 
         if (this.document.credentials == null || this.document.credentials.size == 0) {
-            this.document.credentials = new Map();
+            this.document.credentials = new ComparableMap();
             this.document._credentials = [];
         } else {
             this.document._credentials = Array.from(this.document.credentials.values());
@@ -928,7 +929,7 @@ export class DIDDocumentBuilder {
         }
 
         if (this.document.services == null || this.document.services.size == 0) {
-            this.document.services = new Map();
+            this.document.services = new ComparableMap();
             this.document._services = [];
         } else {
             this.document._services = Array.from(this.document.services.values());
@@ -941,7 +942,7 @@ export class DIDDocumentBuilder {
         }
 
         if (this.document.proofs == null)
-            this.document.proofs = new Map<DID, DIDDocumentProof>();
+            this.document.proofs = new ComparableMap<DID, DIDDocumentProof>();
 
         this.document._proofs = null;
     }

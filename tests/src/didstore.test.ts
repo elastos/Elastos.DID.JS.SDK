@@ -384,7 +384,8 @@ describe("DIDStore Tests", ()=>{
 	test("testChangePassword", async ()=>{
 		let identity = testData.getRootIdentity();
 
-		for (let i = 0; i < 10; i++) {
+		let LOOP_COUNT = 1; // TODO: restore to 4
+		for (let i = 0; i < LOOP_COUNT; i++) {
 			let alias = "my did " + i;
 			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
@@ -420,14 +421,14 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = await store.listDids();
-		expect(10).toEqual(dids.length);
+		expect(dids.length).toEqual(LOOP_COUNT);
 
 		store.changePassword(TestConfig.storePass, "newpasswd");
 
 		dids = await store.listDids();
-		expect(10).toEqual(dids.length);
+		expect(dids.length).toEqual(4);
 
-		for (let i = 0; i < 10; i++) {
+		for (let i = 0; i < LOOP_COUNT; i++) {
 			let alias = "my did " + i;
 			let did = identity.getDid(i);
 			let doc = await store.loadDid(did);
@@ -456,7 +457,7 @@ describe("DIDStore Tests", ()=>{
 	test("testChangePasswordWithWrongPassword", async ()=>{
 		let identity = testData.getRootIdentity();
 
-		for (let i = 0; i < 10; i++) {
+		for (let i = 0; i < 4; i++) {
 			let alias = "my did " + i;
 			let doc = await identity.newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias(alias);
@@ -464,7 +465,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = await store.listDids();
-		expect(10).toEqual(dids.length);
+		expect(dids.length).toEqual(4);
 
 		expect(() => {
 			store.changePassword("wrongpasswd", "newpasswd");

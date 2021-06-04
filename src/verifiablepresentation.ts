@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize } from "jackson-js";
+import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonCreator } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
 import { DID } from "./internals";
@@ -39,6 +39,7 @@ import {
     Serializer,
 	Deserializer
 } from "./internals";
+import { ComparableMap } from "./comparablemap";
 class NormalizedURLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
 
@@ -91,23 +92,23 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	@JsonClassType({type: () => [DIDURL]})
 	public id: DIDURL = null;
 	@JsonProperty({value: VerifiablePresentation.TYPE})
-	// TODO JAVA: @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
 	public type: string[];
 	@JsonProperty({value: VerifiablePresentation.HOLDER})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	@JsonClassType({type: () => [DID]})
 	public holder: DID;
 	@JsonProperty({value: VerifiablePresentation.CREATED})
+	@JsonClassType({type: () => [Date]})
 	public created: Date;
 	@JsonProperty({value: VerifiablePresentation.VERIFIABLE_CREDENTIAL})
-	@JsonClassType({type: () => [VerifiableCredential]})
+	@JsonClassType({type: () => [Array, [VerifiableCredential]]})
 	public _credentials: VerifiableCredential[];
 	@JsonProperty({value: VerifiablePresentation.PROOF})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
 	@JsonClassType({type: () => [VerifiablePresentation.Proof]})
 	public proof: VerifiablePresentation.Proof;
 
-	public credentials: Map<DIDURL, VerifiableCredential>;
+	public credentials: ComparableMap<DIDURL, VerifiableCredential>;
 
 	/**
 	 * Constructs the simplest Presentation.
@@ -115,7 +116,24 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	constructor(holder?: DID) {
 		super();
 		this.holder = holder;
-		this.credentials = new Map<DIDURL, VerifiableCredential>();
+		this.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
+	}
+
+	// Add custom deserialization fields to the method params here + assign.
+    // Jackson does the rest automatically.
+    @JsonCreator()
+    public static jacksonCreator(@JsonProperty({value: VerifiablePresentation.TYPE}) type?: any) {
+        let vp = new VerifiablePresentation(null);
+
+        // Proofs
+        if (type) {
+            if (type instanceof Array)
+                vp.type = type.map((p) => VerifiablePresentation.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [String]}));
+            else
+                vp.type = [VerifiablePresentation.getDefaultObjectMapper().parse(JSON.stringify(type), {mainCreator: () => [String]})];
+        }
+
+		return vp;
 	}
 
 	/**

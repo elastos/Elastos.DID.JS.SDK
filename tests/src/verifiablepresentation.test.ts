@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-import { 
-	DIDURL, 
-	DIDStore, 
-	VerifiablePresentation 
+import {
+	DIDURL,
+	DIDStore,
+	VerifiablePresentation
 } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
@@ -51,11 +51,11 @@ describe('VerifiablePresentation Tests', () => {
 		let vp = await cd.getPresentation("user1", "nonempty");
 
 		expect(vp.getId()).toBeNull();
-		expect(1).toEqual(vp.getType().length);
+		expect(vp.getType().length).toEqual(1);
 		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		expect(4).toEqual(vp.getCredentialCount());
+		expect(vp.getCredentialCount()).toEqual(4);
 		let vcs = vp.getCredentials();
 		for (let vc of vcs) {
 			expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();

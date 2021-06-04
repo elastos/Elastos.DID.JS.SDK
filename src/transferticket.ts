@@ -31,6 +31,7 @@ import { DIDEntity } from "./internals";
 import { DIDURL } from "./internals";
 import { DIDResolveException, NotCustomizedDIDException, DIDStoreException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
+import { ComparableMap } from "./comparablemap";
 
 /**
  * Transfer ticket class.
@@ -72,7 +73,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	// TODO - Convert from java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
 	private _proofs: Proof[];
 
-	private proofs: Map<DID, Proof>;
+	private proofs: ComparableMap<DID, Proof>;
 
 	public constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
 			@JsonProperty({value: TransferTicket.TO, required: true}) to: DID,
@@ -268,7 +269,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		// CAUTION: can not resolve the target document here!
 		//          will cause recursive resolve.
 
-		this.proofs = new Map<DID, Proof>();
+		this.proofs = new ComparableMap<DID, Proof>();
 
 		for (let proof of this._proofs) {
 			if (proof.getVerificationMethod() == null) {
@@ -315,7 +316,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 		let signKey = controller.getDefaultPublicKeyId();
 		if (this.proofs == null) {
-			this.proofs = new Map<DID, Proof>();
+			this.proofs = new ComparableMap<DID, Proof>();
 		} else {
 			if (this.proofs.has(signKey.getDid()))
 				throw new AlreadySignedException(signKey.getDid().toString());

@@ -162,15 +162,15 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
 
     // Internal properties for DIDDocumentBuilder
     @JsonIgnore()
-    public controllerDocs?: Map<DID, DIDDocument>;
+    public controllerDocs?: ComparableMap<DID, DIDDocument>;
     @JsonIgnore()
-    public publicKeys?: Map<DIDURL, DIDDocumentPublicKey>;
+    public publicKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
     @JsonIgnore()
-    public credentials?: Map<DIDURL, VerifiableCredential>;
+    public credentials?: ComparableMap<DIDURL, VerifiableCredential>;
     @JsonIgnore()
-    public services?: Map<DIDURL, DIDDocumentService>;
+    public services?: ComparableMap<DIDURL, DIDDocumentService>;
     @JsonIgnore()
-    public proofs?: Map<DID, DIDDocumentProof>;
+    public proofs?: ComparableMap<DID, DIDDocumentProof>;
     @JsonIgnore()
     public effectiveController?: DID;
 
