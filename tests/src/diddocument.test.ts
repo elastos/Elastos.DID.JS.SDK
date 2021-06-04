@@ -56,13 +56,13 @@ async function testGetPublicKey(version: number, testData: TestData) {
 	expect(pks.length).toEqual(4);
 
 	for (let pk of pks) {
-		expect(pk.getId().getDid()).toEqual(doc.getSubject());
+		expect(pk.getId().getDid().equals(doc.getSubject())).toBeTruthy();
 		expect(pk.getType()).toEqual(Constants.DEFAULT_PUBLICKEY_TYPE);
 
 		if (pk.getId().getFragment() == "recovery")
-			expect(pk.getController()).not.toEqual(doc.getSubject());
+			expect(pk.getController().equals(doc.getSubject())).toBeFalsy();
 		else
-			expect(pk.getController()).toEqual(doc.getSubject());
+			expect(pk.getController().equals(doc.getSubject())).toBeTruthy();
 
 		expect(pk.getId().getFragment() == "primary"
 			|| pk.getId().getFragment() == "key2"
@@ -73,16 +73,16 @@ async function testGetPublicKey(version: number, testData: TestData) {
 	// PublicKey getter.
 	let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");
 	expect(pk).not.toBeNull();
-	expect(DIDURL.from("#primary", doc.getSubject())).toEqual(pk.getId());
+	expect(DIDURL.from("#primary", doc.getSubject()).equals(pk.getId())).toBeTruthy();
 
 	let id: DIDURL = DIDURL.from("#key2", doc.getSubject());
 	pk = doc.getPublicKey(id);
 	expect(pk).not.toBeNull();
-	expect(pk.getId()).toEqual(id);
+	expect(pk.getId().equals(id)).toBeTruthy();
 
 	id = doc.getDefaultPublicKeyId();
 	expect(id).not.toBeNull();
-	expect(DIDURL.from("#primary", doc.getSubject())).toEqual(id);
+	expect(DIDURL.from("#primary", doc.getSubject()).equals(id)).toBeTruthy();
 
 	// Key not exist, should fail.
 	pk = doc.getPublicKey("#notExist");
@@ -96,22 +96,22 @@ async function testGetPublicKey(version: number, testData: TestData) {
 	id = doc.getDefaultPublicKeyId();
 	pks = doc.selectPublicKeys(id, Constants.DEFAULT_PUBLICKEY_TYPE);
 	expect(pks.length).toEqual(1);
-	expect(DIDURL.from("#primary", doc.getSubject())).toEqual(pks[0].getId());
+	expect(DIDURL.from("#primary", doc.getSubject()).equals(pks[0].getId())).toBeTruthy();
 
 	pks = doc.selectPublicKeys(id, null);
 	expect(pks.length).toEqual(1);
-	expect(DIDURL.from("#primary", doc.getSubject())).toEqual(pks[0].getId());
+	expect(DIDURL.from("#primary", doc.getSubject()).equals(pks[0].getId())).toBeTruthy();
 
 	pks = doc.selectPublicKeys(null, Constants.DEFAULT_PUBLICKEY_TYPE);
 	expect(pks.length).toEqual(4);
 
 	pks = doc.selectPublicKeys("#key2", Constants.DEFAULT_PUBLICKEY_TYPE);
 	expect(pks.length).toEqual(1);
-	expect(DIDURL.from("#key2", doc.getSubject())).toEqual(pks[0].getId());
+	expect(DIDURL.from("#key2", doc.getSubject()).equals(pks[0].getId())).toBeTruthy();
 
 	pks = doc.selectPublicKeys("#key3", null);
 	expect(pks.length).toEqual(1);
-	expect(DIDURL.from("#key3", doc.getSubject())).toEqual(pks[0].getId());
+	expect(DIDURL.from("#key3", doc.getSubject()).equals(pks[0].getId())).toBeTruthy();
 }
 
 describe('DIDDocument Tests', () => {
