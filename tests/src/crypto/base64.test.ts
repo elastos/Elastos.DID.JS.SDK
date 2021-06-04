@@ -306,13 +306,9 @@ describe('Base64 tests', () => {
 			for (let i = 0; i < input.length; i++){
 				input[i] = i & 0xff;
 			}
-				
 
-			let output = BASE64.fromString(input.toString("ascii"));
+			let output = BASE64.fromHex(input.toString("hex"));
 			expect(output).toEqual(base64output[len - 1])
 		}
 	});
-
-
-
 });
