@@ -12,6 +12,7 @@
     "test:node:debug": "JEST_CIRCUS=1 node --inspect-brk node_modules/.bin/jest --runInBand --config jest.node.config.ts",
     "test:node-no-jest": "rollup -c rollup.no-jest.config.js && node generated/tests-no-jest.js",
     "test:browser": "npm run clean && rollup -c rollup.browsertests.config.js",
+    "test:node:profile": "JEST_CIRCUS=1 node --prof --no-logfile-per-isolate ./node_modules/.bin/jest --silent=false --verbose --runInBand --config jest.node.config.ts -- didurl.test && node --prof-process v8.log > processed.log && echo '' && echo 'Please open processed.log'. && echo ''",
     "simchain": "java -jar tools/did.jar simchain --loglevel=trace",
     "updatedidjar": "wget -O tools/did.jar https://github.com/elastos/Elastos.DID.Java.SDK/releases/download/v2-internal/did.jar"
   },
