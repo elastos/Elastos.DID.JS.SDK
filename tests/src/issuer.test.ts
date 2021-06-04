@@ -39,6 +39,7 @@ describe("Issuer Tests", ()=>{
 
 	beforeEach(async ()=>{
 		testData = new TestData();
+		await testData.cleanup();
     	store = await testData.getStore();
     	testData.getRootIdentity();
 
@@ -47,7 +48,6 @@ describe("Issuer Tests", ()=>{
 	})
 
 	afterEach(async ()=>{
-		await testData.cleanup();
 	})
 
 	test('New Issuer Test With Sign Key', async () => {

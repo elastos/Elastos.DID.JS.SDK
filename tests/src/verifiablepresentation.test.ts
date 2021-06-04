@@ -34,11 +34,11 @@ let store: DIDStore;
 describe('VerifiablePresentation Tests', () => {
     beforeEach(async () => {
     	testData = new TestData();
+		await testData.cleanup();
     	store = await testData.getStore();
     });
 
     afterEach(async () => {
-    	await testData.cleanup();
     });
 
 	test('testReadPresentationNonempty', async () => {

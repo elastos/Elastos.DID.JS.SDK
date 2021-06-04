@@ -119,12 +119,11 @@ describe('DIDDocument Tests', () => {
 	let store: DIDStore;
 	beforeAll(async () => {
 		testData = new TestData();
+		await testData.cleanup();
 		store = await testData.getStore();
 	});
 
-	afterAll(async () => {
-		await testData.cleanup();
-	});
+	afterAll(async () => {});
 
 	test('Test Get Public Key', async () => {
 		await testGetPublicKey(1, testData);

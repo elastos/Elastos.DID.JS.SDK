@@ -122,9 +122,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
     @JsonClassType({type: () => [DID]})
     private subject: DID;
 
-    // TODO: Convert from java - @JsonFormat(with:{JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED} )
     @JsonProperty({ value: DIDDocument.CONTROLLER })
-    @JsonClassType({type: () => [Array, [DID]]})
     public controllers?: DID[];
 
     @JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
@@ -157,7 +155,6 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
     public expires?: Date;
 
     @JsonProperty({ value: DIDDocument.PROOF })
-    //@JsonDeserialize({ using: DIDDocumentProofDeserializer.deserialize })
     public _proofs?: DIDDocumentProof[];
 
     @JsonIgnore()
@@ -193,12 +190,25 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
     // Add custom deserialization fields to the method params here + assign.
     // Jackson does the rest automatically.
     @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any) {
+    public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any, @JsonProperty({value: "controllers"}) controllers?: any) {
         let doc = new DIDDocument(null);
-        if (_proofs instanceof Array)
-            doc._proofs = _proofs.map((p) => DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [DIDDocumentProof]}));
-        else
-            doc._proofs = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [DIDDocumentProof]})];
+
+        // Proofs
+        if (_proofs) {
+            if (_proofs instanceof Array)
+                doc._proofs = _proofs.map((p) => DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [DIDDocumentProof]}));
+            else
+                doc._proofs = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [DIDDocumentProof]})];
+        }
+
+        // Controllers
+        if (controllers) {
+            if (controllers instanceof Array)
+                doc.controllers = controllers.map((p) => DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [DID]}));
+            else
+                doc.controllers = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(controllers), {mainCreator: () => [DID]})];
+        }
+
         return doc;
     }
 
@@ -1787,7 +1797,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
         }
 
         let lastTxid: string = null;
-        let reolvedSignautre: string = null;
+        let resolvedSignature: string = null;
         let resolvedDoc = await this.getSubject().resolve(true);
         if (resolvedDoc != null) {
             if (resolvedDoc.isDeactivated()) {
@@ -1797,27 +1807,27 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
                 throw new DIDDeactivatedException(this.getSubject().toString());
             }
 
-            reolvedSignautre = resolvedDoc.getProof().getSignature();
+            resolvedSignature = resolvedDoc.getProof().getSignature();
 
             if (!force) {
                 let localPrevSignature = this.getMetadata().getPreviousSignature();
                 let localSignature = this.getMetadata().getSignature();
 
                 if (localPrevSignature == null && localSignature == null) {
-                    DIDDocument.log.error("Missing signatures information, " +
-                        "DID SDK dosen't know how to handle it, " +
+                    DIDDocument.log.error("Trying to publish over an existing document, but signatures information is missing. " +
+                        "DID SDK doesn't know how to handle it, " +
                         "use force mode to ignore checks.");
                     throw new DIDNotUpToDateException(this.getSubject().toString());
                 } else if (localPrevSignature == null || localSignature == null) {
                     let ls = localPrevSignature != null ? localPrevSignature : localSignature;
-                    if (ls !== reolvedSignautre) {
-                        DIDDocument.log.error("Current copy not based on the lastest on-chain copy, signature mismatch.");
+                    if (ls !== resolvedSignature) {
+                        DIDDocument.log.error("Current copy not based on the latest on-chain copy, signature mismatch.");
                         throw new DIDNotUpToDateException(this.getSubject().toString());
                     }
                 } else {
-                    if (localSignature !== reolvedSignautre &&
-                        localPrevSignature !== reolvedSignautre) {
-                        DIDDocument.log.error("Current copy not based on the lastest on-chain copy, signature mismatch.");
+                    if (localSignature !== resolvedSignature &&
+                        localPrevSignature !== resolvedSignature) {
+                        DIDDocument.log.error("Current copy not based on the latest on-chain copy, signature mismatch.");
                         throw new DIDNotUpToDateException(this.getSubject().toString());
                     }
                 }
@@ -1841,7 +1851,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
             await DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
         }
 
-        this.getMetadata().setPreviousSignature(reolvedSignautre);
+        this.getMetadata().setPreviousSignature(resolvedSignature);
         this.getMetadata().setSignature(this.getProof().getSignature());
     }
 

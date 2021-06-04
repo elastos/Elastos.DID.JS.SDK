@@ -47,6 +47,7 @@ import type {
 } from "jackson-js/dist/@types";
 import { IllegalArgumentException } from "./exceptions/exceptions";
 import { DIDURLParser } from "./parser/DIDURLParser";
+import type { JSONObject } from ".";
 
 class DIDSerializer extends Serializer {
     public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
@@ -57,9 +58,9 @@ class DIDSerializer extends Serializer {
 class DIDDeserializer extends Deserializer {
 	public static deserialize(value: string, context: JsonParserTransformerContext): DID {
 		try {
-			if (value && value.includes("{"))
-				throw new IllegalArgumentException("Invalid DIDURL");
-			return new DID(value);
+            if (value && value.includes("{"))
+                throw new IllegalArgumentException("Invalid DIDURL");
+            return new DID(value);
 		} catch (e) {
 			throw new IllegalArgumentException("Invalid DID");
 		}
@@ -74,6 +75,8 @@ class DIDDeserializer extends Deserializer {
 @JsonDeserialize({using:  DIDDeserializer.deserialize})
 export class DID {
     public static METHOD = "elastos";
+    //public static METHOD_SPECIFIC_ID = "elastos";
+    public static METADATA = "metadata";
 
     private method: string | null;
     private methodSpecificId: string | null;

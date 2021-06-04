@@ -58,6 +58,7 @@ describe('JWT Tests', () => {
 
 	beforeEach(async () => {
 		testData = new TestData();
+		await testData.cleanup();
 		identity = testData.getRootIdentity();
 		doc = await identity.newDid(TestConfig.storePass);
 		key = TestData.generateKeypair();
@@ -74,7 +75,6 @@ describe('JWT Tests', () => {
 	});
 
 	afterAll(async () => {
-		await testData.cleanup();
 	});
 /*
 	test('JWT Test', () => {

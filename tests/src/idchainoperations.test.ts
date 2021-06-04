@@ -48,14 +48,14 @@ let identity: RootIdentity;
 // We use several describe() to force jest running test in a sequential order, as the below
 // tests depend on each other.
 describe('IDChainOperations Tests', () => {
-    beforeAll(()=> {
+    beforeAll(async ()=> {
     	testData = new TestData();
+		await testData.cleanup();
     	testData.getRootIdentity();
     	dids = [];
     });
 
     afterAll(async () => {
-    	await testData.cleanup();
     });
 
     beforeEach(async () => {
