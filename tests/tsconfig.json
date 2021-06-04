@@ -1,6 +1,6 @@
 {
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "tests", "data", "dist", "dist.esm"],
+  "exclude": ["node_modules", "data", "dist", "dist.esm"],
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",

@@ -58,12 +58,12 @@ describe("DIDStore Tests", ()=>{
 		return new File(relPath);
 	}
 
-	test("testLoadRootIdentityFromEmptyStore", () => {
+	test("testLoadRootIdentityFromEmptyStore", async () => {
 		let file = getFile(".metadata");
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		let identity = store.loadRootIdentity();
+		let identity = await store.loadRootIdentity();
 		expect(identity).toBeNull();
 	});
 
@@ -130,7 +130,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = await store.listDids();
-		expect(dids.length).toEqual(100);
+		expect(dids.length).toEqual(TestConfig.DID_INDEX_LOOPS);
 	});
 
 	test("testDeleteDID", async ()=>{
@@ -164,7 +164,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let remains = await store.listDids();
-		expect(80).toEqual(remains.length);
+		expect(remains.length).toEqual(80);
 	});
 
 	test("testStoreAndLoadDID", async ()=>{
@@ -195,8 +195,8 @@ describe("DIDStore Tests", ()=>{
 		expect(doc.isValid()).toBeTruthy();
 
 		doc = await store.loadDid(test.getSubject().toString());
-		expect(issuer.getSubject().equals(doc.getSubject())).toBeTruthy();
-		expect(issuer.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+		expect(test.getSubject().equals(doc.getSubject())).toBeTruthy();
+		expect(test.getProof().getSignature()).toEqual(doc.getProof().getSignature());
 		expect(doc.isValid()).toBeTruthy();
 
 		let dids = await store.listDids();
@@ -287,9 +287,9 @@ describe("DIDStore Tests", ()=>{
 		expect(vc).toBeNull();
 
 		id = DIDURL.from("#twitter", user.getSubject());
-		expect(store.containsCredential(id)).toBeTruthy();
-		expect(store.containsCredential(id.toString())).toBeTruthy();
-		expect(store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
+		expect(await store.containsCredential(id)).toBeTruthy();
+		expect(await store.containsCredential(id.toString())).toBeTruthy();
+		expect(await store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
 	});
 
 	test("testListCredentials", async ()=>{
@@ -374,11 +374,11 @@ describe("DIDStore Tests", ()=>{
 				"credentials", "#passport");
 		expect(file.exists()).toBeFalsy();
 
-		expect(store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
-		expect(store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
+		expect(await store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
+		expect(await store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
 
-		expect(store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
-		expect(store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
+		expect(await store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
+		expect(await store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
 	});
 
 	test("testChangePassword", async ()=>{
@@ -684,7 +684,7 @@ describe("DIDStore Tests", ()=>{
 		await (await testData.getInstantData()).getUser1PassportCredential();
 		await (await testData.getInstantData()).getUser1TwitterCredential();
 
-		let id = store.loadRootIdentity().getId();
+		let id = await store.loadRootIdentity().getId();
 
 		let tempDir = new File(TestConfig.tempDir);
 		tempDir.createDirectory();

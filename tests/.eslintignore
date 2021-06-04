@@ -1,4 +1,4 @@
-.eslintrc.js
+#.eslintrc.js
 rollup.*
 jest.*.config.js
 node_modules/

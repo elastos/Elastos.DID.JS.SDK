@@ -67,8 +67,8 @@ describe('JWT Tests', () => {
 		db.addAuthenticationKey(id, key.getPublicKeyBase58());
 		store = await testData.getStore();
 		store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
-		doc = db.seal(TestConfig.storePass);
-		store.storeDid(doc);
+		doc = await db.seal(TestConfig.storePass);
+		await store.storeDid(doc);
 
 		await doc.publish(TestConfig.storePass);
 	    await DIDTestExtension.awaitStandardPublishingDelay();

@@ -69,7 +69,7 @@ import * as fs from "./fs";
 	 * Returns the file name, i.e. the last component part of the path.
 	 */
 	public getName(): string {
-		return this.fullPath.includes(File.SEPARATOR) ? this.fullPath.substring(this.fullPath.lastIndexOf(File.SEPARATOR)) : this.fullPath;
+		return this.fullPath.includes(File.SEPARATOR) ? this.fullPath.substring(this.fullPath.lastIndexOf(File.SEPARATOR)+1) : this.fullPath;
 	}
 
 	/**

@@ -664,9 +664,9 @@ import { BASE64 } from "./internals";
 		 *         the returned value is false if there is credentials owned the specific DID.
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		public containsCredential(id: DIDURL | string): boolean {
+		public async containsCredential(id: DIDURL | string): Promise<boolean> {
 			checkArgument(id != null, "Invalid credential id");
-			return this.loadCredential(id) != null;
+			return (await this.loadCredential(id)) != null;
 		}
 
 		/**
