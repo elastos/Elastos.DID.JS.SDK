@@ -1,10 +1,26 @@
 import {
     JsonValue,
-    JsonCreator
+    JsonCreator,
+    JsonDeserialize
 } from "jackson-js";
+import type {
+	JsonParserTransformerContext
+} from "jackson-js/dist/@types";
 import { IllegalArgumentException } from "./exceptions/exceptions"
-import { checkArgument } from "./internals";
+import { checkArgument, Deserializer } from "./internals";
 
+class MultisigDeserializer extends Deserializer {
+	public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocumentMultiSignature {
+		try {
+            if (value)
+               return DIDDocumentMultiSignature.newFormJson(value);
+		} catch (e) {
+			throw new IllegalArgumentException("Invalid multisig specification");
+		}
+	}
+}
+
+@JsonDeserialize({using:  MultisigDeserializer.deserialize})
 export class DIDDocumentMultiSignature {
     private mv: number;
     private nv: number;
@@ -14,6 +30,13 @@ export class DIDDocumentMultiSignature {
     }
 
     @JsonCreator()
+    public static placeHolder(mOfN: string): DIDDocumentMultiSignature {
+        // The Jackson parser will call JsonCreator with null after called the
+        // customized deserializer. Here should return null to keep the
+        // deserialized result.
+        return null;
+    }
+
     public static newFormJson(mOfN: string): DIDDocumentMultiSignature {
         if (!mOfN || mOfN == null)
             throw new IllegalArgumentException("Invalid multisig spec");

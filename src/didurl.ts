@@ -381,7 +381,13 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	public compareTo(id: DIDURL): number {
 		checkNotNull(id, "id is null");
 
-		return this.toString().localeCompare(id.toString());
+        let strcmp = (s1: string, s2: string) => {
+            if (s1 < s2) return -1;
+            if (s1 > s2) return 1;
+            return 0;
+        };
+
+		return strcmp(this.toString(), id.toString());
 	}
 
 	private mapHashCode(map: Map<string, string>): number {

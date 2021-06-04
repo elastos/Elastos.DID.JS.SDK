@@ -210,8 +210,14 @@ export class DID {
     public compareTo(did: DID): number {
         checkNotNull(did, "did is null");
 
-        let rc = this.method.localeCompare(did.method);
-        return rc == 0 ? this.methodSpecificId.localeCompare(did.methodSpecificId) : rc;
+        let strcmp = (s1: string, s2: string) => {
+            if (s1 < s2) return -1;
+            if (s1 > s2) return 1;
+            return 0;
+        };
+
+        let rc = strcmp(this.method, did.method);
+        return rc == 0 ? strcmp(this.methodSpecificId, did.methodSpecificId) : rc;
     }
 }
 
