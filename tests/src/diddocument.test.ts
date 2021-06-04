@@ -322,7 +322,7 @@ describe('DIDDocument Tests', () => {
 	})
 
 	test("Test Add PublicKey", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc: DIDDocument = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull()
@@ -360,7 +360,7 @@ describe('DIDDocument Tests', () => {
 
 	test("Test Add PublicKey With Cid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -406,7 +406,7 @@ describe('DIDDocument Tests', () => {
 	})
 
 	test("Test Remove PublicKey", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull()
@@ -451,7 +451,7 @@ describe('DIDDocument Tests', () => {
 
 	test("Test Remove PublicKey With Cid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -501,7 +501,7 @@ describe('DIDDocument Tests', () => {
 	})
 
 	test("testGetAuthenticationKey", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -784,7 +784,7 @@ describe('DIDDocument Tests', () => {
 
 	})
 	test("testAddAuthenticationKey", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -920,7 +920,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthorizationKeyCount()).toBe(0);
 	})
 	test("testRemoveAuthenticationKey", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -971,7 +971,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testRemoveAuthenticationKeyWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -1021,7 +1021,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthorizationKeyCount()).toBe(0);
 	})
 	test("testGetAuthorizationKey", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -1075,7 +1075,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testGetAuthorizationKeyWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		await cd.getDocument("user1");
@@ -1094,7 +1094,7 @@ describe('DIDDocument Tests', () => {
 		expect(pks.length).toBe(0);
 	})
 	test("testAddAuthorizationKey", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -1164,7 +1164,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testAddAuthorizationKeyWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -1227,7 +1227,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthorizationKeyCount()).toBe(0);
 	})
 	test("testRemoveAuthorizationKey", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -1275,7 +1275,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthorizationKeyCount()).toBe(1);
 	})
 	test("testGetCredential", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -1328,7 +1328,7 @@ describe('DIDDocument Tests', () => {
 
 	test("testGetCredentialWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		await cd.getDocument("user1");
@@ -1387,7 +1387,7 @@ describe('DIDDocument Tests', () => {
 	test("testAddCredential", async () => {
 		let cd = testData.getCompatibleData(2);
 
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await cd.getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -1426,7 +1426,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testAddCredentialWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -1474,7 +1474,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getCredentialCount()).toBe(4);
 	})
 	test("testAddSelfClaimedCredential", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -1519,7 +1519,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testAddSelfClaimedCredentialWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -1571,7 +1571,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getCredentialCount()).toBe(5);
 	})
 	test("testRemoveCredential", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 		let cd = testData.getCompatibleData(2);
 
 		let doc = await cd.getDocument("user1");
@@ -1616,7 +1616,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testRemoveCredentialWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -1658,7 +1658,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getCredentialCount()).toBe(0);
 	})
 	test("testGetService", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -1730,7 +1730,7 @@ describe('DIDDocument Tests', () => {
 	test("testGetServiceWithCid", async () => {
 
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		await cd.getDocument("user1");
@@ -1794,7 +1794,7 @@ describe('DIDDocument Tests', () => {
 		expect(svcs.length).toBe(0);
 	})
 	test("testAddService", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -1827,7 +1827,7 @@ describe('DIDDocument Tests', () => {
 		expect(svcs[1].getType()).toEqual("Service.Testing")
 	})
 	test("testAddServiceWithDescription", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let map: JSONObject = {
 			"abc": "helloworld",
@@ -1905,7 +1905,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testAddServiceWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -1946,7 +1946,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testAddServiceWithCidAndDescription", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -2028,7 +2028,7 @@ describe('DIDDocument Tests', () => {
 		expect(svcs[2].getProperties()).toBeNull()
 	})
 	test("testRemoveService", async () => {
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		let doc = await testData.getCompatibleData(2).getDocument("user1");
 		expect(doc).not.toBeNull();
@@ -2060,7 +2060,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testRemoveServiceWithCid", async () => {
 		let cd = testData.getCompatibleData(2);
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		await cd.getDocument("issuer");
 		let user1 = await cd.getDocument("user1");
@@ -2145,7 +2145,7 @@ describe('DIDDocument Tests', () => {
 	})
 
 	test("testSignAndVerify", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
@@ -2177,7 +2177,7 @@ describe('DIDDocument Tests', () => {
 	})
 
 	test("testDerive", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
@@ -2195,7 +2195,7 @@ describe('DIDDocument Tests', () => {
 	})
 	test("testDeriveFromIdentifier", async () => {
 		let identifier = "org.elastos.did.test";
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy()
@@ -2212,7 +2212,7 @@ describe('DIDDocument Tests', () => {
 		}
 	})
 	test("testCreateCustomizedDid", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let controller = await identity.newDid(TestConfig.storePass);
@@ -2255,7 +2255,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy()
 	})
 	test("testCreateMultisigCustomizedDid", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
@@ -2334,7 +2334,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy()
 	})
 	test("testUpdateDid", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -2379,7 +2379,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString())
 	})
 	test("testUpdateCustomizedDid", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let controller = await identity.newDid(TestConfig.storePass);
@@ -2453,7 +2453,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString())
 	})
 	test("testUpdateMultisigCustomizedDid", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
@@ -2561,7 +2561,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(5)
 	})
 	test("testTransferCustomizedDidAfterCreate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let controller = await identity.newDid(TestConfig.storePass);
@@ -2638,7 +2638,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy()
 	})
 	test("testTransferCustomizedDidAfterUpdate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let controller = await identity.newDid(TestConfig.storePass);
@@ -2731,7 +2731,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy()
 	})
 	test("testTransferMultisigCustomizedDidAfterCreate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
@@ -2839,7 +2839,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy()
 	})
 	test("testTransferMultisigCustomizedDidAfterUpdate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
@@ -2963,7 +2963,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy()
 	})
 	test("testUpdateDidWithoutPrevSignature", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3010,7 +3010,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString())
 	})
 	test("testUpdateDidWithoutSignature", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3062,7 +3062,7 @@ describe('DIDDocument Tests', () => {
 
 	})
 	test("testUpdateDidWithoutAllSignatures", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3098,7 +3098,7 @@ describe('DIDDocument Tests', () => {
 		}).toEqual(d.getSubject().toString())
 	})
 	test("testForceUpdateDidWithoutAllSignatures", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3130,7 +3130,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString())
 	})
 	test("testUpdateDidWithWrongPrevSignature", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3177,7 +3177,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString())
 	})
 	test("testUpdateDidWithWrongSignature", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3228,7 +3228,7 @@ describe('DIDDocument Tests', () => {
 		}).toEqual(d.getSubject().toString())
 	})
 	test("testForceUpdateDidWithWrongPrevSignature", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3258,7 +3258,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString())
 	})
 	test("testForceUpdateDidWithWrongSignature", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3289,7 +3289,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString())
 	})
 	test("testDeactivateSelfAfterCreate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3307,7 +3307,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateSelfAfterUpdate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3340,7 +3340,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateCustomizedDidAfterCreate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let controller = await identity.newDid(TestConfig.storePass);
@@ -3384,7 +3384,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateCustomizedDidAfterUpdate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let controller = await identity.newDid(TestConfig.storePass);
@@ -3444,7 +3444,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateCidAfterCreateByController", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let controller = await identity.newDid(TestConfig.storePass);
@@ -3492,7 +3492,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateCidAfterUpdateByController", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let controller = await identity.newDid(TestConfig.storePass);
@@ -3557,7 +3557,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateMultisigCustomizedDidAfterCreate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
@@ -3634,7 +3634,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateMultisigCustomizedDidAfterUpdate", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
@@ -3731,7 +3731,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateMultisigCidAfterCreateByController", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
@@ -3807,7 +3807,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateMultisigCidAfterUpdateByController", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create normal DID first
 		let ctrl1 = await identity.newDid(TestConfig.storePass);
@@ -3902,7 +3902,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeTruthy()
 	})
 	test("testDeactivateWithAuthorization1", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let doc = await identity.newDid(TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy()
@@ -3938,7 +3938,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isDeactivated()).toBeFalsy()
 	})
 	test("testDeactivateWithAuthorization2", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 		let doc = await identity.newDid(TestConfig.storePass);
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();
@@ -3983,7 +3983,7 @@ describe('DIDDocument Tests', () => {
 	})
 
 	test("testDeactivateWithAuthorization3", async () => {
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 		let doc = await identity.newDid(TestConfig.storePass);
 		let db = DIDDocumentBuilder.newFromDocument(doc).edit();
 		let key = TestData.generateKeypair();

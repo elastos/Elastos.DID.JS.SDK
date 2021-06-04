@@ -91,11 +91,11 @@ export class TestData {
     	return this.store;
 	}
 
-	public getRootIdentity(): RootIdentity {
+	public async getRootIdentity(): Promise<RootIdentity> {
 		if (this.identity == null) {
 	    	this.mnemonic = new Mnemonic().generate();
 	    	this.identity = RootIdentity.createFromMnemonic(this.mnemonic, TestConfig.passphrase,
-	    			this.store, TestConfig.storePass, true);
+	    			await this.getStore(), TestConfig.storePass, true);
 		}
 
     	return this.identity;

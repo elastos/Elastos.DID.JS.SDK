@@ -25,7 +25,7 @@ describe("RootIdentity Tests", ()=>{
 	test("testInitPrivateIdentity", async () => {
     	expect(store.containsRootIdentities()).toBeFalsy();
 
-    	let identity = testData.getRootIdentity();
+    	let identity = await testData.getRootIdentity();
     	expect(store.containsRootIdentities()).toBeTruthy();
 
     	let store2 = await DIDStore.open(TestConfig.storeRoot);
@@ -79,7 +79,7 @@ describe("RootIdentity Tests", ()=>{
 	});
 
 	test("testCreateDIDWithAlias", async () => {
-    	let identity = testData.getRootIdentity();
+    	let identity = await testData.getRootIdentity();
 
     	let alias = "my first did";
 
@@ -106,7 +106,7 @@ describe("RootIdentity Tests", ()=>{
 	});
 
 	test("testCreateDIDWithoutAlias", async () => {
-    	let identity = testData.getRootIdentity();
+    	let identity = await testData.getRootIdentity();
 
     	let doc = await identity.newDid(TestConfig.storePass);
     	expect(doc.isValid()).toBeTruthy();
@@ -126,7 +126,7 @@ describe("RootIdentity Tests", ()=>{
     });
 
 	test("testCreateDIDByIndex", async () => {
-	    let identity = testData.getRootIdentity();
+	    let identity = await testData.getRootIdentity();
 
 	    let did = identity.getDid(0);
 	    let doc = await identity.newDid(TestConfig.storePass, 0);
@@ -144,7 +144,7 @@ describe("RootIdentity Tests", ()=>{
 	});
 
 	test("testGetDid", async () => {
-	    let identity = testData.getRootIdentity();
+	    let identity = await testData.getRootIdentity();
 
 	    for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
 		    let doc = await identity.newDid(TestConfig.storePass, i);

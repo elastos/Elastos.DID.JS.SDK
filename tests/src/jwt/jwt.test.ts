@@ -59,7 +59,7 @@ describe('JWT Tests', () => {
 	beforeEach(async () => {
 		testData = new TestData();
 		await testData.cleanup();
-		identity = testData.getRootIdentity();
+		identity = await testData.getRootIdentity();
 		doc = await identity.newDid(TestConfig.storePass);
 		key = TestData.generateKeypair();
 		db = DIDDocumentBuilder.newFromDocument(doc).edit();

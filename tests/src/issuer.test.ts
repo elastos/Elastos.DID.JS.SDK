@@ -41,7 +41,7 @@ describe("Issuer Tests", ()=>{
 		testData = new TestData();
 		await testData.cleanup();
     	store = await testData.getStore();
-    	testData.getRootIdentity();
+    	await testData.getRootIdentity();
 
     	issuerDoc = await testData.getInstantData().getIssuerDocument();
     	testDoc = await testData.getInstantData().getUser1Document();

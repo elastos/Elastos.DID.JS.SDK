@@ -73,7 +73,7 @@ describe("DIDStore Tests", ()=>{
 		expect(file.exists()).toBeTruthy();
 		expect(file.isFile()).toBeTruthy();
 
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		file = getFile("roots", identity.getId(), "mnemonic");
 		expect(file.exists()).toBeTruthy();
@@ -134,7 +134,7 @@ describe("DIDStore Tests", ()=>{
 	});
 
 	test("testDeleteDID", async ()=>{
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		// Create test DIDs
 		let dids: DID[] = [];
@@ -293,7 +293,7 @@ describe("DIDStore Tests", ()=>{
 	});
 
 	test("testListCredentials", async ()=>{
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		// Store test data into current store
 		await testData.getInstantData().getIssuerDocument();
@@ -382,7 +382,7 @@ describe("DIDStore Tests", ()=>{
 	});
 
 	test("testChangePassword", async ()=>{
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		let LOOP_COUNT = 1; // TODO: restore to 4
 		for (let i = 0; i < LOOP_COUNT; i++) {
@@ -455,7 +455,7 @@ describe("DIDStore Tests", ()=>{
 	});
 
 	test("testChangePasswordWithWrongPassword", async ()=>{
-		let identity = testData.getRootIdentity();
+		let identity = await testData.getRootIdentity();
 
 		for (let i = 0; i < 4; i++) {
 			let alias = "my did " + i;
@@ -707,7 +707,7 @@ describe("DIDStore Tests", ()=>{
 	});
 
 	test("testExportAndImportStore", async ()=>{
-		testData.getRootIdentity();
+		await testData.getRootIdentity();
 
 		// Store test data into current store
 		await (await testData.getInstantData()).getIssuerDocument();

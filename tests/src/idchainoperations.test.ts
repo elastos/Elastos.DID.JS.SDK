@@ -51,7 +51,7 @@ describe('IDChainOperations Tests', () => {
     beforeAll(async ()=> {
     	testData = new TestData();
 		await testData.cleanup();
-    	testData.getRootIdentity();
+    	await testData.getRootIdentity();
     	dids = [];
     });
 
@@ -61,7 +61,7 @@ describe('IDChainOperations Tests', () => {
     beforeEach(async () => {
     	store = await testData.getStore();
     	mnemonic = testData.getMnemonic();
-    	identity = testData.getRootIdentity();
+    	identity = await testData.getRootIdentity();
     });
 
 	describe('Order 1', () => {
