@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonCreator } from "jackson-js";
+import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonCreator, JsonIgnore } from "jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
 import { DID } from "./internals";
@@ -53,6 +53,12 @@ class NormalizedURLDeserializer extends Deserializer {
 		} catch (e) {
 			throw new ParentException("Invalid public key");
 		}
+	}
+}
+
+class PresentationTypeSerializer extends Serializer {
+	public static serialize(type: string[], context: JsonStringifierTransformerContext): any {
+		return type.length > 1 ? type : type[0];
 	}
 }
 
@@ -92,6 +98,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	@JsonClassType({type: () => [DIDURL]})
 	public id: DIDURL = null;
 	@JsonProperty({value: VerifiablePresentation.TYPE})
+	@JsonSerialize({using: PresentationTypeSerializer.serialize})
 	public type: string[];
 	@JsonProperty({value: VerifiablePresentation.HOLDER})
 	@JsonInclude({value: JsonIncludeType.NON_NULL})
@@ -108,6 +115,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	@JsonClassType({type: () => [VerifiablePresentation.Proof]})
 	public proof: VerifiablePresentation.Proof;
 
+	@JsonIgnore()
 	public credentials: ComparableMap<DIDURL, VerifiableCredential>;
 
 	/**

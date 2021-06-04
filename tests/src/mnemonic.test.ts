@@ -66,6 +66,4 @@ describe('Mnemonic Tests', () => {
 		expect(mc.isValid(mnemonic)).toBeTruthy()
 		expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy()
 	});
-
-
 })
