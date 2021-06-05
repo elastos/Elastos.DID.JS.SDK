@@ -1892,9 +1892,14 @@ export namespace DIDStore {
 
 		public static forRootIdentityPrivateKey(id: string): Key {
 			return new Key(DIDStore.Key.TYPE_ROOT_IDENTITY_PRIVATEKEY, new class implements KeyObject {
-				equals(o) {return o === id;}
-				compareTo(o) {return id.localeCompare(o);}
-				hashCode() {return hashCode(id);}
+				key: string = id;
+				equals(o) {return o === this.key;}
+				compareTo(o) {
+					if (this.key < o) return -1;
+					if (this.key > o) return 1;
+					return 0;
+				}
+				hashCode() {return hashCode(this.key);}
 			});
 		}
 

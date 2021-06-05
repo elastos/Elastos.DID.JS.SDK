@@ -136,8 +136,6 @@ import * as fs from "./fs";
 		if (this.exists()) {
 			let targetName = this.fullPath.includes(File.SEPARATOR) && !newName.includes(File.SEPARATOR) ? this.getParentDirectoryName + File.SEPARATOR + newName : newName;
 			fs.renameSync(this.fullPath, targetName);
-			this.fullPath = targetName;
-			this.fileStats = undefined;
 		}
 	}
 
