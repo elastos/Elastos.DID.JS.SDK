@@ -399,7 +399,7 @@ export class InstantData {
 		if (this.idIssuer == null) {
 			this.testData.getRootIdentity();
 
-			let doc = await this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("Issuer");
 
 			let selfIssuer = new Issuer(doc);
@@ -451,7 +451,7 @@ export class InstantData {
 		if (this.idUser1 == null) {
 			await this.getIssuerDocument();
 
-			let doc = await this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User1");
 
 			// Test document with two embedded credentials
@@ -691,7 +691,7 @@ export class InstantData {
 
 	public async getUser2Document() : Promise<DIDDocument> {
 		if (this.idUser2 == null) {
-			let doc = await this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User2");
 
 			let db = DIDDocumentBuilder.newFromDocument(doc).edit();
@@ -720,7 +720,7 @@ export class InstantData {
 
 	public async getUser3Document() : Promise<DIDDocument> {
 		if (this.idUser3 == null) {
-			let doc = await this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User3");
 			await doc.publish(TestConfig.storePass);
 			await DIDTestExtension.awaitStandardPublishingDelay();
@@ -733,7 +733,7 @@ export class InstantData {
 
 	public async getUser4Document() : Promise<DIDDocument> {
 		if (this.idUser4 == null) {
-			let doc = await this.testData.identity.newDid(TestConfig.storePass);
+			let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("User4");
 			await doc.publish(TestConfig.storePass);
 			await DIDTestExtension.awaitStandardPublishingDelay();
