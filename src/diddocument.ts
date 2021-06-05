@@ -35,7 +35,7 @@ import {
     JsonDeserialize,
     JsonCreatorMode
 } from "jackson-js";
-import { Collections } from "./internals";
+import { Collections, Serializer } from "./internals";
 import { Constants } from "./constants";
 import { ByteBuffer } from "./internals";
 import { EcdsaSigner } from "./internals";
@@ -78,6 +78,13 @@ import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
 import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
+import { JsonStringifierTransformerContext } from "jackson-js/dist/@types";
+
+class DIDDocumentControllerSerializer extends Serializer {
+	public static serialize(controllers: DID[], context: JsonStringifierTransformerContext): any {
+		return controllers.length > 1 ? controllers : controllers[0];
+	}
+}
 
 /**
  * The DIDDocument represents the DID information.
@@ -123,6 +130,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
     private subject: DID;
 
     @JsonProperty({ value: DIDDocument.CONTROLLER })
+    @JsonSerialize({ using: DIDDocumentControllerSerializer.serialize})
     public controllers?: DID[];
 
     @JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
