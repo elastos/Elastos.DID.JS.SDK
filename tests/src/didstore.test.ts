@@ -22,6 +22,7 @@
 
 import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity, runningInBrowser, Exceptions } from "@elastosfoundation/did-js-sdk";
 import { DIDStore, File, Logger } from "@elastosfoundation/did-js-sdk";
+import { WrongPasswordException } from "../../typings/exceptions/exceptions";
 import { DIDTestExtension } from "./utils/didtestextension";
 
 import { TestConfig } from "./utils/testconfig";
@@ -426,7 +427,7 @@ describe("DIDStore Tests", ()=>{
 		store.changePassword(TestConfig.storePass, "newpasswd");
 
 		dids = await store.listDids();
-		expect(dids.length).toEqual(4);
+		expect(dids.length).toEqual(LOOP_COUNT);
 
 		for (let i = 0; i < LOOP_COUNT; i++) {
 			let alias = "my did " + i;
@@ -450,7 +451,7 @@ describe("DIDStore Tests", ()=>{
 			expect(alias).toEqual(doc.getMetadata().getAlias());
 		}
 
-		let doc = identity.newDid("newpasswd");
+		let doc = await identity.newDid("newpasswd");
 		expect(doc).not.toBeNull();
 	});
 
@@ -469,7 +470,7 @@ describe("DIDStore Tests", ()=>{
 
 		expect(() => {
 			store.changePassword("wrongpasswd", "newpasswd");
-		}).toThrow(/*DIDStoreException*/);
+		}).toThrowError(Exceptions.WrongPasswordException);
 	});
 
 	//[1,2].forEach((version)=>{

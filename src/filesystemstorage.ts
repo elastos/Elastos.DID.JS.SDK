@@ -32,6 +32,7 @@ import { RootIdentity } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { DIDStoreMetadata } from "./internals";
 import { File } from "./internals";
+import { Exceptions } from ".";
 
 // Root prefix to distinguish this file's storage from other data in local storage.
 const FILESYSTEM_LOCAL_STORAGE_PREFIX = "DID_FS_STORAGE";
@@ -798,6 +799,8 @@ export class FileSystemStorage implements DIDStorage {
 			let stageFile = this.getFile(true, "postChangePassword");
 			stageFile.createFile();
 		} catch (e) {
+			if (e instanceof Exceptions.WrongPasswordException)
+				throw e;
 			// DIDStoreException | IOException
 			throw new DIDStorageException("Change store password failed.");
 		} finally {
