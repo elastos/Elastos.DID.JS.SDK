@@ -110,7 +110,7 @@ describe('VerifiablePresentation Tests', () => {
 		let presentation = entryParts[1];
 		test('testParseAndSerializeNonempty', async () => {
 			let version = 2;
-			let cd = testData.getCompatibleData(2);
+			let cd = testData.getCompatibleData(version);
 			// For integrity check
 			await cd.loadAll();
 

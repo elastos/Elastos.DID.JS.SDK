@@ -21,16 +21,19 @@
  */
 
 import type { AbstractMetadata } from "./internals";
-import { DID } from "./internals";
 import {
 	ParentException,
 	MalformedDIDURLException,
 	IllegalArgumentException
 } from "./exceptions/exceptions";
 import {
+	DID,
+	DIDURLParser,
 	checkArgument,
 	checkNotNull,
-	hashCode
+	hashCode,
+	Serializer,
+    Deserializer
 } from "./internals";
 import type {
 	JsonStringifierTransformerContext,
@@ -44,10 +47,8 @@ import {
 import type { Hashable } from "./hashable";
 import type { Comparable } from "./comparable";
 import {
-    Serializer,
-    Deserializer
+
 } from "./internals";
-import { DIDURLParser } from "./parser/DIDURLParser";
 
 class URLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
@@ -90,14 +91,12 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 	private fragment = "";
 	private metadata?: AbstractMetadata;
 
-	// Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
-	//public constructor() {}
-
 	@JsonCreator()
 	public static jsonConstructor(): DIDURL {
 		return null;
 	}
 
+	// Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
 	public constructor(url?: DIDURL | string, baseRef?: DID) {
 		if (url) {
 			if(url instanceof DIDURL) {

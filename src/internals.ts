@@ -6,7 +6,6 @@ export * from "./logger";
 export * from "./serializers"; // Should be before filters
 export * from "./filters"; // Should be before all DID objects
 
-
 // Serializer helper classes
 export * from "./didentity";
 export * from "./diddocumentpublickeyreferenceserializer";
@@ -19,8 +18,9 @@ export * from "./didmetadata"; // Should be before DIDExport (DIDStore) and DIDD
 export * from "./didstoremetadata";
 
 // DID/URL
+export * from "./parser/DIDURLParser";
+export * from "./did"; // Should be before didurl because didurl's constructor has a "DID" type.
 export * from "./didurl";
-export * from "./did";
 
 export * from "./didobject";
 

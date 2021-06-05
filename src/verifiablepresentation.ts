@@ -42,7 +42,6 @@ import {
 import { ComparableMap } from "./comparablemap";
 class NormalizedURLSerializer extends Serializer {
 	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
-
 		return NormalizedURLSerializer.mapper(context).stringify(id.toString());
 	}
 }

@@ -25,7 +25,8 @@ import {
     checkEmpty,
     checkNotNull,
     isEmpty,
-    hashCode
+    hashCode,
+    DIDURLParser
 } from "./internals";
 import type { DIDDocument } from "./internals";
 import { DIDBackend } from "./internals";
@@ -46,8 +47,6 @@ import type {
 	JsonParserTransformerContext
 } from "jackson-js/dist/@types";
 import { IllegalArgumentException } from "./exceptions/exceptions";
-import { DIDURLParser } from "./parser/DIDURLParser";
-import type { JSONObject } from ".";
 
 class DIDSerializer extends Serializer {
     public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
