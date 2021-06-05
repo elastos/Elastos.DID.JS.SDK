@@ -1656,7 +1656,7 @@ import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
         let controllers = [];
 
         if (inputControllers && inputControllers.length ) {
-            inputControllers.forEach(function (ctrl) {
+            inputControllers.forEach((ctrl) => {
                 let controller: DID = DID.from(ctrl);
                 if (!controller.equals(this.getSubject()) && !controllers.includes(ctrl))
                     controllers.push (controller);
