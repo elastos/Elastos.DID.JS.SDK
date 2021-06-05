@@ -30,7 +30,7 @@ import {
 import testConfigFile from "../assets/test.config.json";
 
 export class TestConfig {
-	public static DID_INDEX_LOOPS = 1; // TMP DEBUG 100;
+	public static DID_INDEX_LOOPS = 100; // TMP DEBUG 100;
 	private static TEST_CONFIG_FILE = "tests/assets/test.config.json";
 
 	public static network: string;
