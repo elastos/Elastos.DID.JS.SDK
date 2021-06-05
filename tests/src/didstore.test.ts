@@ -426,7 +426,7 @@ describe("DIDStore Tests", ()=>{
 		store.changePassword(TestConfig.storePass, "newpasswd");
 
 		dids = await store.listDids();
-		expect(dids.length).toEqual(4);
+		expect(dids.length).toEqual(LOOP_COUNT);
 
 		for (let i = 0; i < LOOP_COUNT; i++) {
 			let alias = "my did " + i;

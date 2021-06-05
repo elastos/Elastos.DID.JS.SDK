@@ -233,6 +233,11 @@ export class FileSystemStorage implements DIDStorage {
 		return new File(relPath);
 	}
 
+	private getDirPath(...paths: string[]): string {
+		let relPath = this.storeRoot.getAbsolutePath() + File.SEPARATOR + paths.join(File.SEPARATOR);
+		return relPath;
+	}
+
 	public getLocation(): string {
 		return this.storeRoot.toString();
 	}
@@ -769,16 +774,17 @@ export class FileSystemStorage implements DIDStorage {
 		let dataJournal = this.getDir(FileSystemStorage.DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
 
 		let timestamp = new Date().getTime() / 1000;
-		let dataDeprecated = this.getDir(FileSystemStorage.DATA_DIR + "_" + timestamp);
+		let dataDeprecatedPath = this.getDirPath(FileSystemStorage.DATA_DIR + "_" + timestamp);
 
 		let stageFile = this.getFile(false, "postChangePassword");
 
 		if (stageFile.exists()) {
 			if (dataJournal.exists()) {
+	            let dataPath = dataDir.getAbsolutePath();
 				if (dataDir.exists())
-					dataDir.rename(dataDeprecated.getAbsolutePath());
+					dataDir.rename(dataDeprecatedPath);
 
-				dataJournal.rename(dataDir.getAbsolutePath());
+				dataJournal.rename(dataPath);
 			}
 
 			stageFile.delete();
