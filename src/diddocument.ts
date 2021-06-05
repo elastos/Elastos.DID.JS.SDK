@@ -1711,7 +1711,7 @@ class DIDDocumentControllerSerializer extends Serializer {
             this.checkIsPrimitive();
             this.checkAttachedStore();
             if (!source)
-                throw new DIDNotFoundException(from.toString());
+                throw new DIDNotFoundException("DID not found: "+from.toString());
             if (source.isDeactivated())
     			throw new DIDDeactivatedException(from.toString());
 
@@ -1749,7 +1749,7 @@ class DIDDocumentControllerSerializer extends Serializer {
         let did = this.getSubject();
         let targetDoc = await did.resolve(true);
         if (targetDoc == null)
-            throw new DIDNotFoundException(did.toString());
+            throw new DIDNotFoundException("DID not found: "+did.toString());
 
         if (targetDoc.isDeactivated())
             throw new DIDDeactivatedException(did.toString());
@@ -1882,7 +1882,7 @@ class DIDDocumentControllerSerializer extends Serializer {
         // Document should use the IDChain's copy
         let doc = await this.getSubject().resolve(true);
         if (doc == null)
-            throw new DIDNotFoundException(this.getSubject().toString());
+            throw new DIDNotFoundException("DID not found: "+this.getSubject().toString());
         else if (doc.isDeactivated())
             throw new DIDDeactivatedException(this.getSubject().toString());
         else
@@ -1922,7 +1922,7 @@ class DIDDocumentControllerSerializer extends Serializer {
 
         let targetDoc = await target.resolve(true);
         if (targetDoc == null)
-            throw new DIDNotFoundException(target.toString());
+            throw new DIDNotFoundException("DID not found: "+target.toString());
         else if (targetDoc.isDeactivated())
             throw new DIDDeactivatedException(target.toString());
 

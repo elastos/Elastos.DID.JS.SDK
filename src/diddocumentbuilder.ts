@@ -170,7 +170,7 @@ export class DIDDocumentBuilder {
         checkArgument(!this.document.controllers.includes(controller), "Controller already exists");
         let controllerDoc = await controller.resolve(true);
         if (controllerDoc == null)
-            throw new DIDNotFoundException(controller.toString());
+            throw new DIDNotFoundException("DID not found: "+controller.toString());
 
         if (controllerDoc.isDeactivated())
             throw new DIDDeactivatedException(controller.toString());
@@ -530,7 +530,7 @@ export class DIDDocumentBuilder {
 
         let controllerDoc = await controller.resolve();
         if (controllerDoc == null)
-            throw new DIDNotFoundException(id.toString());
+            throw new DIDNotFoundException("DID not found: "+id.toString());
 
         if (controllerDoc.isDeactivated())
             throw new DIDDeactivatedException(controller.toString());

@@ -21,7 +21,7 @@
  */
 
 import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonIgnore, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "jackson-js";
-import { Collections } from "./internals";
+import { Collections, Serializer } from "./internals";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { EcdsaSigner } from "./internals";
@@ -32,6 +32,13 @@ import { DIDURL } from "./internals";
 import { DIDResolveException, NotCustomizedDIDException, DIDStoreException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
 import { ComparableMap } from "./comparablemap";
+import type { JsonStringifierTransformerContext } from "jackson-js/dist/@types";
+
+class TransferTicketProofSerializer extends Serializer {
+	public static serialize(proof: string[], context: JsonStringifierTransformerContext): any {
+		return proof.length > 1 ? proof : proof[0];
+	}
+}
 
 /**
  * Transfer ticket class.
@@ -46,7 +53,6 @@ import { ComparableMap } from "./comparablemap";
 // The values should be the real class field names, not the final JSON output field names.
 // Or keep the class field names same with the JSON field namas.
 @JsonPropertyOrder({value:["id", "to", "txid", "_proofs"]})
-@JsonCreator()
 export class TransferTicket extends DIDEntity<TransferTicket> {
 	public static ID = "id";
 	public static TO = "to";
@@ -59,6 +65,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 	@JsonProperty({value:TransferTicket.ID})
 	private id: DID;
+
 	@JsonIgnore()
 	private doc: DIDDocument;
 
@@ -70,7 +77,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 	@JsonProperty({value:TransferTicket.PROOF})
 	@JsonInclude({value: JsonIncludeType.NON_EMPTY})
-	// TODO - Convert from java - @JsonFormat(with = {JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY,JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
+	@JsonSerialize({using: TransferTicketProofSerializer.serialize})
 	private _proofs: Proof[];
 
 	private proofs: ComparableMap<DID, Proof>;
@@ -82,6 +89,23 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		this.id = did;
 		this.to = to;
 		this.txid = txid;
+	}
+
+	// Add custom deserialization fields to the method params here + assign.
+    // Jackson does the rest automatically.
+    @JsonCreator()
+    public static jacksonCreator(@JsonProperty({value: TransferTicket.PROOF}) proof?: any) {
+        let tt = new TransferTicket(null, null, null);
+
+        // Proofs
+        if (proof) {
+            if (proof instanceof Array)
+				tt._proofs = proof.map((p) => TransferTicket.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [Proof]}));
+            else
+				tt._proofs = [TransferTicket.getDefaultObjectMapper().parse(JSON.stringify(proof), {mainCreator: () => [Proof]})];
+        }
+
+		return tt;
 	}
 
 	/**
@@ -378,7 +402,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	  * @param method the verification method, normally it's a public key
 	  * @param signature the signature encoded in base64 URL safe format
 	  */
-	 protected constructor(
+	 public constructor(
 		 	@JsonProperty({value: TransferTicket.TYPE}) type: string,
 			@JsonProperty({value: TransferTicket.VERIFICATION_METHOD, required: true}) method: DIDURL,
 		 	@JsonProperty({value: TransferTicket.CREATED}) created: Date,
