@@ -122,9 +122,8 @@ import { BASE64 } from "./internals";
 			let passwordDigest = md5(Buffer.from(password)).toString()
 
 			try {
-				let cipher = Aes256cbc.encrypt(Buffer.from(passwordDigest, "utf-8"), password);
-				let digest =  Buffer.from(md5(cipher));
-				return digest.toString("hex");
+				let cipher = Aes256cbc.encrypt(Buffer.from(passwordDigest, "hex"), password);
+				return md5(cipher).toString();
 			} catch (e) {
 				// CryptoException
 				throw new DIDStoreCryptoException("Calculate fingerprint error.", e);
