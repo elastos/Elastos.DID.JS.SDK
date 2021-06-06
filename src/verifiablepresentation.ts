@@ -40,11 +40,7 @@ import {
 	Deserializer
 } from "./internals";
 import { ComparableMap } from "./comparablemap";
-class NormalizedURLSerializer extends Serializer {
-	public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
-		return NormalizedURLSerializer.mapper(context).stringify(id.toString());
-	}
-}
+
 class NormalizedURLDeserializer extends Deserializer {
 	public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
 		try {
@@ -585,7 +581,6 @@ export namespace VerifiablePresentation {
 		 @JsonProperty({value: VerifiablePresentation.TYPE})
 		 private type: string;
 		 @JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD})
-		 @JsonSerialize({using: NormalizedURLSerializer.serialize})
 		 @JsonDeserialize({using: NormalizedURLDeserializer.deserialize})
 		 private verificationMethod: DIDURL;
 		 @JsonProperty({value: VerifiablePresentation.REALM})
