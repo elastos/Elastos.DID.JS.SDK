@@ -61,6 +61,7 @@ import { BASE64 } from "./internals";
 	private static NULL = null;
 
 	private static DID_EXPORT = "did.elastos.export/2.0";
+	private static DID_LAZY_PRIVATEKEY = "lazy-private-key";
 
 	private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
@@ -845,6 +846,19 @@ import { BASE64 } from "./internals";
 		}
 
 		/**
+		 * Store Lazy private key.
+		 *
+		 * @param id the identifier of key
+		 * @throws DIDStoreException DIDStore error.
+		 */
+		public storeLazyPrivateKey(id: DIDURL) {
+			checkArgument(id != null, "Invalid private key id");
+			
+			this.storage.storePrivateKey(id, DIDStore.DID_LAZY_PRIVATEKEY);
+			this.cache.put(DIDStore.Key.forDidPrivateKey(id), DIDStore.DID_LAZY_PRIVATEKEY);
+		}
+
+		/**
 		 * Load private key.
 		 *
 		 * @param did the owner of key
@@ -853,8 +867,9 @@ import { BASE64 } from "./internals";
 		 * @return the original private key
 		 * @throws DIDStoreException DIDStore error.
 		 */
-		 public async loadPrivateKey(id: DIDURL, storepass?: string): Promise<Buffer> {
+		 public async loadPrivateKey(id: DIDURL, storepass: string): Promise<Buffer> {
 			checkArgument(id != null, "Invalid private key id");
+			checkArgument(storepass && storepass != null, "Invalid storepass");
 
 			let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
 				let key = this.storage.loadPrivateKey(id);
@@ -863,16 +878,13 @@ import { BASE64 } from "./internals";
 				};
 			});
 
-			let encryptedKey: string = value === DIDStore.NULL ? null : value;
-
-			if (storepass == undefined) {
-				return encryptedKey ? Buffer.from(encryptedKey) : null;
+			if (value === DIDStore.NULL || !value) {
+				return null;
 			} else {
-				checkArgument(storepass && storepass != null, "Invalid storepass");
-				if (encryptedKey)
-					return this.decrypt(encryptedKey, storepass);
-				else
+				if (value === DIDStore.DID_LAZY_PRIVATEKEY) 
 					return await RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
+				else 
+					return this.decrypt(value, storepass);				
 			}
 		}
 
@@ -889,8 +901,14 @@ import { BASE64 } from "./internals";
 			checkArgument(id != null, "Invalid private key id");
 
 			let keyId = id instanceof DIDURL ? id : DIDURL.from(id);
-			let key = this.loadPrivateKey(keyId);
-			return key != null;
+			let value = this.cache.get(DIDStore.Key.forDidPrivateKey(keyId), () => {
+				let key = this.storage.loadPrivateKey(keyId);
+				return {
+					value: key != null ? key : DIDStore.NULL
+				};
+			});
+				
+			return value === DIDStore.NULL ? false : true;
 		}
 
 		/**

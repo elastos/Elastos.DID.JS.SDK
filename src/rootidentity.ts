@@ -391,6 +391,8 @@ export class RootIdentity {
 		metadata.setIndex(index);
 
 		await this.getStore().storeDid(finalDoc);
+		this.getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
+	
 		return true;
 	}
 

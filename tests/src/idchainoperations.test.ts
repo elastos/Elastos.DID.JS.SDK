@@ -790,13 +790,31 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
 			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
+
+			//create a credential for testing lazy private key
+			let did = restoredDids[0];
+			let issuer = await Issuer.newWithDID(did, cleanStore);
+
+			let props = {
+				name: "John",
+				gender: "Male"
+			};
+
+			let cb = issuer.issueFor(did);
+			let vc  = await cb.id("#selfCredential")
+					.type("BasicProfileCredential")
+					.properties(props)
+					.seal(TestConfig.storePass); 
+			expect(vc).not.toBeNull();
+			expect(vc.getSubject().getProperty("name")).toEqual("John")
 
 			let originalDids: DID[] = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 		});
 	});
 
@@ -817,13 +835,14 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
 			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			let originalDids: DID[] = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 		});
 	});
 
@@ -846,13 +865,14 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
 			let restoredDids: DID[] = Array.from(await store.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			let originalDids: DID[] = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 		});
 	});
 
@@ -877,13 +897,14 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
 			let restoredDids: DID[] = Array.from(await store.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			let originalDids: DID[] = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 		});
 	});
 
@@ -905,13 +926,14 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
 			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			let originalDids: DID[] = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 
 			// Modify a DID document
 			let modifiedDid = dids[0];
@@ -935,7 +957,8 @@ describe('IDChainOperations Tests', () => {
 			originalDids = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 
 			// Should keep the local modified copy after sync
 			doc = await cleanStore.loadDid(modifiedDid);
@@ -961,13 +984,14 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
 			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			let originalDids: DID[] = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 
 			// Modify a DID document
 			let modifiedDid = dids[0];
@@ -988,13 +1012,14 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
 			restoredDids = Array.from(await cleanStore.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			originalDids = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 
 			// Should overwrite the local modified copy with chain copy after sync
 			doc = await cleanStore.loadDid(modifiedDid);
@@ -1020,13 +1045,14 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize from IDChain...OK({}s)", duration);
 
 			let restoredDids: DID[] = Array.from(await cleanStore.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			let originalDids: DID[] = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 
 			// Modify a DID document
 			let modifiedDid = dids[0];
@@ -1047,13 +1073,14 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
 			restoredDids = Array.from(await cleanStore.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			originalDids = Array.from(dids);
 			originalDids.sort((a,b) => a.compareTo(b));
 
-			expect(originalDids).toEqual(restoredDids); // Array comparison
+			for (let i = 0; i < 5; i++)
+				expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
 
 			// Should overwrite the local modified copy with chain copy after sync
 			doc = await cleanStore.loadDid(modifiedDid);
