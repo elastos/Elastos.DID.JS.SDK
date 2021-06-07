@@ -72,5 +72,5 @@ export function promisify<T>(exec: (reject?: (e)=>void)=>T): Promise<T> {
  * Tells whether this library is running in the browser or in a nodejs env.
  */
 export function runningInBrowser(): boolean {
-    return process === undefined || (process.platform as string) === "browser";
+    return process === undefined || (process.platform as string) === "browser" || process.title === "browser";
 }

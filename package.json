@@ -19,8 +19,8 @@
   },
   "typings": "typings/",
   "dependencies": {
-    "antlr4ts": "^0.5.0-alpha.4",
     "assert": "^2.0.0",
+    "axios": "^0.19.2",
     "bip32": "^2.0.6",
     "bn.js": "^5.2.0",
     "browserfs": "^1.4.3",

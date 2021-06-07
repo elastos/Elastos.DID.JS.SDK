@@ -123,6 +123,7 @@ export default command => {
 		// fsevents is a dependency of chokidar that cannot be bundled as it contains binary code
 		external: [
 			'assert',
+			'axios',
 			'crypto',
 			'events',
 			'fs',
@@ -259,7 +260,7 @@ export default command => {
 				mainFields: ['browser', 'module', 'jsnext:main', 'main'],
 				browser: true,
 				preferBuiltins: true,
-				dedupe: ['bn.js', 'browserfs', 'buffer-es6', 'process-es6', 'crypto-browserify', 'assert', 'events']
+				dedupe: ['bn.js', 'browserfs', 'buffer-es6', 'process-es6', 'crypto-browserify', 'assert', 'events', 'browserify-sign']
 			}),
 			// Polyfills needed to replace readable-stream with stream (circular dep)
 			commonjs({

@@ -27,6 +27,8 @@ import { Logger } from "./logger";
 import { checkArgument } from "./internals";
 import { request as httpsRequest } from "https";
 import { request as httpRequest } from "http";
+import { runningInBrowser } from "./utils";
+import axios from "axios";
 
 const log = new Logger("DefaultDIDAdapter");
 
@@ -68,72 +70,94 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	// "main" java implementation to rework synchronous calls and we will also migrate to Promises/Async.
 	protected performRequest(url: URL, body?: string): Promise<JSONObject> {
 		return new Promise((resolve, reject) => {
-			// Use a different module if we call http or https
-			let requestMethod = (url.protocol.indexOf("https") === 0 ? httpsRequest : httpRequest);
-
-			let req = requestMethod({
-				protocol: url.protocol,
-				hostname: url.hostname,
-				port: url.port,
-				path: url.pathname,
-				method: 'POST',
-
-				headers: {
-					"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
-					"Content-Type": "application/json",
-					"Accept": "application/json",
-					"Access-Control-Allow-Origin": "*"
-				}
-			}, (res)=>{
-				let wholeData = "";
-				res.on('data', d => {
-					// Concatenate data that can reach us in several pieces.
-					wholeData += d;
-				})
-				res.on("end", () => {
-					if (wholeData !== null && wholeData.length > 0) {
-						let responseJSON = JSON.parse(wholeData);
-						resolve(responseJSON);
-					} else {
-						resolve({})
-					}
-				})
-			});
-			req.on('error', error => {
-				reject(new ResolveException("HTTP error", error));
-			});
-			if (body)
-				req.write(body);
-			req.end();
-
-			/* var request = new XMLHttpRequest();
-			request.open('POST', url.toString());
-			request.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
-			request.setRequestHeader("Content-Type", "application/json");
-			request.setRequestHeader("Accept", "application/json");
-			request.setRequestHeader("Access-Control-Allow-Origin", "*");
-			request.onreadystatechange = function() {
-				// In case of error, onerror is called but the state also becomes "DONE" with status 0
-				if (this.readyState === XMLHttpRequest.DONE && request.status > 0) {
-					if (request.status < 200 || request.status > 299) {
-						log.error("HTTP request error, status: "+request.status+", message: "+request.statusText);
-						reject(new ResolveException("HTTP error with status: " + request.status));
-					}
-
-					// Try to parse as json or throw an exception
-					try {
-						let responseJSON = JSON.parse(request.responseText);
-						resolve(responseJSON);
-					}
-					catch (e) {
-						reject(new ResolveException("Unable to parse resolver response as a JSON object", e));
-					}
-				}
+			if (runningInBrowser()) {
+				console.log("BROWSER URL ", url)
+				void axios({
+					method: "post",
+					url: url.toString(),
+					headers: {
+						"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					},
+					data: body
+				  }).then((response) => {
+					  if (response.status >= 200 && response.status < 400) {
+						  resolve(response.data);
+					  }
+					  else {
+						  reject(new ResolveException("HTTP error: " + response.statusText));
+					  }
+				  })
 			}
-			request.onerror = function(r, e) {
-				reject(new ResolveException("Http error in performRequest(): ", e));
+			else {
+				// NODEJS
+
+				// Use a different module if we call http or https
+				let requestMethod = (url.protocol.indexOf("https") === 0 ? httpsRequest : httpRequest);
+				let req = requestMethod({
+					protocol: url.protocol,
+					hostname: url.hostname,
+					port: url.port,
+					path: url.pathname,
+					method: 'POST',
+
+					headers: {
+						"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}, (res)=>{
+					let wholeData = "";
+					res.on('data', d => {
+						// Concatenate data that can reach us in several pieces.
+						wholeData += d;
+					})
+					res.on("end", () => {
+						if (wholeData !== null && wholeData.length > 0) {
+							let responseJSON = JSON.parse(wholeData);
+							resolve(responseJSON);
+						} else {
+							resolve({})
+						}
+					})
+				});
+				req.on('error', error => {
+					reject(new ResolveException("HTTP error", error));
+				});
+				if (body)
+					req.write(body);
+				req.end();
+
+				/* var request = new XMLHttpRequest();
+				request.open('POST', url.toString());
+				request.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+				request.setRequestHeader("Content-Type", "application/json");
+				request.setRequestHeader("Accept", "application/json");
+				request.setRequestHeader("Access-Control-Allow-Origin", "*");
+				request.onreadystatechange = function() {
+					// In case of error, onerror is called but the state also becomes "DONE" with status 0
+					if (this.readyState === XMLHttpRequest.DONE && request.status > 0) {
+						if (request.status < 200 || request.status > 299) {
+							log.error("HTTP request error, status: "+request.status+", message: "+request.statusText);
+							reject(new ResolveException("HTTP error with status: " + request.status));
+						}
+
+						// Try to parse as json or throw an exception
+						try {
+							let responseJSON = JSON.parse(request.responseText);
+							resolve(responseJSON);
+						}
+						catch (e) {
+							reject(new ResolveException("Unable to parse resolver response as a JSON object", e));
+						}
+					}
+				}
+				request.onerror = function(r, e) {
+					reject(new ResolveException("Http error in performRequest(): ", e));
+				}
+				request.send(body); */
 			}
-			request.send(body); */
 		});
 	}
 
