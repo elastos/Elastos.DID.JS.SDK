@@ -80,7 +80,7 @@ export class DIDBackend {
 
 	private cache: LRUCache<ResolveRequest<any, any>, ResolveResult<any>>;
 
-	private static instance: DIDBackend;
+	private static instance: DIDBackend = null;
 
 	/**
 	 * Create a DIDBackend with the adapter and the cache specification.
@@ -148,6 +148,10 @@ export class DIDBackend {
 	 */
 	public static getInstance(): DIDBackend {
 		return this.instance;
+	}
+
+	public static isInitialized(): boolean {
+		return this.instance !== null;
 	}
 
 	private generateRequestId(): string {
