@@ -111,7 +111,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 	}
 
 	protected getDate(name: string): Date /* throws ParseException */ {
-		return new Date(this.get(name).toString());
+		return new Date(this.get(name) as string);
 	}
 
 	protected remove(name: string): any {
@@ -140,7 +140,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 	 * @return alias string
 	 */
 	public getAlias(): string {
-		return this.get(AbstractMetadata.ALIAS).toString();
+		return this.get(AbstractMetadata.ALIAS) as string;
 	}
 
 	/**
@@ -162,7 +162,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 	 */
 	public getExtra(key: string): string {
 		checkArgument(key && key != null, "Invalid key");
-		return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key).toString();
+		return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key) as string;
 	}
 
 	public getExtraBoolean(key: string): boolean {
