@@ -147,6 +147,7 @@ export class DIDBackend {
 	 * @return the DIDBackend instance
 	 */
 	public static getInstance(): DIDBackend {
+		checkArgument(this.instance != null, "The DIDBackend was not initialized. Please call DIDBackend.initialize() with a valid DIDAdapter (i.e. new DefaultDIDAdapter()) first.");
 		return this.instance;
 	}
 
