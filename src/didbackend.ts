@@ -405,7 +405,7 @@ export class DIDBackend {
 		return list.getCredentialIds();
 	}
 
-	private createTransaction(request: IDChainRequest<any>, adapter: DIDTransactionAdapter) {
+	private async createTransaction(request: IDChainRequest<any>, adapter: DIDTransactionAdapter) {
 		log.info("Create ID transaction...");
 
 		let payload = request.serialize(true);
@@ -414,7 +414,7 @@ export class DIDBackend {
 		if (adapter == null)
 			adapter = this.getAdapter();
 
-		adapter.createIdTransaction(payload, payload);
+		await adapter.createIdTransaction(payload, payload);
 
 		log.info("ID transaction complete.");
 	}
@@ -454,7 +454,7 @@ export class DIDBackend {
 	 */
 	public async createDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		let request = await DIDRequest.create(doc, signKey, storepass);
-		this.createTransaction(request, adapter);
+		await this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
 
@@ -470,13 +470,13 @@ export class DIDBackend {
 	 */
 	public async updateDid(doc: DIDDocument, previousTxid: string, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		let request = await DIDRequest.update(doc, previousTxid, signKey, storepass);
-		this.createTransaction(request, adapter);
+		await this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
 
 	public async transferDid(doc: DIDDocument, ticket: TransferTicket, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		let request = await DIDRequest.transfer(doc, ticket, signKey, storepass);
-		this.createTransaction(request, adapter);
+		await this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
 
@@ -491,7 +491,7 @@ export class DIDBackend {
      */
 	public async deactivateDid(doc: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		let request = await DIDRequest.deactivate(doc, signKey, storepass);
-		this.createTransaction(request, adapter);
+		await this.createTransaction(request, adapter);
 		this.invalidDidCache(doc.getSubject());
 	}
 
@@ -510,14 +510,14 @@ export class DIDBackend {
 			signer: DIDDocument, signKey: DIDURL, storepass: string,
 			adapter: DIDTransactionAdapter) {
 		let request = await DIDRequest.deactivateTarget(target, targetSignKey, signer, signKey, storepass);
-		this.createTransaction(request, adapter);
+		await this.createTransaction(request, adapter);
 		this.invalidDidCache(target.getSubject());
 	}
 
 	public async declareCredential(vc: VerifiableCredential, signer: DIDDocument,
 			signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		let request = await CredentialRequest.declare(vc, signer, signKey, storepass);
-		this.createTransaction(request, adapter);
+		await this.createTransaction(request, adapter);
 		this.invalidCredentialCache(vc.getId(), null);
 		this.invalidCredentialCache(vc.getId(), vc.getIssuer());
 	}
@@ -525,13 +525,13 @@ export class DIDBackend {
 	public async revokeCredential(vc: VerifiableCredential | DIDURL, signer: DIDDocument, signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter): Promise<void> {
 		if (vc instanceof VerifiableCredential) {
 			let request = await CredentialRequest.revoke(vc, signer, signKey, storepass);
-			this.createTransaction(request, adapter);
+			await this.createTransaction(request, adapter);
 			this.invalidCredentialCache(vc.getId(), null);
 			this.invalidCredentialCache(vc.getId(), vc.getIssuer());
 		}
 		else {
 			let request = await CredentialRequest.revoke(vc, signer, signKey, storepass);
-			this.createTransaction(request, adapter);
+			await this.createTransaction(request, adapter);
 			this.invalidCredentialCache(vc, null);
 			this.invalidCredentialCache(vc, signer.getSubject());
 		}
