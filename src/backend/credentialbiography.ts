@@ -20,10 +20,11 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue, JsonSerialize, JsonDeserialize } from "@elastosfoundation/jackson-js";
+import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue,
+	JsonSerialize, JsonDeserialize, JsonClassType } from "@elastosfoundation/jackson-js";
 import { DIDURL } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
-import type { CredentialTransaction } from "./credentialtransaction";
+import { CredentialTransaction } from "./credentialtransaction";
 import { ResolveResult } from "./resolveresult";
 import {
     Serializer,
@@ -106,10 +107,13 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 	protected static TRANSACTION = "transaction";
 
 	@JsonProperty({value: CredentialBiography.ID})
+	@JsonClassType({type: () => [DIDURL]})
 	private id: DIDURL;
 	@JsonProperty({value: CredentialBiography.STATUS})
+	@JsonClassType({type: () => [CredentialBiographyStatus]})
 	private status: CredentialBiographyStatus;
 	@JsonProperty({value: CredentialBiography.TRANSACTION})
+	@JsonClassType({type: () => [Array, [CredentialTransaction]]})
 	private txs: CredentialTransaction[];
 
 	/**
@@ -171,7 +175,7 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 		if (this.id == null)
 			throw new MalformedResolveResultException("Missing id");
 
-		if (this.status != CredentialBiographyStatus.NOT_FOUND) {
+		if (!this.status.equals(CredentialBiographyStatus.NOT_FOUND)) {
 			if (this.txs == null || this.txs.length == 0)
 				throw new MalformedResolveResultException("Missing transaction");
 

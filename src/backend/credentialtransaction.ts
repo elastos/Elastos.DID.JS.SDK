@@ -40,7 +40,7 @@ export class CredentialTransaction extends IDTransaction<CredentialTransaction, 
 	 * @param request the IDChainRequest content
 	 */
 	// Java: @JsonCreator
-	protected constructor(txid: string = null, timestamp: Date = null, request: CredentialRequest = null) {
+	constructor(txid: string = null, timestamp: Date = null, request: CredentialRequest = null) {
 		super(txid, timestamp, request);
 	}
 
