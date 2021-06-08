@@ -38,15 +38,10 @@ export class BASE64 {
         return Buffer.from(b64str, "base64").toString("hex");
     }
 
-
-
-
     public static encode(hexToBase64: string): string{
         let b64str = Buffer.from(hexToBase64, "hex").toString("base64");
         return  this.convertToURI(b64str)
     }
-
-
 
     private static convertToURI(b64str: string) : string{
         return b64str.replace(/[+/]/g, (item) => item == '+' ? '-' : '_').replace(/=+$/m, '');

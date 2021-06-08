@@ -435,7 +435,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		let revoked = bio.getStatus().equals(CredentialBiographyStatus.REVOKED);
 
 		if (revoked)
-		this.getMetadata().setRevoked(revoked);
+			this.getMetadata().setRevoked(revoked);
 
 		return revoked;
 	}
