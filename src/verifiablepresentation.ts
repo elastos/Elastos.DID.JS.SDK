@@ -248,7 +248,6 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @throws MalformedPresentationException if the presentation object is invalid
 	 */
 	protected async sanitize(): Promise<void> {
-		console.log("TMP DEBUG PRES", this);
 		if (this.type == null || this.type.length == 0)
 			throw new MalformedPresentationException("Missing presentation type");
 
