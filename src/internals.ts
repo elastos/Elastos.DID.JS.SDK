@@ -4,13 +4,11 @@
 export * from "./logger";
 
 export * from "./serializers"; // Should be before filters
-export * from "./filters"; // Should be before all DID objects
 
 // Serializer helper classes
 export * from "./didentity";
 export * from "./diddocumentpublickeyreferenceserializer";
 export * from "./diddocumentpublickeyreferencedeserializer";
-export * from "./diddocumentpublickeyserializerfilter";
 
 // Abstract metadata object shoud be efore all metadata objects
 export * from "./abstractmetadata";

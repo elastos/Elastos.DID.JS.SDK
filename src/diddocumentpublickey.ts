@@ -1,18 +1,31 @@
 import {
     JsonProperty,
     JsonPropertyOrder,
-    JsonSerialize,
     JsonClassType,
-    JsonIgnore
+    JsonIgnore,
+    JsonInclude,
+    JsonIncludeType
 } from "jackson-js";
+import type {
+	JsonStringifierTransformerContext,
+} from "jackson-js/dist/@types";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { Base58 } from "./internals";
 import { DID } from "./internals";
-import { DIDDocumentPublicKeySerializerFilter } from "./internals";
+import { DIDEntity } from "./internals";
 import type { DIDObject } from "./internals";
 import { DIDURL } from "./internals";
-import { TypeSerializerFilter } from "./internals";
+import { keyTypeFilter } from "./internals";
+
+function keyControllerFilter(value: any, context?: JsonStringifierTransformerContext): boolean {
+    let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
+
+    if (!serializeContext || serializeContext.isNormalized())
+        return false;
+
+        return serializeContext.getDid() ? serializeContext.getDid().equals(value as DID) : false;
+}
 
 /**
  * Publickey is used for digital signatures, encryption and
@@ -29,12 +42,12 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
     @JsonProperty({ value: DIDDocumentPublicKey.ID })
     @JsonClassType({type: () => [DIDURL]})
     public id: DIDURL;
-    @JsonSerialize({using: TypeSerializerFilter.filter})
     @JsonProperty({ value: DIDDocumentPublicKey.TYPE })
+    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
     @JsonClassType({type: () => [String]})
     public type: string;
-    @JsonSerialize({using: DIDDocumentPublicKeySerializerFilter.filter})
     @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER })
+    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyControllerFilter})
     @JsonClassType({type: () => [DID]})
     public controller: DID;
     @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58 })
