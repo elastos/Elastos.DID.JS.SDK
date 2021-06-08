@@ -3,14 +3,12 @@ import {
     JsonIncludeType,
     JsonProperty,
     JsonPropertyOrder,
-    JsonSerialize,
     JsonClassType,
     JsonCreator
 } from "jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
-import { DIDURL } from "./internals";
-import { TypeSerializerFilter } from "./internals";
+import { DIDURL, keyTypeFilter } from "./internals";
 
 /**
  * The Proof represents the proof content of DID Document.
@@ -22,8 +20,8 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
     public static CREATED: string = "created";
     public static SIGNATURE_VALUE: string = "signatureValue";
 
-    @JsonSerialize({using: TypeSerializerFilter.serialize})
     @JsonProperty({ value: DIDDocumentProof.TYPE })
+    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
     private type: string;
     @JsonInclude({ value: JsonIncludeType.NON_NULL })
     @JsonProperty({ value: DIDDocumentProof.CREATED })

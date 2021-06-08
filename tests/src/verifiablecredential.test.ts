@@ -139,13 +139,13 @@ describe('let Tests', () => {
 
     	let vc = await cd.getCredential("foo", "email");
 
-		expect(new DIDURL("#email", foo.getSubject()).equals(vc.getId()));
+		expect(new DIDURL("#email", foo.getSubject()).equals(vc.getId())).toBeTruthy();
 
 		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
-		expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeFalsy();
 
-		expect(issuer.getSubject().equals(vc.getIssuer()));
-		expect(foo.getSubject().equals(vc.getSubject().getId()));
+		expect(issuer.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(foo.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
 		expect("foo@example.com").toEqual(vc.getSubject().getProperty("email"));
 
@@ -167,13 +167,13 @@ describe('let Tests', () => {
 
     	let vc = await cd.getCredential("foobar", "license");
 
-		expect(new DIDURL("#license", foobar.getSubject()).equals(vc.getId()));
+		expect(new DIDURL("#license", foobar.getSubject()).equals(vc.getId())).toBeTruthy();
 
 		expect(vc.getType().indexOf("LicenseCredential") >= 0).toBeTruthy();
-		expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeFalsy();
 
-		expect(exampleCorp.getSubject().equals(vc.getIssuer()));
-		expect(foobar.getSubject().equals(vc.getSubject().getId()));
+		expect(exampleCorp.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(foobar.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
 		expect("20201021C889").toEqual(vc.getSubject().getProperty("license-id"));
 		expect("Consulting").toEqual(vc.getSubject().getProperty("scope"));

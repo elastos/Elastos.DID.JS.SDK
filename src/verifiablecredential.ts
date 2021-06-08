@@ -23,10 +23,10 @@
 import dayjs, { Dayjs } from "dayjs";
 import {
 	JsonAnySetter, JsonAnyGetter, JsonClassType, JsonFilter, JsonGetter, JsonIgnore, JsonInclude,
-	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonCreator
+	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonCreator
 } from "jackson-js";
 import type {
-	JsonStringifierTransformerContext
+	JsonStringifierTransformerContext,
 } from "jackson-js/dist/@types";
 import { CredentialBiography, CredentialBiographyStatus } from "./internals";
 import { IDChainRequest } from "./internals";
@@ -54,7 +54,7 @@ import {
 	NotAttachedWithStoreException,
 	UnknownInternalException
 } from "./exceptions/exceptions";
-import { TypeSerializerFilter } from "./internals";
+import { keyTypeFilter } from "./internals";
 import type { Issuer } from "./internals";
 import type {
 	JSONObject,
@@ -62,19 +62,17 @@ import type {
 } from "./json";
 import { sortJSONObject } from "./json";
 import { Logger } from "./logger";
-import {
-	PropertySerializerFilter
-} from "./internals";
 import { checkArgument } from "./internals";
 
 const log = new Logger("VerifiableCredential");
 
-export class IssuerSerializerFilter extends PropertySerializerFilter<DID> {
-    public static include (issuer: DID, context: JsonStringifierTransformerContext): boolean {
-        let serializeContext =  IssuerSerializerFilter.context(context);
+function vcIssuerFilter(value: any, context?: JsonStringifierTransformerContext): boolean {
+	let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
 
-        return serializeContext.isNormalized() || (!(serializeContext && issuer && issuer.equals(serializeContext.getDid())));
-    }
+	if (!serializeContext || serializeContext.isNormalized())
+		return false;
+
+	return serializeContext.getDid() ? serializeContext.getDid().equals(value as DID) : false;
 }
 
 /**
@@ -91,6 +89,7 @@ export class IssuerSerializerFilter extends PropertySerializerFilter<DID> {
 	"expirationDate",
 	"subject",
 	"proof" ]})
+@JsonInclude({value: JsonIncludeType.NON_EMPTY})
 // TODO: convert from java - @JsonFilter("credentialFilter")
 export class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject<string> {
 	public static ID = "id";
@@ -109,8 +108,8 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	public id: DIDURL;
 	@JsonProperty({value:VerifiableCredential.TYPE})
 	public type: string[];
-	@JsonSerialize({using: IssuerSerializerFilter.filter})
 	@JsonProperty({value:VerifiableCredential.ISSUER})
+	@JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: vcIssuerFilter})
 	@JsonClassType({type: () => [DID]})
 	public issuer: DID;
 	@JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
@@ -894,14 +893,13 @@ export namespace VerifiableCredential {
 	  * The default proof type is ECDSAsecp256r1.
 	  */
 	 @JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
-	 @JsonFilter({value: "credentialProofFilter"})
 	 export class Proof {
-		 @JsonSerialize({using: TypeSerializerFilter.filter})
 		 @JsonProperty({value: VerifiableCredential.TYPE})
+		 @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
 		 @JsonClassType({type: ()=>[String]})
 		 public type: string;
 		 @JsonProperty({value: VerifiableCredential.CREATED})
-		 @JsonInclude({value: JsonIncludeType.NON_NULL})
+		 @JsonInclude({value: JsonIncludeType.NON_EMPTY})
 		 @JsonClassType({type: ()=>[Date]})
 		 public created: Date;
 		 @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD})
