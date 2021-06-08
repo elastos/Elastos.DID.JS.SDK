@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonGetter, JsonIgnore, JsonProperty, JsonPropertyOrder, JsonSetter } from "jackson-js";
+import { JsonClassType, JsonGetter, JsonIgnore, JsonProperty, JsonPropertyOrder, JsonSetter } from "@elastosfoundation/jackson-js";
 import type { Class } from "../class";
 import { DIDEntity } from "../internals";
 import type { Hashable } from "../hashable";

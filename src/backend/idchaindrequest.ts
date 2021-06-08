@@ -23,7 +23,7 @@
 import { JsonClassType, JsonCreator, JsonProperty, JsonFormat,
 	JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder,
 	JsonValue, JsonSetter, JsonSerialize, JsonDeserialize
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import type { Class } from "../class";
 import { Constants } from "../constants";
 import { BASE64, Serializer, DIDBiographyStatus } from "../internals";
@@ -35,7 +35,7 @@ import { IllegalArgumentException } from "../exceptions/exceptions";
 import type { JSONObject } from "../json";
 import { TransferTicket } from "../internals";
 import { checkArgument } from "../internals";
-import type { JsonParserTransformerContext, JsonStringifierTransformerContext } from "jackson-js/dist/@types";
+import type { JsonParserTransformerContext, JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js/dist/@types";
 import { Deserializer } from "../serializers";
 
 /**

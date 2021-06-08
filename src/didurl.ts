@@ -38,12 +38,12 @@ import {
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import {
 	JsonSerialize,
     JsonDeserialize,
 	JsonCreator,
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import type { Hashable } from "./hashable";
 import type { Comparable } from "./comparable";
 import {

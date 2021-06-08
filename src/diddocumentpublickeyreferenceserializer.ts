@@ -1,6 +1,6 @@
 import type {
     JsonStringifierTransformerContext,
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import { Serializer } from "./internals";
 import type { DIDDocumentPublicKeyReference } from "./internals";
 

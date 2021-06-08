@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue, JsonSerialize, JsonDeserialize } from "jackson-js";
+import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonValue, JsonSerialize, JsonDeserialize } from "@elastosfoundation/jackson-js";
 import { DIDURL } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
 import type { CredentialTransaction } from "./credentialtransaction";
@@ -32,7 +32,7 @@ import {
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 
 class CredentialBiographyStatusSerializer extends Serializer {
 	public static serialize(value: CredentialBiographyStatus, context: JsonStringifierTransformerContext): string {

@@ -2,10 +2,10 @@ import {
     JsonValue,
     JsonCreator,
     JsonDeserialize
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import type {
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import { IllegalArgumentException } from "./exceptions/exceptions"
 import { checkArgument, Deserializer } from "./internals";
 

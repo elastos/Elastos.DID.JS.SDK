@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty } from "@elastosfoundation/jackson-js";
 import { CredentialBiography } from "./credentialbiography";
 import { ResolveError } from "./resolveerror";
 import { ResolveResponse, RpcConstants, JsonRpcError } from "./resolveresponse";

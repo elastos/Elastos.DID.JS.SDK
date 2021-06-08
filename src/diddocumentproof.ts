@@ -5,7 +5,7 @@ import {
     JsonPropertyOrder,
     JsonClassType,
     JsonCreator
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { DIDURL, keyTypeFilter } from "./internals";

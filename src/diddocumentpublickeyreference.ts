@@ -1,6 +1,6 @@
 import {
     JsonDeserialize, JsonSerialize
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import type { Comparable } from "./comparable";
 import type { DIDDocumentPublicKey } from "./internals";
 import { DIDDocumentPublicKeyReferenceDeserializer } from "./internals";

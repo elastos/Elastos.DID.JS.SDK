@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty, JsonIgnore } from "jackson-js";
+import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty, JsonIgnore } from "@elastosfoundation/jackson-js";
 import { CredentialMetadata } from "./internals";
 import { DID } from "./internals";
 import { DIDDocument } from "./internals";

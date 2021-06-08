@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonCreator, JsonIgnore } from "jackson-js";
+import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonCreator, JsonIgnore } from "@elastosfoundation/jackson-js";
 import { Collections } from "./internals";
 import { Constants } from "./constants";
 import { DID } from "./internals";
@@ -34,7 +34,7 @@ import { VerifiableCredential } from "./internals";
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import {
     Serializer,
 	Deserializer

@@ -34,7 +34,7 @@ import {
     JsonFormatShape,
     JsonDeserialize,
     JsonCreatorMode
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import { Collections, Serializer } from "./internals";
 import { Constants } from "./constants";
 import { ByteBuffer } from "./internals";
@@ -78,7 +78,7 @@ import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
 import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
-import { JsonStringifierTransformerContext } from "jackson-js/dist/@types";
+import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js/dist/@types";
 
 class DIDDocumentControllerSerializer extends Serializer {
 	public static serialize(controllers: DID[], context: JsonStringifierTransformerContext): any {

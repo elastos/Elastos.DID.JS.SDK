@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonIgnore, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "jackson-js";
+import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonIgnore, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize } from "@elastosfoundation/jackson-js";
 import { Collections, Serializer } from "./internals";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
@@ -32,7 +32,7 @@ import { DIDURL } from "./internals";
 import { DIDResolveException, NotCustomizedDIDException, DIDStoreException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
 import { ComparableMap } from "./comparablemap";
-import type { JsonStringifierTransformerContext } from "jackson-js/dist/@types";
+import type { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js/dist/@types";
 
 class TransferTicketProofSerializer extends Serializer {
 	public static serialize(proof: string[], context: JsonStringifierTransformerContext): any {

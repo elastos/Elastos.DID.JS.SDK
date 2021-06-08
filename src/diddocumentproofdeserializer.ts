@@ -1,6 +1,6 @@
 import type {
     JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 
 import {
     ParentException

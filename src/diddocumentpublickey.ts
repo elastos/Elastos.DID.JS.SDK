@@ -5,10 +5,10 @@ import {
     JsonIgnore,
     JsonInclude,
     JsonIncludeType
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import type {
 	JsonStringifierTransformerContext,
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { Base58 } from "./internals";

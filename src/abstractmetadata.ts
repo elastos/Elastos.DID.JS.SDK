@@ -25,7 +25,7 @@ import { DIDEntity } from "./internals";
 import type { DIDStore } from "./internals";
 import type { JSONObject, JSONValue } from "./json";
 import { checkArgument } from "./internals";
-import { JsonIgnore, JsonInclude, JsonIncludeType, JsonClassType, JsonAnySetter, JsonAnyGetter, JsonProperty, JsonIgnoreType, JsonManagedReference, JsonIdentityInfo, JsonUnwrapped, JsonTypeId, JsonIgnoreProperties } from "jackson-js";
+import { JsonIgnore, JsonInclude, JsonIncludeType, JsonClassType, JsonAnySetter, JsonAnyGetter, JsonProperty, JsonIgnoreType, JsonManagedReference, JsonIdentityInfo, JsonUnwrapped, JsonTypeId, JsonIgnoreProperties } from "@elastosfoundation/jackson-js";
 
 /**
  * The class defines the base interface of Meta data.

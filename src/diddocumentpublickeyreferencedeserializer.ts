@@ -1,6 +1,6 @@
 import type {
     JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import { DIDDocumentPublicKey } from "./internals";
 import { DIDDocumentPublicKeyReference } from "./internals";
 import { DIDURL } from "./internals";

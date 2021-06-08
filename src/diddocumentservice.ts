@@ -6,7 +6,7 @@ import {
     JsonCreator,
     JsonIgnore,
     JsonAnyGetter
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import { DIDURL } from "./internals";
 import type { DIDObject } from "./internals";
 import type { JSONObject, JSONValue } from "./json";

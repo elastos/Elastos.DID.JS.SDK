@@ -24,10 +24,10 @@ import dayjs, { Dayjs } from "dayjs";
 import {
 	JsonAnySetter, JsonAnyGetter, JsonClassType, JsonFilter, JsonGetter, JsonIgnore, JsonInclude,
 	JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonCreator
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import type {
 	JsonStringifierTransformerContext,
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import { CredentialBiography, CredentialBiographyStatus } from "./internals";
 import { IDChainRequest } from "./internals";
 import { Collections } from "./internals";

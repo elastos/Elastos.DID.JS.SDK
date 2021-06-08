@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { JsonCreator, JsonProperty, JsonPropertyOrder } from "@elastosfoundation/jackson-js";
 import { DID } from "../internals";
 import type { DIDURL } from "../internals";
 import { MalformedResolveResultException } from "../exceptions/exceptions";

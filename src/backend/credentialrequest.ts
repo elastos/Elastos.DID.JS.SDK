@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty } from "@elastosfoundation/jackson-js";
 import type { DIDDocument } from "../internals";
 import { DIDURL } from "../internals";
 import { base64Decode } from "../internals";

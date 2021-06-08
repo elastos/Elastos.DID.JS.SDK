@@ -37,7 +37,7 @@ import {
     JsonCreator,
     JsonProperty,
     JsonClassType
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 import {
     Serializer,
     Deserializer
@@ -45,7 +45,7 @@ import {
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import { IllegalArgumentException } from "./exceptions/exceptions";
 
 class DIDSerializer extends Serializer {

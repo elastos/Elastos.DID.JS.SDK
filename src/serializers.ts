@@ -4,10 +4,10 @@ import { Constants } from "./constants";
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import type {
     ObjectMapper,
-} from "jackson-js";
+} from "@elastosfoundation/jackson-js";
 
 export class Serializer {
     public static context(context: JsonStringifierTransformerContext): DIDEntity.SerializeContext {

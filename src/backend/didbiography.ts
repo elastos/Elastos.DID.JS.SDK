@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonValue } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonValue } from "@elastosfoundation/jackson-js";
 import { DID } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
@@ -32,7 +32,7 @@ import {
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 
 class DIDBiographyStatusSerializer extends Serializer {
 	public static serialize(value: DIDBiographyStatus, context: JsonStringifierTransformerContext): string {

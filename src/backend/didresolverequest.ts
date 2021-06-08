@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonProperty, JsonInclude, JsonFilterType, JsonIncludeType } from "jackson-js";
+import { JsonCreator, JsonProperty, JsonInclude, JsonFilterType, JsonIncludeType } from "@elastosfoundation/jackson-js";
 import { DID } from "../internals";
 import { DIDURL } from "../internals";
 import type { Hashable } from "../hashable";

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty, JsonPropertyOrder } from "jackson-js";
+import { JsonClassType, JsonCreator, JsonProperty, JsonPropertyOrder } from "@elastosfoundation/jackson-js";
 import { DIDEntity } from "../internals";
 import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
 import type { IDChainRequest } from "./idchaindrequest";

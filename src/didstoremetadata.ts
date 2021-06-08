@@ -1,4 +1,4 @@
-import { JsonCreator, JsonInclude, JsonIncludeType } from "jackson-js";
+import { JsonCreator, JsonInclude, JsonIncludeType } from "@elastosfoundation/jackson-js";
 import { AbstractMetadata } from "./internals";
 import type { DIDStore } from "./internals";
 import { DIDStoreException } from "./exceptions/exceptions";

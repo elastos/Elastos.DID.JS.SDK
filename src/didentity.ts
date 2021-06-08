@@ -20,11 +20,11 @@
  * SOFTWARE.
  */
 
-import { ObjectMapper } from "jackson-js";
+import { ObjectMapper } from "@elastosfoundation/jackson-js";
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js/dist/@types";
 import type { Class } from "./class";
 import { 
 	DID, 
