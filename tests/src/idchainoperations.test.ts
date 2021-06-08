@@ -153,8 +153,8 @@ describe('IDChainOperations Tests', () => {
 			let key = TestData.generateKeypair();
 			db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
 			doc = await db.seal(TestConfig.storePass);
-			expect(2).toEqual(doc.getPublicKeyCount());
-			expect(2).toEqual(doc.getAuthenticationKeyCount());
+			expect(doc.getPublicKeyCount()).toEqual(2);
+			expect(doc.getAuthenticationKeyCount()).toEqual(2);
 			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
@@ -177,10 +177,10 @@ describe('IDChainOperations Tests', () => {
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID).toEqual(rr.getStatus());
-			expect(2).toEqual(rr.getTransactionCount());
+			expect(rr.getTransactionCount()).toEqual(2);
 			let txs = rr.getAllTransactions();
 			expect(txs).not.toBeNull();
-			expect(2).toEqual(txs.length);
+			expect(txs.length).toEqual(2);
 
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
@@ -213,8 +213,8 @@ describe('IDChainOperations Tests', () => {
 			let key = TestData.generateKeypair();
 			db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
 			doc = await db.seal(TestConfig.storePass);
-			expect(3).toEqual(doc.getPublicKeyCount());
-			expect(3).toEqual(doc.getAuthenticationKeyCount());
+			expect(doc.getPublicKeyCount()).toEqual(3);
+			expect(doc.getAuthenticationKeyCount()).toEqual(3);
 			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
@@ -237,10 +237,10 @@ describe('IDChainOperations Tests', () => {
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
-			expect(3).toEqual(rr.getTransactionCount());
+			expect(rr.getTransactionCount()).toEqual(3);
 			let txs = rr.getAllTransactions();
 			expect(txs).not.toBeNull();
-			expect(3).toEqual(txs.length);
+			expect(txs.length).toEqual(3);
 
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
@@ -278,8 +278,8 @@ describe('IDChainOperations Tests', () => {
 			let key = TestData.generateKeypair();
 			db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
 			doc = await db.seal(TestConfig.storePass);
-			expect(2).toEqual(doc.getPublicKeyCount());
-			expect(2).toEqual(doc.getAuthenticationKeyCount());
+			expect(doc.getPublicKeyCount()).toEqual(2);
+			expect(doc.getAuthenticationKeyCount()).toEqual(2);
 			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
@@ -301,10 +301,10 @@ describe('IDChainOperations Tests', () => {
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
-			expect(2).toEqual(rr.getTransactionCount());
+			expect(rr.getTransactionCount()).toEqual(2);
 			let txs = rr.getAllTransactions();
 			expect(txs).not.toBeNull();
-			expect(2).toEqual(txs.length);
+			expect(txs.length).toEqual(2);
 
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
@@ -337,8 +337,8 @@ describe('IDChainOperations Tests', () => {
 			let key = TestData.generateKeypair();
 			db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
 			doc = await db.seal(TestConfig.storePass);
-			expect(3).toEqual(doc.getPublicKeyCount());
-			expect(3).toEqual(doc.getAuthenticationKeyCount());
+			expect(doc.getPublicKeyCount()).toEqual(3);
+			expect(doc.getAuthenticationKeyCount()).toEqual(3);
 			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
@@ -361,10 +361,10 @@ describe('IDChainOperations Tests', () => {
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
-			expect(3).toEqual(rr.getTransactionCount());
+			expect(rr.getTransactionCount()).toEqual(3);
 			let txs = rr.getAllTransactions();
 			expect(txs).not.toBeNull();
-			expect(3).toEqual(txs.length);
+			expect(txs.length).toEqual(3);
 
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
@@ -411,7 +411,7 @@ describe('IDChainOperations Tests', () => {
 			db.addCredential(vc);
 			doc = await db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
-			expect(1).toEqual(doc.getCredentialCount());
+			expect(doc.getCredentialCount()).toEqual(1);
 			await store.storeDid(doc);
 
 			log.debug("Publishing new DID {}...", did);
@@ -465,7 +465,7 @@ describe('IDChainOperations Tests', () => {
 			db.addCredential(vc);
 			doc = await db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
-			expect(2).toEqual(doc.getCredentialCount());
+			expect(doc.getCredentialCount()).toEqual(2);
 			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
@@ -488,10 +488,10 @@ describe('IDChainOperations Tests', () => {
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
-			expect(2).toEqual(rr.getTransactionCount());
+			expect(rr.getTransactionCount()).toEqual(2);
 			let txs = rr.getAllTransactions();
 			expect(txs).not.toBeNull();
-			expect(2).toEqual(txs.length);
+			expect(txs.length).toEqual(2);
 
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
@@ -542,7 +542,7 @@ describe('IDChainOperations Tests', () => {
 			db.addCredential(vc);
 			doc = await db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
-			expect(3).toEqual(doc.getCredentialCount());
+			expect(doc.getCredentialCount()).toEqual(3);
 			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
@@ -565,10 +565,10 @@ describe('IDChainOperations Tests', () => {
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
-			expect(3).toEqual(rr.getTransactionCount());
+			expect(rr.getTransactionCount()).toEqual(3);
 			let txs = rr.getAllTransactions();
 			expect(txs).not.toBeNull();
-			expect(3).toEqual(txs.length);
+			expect(txs.length).toEqual(3);
 
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
@@ -615,7 +615,7 @@ describe('IDChainOperations Tests', () => {
 			db.addCredential(vc);
 			doc = await db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
-			expect(1).toEqual(doc.getCredentialCount());
+			expect(doc.getCredentialCount()).toEqual(1);
 			await store.storeDid(doc);
 
 			log.debug("Publishing new DID {}...", did);
@@ -670,7 +670,7 @@ describe('IDChainOperations Tests', () => {
 			db.addCredential(vc);
 			doc = await db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
-			expect(2).toEqual(doc.getCredentialCount());
+			expect(doc.getCredentialCount()).toEqual(2);
 			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
@@ -728,7 +728,7 @@ describe('IDChainOperations Tests', () => {
 			db.addCredential(vc);
 			doc = await db.seal(TestConfig.storePass);
 			expect(doc).not.toBeNull();
-			expect(3).toEqual(doc.getCredentialCount());
+			expect(doc.getCredentialCount()).toEqual(3);
 			await store.storeDid(doc);
 
 			log.debug("Updating DID {}...", did);
@@ -751,10 +751,10 @@ describe('IDChainOperations Tests', () => {
 			expect(rr).not.toBeNull();
 			expect(did.equals(rr.getDid())).toBeTruthy();
 			expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
-			expect(3).toEqual(rr.getTransactionCount());
+			expect(rr.getTransactionCount()).toEqual(3);
 			let txs = rr.getAllTransactions();
 			expect(txs).not.toBeNull();
-			expect(3).toEqual(txs.length);
+			expect(txs.length).toEqual(3);
 
 			let tx = txs[0];
 			expect(did.equals(tx.getDid())).toBeTruthy();
@@ -951,7 +951,7 @@ describe('IDChainOperations Tests', () => {
 			log.debug("Synchronize again from IDChain...OK({}s)", duration);
 
 			restoredDids = Array.from(await cleanStore.listDids());
-			expect(5).toEqual(restoredDids.length);
+			expect(restoredDids.length).toEqual(5);
 			restoredDids.sort((a,b) => a.compareTo(b));
 
 			originalDids = Array.from(dids);

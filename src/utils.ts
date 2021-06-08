@@ -38,7 +38,7 @@ export function hashCode(input: string | number | boolean): number {
         return input;
     }
     if (typeof input === 'boolean') {
-        return this === true ? 1231 : 1237;
+        return input === true ? 1231 : 1237;
     }
     throw new IllegalArgumentException("Unsupported type " + typeof input);
 }
