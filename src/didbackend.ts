@@ -361,6 +361,11 @@ export class DIDBackend {
 
 				// Avoid resolve current credential recursively
 				let request = new (class extends CredentialRequest {
+					constructor(request: CredentialRequest) {
+						super();
+						this.constructWithIDChainRequest(request);
+					}
+
 					getCredential() {
 						return vc;
 					}
