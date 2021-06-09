@@ -504,9 +504,9 @@ describe('DIDDocument Tests', () => {
 		expect(pks.length).toBe(3);
 
 		pks.forEach(pk => {
-			expect(pk.getId().getDid()).toEqual(doc.getSubject());
+			expect(pk.getId().getDid().equals(doc.getSubject())).toBeTruthy();
 			expect(pk.getType()).toEqual(Constants.DEFAULT_PUBLICKEY_TYPE);
-			expect(pk.getController()).toEqual(doc.getSubject());
+			expect(pk.getController().equals(doc.getSubject())).toBeTruthy();
 			expect(pk.getId().getFragment() == "primary"
 				|| pk.getId().getFragment() == "key2"
 				|| pk.getId().getFragment() == "key3").toBeTruthy();
@@ -618,7 +618,7 @@ describe('DIDDocument Tests', () => {
 			ids.push(pk.getId());
 		});
 
-		ids.sort();
+	    ids.sort();
 
 		let refs = new Array<DIDURL>(7);
 		refs.push(user1.getDefaultPublicKeyId());
@@ -631,7 +631,7 @@ describe('DIDDocument Tests', () => {
 
 		refs.sort();
 
-		for (let i = 0; i < ids.length; i++)
+		for (let i = 0; i < 7; i++)
 			expect(refs[i].equals(ids[i])).toBeTruthy();
 
 		// PublicKey getter.
@@ -687,7 +687,7 @@ describe('DIDDocument Tests', () => {
 
 		pks = doc.selectAuthenticationKeys(DIDURL.from("#key3", doc.getSubject()), null);
 		expect(pks.length).toBe(1);
-		expect(pks[0].getId().equals(DIDURL.from("#key3", user1.getSubject()))).toBeTruthy();
+		expect(pks[0].getId().equals(DIDURL.from("#key3", doc.getSubject()))).toBeTruthy();
 	})
 
 	test("testGetAuthenticationKeyWithMultiControllerCid2", async () => {
@@ -1020,9 +1020,9 @@ describe('DIDDocument Tests', () => {
 		expect(pks.length).toBe(1);
 
 		pks.forEach(pk => {
-			expect(pk.getId().getDid()).toEqual(doc.getSubject());
+			expect(pk.getId().getDid().equals(doc.getSubject())).toBeTruthy();
 			expect(pk.getType()).toEqual(Constants.DEFAULT_PUBLICKEY_TYPE);
-			expect(pk.getController()).not.toEqual(doc.getSubject());
+			expect(pk.getController().equals(doc.getSubject())).toBeFalsy();
 			expect(pk.getId().getFragment()).toEqual("recovery");
 		});
 
@@ -1271,8 +1271,8 @@ describe('DIDDocument Tests', () => {
 		expect(vcs.length).toBe(2);
 
 		vcs.forEach(vc => {
-			expect(vc.getId().getDid()).toEqual(doc.getSubject());
-			expect(vc.getSubject().getId()).toEqual(doc.getSubject());
+			expect(vc.getId().getDid().equals(doc.getSubject())).toBeTruthy();
+			expect(vc.getSubject().getId().equals(doc.getSubject())).toBeTruthy();
 			expect(vc.getId().getFragment() == "profile"
 				|| vc.getId().getFragment() == "email").toBeTruthy();
 		});
@@ -1329,8 +1329,8 @@ describe('DIDDocument Tests', () => {
 		expect(vcs.length).toBe(2);
 
 		vcs.forEach(vc => {
-			expect(vc.getId().getDid()).toEqual(doc.getSubject());
-			expect(vc.getSubject().getId()).toEqual(doc.getSubject());
+			expect(vc.getId().getDid().equals(doc.getSubject())).toBeTruthy();
+			expect(vc.getSubject().getId().equals(doc.getSubject())).toBeTruthy();
 			expect(vc.getId().getFragment() == "profile"
 				|| vc.getId().getFragment() == "email").toBeTruthy();
 		});
@@ -2479,7 +2479,7 @@ describe('DIDDocument Tests', () => {
 
 		expect(ctrls.length).toBe(docctrls.length);
 
-		for (let i =0; i < ctrls.length; i++)
+		for (let i =0; i < 3; i++)
 			expect(ctrls[i].equals(docctrls[i])).toBeTruthy();
 
 		resolved = await did.resolve();
@@ -2764,7 +2764,7 @@ describe('DIDDocument Tests', () => {
 
 		expect(ctrls.length).toBe(docctrls.length);
 
-		for (let i = 0; i < ctrls.length; i++)
+		for (let i = 0; i < 3; i++)
 			expect(ctrls[i].equals(docctrls[i])).toBeTruthy();
 
 		resolved = await did.resolve();
@@ -3609,7 +3609,7 @@ describe('DIDDocument Tests', () => {
 		docctrls.sort();
 		expect(ctrls.length).toBe(docctrls.length);
 
-		for (let i = 0; i < ctrls.length; i++)
+		for (let i = 0; i < 3; i++)
 			expect(ctrls[i].equals(docctrls[i])).toBeTruthy();
 
 		resolved = await did.resolve();
@@ -3693,7 +3693,7 @@ describe('DIDDocument Tests', () => {
 		docctrls.sort();
 		expect(ctrls.length).toBe(docctrls.length);
 
-		for (let i = 0; i < ctrls.length; i++)
+		for (let i = 0; i < 3; i++)
 			expect(ctrls[i].equals(docctrls[i])).toBeTruthy();
 
 		resolved = await did.resolve();
@@ -3871,7 +3871,7 @@ describe('DIDDocument Tests', () => {
 		docctrls.sort();
 		expect(ctrls.length).toBe(docctrls.length);
 
-		for (let i = 0; i < ctrls.length; i++)
+		for (let i = 0; i < 3; i++)
 			expect(ctrls[i].equals(docctrls[i])).toBeTruthy();
 
 		resolved = await did.resolve();
