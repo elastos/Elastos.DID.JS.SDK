@@ -52,8 +52,7 @@ describe('let Tests', () => {
 	});
 
 	test('testKycCredential', async () => {
-		let version = 2;
-    	let cd = testData.getCompatibleData(version);
+    	let cd = testData.getCompatibleData(2);
 
     	let issuer = await cd.getDocument("issuer");
 		let user = await cd.getDocument("user1");
