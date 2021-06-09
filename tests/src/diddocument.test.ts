@@ -43,7 +43,6 @@ import {
 } from "./utils/utils";
 import { TestConfig } from "./utils/testconfig";
 import { DIDTestExtension } from "./utils/didtestextension";
-import { exception } from "console";
 
 async function testGetPublicKey(version: number, testData: TestData) {
 	let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
