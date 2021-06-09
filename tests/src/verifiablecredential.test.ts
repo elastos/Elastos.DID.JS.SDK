@@ -29,11 +29,14 @@ import {
 	IDChainRequest,
 	Exceptions
 } from "@elastosfoundation/did-js-sdk";
-import { randomInt } from "crypto";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
 
 const log = new Logger("VerifiableCredentialTest");
+
+function randomInt(max: number): number {
+	return Math.floor(Math.random() * max);
+}
 
 describe('let Tests', () => {
 	let testData: TestData;
@@ -731,13 +734,14 @@ describe('let Tests', () => {
 	   	let doc = await sd.getUser1Document();
 	   	let did = doc.getSubject();
 	   	let ids = await VerifiableCredential.list(did);
-	   	expect(ids).not.toBeNull();
+		expect(ids).not.toBeNull();
 		expect(ids.length).toEqual(4);
 
 	   	for (let id of ids) {
+
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(id).toEqual(vc.getId().toString());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -750,7 +754,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(id).toEqual(vc.getId().toString());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -763,7 +767,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(id).toEqual(vc.getId().toString());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -800,7 +804,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(id).toEqual(vc.getId().toString());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}
@@ -813,7 +817,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(id).toEqual(vc.getId().toString());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}
@@ -826,7 +830,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(id).toEqual(vc.getId().toString());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}

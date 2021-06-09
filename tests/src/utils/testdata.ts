@@ -397,7 +397,7 @@ export class InstantData {
 
 	public async getIssuerDocument(): Promise<DIDDocument> {
 		if (this.idIssuer == null) {
-			this.testData.getRootIdentity();
+			await this.testData.getRootIdentity();
 
 			let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
 			doc.getMetadata().setAlias("Issuer");

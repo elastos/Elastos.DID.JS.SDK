@@ -414,7 +414,7 @@ export class DIDBackend {
 		log.info("Create ID transaction...");
 
 		let payload = request.serialize(true);
-		log.trace("Transaction payload: '{}', memo: {}", payload, "");
+		log.trace("Transaction payload: '{}'", payload);
 
 		if (adapter == null)
 			adapter = this.getAdapter();
