@@ -10,6 +10,16 @@ export class ComparableMap<K extends Comparable<K>, V> extends Map<K,V> {
         return null;
     }
 
+    public delete(k: K): boolean {
+        for (let e of this.entries()) {
+            if (e[0].equals(k)) {
+                super.delete(e[0]);
+                return true;
+            }      
+        }
+        return false;
+    }
+    
     /**
      * Slows implementation for a sorted array of values. Can be improved.
      */

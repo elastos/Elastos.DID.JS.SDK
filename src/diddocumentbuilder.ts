@@ -337,7 +337,7 @@ export class DIDDocumentBuilder {
                 throw new DIDObjectHasReference(id.toString());
         }
 
-        if (this.document.publicKeys.delete(id) != null) {
+        if (this.document.publicKeys.delete(id)) {
             try {
                 // TODO: should delete the loosed private key when store the document
                 if (this.document.getMetadata().attachedStore())
