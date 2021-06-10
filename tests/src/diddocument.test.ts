@@ -2589,7 +2589,7 @@ describe('DIDDocument Tests', () => {
 		// create the transfer ticket
 		doc.setEffectiveController(controller.getSubject());
 		let ticket = await doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
-		expect(async() => {await ticket.isValid(); }).rejects.toBeTruthy();
+		await expect(async() => {await ticket.isValid(); }).toBeTruthy();
 
 		// create new document for customized DID
 		doc = await newController.newCustomized(did, 1, TestConfig.storePass, true);
@@ -3034,7 +3034,7 @@ describe('DIDDocument Tests', () => {
 		await store.storeDid(doc);
 
 		let d = doc;
-		expect(async() => {
+		await expect(async () => {
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3042,7 +3042,7 @@ describe('DIDDocument Tests', () => {
 			} catch (error) {
 				return error.toString();
 			}
-		}).rejects.toEqual(d.getSubject().toString());
+		}).toEqual(d.getSubject().toString());
 	})
 
 	test("testUpdateDidWithoutAllSignatures", async () => {
@@ -3071,7 +3071,7 @@ describe('DIDDocument Tests', () => {
 		await store.storeDid(doc);
 
 		let d = doc;
-		expect(async() => {
+		await expect(async() => {
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3079,7 +3079,7 @@ describe('DIDDocument Tests', () => {
 			} catch (error) {
 				return error.toString();
 			}
-		}).rejects.toEqual(d.getSubject().toString());
+		}).toEqual(d.getSubject().toString());
 	})
 
 	test("testForceUpdateDidWithoutAllSignatures", async () => {
@@ -3204,7 +3204,7 @@ describe('DIDDocument Tests', () => {
 		await store.storeDid(doc);
 
 		let d = doc;
-		expect(async() => {
+		await expect(async() => {
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3212,7 +3212,7 @@ describe('DIDDocument Tests', () => {
 			} catch (error) {
 				return error.toString();
 			}
-		}).rejects.toEqual(d.getSubject().toString());
+		}).toEqual(d.getSubject().toString());
 	})
 
 	test("testForceUpdateDidWithWrongPrevSignature", async () => {
