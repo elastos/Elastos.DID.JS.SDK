@@ -58,6 +58,9 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
         else
             this.created = null;
 
+        if (this.created)
+            this.created.setMilliseconds(0);
+
         this.creator = creator;
         this.signature = signature;
     }

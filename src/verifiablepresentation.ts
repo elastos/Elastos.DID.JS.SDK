@@ -548,6 +548,8 @@ export namespace VerifiablePresentation {
 			}
 
 			this.presentation.created = new Date();
+			if (this.presentation.created)
+				this.presentation.created.setMilliseconds(0);
 
 			this.presentation._credentials = Array.from(this.presentation.credentials.values());
 

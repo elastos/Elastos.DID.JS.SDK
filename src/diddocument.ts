@@ -603,14 +603,14 @@ class DIDDocumentProofSerializer extends Serializer {
     // than using raw bytes manipulation here.
     private mapToDerivePath(identifier: string, securityCode: number): string {
         let digest = SHA256.encodeToBuffer(Buffer.from(identifier, "utf-8"));
-        let path = "";
+        let path = "m/";
         let bb = ByteBuffer.wrap(digest);
         while (bb.hasRemaining()) {
             let idx = bb.readInt();
             if (idx >= 0)
                 path = path.concat(idx.toString());
             else
-                path = path.concat((idx & 0x7FFFFFFF).toString()).concat("H");
+                path = path.concat((idx & 0x7FFFFFFF).toString()).concat("'");
 
             path = path.concat("/");
         }
@@ -618,7 +618,7 @@ class DIDDocumentProofSerializer extends Serializer {
         if (securityCode >= 0)
             path = path.concat(securityCode.toString());
         else
-            path = path.concat((securityCode & 0x7FFFFFFF).toString()).concat('H');
+            path = path.concat((securityCode & 0x7FFFFFFF).toString()).concat("'");
 
         return path;
     }
@@ -1515,7 +1515,7 @@ class DIDDocumentProofSerializer extends Serializer {
         return ticket;
     }
 
-    public signWithDocument(doc: DIDDocument, storepass: string): Promise<DIDDocument> {
+    public async signWithDocument(doc: DIDDocument, storepass: string): Promise<DIDDocument> {
         checkArgument(doc != null, "Invalid document");
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
@@ -1539,7 +1539,7 @@ class DIDDocumentProofSerializer extends Serializer {
 
         let builder = DIDDocumentBuilder.newFromDocument(doc).edit(this);
         try {
-            return builder.seal(storepass);
+            return await builder.seal(storepass);
         } catch (ignore) {
             // MalformedDocumentException
             throw new UnknownInternalException(ignore);

@@ -410,6 +410,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 ) {
 		 this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 		 this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
+		 if (this.created)
+		 	this.created.setMilliseconds(0);
 		 this.verificationMethod = method;
 		 this.signature = signature;
 	 }
