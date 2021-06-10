@@ -739,7 +739,7 @@ describe('let Tests', () => {
 
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId().toString());
+			expect(id).toEqual(vc.getId());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -749,10 +749,16 @@ describe('let Tests', () => {
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
 		expect(ids.length).toEqual(2);
-	   	for (let id of ids) {
+		console.log("IDS")
+		console.log(ids)
+		for (let id of ids) {
+			   console.log("ID")
+			   console.log(id)
 	   		let vc = await VerifiableCredential.resolve(id);
+			   console.log("vc.getId")
+			   console.log(vc.getId())
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId().toString());
+			expect(id).toEqual(vc.getId());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -765,7 +771,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId().toString());
+			expect(id).toEqual(vc.getId());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -802,7 +808,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId().toString());
+			expect(id).toEqual(vc.getId());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}
@@ -815,7 +821,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId().toString());
+			expect(id).toEqual(vc.getId());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}
@@ -828,7 +834,7 @@ describe('let Tests', () => {
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId().toString());
+			expect(id).toEqual(vc.getId());
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}
