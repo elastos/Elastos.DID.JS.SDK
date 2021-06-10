@@ -149,7 +149,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
-			if (i % 5 != 0)
+			if (i % 3 != 0)
 				continue;
 
 			let did = dids[i];
@@ -165,7 +165,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let remains = await store.listDids();
-		expect(remains.length).toEqual(80);
+		expect(remains.length).toEqual(6);
 	});
 
 	test("testStoreAndLoadDID", async ()=>{
