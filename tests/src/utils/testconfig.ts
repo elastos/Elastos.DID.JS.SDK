@@ -23,14 +23,14 @@
 //import testConfig from "../assets/test.config.json";
 
 import { join } from "path";
-import { 
-	runningInBrowser, 
-	Logger 
+import {
+	runningInBrowser,
+	Logger
 } from "@elastosfoundation/did-js-sdk";
 import testConfigFile from "../assets/test.config.json";
 
 export class TestConfig {
-	public static DID_INDEX_LOOPS = 1; // TMP DEBUG 100;
+	public static DID_INDEX_LOOPS = 10;
 	private static TEST_CONFIG_FILE = "tests/assets/test.config.json";
 
 	public static network: string;
