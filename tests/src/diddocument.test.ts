@@ -117,13 +117,13 @@ async function testGetPublicKey(version: number, testData: TestData) {
 describe('DIDDocument Tests', () => {
 	let testData: TestData;
 	let store: DIDStore;
-	beforeAll(async () => {
+	beforeEach(async () => {
 		testData = new TestData();
 		await testData.cleanup();
 		store = await testData.getStore();
 	});
 
-	afterAll(async () => {});
+	afterEach(async () => {});
 
 	test('Test Get Public Key', async () => {
 		await testGetPublicKey(1, testData);
