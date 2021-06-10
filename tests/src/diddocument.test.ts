@@ -2160,8 +2160,9 @@ describe('DIDDocument Tests', () => {
 		expect(doc).not.toBeNull();
 		expect(doc.isValid()).toBeTruthy();
 
-		for (let i = -100; i < 100; i++) {
-			let strKey = await doc.derive(i, TestConfig.storePass);
+		//todo: compare to java derive result
+		for (let i = -10; i < 10; i++) {
+			let strKey = await doc.deriveFromIdentifier(identifier, i, TestConfig.storePass);
 			let key = HDKey.deserializeBase58(strKey);
 
 			let binKey = Base58.decode(strKey);
@@ -2262,7 +2263,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeFalsy();
 
 		const d = doc;
-		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		expect(async() => {await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
 		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy();
@@ -2461,7 +2462,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeFalsy();
 
 		const d = doc;
-		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
 		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy();
@@ -2571,12 +2572,12 @@ describe('DIDDocument Tests', () => {
 
 		// create new controller
 		let newController = await identity.newDid(TestConfig.storePass);
-		expect(controller.isValid()).toBeTruthy();
+		expect(newController.isValid()).toBeTruthy();
 
 		resolved = await newController.getSubject().resolve();
 		expect(resolved).toBeNull();
 
-		await controller.publish(TestConfig.storePass);
+		await newController.publish(TestConfig.storePass);
 		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await newController.getSubject().resolve();
@@ -2588,7 +2589,7 @@ describe('DIDDocument Tests', () => {
 		// create the transfer ticket
 		doc.setEffectiveController(controller.getSubject());
 		let ticket = await doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
-		await expect(async () => { return await ticket.isValid() }).toBeTruthy();
+		expect(async() => {await ticket.isValid(); }).rejects.toBeTruthy();
 
 		// create new document for customized DID
 		doc = await newController.newCustomized(did, 1, TestConfig.storePass, true);
@@ -2665,12 +2666,12 @@ describe('DIDDocument Tests', () => {
 
 		// create new controller
 		let newController = await identity.newDid(TestConfig.storePass);
-		expect(controller.isValid()).toBeTruthy();
+		expect(newController.isValid()).toBeTruthy();
 
 		resolved = await newController.getSubject().resolve();
 		expect(resolved).toBeNull();
 
-		await controller.publish(TestConfig.storePass);
+		await newController.publish(TestConfig.storePass);
 		await DIDTestExtension.awaitStandardPublishingDelay();
 
 		resolved = await newController.getSubject().resolve();
@@ -2745,7 +2746,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeFalsy();
 
 		const d = doc;
-		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
 		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy();
@@ -3033,7 +3034,7 @@ describe('DIDDocument Tests', () => {
 		await store.storeDid(doc);
 
 		let d = doc;
-		await expect(async () => {
+		expect(async() => {
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3041,7 +3042,7 @@ describe('DIDDocument Tests', () => {
 			} catch (error) {
 				return error.toString();
 			}
-		}).toEqual(d.getSubject().toString());
+		}).rejects.toEqual(d.getSubject().toString());
 	})
 
 	test("testUpdateDidWithoutAllSignatures", async () => {
@@ -3070,7 +3071,7 @@ describe('DIDDocument Tests', () => {
 		await store.storeDid(doc);
 
 		let d = doc;
-		await expect(async () => {
+		expect(async() => {
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3078,7 +3079,7 @@ describe('DIDDocument Tests', () => {
 			} catch (error) {
 				return error.toString();
 			}
-		}).toEqual(d.getSubject().toString());
+		}).rejects.toEqual(d.getSubject().toString());
 	})
 
 	test("testForceUpdateDidWithoutAllSignatures", async () => {
@@ -3203,7 +3204,7 @@ describe('DIDDocument Tests', () => {
 		await store.storeDid(doc);
 
 		let d = doc;
-		await expect(async () => {
+		expect(async() => {
 			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3211,7 +3212,7 @@ describe('DIDDocument Tests', () => {
 			} catch (error) {
 				return error.toString();
 			}
-		}).toEqual(d.getSubject().toString());
+		}).rejects.toEqual(d.getSubject().toString());
 	})
 
 	test("testForceUpdateDidWithWrongPrevSignature", async () => {
@@ -3592,7 +3593,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeFalsy();
 
 		const d = doc;
-		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
 		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy();
@@ -3675,7 +3676,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeFalsy();
 
 		const d = doc;
-		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
 		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy();
@@ -3776,7 +3777,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeFalsy();
 
 		const d = doc;
-		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
 		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy();
@@ -3853,7 +3854,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeFalsy();
 
 		const d = doc;
-		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
 		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy();

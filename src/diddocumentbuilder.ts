@@ -726,7 +726,7 @@ export class DIDDocumentBuilder {
         if (this.document.credentials == null || this.document.credentials.size == 0)
             throw new DIDObjectNotExistException(id.toString());
 
-        if (this.document.credentials.delete(this.canonicalId(id)))
+        if (this.document.credentials.delete(this.canonicalId(id)) != null)
             this.invalidateProof();
         else
             throw new DIDObjectNotExistException(id.toString());
@@ -797,7 +797,7 @@ export class DIDDocumentBuilder {
         if (this.document.services == null || this.document.services.size == 0)
             throw new DIDObjectNotExistException(id.toString());
 
-        if (this.document.services.delete(this.canonicalId(id)))
+        if (this.document.services.delete(this.canonicalId(id)) != null)
             this.invalidateProof();
         else
             throw new DIDObjectNotExistException(id.toString());
