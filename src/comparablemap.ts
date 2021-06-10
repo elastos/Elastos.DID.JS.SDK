@@ -12,11 +12,18 @@ export class ComparableMap<K extends Comparable<K>, V> extends Map<K,V> {
 
     public delete(k: K): boolean {
         for (let e of this.entries()) {
-            if (e[0].equals(k)) {
-                return super.delete(e[0]);
-            }      
+            if (e[0].equals(k))
+                return super.delete(e[0]);     
         }
         return false;
+    }
+
+    public has(k: K): boolean {
+        for (let e of this.entries()) {
+            if (e[0].equals(k))
+                return true;     
+        }
+        return false;        
     }
 
     /**
