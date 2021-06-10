@@ -20,9 +20,10 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonProperty, JsonPropertyOrder } from "@elastosfoundation/jackson-js";
+import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonClassType,
+	JsonInclude, JsonIncludeType } from "@elastosfoundation/jackson-js";
 import { DID } from "../internals";
-import type { DIDURL } from "../internals";
+import { DIDURL } from "../internals";
 import { MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
 
@@ -38,6 +39,8 @@ export class CredentialList extends ResolveResult<CredentialList> {
 	@JsonProperty({ value: CredentialList.DID })
 	private did: DID;
 	@JsonProperty({ value: CredentialList.CREDENTIALS })
+	@JsonInclude({ value: JsonIncludeType.NON_NULL})
+	@JsonClassType({type: () => [Array, [DIDURL]]})
 	private credentialIds: DIDURL[];
 
 	public constructor(did: DID = null) {
