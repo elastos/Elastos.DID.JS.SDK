@@ -840,7 +840,7 @@ describe('let Tests', () => {
 	   	expect(ids).toBeNull();
     });
 
-    test('testListPagination', async () => {
+    /* test('testListPagination', async () => {
     	let sd = testData.getInstantData();
 
     	let doc = await sd.getUser1Document();
@@ -955,5 +955,5 @@ describe('let Tests', () => {
 		   	skip += ids.length;
     	}
     	expect(index).toEqual(0);
-    });
+    }); */
 });
