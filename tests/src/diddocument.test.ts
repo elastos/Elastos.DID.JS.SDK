@@ -1434,7 +1434,8 @@ describe('DIDDocument Tests', () => {
 		expect(() => { db.addCredential(fvc); }).toThrowError();
 
 		// Credential not belongs to current did, should fail.
-		await expect(async () => { db.addCredential(await cd.getCredential("user1", "passport")); }).toThrowError();
+		fvc = await cd.getCredential("user1", "passport");
+		expect(() => { db.addCredential(fvc); }).toThrowError();
 
 		doc = await db.seal(TestConfig.storePass);
 		doc = await user2.signWithDocument(doc, TestConfig.storePass);
@@ -1660,18 +1661,18 @@ describe('DIDDocument Tests', () => {
 		// Service getter, should success.
 		let svc = doc.getService("#openid");
 		expect(svc).not.toBeNull();
-		expect(svc.getId().equals(doc.getSubject())).toBeTruthy()
+		expect(svc.getId().equals(DIDURL.from("#openid", doc.getSubject()))).toBeTruthy();
 		expect(svc.getType()).toEqual("OpenIdConnectVersion1.0Service")
 		expect(svc.getServiceEndpoint()).toEqual("https://openid.example.com/")
 
 		let props = svc.getProperties();
-		expect(Object.keys(props).length).toBe(0);
+		expect(props).toBeNull();
 
 		svc = doc.getService(DIDURL.from("#vcr", doc.getSubject()));
 		expect(svc).not.toBeNull();
 		expect(svc.getId().equals(DIDURL.from("#vcr", doc.getSubject()))).toBeTruthy();
 		props = svc.getProperties();
-		expect(Object.keys(props).length).toBe(0)
+		expect(props).toBeNull();
 
 		// Service not exist, should fail.
 		svc = doc.getService("#notExistService");
@@ -1692,7 +1693,7 @@ describe('DIDDocument Tests', () => {
 
 		props = svcs[0].getProperties();
 		expect(svcs.length).toBe(1);
-		expect(props.length).toBe(12);
+		expect(Object.keys(props).length).toBe(12);
 		expect(props["foobar"]).toEqual("lalala...")
 		expect(props["FOOBAR"]).toEqual("Lalala...")
 
@@ -1703,7 +1704,6 @@ describe('DIDDocument Tests', () => {
 
 		svcs = doc.selectServices(null, "notExistType");
 		expect(svcs.length).toBe(0);
-
 	})
 
 	test("testGetServiceWithCid", async () => {
@@ -1741,13 +1741,13 @@ describe('DIDDocument Tests', () => {
 		expect(svc.getServiceEndpoint()).toEqual("https://foobar.com/vault")
 
 		let props = svc.getProperties();
-		expect(Object.keys(props).length).toBe(0);
+		expect(props).toBeNull();
 
 		svc = doc.getService(DIDURL.from("#vcr", doc.getSubject()));
 		expect(svc).not.toBeNull();
 		expect(svc.getId().equals(DIDURL.from("#vcr", doc.getSubject()))).toBeTruthy();
 		props = svc.getProperties();
-		expect(props.length).toBe(12);
+		expect(Object.keys(props).length).toBe(12);
 		expect(props["foobar"]).toEqual("lalala...");
 		expect(props["FOOBAR"]).toEqual("Lalala...");
 

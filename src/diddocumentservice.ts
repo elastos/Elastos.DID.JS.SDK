@@ -50,7 +50,7 @@ export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocu
         this.endpoint = endpoint;
         this.properties = properties ? properties : {};
 
-        if (this.properties.size > 0) {
+        if (Object.keys(this.properties).length > 0) {
             delete this.properties[DIDDocumentService.ID];
             delete this.properties[DIDDocumentService.TYPE];
             delete this.properties[DIDDocumentService.SERVICE_ENDPOINT];
@@ -121,7 +121,7 @@ export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocu
     }
 
     public getProperties(): JSONObject {
-        return this.properties != null ? this.properties : {};
+        return Object.keys(this.properties).length > 0 ? this.properties : null;
     }
 
     public equals(ref: DIDDocumentService): boolean {

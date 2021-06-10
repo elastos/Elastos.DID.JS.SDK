@@ -86,6 +86,11 @@ class DIDDocumentControllerSerializer extends Serializer {
 	}
 }
 
+class DIDDocumentProofSerializer extends Serializer {
+	public static serialize(proofs: DIDDocumentProof[], context: JsonStringifierTransformerContext): any {
+		return proofs.length > 1 ? proofs : proofs[0];
+	}
+}
 /**
  * The DIDDocument represents the DID information.
  *
@@ -163,6 +168,7 @@ class DIDDocumentControllerSerializer extends Serializer {
     public expires?: Date;
 
     @JsonProperty({ value: DIDDocument.PROOF })
+    @JsonSerialize({ using: DIDDocumentProofSerializer.serialize})
     public _proofs?: DIDDocumentProof[];
 
     @JsonIgnore()
