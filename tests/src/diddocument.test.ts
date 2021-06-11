@@ -30,7 +30,8 @@ import {
 	DIDDocumentBuilder,
 	JSONObject,
 	HDKey,
-	Base58
+	Base58,
+	Exceptions
 } from "@elastosfoundation/did-js-sdk";
 import {
 	TestData,
@@ -3035,14 +3036,9 @@ describe('DIDDocument Tests', () => {
 
 		let d = doc;
 		await expect(async () => {
-			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
-				return "";
-			} catch (error) {
-				return error.toString();
-			}
-		}).toEqual(d.getSubject().toString());
+		}).rejects.toThrowError(Exceptions.DIDNotUpToDateException);
 	})
 
 	test("testUpdateDidWithoutAllSignatures", async () => {
@@ -3072,14 +3068,9 @@ describe('DIDDocument Tests', () => {
 
 		let d = doc;
 		await expect(async() => {
-			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
-				return "";
-			} catch (error) {
-				return error.toString();
-			}
-		}).toEqual(d.getSubject().toString());
+		}).rejects.toThrowError(Exceptions.DIDNotUpToDateException);
 	})
 
 	test("testForceUpdateDidWithoutAllSignatures", async () => {
@@ -3205,14 +3196,9 @@ describe('DIDDocument Tests', () => {
 
 		let d = doc;
 		await expect(async() => {
-			try {
 				await d.publish(TestConfig.storePass);
 				await DIDTestExtension.awaitStandardPublishingDelay();
-				return "";
-			} catch (error) {
-				return error.toString();
-			}
-		}).toEqual(d.getSubject().toString());
+		}).rejects.toThrowError(Exceptions.DIDNotUpToDateException);
 	})
 
 	test("testForceUpdateDidWithWrongPrevSignature", async () => {

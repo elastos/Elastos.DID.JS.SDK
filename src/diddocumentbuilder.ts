@@ -726,7 +726,7 @@ export class DIDDocumentBuilder {
         if (this.document.credentials == null || this.document.credentials.size == 0)
             throw new DIDObjectNotExistException(id.toString());
 
-        if (this.document.credentials.delete(this.canonicalId(id)) != null)
+        if (this.document.credentials.delete(this.canonicalId(id)))
             this.invalidateProof();
         else
             throw new DIDObjectNotExistException(id.toString());
@@ -797,7 +797,7 @@ export class DIDDocumentBuilder {
         if (this.document.services == null || this.document.services.size == 0)
             throw new DIDObjectNotExistException(id.toString());
 
-        if (this.document.services.delete(this.canonicalId(id)) != null)
+        if (this.document.services.delete(this.canonicalId(id)))
             this.invalidateProof();
         else
             throw new DIDObjectNotExistException(id.toString());
@@ -818,6 +818,8 @@ export class DIDDocumentBuilder {
         this.checkNotSealed();
 
         this.document.expires = this.getMaxExpires();
+        if (this.document.expires)
+            this.document.expires.setMilliseconds(0);
         this.invalidateProof();
 
         return this;
@@ -833,6 +835,7 @@ export class DIDDocumentBuilder {
         this.checkNotSealed();
         checkArgument(expires != null, "Invalid expires");
 
+        expires.setMilliseconds(0);
         if (dayjs(expires).isAfter(this.getMaxExpires()))
             throw new IllegalArgumentException("Invalid expires, out of range.");
 
