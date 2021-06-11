@@ -472,7 +472,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json)))
 			return false;
 
-
 		if (!this.isSelfProclaimed()) {
 			let controllerDoc = await this.subject.getId().resolve();
 			if (controllerDoc != null && !controllerDoc.isValid())
@@ -480,7 +479,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		}
 
 		return true;
-
 	}
 
 	public async wasDeclared(): Promise<boolean> {
@@ -1051,6 +1049,8 @@ export namespace VerifiableCredential {
 		private defaultExpirationDate(): Builder {
 			this.checkNotSealed();
 			this.credential.expirationDate = this.getMaxExpires();
+			if(this.credential.expirationDate)
+				this.credential.expirationDate.setMilliseconds(0);
 			return this;
 		}
 
@@ -1070,6 +1070,8 @@ export namespace VerifiableCredential {
 				expDate = dayjs(maxExpires);
 
 			this.credential.expirationDate = expDate.toDate();
+			if(this.credential.expirationDate)
+				this.credential.expirationDate.setMilliseconds(0);
 
 			return this;
 		}
@@ -1123,6 +1125,8 @@ export namespace VerifiableCredential {
 				throw new MalformedCredentialException("Missing credential type");
 
 			this.credential.issuanceDate = new Date();
+			if(this.credential.issuanceDate)
+				this.credential.issuanceDate.setMilliseconds(0);
 
 			if (!this.credential.hasExpirationDate())
 				this.defaultExpirationDate();
