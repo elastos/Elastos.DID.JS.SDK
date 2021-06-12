@@ -33,8 +33,8 @@ import axios from "axios";
 const log = new Logger("DefaultDIDAdapter");
 
 export class DefaultDIDAdapter implements DIDAdapter {
-	private static MAINNET_RESOLVER = "http://api.elastos.io:20606";
-	private static TESTNET_RESOLVER = "http://api.elastos.io:21606";
+	private static MAINNET_RESOLVER = "https://api.elastos.io/did/v2";
+	private static TESTNET_RESOLVER = "https://api-testnet.elastos.io/did/v2";
 
 	protected resolver: URL;
 
@@ -44,7 +44,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	 * @param resolver the resolver url string
 	 * @throws IllegalArgumentException throw this exception if setting resolver url failed.
 	 */
-	public constructor(resolver: string) {
+	public constructor(resolver: "mainnet" | "testnet" | string) {
 		checkArgument(resolver && resolver != null, "Invalid resolver URL");
 
 		switch (resolver.toLowerCase()) {
