@@ -71,12 +71,11 @@ export class DefaultDIDAdapter implements DIDAdapter {
 	protected performRequest(url: URL, body?: string): Promise<JSONObject> {
 		return new Promise((resolve, reject) => {
 			if (runningInBrowser()) {
-				console.log("BROWSER URL ", url)
 				void axios({
 					method: "post",
 					url: url.toString(),
 					headers: {
-						"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
+						// Don't set user-agent in browser environment, this is forbidden by modern browsers.
 						"Content-Type": "application/json",
 						"Accept": "application/json"
 					},
