@@ -2600,7 +2600,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getController().equals(newController.getSubject())).toBeTruthy();
 
 		// transfer
-		await doc.publishWithTicket(ticket, DIDURL.fromDID(doc.getController()), TestConfig.storePass);
+		await doc.publishWithTicket(ticket, newController.getDefaultPublicKeyId(), TestConfig.storePass);
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull();
@@ -2683,7 +2683,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy();
 
 		// create the transfer ticket
-		let ticket = await controller.createTransferTicket(did, TestConfig.storePass, newController.getSubject());
+		let ticket = await controller.createTransferTicket(newController.getSubject(), TestConfig.storePass, did);
 		expect(ticket.isValid()).toBeTruthy();
 
 		// create new document for customized DID
@@ -2693,7 +2693,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getController().equals(newController.getSubject())).toBeTruthy();
 
 		// transfer
-		await doc.publishWithTicket(ticket, DIDURL.fromDID(doc.getSubject()), TestConfig.storePass);
+		await doc.publishWithTicket(ticket, newController.getDefaultPublicKeyId(), TestConfig.storePass);
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull();
@@ -2791,7 +2791,7 @@ describe('DIDDocument Tests', () => {
 		let u4 = await td.getUser4Document();
 
 		// transfer ticket
-		let ticket = await ctrl1.createTransferTicket(did, TestConfig.storePass, u1.getSubject());
+		let ticket = await ctrl1.createTransferTicket(u1.getSubject(), TestConfig.storePass, did);
 		ticket = await ctrl2.signWithTicket(ticket, TestConfig.storePass);
 		expect(ticket.isValid()).toBeTruthy();
 
@@ -2806,7 +2806,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getMultiSignature().toString()).toEqual("3:4");
 
 		// transfer
-		await doc.publishWithTicket(ticket, doc.getSubject().toString(), TestConfig.storePass);
+		await doc.publishWithTicket(ticket, u2.getDefaultPublicKeyId(), TestConfig.storePass);
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull();
@@ -2859,7 +2859,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.isValid()).toBeFalsy();
 
 		const d = doc;
-		expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).toThrowError();
+		await expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
 		doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
 		expect(doc.isValid()).toBeTruthy();
@@ -2937,7 +2937,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getMultiSignature().toString()).toEqual("3:4");
 
 		// transfer
-		await doc.publishWithTicket(ticket, doc.getSubject().toString(), TestConfig.storePass);
+		await doc.publishWithTicket(ticket, u3.getDefaultPublicKeyId(), TestConfig.storePass);
 
 		resolved = await did.resolve();
 		expect(resolved).not.toBeNull();
@@ -3277,7 +3277,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).not.toBeNull();
 		expect(resolved.toString()).toEqual(doc.toString());
 
-		await doc.deactivate(null, TestConfig.storePass);
+		await doc.deactivate(null, TestConfig.storePass, null);
 
 		doc = await doc.getSubject().resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
@@ -3312,7 +3312,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).not.toBeNull();
 		expect(resolved.toString()).toEqual(doc.toString());
 
-		await doc.deactivate(null, TestConfig.storePass);
+		await doc.deactivate(null, TestConfig.storePass, null);
 		doc = await doc.getSubject().resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3357,7 +3357,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy();
 
 		// Deactivate
-		await doc.deactivate(null, TestConfig.storePass);
+		await doc.deactivate(null, TestConfig.storePass, null);
 		doc = await doc.getSubject().resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3418,7 +3418,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString());
 
 		// Deactivate
-		await doc.deactivate(null, TestConfig.storePass);
+		await doc.deactivate(null, TestConfig.storePass, null);
 		doc = await doc.getSubject().resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3466,7 +3466,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy();
 
 		// Deactivate
-		await controller.deactivateTargetDID(did, null, TestConfig.storePass);
+		await doc.deactivate(controller.getDefaultPublicKeyId(), TestConfig.storePass, null);
 		doc = await did.resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3530,7 +3530,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.toString()).toEqual(doc.toString());
 
 		// Deactivate
-		await controller.deactivateTargetDID(did, null, TestConfig.storePass);
+		await doc.deactivate(controller.getDefaultPublicKeyId(),TestConfig.storePass, null);
 		doc = await did.resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3613,7 +3613,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy();
 
 		// Deactivate
-		await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
+		await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass, null);
 		doc = await doc.getSubject().resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3714,7 +3714,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(4);
 
 		// Deactivate
-		await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
+		await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass, null);
 		doc = await doc.getSubject().resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3791,7 +3791,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved.isValid()).toBeTruthy();
 
 		// Deactivate
-		await ctrl1.deactivateTargetDID(did, null, TestConfig.storePass);
+		await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass, null);
 		doc = await did.resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3892,7 +3892,7 @@ describe('DIDDocument Tests', () => {
 		expect(doc.getAuthenticationKeyCount()).toBe(4)
 
 		// Deactivate
-		await ctrl2.deactivateTargetDID(did, null, TestConfig.storePass);
+		await doc.deactivate(ctrl2.getDefaultPublicKeyId(), TestConfig.storePass, null);
 		doc = await did.resolve();
 		expect(doc.isDeactivated()).toBeTruthy();
 	})
@@ -3926,7 +3926,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).not.toBeNull();
 		expect(resolved.toString()).toEqual(target.toString());
 
-		await doc.deactivate(DIDURL.fromDID(target.getSubject()), TestConfig.storePass);
+		await doc.deactivateTargetDID(target.getSubject(), null, TestConfig.storePass, null);
 		target = await target.getSubject().resolve();
 		expect(target.isDeactivated()).toBeTruthy();
 
@@ -3971,7 +3971,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).not.toBeNull();
 		expect(resolved.toString()).toEqual(target.toString());
 
-		await doc.deactivate(DIDURL.fromDID(target.getSubject()), TestConfig.storePass);
+		await doc.deactivateTargetDID(target.getSubject(), null, TestConfig.storePass, null);
 		target = await target.getSubject().resolve();
 		expect(target.isDeactivated()).toBeTruthy();
 
@@ -4016,7 +4016,7 @@ describe('DIDDocument Tests', () => {
 		expect(resolved).not.toBeNull();
 		expect(resolved.toString()).toEqual(target.toString());
 
-		await doc.deactivate(DIDURL.fromDID(target.getSubject()), TestConfig.storePass);
+		await doc.deactivateTargetDID(target.getSubject(), null, TestConfig.storePass, null);
 		target = await target.getSubject().resolve();
 		expect(target.isDeactivated()).toBeTruthy();
 

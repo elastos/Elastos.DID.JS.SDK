@@ -22,7 +22,7 @@
 
 import { JsonClassType, JsonCreator, JsonProperty, JsonFormat,
 	JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder,
-	JsonValue, JsonSetter, JsonSerialize, JsonDeserialize
+	JsonValue, JsonSetter, JsonSerialize, JsonDeserialize, JsonIgnore
 } from "@elastosfoundation/jackson-js";
 import type { Class } from "../class";
 import { Constants } from "../constants";
@@ -248,7 +248,7 @@ export namespace IDChainRequest {
 			  */
 			export const REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
 	}
-	 
+
 	@JsonPropertyOrder({value: [
 		"specification",
 		"operation",
@@ -272,6 +272,8 @@ export namespace IDChainRequest {
 		@JsonInclude({value: JsonIncludeType.NON_NULL})
 		@JsonClassType({type: () => [String]})
 		private ticket: string;
+
+		@JsonIgnore()
 		private transferTicket: TransferTicket;
 
 		constructor(@JsonProperty({value: IDChainRequest.SPECIFICATION, required: true}) spec: string) {
@@ -285,15 +287,15 @@ export namespace IDChainRequest {
 			return header;
 		}
 
-		static newWithTransferTicket(operation: Operation, ticket: TransferTicket = null) {
+		static newWithTransferTicket(operation: Operation, ticket: TransferTicket) {
+			checkArgument(ticket != null, "Invalid ticket");
+
 			let header = new Header(operation.getSpecification());
 			header.operation = operation;
 
-			if (ticket) {
-				let json = ticket.toString(true);
-				header.ticket = BASE64.fromString(json);
-				header.transferTicket = ticket;
-			}
+			let json = ticket.toString(true);
+			header.ticket = BASE64.fromString(json);
+			header.transferTicket = ticket;
 
 			return header;
 		}
@@ -315,21 +317,22 @@ export namespace IDChainRequest {
 		}
 
 		@JsonSetter({value: IDChainRequest.TICKET})
-		private async setTicket(ticket: string): Promise<void> {
+		private setTicket(ticket: string) {
 			checkArgument(ticket != null && ticket !== "", "Invalid ticket");
-
-			let json = BASE64.toString(ticket)
-			try {
-				this.transferTicket = await TransferTicket.parseContent(json);
-			} catch (e) {
-				// MalformedTransferTicketException
-				throw new IllegalArgumentException("Invalid ticket", e);
-			}
-
 			this.ticket = ticket;
 		}
 
-		public getTransferTicket(): TransferTicket {
+		public async getTransferTicket(): Promise<TransferTicket> {
+			if (this.ticket && !this.transferTicket) {
+				let json = BASE64.toString(this.ticket)
+				try {
+					this.transferTicket = await TransferTicket.parseContent(json);
+				} catch (e) {
+					// MalformedTransferTicketException
+					throw new IllegalArgumentException("Invalid ticket", e);
+				}
+			}
+
 			return this.transferTicket;
 		}
 	}

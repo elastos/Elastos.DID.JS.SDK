@@ -992,7 +992,7 @@ export class InstantData {
 			let doc = await this.getFooBarDocument();
 			let user4 = await this.getUser4Document();
 
-			let tt = await this.idUser1.createTransferTicket(doc.getSubject(), TestConfig.storePass, user4.getSubject());
+			let tt = await this.idUser1.createTransferTicket(user4.getSubject(), TestConfig.storePass, doc.getSubject());
 			tt = await this.idUser3.signWithTicket(tt, TestConfig.storePass);
 
 			this.ttFooBar = tt;
@@ -1096,7 +1096,7 @@ export class InstantData {
 			let doc = await this.getBazDocument();
 			let user4 = await this.getUser4Document();
 
-			let tt = await this.idUser2.createTransferTicket(doc.getSubject(), TestConfig.storePass, user4.getSubject());
+			let tt = await this.idUser2.createTransferTicket(user4.getSubject(), TestConfig.storePass, doc.getSubject());
 
 			this.ttBaz = tt;
 		}
