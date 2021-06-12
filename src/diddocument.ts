@@ -1762,6 +1762,8 @@ class DIDDocumentProofSerializer extends Serializer {
 
         if (signKey == null) {
             signKey = this.getDefaultPublicKeyId();
+            if (signKey == null)
+                throw new InvalidKeyException("No sign key.");
         } else {
             if (this.getAuthenticationKey(signKey) == null)
                 throw new InvalidKeyException(signKey.toString());
@@ -1878,7 +1880,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @throws DIDStoreException deactivate did failed because of did store error
      * @throws DIDBackendException deactivate did failed because of did backend error
      */
-    public async deactivate(signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
+    public async deactivate(signKey: DIDURL = null, storepass: string, adapter: DIDTransactionAdapter = null) {
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
 
@@ -1897,8 +1899,15 @@ class DIDDocumentProofSerializer extends Serializer {
         if (signKey == null) {
             signKey = doc.getDefaultPublicKeyId();
         } else {
-            if (!doc.isAuthenticationKey(signKey))
-                throw new InvalidKeyException(signKey.toString());
+            if (!doc.isCustomizedDid()) {
+                if(!signKey.equals(doc.getDefaultPublicKeyId()) &&
+                        doc.getAuthenticationKey(signKey) == null)
+                    throw new InvalidKeyException(signKey.toString());
+            } else {
+                let controllerdoc = this.getControllerDocument(signKey.getDid());
+                if (controllerdoc == null || !signKey.equals(controllerdoc.getDefaultPublicKeyId()))
+                    throw new InvalidKeyException(signKey.toString());
+                }
         }
 
         await DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
@@ -1918,7 +1927,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
     // NOTE: Was deactivate() in java
-    public async deactivateTargetDID(target: DID, signKey: DIDURL, storepass: string = null, adapter: DIDTransactionAdapter = null) {
+    public async deactivateTargetDID(target: DID, signKey : DIDURL = null, storepass: string, adapter: DIDTransactionAdapter = null) {
         checkArgument(target != null, "Invalid target DID");
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();

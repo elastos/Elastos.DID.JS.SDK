@@ -142,7 +142,6 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 		return request;
 	}
 
-
 	/**
 	 * Constructs the 'deactivate' DID Request.
 	 *
@@ -204,7 +203,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 	 *
 	 * @return the TransferTicket object
 	 */
-	public getTransferTicket(): TransferTicket {
+	public async getTransferTicket(): Promise<TransferTicket> {
 		return this.getHeader().getTransferTicket();
 	}
 
