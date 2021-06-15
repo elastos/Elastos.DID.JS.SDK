@@ -34,6 +34,40 @@ Or:
 - Using **jest runner**:
 - Click **run** or **debug** directly from the code, above test descriptions.
 
+### Performance issue
+
+We are still optimzing tests migrated from the Java implementation. Running all tests on an up to date CPU can take several hours. The main source of this problem has been located in the BigNumber operations of the Elliptic library and in the key operations of the hdkey-secp256r1 library. Since there shouldn't be huge impacts on the runtime code, the selected solution has been to develop an automated CI to automatically run tests remotely. Here are some metrics and graphics to show latency sources:
+
+**Profiling metrics showing 'mul' method latency**
+
+![Metrics](tests/img/perf_issue_metrics.png)
+[Source profile data](tests/vscode-profile-2021-06-14-21-13-30.cpuprofile)
+
+**Latency from deriveChild hdkey-secp256r1**
+
+![Metrics](tests/img/perf_issue_test_1.png)
+
+Call hierarchy:
+ - TestData.getUser1Document
+  - TestData.generateKeyPair
+   - HDKey.deriveWithPath
+    - derive(hdkey-secp256r1)
+     - deriveChild(hdkey-secp256r1)
+
+
+**Latency from jmulAdd of Elliptic**
+
+![Metrics](tests/img/perf_issue_test_2.png)
+
+Call hierarchy:
+ - DIDDocument.isValid
+  - DIDDocument.isGenuine
+   - DIDDocument.verifyDigest 
+    - EcdsaSigner.verify
+     - verify(Elliptic)
+      - jmulAdd(Elliptic)
+       - \_wnafMulAdd(Elliptic)
+
 
 ## The DID Adapter
 
