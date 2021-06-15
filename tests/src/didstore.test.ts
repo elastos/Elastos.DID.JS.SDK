@@ -22,9 +22,7 @@
 
 import { DID, DIDDocument, DIDURL, Issuer, Mnemonic, RootIdentity, runningInBrowser, Exceptions } from "@elastosfoundation/did-js-sdk";
 import { DIDStore, File, Logger } from "@elastosfoundation/did-js-sdk";
-import { WrongPasswordException } from "../../typings/exceptions/exceptions";
 import { DIDTestExtension } from "./utils/didtestextension";
-
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
 import { Utils } from "./utils/utils";
@@ -124,14 +122,14 @@ describe("DIDStore Tests", ()=>{
 			expect(resolved).not.toBeNull();
 			await store.storeDid(resolved);
 			expect(alias).toEqual(resolved.getMetadata().getAlias());
-			expect(doc.getSubject()).toEqual(resolved.getSubject());
+			expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
 			expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
 
 			expect(resolved.isValid()).toBeTruthy();
 		}
 
 		let dids = await store.listDids();
-		expect(dids.length).toEqual(TestConfig.DID_INDEX_LOOPS);
+		expect(dids.length).toBe(TestConfig.DID_INDEX_LOOPS);
 	});
 
 	test("testDeleteDID", async ()=>{
@@ -165,7 +163,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let remains = await store.listDids();
-		expect(remains.length).toEqual(6);
+		expect(remains.length).toBe(6);
 	});
 
 	test("testStoreAndLoadDID", async ()=>{
@@ -201,7 +199,7 @@ describe("DIDStore Tests", ()=>{
 		expect(doc.isValid()).toBeTruthy();
 
 		let dids = await store.listDids();
-		expect(dids.length).toEqual(2);
+		expect(dids.length).toBe(2);
 	});
 
 	test("testLoadCredentials", async ()=>{
@@ -309,7 +307,7 @@ describe("DIDStore Tests", ()=>{
 		vc.getMetadata().setAlias("Passport");
 
 		let vcs = await store.listCredentials(user.getSubject());
-		expect(4).toEqual(vcs.length);
+		expect(vcs.length).toBe(4);
 
 		for (let id of vcs) {
 			expect(id.getFragment() ===  "profile"
@@ -336,7 +334,6 @@ describe("DIDStore Tests", ()=>{
 		vc.getMetadata().setAlias("Twitter");
 		vc = await testData.getInstantData().getUser1PassportCredential();
 		vc.getMetadata().setAlias("Passport");
-
 
 		let file = getFile("ids", user.getSubject().getMethodSpecificId(),
 				"credentials", "#twitter", "credential");
@@ -422,12 +419,12 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = await store.listDids();
-		expect(dids.length).toEqual(LOOP_COUNT);
+		expect(dids.length).toBe(LOOP_COUNT);
 
 		store.changePassword(TestConfig.storePass, "newpasswd");
 
 		dids = await store.listDids();
-		expect(dids.length).toEqual(LOOP_COUNT);
+		expect(dids.length).toBe(LOOP_COUNT);
 
 		for (let i = 0; i < LOOP_COUNT; i++) {
 			let alias = "my did " + i;
@@ -466,7 +463,7 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let dids = await store.listDids();
-		expect(dids.length).toEqual(4);
+		expect(dids.length).toBe(4);
 
 		expect(() => {
 			store.changePassword("wrongpasswd", "newpasswd");
@@ -484,32 +481,32 @@ describe("DIDStore Tests", ()=>{
 			let store = await DIDStore.open(cd.getStoreDir());
 
 			let dids = await store.listDids();
-			expect(version == 2 ? 10 : 4).toEqual(dids.length);
+			expect(dids.length).toBe(version == 2 ? 10 : 4);
 
 			for (let did of dids) {
 				let alias = (await did.getMetadata()).getAlias();
 
 				if (alias === "Issuer") {
 					let vcs = await store.listCredentials(did);
-					expect(1).toEqual(vcs.length);
+					expect(vcs.length).toBe(1);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User1") {
 					let vcs = await store.listCredentials(did);
-					expect(version == 2 ? 5 : 4).toEqual(vcs.length);
+					expect(vcs.length).toBe(version == 2 ? 5 : 4);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User2") {
 					let vcs = await store.listCredentials(did);
-					expect(1).toEqual(vcs.length);
+					expect(vcs.length).toBe(1);
 
 					for (let id of vcs)
 						expect(store.loadCredential(id)).not.toBeNull();
 				} else if (alias === "User3") {
 					let vcs = await store.listCredentials(did);
-					expect(0).toEqual(vcs.length);
+					expect(vcs.length).toBe(0);
 				}
 
 				let doc = await store.loadDid(did);
@@ -591,7 +588,7 @@ describe("DIDStore Tests", ()=>{
 			await createDataForPerformanceTest(store);
 
 			let dids = await store.listDids();
-			expect(10).toEqual(dids.length);
+			expect(dids.length).toBe(10);
 
 			let start = new Date().getTime();
 

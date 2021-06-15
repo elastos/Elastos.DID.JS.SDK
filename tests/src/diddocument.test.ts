@@ -38,8 +38,6 @@ import {
 	CompatibleData
 } from "./utils/testdata";
 import {
-	assertEquals,
-	assertArrayEquals,
 	assertNull
 } from "./utils/utils";
 import { TestConfig } from "./utils/testconfig";

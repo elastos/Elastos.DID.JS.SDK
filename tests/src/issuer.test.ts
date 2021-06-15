@@ -54,15 +54,15 @@ describe("Issuer Tests", ()=>{
 		let signKey = issuerDoc.getDefaultPublicKeyId();
 		let issuer = await Issuer.newWithDID(issuerDoc.getSubject(), store, signKey);
 
-		expect(issuer.getDid()).toEqual(issuerDoc.getSubject())
-		expect(issuer.getSignKey()).toEqual(signKey)
+		expect(issuer.getDid().equals(issuerDoc.getSubject())).toBeTruthy();
+		expect(issuer.getSignKey().equals(signKey)).toBeTruthy();
 	})
 
 	test('New Issuer Test Without Sign Key', async () => {
 		let issuer = await Issuer.newWithDID(issuerDoc.getSubject(), store);
 
-		expect(issuer.getDid()).toEqual(issuerDoc.getSubject())
-		expect(issuer.getSignKey()).toEqual(issuerDoc.getDefaultPublicKeyId())
+		expect(issuer.getDid().equals(issuerDoc.getSubject())).toBeTruthy();
+		expect(issuer.getSignKey().equals(issuerDoc.getDefaultPublicKeyId())).toBeTruthy();
 	})
 
 	test('New Issuer Test With Invalid Key', () => {
@@ -70,18 +70,17 @@ describe("Issuer Tests", ()=>{
 		let signKey = new DIDURL("#testKey", issuerDoc.getSubject());
 		let doc = issuerDoc;
 
-		expect(() =>{Issuer.newWithDocument(doc, signKey)}).toThrowError()
+		expect(() =>{Issuer.newWithDocument(doc, signKey)}).toThrowError();
 	})
 
 	test('New Issuer Test With Invalid Key 2', () => {
 
 		let signKey = new DIDURL("#recovery", issuerDoc.getSubject());
 		let doc = issuerDoc;
-		expect(()=>{Issuer.newWithDocument(doc, signKey)}).toThrowError()
+		expect(()=>{Issuer.newWithDocument(doc, signKey)}).toThrowError();
 	})
 
 	test('Issue Kyc Credential Test', async () => {
-
 		let props = {
 		    name: "John",
 		    gender: "Male",
@@ -101,29 +100,28 @@ describe("Issuer Tests", ()=>{
 
 		let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
-		expect(vcId).toEqual(vc.getId())
+		expect(vcId.equals(vc.getId())).toBeTruthy();
 
-		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy();
 
-		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
-		expect(testDoc.getSubject()).toEqual(vc.getSubject().getId())
+		expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(testDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-		expect(vc.getSubject().getProperty("name")).toEqual("John")
-		expect(vc.getSubject().getProperty("gender")).toEqual("Male")
-		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore")
-		expect(vc.getSubject().getProperty("language")).toEqual("English")
-		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com")
-		expect(vc.getSubject().getProperty("twitter")).toEqual("@john")
+		expect(vc.getSubject().getProperty("name")).toEqual("John");
+		expect(vc.getSubject().getProperty("gender")).toEqual("Male");
+		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
+		expect(vc.getSubject().getProperty("language")).toEqual("English");
+		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com");
+		expect(vc.getSubject().getProperty("twitter")).toEqual("@john");
 
-		await expect(await vc.isExpired()).toBeFalsy()
-		await expect(await vc.isGenuine()).toBeTruthy()
-		await expect(await vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy();
+		await expect(await vc.isGenuine()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 	})
 
 	test('Issue Self Proclaimed Credential Test', async () => {
-
 		let props = {
 			name: "Testing Issuer",
 			nation: "Singapore",
@@ -141,24 +139,23 @@ describe("Issuer Tests", ()=>{
 
 		let vcId = new DIDURL("#myCredential", testDoc.getSubject());
 
-		expect(vcId).toEqual(vc.getId())
+		expect(vcId.equals(vc.getId())).toBeTruthy();
 
-		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy()
-		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy();
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
 
-		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
-		expect(testDoc.getSubject()).toEqual(vc.getSubject().getId())
+		expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(testDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-		expect(vc.getSubject().getProperty("name")).toEqual("Testing Issuer")
-		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore")
-		expect(vc.getSubject().getProperty("language")).toEqual("English")
-		expect(vc.getSubject().getProperty("email")).toEqual("issuer@example.com")
+		expect(vc.getSubject().getProperty("name")).toEqual("Testing Issuer");
+		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
+		expect(vc.getSubject().getProperty("language")).toEqual("English");
+		expect(vc.getSubject().getProperty("email")).toEqual("issuer@example.com");
 
-		await expect(await vc.isExpired()).toBeFalsy()
-		await expect(await vc.isGenuine()).toBeTruthy()
-		await expect(await vc.isValid()).toBeTruthy()
-
+		await expect(await vc.isExpired()).toBeFalsy();
+		await expect(await vc.isGenuine()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 	})
 
 	test('Issue Kyc Credential For Cid Test', async () => {
@@ -183,27 +180,25 @@ describe("Issuer Tests", ()=>{
 
 		let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
-		expect(vcId).toEqual(vc.getId())
+		expect(vcId.equals(vc.getId())).toBeTruthy();
 
-		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy();
 
-		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
-		expect(testDoc.getSubject()).toEqual(vc.getSubject().getId())
+		expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(testDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-		expect(vc.getSubject().getProperty("name")).toEqual("John")
-		expect(vc.getSubject().getProperty("gender")).toEqual("Male")
-		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore")
-		expect(vc.getSubject().getProperty("language")).toEqual("English")
-		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com")
-		expect(vc.getSubject().getProperty("twitter")).toEqual("@john")
+		expect(vc.getSubject().getProperty("name")).toEqual("John");
+		expect(vc.getSubject().getProperty("gender")).toEqual("Male");
+		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
+		expect(vc.getSubject().getProperty("language")).toEqual("English");
+		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com");
+		expect(vc.getSubject().getProperty("twitter")).toEqual("@john");
 
-		await expect(await vc.isExpired()).toBeFalsy()
-		await expect(await vc.isGenuine()).toBeTruthy()
-		await expect(await vc.isValid()).toBeTruthy()
-
-
+		await expect(await vc.isExpired()).toBeFalsy();
+		await expect(await vc.isGenuine()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 	})
 
 	test('Issue Kyc Credential From Cid Test', async () => {
@@ -228,25 +223,25 @@ describe("Issuer Tests", ()=>{
 
 		let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
-		expect(vcId).toEqual(vc.getId())
+		expect(vcId.equals(vc.getId())).toBeTruthy();
 
-		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy();
 
-		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
-		expect(testDoc.getSubject()).toEqual(vc.getSubject().getId())
+		expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(testDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-		expect(vc.getSubject().getProperty("name")).toEqual("John")
-		expect(vc.getSubject().getProperty("gender")).toEqual("Male")
-		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore")
-		expect(vc.getSubject().getProperty("language")).toEqual("English")
-		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com")
-		expect(vc.getSubject().getProperty("twitter")).toEqual("@john")
+		expect(vc.getSubject().getProperty("name")).toEqual("John");
+		expect(vc.getSubject().getProperty("gender")).toEqual("Male");
+		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
+		expect(vc.getSubject().getProperty("language")).toEqual("English");
+		expect(vc.getSubject().getProperty("email")).toEqual("john@example.com");
+		expect(vc.getSubject().getProperty("twitter")).toEqual("@john");
 
-		await expect(await vc.isExpired()).toBeFalsy()
-		await expect(await vc.isGenuine()).toBeTruthy()
-		await expect(await vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy();
+		await expect(await vc.isGenuine()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 	})
 
 	test('Issue SelfProclaimed Credential From Cid Test', async () => {
@@ -269,23 +264,23 @@ describe("Issuer Tests", ()=>{
 
 		let vcId = new DIDURL("#myCredential", issuerDoc.getSubject());
 
-		expect(vcId).toEqual(vc.getId())
+		expect(vcId.equals(vc.getId())).toBeTruthy();
 
-		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy();
 
-		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
-		expect(issuerDoc.getSubject()).toEqual(vc.getSubject().getId())
+		expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(issuerDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-		expect(vc.getSubject().getProperty("name")).toEqual("Testing Issuer")
-		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore")
-		expect(vc.getSubject().getProperty("language")).toEqual("English")
-		expect(vc.getSubject().getProperty("email")).toEqual("issuer@example.com")
+		expect(vc.getSubject().getProperty("name")).toEqual("Testing Issuer");
+		expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
+		expect(vc.getSubject().getProperty("language")).toEqual("English");
+		expect(vc.getSubject().getProperty("email")).toEqual("issuer@example.com");
 
-		await expect(await vc.isExpired()).toBeFalsy()
-		await expect(await vc.isGenuine()).toBeTruthy()
-		await expect(await vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy();
+		await expect(await vc.isGenuine()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 	})
 
 	test('Issue Json Props Credential Test', async () => {
@@ -301,24 +296,24 @@ describe("Issuer Tests", ()=>{
 
 		let vcId = new DIDURL("#myCredential", issuerDoc.getSubject());
 
-		expect(vcId).toEqual(vc.getId())
+		expect(vcId.equals(vc.getId())).toBeTruthy();
 
-		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy()
-		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy()
+		expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
+		expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy();
 
-		expect(issuerDoc.getSubject()).toEqual(vc.getIssuer())
-		expect(issuerDoc.getSubject()).toEqual(vc.getSubject().getId())
+		expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
+		expect(issuerDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-		expect(vc.getSubject().getProperty("Description")).toEqual("Technologist")
-		expect(vc.getSubject().getProperty("alternateName")).toEqual("Jason Holtslander")
-		expect(vc.getSubject().getProperty("numberValue")).toEqual(1234)
+		expect(vc.getSubject().getProperty("Description")).toEqual("Technologist");
+		expect(vc.getSubject().getProperty("alternateName")).toEqual("Jason Holtslander");
+		expect(vc.getSubject().getProperty("numberValue")).toEqual(1234);
 		// JAVA: expect(vc.getSubject().getProperty(9.5)).toEqual("doubleValue")
 
-		expect(vc.getSubject().getProperties()).not.toBeNull()
+		expect(vc.getSubject().getProperties()).not.toBeNull();
 
-		await expect(await vc.isExpired()).toBeFalsy()
-		await expect(await vc.isGenuine()).toBeTruthy()
-		await expect(await vc.isValid()).toBeTruthy()
+		await expect(await vc.isExpired()).toBeFalsy();
+		await expect(await vc.isGenuine()).toBeTruthy();
+		await expect(await vc.isValid()).toBeTruthy();
 	})
 })

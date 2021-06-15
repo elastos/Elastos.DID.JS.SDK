@@ -177,8 +177,8 @@ describe('let Tests', () => {
 		expect(exampleCorp.getSubject().equals(vc.getIssuer())).toBeTruthy();
 		expect(foobar.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-		expect("20201021C889").toEqual(vc.getSubject().getProperty("license-id"));
-		expect("Consulting").toEqual(vc.getSubject().getProperty("scope"));
+		expect(vc.getSubject().getProperty("license-id")).toEqual("20201021C889");
+		expect(vc.getSubject().getProperty("scope")).toEqual("Consulting");
 
 		expect(vc.getIssuanceDate()).not.toBeNull();
 		await expect(await vc.getExpirationDate()).not.toBeNull();
@@ -188,7 +188,6 @@ describe('let Tests', () => {
 		await expect(await vc.isGenuine()).toBeTruthy();
 		await expect(await vc.isValid()).toBeTruthy();
     });
-
 
     test('testSelfProclaimedCredentialFromCid', async () => {
     	let cd = testData.getCompatibleData(2);
@@ -206,8 +205,8 @@ describe('let Tests', () => {
 		expect(foobar.getSubject().equals(vc.getIssuer()));
 		expect(foobar.getSubject().equals(vc.getSubject().getId()));
 
-		expect("https://foobar.com/outsourcing").toEqual(vc.getSubject().getProperty("Outsourceing"));
-		expect("https://foobar.com/consultation").toEqual(vc.getSubject().getProperty("consultation"));
+		expect(vc.getSubject().getProperty("Outsourceing")).toEqual("https://foobar.com/outsourcing");
+		expect(vc.getSubject().getProperty("consultation")).toEqual("https://foobar.com/consultation");
 
 		expect(vc.getIssuanceDate()).not.toBeNull();
 		await expect(await vc.getExpirationDate()).not.toBeNull();
@@ -297,7 +296,6 @@ describe('let Tests', () => {
 		}
 	});
 
-
     test('testDeclareCredentials', async () => {
 	   	let sd = testData.getInstantData();
 
@@ -338,7 +336,7 @@ describe('let Tests', () => {
 
 			let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
 			expect(bio).not.toBeNull();
-			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getAllTransactions().length).toBe(1);
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 	   	}
     });
@@ -396,7 +394,7 @@ describe('let Tests', () => {
 
 			let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
 			expect(bio).not.toBeNull();
-			expect(bio.getAllTransactions().length).toEqual(2);
+			expect(bio.getAllTransactions().length).toBe(2);
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 			expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 		}
@@ -463,7 +461,7 @@ describe('let Tests', () => {
 
 			let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
 			expect(bio).not.toBeNull();
-			expect(bio.getAllTransactions().length).toEqual(2);
+			expect(bio.getAllTransactions().length).toBe(2);
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 			expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 		}
@@ -508,7 +506,7 @@ describe('let Tests', () => {
 
 			let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
 			expect(bio).not.toBeNull();
-			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getAllTransactions().length).toBe(1);
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 		}
     });
@@ -555,7 +553,7 @@ describe('let Tests', () => {
 
 			let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
 			expect(bio).not.toBeNull();
-			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getAllTransactions().length).toBe(1);
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 		}
     });
@@ -605,7 +603,7 @@ describe('let Tests', () => {
 
 			let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
 			expect(bio).not.toBeNull();
-			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getAllTransactions().length).toBe(1);
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 		}
     });
@@ -676,7 +674,7 @@ describe('let Tests', () => {
 
 			let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
 			expect(bio).not.toBeNull();
-			expect(bio.getAllTransactions().length).toEqual(2);
+			expect(bio.getAllTransactions().length).toBe(2);
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
 			expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 		}
@@ -725,7 +723,7 @@ describe('let Tests', () => {
 
 			let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
 			expect(bio).not.toBeNull();
-			expect(bio.getAllTransactions().length).toEqual(1);
+			expect(bio.getAllTransactions().length).toBe(1);
 			expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
 	   	}
 
@@ -733,13 +731,13 @@ describe('let Tests', () => {
 	   	let did = doc.getSubject();
 	   	let ids = await VerifiableCredential.list(did);
 		expect(ids).not.toBeNull();
-		expect(ids.length).toEqual(4);
+		expect(ids.length).toBe(4);
 
 	   	for (let id of ids) {
 
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(vc.getId().equals(id)).toBeTruthy();
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -748,7 +746,7 @@ describe('let Tests', () => {
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
-		expect(ids.length).toEqual(2);
+		expect(ids.length).toBe(2);
 		console.log("IDS")
 		console.log(ids)
 		for (let id of ids) {
@@ -758,7 +756,7 @@ describe('let Tests', () => {
 			   console.log("vc.getId")
 			   console.log(vc.getId())
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(vc.getId().equals(id)).toBeTruthy();
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -767,11 +765,11 @@ describe('let Tests', () => {
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
-		expect(ids.length).toEqual(1);
+		expect(ids.length).toBe(1);
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(vc.getId().equals(id)).toBeTruthy();
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeFalsy();
 	   	}
@@ -804,11 +802,11 @@ describe('let Tests', () => {
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
-		expect(ids.length).toEqual(4);
+		expect(ids.length).toBe(4);
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(vc.getId().equals(id)).toBeTruthy();
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}
@@ -817,11 +815,11 @@ describe('let Tests', () => {
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
-		expect(ids.length).toEqual(2);
+		expect(ids.length).toBe(2);
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(vc.getId().equals(id)).toBeTruthy();
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}
@@ -830,11 +828,11 @@ describe('let Tests', () => {
 	   	did = doc.getSubject();
 	   	ids = await VerifiableCredential.list(did);
 	   	expect(ids).not.toBeNull();
-		expect(ids.length).toEqual(1);
+		expect(ids.length).toBe(1);
 	   	for (let id of ids) {
 	   		let vc = await VerifiableCredential.resolve(id);
 	   		expect(vc).not.toBeNull();
-			expect(id).toEqual(vc.getId());
+			expect(vc.getId().equals(id)).toBeTruthy();
 	   		expect(await vc.wasDeclared()).toBeTruthy();
 	   		expect(await vc.isRevoked()).toBeTruthy();
 	   	}
@@ -871,7 +869,7 @@ describe('let Tests', () => {
     	let index = 35;
     	let ids = await VerifiableCredential.list(did);
     	expect(ids).not.toBeNull();
-		expect(ids.length).toEqual(36);
+		expect(ids.length).toBe(36);
 
 	   	for (let id of ids) {
 	   		console.log("Resolving credential {}...", id.getFragment());
@@ -888,7 +886,7 @@ describe('let Tests', () => {
     	index = 35;
     	ids = await VerifiableCredential.list(did, 0, 560);
     	expect(ids).not.toBeNull();
-		expect(ids.length).toEqual(36);
+		expect(ids.length).toBe(36);
 	   	for (let id of ids) {
 	   		//console.log("Resolving credential {}...", id.getFragment());
 
@@ -959,6 +957,6 @@ describe('let Tests', () => {
 
 		   	skip += ids.length;
     	}
-    	expect(index).toEqual(0);
+    	expect(index).toBe(0);
     });
 });
