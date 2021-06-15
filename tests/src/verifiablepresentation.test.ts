@@ -51,11 +51,11 @@ describe('VerifiablePresentation Tests', () => {
 		let vp = await cd.getPresentation("user1", "nonempty");
 
 		expect(vp.getId()).toBeNull();
-		expect(vp.getType().length).toEqual(1);
+		expect(vp.getType().length).toBe(1);
 		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		expect(vp.getCredentialCount()).toEqual(4);
+		expect(vp.getCredentialCount()).toBe(4);
 		let vcs = vp.getCredentials();
 		for (let vc of vcs) {
 			expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
@@ -86,11 +86,11 @@ describe('VerifiablePresentation Tests', () => {
 		let vp = await cd.getPresentation("user1", "empty");
 
 		expect(vp.getId()).toBeNull();
-		expect(1).toEqual(vp.getType().length);
+		expect(vp.getType().length).toBe(1);
 		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		expect(0).toEqual(vp.getCredentialCount());
+		expect(vp.getCredentialCount()).toBe(0);
 		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
 		await expect(await vp.isGenuine()).toBeTruthy();
@@ -150,11 +150,11 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp).not.toBeNull();
 
 		expect(vp.getId()).toBeNull();
-		expect(1).toEqual(vp.getType().length);
+		expect(vp.getType().length).toBe(1);
 		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		expect(4).toEqual(vp.getCredentialCount());
+		expect(vp.getCredentialCount()).toBe(4);
 		let vcs = vp.getCredentials();
 		for (let vc of vcs) {
 			expect(doc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
@@ -195,12 +195,12 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp).not.toBeNull();
 
 		expect(new DIDURL("#test-vp", doc.getSubject()).equals(vp.getId())).toBeTruthy();
-		expect(2).toEqual(vp.getType().length);
-		expect("TestPresentation").toEqual(vp.getType()[0]);
-		expect("Trail").toEqual(vp.getType()[1]);
+		expect(vp.getType().length).toBe(2);
+		expect(vp.getType()[0]).toEqual("TestPresentation");
+		expect(vp.getType()[1]).toEqual("Trail");
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		expect(4).toEqual(vp.getCredentialCount());
+		expect(vp.getCredentialCount()).toBe(4);
 		let vcs = vp.getCredentials();
 		for (let vc of vcs) {
 			expect(doc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
@@ -234,11 +234,11 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp).not.toBeNull();
 
 		expect(vp.getId()).toBeFalsy(); // null or undefined
-		expect(1).toEqual(vp.getType().length);
+		expect(vp.getType().length).toEqual(1);
 		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		expect(0).toEqual(vp.getCredentialCount());
+		expect(vp.getCredentialCount()).toEqual(0);
 		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeFalsy(); // null or undefined
 
 		let resolved = await vp.getHolder().resolve();
@@ -263,13 +263,13 @@ describe('VerifiablePresentation Tests', () => {
 		expect(vp).not.toBeNull();
 
 		expect(new DIDURL("#test-vp", doc.getSubject()).equals(vp.getId())).toBeTruthy();
-		expect(3).toEqual(vp.getType().length);
-		expect("Baz").toEqual(vp.getType()[0]);
-		expect("FooBar").toEqual(vp.getType()[1]);
-		expect("HelloWorld").toEqual(vp.getType()[2]);
+		expect(vp.getType().length).toBe(3);
+		expect(vp.getType()[0]).toEqual("Baz");
+		expect(vp.getType()[1]).toEqual("FooBar");
+		expect(vp.getType()[2]).toEqual("HelloWorld");
 		expect(doc.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		expect(0).toEqual(vp.getCredentialCount());
+		expect(vp.getCredentialCount()).toBe(0);
 		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeFalsy(); // null or undefined
 
 		let resolved = await vp.getHolder().resolve();

@@ -36,9 +36,9 @@ describe('DIDURL Tests', () => {
 	})
 
 	test('Test parse DID', () => {
-		expect(urlParsed.did.value).toBe(testDID)
-        expect(urlParsed.did.method).toBe("elastos")
-        expect(urlParsed.did.methodSpecificId).toBe("icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN")
+		expect(urlParsed.did.value).toEqual(testDID)
+        expect(urlParsed.did.method).toEqual("elastos")
+        expect(urlParsed.did.methodSpecificId).toEqual("icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN")
 	});
 
     test('Test parse params', () => {
@@ -50,18 +50,18 @@ describe('DIDURL Tests', () => {
 		expect(urlParsed.params.get("keyonly")).toBe(null)
     })
     test('Test parse path', () => {
-        expect(urlParsed.path).toBe(path)
+        expect(urlParsed.path).toEqual(path)
     })
 
     test('Test parse query', () => {
         expect(urlParsed.query.has("qkey")).toBeTruthy()
 		expect(urlParsed.query.has("qkeyonly")).toBeTruthy()
 		expect(urlParsed.query.has("test")).toBeTruthy()
-		expect(urlParsed.query.get("qkey")).toBe("qvalue")
-		expect(urlParsed.query.get("qkeyonly")).toBe(null)
+		expect(urlParsed.query.get("qkey")).toEqual("qvalue")
+		expect(urlParsed.query.get("qkeyonly")).toEqual(null)
     })
 
     test('Test parse fragment', () => {
-        expect(urlParsed.fragment).toBe("testfragment")
+        expect(urlParsed.fragment).toEqual("testfragment")
     })
 })

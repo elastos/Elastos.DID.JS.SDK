@@ -1,4 +1,3 @@
-import { Constants } from "./constants";
 import {
 	TransferTicket,
 	DIDStore,
@@ -45,7 +44,7 @@ describe('TransferTicket Tests', () => {
         expect(parsedTicket.getSubject().equals(ticket.getSubject())).toBeTruthy();
         expect(parsedTicket.getTo().equals(ticket.getTo())).toBeTruthy();
         expect(parsedTicket.getTransactionId()).toEqual(ticket.getTransactionId());
-        expect(parsedTicket.getProofs().length).toEqual(ticket.getProofs().length);
+        expect(parsedTicket.getProofs().length).toBe(ticket.getProofs().length);
 
         for (let i = 0; i < ticket.getProofs().length; i++)
             expect(parsedTicket.getProofs()[i].equals(ticket.getProofs()[i]));

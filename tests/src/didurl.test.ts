@@ -20,14 +20,11 @@
  * SOFTWARE.
  */
 
-import {
-	DID,
-	DIDURL
-} from "@elastosfoundation/did-js-sdk";
+import { DID, DIDURL } from "@elastosfoundation/did-js-sdk";
 
 const verifyNewDidCreation = (valueToValidate: string, base: DID = null) =>{
 	let url: DIDURL = new DIDURL(valueToValidate, base);
-	expect(url.toString()).toBe((base ? base.toString() : "") + valueToValidate);
+	expect(url.toString()).toEqual((base ? base.toString() : "") + valueToValidate);
 }
 
 describe('DIDURL Tests', () => {
@@ -123,63 +120,56 @@ describe('DIDURL Tests', () => {
 		verifyNewDidCreation(params + path + query);
 	});
 
-
 	test('Test compatible with plain fragment', () => {
 
 		let testURL = testDID + "#test";
 		let url = new DIDURL(testURL);
 
-		expect(url.toString()).toBe(testURL);
-		expect(url.getFragment()).toBe("test");
+		expect(url.toString()).toEqual(testURL);
+		expect(url.getFragment()).toEqual("test");
 
 		url = new DIDURL("test", did)
 
-		expect(url.toString()).toBe(testURL);
-		expect(url.getFragment()).toBe("test");
+		expect(url.toString()).toEqual(testURL);
+		expect(url.getFragment()).toEqual("test");
 
 		url = new DIDURL("test")
-		expect(url.getFragment()).toBe("test");
-
+		expect(url.getFragment()).toEqual("test");
 	});
-
 
 	test('Test Constructor Error 1', () => {
 		expect(() => {new DIDURL("did:elastos:1234567890;" + params + path + query + fragment)}).toThrowError();
 	})
 
 	test('Test Constructor Error 2', () => {
-
 		expect(() => {new DIDURL("did:example:1234567890" + params + path + query + fragment)}).toThrowError();
 	})
 
 	test('Test Constructor Error 3', () => {
-
 		expect(() => {new DIDURL("did:elastos::1234567890" + params + path + query + fragment)}).toThrowError();
 	})
 
 	test('Test Constructor Error 4', () => {
-
 		expect(() => {new DIDURL("did:example:1234567890" + params + path + "?" + "#" + fragment)}).toThrowError();
 	})
 
 	test('Test Constructor Error 5', () => {
-
 		expect(() => {new DIDURL("did:example:1234567890" + params + path + query + "#")}).toThrowError();
 	})
 
 	test('Test GetDID', () => {
-		expect(url.getDid().toString()).toBe(testDID);
+		expect(url.getDid().toString()).toEqual(testDID);
 	})
 
 	test('Test GetParameters', () => {
-		expect(url.getParametersString()).toBe(params.substring(1));
+		expect(url.getParametersString()).toEqual(params.substring(1));
 	})
 
 	test('Test GetParameter', () => {
-		expect(url.getParameter("elastos:foo")).toBe("testvalue");
+		expect(url.getParameter("elastos:foo")).toEqual("testvalue");
 		expect(url.getParameter("foo")).toBeUndefined();
-		expect(url.getParameter("bar")).toBe("123");
-		expect(url.getParameter("elastos:foobar")).toBe("12345");
+		expect(url.getParameter("bar")).toEqual("123");
+		expect(url.getParameter("elastos:foobar")).toEqual("12345");
 		expect(url.getParameter("foobar")).toBeUndefined();
 		expect(url.getParameter("keyonly")).toBeNull();
 	})
@@ -190,26 +180,22 @@ describe('DIDURL Tests', () => {
 		expect(url.hasParameter("elastos:foobar")).toBeTruthy();
 		expect(url.hasParameter("keyonly")).toBeTruthy();
 
-
 		expect(url.hasParameter("notexist")).toBeFalsy();
 		expect(url.hasParameter("foo")).toBeFalsy();
 		expect(url.hasParameter("boobar")).toBeFalsy();
 	})
 
-
 	test('Test GetPath', () => {
-		expect(url.getPath()).toBe(path);
+		expect(url.getPath()).toEqual(path);
 	})
-
 
 	test('Test GetQuery', () => {
-		expect(url.getQueryString()).toBe(query.substring(1));
+		expect(url.getQueryString()).toEqual(query.substring(1));
 	})
 
-
 	test('Test GetQueryParameter', () => {
-		expect(url.getQueryParameter("qkey")).toBe("qvalue");
-		expect(url.getQueryParameter("test")).toBe("true");
+		expect(url.getQueryParameter("qkey")).toEqual("qvalue");
+		expect(url.getQueryParameter("test")).toEqual("true");
 		expect(url.getQueryParameter("qkeyonly")).toBeNull();
 	})
 
@@ -217,7 +203,6 @@ describe('DIDURL Tests', () => {
 		expect(url.hasQueryParameter("qkeyonly")).toBeTruthy();
 		expect(url.hasQueryParameter("qkey")).toBeTruthy();
 		expect(url.hasQueryParameter("test")).toBeTruthy();
-
 		expect(url.hasQueryParameter("notexist")).toBeFalsy();
 	})
 
@@ -226,20 +211,19 @@ describe('DIDURL Tests', () => {
 	})
 
 	test('Test ToString', () => {
-		expect(url.toString()).toBe(testURL);
+		expect(url.toString()).toEqual(testURL);
 	})
 
 	test('Test HashCode', () => {
 		let other = new DIDURL(testURL);
-		expect(other.hashCode()).toBe(url.hashCode());
+		expect(other.hashCode()).toEqual(url.hashCode());
 
 		other = new DIDURL("did:elastos:1234567890#test");
-		expect(other.hashCode()).not.toBe(url.hashCode());
+		expect(other.hashCode()).not.toEqual(url.hashCode());
 	})
 
 	test('Test Equals', () => {
 		let other = new DIDURL(testURL);
-
 
 		expect(url.equals(other)).toBeTruthy()
 		expect(url.equals(testURL)).toBeTruthy()
@@ -247,7 +231,5 @@ describe('DIDURL Tests', () => {
 		other = new DIDURL("did:elastos:1234567890#test");
 		expect(url.equals(other)).toBeFalsy();
 		expect(url.equals("did:elastos:1234567890#test")).toBeFalsy()
-
 	})
-
 })

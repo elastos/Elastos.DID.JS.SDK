@@ -119,7 +119,7 @@ describe("RootIdentity Tests", ()=>{
 
     	resolved = await doc.getSubject().resolve();
     	expect(resolved).not.toBeNull();
-    	expect(doc.getSubject()).toEqual(resolved.getSubject());
+    	expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
     	expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
 
     	expect(resolved.isValid()).toBeTruthy();

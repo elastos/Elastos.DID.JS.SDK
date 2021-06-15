@@ -49,21 +49,21 @@ describe('Mnemonic Tests', () => {
 			let mc = Mnemonic.getInstance(lang);
 			let mnemonic = mc.generate();
 
-			expect(mc.isValid(mnemonic)).toBeTruthy()
-		    expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy()
+			expect(mc.isValid(mnemonic)).toBeTruthy();
+		    expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy();
 
 			RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
 
-			expect(mc.isValid(mnemonic + "z")).toBeFalsy()
-			expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy()
+			expect(mc.isValid(mnemonic + "z")).toBeFalsy();
+			expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy();
 		});
 	});
 
 	test('Test french mnemonic', () => {
 		let mnemonic = "remarque séduire massif boire horde céleste exact dribbler pulpe prouesse vagabond opale";
-		let mc = Mnemonic.getInstance(Mnemonic.FRENCH)
+		let mc = Mnemonic.getInstance(Mnemonic.FRENCH);
 
-		expect(mc.isValid(mnemonic)).toBeTruthy()
-		expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy()
+		expect(mc.isValid(mnemonic)).toBeTruthy();
+		expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy();
 	});
 })
