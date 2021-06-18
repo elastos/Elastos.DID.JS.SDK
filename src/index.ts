@@ -1,6 +1,6 @@
 'use strict';
 
-import { DIDBackend } from "./internals";
+import { DIDBackend, DIDRequest } from "./internals";
 import { DID } from "./internals";
 import { DIDDocument, DIDDocumentPublicKey, DIDDocumentBuilder } from "./internals";
 import { DIDStore } from "./internals";
@@ -77,6 +77,7 @@ export {
 	DIDDocumentBuilder,
 	DIDStore,
 	DIDBackend,
+	DIDRequest,
 	RootIdentity,
 	VerifiableCredential,
 	VerifiablePresentation,
