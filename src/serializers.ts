@@ -4,7 +4,7 @@ import { Constants } from "./constants";
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js";
 import type {
     ObjectMapper,
 } from "@elastosfoundation/jackson-js";

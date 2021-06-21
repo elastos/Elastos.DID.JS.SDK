@@ -78,7 +78,7 @@ import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
 import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
-import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js/dist/@types";
+import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
 
 class DIDDocumentControllerSerializer extends Serializer {
 	public static serialize(controllers: DID[], context: JsonStringifierTransformerContext): any {

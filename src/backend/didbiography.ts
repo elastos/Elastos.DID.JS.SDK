@@ -32,7 +32,7 @@ import {
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js";
 
 class DIDBiographyStatusSerializer extends Serializer {
 	public static serialize(value: DIDBiographyStatus, context: JsonStringifierTransformerContext): string {

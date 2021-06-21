@@ -35,7 +35,7 @@ import { IllegalArgumentException } from "../exceptions/exceptions";
 import type { JSONObject } from "../json";
 import { TransferTicket } from "../internals";
 import { checkArgument } from "../internals";
-import type { JsonParserTransformerContext, JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js/dist/@types";
+import type { JsonParserTransformerContext, JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
 import { Deserializer } from "../serializers";
 
 /**

@@ -45,9 +45,9 @@ writeFileSync("./generated/browserdata.json", JSON.stringify(dataBundle, null, "
 
 export default [
     {
-        //input: 'tests/didstore.test.ts',
-        input: ['src/**/*.ts'],
-        //input: 'tests/crypto/ecdsasigner.test.ts',
+        input: 'src/private.test.ts',
+        //input: ['src/**/*.ts'],
+        //input: 'src/crypto/ecdsasigner.test.ts',
         output: {
             //file: 'public/tests/did.browser.tests.js',
             dir: 'public/tests',
@@ -103,8 +103,8 @@ export default [
                     { "find": "http", "replacement": "http-browserify" },
                     { "find": "https", "replacement": "http-browserify" },
                     { "find": "process", "replacement": "process-browserify" },
-                    { "find": "url", "replacement": "url" },
-                    { "find": "os", "replacement": "os-browserify" },
+                    /* { "find": "url", "replacement": "url" },
+                    { "find": "os", "replacement": "os-browserify" }, */
                     { find: "buffer", replacement: "buffer-es6" },
                     { find: "path", replacement: "path-browserify" }
 				]

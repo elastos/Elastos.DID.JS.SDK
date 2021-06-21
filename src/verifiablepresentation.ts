@@ -34,7 +34,7 @@ import { VerifiableCredential } from "./internals";
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js";
 import {
     Serializer,
 	Deserializer

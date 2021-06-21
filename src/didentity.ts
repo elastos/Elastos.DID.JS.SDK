@@ -24,7 +24,7 @@ import { ObjectMapper } from "@elastosfoundation/jackson-js";
 import type {
 	JsonStringifierTransformerContext,
 	JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js";
 import type { Class } from "./class";
 import { 
 	DID, 

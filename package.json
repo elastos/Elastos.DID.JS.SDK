@@ -1,6 +1,6 @@
 {
   "name": "@elastosfoundation/did-js-sdk",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Elastos DID Typescript SDK",
   "scripts": {
     "prepublishOnly": "npm run clean && npm run build",
@@ -19,7 +19,7 @@
   },
   "typings": "typings/",
   "dependencies": {
-    "@elastosfoundation/jackson-js": "^1.1.0",
+    "@elastosfoundation/jackson-js": "^1.1.2",
     "assert": "^2.0.0",
     "axios": "^0.19.2",
     "bip32": "^2.0.6",
@@ -70,6 +70,8 @@
     "eslint-plugin-import": "^2.23.3",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
+    "http-browserify": "^1.7.0",
+    "https-browserify": "^1.0.0",
     "jest": "^26.6.3",
     "jest-circus": "^26.6.3",
     "jest-environment-node": "^26.6.2",

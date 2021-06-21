@@ -40,3 +40,4 @@ package-lock.json
 appdid
 public/tests/
 generated/
+src/private.test.ts

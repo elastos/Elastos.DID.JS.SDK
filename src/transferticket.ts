@@ -32,7 +32,7 @@ import { DIDURL } from "./internals";
 import { DIDResolveException, NotCustomizedDIDException, DIDStoreException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
 import { ComparableMap } from "./comparablemap";
-import type { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js/dist/@types";
+import type { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
 
 class TransferTicketProofSerializer extends Serializer {
 	public static serialize(proof: string[], context: JsonStringifierTransformerContext): any {

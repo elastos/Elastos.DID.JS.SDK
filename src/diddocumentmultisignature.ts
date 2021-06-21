@@ -5,7 +5,7 @@ import {
 } from "@elastosfoundation/jackson-js";
 import type {
 	JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js";
 import { IllegalArgumentException } from "./exceptions/exceptions"
 import { checkArgument, Deserializer } from "./internals";
 

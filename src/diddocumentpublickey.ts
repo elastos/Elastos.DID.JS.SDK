@@ -8,7 +8,7 @@ import {
 } from "@elastosfoundation/jackson-js";
 import type {
 	JsonStringifierTransformerContext,
-} from "@elastosfoundation/jackson-js/dist/@types";
+} from "@elastosfoundation/jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { Base58 } from "./internals";
