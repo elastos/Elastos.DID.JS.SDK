@@ -33,8 +33,8 @@ import axios from "axios";
 const log = new Logger("DefaultDIDAdapter");
 
 export class DefaultDIDAdapter implements DIDAdapter {
-	private static MAINNET_RESOLVER = "https://api.elastos.io/did/v2";
-	private static TESTNET_RESOLVER = "https://api-testnet.elastos.io/did/v2";
+	private static MAINNET_RESOLVER = "https://api.elastos.io/eid";
+	private static TESTNET_RESOLVER = "https://api-testnet.elastos.io/eid";
 
 	protected resolver: URL;
 
