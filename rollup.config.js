@@ -46,6 +46,9 @@ const commitHash = (function () {
 	}
 })();
 
+const prodBuild = process.env.prodbuild || false;
+console.log("Prod build: ", prodBuild);
+
 const now = new Date(
 	process.env.SOURCE_DATE_EPOCH ? process.env.SOURCE_DATE_EPOCH * 1000 : new Date().getTime()
 ).toUTCString();
@@ -153,7 +156,7 @@ export default command => {
 				return 'default';
 			},
 			manualChunks: { did: ['src/index.ts'] },
-			sourcemap: true
+			sourcemap: !prodBuild
 		}
 	};
 
@@ -173,7 +176,7 @@ export default command => {
 			...commonJSBuild.output,
 			dir: 'dist/es',
 			format: 'es',
-			sourcemap: true,
+			sourcemap: !prodBuild,
 			minifyInternalExports: false
 		}
 	};
@@ -295,7 +298,7 @@ export default command => {
 				file: 'dist/es/did.browser.js',
 				format: 'es',
 				banner,
-				sourcemap: true,
+				sourcemap: !prodBuild,
 				//intro: 'var process: { env: {}};'
 				//intro: 'var global = typeof self !== undefined ? self : this;' // Fix "global is not defined"
 			},

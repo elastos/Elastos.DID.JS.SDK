@@ -1,10 +1,10 @@
 {
   "name": "@elastosfoundation/did-js-sdk",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Elastos DID Typescript SDK",
   "scripts": {
     "prepublishOnly": "npm run clean && npm run build",
-    "build": "npm run clean && npm run types && rollup -c",
+    "build": "npm run clean && npm run types && rollup -c --environment prodbuild",
     "dev": "rollup -c -w",
     "clean": "rm -rf dist/ typings/ generated/",
     "types": "npm run clean && tsc --emitDeclarationOnly --outDir typings/ --project tsconfig.types.json",
