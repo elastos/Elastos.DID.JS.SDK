@@ -67,7 +67,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	}
 
 	public getIndex(): number {
-		return this.getInteger(DIDMetadata.INDEX);
+		return this.getInteger(DIDMetadata.INDEX, -1);
 	}
 
 	/**
@@ -140,7 +140,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 */
 	public getPublished(): Date | null {
 		try {
-			return this.getDate(DIDMetadata.PUBLISHED);
+			return this.getDate(DIDMetadata.PUBLISHED, null);
 		} catch (e) {
 			return null;
 		}
@@ -162,7 +162,7 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
 	 *         the returned value is false if the did is activated.
 	 */
 	public isDeactivated(): boolean {
-		return this.getBoolean(DIDMetadata.DEACTIVATED);
+		return this.getBoolean(DIDMetadata.DEACTIVATED, false);
 	}
 
     /**

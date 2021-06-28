@@ -94,12 +94,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 	 * @return the published time
 	 */
 	public getPublished(): Date {
-		try {
-			return this.getDate(CredentialMetadata.PUBLISHED);
-		} catch (e) {
-			// ParseException
-			return null;
-		}
+		return this.getDate(CredentialMetadata.PUBLISHED, null);
 	}
 
 	/**
@@ -118,7 +113,7 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
 	 *         the returned value is false if the did is not revoked.
 	 */
 	public isRevoked(): boolean {
-		return this.getBoolean(CredentialMetadata.REVOKED);
+		return this.getBoolean(CredentialMetadata.REVOKED, false);
 	}
 
     /**
