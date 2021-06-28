@@ -183,6 +183,9 @@ export class DIDBackend {
 
 		let requestJson = request.serialize(true);
 		let resolvedJson = await this.getAdapter().resolve(requestJson);
+		if (resolvedJson == null)
+			throw new DIDResolveException("Unknown error, got null result.");
+			
 		let response: ResolveResponse<any, any> = null;
 		try {
 			switch (request.getMethod()) {
