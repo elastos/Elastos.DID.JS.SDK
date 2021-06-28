@@ -37,7 +37,7 @@ export class DIDStoreMetadata extends AbstractMetadata {
     }
 
     public getVersion(): number {
-        return this.getInteger(DIDStoreMetadata.VERSION);
+        return this.getInteger(DIDStoreMetadata.VERSION, -1);
     }
 
     public setFingerprint(fingerprint: string) {

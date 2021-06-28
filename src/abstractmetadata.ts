@@ -25,7 +25,7 @@ import { DIDEntity } from "./internals";
 import type { DIDStore } from "./internals";
 import type { JSONObject, JSONValue } from "./json";
 import { checkArgument } from "./internals";
-import { JsonIgnore, JsonInclude, JsonIncludeType, JsonClassType, JsonAnySetter, JsonAnyGetter, JsonProperty, JsonIgnoreType, JsonManagedReference, JsonIdentityInfo, JsonUnwrapped, JsonTypeId, JsonIgnoreProperties } from "@elastosfoundation/jackson-js";
+import { JsonIgnore, JsonAnySetter, JsonAnyGetter} from "@elastosfoundation/jackson-js";
 
 /**
  * The class defines the base interface of Meta data.
@@ -102,16 +102,34 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 		this.save();
 	}
 
-	protected getBoolean(name: string): boolean {
-		return new Boolean(this.get(name)).valueOf();
+	protected getBoolean(name: string, defaultValue: boolean): boolean {
+		let strValue = this.get(name);
+		return strValue != null ? new Boolean(strValue).valueOf() : defaultValue;
+		
 	}
 
-	protected getInteger(name: string): number {
-		return new Number(this.get(name)).valueOf();
+	protected getInteger(name: string, defaultValue: number): number {
+		let strValue = this.get(name);
+		let value = defaultValue;
+		if (strValue != null) {
+			try {
+				value = new Number(strValue).valueOf();
+			} catch (ignore) {
+			}
+		}
+		return value;
 	}
 
-	protected getDate(name: string): Date /* throws ParseException */ {
-		return new Date(this.get(name) as string);
+	protected getDate(name: string, defaultValue: Date): Date /* throws ParseException */ {
+		let strValue = this.get(name);
+		let value = defaultValue;
+		if (strValue != null) {
+			try {
+				value = new Date(strValue as string);
+			} catch (ignore) {
+			}
+		}
+		return value;
 	}
 
 	protected remove(name: string): any {
@@ -165,19 +183,19 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 		return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key) as string;
 	}
 
-	public getExtraBoolean(key: string): boolean {
+	public getExtraBoolean(key: string, defaultValue: boolean): boolean {
 		checkArgument(key && key != null, "Invalid key");
-		return this.getBoolean(AbstractMetadata.USER_EXTRA_PREFIX + key);
+		return this.getBoolean(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
 	}
 
-	public getExtraInteger(key: string): number {
+	public getExtraInteger(key: string, defaultValue: number): number {
 		checkArgument(key && key != null, "Invalid key");
-		return this.getInteger(AbstractMetadata.USER_EXTRA_PREFIX + key);
+		return this.getInteger(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
 	}
 
-	public getExtraDate(key: string): Date /* throws ParseException */ {
+	public getExtraDate(key: string, defaultValue: Date): Date /* throws ParseException */ {
 		checkArgument(key && key != null, "Invalid key");
-		return this.getDate(AbstractMetadata.USER_EXTRA_PREFIX + key);
+		return this.getDate(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
 	}
 
 	public removeExtra(key: string): string {
