@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty, JsonIgnore } from "@elastosfoundation/jackson-js";
+import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty} from "@elastosfoundation/jackson-js";
 import { CredentialMetadata } from "./internals";
 import { DID } from "./internals";
 import { DIDDocument } from "./internals";
@@ -372,9 +372,18 @@ import { BASE64 } from "./internals";
 			return success;
 		}
 
-		public listRootIdentities(): RootIdentity[] {
-			return this.storage.listRootIdentities();
-			// TODO - Check if we need to clone the list or not like java probably does - return Collections.unmodifiableList(this.storage.listRootIdentities());
+		public async istRootIdentities(): Promise<RootIdentity[]> {
+			let ids = this.storage.listRootIdentities();
+
+			for (let id of ids) {
+				let metadata = await this.storage.loadRootIdentityMetadata(id.getId());
+				if (metadata == null)
+					metadata = new RootIdentity.Metadata(id.getId(), this);
+
+				id.setMetadata(metadata);
+			}
+   
+			return ids;
 		}
 
 		public containsRootIdentities(): boolean {
@@ -566,6 +575,9 @@ import { BASE64 } from "./internals";
 			let dids = this.storage.listDids();
 			for (let did of dids) {
 				let metadata = await this.loadDidMetadata(did);
+				if (metadata == null)
+					metadata = new DIDMetadata(did, this);
+
 				did.setMetadata(metadata);
 			}
 
@@ -641,19 +653,6 @@ import { BASE64 } from "./internals";
 				throw new DIDStoreException("Load credential failed: " + id, e);
 			}
 		}
-
-		/**
-		 * Load the specified Credential.
-		 *
-		 * @param did the owner of Credential
-		 * @param id the identifier of Credential
-		 * @return the Credential object
-		 * @throws DIDStoreException DIDStore error.
-		 */
-		/* public VerifiableCredential loadCredential(String id)
-				throws DIDStoreException {
-			return loadCredential(DIDURL.valueOf(id));
-		} */
 
 		/**
 		 * Judge whether does DIDStore contain the specified credential.
@@ -783,6 +782,9 @@ import { BASE64 } from "./internals";
 			let ids = this.storage.listCredentials(did);
 			for (let id of ids) {
 				let metadata = await this.loadCredentialMetadata(id);
+				if (metadata == null)
+					metadata = new CredentialMetadata(id, this);
+
 				id.setMetadata(metadata);
 			}
 
