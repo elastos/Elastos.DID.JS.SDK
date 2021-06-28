@@ -42,59 +42,71 @@ describe('VerifiablePresentation Tests', () => {
     });
 
 	test('testReadPresentationNonempty', async () => {
-		let version = 2;
-    	let cd = testData.getCompatibleData(version);
+		let version;
+		for (version = 1; version <= 2; version++) {
+			let cd = testData.getCompatibleData(version);
 
-    	// For integrity check
-		await cd.getDocument("issuer");
-		let user = await cd.getDocument("user1");
-		let vp = await cd.getPresentation("user1", "nonempty");
+			// For integrity check
+			await cd.getDocument("issuer");
+			let user = await cd.getDocument("user1");
+			let vp = await cd.getPresentation("user1", "nonempty");
 
-		expect(vp.getId()).toBeNull();
-		expect(vp.getType().length).toBe(1);
-		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
-		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
+			if (version == 1)
+				expect(vp.getId()).toBeNull();
+			else
+				expect(vp.getId()).not.toBeNull();
 
-		expect(vp.getCredentialCount()).toBe(4);
-		let vcs = vp.getCredentials();
-		for (let vc of vcs) {
-			expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+			expect(vp.getType().length).toBe(1);
+			expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
+			expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-			expect(vc.getId().getFragment() === "profile"
-					|| vc.getId().getFragment() === "email"
-					|| vc.getId().getFragment() === "twitter"
-					|| vc.getId().getFragment() === "passport").toBeTruthy();
+			expect(vp.getCredentialCount()).toBe(4);
+			let vcs = vp.getCredentials();
+			for (let vc of vcs) {
+				expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+
+				expect(vc.getId().getFragment() === "profile"
+						|| vc.getId().getFragment() === "email"
+						|| vc.getId().getFragment() === "twitter"
+						|| vc.getId().getFragment() === "passport").toBeTruthy();
+			}
+
+			expect(vp.getCredential(new DIDURL("#profile", vp.getHolder()))).not.toBeNull();
+			expect(vp.getCredential(new DIDURL("#email", vp.getHolder()))).not.toBeNull();
+			expect(vp.getCredential(new DIDURL("#twitter", vp.getHolder()))).not.toBeNull();
+			expect(vp.getCredential(new DIDURL("#passport", vp.getHolder()))).not.toBeNull();
+			expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
+
+			await expect(await vp.isGenuine()).toBeTruthy();
+			await expect(await vp.isValid()).toBeTruthy();
 		}
-
-		expect(vp.getCredential(new DIDURL("#profile", vp.getHolder()))).not.toBeNull();
-		expect(vp.getCredential(new DIDURL("#email", vp.getHolder()))).not.toBeNull();
-		expect(vp.getCredential(new DIDURL("#twitter", vp.getHolder()))).not.toBeNull();
-		expect(vp.getCredential(new DIDURL("#passport", vp.getHolder()))).not.toBeNull();
-		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
-
-		await expect(await vp.isGenuine()).toBeTruthy();
-		await expect(await vp.isValid()).toBeTruthy();
 	});
 
 	test('testReadPresentationEmpty', async () => {
-		let version = 2;
-    	let cd = testData.getCompatibleData(version);
+		let version;
+		for (version = 1; version <= 2; version++) {
+			let cd = testData.getCompatibleData(version);
 
-    	// For integrity check
-		await cd.getDocument("issuer");
-		let user = await cd.getDocument("user1");
-		let vp = await cd.getPresentation("user1", "empty");
+			// For integrity check
+			await cd.getDocument("issuer");
+			let user = await cd.getDocument("user1");
+			let vp = await cd.getPresentation("user1", "empty");
 
-		expect(vp.getId()).toBeNull();
-		expect(vp.getType().length).toBe(1);
-		expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
-		expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
+			if (version == 1)
+				expect(vp.getId()).toBeNull();
+			else
+				expect(vp.getId()).not.toBeNull();
+				
+			expect(vp.getType().length).toBe(1);
+			expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
+			expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
 
-		expect(vp.getCredentialCount()).toBe(0);
-		expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
+			expect(vp.getCredentialCount()).toBe(0);
+			expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
-		await expect(await vp.isGenuine()).toBeTruthy();
-		await expect(await vp.isValid()).toBeTruthy();
+			await expect(await vp.isGenuine()).toBeTruthy();
+			await expect(await vp.isValid()).toBeTruthy();
+		}
 	});
 
 	[
