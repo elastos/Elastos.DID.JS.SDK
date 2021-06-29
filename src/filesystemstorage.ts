@@ -196,11 +196,11 @@ export class FileSystemStorage implements DIDStorage {
 
 	private static toPath(id: DIDURL): string {
 		let path = id.toString(id.getDid());
-		return path.replace(';', '.').replace('/', '_').replace('?', '-');
+		return path.replace(';', '+').replace('/', '~').replace('?', '!');
 	}
 
 	private static toDIDURL(did: DID, path: string): DIDURL {
-		path = path.replace('.', ';').replace('_', '/').replace('-', '?');
+		path = path.replace('+', ';').replace('~', '/').replace('!', '?');
 		return DIDURL.from(path, did);
 	}
 
