@@ -397,17 +397,17 @@ describe("DIDStore Tests", ()=>{
 		}
 
 		let store = await testData.getStore();
-		let dids = await store.listDids();
+		let dids: DID[] = Array.from(await store.listDids());
 		dids.sort((a,b) => a.compareTo(b));
 		for (let did of dids) {
 			expect(store.deleteDid(did)).toBeTruthy();
 		}
 		
-		let empty = await store.listDids();
+		let empty: DID[] = Array.from(await store.listDids());
 		expect(empty.length).toBe(0);
 
 		await store.synchronize();
-		let syncedDids =  await store.listDids();
+		let syncedDids: DID[] =  Array.from(await store.listDids());
 		syncedDids.sort((a,b) => a.compareTo(b));
 
 		for (let i = 0; i < 5; i++)
@@ -453,12 +453,12 @@ describe("DIDStore Tests", ()=>{
 			expect(resolved.isValid()).toBeTruthy();
 		}
 
-		let dids = await store.listDids();
+		let dids: DID[] = Array.from(await store.listDids());
 		expect(dids.length).toBe(LOOP_COUNT);
 
 		store.changePassword(TestConfig.storePass, "newpasswd");
 
-		dids = await store.listDids();
+		dids = Array.from(await store.listDids());
 		expect(dids.length).toBe(LOOP_COUNT);
 
 		for (let i = 0; i < LOOP_COUNT; i++) {

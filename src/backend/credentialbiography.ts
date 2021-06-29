@@ -172,10 +172,22 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
 	}
 
 	public async sanitize(): Promise<void> {
-		if (this.id == null)
-			throw new MalformedResolveResultException("Missing id");
+		// TODO: revert this change later!!!
+ 		//
+ 		// Normally should check id field here.
+ 		// But now the resolve gives wrong response with a empty id field.
+ 		// Now check id field only if status != NOT_FOUND as a workaround
+ 		//
+ 		// if (id == null)
+ 		//	throw new MalformedResolveResultException("Missing id");
+		/*if (this.id == null)
+			throw new MalformedResolveResultException("Missing id");*/
 
 		if (!this.status.equals(CredentialBiographyStatus.NOT_FOUND)) {
+			// TODO: see above
+			if (this.id == null)
+				throw new MalformedResolveResultException("Missing id");
+
 			if (this.txs == null || this.txs.length == 0)
 				throw new MalformedResolveResultException("Missing transaction");
 
