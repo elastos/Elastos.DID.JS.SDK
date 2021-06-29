@@ -27,9 +27,11 @@ import {
 	Logger,
 	DIDStore,
 	DID,
+	DIDURL,
 	RootIdentity,
 	DIDDocument,
 	IDChainRequest,
+	VerifiableCredential,
 	Issuer,
 	File } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
@@ -1085,6 +1087,35 @@ describe('IDChainOperations Tests', () => {
 			// Should overwrite the local modified copy with chain copy after sync
 			doc = await cleanStore.loadDid(modifiedDid);
 			expect(originalSignature).toEqual(doc.getSignature());
+		});
+	});
+
+	describe('Order 30', () => {
+		test('testResolveVC', async () => {
+			let id = new DIDURL("did:elastos:iZrzd9TFbVhRBgcnjoGYQhqkHf7emhxdYu#1234");
+			let vc = await VerifiableCredential.resolve(id);
+			expect(vc).toBeNull();
+		});
+	});
+
+	describe('Order 40', () => {
+		test('testSynchronizeStore', async () => {
+			let dids: DID[] = Array.from(await store.listDids());
+			dids.sort((a,b) => a.compareTo(b));
+			for (let did of dids) {
+				console.log("-------- " + did);
+				expect(store.deleteDid(did)).toBeTruthy();
+			}
+   
+			let empty: DID[] = Array.from(await store.listDids());
+			expect(empty.length).toBe(0);
+   
+			await store.synchronize();
+			let syncedDids: DID[] =  Array.from(await store.listDids());
+			syncedDids.sort((a,b) => a.compareTo(b));
+   
+			for (let i = 0; i < dids.length; i++)
+				expect(dids[i].equals(syncedDids[i])).toBeTruthy();
 		});
 	});
 });
