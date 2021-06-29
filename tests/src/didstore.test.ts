@@ -379,6 +379,41 @@ describe("DIDStore Tests", ()=>{
 		expect(await store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
 	});
 
+	test("testSynchronizeStore", async ()=> {
+		let identity = await testData.getRootIdentity();
+		for (let i = 0; i < 5; i++) {
+			let alias = "my did " + i;
+			let doc = await identity.newDid(TestConfig.storePass);
+			doc.getMetadata().setAlias(alias);
+			expect(doc.isValid()).toBeTruthy();
+
+			let resolved = await doc.getSubject().resolve();
+			expect(resolved).toBeNull();
+
+			await doc.publish(TestConfig.storePass);
+
+			resolved = await doc.getSubject().resolve();
+			expect(resolved).not.toBeNull();
+		}
+
+		let store = await testData.getStore();
+		let dids = await store.listDids();
+		dids.sort((a,b) => a.compareTo(b));
+		for (let did of dids) {
+			expect(store.deleteDid(did)).toBeTruthy();
+		}
+		
+		let empty = await store.listDids();
+		expect(empty.length).toBe(0);
+
+		await store.synchronize();
+		let syncedDids =  await store.listDids();
+		syncedDids.sort((a,b) => a.compareTo(b));
+
+		for (let i = 0; i < 5; i++)
+			expect(dids[i].equals(syncedDids[i])).toBeTruthy();
+	});
+
 	test("testChangePassword", async ()=>{
 		let identity = await testData.getRootIdentity();
 
