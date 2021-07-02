@@ -4,7 +4,7 @@ const coinTypes = {
 };
 
 const elastosRPCAddress = {
-  mainchain: "https://api.elastos.io/did",
+  mainchain: "https://api.trinity-tech.cn/did",
 };
 
 const changeChain = {
