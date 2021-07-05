@@ -102,13 +102,13 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 		this.save();
 	}
 
-	protected getBoolean(name: string, defaultValue: boolean): boolean {
+	protected getBoolean(name: string, defaultValue: boolean = false): boolean {
 		let strValue = this.get(name);
 		return strValue != null ? new Boolean(strValue).valueOf() : defaultValue;
 		
 	}
 
-	protected getInteger(name: string, defaultValue: number): number {
+	protected getInteger(name: string, defaultValue: number = -1): number {
 		let strValue = this.get(name);
 		let value = defaultValue;
 		if (strValue != null) {
@@ -120,7 +120,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 		return value;
 	}
 
-	protected getDate(name: string, defaultValue: Date): Date /* throws ParseException */ {
+	protected getDate(name: string, defaultValue: Date = null): Date /* throws ParseException */ {
 		let strValue = this.get(name);
 		let value = defaultValue;
 		if (strValue != null) {
@@ -183,17 +183,17 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 		return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key) as string;
 	}
 
-	public getExtraBoolean(key: string, defaultValue: boolean): boolean {
+	public getExtraBoolean(key: string, defaultValue: boolean = false): boolean {
 		checkArgument(key && key != null, "Invalid key");
 		return this.getBoolean(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
 	}
 
-	public getExtraInteger(key: string, defaultValue: number): number {
+	public getExtraInteger(key: string, defaultValue: number = -1): number {
 		checkArgument(key && key != null, "Invalid key");
 		return this.getInteger(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
 	}
 
-	public getExtraDate(key: string, defaultValue: Date): Date /* throws ParseException */ {
+	public getExtraDate(key: string, defaultValue: Date = null): Date /* throws ParseException */ {
 		checkArgument(key && key != null, "Invalid key");
 		return this.getDate(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
 	}
