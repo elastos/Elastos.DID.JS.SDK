@@ -1883,7 +1883,8 @@ class DIDDocumentProofSerializer extends Serializer {
             await DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
         }
 
-        this.getMetadata().setPreviousSignature(resolvedSignature);
+        if (resolvedSignature != null)
+            this.getMetadata().setPreviousSignature(resolvedSignature);
         this.getMetadata().setSignature(this.getProof().getSignature());
     }
 
@@ -1912,6 +1913,8 @@ class DIDDocumentProofSerializer extends Serializer {
         else
             doc.getMetadata().attachStore(this.getStore());
 
+        doc.effectiveController = this.effectiveController;
+        
         if (signKey == null) {
             signKey = doc.getDefaultPublicKeyId();
         } else {

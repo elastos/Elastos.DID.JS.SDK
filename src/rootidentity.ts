@@ -387,9 +387,12 @@ export class RootIdentity {
 		}
 
 		let metadata = finalDoc.getMetadata();
+		metadata.setPublished(resolvedDoc.getMetadata().getPublished());
+		metadata.setSignature(resolvedDoc.getProof().getSignature());
 		metadata.setRootIdentityId(this.getId());
 		metadata.setIndex(index);
-
+		if (localDoc != null)
+			localDoc.getMetadata().attachStore(this.getStore())
 		await this.getStore().storeDid(finalDoc);
 		this.getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
 	
