@@ -308,14 +308,14 @@ export class DIDBackend {
 		if (!await tx.getRequest().isValid())
 			throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
 
-		let doc = tx.getRequest().getDocument();
-		let metadata = new DIDMetadata(doc.getSubject());
+		let doc = tx.getRequest().getDocument().clone();
+		let metadata = doc.getMetadata();
 		metadata.setTransactionId(tx.getTransactionId());
 		metadata.setSignature(doc.getProof().getSignature());
 		metadata.setPublished(tx.getTimestamp());
 		if (bio.getStatus().equals(DIDBiographyStatus.DEACTIVATED))
 			metadata.setDeactivated(true);
-		doc.setMetadata(metadata);
+			
 		return doc;
 	}
 

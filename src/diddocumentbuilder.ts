@@ -918,6 +918,7 @@ export class DIDDocumentBuilder {
             } else {
                 for (let pk of this.document.authenticationKeys.values())
                     this.document._authentications.push(DIDDocumentPublicKeyReference.newWithKey(pk));
+                Collections.sort(this.document._authentications);
             }
 
             if (this.document.authorizationKeys.size == 0) {
@@ -926,6 +927,7 @@ export class DIDDocumentBuilder {
             } else {
                 for (let pk of this.document.authorizationKeys.values())
                     this.document._authorizations.push(DIDDocumentPublicKeyReference.newWithKey(pk));
+                Collections.sort(this.document._authentications);
             }
         }
 
@@ -979,6 +981,9 @@ export class DIDDocumentBuilder {
             throw new AlreadySignedException(signerDoc.getSubject().toString());
 
         let json = this.document.serialize(true);
+        //test by chenyu
+        console.log("---- seal: " + json);
+
         let sig = await this.document.signWithId(signKey, storepass, Buffer.from(json));
         let proof = new DIDDocumentProof(signKey, sig);
         this.document.proofs.set(proof.getCreator().getDid(), proof);

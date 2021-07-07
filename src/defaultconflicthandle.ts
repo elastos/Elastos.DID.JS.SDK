@@ -15,8 +15,6 @@ export class DefaultConflictHandle implements ConflictHandle {
 		}
 
 		public merge(chainDoc: DIDDocument, localDoc: DIDDocument): DIDDocument {
-			localDoc.getMetadata().setPublished(chainDoc.getMetadata().getPublished());
-			localDoc.getMetadata().setSignature(chainDoc.getMetadata().getSignature());
 			return localDoc;
 		}
 }

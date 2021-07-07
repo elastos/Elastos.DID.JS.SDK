@@ -423,10 +423,9 @@ import { BASE64 } from "./internals";
 			if (doc.getStore() != this) {
 				let metadata = await this.loadDidMetadata(doc.getSubject());
 				doc.getMetadata().merge(metadata);
-				this.storeDidMetadata(doc.getSubject(), doc.getMetadata());
-
 				doc.getMetadata().attachStore(this);
 			}
+			this.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
 			for (let vc of doc.getCredentials())
 				await this.storeCredential(vc);
@@ -617,10 +616,9 @@ import { BASE64 } from "./internals";
 			if (credential.getMetadata().getStore() != this) {
 				let metadata = await this.loadCredentialMetadata(credential.getId());
 				credential.getMetadata().merge(metadata);
-				this.storeCredentialMetadata(credential.getId(), credential.getMetadata());
-
 				credential.getMetadata().attachStore(this);
 			}
+			this.storeCredentialMetadata(credential.getId(), credential.getMetadata());
 
 			this.cache.put(DIDStore.Key.forCredential(credential.getId()), credential);
 		}
@@ -1040,6 +1038,13 @@ import { BASE64 } from "./internals";
 							log.debug("Conflict handle return the final copy.");
 						}
 					}
+
+					localDoc.getMetadata().attachStore(this);
+
+					let metadata = finalDoc.getMetadata();
+					metadata.setPublished(resolvedDoc.getMetadata().getPublished());
+					metadata.setSignature(resolvedDoc.getProof().getSignature());
+					metadata.attachStore(this);
 
 					this.storage.storeDid(finalDoc);
 				}
