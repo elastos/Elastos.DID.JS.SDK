@@ -29,11 +29,7 @@ import {
     JsonPropertyOrder,
     JsonIgnore,
     JsonCreator,
-    JsonSerialize,
-    JsonFormat,
-    JsonFormatShape,
-    JsonDeserialize,
-    JsonCreatorMode
+    JsonSerialize
 } from "@elastosfoundation/jackson-js";
 import { Collections, Serializer } from "./internals";
 import { Constants } from "./constants";
@@ -77,7 +73,6 @@ import { TransferTicket } from "./internals";
 import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
-import { DIDDocumentProofDeserializer } from "./diddocumentproofdeserializer";
 import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
 
 class DIDDocumentControllerSerializer extends Serializer {
@@ -180,6 +175,10 @@ class DIDDocumentProofSerializer extends Serializer {
     @JsonIgnore()
     public publicKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
     @JsonIgnore()
+    public authenticationKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
+    @JsonIgnore()
+    public authorizationKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
+    @JsonIgnore()
     public credentials?: ComparableMap<DIDURL, VerifiableCredential>;
     @JsonIgnore()
     public services?: ComparableMap<DIDURL, DIDDocumentService>;
@@ -251,7 +250,9 @@ class DIDDocumentProofSerializer extends Serializer {
         newInstance.multisig = doc.multisig;
         newInstance.publicKeys = doc.publicKeys;
         newInstance._publickeys = doc._publickeys;
+        newInstance.authenticationKeys = doc.authenticationKeys;
         newInstance._authentications = doc._authentications;
+        newInstance.authorizationKeys = doc.authorizationKeys;
         newInstance._authorizations = doc._authorizations;
         newInstance.defaultPublicKey = doc.defaultPublicKey;
         newInstance.credentials = doc.credentials;
@@ -650,12 +651,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the count of authentication key array
      */
     public getAuthenticationKeyCount(): number {
-        let count = 0;
-
-        for (let pk of this.publicKeys.values()) {
-            if (pk.isAuthenticationKey())
-                count++;
-        }
+        let count = this.authenticationKeys.size;
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
@@ -671,12 +667,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the matched authentication key array
      */
     public getAuthenticationKeys(): DIDDocumentPublicKey[] {
-        let pks: DIDDocumentPublicKey[] = [];
-
-        for (let pk of this.publicKeys.values()) {
-            if (pk.isAuthenticationKey())
-                pks.push(pk);
-        }
+        let pks: DIDDocumentPublicKey[] = Array.from(this.authenticationKeys.values());
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
@@ -699,10 +690,7 @@ class DIDDocumentProofSerializer extends Serializer {
         id = this.canonicalId(id);
 
         let pks: DIDDocumentPublicKey[] = [];
-        for (let pk of this.publicKeys.values()) {
-            if (!pk.isAuthenticationKey())
-                continue;
-
+        for (let pk of this.authenticationKeys.values()) {
             if (id != null && !pk.getId().equals(id))
                 continue;
 
@@ -727,8 +715,21 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the matched authentication key object
      */
     public getAuthenticationKey(idOrString: DIDURL | string): DIDDocumentPublicKey {
-        let pk = this.getPublicKey(this.canonicalId(idOrString));
-        return (pk != null && pk.isAuthenticationKey()) ? pk : null;
+        checkArgument(idOrString != null, "Invalid publicKey id");
+
+        idOrString = this.canonicalId(idOrString);
+
+        let pk = this.authenticationKeys.get(idOrString);
+        if (pk != null)
+            return pk;
+
+        if (this.hasController()) {
+            for (let doc of this.controllerDocs.values()) {
+                return doc.getAuthenticationKey(idOrString);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -748,14 +749,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the count
      */
     public getAuthorizationKeyCount(): number {
-        let count = 0;
-
-        for (let pk of this.publicKeys.values()) {
-            if (pk.isAuthorizationKey())
-                count++;
-        }
-
-        return count;
+        return this.authorizationKeys.size;
     }
 
     /**
@@ -764,13 +758,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the  array
      */
     public getAuthorizationKeys(): DIDDocumentPublicKey[] {
-        let pks: DIDDocumentPublicKey[] = [];
-
-        for (let pk of this.publicKeys.values()) {
-            if (pk.isAuthorizationKey())
-                pks.push(pk);
-        }
-
+        let pks: DIDDocumentPublicKey[] = Array.from(this.authorizationKeys.values());
         return pks;
     }
 
@@ -787,10 +775,7 @@ class DIDDocumentProofSerializer extends Serializer {
         idOrString = this.canonicalId(idOrString);
 
         let pks: DIDDocumentPublicKey[] = [];
-        for (let pk of this.publicKeys.values()) {
-            if (!pk.isAuthorizationKey())
-                continue;
-
+        for (let pk of this.authorizationKeys.values()) {
             if (idOrString != null && !pk.getId().equals(idOrString))
                 continue;
 
@@ -806,12 +791,13 @@ class DIDDocumentProofSerializer extends Serializer {
     /**
      * Get authorization key matched the given key id.
      *
-     * @param id the key id
+     * @param idOrString the key id
      * @return the authorization key object
      */
-    public getAuthorizationKey(id: DIDURL | string): DIDDocumentPublicKey {
-        let pk = this.getPublicKey(id);
-        return pk != null && pk.isAuthorizationKey() ? pk : null;
+    public getAuthorizationKey(idOrString: DIDURL | string): DIDDocumentPublicKey {
+        checkArgument(idOrString != null, "Invalid publicKey id");
+
+        return this.authorizationKeys.get(this.canonicalId(idOrString));
     }
 
     /**
@@ -821,7 +807,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the returned value is true if the matched key is an authorization key;
      *         the returned value is false if the matched key is not an authorization key.
      */
-    public isAuthorizationKey(id: DIDURL | string): boolean {
+     public isAuthorizationKey(id: DIDURL | string): boolean {
         return this.getAuthorizationKey(id) != null;
     }
 
@@ -1079,6 +1065,7 @@ class DIDDocumentProofSerializer extends Serializer {
         }
 
         if (this._authentications != null && this._authentications.length > 0) {
+            this.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
             let pk: DIDDocumentPublicKey;
 
             for (let keyRef of this._authentications) {
@@ -1120,15 +1107,17 @@ class DIDDocumentProofSerializer extends Serializer {
                     pks.set(pk.getId(), pk);
                 }
 
-                pk.setAuthenticationKey(true);
+                this.authenticationKeys.set(pk.getId(), pk);
             }
 
             Collections.sort(this._authentications);
         } else {
             this._authentications = [];
+            this.authenticationKeys = new ComparableMap();
         }
 
         if (this._authorizations != null && this._authorizations.length > 0) {
+            this.authorizationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
             let pk: DIDDocumentPublicKey;
 
             for (let keyRef of this._authorizations) {
@@ -1174,12 +1163,13 @@ class DIDDocumentProofSerializer extends Serializer {
                     pks.set(pk.getId(), pk);
                 }
 
-                pk.setAuthorizationKey(true);
+                this.authorizationKeys.set(pk.getId(), pk);
             }
 
             Collections.sort(this._authorizations);
         } else {
             this._authorizations = [];
+            this.authorizationKeys = new ComparableMap();
         }
 
         // for customized DID with controller, could be no public keys
@@ -1197,17 +1187,16 @@ class DIDDocumentProofSerializer extends Serializer {
                 let address = HDKey.toAddress(pk.getPublicKeyBytes());
                 if (address === this.getSubject().getMethodSpecificId()) {
                     this.defaultPublicKey = pk;
-                    if (!pk.isAuthenticationKey()) {
-                        pk.setAuthenticationKey(true);
+                    if (!this.authenticationKeys.has(pk.getId())) {
                         if (this._authentications.length == 0) {
                             this._authentications = [];
-                            this._authentications.push(DIDDocumentPublicKeyReference.newWithKey(pk));
-                        } else {
-                            this._authentications.push(DIDDocumentPublicKeyReference.newWithKey(pk));
-                            Collections.sort(this._authentications);
+                            this.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
                         }
-                    }
 
+                        this._authentications.push(DIDDocumentPublicKeyReference.newWithKey(pk));
+                        this.authenticationKeys.set(pk.getId(), pk);
+                        Collections.sort(this._authentications);  
+                    }
                     break;
                 }
             }
@@ -1464,6 +1453,8 @@ class DIDDocumentProofSerializer extends Serializer {
         if (this.multisig != null)
             doc.multisig = DIDDocumentMultiSignature.newFromMultiSignature(this.multisig);
         doc.publicKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.publicKeys);
+        doc.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.authenticationKeys);
+        doc.authorizationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.authorizationKeys);
         doc.defaultPublicKey = this.defaultPublicKey;
         doc.credentials = new ComparableMap<DIDURL, VerifiableCredential>(this.credentials);
         doc.services = new ComparableMap<DIDURL, DIDDocumentService>(this.services);
@@ -1472,6 +1463,31 @@ class DIDDocumentProofSerializer extends Serializer {
 
         let metadata: DIDMetadata = this.getMetadata().clone();
         doc.setMetadata(metadata);
+
+        return doc;
+    }
+
+	public clone(): DIDDocument {
+        let doc = new DIDDocument(this.subject);
+
+        doc.controllers = this.controllers;
+        doc.controllerDocs = this.controllerDocs;
+        doc.multisig = this.multisig;
+        doc.publicKeys = this.publicKeys;
+        doc._publickeys = this._publickeys;
+        doc.authenticationKeys = this.authenticationKeys;
+        doc._authentications = this._authentications;
+        doc.authorizationKeys = this.authorizationKeys;
+        doc._authorizations = this._authorizations;
+        doc.defaultPublicKey = this.defaultPublicKey;
+        doc.credentials = this.credentials;
+        doc._credentials = this._credentials;
+        doc.services = this.services;
+        doc._services = this._services;
+        doc.expires = this.expires;
+        doc.proofs = this.proofs;
+        doc._proofs = this._proofs;
+        doc.metadata = this.getMetadata().clone();
 
         return doc;
     }

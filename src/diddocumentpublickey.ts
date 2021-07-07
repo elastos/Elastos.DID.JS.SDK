@@ -121,32 +121,6 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
         return Base58.decode(this.publicKeyBase58);
     }
 
-    /**
-     * Check if the key is an authentication key or not.
-     *
-     * @return if the key is an authentication key or not
-     */
-    public isAuthenticationKey(): boolean {
-        return this.authenticationKey;
-    }
-
-    public setAuthenticationKey(authenticationKey: boolean) {
-        this.authenticationKey = authenticationKey;
-    }
-
-    /**
-     * Check if the key is an authorization key or not.
-     *
-     * @return if the key is an authorization key or not
-     */
-    public isAuthorizationKey(): boolean {
-        return this.authorizationKey;
-    }
-
-    public setAuthorizationKey(authorizationKey: boolean) {
-        this.authorizationKey = authorizationKey;
-    }
-
     public equals(ref: DIDDocumentPublicKey): boolean {
         if (this == ref)
             return true;

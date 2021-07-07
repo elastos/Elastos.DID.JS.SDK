@@ -254,6 +254,8 @@ export class DIDDocumentBuilder {
     public addPublicKey(key: DIDDocumentPublicKey) {
         if (this.document.publicKeys == null) {
             this.document.publicKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
+            this.document.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
+            this.document.authorizationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
         } else {
             // Check the existence, both id and keyBase58
             for (let pk of this.document.publicKeys.values()) {
@@ -272,7 +274,7 @@ export class DIDDocumentBuilder {
             let address = HDKey.toAddress(key.getPublicKeyBytes());
             if (address === this.getSubject().getMethodSpecificId()) {
                 this.document.defaultPublicKey = key;
-                key.setAuthenticationKey(true);
+                this.document.authenticationKeys.set(key.getId(), key);
             }
         }
 
@@ -333,11 +335,15 @@ export class DIDDocumentBuilder {
             throw new DIDObjectHasReference(id.toString() + "is default key");
 
         if (!force) {
-            if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
+            //if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
+            if (this.document.authenticationKeys.has(pk.getId()) ||
+                    this.document.authorizationKeys.has(pk.getId()))
                 throw new DIDObjectHasReference(id.toString());
         }
 
         if (this.document.publicKeys.delete(id)) {
+            this.document.authenticationKeys.delete(id);
+            this.document.authorizationKeys.delete(id);
             try {
                 // TODO: should delete the loosed private key when store the document
                 if (this.document.getMetadata().attachedStore())
@@ -369,8 +375,8 @@ export class DIDDocumentBuilder {
         if (!key.getController().equals(this.getSubject()))
             throw new IllegalUsage(id.toString());
 
-        if (!key.isAuthenticationKey()) {
-            key.setAuthenticationKey(true);
+        if (!this.document.authenticationKeys.has(id)) {
+            this.document.authenticationKeys.set(id, key);
             this.invalidateProof();
         }
 
@@ -395,8 +401,8 @@ export class DIDDocumentBuilder {
         checkArgument(pk && pk != null, "Invalid publicKey");
 
         let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), null, this.getSubject(), pk);
-        key.setAuthenticationKey(true);
         this.addPublicKey(key);
+        this.document.authenticationKeys.set(id, key);
 
         return this;
     }
@@ -416,7 +422,7 @@ export class DIDDocumentBuilder {
 
         id = this.canonicalId(id);
         let key = this.document.publicKeys.get(id);
-        if (key == null || !key.isAuthenticationKey())
+        if (key == null || !this.document.authenticationKeys.has(key.getId()))
             throw new DIDObjectNotExistException(id.toString());
 
         // Can not remove default public key
@@ -424,8 +430,8 @@ export class DIDDocumentBuilder {
             throw new DIDObjectHasReference(
                 "Cannot remove the default PublicKey from authentication.");
 
-        if (key.isAuthenticationKey()) {
-            key.setAuthenticationKey(false);
+        if (this.document.authenticationKeys.has(id)) {
+            this.document.authenticationKeys.delete(id);
             this.invalidateProof();
         } else {
             throw new DIDObjectNotExistException(id.toString());
@@ -460,8 +466,8 @@ export class DIDDocumentBuilder {
         if (key.getController().equals(this.getSubject()))
             throw new IllegalUsage(id.toString());
 
-        if (!key.isAuthorizationKey()) {
-            key.setAuthorizationKey(true);
+        if (!this.document.authorizationKeys.has(id)) {
+            this.document.authorizationKeys.set(id, key);
             this.invalidateProof();
         }
 
@@ -499,9 +505,9 @@ export class DIDDocumentBuilder {
             throw new IllegalUsage("Key's controller is self.");
 
         let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), null, controller, pk);
-        key.setAuthorizationKey(true);
         this.addPublicKey(key);
-
+        this.document.authorizationKeys.set(id, key);
+        
         return this;
     }
 
@@ -554,8 +560,8 @@ export class DIDDocumentBuilder {
 
         let pk = new DIDDocumentPublicKey(this.canonicalId(id), targetPk.getType(),
             controller, targetPk.getPublicKeyBase58());
-        pk.setAuthorizationKey(true);
         this.addPublicKey(pk);
+        this.document.authorizationKeys.set(id, pk);
 
         return this;
     }
@@ -580,8 +586,8 @@ export class DIDDocumentBuilder {
         if (key == null)
             throw new DIDObjectNotExistException(id.toString());
 
-        if (key.isAuthorizationKey()) {
-            key.setAuthorizationKey(false);
+        if (this.document.authorizationKeys.has(id)) {
+            this.document.authorizationKeys.delete(id);
             this.invalidateProof();
         } else {
             throw new DIDObjectNotExistException(id.toString());
@@ -894,6 +900,8 @@ export class DIDDocumentBuilder {
 
         if (this.document.publicKeys == null || this.document.publicKeys.size == 0) {
             this.document.publicKeys = new ComparableMap();
+            this.document.authenticationKeys = new ComparableMap();
+            this.document.authorizationKeys = new ComparableMap();
             this.document._publickeys = [];
             this.document._authentications = [];
             this.document._authorizations = [];
@@ -904,23 +912,21 @@ export class DIDDocumentBuilder {
             this.document._authentications = [];
             this.document._authorizations = [];
 
-            for (let pk of this.document.publicKeys.values()) {
-                if (pk.isAuthenticationKey())
+            if (this.document.authenticationKeys.size == 0) {
+                //this.document._authentications = [];
+                this.document.authenticationKeys = new ComparableMap();
+            } else {
+                for (let pk of this.document.authenticationKeys.values())
                     this.document._authentications.push(DIDDocumentPublicKeyReference.newWithKey(pk));
-
-                if (pk.isAuthorizationKey())
-                    this.document._authorizations.push(DIDDocumentPublicKeyReference.newWithKey(pk));
             }
 
-            if (this.document._authentications.length == 0)
-                this.document._authentications = [];
-            else
-                Collections.sort(this.document._authentications);
-
-            if (this.document._authorizations.length == 0)
-                this.document._authorizations = [];
-            else
-                Collections.sort(this.document._authorizations);
+            if (this.document.authorizationKeys.size == 0) {
+                //this.document._authorizations = [];
+                this.document.authorizationKeys = new ComparableMap();
+            } else {
+                for (let pk of this.document.authorizationKeys.values())
+                    this.document._authorizations.push(DIDDocumentPublicKeyReference.newWithKey(pk));
+            }
         }
 
         if (this.document.credentials == null || this.document.credentials.size == 0) {
