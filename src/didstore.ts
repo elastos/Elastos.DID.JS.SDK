@@ -1044,6 +1044,8 @@ import { BASE64 } from "./internals";
 					let metadata = finalDoc.getMetadata();
 					metadata.setPublished(resolvedDoc.getMetadata().getPublished());
 					metadata.setSignature(resolvedDoc.getProof().getSignature());
+					if (resolvedDoc.getMetadata().isDeactivated())
+						metadata.setDeactivated(true);
 					metadata.attachStore(this);
 
 					this.storage.storeDid(finalDoc);
