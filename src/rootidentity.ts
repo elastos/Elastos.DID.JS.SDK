@@ -389,6 +389,8 @@ export class RootIdentity {
 		let metadata = finalDoc.getMetadata();
 		metadata.setPublished(resolvedDoc.getMetadata().getPublished());
 		metadata.setSignature(resolvedDoc.getProof().getSignature());
+		if (resolvedDoc.getMetadata().isDeactivated())
+ 			metadata.setDeactivated(true);
 		metadata.setRootIdentityId(this.getId());
 		metadata.setIndex(index);
 		if (localDoc != null)
