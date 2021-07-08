@@ -718,15 +718,14 @@ class DIDDocumentProofSerializer extends Serializer {
         checkArgument(idOrString != null, "Invalid publicKey id");
 
         idOrString = this.canonicalId(idOrString);
-
         let pk = this.authenticationKeys.get(idOrString);
         if (pk != null)
             return pk;
 
         if (this.hasController()) {
-            for (let doc of this.controllerDocs.values()) {
+            let doc = this.controllerDocs.get(idOrString.getDid());
+            if (doc != null)
                 return doc.getAuthenticationKey(idOrString);
-            }
         }
 
         return null;
@@ -1392,9 +1391,9 @@ class DIDDocumentProofSerializer extends Serializer {
 
                 if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId()))
                     return false;
-
+                    
                 if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest))
-                    return false;
+                    return false;    
             }
 
             return true;
