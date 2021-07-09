@@ -40,7 +40,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 	// but for now i want to keep validating the "internals" fix and Object does the job for now.
 	@JsonIgnore()
 	public props: JSONObject = {};
-
+	@JsonIgnore()
 	protected store?: DIDStore;
 
 	/**
