@@ -680,14 +680,14 @@ describe("DIDStore Tests", ()=>{
 
 		store.close();
 	});
-/*
+
 	test("testExportAndImportDid", async ()=>{
 		let storeDir = new File(TestConfig.storeRoot);
 
-		await (await testData.getInstantData()).getIssuerDocument();
-		await (await testData.getInstantData()).getUser1Document();
-		await (await testData.getInstantData()).getUser1PassportCredential();
-		await (await testData.getInstantData()).getUser1TwitterCredential();
+        await testData.getInstantData().getIssuerDocument();
+        await testData.getInstantData().getUser1Document();
+        await testData.getInstantData().getUser1PassportCredential();
+        await testData.getInstantData().getUser1TwitterCredential();
 
 		let did = (await store.listDids())[0];
 
@@ -695,12 +695,13 @@ describe("DIDStore Tests", ()=>{
 		tempDir.createDirectory(true);
 		let exportFile = new File(tempDir, "didexport.json");
 
-		exportFile.writeText((await store.exportDid(did, "password", TestConfig.storePass)).serialize(true));
+        let data = await store.exportDid(did, "password", TestConfig.storePass);
+        exportFile.writeText(data);
 
-		let restoreDir = new File(tempDir, "restore");
-		Utils.deleteFile(restoreDir);
-		let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
-		store2.importDid(exportFile, "password", TestConfig.storePass);
+        let restoreDir = new File(tempDir, "restore");
+        Utils.deleteFile(restoreDir);
+        let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
+        await store2.importDid(data, "password", TestConfig.storePass);
 
 		let path = "data" + File.SEPARATOR + "ids" + File.SEPARATOR + did.getMethodSpecificId();
 		let didDir = new File(storeDir, path);
@@ -713,23 +714,24 @@ describe("DIDStore Tests", ()=>{
 	test("testExportAndImportRootIdentity", async ()=>{
 		let storeDir = new File(TestConfig.storeRoot);
 
-		await (await testData.getInstantData()).getIssuerDocument();
-		await (await testData.getInstantData()).getUser1Document();
-		await (await testData.getInstantData()).getUser1PassportCredential();
-		await (await testData.getInstantData()).getUser1TwitterCredential();
+        await testData.getInstantData().getIssuerDocument();
+        await testData.getInstantData().getUser1Document();
+        await testData.getInstantData().getUser1PassportCredential();
+        await testData.getInstantData().getUser1TwitterCredential();
 
-		let id = await store.loadRootIdentity().getId();
+        let rootidentity = await store.loadRootIdentity();
+        let id = rootidentity.getId();
 
 		let tempDir = new File(TestConfig.tempDir);
 		tempDir.createDirectory();
 		let exportFile = new File(tempDir, "idexport.json");
 
-		store.exportRootIdentity(id, exportFile, "password", TestConfig.storePass);
+        let data = await store.exportRootIdentity(id, "password", TestConfig.storePass);
 
-		let restoreDir = new File(tempDir, "restore");
-		Utils.deleteFile(restoreDir);
-		let store2 = DIDStore.open(restoreDir.getAbsolutePath());
-		store2.importRootIdentity(exportFile, "password", TestConfig.storePass);
+        let restoreDir = new File(tempDir, "restore");
+        Utils.deleteFile(restoreDir);
+        let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
+        await store2.importRootIdentity(data, "password", TestConfig.storePass);
 
 		let path = "data" + File.SEPARATOR + "roots" + File.SEPARATOR + id;
 		let privateDir = new File(storeDir, path);
@@ -739,7 +741,7 @@ describe("DIDStore Tests", ()=>{
 		expect(Utils.equals(rePrivateDir, privateDir)).toBeTruthy();
 	});
 
-	test("testExportAndImportStore", async ()=>{
+	/*test("testExportAndImportStore", async ()=>{
 		await testData.getRootIdentity();
 
 		// Store test data into current store

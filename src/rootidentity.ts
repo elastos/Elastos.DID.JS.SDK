@@ -150,7 +150,7 @@ export class RootIdentity {
 		this.metadata = metadata;
 	}
 
-	protected static getId(key: Buffer): string {
+	public static getId(key: Buffer): string {
 		checkArgument(key != null && key.length > 0, "Invalid key bytes");
 		return crypto.createHash('md5').update(key.toString('hex'), "hex").digest("hex");
 	}
