@@ -335,7 +335,6 @@ export class DIDDocumentBuilder {
             throw new DIDObjectHasReference(id.toString() + "is default key");
 
         if (!force) {
-            //if (pk.isAuthenticationKey() || pk.isAuthorizationKey())
             if (this.document.authenticationKeys.has(pk.getId()) ||
                     this.document.authorizationKeys.has(pk.getId()))
                 throw new DIDObjectHasReference(id.toString());
@@ -981,8 +980,6 @@ export class DIDDocumentBuilder {
             throw new AlreadySignedException(signerDoc.getSubject().toString());
 
         let json = this.document.serialize(true);
-        //test by chenyu
-        console.log("---- seal: " + json);
 
         let sig = await this.document.signWithId(signKey, storepass, Buffer.from(json));
         let proof = new DIDDocumentProof(signKey, sig);
