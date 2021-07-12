@@ -63,3 +63,4 @@ export class InvalidDateFormat extends ParentException {}
 export class OutOfBoundException extends ParentException {}
 export class DIDTransactionException extends ParentException {}
 export class MalformedExportDataException extends ParentException {}
+export class DIDControllersChangedException extends ParentException {}
