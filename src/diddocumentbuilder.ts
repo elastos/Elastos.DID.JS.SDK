@@ -524,7 +524,7 @@ export class DIDDocumentBuilder {
      * @throws DIDResolveException resolve controller failed.
      * @throws InvalidKeyException the key is not an authentication key.
      */
-    public async authorizationDid(id: DIDURL, controller: DID, key: DIDURL): Promise<DIDDocumentBuilder> {
+    public async authorizeDid(id: DIDURL, controller: DID, key: DIDURL): Promise<DIDDocumentBuilder> {
         this.checkNotSealed();
         checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
             "Invalid publicKey id");

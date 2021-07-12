@@ -3910,7 +3910,7 @@ describe('DIDDocument Tests', () => {
 
 		let target = await identity.newDid(TestConfig.storePass);
 		let db = DIDDocumentBuilder.newFromDocument(target).edit();
-		await db.authorizationDid(new DIDURL("#recovery"), doc.getSubject(), null);
+		await db.authorizeDid(new DIDURL("#recovery"), doc.getSubject(), null);
 		target = await db.seal(TestConfig.storePass);
 		expect(target).not.toBeNull();
 		expect(target.getAuthorizationKeyCount()).toBe(1);
