@@ -66,7 +66,8 @@ import {
     NotControllerException,
     NotCustomizedDIDException,
     NotPrimitiveDIDException,
-    UnknownInternalException
+    UnknownInternalException,
+    DIDControllersChangedException
 } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { TransferTicket } from "./internals";
@@ -1836,6 +1837,23 @@ class DIDDocumentProofSerializer extends Serializer {
 
                 DIDDocument.log.error("Publish failed because DID is deactivated.");
                 throw new DIDDeactivatedException(this.getSubject().toString());
+            }
+
+            if (this.isCustomizedDid()) {
+                if (!this.multisig.equals(resolvedDoc.multisig))
+                    throw new DIDControllersChangedException();
+
+                let orgControllers = resolvedDoc.getControllers();
+                let curControllers = this.getControllers();
+                if (orgControllers.length != curControllers.length)
+                    throw new DIDControllersChangedException();
+
+                orgControllers.sort();
+                curControllers.sort();
+
+                for (let i = 0; i < orgControllers.length; i++)
+                    if (!orgControllers[i].equals(curControllers[i]))
+					    throw new DIDControllersChangedException();
             }
 
             resolvedSignature = resolvedDoc.getProof().getSignature();
