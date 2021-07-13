@@ -1771,7 +1771,7 @@ class DIDDocumentProofSerializer extends Serializer {
         let did = this.getSubject();
         let targetDoc = await did.resolve(true);
         if (targetDoc == null)
-            throw new DIDNotFoundException("DID not found: "+did.toString());
+            throw new DIDNotFoundException("DID not found: " + did.toString());
 
         if (targetDoc.isDeactivated())
             throw new DIDDeactivatedException(did.toString());
@@ -1840,7 +1840,12 @@ class DIDDocumentProofSerializer extends Serializer {
             }
 
             if (this.isCustomizedDid()) {
-                if (!this.multisig.equals(resolvedDoc.multisig))
+                let curMultisig = this.getMultiSignature() == null ?
+                        DIDDocumentMultiSignature.ONE_OF_ONE : this.getMultiSignature();
+				let orgMultisig = resolvedDoc.getMultiSignature() == null ?
+                        DIDDocumentMultiSignature.ONE_OF_ONE : resolvedDoc.getMultiSignature();
+
+                if (!curMultisig.equals(orgMultisig))
                     throw new DIDControllersChangedException();
 
                 let orgControllers = resolvedDoc.getControllers();
