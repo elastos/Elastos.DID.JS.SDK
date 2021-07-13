@@ -22,6 +22,7 @@ class MultisigDeserializer extends Deserializer {
 
 @JsonDeserialize({using:  MultisigDeserializer.deserialize})
 export class DIDDocumentMultiSignature {
+    public static ONE_OF_ONE = new DIDDocumentMultiSignature(1, 1);
     private mv: number;
     private nv: number;
 
@@ -53,7 +54,7 @@ export class DIDDocumentMultiSignature {
     }
 
     protected apply(m: number, n: number) {
-        checkArgument(n > 1, "Invalid multisig spec: n should > 1");
+        checkArgument(n > 0, "Invalid multisig spec: n should > 0");
         checkArgument(m > 0 && m <= n, "Invalid multisig spec: m should > 0 and <= n");
 
         this.mv = m;
