@@ -29,10 +29,11 @@ import { DID } from "./internals";
 import type { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
 import { DIDURL } from "./internals";
-import { DIDResolveException, NotCustomizedDIDException, DIDStoreException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";
+import { NotCustomizedDIDException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
 import { ComparableMap } from "./comparablemap";
 import type { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
+import { VerificationEventListener } from "./verificationEventListener";
 
 class TransferTicketProofSerializer extends Serializer {
 	public static serialize(proof: string[], context: JsonStringifierTransformerContext): any {
@@ -201,48 +202,91 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return true is the ticket is genuine else false
 	 */
-	public async isGenuine(): Promise<boolean> {
+	public async isGenuine(listener : VerificationEventListener = null): Promise<boolean> {
 		let doc = await this.getDocument();
-		if (doc == null)
-			return false;
+		if (doc == null) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: can not resolve the owner document", this.getSubject());
+				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+			}
 
-		if (!doc.isGenuine())
 			return false;
+		}
+
+		if (!doc.isGenuine(listener)) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: the owner document is not genuine", this.getSubject());
+				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+			}
+
+			return false;
+		}
 
 		// Proofs count should match with multisig
 		if ((doc.getControllerCount() > 1 && this.proofs.size != doc.getMultiSignature().m()) ||
-				(doc.getControllerCount() <= 1 && this.proofs.size != 1))
+				(doc.getControllerCount() <= 1 && this.proofs.size != 1)) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: proof size not matched with multisig, %d expected, actual is %d",
+						this.getSubject(), doc.getMultiSignature().m(), doc.proofs.size);
+				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+			}
 			return false;
+		}
 
 		let tt = TransferTicket.newWithTicket(this, false);
 		let json = tt.serialize(true);
 		let digest = EcdsaSigner.sha256Digest(Buffer.from(json, 'utf-8'));
 
-		let checkedControllers: DID[] = [];
-
 		for (let proof of this._proofs) {
-			if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
+			if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: key type '%s' for proof is not supported",
+							this.getSubject(), proof.getType());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
 				return false;
-
+			}
+				
 			let controllerDoc = doc.getControllerDocument(proof.getVerificationMethod().getDid());
-			if (controllerDoc == null)
+			if (controllerDoc == null) {
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: can not resolve the document for controller '%s' to verify the proof",
+						this.getSubject(), proof.getVerificationMethod().getDid());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
 				return false;
-
-			if (!controllerDoc.isValid())
+			}
+				
+			if (!controllerDoc.isValid(listener)) {
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: controller '%s' is invalid, failed to verify the proof",
+							this.getSubject(), proof.getVerificationMethod().getDid());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
 				return false;
-
-			// if already checked this controller
-			if (checkedControllers.includes(proof.getVerificationMethod().getDid()))
+			}
+				
+			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId())) {
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: key '%s' for proof is not default key of '%s'",
+							this.getSubject(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
 				return false;
-
-			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId()))
+			}
+	
+			if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest)) {
+				if (listener != null) {
+					listener.failed(this, "Ticket %s: proof '%s' is invalid, signature mismatch",
+							this.getSubject(), proof.getVerificationMethod());
+					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				}
 				return false;
-
-			if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest))
-				return false;
-
-			checkedControllers.push(proof.getVerificationMethod().getDid());
+			}
 		}
+
+		if (listener != null)
+			listener.succeeded(this, "Ticket %s: is genuine", this.getSubject());
 
 		return true;
 	}
@@ -252,20 +296,41 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 	 *
 	 * @return true is the ticket is valid else false
 	 */
-	public async isValid(): Promise<boolean> {
+	public async isValid(listener : VerificationEventListener = null): Promise<boolean> {
 		let doc = await this.getDocument();
-		if (doc == null)
+		if (doc == null) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: can not resolve the owners document", this.getSubject());
+				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+			}
 			return false;
+		}
 
-		if (!doc.isValid())
+		if (!doc.isValid(listener)) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: the owners document is not valid", this.getSubject());
+				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+			}
 			return false;
+		}
 
-		if (!await this.isGenuine())
+		if (!await this.isGenuine(listener)) {
+			if (listener != null)
+				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
 			return false;
+		}
 
-		if (this.txid !== doc.getMetadata().getTransactionId())
+		if (this.txid !== doc.getMetadata().getTransactionId()) {
+			if (listener != null) {
+				listener.failed(this, "Ticket %s: the transaction id already out date", this.getSubject());
+				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+			}
 			return false;
-
+		}
+	
+		if (listener != null)
+			listener.succeeded(this, "Ticket %s: is valid", this.getSubject());
+			
 		return true;
 	}
 

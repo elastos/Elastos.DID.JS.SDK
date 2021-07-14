@@ -28,8 +28,8 @@ import type { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
 import type { DIDStore } from "./internals";
 import { DIDURL } from "./internals";
-import { ParentException, AlreadySealedException, IllegalArgumentException, DIDNotFoundException, DIDObjectAlreadyExistException, IllegalUsage, InvalidKeyException, MalformedPresentationException } from "./exceptions/exceptions";
-import { checkArgument, promisify } from "./internals";
+import { ParentException, AlreadySealedException, DIDNotFoundException, DIDObjectAlreadyExistException, IllegalUsage, InvalidKeyException, MalformedPresentationException } from "./exceptions/exceptions";
+import { checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import type {
 	JsonStringifierTransformerContext,
@@ -40,6 +40,7 @@ import {
 	Deserializer
 } from "./internals";
 import { ComparableMap } from "./comparablemap";
+import { VerificationEventListener } from "./verificationEventListener";
 
 class NormalizedURLDeserializer extends Deserializer {
 	public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
@@ -286,38 +287,81 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return whether the Credential object is genuine
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public async isGenuine(): Promise<boolean> {
+	public async isGenuine(listener : VerificationEventListener = null): Promise<boolean> {
 		let holderDoc = await this.getHolder().resolve();
-		if (holderDoc == null)
+		if (holderDoc == null) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: can not resolve the holder's document", this.getId());
+				listener.failed(this, "VP %s: is not genuine", this.getId());
+			}
 			return false;
+		}		
 
 		// Check the integrity of holder' document.
-		if (!holderDoc.isGenuine())
+		if (!holderDoc.isGenuine()) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: holder's document is not genuine", this.getId());
+				listener.failed(this, "VP %s: is not genuine", this.getId());
+			}
 			return false;
-
+		}
+			
 		// Unsupported public key type;
-		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
+		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: key type '%s' for proof is not supported",
+						this.getId(), this.proof.getType());
+				listener.failed(this, "VP %s: is not genuine", this.getId());
+			}
 			return false;
-
+		}
+			
 		// Credential should signed by authentication key.
-		if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod()))
+		if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: Key '%s' for proof is not an authencation key of '%s'",
+						this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+				listener.failed(this, "VP %s: is not genuine", this.getId());
+			}
 			return false;
-
+		}
+			
 		// All credentials should owned by holder
 		for (let vc of this.credentials.values()) {
-			if (!vc.getSubject().getId().equals(this.getHolder()))
+			if (!vc.getSubject().getId().equals(this.getHolder())) {
+				if (listener != null) {
+					listener.failed(this, "VP %s: credential '%s' not owned by the holder '%s'",
+							this.getId(), vc.getId(), this.getHolder());
+					listener.failed(this, "VP %s: is not genuine", this.getId());
+				}
 				return false;
-
-			if (!await vc.isGenuine())
+			}
+				
+			if (!await vc.isGenuine()) {
+				if (listener != null) {
+					listener.failed(this, "VP %s: credential '%s' is not genuine",
+							this.getId(), vc.getId());
+					listener.failed(this, "VP %s: is not genuine", this.getId());
+				}
 				return false;
+			}		
 		}
 
 		let vp = VerifiablePresentation.newFromPresentation(this, false);
 		let json = vp.serialize(true);
 
-		return holderDoc.verify(this.proof.getVerificationMethod(),
+		let result =  holderDoc.verify(this.proof.getVerificationMethod(),
 			this.proof.getSignature(), Buffer.from(json),
 			Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
+        if (listener != null) {
+			if (result) {
+				listener.succeeded(this, "VP %s: is genuine", this.getId());
+			} else {
+				listener.failed(this, "VP %s: proof is invalid, signature mismatch", this.getId());
+				listener.failed(this, "VP %s: is not genuine", this.getId());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -326,38 +370,82 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 	 * @return whether the Credential object is valid
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public async isValid(): Promise<boolean> {
+	public async isValid(listener : VerificationEventListener = null): Promise<boolean> {
 		let  holderDoc = await this.getHolder().resolve();
-		if (holderDoc == null)
+		if (holderDoc == null) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: can not resolve the holder's document", this.getId());
+				listener.failed(this, "VP %s: is invalid", this.getId());
+			}
 			return false;
-
+		}
+			
 		// Check the validity of holder' document.
-		if (!holderDoc.isValid())
+		if (!holderDoc.isValid()) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: holder's document is invalid", this.getId());
+				listener.failed(this, "VP %s: is invalid", this.getId());
+			}
 			return false;
+		}	
 
 		// Unsupported public key type;
-		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
+		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: Key type '%s' for proof is not supported",
+						this.getId(), this.proof.getType());
+				listener.failed(this, "VP %s: is invalid", this.getId());
+			}
 			return false;
-
+		}
+			
 		// Credential should signed by authentication key.
-		if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod()))
+		if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
+			if (listener != null) {
+				listener.failed(this, "VP %s: Key '%s' for proof is not an authencation key of '%s'",
+						this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+				listener.failed(this, "VP %s: is invalid", this.getId());
+			}
 			return false;
-
+		}
+		
 		// All credentials should owned by holder
 		for (let vc of this.credentials.values()) {
-			if (!vc.getSubject().getId().equals(this.getHolder()))
+			if (!vc.getSubject().getId().equals(this.getHolder())) {
+				if (listener != null) {
+					listener.failed(this, "VP %s: credential '%s' not owned by the holder '%s'",
+							this.getId(), vc.getId(), this.getHolder());
+					listener.failed(this, "VP %s: is not genuine", this.getId());
+				}
 				return false;
-
-			if (!await vc.isValid())
+			}
+				
+			if (!await vc.isValid()) {
+				if (listener != null) {
+					listener.failed(this, "VP %s: credential '%s' is invalid",
+					this.getId(), vc.getId());
+					listener.failed(this, "VP %s: is invalid", this.getId());
+				}
 				return false;
+			}	
 		}
 
 		let vp = VerifiablePresentation.newFromPresentation(this, false);
 		let json = vp.serialize(true);
 
-		return holderDoc.verify(this.proof.getVerificationMethod(),
+		let result = holderDoc.verify(this.proof.getVerificationMethod(),
 			this.proof.getSignature(), Buffer.from(json),
 			Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
+		if (listener != null) {
+			if (result) {
+				listener.succeeded(this, "VP %s: is valid", this.getId());
+			} else {
+				listener.failed(this, "VP %s: proof is invalid, signature mismatch", this.getId());
+				listener.failed(this, "VP %s: is invalid", this.getId());
+			}
+		}
+
+		return result;
 	}
 
 	/**

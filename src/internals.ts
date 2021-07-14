@@ -43,6 +43,8 @@ export * from "./didstore";
 
 export * from "./issuer";
 
+export * from "./verificationEventListener"
+
 export * from "./collections";
 export * from "./crypto/bytebuffer";
 export * from "./crypto/md5";

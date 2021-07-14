@@ -48,6 +48,7 @@ import { DIDDocumentPublicKeyReference } from "./internals";
 import { DIDDocumentService } from "./internals";
 import { DIDEntity } from "./internals";
 import { DIDMetadata } from "./internals";
+import { VerificationEventListener } from "./internals";
 import type { DIDStore } from "./internals";
 import type { DIDTransactionAdapter } from "./didtransactionadapter";
 import { DIDURL } from "./internals";
@@ -1355,11 +1356,17 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the returned value is true if the did document is genuine;
      *         the returned value is false if the did document is not genuine.
      */
-    public isGenuine(): boolean {
+    public isGenuine(listener : VerificationEventListener = null): boolean {
         // Proofs count should match with multisig
         let expectedProofs = this.multisig == null ? 1 : this.multisig.m();
-        if (this.proofs.size != expectedProofs)
+        if (this.proofs.size != expectedProofs) {
+            if (listener != null) {
+				listener.failed(this, "%s: proof size not matched with multisig, %d expected, actual is %d",
+						this.getSubject(), this.multisig.m(), this.proofs.size);
+				listener.failed(this, "%s: is not genuine", this.getSubject());
+			}
             return false;
+        }
 
         let doc = DIDDocument.clone(this, false);
         let json = doc.serialize(true);
@@ -1370,32 +1377,90 @@ class DIDDocumentProofSerializer extends Serializer {
             let proof = this.getProof();
 
             // Unsupported public key type;
-            if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
-                return false;
+            if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
+            	if (listener != null) {
+					listener.failed(this, "%s: key type '%s' for proof is not supported",
+							this.getSubject(), proof.getType());
+					listener.failed(this, "%s: is not genuine", this.getSubject());
+				}
 
-            if (!proof.getCreator().equals(this.getDefaultPublicKeyId()))
                 return false;
+            }
 
-            return this.verifyDigest(proof.getCreator(), proof.getSignature(), digest);
+            if (!proof.getCreator().equals(this.getDefaultPublicKeyId())) {
+				if (listener != null) {
+					listener.failed(this, "%s: key '%s' for proof is not default key",
+							this.getSubject(), proof.getCreator());
+					listener.failed(this, "%s: is not genuine", this.getSubject());
+				}
+                return false;
+            }
+
+            let result =  this.verifyDigest(proof.getCreator(), proof.getSignature(), digest);
+			if (listener != null) {
+				if (result) {
+					listener.succeeded(this, "%s: is genuine", this.getSubject());
+				} else {
+					listener.failed(this, "%s: can not verify the signature", this.getSubject());
+					listener.failed(this, "%s: is not genuine", this.getSubject());
+				}
+			}
+
+			return result;
         } else {
             for (let proof of this._proofs) {
                 // Unsupported public key type;
-                if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
+                if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
+                    if (listener != null) {
+						listener.failed(this, "%s: key type '%s' for proof is not supported",
+								this.getSubject(), proof.getType());
+						listener.failed(this, "%s: is not genuine", this.getSubject());
+					}
+
                     return false;
+                }
 
                 let controllerDoc = this.getControllerDocument(proof.getCreator().getDid());
-                if (controllerDoc == null)
+                if (controllerDoc == null) {
+                    if (listener != null) {
+						listener.failed(this, "%s: can not resolve the document for controller '%s' to verify the proof",
+								this.getSubject(), proof.getCreator().getDid());
+						listener.failed(this, "%s: is not genuine", this.getSubject());
+					}
                     return false;
-
-                if (!controllerDoc.isGenuine())
-                    return false;
-
-                if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId()))
-                    return false;
+                }
                     
-                if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest))
-                    return false;    
+                if (!controllerDoc.isGenuine(listener)) {
+                    if (listener != null) {
+						listener.failed(this, "%s: controller '%s' is not genuine, failed to verify the proof",
+								this.getSubject(), proof.getCreator().getDid());
+						listener.failed(this, "%s: is not genuine", this.getSubject());
+					}
+
+                    return false;
+                }
+
+                if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId())) {
+                    if (listener != null) {
+						listener.failed(this, "%s: key '%s' for proof is not default key of '%s'",
+								this.getSubject(), proof.getCreator(), proof.getCreator().getDid());
+						listener.failed(this, "%s: is not genuine", this.getSubject());
+					}
+                    return false;
+                }
+                    
+                if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest)) {
+                    if (listener != null) {
+						listener.failed(this, "%s: proof '%s' is invalid, signature mismatch",
+								this.getSubject(), proof.getCreator());
+						listener.failed(this, "%s: is not genuine", this.getSubject());
+					}
+                    return false;  
+                }         
             }
+
+            if (listener != null)
+                listener.succeeded(this, "%s: is genuine", this.getSubject());
 
             return true;
         }
@@ -1431,16 +1496,53 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the returned value is true if the did document is valid;
      *         the returned value is false if the did document is not valid.
      */
-    public isValid(): boolean {
-        if (this.isDeactivated() || this.isExpired() || !this.isGenuine())
+    public isValid(listener : VerificationEventListener = null): boolean {
+        if (this.isDeactivated()) {
+            if (listener != null) {
+				listener.failed(this, "%s: is deactivated", this.getSubject());
+				listener.failed(this, "%s: is invalid", this.getSubject());
+			}
+			return false;
+        }
+
+        if (this.isExpired()) {
+			if (listener != null) {
+				listener.failed(this, "%s: is expired", this.getSubject());
+				listener.failed(this, "%s: is invalid", this.getSubject());
+			}
+			return false;
+        }
+
+        if (!this.isGenuine(listener)) {
+            if (listener != null)
+                listener.failed(this, "%s: is invalid", this.getSubject());
             return false;
+        }
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values()) {
-                if (doc.isDeactivated() || !doc.isGenuine())
-                    return false;
+                if (doc.isDeactivated()) {
+                    if (listener != null) {
+                        listener.failed(this, "%s: controller '%s' is deactivated",
+                                this.getSubject(), doc.getSubject());
+                        listener.failed(this, "%s: is invalid", this.getSubject());
+                    }
+					return false;
+				}
+                
+                if (!doc.isGenuine(listener)) {
+                    if (listener != null) {
+                        listener.failed(this, "%s: controller '%s' is not genuine",
+                                this.getSubject(), doc.getSubject());
+                        listener.failed(this, "%s: is invalid", this.getSubject());
+                    }
+					return false;
+                }
             }
         }
+
+        if (listener != null)
+            listener.succeeded(this, "%s: is valid", this.getSubject());
 
         return true;
     }
