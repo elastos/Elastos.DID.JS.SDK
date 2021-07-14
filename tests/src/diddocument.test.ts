@@ -42,6 +42,7 @@ import {
 } from "./utils/utils";
 import { TestConfig } from "./utils/testconfig";
 import { DIDTestExtension } from "./utils/didtestextension";
+import { DefaultVerificationEventListener } from "../../typings/verificationEventListener";
 
 async function testGetPublicKey(version: number, testData: TestData) {
 	let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
@@ -2070,6 +2071,11 @@ describe('DIDDocument Tests', () => {
 		let cd = testData.getCompatibleData(version);
 		await cd.loadAll();
 		let dids = [
+			"user1",
+			"user2",
+			"user3",
+			"user4",
+			"issuer",
 			"examplecorp",
 			"foobar",
 			"foo",
@@ -2101,6 +2107,70 @@ describe('DIDDocument Tests', () => {
 				expect(normalized.toString(false)).toEqual(compactJson);
 				expect(doc.toString(false)).toEqual(compactJson);
 			}
+		}
+	})
+
+	test("testGenuineAndValidWithListener", async () => {
+		let version = 2;
+		let cd = testData.getCompatibleData(version);
+		await cd.loadAll();
+		let dids = [
+			"user1",
+			"user2",
+			"user3",
+			"user4",
+			"issuer",
+			"examplecorp",
+			"foobar",
+			"foo",
+			"bar",
+			"baz"]
+
+        let listener = new DefaultVerificationEventListener("  ", "- ", "* ");
+		for(const did of dids){
+			let compactJson = cd.getDocumentJson(did, "compact");
+			let compact = await DIDDocument.parse<DIDDocument>(compactJson, DIDDocument);
+			expect(compact).not.toBeNull();
+			expect(compact.isValid()).toBeTruthy();
+
+			expect(compact.isGenuine(listener)).toBeTruthy();
+			let message = String(listener.toString());
+			expect(message.startsWith("  - ")).toBeTruthy();
+			listener.reset();
+	
+			expect(compact.isValid(listener)).toBeTruthy();
+			message = String(listener.toString());
+			expect(message.startsWith("  - ")).toBeTruthy();
+			listener.reset();
+
+			let normalizedJson = cd.getDocumentJson(did, "normalized");
+			let normalized = await DIDDocument.parse<DIDDocument>(normalizedJson, DIDDocument);
+			expect(normalized).not.toBeNull();
+			expect(normalized.isValid()).toBeTruthy();
+
+			expect(normalized.isGenuine(listener)).toBeTruthy();
+			message = String(listener.toString());
+			expect(message.startsWith("  - ")).toBeTruthy();
+			listener.reset();
+	
+			expect(normalized.isValid(listener)).toBeTruthy();
+			message = String(listener.toString());
+			expect(message.startsWith("  - ")).toBeTruthy();
+			listener.reset();
+
+			let doc = await cd.getDocument(did);
+			expect(doc).not.toBeNull();
+			expect(doc.isValid()).toBeTruthy();
+
+			expect(doc.isGenuine(listener)).toBeTruthy();
+			message = String(listener.toString());
+			expect(message.startsWith("  - ")).toBeTruthy();
+			listener.reset();
+	
+			expect(doc.isValid(listener)).toBeTruthy();
+			message = String(listener.toString());
+			expect(message.startsWith("  - ")).toBeTruthy();
+			listener.reset();
 		}
 	})
 

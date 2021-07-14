@@ -743,38 +743,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		await DIDBackend.getInstance().revokeCredential(id, signer, signKey, storepass, adapter);
 	}
 
-	/* public static void revoke(id: DIDURL, DIDDocument issuer, signKey: DIDURL, storepass: string) {
-		revoke(id, issuer, signKey, storepass, null);
-	}
-
-	public static void revoke(String id, DIDDocument issuer, String signKey,
-			storepass: string, adapter: DIDTransactionAdapter) {
-		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
-				storepass, adapter);
-	}
-
-	public static void revoke(String id, DIDDocument issuer, String signKey, storepass: string) {
-		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
-				storepass, null);
-	}
-
-	public static void revoke(id: DIDURL, DIDDocument issuer, storepass: string, DIDTransactionAdapter adapter) {
-		revoke(id, issuer, null, storepass, adapter);
-	}
-
-	public static void revoke(id: DIDURL, DIDDocument issuer, storepass: string) {
-		revoke(id, issuer, null, storepass, null);
-	}
-
-	public static void revoke(String id, DIDDocument issuer, storepass: string,
-			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
-		revoke(DIDURL.valueOf(id), issuer, null, storepass, adapter);
-	}
-
-	public static void revoke(String id, DIDDocument issuer, storepass: string) {
-		revoke(DIDURL.valueOf(id), issuer, null, storepass, null);
-	} */
-
 	/**
 	 * Resolve VerifiableCredential object.
 	 *
@@ -805,20 +773,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		return DIDBackend.getInstance().resolveCredentialBiography(id, issuer);
 	}
-
-	/* public static CredentialBiography resolveBiography(id: DIDURL) {
-		checkArgument(id != null, "Invalid credential id");
-
-		return DIDBackend.getInstance().resolveCredentialBiography(id);
-	} */
-
-	/* public static CredentialBiography resolveBiography(String id, String issuer) {
-		return resolveBiography(DIDURL.valueOf(id), DID.from(issuer));
-	}
-
-	public static CredentialBiography resolveBiography(String id) {
-		return resolveBiography(id, null);
-	} */
 
 	public static list(did: DID, skip = 0, limit = 0): Promise<DIDURL[]> {
 		checkArgument(did != null, "Invalid did");

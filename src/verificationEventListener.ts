@@ -44,64 +44,61 @@ export abstract class VerificationEventListener {
 	}
 
 	public getDefault(ident : string, succeededPrefix : string, failedPrefix : string) : VerificationEventListener {
-		return new VerificationEventListener.DefaultVerificationEventListener(ident, succeededPrefix, failedPrefix);
+		return new DefaultVerificationEventListener(ident, succeededPrefix, failedPrefix);
 	}
 
 	public getDefaultWithIdent(ident : string) : VerificationEventListener {
-		return new VerificationEventListener.DefaultVerificationEventListener(ident, null, null);
+		return new DefaultVerificationEventListener(ident, null, null);
 	}
 }
 
-export namespace VerificationEventListener {
-	export class DefaultVerificationEventListener extends VerificationEventListener {
-		private static EMPTY = "";
+export class DefaultVerificationEventListener extends VerificationEventListener {
+	private static EMPTY = "";
 
-		private ident : string;
-		private succeededPrefix : string;
-		private failedPrefix : string;
-		private records : DefaultVerificationEventListener.Record[];
+	private ident : string;
+	private succeededPrefix : string;
+	private failedPrefix : string;
+	private records : DefaultVerificationEventListener.Record[];
 
-	    constructor(ident : string, succeededPrefix : string, failedPrefix : string) {
-			super();
-			this.ident = ident == null ? DefaultVerificationEventListener.EMPTY : ident;
-			this.succeededPrefix = succeededPrefix == null ? DefaultVerificationEventListener.EMPTY : succeededPrefix;
-			this.failedPrefix = failedPrefix == null ? DefaultVerificationEventListener.EMPTY : failedPrefix;
+	constructor(ident : string, succeededPrefix : string, failedPrefix : string) {
+		super();
+		this.ident = ident == null ? DefaultVerificationEventListener.EMPTY : ident;
+		this.succeededPrefix = succeededPrefix == null ? DefaultVerificationEventListener.EMPTY : succeededPrefix;
+		this.failedPrefix = failedPrefix == null ? DefaultVerificationEventListener.EMPTY : failedPrefix;
 
-			this.records = new Array();
-		}
-
-		public done(context : Object, succeeded : boolean, message : string) : void {
-			this.records.push(new VerificationEventListener.DefaultVerificationEventListener.Record(context, succeeded, message));
-		}
-
-		public reset() : void {
-			this.records = [];
-		}
-
-		public toString() : string {
-			let strb : string[];
-			for (let record of this.records) {
-				strb.push(this.ident);
-				strb.push(record.succeeded ? this.succeededPrefix : this.failedPrefix)
-				strb.push(record.message)
-				strb.push("\n");
-			}
-
-			return strb.toString();
-		}	
+		this.records = new Array();
 	}
 
-	export namespace DefaultVerificationEventListener {
-		export class Record {
-			context : Object;
-			succeeded : boolean;
-			message : string;
-
-			constructor(context : Object, succeeded : boolean, message : string) {
-				this.context = context;
-				this.succeeded = succeeded;
-				this.message = message;
-			}
-		}		
+	public done(context : Object, succeeded : boolean, message : string) : void {
+		this.records.push(new DefaultVerificationEventListener.Record(context, succeeded, message));
 	}
+
+	public reset() : void {
+		this.records = [];
+	}
+	
+	public toString() : string {
+		let strb = String();
+		for (let record of this.records) {
+			strb.concat(this.ident);
+			strb.concat(record.succeeded ? this.succeededPrefix : this.failedPrefix);
+			strb.concat(record.message);
+			strb.concat("\n");
+		}
+		return strb.toString();
+	}
+}
+
+export namespace DefaultVerificationEventListener {
+	export class Record {
+		context : Object;
+		succeeded : boolean;
+		message : string;
+
+		constructor(context : Object, succeeded : boolean, message : string) {
+			this.context = context;
+			this.succeeded = succeeded;
+			this.message = message;
+		}
+	}		
 }
