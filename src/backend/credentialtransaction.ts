@@ -26,25 +26,25 @@ import { CredentialRequest } from "./credentialrequest";
 import { IDTransaction } from "./idtransaction";
 
 export class CredentialTransaction extends IDTransaction<CredentialTransaction, CredentialRequest> {
-	@JsonProperty({value: IDTransaction.OPERATION})
-	@JsonClassType({type: () => [CredentialRequest]})
-	declare protected request: CredentialRequest;
+    @JsonProperty({value: IDTransaction.OPERATION})
+    @JsonClassType({type: () => [CredentialRequest]})
+    declare protected request: CredentialRequest;
 
-	protected CredentialTransaction() {}
+    protected CredentialTransaction() {}
 
-	/**
-	 * Constructs the DIDTransaction with the given value.
-	 *
-	 * @param txid the transaction id string
-	 * @param timestamp the time stamp
-	 * @param request the IDChainRequest content
-	 */
-	// Java: @JsonCreator
-	constructor(txid: string = null, timestamp: Date = null, request: CredentialRequest = null) {
-		super(txid, timestamp, request);
-	}
+    /**
+     * Constructs the DIDTransaction with the given value.
+     *
+     * @param txid the transaction id string
+     * @param timestamp the time stamp
+     * @param request the IDChainRequest content
+     */
+    // Java: @JsonCreator
+    constructor(txid: string = null, timestamp: Date = null, request: CredentialRequest = null) {
+        super(txid, timestamp, request);
+    }
 
-	public getId(): DIDURL {
-		return this.getRequest().getCredentialId();
-	}
+    public getId(): DIDURL {
+        return this.getRequest().getCredentialId();
+    }
 }

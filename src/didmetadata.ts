@@ -30,140 +30,140 @@ import { DIDStoreException } from "./exceptions/exceptions";
  * The class defines the implement of DID Metadata.
  */
 export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetadata> {
-	private static ROOT_IDENTITY = "rootIdentity";
-	private static INDEX = "index";
-	private static TXID = "txid";
-	private static PREV_SIGNATURE = "prevSignature";
-	private static SIGNATURE = "signature";
-	private static PUBLISHED = "published";
-	private static DEACTIVATED = "deactivated";
+    private static ROOT_IDENTITY = "rootIdentity";
+    private static INDEX = "index";
+    private static TXID = "txid";
+    private static PREV_SIGNATURE = "prevSignature";
+    private static SIGNATURE = "signature";
+    private static PUBLISHED = "published";
+    private static DEACTIVATED = "deactivated";
 
-	private did: DID | null = null;
+    private did: DID | null = null;
 
-	/**
-	 * Constructs the empty DIDMetadataImpl with the given store.
-	 *
-	 * @param store the specified DIDStore
-	 */
-	public constructor(did: DID | null = null, store: DIDStore | null = null) {
-		super(store);
-		this.did = did;
-	}
+    /**
+     * Constructs the empty DIDMetadataImpl with the given store.
+     *
+     * @param store the specified DIDStore
+     */
+    public constructor(did: DID | null = null, store: DIDStore | null = null) {
+        super(store);
+        this.did = did;
+    }
 
-	public setDid(did: DID) {
-		this.did = did;
-	}
+    public setDid(did: DID) {
+        this.did = did;
+    }
 
-	public setRootIdentityId(id: string) {
-		this.put(DIDMetadata.ROOT_IDENTITY, id);
-	}
+    public setRootIdentityId(id: string) {
+        this.put(DIDMetadata.ROOT_IDENTITY, id);
+    }
 
-	public getRootIdentityId(): string {
-		return this.get(DIDMetadata.ROOT_IDENTITY) as string;
-	}
+    public getRootIdentityId(): string {
+        return this.get(DIDMetadata.ROOT_IDENTITY) as string;
+    }
 
-	public setIndex(index: number) {
-		this.put(DIDMetadata.INDEX, index);
-	}
+    public setIndex(index: number) {
+        this.put(DIDMetadata.INDEX, index);
+    }
 
-	public getIndex(): number {
-		return this.getInteger(DIDMetadata.INDEX, -1);
-	}
+    public getIndex(): number {
+        return this.getInteger(DIDMetadata.INDEX, -1);
+    }
 
-	/**
-	 * Set transaction id into DIDMetadata.
-	 *
-	 * @param txid the transaction id string
-	 */
-	public setTransactionId(txid: string) {
-		this.put(DIDMetadata.TXID, txid);
-	}
+    /**
+     * Set transaction id into DIDMetadata.
+     *
+     * @param txid the transaction id string
+     */
+    public setTransactionId(txid: string) {
+        this.put(DIDMetadata.TXID, txid);
+    }
 
-	/**
-	 * Get the last transaction id.
-	 *
-	 * @return the transaction string
-	 */
-	public getTransactionId(): string {
-		return this.get(DIDMetadata.TXID) as string;
-	}
+    /**
+     * Get the last transaction id.
+     *
+     * @return the transaction string
+     */
+    public getTransactionId(): string {
+        return this.get(DIDMetadata.TXID) as string;
+    }
 
-	/**
-	 * Set previous signature into DIDMetadata.
-	 *
-	 * @param signature the signature string
-	 */
-	public setPreviousSignature(signature: string) {
-		this.put(DIDMetadata.PREV_SIGNATURE, signature);
-	}
+    /**
+     * Set previous signature into DIDMetadata.
+     *
+     * @param signature the signature string
+     */
+    public setPreviousSignature(signature: string) {
+        this.put(DIDMetadata.PREV_SIGNATURE, signature);
+    }
 
-	/**
-	 * Get the document signature from the previous transaction.
-	 *
-	 * @return the signature string
-	 */
-	public getPreviousSignature(): string {
-		return this.get(DIDMetadata.PREV_SIGNATURE) as string;
-	}
+    /**
+     * Get the document signature from the previous transaction.
+     *
+     * @return the signature string
+     */
+    public getPreviousSignature(): string {
+        return this.get(DIDMetadata.PREV_SIGNATURE) as string;
+    }
 
-	/**
-	 * Set signature into DIDMetadata.
-	 *
-	 * @param signature the signature string
-	 */
-	public setSignature(signature: string) {
-		this.put(DIDMetadata.SIGNATURE, signature);
-	}
+    /**
+     * Set signature into DIDMetadata.
+     *
+     * @param signature the signature string
+     */
+    public setSignature(signature: string) {
+        this.put(DIDMetadata.SIGNATURE, signature);
+    }
 
-	/**
-	 * Get the document signature from the lastest transaction.
-	 *
-	 * @return the signature string
-	 */
-	public getSignature(): string {
-		return this.get(DIDMetadata.SIGNATURE) as string;
-	}
+    /**
+     * Get the document signature from the lastest transaction.
+     *
+     * @return the signature string
+     */
+    public getSignature(): string {
+        return this.get(DIDMetadata.SIGNATURE) as string;
+    }
 
-	/**
-	 * Set published time into DIDMetadata.
-	 *
-	 * @param timestamp the time published
-	 */
-	 public setPublished(timestamp: Date) {
-		this.put(DIDMetadata.PUBLISHED, timestamp);
-	}
+    /**
+     * Set published time into DIDMetadata.
+     *
+     * @param timestamp the time published
+     */
+     public setPublished(timestamp: Date) {
+        this.put(DIDMetadata.PUBLISHED, timestamp);
+    }
 
-	/**
-	 * Get the time of the lastest published transaction.
-	 *
-	 * @return the published time
-	 */
-	public getPublished(): Date | null {
-		try {
-			return this.getDate(DIDMetadata.PUBLISHED, null);
-		} catch (e) {
-			return null;
-		}
-	}
+    /**
+     * Get the time of the lastest published transaction.
+     *
+     * @return the published time
+     */
+    public getPublished(): Date | null {
+        try {
+            return this.getDate(DIDMetadata.PUBLISHED, null);
+        } catch (e) {
+            return null;
+        }
+    }
 
-	/**
-	 * Set deactivate status into DIDMetadata.
-	 *
-	 * @param deactivated the deactivate status
-	 */
-	 public setDeactivated(deactivated: boolean) {
-		this.put(DIDMetadata.DEACTIVATED, deactivated);
-	}
+    /**
+     * Set deactivate status into DIDMetadata.
+     *
+     * @param deactivated the deactivate status
+     */
+     public setDeactivated(deactivated: boolean) {
+        this.put(DIDMetadata.DEACTIVATED, deactivated);
+    }
 
-	/**
-	 * the DID deactivated status.
-	 *
-	 * @return the returned value is true if the did is deactivated.
-	 *         the returned value is false if the did is activated.
-	 */
-	public isDeactivated(): boolean {
-		return this.getBoolean(DIDMetadata.DEACTIVATED, false);
-	}
+    /**
+     * the DID deactivated status.
+     *
+     * @return the returned value is true if the did is deactivated.
+     *         the returned value is false if the did is activated.
+     */
+    public isDeactivated(): boolean {
+        return this.getBoolean(DIDMetadata.DEACTIVATED, false);
+    }
 
     /**
      * Returns a shallow copy of this instance: the keys and values themselves
@@ -171,23 +171,23 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
      *
      * @return a shallow copy of this object
      */
-	public clone(): DIDMetadata  | null {
-		let clonedData: DIDMetadata = new DIDMetadata();
-		clonedData.props = this.props;
-		clonedData.did = this.did;
-		clonedData.store = this.store;
-		return clonedData;
+    public clone(): DIDMetadata  | null {
+        let clonedData: DIDMetadata = new DIDMetadata();
+        clonedData.props = this.props;
+        clonedData.did = this.did;
+        clonedData.store = this.store;
+        return clonedData;
     }
 
-	protected save() {
-		if (this.attachedStore()) {
-			try {
-				this.getStore().storeDidMetadata(this.did, this);
-			} catch (e) {
-				if (e instanceof DIDStoreException)
-					console.log("INTERNAL - error store metadata for DID {}", this.did);
-				throw e;
-			}
-		}
-	}
+    protected save() {
+        if (this.attachedStore()) {
+            try {
+                this.getStore().storeDidMetadata(this.did, this);
+            } catch (e) {
+                if (e instanceof DIDStoreException)
+                    console.log("INTERNAL - error store metadata for DID {}", this.did);
+                throw e;
+            }
+        }
+    }
 }

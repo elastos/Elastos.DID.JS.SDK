@@ -27,13 +27,13 @@ import type { DIDTransactionAdapter } from "./didtransactionadapter";
  * The interface to provide DID Adapter method to publish DID Document.
  */
 export interface DIDAdapter extends DIDTransactionAdapter {
-	/**
-	 * Perform the DID related resolve.
-	 *
-	 * @param requestId the request identifier by user defined
-	 * @param request the resolve request
-	 * @return the resolve result
-	 * @throws DIDResolveException resolve did failed.
-	 */
-	resolve(request: string): Promise<JSONObject>;
+    /**
+     * Perform the DID related resolve.
+     *
+     * @param requestId the request identifier by user defined
+     * @param request the resolve request
+     * @return the resolve result
+     * @throws DIDResolveException resolve did failed.
+     */
+    resolve(request: string): Promise<JSONObject>;
 }

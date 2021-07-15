@@ -2,8 +2,8 @@ import { DIDEntity } from "./internals";
 import type { DID } from "./internals";
 import { Constants } from "./constants";
 import type {
-	JsonStringifierTransformerContext,
-	JsonParserTransformerContext
+    JsonStringifierTransformerContext,
+    JsonParserTransformerContext
 } from "@elastosfoundation/jackson-js";
 import type {
     ObjectMapper,

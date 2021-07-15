@@ -11,212 +11,212 @@ import * as fs from "./fs";
  */
 
  export class File { // Exported, for test cases only
-	public static SEPARATOR = "/";
+    public static SEPARATOR = "/";
 
-	private fullPath: string;
-	private fileStats?: fs.Stats;
+    private fullPath: string;
+    private fileStats?: fs.Stats;
 
-	public constructor(path: File | string, subpath?: string) {
-		let fullPath: string = path instanceof File ? path.getAbsolutePath() : path as string;
+    public constructor(path: File | string, subpath?: string) {
+        let fullPath: string = path instanceof File ? path.getAbsolutePath() : path as string;
 
-		if (subpath)
-			fullPath += (File.SEPARATOR + subpath);
+        if (subpath)
+            fullPath += (File.SEPARATOR + subpath);
 
-		this.fullPath = fullPath;
-	}
+        this.fullPath = fullPath;
+    }
 
-	public static exists(file: File | string): boolean {
-		if (typeof file === "string")
-			file = new File(file);
+    public static exists(file: File | string): boolean {
+        if (typeof file === "string")
+            file = new File(file);
 
-		return file.exists();
-	}
+        return file.exists();
+    }
 
-	public static isFile(file: File | string): boolean {
-		if (typeof file === "string")
-			file = new File(file);
+    public static isFile(file: File | string): boolean {
+        if (typeof file === "string")
+            file = new File(file);
 
-		return file.isFile();
-	}
+        return file.isFile();
+    }
 
-	public static isDirectory(file: File | string): boolean {
-		if (typeof file === "string")
-			file = new File(file);
+    public static isDirectory(file: File | string): boolean {
+        if (typeof file === "string")
+            file = new File(file);
 
-		return file.isDirectory();
-	}
+        return file.isDirectory();
+    }
 
-	private getStats(): fs.Stats {
-		if (this.fileStats)
-			return this.fileStats;
-		return this.exists() ? fs.statSync(this.fullPath) : null;
-	}
+    private getStats(): fs.Stats {
+        if (this.fileStats)
+            return this.fileStats;
+        return this.exists() ? fs.statSync(this.fullPath) : null;
+    }
 
-	public exists(): boolean {
-		return fs.existsSync(this.fullPath);
-	}
+    public exists(): boolean {
+        return fs.existsSync(this.fullPath);
+    }
 
-	// Entry size in bytes
-	public length(): number {
-		return this.exists() ? this.getStats().size : 0;
-	}
+    // Entry size in bytes
+    public length(): number {
+        return this.exists() ? this.getStats().size : 0;
+    }
 
-	public getAbsolutePath(): string {
-		return this.fullPath;
-	}
+    public getAbsolutePath(): string {
+        return this.fullPath;
+    }
 
-	/**
-	 * Returns the file name, i.e. the last component part of the path.
-	 */
-	public getName(): string {
-		return this.fullPath.includes(File.SEPARATOR) ? this.fullPath.substring(this.fullPath.lastIndexOf(File.SEPARATOR)+1) : this.fullPath;
-	}
+    /**
+     * Returns the file name, i.e. the last component part of the path.
+     */
+    public getName(): string {
+        return this.fullPath.includes(File.SEPARATOR) ? this.fullPath.substring(this.fullPath.lastIndexOf(File.SEPARATOR)+1) : this.fullPath;
+    }
 
-	/**
-	 * Returns the directory object that contains this file.
-	 */
-	public getParentDirectory(): File {
-		let directoryName = this.getParentDirectoryName();
-		if (directoryName) {
-			return new File(directoryName);
-		}
-		return null;
-	}
+    /**
+     * Returns the directory object that contains this file.
+     */
+    public getParentDirectory(): File {
+        let directoryName = this.getParentDirectoryName();
+        if (directoryName) {
+            return new File(directoryName);
+        }
+        return null;
+    }
 
-	public getParentDirectoryName(): string {
-		if (this.fullPath.includes(File.SEPARATOR))
-			return this.fullPath.substring(0, this.fullPath.lastIndexOf(File.SEPARATOR));
-		if (this.isDirectory)
-			return this.fullPath;
-		return "";
-	}
+    public getParentDirectoryName(): string {
+        if (this.fullPath.includes(File.SEPARATOR))
+            return this.fullPath.substring(0, this.fullPath.lastIndexOf(File.SEPARATOR));
+        if (this.isDirectory)
+            return this.fullPath;
+        return "";
+    }
 
-	public isDirectory(): boolean {
-		return this.exists() ? this.getStats().isDirectory() : false;
-	}
+    public isDirectory(): boolean {
+        return this.exists() ? this.getStats().isDirectory() : false;
+    }
 
-	public isFile(): boolean {
-		return this.exists() ? this.getStats().isFile() : false;
-	}
+    public isFile(): boolean {
+        return this.exists() ? this.getStats().isFile() : false;
+    }
 
-	/**
-	 * Lists all file names in this directory.
-	 */
-	public list(): string[] {
-		return this.exists() && this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
-	}
+    /**
+     * Lists all file names in this directory.
+     */
+    public list(): string[] {
+        return this.exists() && this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
+    }
 
-	/**
-	 * Lists all files (as File) in this directory.
-	 */
-	public listFiles(): File[] {
-		if (!this.exists() || !this.getStats().isDirectory()) {
-			return null;
-		}
-		let files: File[] = [];
-		this.list().forEach((fileName)=>{
-			files.push(new File(this.getAbsolutePath()+"/"+fileName));
-		});
+    /**
+     * Lists all files (as File) in this directory.
+     */
+    public listFiles(): File[] {
+        if (!this.exists() || !this.getStats().isDirectory()) {
+            return null;
+        }
+        let files: File[] = [];
+        this.list().forEach((fileName)=>{
+            files.push(new File(this.getAbsolutePath()+"/"+fileName));
+        });
 
-		return files;
-	}
+        return files;
+    }
 
-	public writeText(content: string) {
-		if (!this.exists() || this.getStats().isFile()) {
-			fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
-		}
-	}
+    public writeText(content: string) {
+        if (!this.exists() || this.getStats().isFile()) {
+            fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
+        }
+    }
 
-	public readText(): string {
-		return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
-		return null;
-	}
+    public readText(): string {
+        return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
+        return null;
+    }
 
-	public rename(newName: string) {
-		if (this.exists()) {
-			let targetName = this.fullPath.includes(File.SEPARATOR) && !newName.includes(File.SEPARATOR) ? this.getParentDirectoryName + File.SEPARATOR + newName : newName;
-			fs.renameSync(this.fullPath, targetName);
-		}
-	}
+    public rename(newName: string) {
+        if (this.exists()) {
+            let targetName = this.fullPath.includes(File.SEPARATOR) && !newName.includes(File.SEPARATOR) ? this.getParentDirectoryName + File.SEPARATOR + newName : newName;
+            fs.renameSync(this.fullPath, targetName);
+        }
+    }
 
-	public createFile(overwrite?: boolean) {
-		let replace = overwrite ? overwrite : false;
-		if (!this.exists() || replace) {
-			fs.writeFileSync(this.fullPath, "", { encoding: "utf-8" });
-			this.fileStats = undefined;
-		}
-	}
+    public createFile(overwrite?: boolean) {
+        let replace = overwrite ? overwrite : false;
+        if (!this.exists() || replace) {
+            fs.writeFileSync(this.fullPath, "", { encoding: "utf-8" });
+            this.fileStats = undefined;
+        }
+    }
 
-	public createDirectory(overwrite?: boolean) {
-		let replace = overwrite ? overwrite : false;
-		if (!this.exists() || replace) {
-			//mkdirSync(this.fullPath, { "recursive": true });
-			this.mkdirpath(this.fullPath);
-			this.fileStats = undefined;
-		}
-	}
+    public createDirectory(overwrite?: boolean) {
+        let replace = overwrite ? overwrite : false;
+        if (!this.exists() || replace) {
+            //mkdirSync(this.fullPath, { "recursive": true });
+            this.mkdirpath(this.fullPath);
+            this.fileStats = undefined;
+        }
+    }
 
-	/**
-	 * Internal reimplementation of mkdir because even if nodejs now has a "recursive" option,
-	 * browserfs localstorage driver doesn't.
-	 */
-	private mkdirpath(dirPath: string)
-	{
-		if(!fs.existsSync(dirPath)){
-			try
-			{
-				fs.mkdirSync(dirPath);
-			}
-			catch(e)
-			{
-				let dirname = path.dirname(dirPath);
-				if (dirname !== dirPath) {
-					this.mkdirpath(dirname);
-					this.mkdirpath(dirPath);
-				}
-				else {
-					// We reached the root path. Folder creation has failed for some reason, so we
-					// throw an error.
-					throw e;
-				}
-			}
-		}
-	}
+    /**
+     * Internal reimplementation of mkdir because even if nodejs now has a "recursive" option,
+     * browserfs localstorage driver doesn't.
+     */
+    private mkdirpath(dirPath: string)
+    {
+        if(!fs.existsSync(dirPath)){
+            try
+            {
+                fs.mkdirSync(dirPath);
+            }
+            catch(e)
+            {
+                let dirname = path.dirname(dirPath);
+                if (dirname !== dirPath) {
+                    this.mkdirpath(dirname);
+                    this.mkdirpath(dirPath);
+                }
+                else {
+                    // We reached the root path. Folder creation has failed for some reason, so we
+                    // throw an error.
+                    throw e;
+                }
+            }
+        }
+    }
 
-	/**
-	 * Deletes this file from storage.
-	 */
-	public delete() {
-		if (this.exists()) {
-			if (this.isDirectory())
-				this.deleteDirectory(this.fullPath);
-			else
-				fs.unlinkSync(this.fullPath);
-			this.fileStats = undefined;
-		}
-	}
+    /**
+     * Deletes this file from storage.
+     */
+    public delete() {
+        if (this.exists()) {
+            if (this.isDirectory())
+                this.deleteDirectory(this.fullPath);
+            else
+                fs.unlinkSync(this.fullPath);
+            this.fileStats = undefined;
+        }
+    }
 
-	/**
-	 * Internal reimplementation of rmdir because even if nodejs now has a "resursive" option,
-	 * browserfs localstorage driver doesn't.
-	 */
-	private deleteDirectory(directoryPath: string) {
-		if (fs.existsSync(directoryPath)) {
-			fs.readdirSync(directoryPath).forEach((file, index) => {
-			  const curPath = path.join(directoryPath, file);
-			  if (fs.lstatSync(curPath).isDirectory()) {
-			   	// recurse
-				this.deleteDirectory(curPath);
-			  } else {
-				// delete file
-				fs.unlinkSync(curPath);
-			  }
-			});
-			fs.rmdirSync(directoryPath);
-		}
-	}
+    /**
+     * Internal reimplementation of rmdir because even if nodejs now has a "resursive" option,
+     * browserfs localstorage driver doesn't.
+     */
+    private deleteDirectory(directoryPath: string) {
+        if (fs.existsSync(directoryPath)) {
+            fs.readdirSync(directoryPath).forEach((file, index) => {
+              const curPath = path.join(directoryPath, file);
+              if (fs.lstatSync(curPath).isDirectory()) {
+                // recurse
+                this.deleteDirectory(curPath);
+              } else {
+                // delete file
+                fs.unlinkSync(curPath);
+              }
+            });
+            fs.rmdirSync(directoryPath);
+        }
+    }
 
-	public toString() {
-		return this.fullPath;
-	}
+    public toString() {
+        return this.fullPath;
+    }
 }

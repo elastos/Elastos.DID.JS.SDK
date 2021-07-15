@@ -26,79 +26,79 @@ import { Web3Adapter } from "../backend/web3adapter";
 import { TestConfig } from "./testconfig";
 
 export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource */ {
-	private static adapter: DIDAdapter;
-	private static simChain: SimulatedIDChain;
+    private static adapter: DIDAdapter;
+    private static simChain: SimulatedIDChain;
 
-	public static setup(/* name: string */) {
-		// Force load TestConfig first!!!
-		let rpcEndpoint = TestConfig.rpcEndpoint;
+    public static setup(/* name: string */) {
+        // Force load TestConfig first!!!
+        let rpcEndpoint = TestConfig.rpcEndpoint;
 
-		// if (name.equals("IDChainOperationsTest")) {
-			// When run the IDChainOperationsTest only
+        // if (name.equals("IDChainOperationsTest")) {
+            // When run the IDChainOperationsTest only
 
-			//DIDTestExtension.adapter = new Web3Adapter(
-			//	rpcEndpoint, TestConfig.contractAddress,
-			//	TestConfig.walletPath, TestConfig.walletPassword);
+            //DIDTestExtension.adapter = new Web3Adapter(
+            //  rpcEndpoint, TestConfig.contractAddress,
+            //  TestConfig.walletPath, TestConfig.walletPassword);
 
-			DIDTestExtension.adapter = new SimulatedIDChainAdapter(
-				"http://127.0.0.1:9123");
-		// }
+            DIDTestExtension.adapter = new SimulatedIDChainAdapter(
+                "http://127.0.0.1:9123");
+        // }
 
-		if (DIDTestExtension.adapter == null) {
-			DIDTestExtension.simChain = new SimulatedIDChain();
-			//simChain.start();
-			DIDTestExtension.adapter = DIDTestExtension.simChain.getAdapter();
-		}
+        if (DIDTestExtension.adapter == null) {
+            DIDTestExtension.simChain = new SimulatedIDChain();
+            //simChain.start();
+            DIDTestExtension.adapter = DIDTestExtension.simChain.getAdapter();
+        }
 
-		DIDBackend.initialize(DIDTestExtension.adapter);
-	}
+        DIDBackend.initialize(DIDTestExtension.adapter);
+    }
 
-	/**
+    /**
      * Method that awaits a specific duration until a DID is supposed to be "published".
      * The simulated ID chain adapter may return quickly, while a web3 adapter may await a few
      * blocks for the transaction to be handled by the blockchain.
      */
-	public static async awaitStandardPublishingDelay(): Promise<void> {
-		if (DIDTestExtension.adapter instanceof Web3Adapter) {
-			await DIDTestExtension.adapter.awaitStandardPublishingDelay();
-		}
-		else if (DIDTestExtension.adapter instanceof SimulatedIDChainAdapter) {
-			// TODO: Normally we shouldn't have to wait because the simchain should
-			// return from the "publish" api call only when the document is really
-			// "published". But it seems like if we call publish/resolve too fast this
-			// doesn't work.  To be checked.
-			return new Promise(resolve => {
-				setTimeout(() => {
-					resolve();
-				}, 2000);
-			})
-		}
-	}
+    public static async awaitStandardPublishingDelay(): Promise<void> {
+        if (DIDTestExtension.adapter instanceof Web3Adapter) {
+            await DIDTestExtension.adapter.awaitStandardPublishingDelay();
+        }
+        else if (DIDTestExtension.adapter instanceof SimulatedIDChainAdapter) {
+            // TODO: Normally we shouldn't have to wait because the simchain should
+            // return from the "publish" api call only when the document is really
+            // "published". But it seems like if we call publish/resolve too fast this
+            // doesn't work.  To be checked.
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve();
+                }, 2000);
+            })
+        }
+    }
 
-	/* public void close() throws Throwable {
-		if (simChain != null)
-			simChain.stop();
+    /* public void close() throws Throwable {
+        if (simChain != null)
+            simChain.stop();
 
-		simChain = null;
-		adapter = null;
-	} */
+        simChain = null;
+        adapter = null;
+    } */
 
-	/* public static beforeAll(contextName: string) {
-	 	String key = this.getClass().getName();
-	    Object value = context.getRoot().getStore(GLOBAL).get(key);
-	    //if (value == null) {
-	    	// First test container invocation.
-	    	DIDTestExtension.setup(contextName);
-	    	//context.getRoot().getStore(GLOBAL).put(key, this);
-	    //}
-	} */
+    /* public static beforeAll(contextName: string) {
+        String key = this.getClass().getName();
+        Object value = context.getRoot().getStore(GLOBAL).get(key);
+        //if (value == null) {
+            // First test container invocation.
+            DIDTestExtension.setup(contextName);
+            //context.getRoot().getStore(GLOBAL).put(key, this);
+        //}
+    } */
 
-	public static async resetData() {
-		if (DIDTestExtension.adapter instanceof SimulatedIDChainAdapter)
-			await (DIDTestExtension.adapter as SimulatedIDChainAdapter).resetData();
-	}
+    public static async resetData() {
+        if (DIDTestExtension.adapter instanceof SimulatedIDChainAdapter)
+            await (DIDTestExtension.adapter as SimulatedIDChainAdapter).resetData();
+    }
 
-	public static getAdapter(): DIDAdapter {
-		return DIDTestExtension.adapter;
-	}
+    public static getAdapter(): DIDAdapter {
+        return DIDTestExtension.adapter;
+    }
 }

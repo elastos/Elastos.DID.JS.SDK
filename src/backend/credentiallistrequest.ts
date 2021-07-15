@@ -29,83 +29,83 @@ import { hashCode } from "../internals";
 
 @JsonCreator()
 export class CredentialListRequest extends ResolveRequest<CredentialListRequest, Parameters> {
-	public static PARAMETER_DID = "did";
-	public static PARAMETER_SKIP = "skip";
-	public static PARAMETER_LIMIT = "limit";
+    public static PARAMETER_DID = "did";
+    public static PARAMETER_SKIP = "skip";
+    public static PARAMETER_LIMIT = "limit";
 
-	public static METHOD_NAME = "did_listCredentials";
+    public static METHOD_NAME = "did_listCredentials";
 
-	public constructor(@JsonProperty({value: CredentialListRequest.ID}) requestId: string) {
-		super(requestId, CredentialListRequest.METHOD_NAME);
-	}
+    public constructor(@JsonProperty({value: CredentialListRequest.ID}) requestId: string) {
+        super(requestId, CredentialListRequest.METHOD_NAME);
+    }
 
-	public setParameters(didOrParams: DID | Parameters, skip = 0, limit = 0) {
-		if (didOrParams instanceof DID)
-			super.setParameters(new Parameters(didOrParams, skip, limit));
-		else
-			super.setParameters(didOrParams);
-	}
+    public setParameters(didOrParams: DID | Parameters, skip = 0, limit = 0) {
+        if (didOrParams instanceof DID)
+            super.setParameters(new Parameters(didOrParams, skip, limit));
+        else
+            super.setParameters(didOrParams);
+    }
 
-	public getDid(): DID {
-		return this.getParameters().did;
-	}
+    public getDid(): DID {
+        return this.getParameters().did;
+    }
 
-	public getSkip(): number {
-		return this.getParameters().skip;
-	}
+    public getSkip(): number {
+        return this.getParameters().skip;
+    }
 
-	public getLimit(): number {
-		return this.getParameters().limit;
-	}
+    public getLimit(): number {
+        return this.getParameters().limit;
+    }
 
-	public toString(): string {
-		let builder = new DIDURL.Builder(this.getParameters().did);
-		builder.setPath("/credentials");
-		builder.setQueryParameter(CredentialListRequest.PARAMETER_SKIP, this.getParameters().skip.toFixed());
-		builder.setQueryParameter(CredentialListRequest.PARAMETER_LIMIT, this.getParameters().limit.toFixed());
+    public toString(): string {
+        let builder = new DIDURL.Builder(this.getParameters().did);
+        builder.setPath("/credentials");
+        builder.setQueryParameter(CredentialListRequest.PARAMETER_SKIP, this.getParameters().skip.toFixed());
+        builder.setQueryParameter(CredentialListRequest.PARAMETER_LIMIT, this.getParameters().limit.toFixed());
 
-		return builder.build().toString();
-	}
+        return builder.build().toString();
+    }
 }
 
 @JsonCreator()
 class Parameters implements Hashable {
-	@JsonProperty({value: CredentialListRequest.PARAMETER_DID}) @JsonClassType({type: () => [DID]})
-	public did: DID;
+    @JsonProperty({value: CredentialListRequest.PARAMETER_DID}) @JsonClassType({type: () => [DID]})
+    public did: DID;
 
-	@JsonProperty({value: CredentialListRequest.PARAMETER_SKIP})
-	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
-	public skip: number;
+    @JsonProperty({value: CredentialListRequest.PARAMETER_SKIP})
+    @JsonInclude({value: JsonIncludeType.NON_DEFAULT})
+    public skip: number;
 
-	@JsonProperty({value: CredentialListRequest.PARAMETER_LIMIT})
-	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
-	public limit: number;
+    @JsonProperty({value: CredentialListRequest.PARAMETER_LIMIT})
+    @JsonInclude({value: JsonIncludeType.NON_DEFAULT})
+    public limit: number;
 
-	public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip = 0, limit = 0) {
-		this.did = did;
-		this.skip = skip;
-		this.limit = limit;
-	}
+    public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip = 0, limit = 0) {
+        this.did = did;
+        this.skip = skip;
+        this.limit = limit;
+    }
 
-	public hashCode(): number {
-		let hash = this.did.hashCode();
-		hash += hashCode(this.skip);
-		hash += hashCode(this.limit);
-		return hash;
-	}
+    public hashCode(): number {
+        let hash = this.did.hashCode();
+        hash += hashCode(this.skip);
+        hash += hashCode(this.limit);
+        return hash;
+    }
 
-	public equals(o: unknown): boolean {
-		if (!(o instanceof Parameters))
-			return false;
+    public equals(o: unknown): boolean {
+        if (!(o instanceof Parameters))
+            return false;
 
-		let p = o as Parameters;
+        let p = o as Parameters;
 
-		if (!this.did.equals(p.did))
-			return false;
+        if (!this.did.equals(p.did))
+            return false;
 
-		if (this.skip != p.skip)
-			return false;
+        if (this.skip != p.skip)
+            return false;
 
-		return this.limit == p.limit;
-	}
+        return this.limit == p.limit;
+    }
 }

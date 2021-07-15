@@ -21,7 +21,7 @@
  */
 
 import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonClassType,
-	JsonInclude, JsonIncludeType } from "@elastosfoundation/jackson-js";
+    JsonInclude, JsonIncludeType } from "@elastosfoundation/jackson-js";
 import { DID } from "../internals";
 import { DIDURL } from "../internals";
 import { MalformedResolveResultException } from "../exceptions/exceptions";
@@ -30,50 +30,50 @@ import { ResolveResult } from "./resolveresult";
 @JsonPropertyOrder({value: ["did", "credentialIds"]})
 @JsonCreator()
 export class CredentialList extends ResolveResult<CredentialList> {
-	protected static DID = "did";
-	protected static CREDENTIALS = "credentials";
+    protected static DID = "did";
+    protected static CREDENTIALS = "credentials";
 
-	public static DEFAULT_SIZE = 128;
-	public static MAX_SIZE = 512;
+    public static DEFAULT_SIZE = 128;
+    public static MAX_SIZE = 512;
 
-	@JsonProperty({ value: CredentialList.DID })
-	private did: DID;
-	@JsonProperty({ value: CredentialList.CREDENTIALS })
-	@JsonInclude({ value: JsonIncludeType.NON_NULL})
-	@JsonClassType({type: () => [Array, [DIDURL]]})
-	private credentialIds: DIDURL[];
+    @JsonProperty({ value: CredentialList.DID })
+    private did: DID;
+    @JsonProperty({ value: CredentialList.CREDENTIALS })
+    @JsonInclude({ value: JsonIncludeType.NON_NULL})
+    @JsonClassType({type: () => [Array, [DIDURL]]})
+    private credentialIds: DIDURL[];
 
-	public constructor(did: DID = null) {
-		super();
-		this.did = did;
-	}
+    public constructor(did: DID = null) {
+        super();
+        this.did = did;
+    }
 
-	public getDid(): DID {
-		return this.did;
-	}
+    public getDid(): DID {
+        return this.did;
+    }
 
-	public getCredentialIds(): DIDURL[] {
-		return this.credentialIds != null ? this.credentialIds : [];
-	}
+    public getCredentialIds(): DIDURL[] {
+        return this.credentialIds != null ? this.credentialIds : [];
+    }
 
-	public size(): number {
-		return this.credentialIds != null ? this.credentialIds.length : 0;
-	}
+    public size(): number {
+        return this.credentialIds != null ? this.credentialIds.length : 0;
+    }
 
-	public getCredentialId(index: number): DIDURL {
-		return this.credentialIds != null ? this.credentialIds[index] : null;
-	}
+    public getCredentialId(index: number): DIDURL {
+        return this.credentialIds != null ? this.credentialIds[index] : null;
+    }
 
-	protected addCredentialId(id: DIDURL) {
-		if (this.credentialIds == null)
-			this.credentialIds = [];
+    protected addCredentialId(id: DIDURL) {
+        if (this.credentialIds == null)
+            this.credentialIds = [];
 
-		this.credentialIds.push(id);
-	}
+        this.credentialIds.push(id);
+    }
 
-	// eslint-disable-next-line require-await
-	public async sanitize(): Promise<void> {
-		if (this.did == null)
-			throw new MalformedResolveResultException("Missing did");
-	}
+    // eslint-disable-next-line require-await
+    public async sanitize(): Promise<void> {
+        if (this.did == null)
+            throw new MalformedResolveResultException("Missing did");
+    }
 }

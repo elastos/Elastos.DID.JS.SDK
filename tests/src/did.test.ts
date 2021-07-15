@@ -23,50 +23,50 @@
 import { DID } from "@elastosfoundation/did-js-sdk";
 
 describe('DID Tests', () => {
-	const testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-	const testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-	let did: DID;
+    const testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+    const testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+    let did: DID;
 
-	beforeEach(() => {
-		did = new DID(testDID);
-	});
+    beforeEach(() => {
+        did = new DID(testDID);
+    });
 
-	test('Test Constructor', () => {
-		expect(did.toString()).toEqual(testDID);
+    test('Test Constructor', () => {
+        expect(did.toString()).toEqual(testDID);
 
-		did = new DID("did:elastos:1234567890");
-		expect(did.toString()).toEqual("did:elastos:1234567890");
-	});
+        did = new DID("did:elastos:1234567890");
+        expect(did.toString()).toEqual("did:elastos:1234567890");
+    });
 
-	test('Test Constructor with invalid did string', () => {
-		expect(() =>{ new DID("id:elastos:1234567890")}).toThrowError()
-		expect(() =>{ new DID("did:example:1234567890")}).toThrowError()
-		expect(() =>{ new DID("did:elastos:")}).toThrowError()
-	});
+    test('Test Constructor with invalid did string', () => {
+        expect(() =>{ new DID("id:elastos:1234567890")}).toThrowError()
+        expect(() =>{ new DID("did:example:1234567890")}).toThrowError()
+        expect(() =>{ new DID("did:elastos:")}).toThrowError()
+    });
 
-	test('Test Get Method', () => {
-		expect(did.getMethod()).toEqual(DID.METHOD);
-	});
+    test('Test Get Method', () => {
+        expect(did.getMethod()).toEqual(DID.METHOD);
+    });
 
-	test('Test Get Specific Id', () => {
-		expect(did.getMethodSpecificId()).toEqual(testMethodSpecificID);
-	});
+    test('Test Get Specific Id', () => {
+        expect(did.getMethodSpecificId()).toEqual(testMethodSpecificID);
+    });
 
-	test('Test hashcode', () => {
-		let otherDID = new DID(testDID);
-		expect(otherDID.hashCode()).toEqual(did.hashCode());
+    test('Test hashcode', () => {
+        let otherDID = new DID(testDID);
+        expect(otherDID.hashCode()).toEqual(did.hashCode());
 
-		otherDID = new DID("did:elastos:1234567890");
-		expect(otherDID.hashCode()).not.toEqual(did.hashCode());
-	});
+        otherDID = new DID("did:elastos:1234567890");
+        expect(otherDID.hashCode()).not.toEqual(did.hashCode());
+    });
 
-	test('Test Equals', () => {
-		let otherDID = new DID(testDID);
-		expect(did.equals(otherDID)).toBeTruthy();
-		expect(did.equals(testDID)).toBeTruthy();
+    test('Test Equals', () => {
+        let otherDID = new DID(testDID);
+        expect(did.equals(otherDID)).toBeTruthy();
+        expect(did.equals(testDID)).toBeTruthy();
 
-		otherDID = new DID("did:elastos:1234567890");
-		expect(did.equals(otherDID)).toBeFalsy();
-		expect(did.equals("did:elastos:1234567890")).toBeFalsy();
-	});
+        otherDID = new DID("did:elastos:1234567890");
+        expect(did.equals(otherDID)).toBeFalsy();
+        expect(did.equals("did:elastos:1234567890")).toBeFalsy();
+    });
 });

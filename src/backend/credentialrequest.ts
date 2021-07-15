@@ -25,9 +25,9 @@ import { DIDDocument } from "../internals";
 import { DIDURL } from "../internals";
 import { BASE64 } from "../internals";
 import {
-	InvalidKeyException,
-	MalformedIDChainRequestException,
-	UnknownInternalException
+    InvalidKeyException,
+    MalformedIDChainRequestException,
+    UnknownInternalException
 } from "../exceptions/exceptions";
 import { VerifiableCredential } from "../internals";
 import { IDChainRequest } from "./idchaindrequest";
@@ -37,202 +37,202 @@ import { IDChainRequest } from "./idchaindrequest";
  */
 @JsonCreator()
 export class CredentialRequest extends IDChainRequest<CredentialRequest> {
-	@JsonProperty({value: IDChainRequest.HEADER})
-	@JsonClassType({type: () => [IDChainRequest.Header]})
-	declare protected header: IDChainRequest.Header;
-	@JsonProperty({value: IDChainRequest.PAYLOAD})
-	@JsonClassType({type: () => [String]})
-	declare protected payload: string;
-	@JsonProperty({value: IDChainRequest.PROOF})
-	@JsonClassType({type: () => [IDChainRequest.Proof]})
-	declare protected proof: IDChainRequest.Proof;
+    @JsonProperty({value: IDChainRequest.HEADER})
+    @JsonClassType({type: () => [IDChainRequest.Header]})
+    declare protected header: IDChainRequest.Header;
+    @JsonProperty({value: IDChainRequest.PAYLOAD})
+    @JsonClassType({type: () => [String]})
+    declare protected payload: string;
+    @JsonProperty({value: IDChainRequest.PROOF})
+    @JsonClassType({type: () => [IDChainRequest.Proof]})
+    declare protected proof: IDChainRequest.Proof;
 
-	@JsonIgnore()
-	private id: DIDURL;
-	@JsonIgnore()
-	private vc: VerifiableCredential;
-	@JsonIgnore()
-	private signer: DIDDocument;
+    @JsonIgnore()
+    private id: DIDURL;
+    @JsonIgnore()
+    private vc: VerifiableCredential;
+    @JsonIgnore()
+    private signer: DIDDocument;
 
-	/*
-	public constructor(source: CredentialRequest | IDChainRequest.Operation) {
-		super();
-		if (source instanceof CredentialRequest) {
-			this.constructWithIDChainRequest(source);
-		} else {
-			this.constructWithOperation(source);
-		}
-	}
-	*/
+    /*
+    public constructor(source: CredentialRequest | IDChainRequest.Operation) {
+        super();
+        if (source instanceof CredentialRequest) {
+            this.constructWithIDChainRequest(source);
+        } else {
+            this.constructWithOperation(source);
+        }
+    }
+    */
 
-	private static newWithOperation(operation: IDChainRequest.Operation): CredentialRequest {
-		let credentialRequest = new CredentialRequest();
-		credentialRequest.constructWithOperation(operation);
-		return credentialRequest;
-	}
+    private static newWithOperation(operation: IDChainRequest.Operation): CredentialRequest {
+        let credentialRequest = new CredentialRequest();
+        credentialRequest.constructWithOperation(operation);
+        return credentialRequest;
+    }
 
-	public static newWithCredentialRequest(request: CredentialRequest): CredentialRequest {
-		let credentialRequest = new CredentialRequest();
-		credentialRequest.constructWithIDChainRequest(request);
-		credentialRequest.id = request.id;
-		credentialRequest.vc = request.vc;
-		credentialRequest.signer = request.signer;
-		return credentialRequest;
-	}
+    public static newWithCredentialRequest(request: CredentialRequest): CredentialRequest {
+        let credentialRequest = new CredentialRequest();
+        credentialRequest.constructWithIDChainRequest(request);
+        credentialRequest.id = request.id;
+        credentialRequest.vc = request.vc;
+        credentialRequest.signer = request.signer;
+        return credentialRequest;
+    }
 
-	/**
-	 * Constructs the 'declare' credential Request.
-	 *
-	 * @param vc the VerifiableCredential object needs to be declare
-	 * @param signer the credential owner's DIDDocument object
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
-	 */
-	public static async declare(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string): Promise<CredentialRequest> {
-		let request = CredentialRequest.newWithOperation(IDChainRequest.Operation.DECLARE);
-		request.setPayload(vc);
-		request.setSigner(signer);
+    /**
+     * Constructs the 'declare' credential Request.
+     *
+     * @param vc the VerifiableCredential object needs to be declare
+     * @param signer the credential owner's DIDDocument object
+     * @param signKey the key to sign Request
+     * @param storepass the password for DIDStore
+     * @return the IDChainRequest object
+     * @throws DIDStoreException there is no store to attach.
+     */
+    public static async declare(vc: VerifiableCredential, signer: DIDDocument, signKey: DIDURL, storepass: string): Promise<CredentialRequest> {
+        let request = CredentialRequest.newWithOperation(IDChainRequest.Operation.DECLARE);
+        request.setPayload(vc);
+        request.setSigner(signer);
 
-		try {
-			await request.seal(signer, signKey, storepass);
-		} catch (ignore) {
-			// MalformedIDChainRequestException
-			throw new UnknownInternalException(ignore);
-		}
+        try {
+            await request.seal(signer, signKey, storepass);
+        } catch (ignore) {
+            // MalformedIDChainRequestException
+            throw new UnknownInternalException(ignore);
+        }
 
-		return request;
-	}
+        return request;
+    }
 
-	/**
-	 * Constructs the 'revoke' credential Request.
-	 *
-	 * @param vc the VerifiableCredential object needs to be revoke
-	 * @param doc the credential owner's or issuer's DIDDocument object
-	 * @param signKey the key to sign Request
-	 * @param storepass the password for DIDStore
-	 * @return the IDChainRequest object
-	 * @throws DIDStoreException there is no store to attach.
-	 */
-	public static async revoke(vc: VerifiableCredential | DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<CredentialRequest> {
-		let request = CredentialRequest.newWithOperation(IDChainRequest.Operation.REVOKE);
-		request.setPayload(vc);
-		request.setSigner(doc);
+    /**
+     * Constructs the 'revoke' credential Request.
+     *
+     * @param vc the VerifiableCredential object needs to be revoke
+     * @param doc the credential owner's or issuer's DIDDocument object
+     * @param signKey the key to sign Request
+     * @param storepass the password for DIDStore
+     * @return the IDChainRequest object
+     * @throws DIDStoreException there is no store to attach.
+     */
+    public static async revoke(vc: VerifiableCredential | DIDURL, doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<CredentialRequest> {
+        let request = CredentialRequest.newWithOperation(IDChainRequest.Operation.REVOKE);
+        request.setPayload(vc);
+        request.setSigner(doc);
 
-		try {
-			await request.seal(doc, signKey, storepass);
-		} catch (ignore) {
-			// MalformedIDChainRequestException
-			throw new UnknownInternalException(ignore);
-		}
+        try {
+            await request.seal(doc, signKey, storepass);
+        } catch (ignore) {
+            // MalformedIDChainRequestException
+            throw new UnknownInternalException(ignore);
+        }
 
-		return request;
-	}
+        return request;
+    }
 
-	private setSigner(initiator: DIDDocument) {
-		this.signer = initiator;
-	}
+    private setSigner(initiator: DIDDocument) {
+        this.signer = initiator;
+    }
 
-	public getCredentialId(): DIDURL {
-		return this.id;
-	}
+    public getCredentialId(): DIDURL {
+        return this.id;
+    }
 
-	public getCredential(): VerifiableCredential {
-		return this.vc;
-	}
+    public getCredential(): VerifiableCredential {
+        return this.vc;
+    }
 
-	 setPayload(id: DIDURL | VerifiableCredential | string) {
-		if (id instanceof VerifiableCredential) {
-			let vc: VerifiableCredential = id;
-			this.id = vc.getId();
-			this.vc = vc;
+     setPayload(id: DIDURL | VerifiableCredential | string) {
+        if (id instanceof VerifiableCredential) {
+            let vc: VerifiableCredential = id;
+            this.id = vc.getId();
+            this.vc = vc;
 
-			if (this.getHeader().getOperation().equals(IDChainRequest.Operation.DECLARE)) {
-				let json = vc.toString(true);
+            if (this.getHeader().getOperation().equals(IDChainRequest.Operation.DECLARE)) {
+                let json = vc.toString(true);
 
-				this.setPayload(BASE64.fromString(json));
-			} else if (this.getHeader().getOperation().equals(IDChainRequest.Operation.REVOKE)) {
-				this.setPayload(vc.getId().toString());
-			}
-		}
-		else if (id instanceof DIDURL) {
-			this.id = id;
-			this.vc = null;
+                this.setPayload(BASE64.fromString(json));
+            } else if (this.getHeader().getOperation().equals(IDChainRequest.Operation.REVOKE)) {
+                this.setPayload(vc.getId().toString());
+            }
+        }
+        else if (id instanceof DIDURL) {
+            this.id = id;
+            this.vc = null;
 
-			super.setPayload(id.toString());
-		}
-		else { // string
-			super.setPayload(id);
-		}
-	}
+            super.setPayload(id.toString());
+        }
+        else { // string
+            super.setPayload(id);
+        }
+    }
 
-	// eslint-disable-next-line require-await
-	public async sanitize(): Promise<void> {
-		let header = this.getHeader();
+    // eslint-disable-next-line require-await
+    public async sanitize(): Promise<void> {
+        let header = this.getHeader();
 
-		if (header == null)
-			throw new MalformedIDChainRequestException("Missing header");
+        if (header == null)
+            throw new MalformedIDChainRequestException("Missing header");
 
-		if (header.getSpecification() == null)
-			throw new MalformedIDChainRequestException("Missing specification");
+        if (header.getSpecification() == null)
+            throw new MalformedIDChainRequestException("Missing specification");
 
-		if (header.getSpecification() !== CredentialRequest.CREDENTIAL_SPECIFICATION)
-			throw new MalformedIDChainRequestException("Unsupported specification");
+        if (header.getSpecification() !== CredentialRequest.CREDENTIAL_SPECIFICATION)
+            throw new MalformedIDChainRequestException("Unsupported specification");
 
-		if (!header.getOperation().equals(IDChainRequest.Operation.DECLARE) && !header.getOperation().equals(IDChainRequest.Operation.REVOKE)) {
-			throw new MalformedIDChainRequestException("Invalid operation " + header.getOperation());
-		}
+        if (!header.getOperation().equals(IDChainRequest.Operation.DECLARE) && !header.getOperation().equals(IDChainRequest.Operation.REVOKE)) {
+            throw new MalformedIDChainRequestException("Invalid operation " + header.getOperation());
+        }
 
-		let payload = this.getPayload();
-		if (payload == null || payload === "")
-			throw new MalformedIDChainRequestException("Missing payload");
+        let payload = this.getPayload();
+        if (payload == null || payload === "")
+            throw new MalformedIDChainRequestException("Missing payload");
 
-		let proof = this.getProof();
-		if (proof == null)
-			throw new MalformedIDChainRequestException("Missing proof");
+        let proof = this.getProof();
+        if (proof == null)
+            throw new MalformedIDChainRequestException("Missing proof");
 
-		try {
-			if (header.getOperation().equals(IDChainRequest.Operation.DECLARE)) {
-				let json = BASE64.toString(payload);
+        try {
+            if (header.getOperation().equals(IDChainRequest.Operation.DECLARE)) {
+                let json = BASE64.toString(payload);
 
-				this.vc = await VerifiableCredential.parseContent(json);
-				this.id = this.vc.getId();
-			} else {
-				this.id = DIDURL.from(payload);
-			}
-		} catch (e) {
-			// DIDException
-			throw new MalformedIDChainRequestException("Invalid payload", e);
-		}
+                this.vc = await VerifiableCredential.parseContent(json);
+                this.id = this.vc.getId();
+            } else {
+                this.id = DIDURL.from(payload);
+            }
+        } catch (e) {
+            // DIDException
+            throw new MalformedIDChainRequestException("Invalid payload", e);
+        }
 
-		proof.qualifyVerificationMethod(this.id.getDid());
-	}
+        proof.qualifyVerificationMethod(this.id.getDid());
+    }
 
-	public async seal(doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<void> {
-		if (!doc.isAuthenticationKey(signKey))
-			throw new InvalidKeyException("Not an authentication key.");
+    public async seal(doc: DIDDocument, signKey: DIDURL, storepass: string): Promise<void> {
+        if (!doc.isAuthenticationKey(signKey))
+            throw new InvalidKeyException("Not an authentication key.");
 
-		if (this.getPayload() == null || this.getPayload() === "")
-			throw new MalformedIDChainRequestException("Missing payload");
+        if (this.getPayload() == null || this.getPayload() === "")
+            throw new MalformedIDChainRequestException("Missing payload");
 
-		let signature = await doc.signWithId(signKey, storepass, ...this.getSigningInputs());
-		this.setProof(new IDChainRequest.Proof(signKey, signature));
-	}
+        let signature = await doc.signWithId(signKey, storepass, ...this.getSigningInputs());
+        this.setProof(new IDChainRequest.Proof(signKey, signature));
+    }
 
-	protected async getSignerDocument(): Promise<DIDDocument> {
-		if (this.signer != null)
-			return this.signer;
+    protected async getSignerDocument(): Promise<DIDDocument> {
+        if (this.signer != null)
+            return this.signer;
 
-		if (this.getOperation().equals(IDChainRequest.Operation.DECLARE))
-			this.signer = await this.getCredential().getSubject().getId().resolve();
-		else {
-			if (this.getCredential() != null)
-				this.signer = await this.getCredential().getSubject().getId().resolve();
-			else
-				this.signer = await this.getProof().getVerificationMethod().getDid().resolve();
-		}
+        if (this.getOperation().equals(IDChainRequest.Operation.DECLARE))
+            this.signer = await this.getCredential().getSubject().getId().resolve();
+        else {
+            if (this.getCredential() != null)
+                this.signer = await this.getCredential().getSubject().getId().resolve();
+            else
+                this.signer = await this.getProof().getVerificationMethod().getDid().resolve();
+        }
 
-		return this.signer;
-	}
+        return this.signer;
+    }
 }

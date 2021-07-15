@@ -26,17 +26,17 @@ import type { DIDURL } from "./internals";
  * The class is the base object for PublicKey and Credential.
  */
 export interface DIDObject<Type> {
-	/**
-	 * Get the entry id.
-	 *
-	 * @return the identifier object
-	 */
-	getId(): DIDURL;
+    /**
+     * Get the entry id.
+     *
+     * @return the identifier object
+     */
+    getId(): DIDURL;
 
-	/**
-	 * Get the entry type.
-	 *
-	 * @return the type string or array
-	 */
-	getType(): string | Type[];
+    /**
+     * Get the entry type.
+     *
+     * @return the type string or array
+     */
+    getType(): string | Type[];
 }

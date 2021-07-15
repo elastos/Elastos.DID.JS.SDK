@@ -24,54 +24,54 @@ import crypto from "crypto"
 import { BASE64 } from "./base64";
 
 export class Aes256cbc {
-	private static generateKeyAndIv(passwd: string): {key: Buffer, iv: Buffer} {
+    private static generateKeyAndIv(passwd: string): {key: Buffer, iv: Buffer} {
 
-		let bufferPassword : Buffer = Buffer.from(passwd, "utf-8")
+        let bufferPassword : Buffer = Buffer.from(passwd, "utf-8")
 
-		let first16KeyBytesInHex = crypto
-		.createHash('md5')
-		.update(bufferPassword)
-		.digest();
+        let first16KeyBytesInHex = crypto
+        .createHash('md5')
+        .update(bufferPassword)
+        .digest();
 
-		let last16KeyBytesInHex = crypto
-		.createHash('md5')
-		.update(first16KeyBytesInHex)
-		.update(bufferPassword)
-		.digest()
+        let last16KeyBytesInHex = crypto
+        .createHash('md5')
+        .update(first16KeyBytesInHex)
+        .update(bufferPassword)
+        .digest()
 
-		let iv = crypto
-		.createHash('md5')
-		.update(last16KeyBytesInHex)
-		.update(bufferPassword)
-		.digest();
+        let iv = crypto
+        .createHash('md5')
+        .update(last16KeyBytesInHex)
+        .update(bufferPassword)
+        .digest();
 
-		return {
-			key: Buffer.concat([first16KeyBytesInHex, last16KeyBytesInHex]),
-			iv
-		};
-	}
+        return {
+            key: Buffer.concat([first16KeyBytesInHex, last16KeyBytesInHex]),
+            iv
+        };
+    }
 
-	public static encrypt(plain: Buffer, passwd: string): Buffer {
-		let { key, iv } = Aes256cbc.generateKeyAndIv(passwd);
+    public static encrypt(plain: Buffer, passwd: string): Buffer {
+        let { key, iv } = Aes256cbc.generateKeyAndIv(passwd);
 
-		let cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-		return Buffer.concat([cipher.update(plain), cipher.final()]);
-	}
+        let cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+        return Buffer.concat([cipher.update(plain), cipher.final()]);
+    }
 
-	public static decrypt(secret: Buffer, passwd: string): Buffer {
-		let { key, iv } = this.generateKeyAndIv(passwd);
+    public static decrypt(secret: Buffer, passwd: string): Buffer {
+        let { key, iv } = this.generateKeyAndIv(passwd);
 
-		let decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-		return Buffer.concat([decipher.update(secret), decipher.final()]);
-	}
+        let decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+        return Buffer.concat([decipher.update(secret), decipher.final()]);
+    }
 
-	public static encryptToBase64(plain: Buffer, passwd: string): string {
-		let secret = this.encrypt(plain, passwd);
-		return BASE64.toUrlFormat(secret.toString("base64"))
-	}
+    public static encryptToBase64(plain: Buffer, passwd: string): string {
+        let secret = this.encrypt(plain, passwd);
+        return BASE64.toUrlFormat(secret.toString("base64"))
+    }
 
-	public static decryptFromBase64(base64Secret: string, passwd: string): Buffer {
-		let secret = Buffer.from(BASE64.fromUrlFormat(base64Secret), "base64")
-		return Aes256cbc.decrypt(secret, passwd);
-	}
+    public static decryptFromBase64(base64Secret: string, passwd: string): Buffer {
+        let secret = Buffer.from(BASE64.fromUrlFormat(base64Secret), "base64")
+        return Aes256cbc.decrypt(secret, passwd);
+    }
 }

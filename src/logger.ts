@@ -42,7 +42,7 @@ export class Logger {
         }
     }
 
-	info(...data: any) {
+    info(...data: any) {
         if (Logger.logLevel.id >= Logger.INFO.id) {
             console.log(this.format(Logger.INFO, data));
         }

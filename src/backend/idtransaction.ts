@@ -27,64 +27,64 @@ import type { IDChainRequest } from "./idchaindrequest";
 
 @JsonPropertyOrder({value: ["txId", "timestamp", "request"]})
 export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDEntity<T> {
-	protected static TXID = "txid";
-	protected static TIMESTAMP = "timestamp";
-	protected static OPERATION = "operation";
+    protected static TXID = "txid";
+    protected static TIMESTAMP = "timestamp";
+    protected static OPERATION = "operation";
 
-	@JsonProperty({value: IDTransaction.TXID})
-	@JsonClassType({type: () => [String]})
-	private txId: string;
-	@JsonProperty({value: IDTransaction.TIMESTAMP})
-	@JsonClassType({type: () => [Date]})
-	private timestamp: Date;
-	protected request: R;
+    @JsonProperty({value: IDTransaction.TXID})
+    @JsonClassType({type: () => [String]})
+    private txId: string;
+    @JsonProperty({value: IDTransaction.TIMESTAMP})
+    @JsonClassType({type: () => [Date]})
+    private timestamp: Date;
+    protected request: R;
 
-	/**
-	 * Constructs the DIDTransaction with the given value.
-	 *
-	 * @param txid the transaction id string
-	 * @param timestamp the time stamp
-	 * @param request the IDChainRequest content
-	 */
-	protected constructor(txid: string = null, timestamp: Date = null, request: R = null) {
-		super();
-		this.txId = txid;
-		this.timestamp = timestamp;
-		this.request = request;
-	}
+    /**
+     * Constructs the DIDTransaction with the given value.
+     *
+     * @param txid the transaction id string
+     * @param timestamp the time stamp
+     * @param request the IDChainRequest content
+     */
+    protected constructor(txid: string = null, timestamp: Date = null, request: R = null) {
+        super();
+        this.txId = txid;
+        this.timestamp = timestamp;
+        this.request = request;
+    }
 
-	public getTransactionId(): string {
-		return this.txId;
-	}
+    public getTransactionId(): string {
+        return this.txId;
+    }
 
-	public getTimestamp(): Date {
-		return this.timestamp;
-	}
+    public getTimestamp(): Date {
+        return this.timestamp;
+    }
 
-	/**
-	 * Get request object of transaction.
-	 *
-	 * @return the IDRequest object
-	 */
-	public getRequest(): R {
-		return this.request;
-	}
+    /**
+     * Get request object of transaction.
+     *
+     * @return the IDRequest object
+     */
+    public getRequest(): R {
+        return this.request;
+    }
 
-	public async sanitize(): Promise<void> {
-		if (this.txId == null || this.txId === "")
-			throw new MalformedIDChainTransactionException("Missing txid");
+    public async sanitize(): Promise<void> {
+        if (this.txId == null || this.txId === "")
+            throw new MalformedIDChainTransactionException("Missing txid");
 
-		if (this.timestamp == null)
-			throw new MalformedIDChainTransactionException("Missing timestamp");
+        if (this.timestamp == null)
+            throw new MalformedIDChainTransactionException("Missing timestamp");
 
-		if (this.request == null)
-			throw new MalformedIDChainTransactionException("Missing request");
+        if (this.request == null)
+            throw new MalformedIDChainTransactionException("Missing request");
 
-		try {
-			await this.request.sanitize();
-		} catch (e) {
-			// MalformedIDChainRequestException
-			throw new MalformedIDChainTransactionException("Invalid request", e);
-		}
-	}
+        try {
+            await this.request.sanitize();
+        } catch (e) {
+            // MalformedIDChainRequestException
+            throw new MalformedIDChainTransactionException("Invalid request", e);
+        }
+    }
 }

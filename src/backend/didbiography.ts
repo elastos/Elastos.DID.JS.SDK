@@ -30,68 +30,68 @@ import {
     Deserializer
 } from "../internals";
 import type {
-	JsonStringifierTransformerContext,
-	JsonParserTransformerContext
+    JsonStringifierTransformerContext,
+    JsonParserTransformerContext
 } from "@elastosfoundation/jackson-js";
 
 class DIDBiographyStatusSerializer extends Serializer {
-	public static serialize(value: DIDBiographyStatus, context: JsonStringifierTransformerContext): string {
-		return value ? String(value) : null;
-	}
+    public static serialize(value: DIDBiographyStatus, context: JsonStringifierTransformerContext): string {
+        return value ? String(value) : null;
+    }
 }
 class DIDBiographyStatusDeserializer extends Deserializer {
-	public static deserialize(value: string | number, context: JsonParserTransformerContext): DIDBiographyStatus {
-		switch(String(value)) {
-			case "0":
-				return DIDBiographyStatus.VALID;
-			case "2":
-				return DIDBiographyStatus.DEACTIVATED;
-			case "3":
-				return DIDBiographyStatus.NOT_FOUND;
-			default:
-				throw new IllegalArgumentException("Invalid DIDBiographyStatus");
-		}
-	}
+    public static deserialize(value: string | number, context: JsonParserTransformerContext): DIDBiographyStatus {
+        switch(String(value)) {
+            case "0":
+                return DIDBiographyStatus.VALID;
+            case "2":
+                return DIDBiographyStatus.DEACTIVATED;
+            case "3":
+                return DIDBiographyStatus.NOT_FOUND;
+            default:
+                throw new IllegalArgumentException("Invalid DIDBiographyStatus");
+        }
+    }
 }
 
 @JsonSerialize({using: DIDBiographyStatusSerializer.serialize})
 @JsonDeserialize({using: DIDBiographyStatusDeserializer.deserialize})
 export class DIDBiographyStatus {
-	protected name: string;
-	protected value: number;
+    protected name: string;
+    protected value: number;
 
-	public constructor(value: number, name: string, ) {
-		this.name = name;
-		this.value = value;
-	}
+    public constructor(value: number, name: string, ) {
+        this.name = name;
+        this.value = value;
+    }
 
-	@JsonValue()
-	public getValue(): number {
-		return this.value;
-	}
+    @JsonValue()
+    public getValue(): number {
+        return this.value;
+    }
 
-	public toString(): string {
-		return this.name.toLowerCase();
-	}
+    public toString(): string {
+        return this.name.toLowerCase();
+    }
 
-	public equals(status: DIDBiographyStatus): boolean {
-		return this.value == status.value;
-	}
+    public equals(status: DIDBiographyStatus): boolean {
+        return this.value == status.value;
+    }
 }
 
 export namespace DIDBiographyStatus {
-	/**
-	 * The credential is valid.
-	 */
-	export const VALID = new DIDBiographyStatus(0, "valid");
-	 /**
-	  * The credential is deactivated.
-	  */
-	export const DEACTIVATED = new DIDBiographyStatus(2, "deactivated");
-	 /**
-	  * The credential is not published.
-	  */
-	export const NOT_FOUND = new DIDBiographyStatus(3, "not_found");
+    /**
+     * The credential is valid.
+     */
+    export const VALID = new DIDBiographyStatus(0, "valid");
+     /**
+      * The credential is deactivated.
+      */
+    export const DEACTIVATED = new DIDBiographyStatus(2, "deactivated");
+     /**
+      * The credential is not published.
+      */
+    export const NOT_FOUND = new DIDBiographyStatus(3, "not_found");
 }
 
 /**
@@ -100,97 +100,97 @@ export namespace DIDBiographyStatus {
 @JsonPropertyOrder({value: ["did", "status", "txs"]})
 @JsonInclude({value: JsonIncludeType.NON_NULL})
 export class DIDBiography extends ResolveResult<DIDBiography> {
-	protected static DID = "did";
-	protected static STATUS = "status";
-	protected static TRANSACTION = "transaction";
+    protected static DID = "did";
+    protected static STATUS = "status";
+    protected static TRANSACTION = "transaction";
 
-	@JsonProperty({value: DIDBiography.DID}) @JsonClassType({type: ()=>[DID]})
-	private did: DID;
-	@JsonProperty({value: DIDBiography.STATUS}) @JsonClassType({type: ()=>[DIDBiographyStatus]})
-	private status: DIDBiographyStatus;
-	@JsonProperty({value: DIDBiography.TRANSACTION}) @JsonClassType({type: ()=>[Array, [DIDTransaction]]})
-	private txs: DIDTransaction[];
+    @JsonProperty({value: DIDBiography.DID}) @JsonClassType({type: ()=>[DID]})
+    private did: DID;
+    @JsonProperty({value: DIDBiography.STATUS}) @JsonClassType({type: ()=>[DIDBiographyStatus]})
+    private status: DIDBiographyStatus;
+    @JsonProperty({value: DIDBiography.TRANSACTION}) @JsonClassType({type: ()=>[Array, [DIDTransaction]]})
+    private txs: DIDTransaction[];
 
-	/**
-	 * Constructs the Resolve Result with the given value.
-	 *
-	 * @param did the specified DID
-	 * @param status the DID's status
-	 */
-	@JsonCreator()
-	public static toDIDBiography(
-		@JsonProperty({value: DIDBiography.DID, required: true}) did: DID,
-		@JsonProperty({value: DIDBiography.STATUS, required: true}) status: DIDBiographyStatus
-	) {
-			let didBiography = new DIDBiography(did);
-			didBiography.status = status;
-			return didBiography;
-	}
+    /**
+     * Constructs the Resolve Result with the given value.
+     *
+     * @param did the specified DID
+     * @param status the DID's status
+     */
+    @JsonCreator()
+    public static toDIDBiography(
+        @JsonProperty({value: DIDBiography.DID, required: true}) did: DID,
+        @JsonProperty({value: DIDBiography.STATUS, required: true}) status: DIDBiographyStatus
+    ) {
+            let didBiography = new DIDBiography(did);
+            didBiography.status = status;
+            return didBiography;
+    }
 
-	public constructor(did: DID) {
-		super();
-		this.did = did;
-	}
+    public constructor(did: DID) {
+        super();
+        this.did = did;
+    }
 
-	public getDid(): DID {
-		return this.did;
-	}
+    public getDid(): DID {
+        return this.did;
+    }
 
-	protected setStatus(status: DIDBiographyStatus) {
-		this.status = status;
-	}
+    protected setStatus(status: DIDBiographyStatus) {
+        this.status = status;
+    }
 
-	public getStatus(): DIDBiographyStatus {
-		return this.status;
-	}
+    public getStatus(): DIDBiographyStatus {
+        return this.status;
+    }
 
-	public getTransactionCount(): number {
-		return this.txs != null ? this.txs.length : 0;
-	}
+    public getTransactionCount(): number {
+        return this.txs != null ? this.txs.length : 0;
+    }
 
-	/**
-	 * Get the index transaction content.
-	 *
-	 * @param index the index
-	 * @return the index DIDTransaction content
-	 */
-	public getTransaction(index: number): DIDTransaction {
-		return this.txs != null ? this.txs[index] : null;
-	}
+    /**
+     * Get the index transaction content.
+     *
+     * @param index the index
+     * @return the index DIDTransaction content
+     */
+    public getTransaction(index: number): DIDTransaction {
+        return this.txs != null ? this.txs[index] : null;
+    }
 
-	public getAllTransactions(): DIDTransaction[] {
-		return this.txs != null ? this.txs : [];
-	}
+    public getAllTransactions(): DIDTransaction[] {
+        return this.txs != null ? this.txs : [];
+    }
 
-	/**
-	 * Add transaction infomation into IDChain Transaction.
-	 * @param tx the DIDTransaction object
-	 */
-	protected addTransaction(tx: DIDTransaction) {
-		if (this.txs == null)
-			this.txs = [];
+    /**
+     * Add transaction infomation into IDChain Transaction.
+     * @param tx the DIDTransaction object
+     */
+    protected addTransaction(tx: DIDTransaction) {
+        if (this.txs == null)
+            this.txs = [];
 
-		this.txs.push(tx);
-	}
+        this.txs.push(tx);
+    }
 
-	public async sanitize(): Promise<void> {
-		if (this.did == null)
-			throw new MalformedResolveResultException("Missing did");
+    public async sanitize(): Promise<void> {
+        if (this.did == null)
+            throw new MalformedResolveResultException("Missing did");
 
-		if (!this.status.equals(DIDBiographyStatus.NOT_FOUND)) {
-			if (this.txs == null || this.txs.length == 0)
-				throw new MalformedResolveResultException("Missing transaction");
+        if (!this.status.equals(DIDBiographyStatus.NOT_FOUND)) {
+            if (this.txs == null || this.txs.length == 0)
+                throw new MalformedResolveResultException("Missing transaction");
 
-			try {
-				for (let tx of this.txs)
-					await tx.sanitize();
-			} catch (e) {
-				// MalformedIDChainTransactionException
-				throw new MalformedResolveResultException("Invalid transaction", e);
-			}
-		} else {
-			if (this.txs != null)
-				throw new MalformedResolveResultException("Should not include transaction");
-		}
-	}
+            try {
+                for (let tx of this.txs)
+                    await tx.sanitize();
+            } catch (e) {
+                // MalformedIDChainTransactionException
+                throw new MalformedResolveResultException("Invalid transaction", e);
+            }
+        } else {
+            if (this.txs != null)
+                throw new MalformedResolveResultException("Should not include transaction");
+        }
+    }
 }

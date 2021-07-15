@@ -8,7 +8,7 @@ import { checkArgument } from "./internals";
 @JsonInclude({value: JsonIncludeType.NON_NULL})
 export class DIDStoreMetadata extends AbstractMetadata {
     static DID_STORE_TYPE = "did:elastos:store";
-	static DID_STORE_VERSION = 3;
+    static DID_STORE_VERSION = 3;
 
     private static TYPE = "type";
     private static VERSION = "version";

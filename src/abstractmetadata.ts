@@ -31,189 +31,189 @@ import { JsonIgnore, JsonAnySetter, JsonAnyGetter} from "@elastosfoundation/jack
  * The class defines the base interface of Meta data.
  */
 export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> implements Cloneable<AbstractMetadata> {
-	private static ALIAS = "alias";
+    private static ALIAS = "alias";
 
-	protected static USER_EXTRA_PREFIX = "UX-";
+    protected static USER_EXTRA_PREFIX = "UX-";
 
-	// TODO @carl (BPI): I temporarily remplace this Map/String/String type with a raw Object, because
-	// this throws a "incompatible receiver 'size' or #Map" runtime error. Not sure how to fix this correctly
-	// but for now i want to keep validating the "internals" fix and Object does the job for now.
-	@JsonIgnore()
-	public props: JSONObject = {};
-	@JsonIgnore()
-	protected store?: DIDStore;
+    // TODO @carl (BPI): I temporarily remplace this Map/String/String type with a raw Object, because
+    // this throws a "incompatible receiver 'size' or #Map" runtime error. Not sure how to fix this correctly
+    // but for now i want to keep validating the "internals" fix and Object does the job for now.
+    @JsonIgnore()
+    public props: JSONObject = {};
+    @JsonIgnore()
+    protected store?: DIDStore;
 
-	/**
-	 * Constructs the AbstractMetadata and attach with the store.
-	 *
-	 * @param store the DIDStore
-	 */
-	constructor(store?: DIDStore) {
-		super();
-		this.store = store;
-		this.props = {};
-	}
+    /**
+     * Constructs the AbstractMetadata and attach with the store.
+     *
+     * @param store the DIDStore
+     */
+    constructor(store?: DIDStore) {
+        super();
+        this.store = store;
+        this.props = {};
+    }
 
-	/**
-	 * Set store for Abstract Metadata.
-	 * @param store the DIDStore
-	 */
-	public attachStore(store: DIDStore) {
-		checkArgument(store != null, "Invalid store");
-		this.store = store;
-	}
+    /**
+     * Set store for Abstract Metadata.
+     * @param store the DIDStore
+     */
+    public attachStore(store: DIDStore) {
+        checkArgument(store != null, "Invalid store");
+        this.store = store;
+    }
 
-	public detachStore() {
-		this.store = null;
-	}
+    public detachStore() {
+        this.store = null;
+    }
 
-	/**
-	 * Get store from Abstract Metadata.
-	 *
-	 * @return the DIDStore object
-	 */
-	 public getStore(): DIDStore {
-		return this.store;
-	}
+    /**
+     * Get store from Abstract Metadata.
+     *
+     * @return the DIDStore object
+     */
+     public getStore(): DIDStore {
+        return this.store;
+    }
 
-	/**
-	 * Judge whether the Abstract Metadata attach the store or not.
-	 *
-	 * @return the returned value is true if there is store attached meta data;
-	 *         the returned value is false if there is no store attached meta data.
-	 */
-	public attachedStore(): boolean {
-		return this.store != null;
-	}
+    /**
+     * Judge whether the Abstract Metadata attach the store or not.
+     *
+     * @return the returned value is true if there is store attached meta data;
+     *         the returned value is false if there is no store attached meta data.
+     */
+    public attachedStore(): boolean {
+        return this.store != null;
+    }
 
-	@JsonAnyGetter()
-	protected getProperties(): JSONObject {
-		return this.props;
-	}
+    @JsonAnyGetter()
+    protected getProperties(): JSONObject {
+        return this.props;
+    }
 
-	protected get(name: string): JSONValue {
-		return this.props[name];
-	}
+    protected get(name: string): JSONValue {
+        return this.props[name];
+    }
 
-	@JsonAnySetter()
-	protected put(name: string, value: JSONValue | Date ) {
-		this.props[name] = value instanceof Date ? value.toISOString() : value;
+    @JsonAnySetter()
+    protected put(name: string, value: JSONValue | Date ) {
+        this.props[name] = value instanceof Date ? value.toISOString() : value;
 
-		this.save();
-	}
+        this.save();
+    }
 
-	protected getBoolean(name: string, defaultValue: boolean = false): boolean {
-		let strValue = this.get(name);
-		return strValue != null ? new Boolean(strValue).valueOf() : defaultValue;
-		
-	}
+    protected getBoolean(name: string, defaultValue: boolean = false): boolean {
+        let strValue = this.get(name);
+        return strValue != null ? new Boolean(strValue).valueOf() : defaultValue;
+        
+    }
 
-	protected getInteger(name: string, defaultValue: number = -1): number {
-		let strValue = this.get(name);
-		let value = defaultValue;
-		if (strValue != null) {
-			try {
-				value = new Number(strValue).valueOf();
-			} catch (ignore) {
-			}
-		}
-		return value;
-	}
+    protected getInteger(name: string, defaultValue: number = -1): number {
+        let strValue = this.get(name);
+        let value = defaultValue;
+        if (strValue != null) {
+            try {
+                value = new Number(strValue).valueOf();
+            } catch (ignore) {
+            }
+        }
+        return value;
+    }
 
-	protected getDate(name: string, defaultValue: Date = null): Date /* throws ParseException */ {
-		let strValue = this.get(name);
-		let value = defaultValue;
-		if (strValue != null) {
-			try {
-				value = new Date(strValue as string);
-			} catch (ignore) {
-			}
-		}
-		return value;
-	}
+    protected getDate(name: string, defaultValue: Date = null): Date /* throws ParseException */ {
+        let strValue = this.get(name);
+        let value = defaultValue;
+        if (strValue != null) {
+            try {
+                value = new Date(strValue as string);
+            } catch (ignore) {
+            }
+        }
+        return value;
+    }
 
-	protected remove(name: string): any {
-		let value = this.props[name];
-		delete this.props[name];
-		this.save();
-		return value;
-	}
+    protected remove(name: string): any {
+        let value = this.props[name];
+        delete this.props[name];
+        this.save();
+        return value;
+    }
 
-	public isEmpty(): boolean {
-		return this.props.size == 0;
-	}
+    public isEmpty(): boolean {
+        return this.props.size == 0;
+    }
 
-	/**
-	 * Set alias.
-	 *
-	 * @param alias alias string
-	 */
-	public setAlias(alias: string) {
-		this.put(AbstractMetadata.ALIAS, alias);
-	}
+    /**
+     * Set alias.
+     *
+     * @param alias alias string
+     */
+    public setAlias(alias: string) {
+        this.put(AbstractMetadata.ALIAS, alias);
+    }
 
-	/**
-	 * Get alias.
-	 *
-	 * @return alias string
-	 */
-	public getAlias(): string {
-		return this.get(AbstractMetadata.ALIAS) as string;
-	}
+    /**
+     * Get alias.
+     *
+     * @return alias string
+     */
+    public getAlias(): string {
+        return this.get(AbstractMetadata.ALIAS) as string;
+    }
 
-	/**
-	 * Set Extra element.
-	 *
-	 * @param key the key string
-	 * @param value the value
-	 */
-	public setExtra(key: string, value: any) {
-		checkArgument(key != null && key != "", "Invalid key");
-		this.put(AbstractMetadata.USER_EXTRA_PREFIX + key, value);
-	}
+    /**
+     * Set Extra element.
+     *
+     * @param key the key string
+     * @param value the value
+     */
+    public setExtra(key: string, value: any) {
+        checkArgument(key != null && key != "", "Invalid key");
+        this.put(AbstractMetadata.USER_EXTRA_PREFIX + key, value);
+    }
 
-	/**
-	 * Get Extra element.
-	 *
-	 * @param key the key string
-	 * @return the value string
-	 */
-	public getExtra(key: string): string {
-		checkArgument(key && key != null, "Invalid key");
-		return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key) as string;
-	}
+    /**
+     * Get Extra element.
+     *
+     * @param key the key string
+     * @return the value string
+     */
+    public getExtra(key: string): string {
+        checkArgument(key && key != null, "Invalid key");
+        return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key) as string;
+    }
 
-	public getExtraBoolean(key: string, defaultValue: boolean = false): boolean {
-		checkArgument(key && key != null, "Invalid key");
-		return this.getBoolean(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
-	}
+    public getExtraBoolean(key: string, defaultValue: boolean = false): boolean {
+        checkArgument(key && key != null, "Invalid key");
+        return this.getBoolean(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
+    }
 
-	public getExtraInteger(key: string, defaultValue: number = -1): number {
-		checkArgument(key && key != null, "Invalid key");
-		return this.getInteger(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
-	}
+    public getExtraInteger(key: string, defaultValue: number = -1): number {
+        checkArgument(key && key != null, "Invalid key");
+        return this.getInteger(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
+    }
 
-	public getExtraDate(key: string, defaultValue: Date = null): Date /* throws ParseException */ {
-		checkArgument(key && key != null, "Invalid key");
-		return this.getDate(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
-	}
+    public getExtraDate(key: string, defaultValue: Date = null): Date /* throws ParseException */ {
+        checkArgument(key && key != null, "Invalid key");
+        return this.getDate(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
+    }
 
-	public removeExtra(key: string): string {
-		checkArgument(key && key != null, "Invalid key");
-		return this.remove(AbstractMetadata.USER_EXTRA_PREFIX + key);
-	}
+    public removeExtra(key: string): string {
+        checkArgument(key && key != null, "Invalid key");
+        return this.remove(AbstractMetadata.USER_EXTRA_PREFIX + key);
+    }
 
-	/**
-	 * Merge two metadata.
-	 *
-	 * @param metadata the metadata to be merged.
-	 */
-	public merge(metadata: AbstractMetadata) {
-		if (metadata == this || metadata == null)
-			return;
+    /**
+     * Merge two metadata.
+     *
+     * @param metadata the metadata to be merged.
+     */
+    public merge(metadata: AbstractMetadata) {
+        if (metadata == this || metadata == null)
+            return;
 
-		this.props = {...metadata.props, ...this.props};
-	}
+        this.props = {...metadata.props, ...this.props};
+    }
 
 
     /**
@@ -222,13 +222,13 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
      *
      * @return a shallow copy of this object
      */
-	 public clone(): any {
-		let result = super.clone() as AbstractMetadata;
-		result.store = this.store;
-		result.props = this.props;
+     public clone(): any {
+        let result = super.clone() as AbstractMetadata;
+        result.store = this.store;
+        result.props = this.props;
 
-		return result;
-	 }
+        return result;
+     }
 
-	protected abstract save();
+    protected abstract save();
 }
