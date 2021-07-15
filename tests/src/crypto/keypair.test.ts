@@ -23,66 +23,66 @@
 test("stub", ()=> Promise.resolve(true));
 
 /* public class KeyPairTest {
-	final static int KEY_SIZE = 1024;
+    final static int KEY_SIZE = 1024;
 
-	static {
-	    Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
-	}
+    static {
+        Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
+    }
 
-	//@Test
-	public void RSAKeyPairTest() throws GeneralSecurityException, IOException {
-		SecureRandom random = new SecureRandom();
-		RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(KEY_SIZE, RSAKeyGenParameterSpec.F4);
-		KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", "SC");
-		generator.initialize(spec, random);
-		KeyPair kp = generator.generateKeyPair();
-		Utils.dumpHex("PublicKey", kp.getPublic().getEncoded());
-		Utils.dumpHex("PrivateKey", kp.getPrivate().getEncoded());
+    //@Test
+    public void RSAKeyPairTest() throws GeneralSecurityException, IOException {
+        SecureRandom random = new SecureRandom();
+        RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(KEY_SIZE, RSAKeyGenParameterSpec.F4);
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", "SC");
+        generator.initialize(spec, random);
+        KeyPair kp = generator.generateKeyPair();
+        Utils.dumpHex("PublicKey", kp.getPublic().getEncoded());
+        Utils.dumpHex("PrivateKey", kp.getPrivate().getEncoded());
 
-		RSAKeyPairGenerator keyGen = new RSAKeyPairGenerator();
-		keyGen.init(new RSAKeyGenerationParameters(RSAKeyGenParameterSpec.F4, random, KEY_SIZE, 80));
-		AsymmetricCipherKeyPair key = keyGen.generateKeyPair();
+        RSAKeyPairGenerator keyGen = new RSAKeyPairGenerator();
+        keyGen.init(new RSAKeyGenerationParameters(RSAKeyGenParameterSpec.F4, random, KEY_SIZE, 80));
+        AsymmetricCipherKeyPair key = keyGen.generateKeyPair();
 
-		SubjectPublicKeyInfo pi = SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(key.getPublic());
-		System.out.println(Base64.encodeToString(pi.getEncoded()));
-		PrivateKeyInfo si = PrivateKeyInfoFactory.createPrivateKeyInfo(key.getPrivate());
-		System.out.println(Base64.encodeToString(si.getEncoded()));
+        SubjectPublicKeyInfo pi = SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(key.getPublic());
+        System.out.println(Base64.encodeToString(pi.getEncoded()));
+        PrivateKeyInfo si = PrivateKeyInfoFactory.createPrivateKeyInfo(key.getPrivate());
+        System.out.println(Base64.encodeToString(si.getEncoded()));
 
-		PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(si.getEncoded());
-		X509EncodedKeySpec spkiKeySpec = new X509EncodedKeySpec(pi.getEncoded());
+        PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(si.getEncoded());
+        X509EncodedKeySpec spkiKeySpec = new X509EncodedKeySpec(pi.getEncoded());
 
-		KeyFactory kf = KeyFactory.getInstance("RSA");
-	    kp = new KeyPair(kf.generatePublic(spkiKeySpec), kf.generatePrivate(pkcs8KeySpec));
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        kp = new KeyPair(kf.generatePublic(spkiKeySpec), kf.generatePrivate(pkcs8KeySpec));
 
-		Utils.dumpHex("PublicKey", kp.getPublic().getEncoded());
-		Utils.dumpHex("PrivateKey", kp.getPrivate().getEncoded());
-	}
+        Utils.dumpHex("PublicKey", kp.getPublic().getEncoded());
+        Utils.dumpHex("PrivateKey", kp.getPrivate().getEncoded());
+    }
 
-	//@Test
-	public void test1() throws DIDException, NoSuchAlgorithmException, InvalidKeySpecException, SignatureException, InvalidKeyException {
-		byte[] input = "Hello World!".getBytes();
+    //@Test
+    public void test1() throws DIDException, NoSuchAlgorithmException, InvalidKeySpecException, SignatureException, InvalidKeyException {
+        byte[] input = "Hello World!".getBytes();
 
-		for (int i = 0; i < 1000; i++) {
-			HDKey key = TestData.generateKeypair();
+        for (int i = 0; i < 1000; i++) {
+            HDKey key = TestData.generateKeypair();
 
-			byte[] sig1 = key.sign(Sha256Hash.hash(input));
-			System.out.println(Base64.encodeToString(sig1));
+            byte[] sig1 = key.sign(Sha256Hash.hash(input));
+            System.out.println(Base64.encodeToString(sig1));
 
-			KeyPair keyPair = key.getJCEKeyPair();
-			Signature s = Signature.getInstance("SHA256withECDSA");
-	        s.initSign(keyPair.getPrivate());
-	        s.update(input);
+            KeyPair keyPair = key.getJCEKeyPair();
+            Signature s = Signature.getInstance("SHA256withECDSA");
+            s.initSign(keyPair.getPrivate());
+            s.update(input);
 
-	        byte[] sig2 = s.sign();
-	        System.out.println(Base64.encodeToString(sig2));
+            byte[] sig2 = s.sign();
+            System.out.println(Base64.encodeToString(sig2));
 
-	        System.out.println(key.verify(Sha256Hash.hash(input), sig2));
+            System.out.println(key.verify(Sha256Hash.hash(input), sig2));
 
-	        s = Signature.getInstance("SHA256withECDSA");
-	        s.initVerify(keyPair.getPublic());
-	        s.update(input);
-	        System.out.println(s.verify(sig1));
-		}
-	}
+            s = Signature.getInstance("SHA256withECDSA");
+            s.initVerify(keyPair.getPublic());
+            s.update(input);
+            System.out.println(s.verify(sig1));
+        }
+    }
 }
  */

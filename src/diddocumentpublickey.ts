@@ -7,7 +7,7 @@ import {
     JsonIncludeType
 } from "@elastosfoundation/jackson-js";
 import type {
-	JsonStringifierTransformerContext,
+    JsonStringifierTransformerContext,
 } from "@elastosfoundation/jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";

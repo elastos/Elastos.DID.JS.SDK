@@ -25,45 +25,45 @@ import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
 
 describe('Mnemonic Tests', () => {
-	let testData: TestData;
-	let store: DIDStore;
+    let testData: TestData;
+    let store: DIDStore;
 
-	beforeEach(async () => {
-		testData = new TestData();
-		await testData.cleanup();
-		store = await testData.getStore();
-	})
+    beforeEach(async () => {
+        testData = new TestData();
+        await testData.cleanup();
+        store = await testData.getStore();
+    })
 
-	afterEach(async () => {
-	});
+    afterEach(async () => {
+    });
 
-	test('Test builtin wordlist', () => {
-		let languages = [
-			Mnemonic.DEFAULT,
-			Mnemonic.CHINESE_SIMPLIFIED,
-			Mnemonic.ENGLISH,
-			Mnemonic.FRENCH,
-		];
+    test('Test builtin wordlist', () => {
+        let languages = [
+            Mnemonic.DEFAULT,
+            Mnemonic.CHINESE_SIMPLIFIED,
+            Mnemonic.ENGLISH,
+            Mnemonic.FRENCH,
+        ];
 
-		languages.forEach(lang => {
-			let mc = Mnemonic.getInstance(lang);
-			let mnemonic = mc.generate();
+        languages.forEach(lang => {
+            let mc = Mnemonic.getInstance(lang);
+            let mnemonic = mc.generate();
 
-			expect(mc.isValid(mnemonic)).toBeTruthy();
-		    expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy();
+            expect(mc.isValid(mnemonic)).toBeTruthy();
+            expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy();
 
-			RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
+            RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
 
-			expect(mc.isValid(mnemonic + "z")).toBeFalsy();
-			expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy();
-		});
-	});
+            expect(mc.isValid(mnemonic + "z")).toBeFalsy();
+            expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy();
+        });
+    });
 
-	test('Test french mnemonic', () => {
-		let mnemonic = "remarque séduire massif boire horde céleste exact dribbler pulpe prouesse vagabond opale";
-		let mc = Mnemonic.getInstance(Mnemonic.FRENCH);
+    test('Test french mnemonic', () => {
+        let mnemonic = "remarque séduire massif boire horde céleste exact dribbler pulpe prouesse vagabond opale";
+        let mc = Mnemonic.getInstance(Mnemonic.FRENCH);
 
-		expect(mc.isValid(mnemonic)).toBeTruthy();
-		expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy();
-	});
+        expect(mc.isValid(mnemonic)).toBeTruthy();
+        expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy();
+    });
 })

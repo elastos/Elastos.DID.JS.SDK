@@ -1,24 +1,24 @@
 import {
-	TransferTicket,
-	DIDStore,
+    TransferTicket,
+    DIDStore,
 } from "@elastosfoundation/did-js-sdk";
 import {
-	TestData,
+    TestData,
 } from "./utils/testdata";
 
 describe('TransferTicket Tests', () => {
-	let testData: TestData;
-	let store: DIDStore;
+    let testData: TestData;
+    let store: DIDStore;
 
-	beforeEach(async () => {
-		testData = new TestData();
-		await testData.cleanup();
-		store = await testData.getStore();
-	});
+    beforeEach(async () => {
+        testData = new TestData();
+        await testData.cleanup();
+        store = await testData.getStore();
+    });
 
-	afterEach(async () => {});
+    afterEach(async () => {});
 
-	test('Test FooBar', async () => {
+    test('Test FooBar', async () => {
         let td = testData.getInstantData();
 
         let ticket = await td.getFooBarTransferTicket();
@@ -32,9 +32,9 @@ describe('TransferTicket Tests', () => {
 
         for (let i = 0; i < ticket.getProofs().length; i++)
             expect(parsedTicket.getProofs()[i].equals(ticket.getProofs()[i]));
-	});
+    });
 
-	test('Test Baz', async () => {
+    test('Test Baz', async () => {
         let td = testData.getInstantData();
 
         let ticket = await td.getBazTransferTicket();
@@ -48,5 +48,5 @@ describe('TransferTicket Tests', () => {
 
         for (let i = 0; i < ticket.getProofs().length; i++)
             expect(parsedTicket.getProofs()[i].equals(ticket.getProofs()[i]));
-	});
+    });
 });

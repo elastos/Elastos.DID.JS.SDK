@@ -37,84 +37,84 @@ import { checkArgument } from "./internals";
  * The class defines the implement of Credential Meta data.
  */
 export class CredentialMetadata extends AbstractMetadata implements Cloneable<CredentialMetadata> {
-	private static TXID = "txid";
-	private static PUBLISHED = "published";
-	private static REVOKED = "revoked";
-	private static log = new Logger("CredentialMetadata");
+    private static TXID = "txid";
+    private static PUBLISHED = "published";
+    private static REVOKED = "revoked";
+    private static log = new Logger("CredentialMetadata");
 
 
-	private id: DIDURL;
+    private id: DIDURL;
 
-	/**
-	 * Construct the CredentialMetadataImpl with the given store.
-	 *
-	 * @param store the specified DIDStore
-	 */
-	constructor(id: DIDURL = null, store: DIDStore = null) {
-		super(store);
-		this.id = id;
-	}
+    /**
+     * Construct the CredentialMetadataImpl with the given store.
+     *
+     * @param store the specified DIDStore
+     */
+    constructor(id: DIDURL = null, store: DIDStore = null) {
+        super(store);
+        this.id = id;
+    }
 
-	public setId(id: DIDURL) {
-		this.id = id;
-	}
+    public setId(id: DIDURL) {
+        this.id = id;
+    }
 
-	/**
-	 * Set transaction id for CredentialMetadata.
-	 *
-	 * @param txid the transaction id string
-	 */
-	public setTransactionId(txid: string) {
-		this.put(CredentialMetadata.TXID, txid);
-	}
+    /**
+     * Set transaction id for CredentialMetadata.
+     *
+     * @param txid the transaction id string
+     */
+    public setTransactionId(txid: string) {
+        this.put(CredentialMetadata.TXID, txid);
+    }
 
-	/**
-	 * Get the last transaction id.
-	 *
-	 * @return the transaction string
-	 */
-	public getTransactionId(): string {
-		return this.get(CredentialMetadata.TXID) as string;
-	}
+    /**
+     * Get the last transaction id.
+     *
+     * @return the transaction string
+     */
+    public getTransactionId(): string {
+        return this.get(CredentialMetadata.TXID) as string;
+    }
 
-	/**
-	 * Set published time for CredentialMetadata.
-	 *
-	 * @param timestamp the time published
-	 */
-	public setPublished(timestamp: Date) {
-		checkArgument(timestamp != null, "Invalid timestamp");
+    /**
+     * Set published time for CredentialMetadata.
+     *
+     * @param timestamp the time published
+     */
+    public setPublished(timestamp: Date) {
+        checkArgument(timestamp != null, "Invalid timestamp");
 
-		this.put(CredentialMetadata.PUBLISHED, timestamp);
-	}
+        this.put(CredentialMetadata.PUBLISHED, timestamp);
+    }
 
-	/**
-	 * Get the time of the latest declare transaction.
-	 *
-	 * @return the published time
-	 */
-	public getPublished(): Date {
-		return this.getDate(CredentialMetadata.PUBLISHED, null);
-	}
+    /**
+     * Get the time of the latest declare transaction.
+     *
+     * @return the published time
+     */
+    public getPublished(): Date {
+        return this.getDate(CredentialMetadata.PUBLISHED, null);
+    }
 
-	/**
-	 * Set revoked status into CredentialMetadata.
-	 *
-	 * @param revoked the revocation status
-	 */
-	public setRevoked(revoked: boolean) {
-		this.put(CredentialMetadata.REVOKED, revoked);
-	}
+    /**
+     * Set revoked status into CredentialMetadata.
+     *
+     * @param revoked the revocation status
+     */
+    public setRevoked(revoked: boolean) {
+        this.put(CredentialMetadata.REVOKED, revoked);
+    }
 
-	/**
-	 * the DID revoked status.
-	 *
-	 * @return the returned value is true if the did is revoked.
-	 *         the returned value is false if the did is not revoked.
-	 */
-	public isRevoked(): boolean {
-		return this.getBoolean(CredentialMetadata.REVOKED, false);
-	}
+    /**
+     * the DID revoked status.
+     *
+     * @return the returned value is true if the did is revoked.
+     *         the returned value is false if the did is not revoked.
+     */
+    public isRevoked(): boolean {
+        return this.getBoolean(CredentialMetadata.REVOKED, false);
+    }
 
     /**
      * Returns a shallow copy of this instance: the keys and values themselves
@@ -122,26 +122,26 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
      *
      * @return a shallow copy of this object
      */
-	public clone(): CredentialMetadata {
-		try {
-			return super.clone();
-		} catch (e) {
-			// CloneNotSupportedException
-			CredentialMetadata.log.error(e);
-			return null;
-		}
+    public clone(): CredentialMetadata {
+        try {
+            return super.clone();
+        } catch (e) {
+            // CloneNotSupportedException
+            CredentialMetadata.log.error(e);
+            return null;
+        }
     }
 
-	protected save() {
-		if (this.attachedStore()) {
-			try {
-				this.getStore().storeCredentialMetadata(this.id, this);
-			} catch (e) {
-				// DIDStoreException
-				CredentialMetadata.log.error("INTERNAL - error store metadata for credential {}", this.id);
-				throw e;
-			}
-		}
-	}
+    protected save() {
+        if (this.attachedStore()) {
+            try {
+                this.getStore().storeCredentialMetadata(this.id, this);
+            } catch (e) {
+                // DIDStoreException
+                CredentialMetadata.log.error("INTERNAL - error store metadata for credential {}", this.id);
+                throw e;
+            }
+        }
+    }
 }
 

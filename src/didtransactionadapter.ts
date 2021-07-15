@@ -21,13 +21,13 @@
  */
 
 export interface DIDTransactionAdapter {
-	/**
-	 * User need to implement 'createIdTransaction' function.
-	 * An application-defined function that create id transaction to chain.
-	 *
-	 * @param payload the payload string to put into id transaction
-	 * @param memo the memorandum string
-	 * @throws DIDTransactionException throw this exception if publishing id transaction failed.
-	 */
-	createIdTransaction(payload: string, memo: string);
+    /**
+     * User need to implement 'createIdTransaction' function.
+     * An application-defined function that create id transaction to chain.
+     *
+     * @param payload the payload string to put into id transaction
+     * @param memo the memorandum string
+     * @throws DIDTransactionException throw this exception if publishing id transaction failed.
+     */
+    createIdTransaction(payload: string, memo: string);
 }

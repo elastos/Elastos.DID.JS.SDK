@@ -4,20 +4,20 @@ import {
     JsonDeserialize
 } from "@elastosfoundation/jackson-js";
 import type {
-	JsonParserTransformerContext
+    JsonParserTransformerContext
 } from "@elastosfoundation/jackson-js";
 import { IllegalArgumentException } from "./exceptions/exceptions"
 import { checkArgument, Deserializer } from "./internals";
 
 class MultisigDeserializer extends Deserializer {
-	public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocumentMultiSignature {
-		try {
+    public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocumentMultiSignature {
+        try {
             if (value)
                return DIDDocumentMultiSignature.newFormJson(value);
-		} catch (e) {
-			throw new IllegalArgumentException("Invalid multisig specification");
-		}
-	}
+        } catch (e) {
+            throw new IllegalArgumentException("Invalid multisig specification");
+        }
+    }
 }
 
 @JsonDeserialize({using:  MultisigDeserializer.deserialize})

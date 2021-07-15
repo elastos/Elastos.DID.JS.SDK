@@ -43,27 +43,27 @@ import {
     Deserializer
 } from "./internals";
 import type {
-	JsonStringifierTransformerContext,
-	JsonParserTransformerContext
+    JsonStringifierTransformerContext,
+    JsonParserTransformerContext
 } from "@elastosfoundation/jackson-js";
 import { IllegalArgumentException } from "./exceptions/exceptions";
 
 class DIDSerializer extends Serializer {
     public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
-		return did ? did.toString() : null;
-	}
+        return did ? did.toString() : null;
+    }
 }
 
 class DIDDeserializer extends Deserializer {
-	public static deserialize(value: string, context: JsonParserTransformerContext): DID {
-		try {
+    public static deserialize(value: string, context: JsonParserTransformerContext): DID {
+        try {
             if (value && value.includes("{"))
                 throw new IllegalArgumentException("Invalid DIDURL");
             return new DID(value);
-		} catch (e) {
-			throw new IllegalArgumentException("Invalid DID");
-		}
-	}
+        } catch (e) {
+            throw new IllegalArgumentException("Invalid DID");
+        }
+    }
 }
 
 /**

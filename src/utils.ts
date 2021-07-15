@@ -8,7 +8,7 @@ export function checkArgument(condition: boolean, errorMessage: string): void {
 }
 
 export function checkEmpty(value: string, errorMessage: string): void {
-	checkArgument(value != null && value !== "", errorMessage);
+    checkArgument(value != null && value !== "", errorMessage);
 }
 
 export function checkNotNull(value: any, errorMessage: string): void {
@@ -18,7 +18,7 @@ export function checkNotNull(value: any, errorMessage: string): void {
 }
 
 export function isEmpty(value: string): boolean {
-	return !value || value == null;
+    return !value || value == null;
 }
 
 export function uint8ArrayCopy(src: Uint8Array, srcIndex: number, dest: Uint8Array, destIndex: number, length: number): void {

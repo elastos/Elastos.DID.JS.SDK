@@ -19,81 +19,81 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-		
+        
 export class VerificationEventListener {
-	public done(context : Object, succeeded : boolean, message : string) : void {};
+    public done(context : Object, succeeded : boolean, message : string) : void {};
 
-	public reset() : void {};
+    public reset() : void {};
 
-	private eprintf(format : string, args : Object[]) : string {
+    private eprintf(format : string, args : Object[]) : string {
         let content = String(format);
         for (let i = 0; i < args.length; i++) {
             content = content.replace(/\{\}/, String(args[i]));
         }
-		return content;
-	}
+        return content;
+    }
 
-	public succeeded(context : Object, format : string, ...args: Object[]) : void {
-		let message = this.eprintf(format, args);
-		this.done(context, true, message);
-	}
+    public succeeded(context : Object, format : string, ...args: Object[]) : void {
+        let message = this.eprintf(format, args);
+        this.done(context, true, message);
+    }
 
-	public failed(context : Object, format : string, ...args: Object[]) : void {
-		let message = this.eprintf(format, args);
-		this.done(context, false, message);
-	}
+    public failed(context : Object, format : string, ...args: Object[]) : void {
+        let message = this.eprintf(format, args);
+        this.done(context, false, message);
+    }
 
-	public static getDefault(ident : string, succeededPrefix : string, failedPrefix : string) : VerificationEventListener {
-		return new DefaultVerificationEventListener(ident, succeededPrefix, failedPrefix);
-	}
+    public static getDefault(ident : string, succeededPrefix : string, failedPrefix : string) : VerificationEventListener {
+        return new DefaultVerificationEventListener(ident, succeededPrefix, failedPrefix);
+    }
 
-	public static getDefaultWithIdent(ident : string) : VerificationEventListener {
-		return new DefaultVerificationEventListener(ident, null, null);
-	}
+    public static getDefaultWithIdent(ident : string) : VerificationEventListener {
+        return new DefaultVerificationEventListener(ident, null, null);
+    }
 }
 
 class Record {
-	context : Object;
-	succeeded : boolean;
-	message : string;
+    context : Object;
+    succeeded : boolean;
+    message : string;
 
-	constructor(context : Object, succeeded : boolean, message : string) {
-		this.context = context;
-		this.succeeded = succeeded;
-		this.message = message;
-	}
+    constructor(context : Object, succeeded : boolean, message : string) {
+        this.context = context;
+        this.succeeded = succeeded;
+        this.message = message;
+    }
 }
 
 class DefaultVerificationEventListener extends VerificationEventListener {
-	private static EMPTY = "";
+    private static EMPTY = "";
 
-	private ident : string;
-	private succeededPrefix : string;
-	private failedPrefix : string;
-	private records : Record[];
+    private ident : string;
+    private succeededPrefix : string;
+    private failedPrefix : string;
+    private records : Record[];
 
-	constructor(ident : string, succeededPrefix : string, failedPrefix : string) {
-		super();
-		this.ident = ident == null ? DefaultVerificationEventListener.EMPTY : ident;
-		this.succeededPrefix = succeededPrefix == null ? DefaultVerificationEventListener.EMPTY : succeededPrefix;
-		this.failedPrefix = failedPrefix == null ? DefaultVerificationEventListener.EMPTY : failedPrefix;
+    constructor(ident : string, succeededPrefix : string, failedPrefix : string) {
+        super();
+        this.ident = ident == null ? DefaultVerificationEventListener.EMPTY : ident;
+        this.succeededPrefix = succeededPrefix == null ? DefaultVerificationEventListener.EMPTY : succeededPrefix;
+        this.failedPrefix = failedPrefix == null ? DefaultVerificationEventListener.EMPTY : failedPrefix;
 
-		this.records = new Array<Record>();
-	}
+        this.records = new Array<Record>();
+    }
 
-	public done(context : Object, succeeded : boolean, message : string) : void {
-		this.records.unshift(new Record(context, succeeded, message));
-	}
+    public done(context : Object, succeeded : boolean, message : string) : void {
+        this.records.unshift(new Record(context, succeeded, message));
+    }
 
-	public reset() : void {
-		this.records = [];
-	}
-	
-	public toString() : string {
-		let str = "";
-		for (let record of this.records)
+    public reset() : void {
+        this.records = [];
+    }
+    
+    public toString() : string {
+        let str = "";
+        for (let record of this.records)
             str = str.concat(this.ident, record.succeeded ? this.succeededPrefix : this.failedPrefix, record.message, "\n");
 
-		return str;
-	}
+        return str;
+    }
 }

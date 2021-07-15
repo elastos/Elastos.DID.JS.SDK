@@ -37,75 +37,75 @@ Logger.setLevel(Logger.TRACE);
  * TODO: Make sure this can't be called twice - possibly replace with a "promisifiable" subscriber event.
  */
 /* async function initialize() {
-	return new Promise<void>((resolve, reject)=>{
-		console.log("BrowserFS initialization");
+    return new Promise<void>((resolve, reject)=>{
+        console.log("BrowserFS initialization");
 
-		if (window) {
-			BrowserFS.configure({
-				fs: "LocalStorage",
-				options: {}
-			}, function(e) {
-				console.log("BrowserFS initialization complete", e);
-				if (e) {
-					reject(e)
-				}
-				else {
-					resolve();
-				}
-			});
-			resolve();
-		}
-		else {
-			// NodeJS: nothing to do.
-			resolve();
-		}
-	});
+        if (window) {
+            BrowserFS.configure({
+                fs: "LocalStorage",
+                options: {}
+            }, function(e) {
+                console.log("BrowserFS initialization complete", e);
+                if (e) {
+                    reject(e)
+                }
+                else {
+                    resolve();
+                }
+            });
+            resolve();
+        }
+        else {
+            // NodeJS: nothing to do.
+            resolve();
+        }
+    });
 } */
 
 export type {
-	DIDURLValues,
-	DIDAdapter,
-	JSONObject,
-	JSONValue
+    DIDURLValues,
+    DIDAdapter,
+    JSONObject,
+    JSONValue
 }
 
 export {
-	//initialize,
+    //initialize,
 
-	DID,
-	DIDDocument,
-	DIDDocumentPublicKey,
-	DIDDocumentBuilder,
-	DIDStore,
-	DIDBackend,
-	RootIdentity,
-	VerifiableCredential,
-	VerifiablePresentation,
-	Mnemonic,
-	TransferTicket,
-	Issuer,
-	DIDURL,
-	DIDURLParser,
-	DIDBiography,
-	DIDBiographyStatus,
-	IDChainRequest,
-	DefaultDIDAdapter,
-	SimulatedIDChain,
-	SimulatedIDChainAdapter,
-	Exceptions,
-	VerificationEventListener,
+    DID,
+    DIDDocument,
+    DIDDocumentPublicKey,
+    DIDDocumentBuilder,
+    DIDStore,
+    DIDBackend,
+    RootIdentity,
+    VerifiableCredential,
+    VerifiablePresentation,
+    Mnemonic,
+    TransferTicket,
+    Issuer,
+    DIDURL,
+    DIDURLParser,
+    DIDBiography,
+    DIDBiographyStatus,
+    IDChainRequest,
+    DefaultDIDAdapter,
+    SimulatedIDChain,
+    SimulatedIDChainAdapter,
+    Exceptions,
+    VerificationEventListener,
 
-	// TODO - others
+    // TODO - others
 
-	// Utilities
-	runningInBrowser,
+    // Utilities
+    runningInBrowser,
 
-	// Internal - for tests only
-	File,
-	Logger,
-	Aes256cbc,
-	BASE64,
-	HDKey,
-	Base58,
-	EcdsaSigner
+    // Internal - for tests only
+    File,
+    Logger,
+    Aes256cbc,
+    BASE64,
+    HDKey,
+    Base58,
+    EcdsaSigner
 }

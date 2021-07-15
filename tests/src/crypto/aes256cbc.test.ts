@@ -23,46 +23,46 @@
 import { Aes256cbc, BASE64 } from "@elastosfoundation/did-js-sdk"
 
 describe('Aes256cbc Encryption Tests', () => {
-	const passwd: string = "secret";
-	const plain: string = "The quick brown fox jumps over the lazy dog."
-	const cipherBase64u: string = "TBimuq42IyD6FsoZK0AoCOt75uiL_gEepZTpgu59RYSV-NR-fqxsYfx0cyyzGacX";
+    const passwd: string = "secret";
+    const plain: string = "The quick brown fox jumps over the lazy dog."
+    const cipherBase64u: string = "TBimuq42IyD6FsoZK0AoCOt75uiL_gEepZTpgu59RYSV-NR-fqxsYfx0cyyzGacX";
 
-	test('encrypt method', () => {
-		let cipherResult: Buffer = Aes256cbc.encrypt(Buffer.from(plain, "utf-8"), passwd)
-		let base64: string = BASE64.fromUrlFormat(cipherBase64u)
-		let base64Buffer: Buffer = Buffer.from(base64, "base64")
+    test('encrypt method', () => {
+        let cipherResult: Buffer = Aes256cbc.encrypt(Buffer.from(plain, "utf-8"), passwd)
+        let base64: string = BASE64.fromUrlFormat(cipherBase64u)
+        let base64Buffer: Buffer = Buffer.from(base64, "base64")
 
-		expect(cipherResult)
-		.toEqual(base64Buffer)
-	});
+        expect(cipherResult)
+        .toEqual(base64Buffer)
+    });
 
-	test('decrypt method', () => {
-		let base64: string = BASE64.fromUrlFormat(cipherBase64u)
-		let base64Buffer: Buffer = Buffer.from(base64, "base64")
-		let expectedBuffer: Buffer = Buffer.from(plain, "utf-8")
-		let decipherResult: Buffer = Aes256cbc.decrypt(base64Buffer, passwd)
+    test('decrypt method', () => {
+        let base64: string = BASE64.fromUrlFormat(cipherBase64u)
+        let base64Buffer: Buffer = Buffer.from(base64, "base64")
+        let expectedBuffer: Buffer = Buffer.from(plain, "utf-8")
+        let decipherResult: Buffer = Aes256cbc.decrypt(base64Buffer, passwd)
 
-		expect(decipherResult)
-		.toEqual(expectedBuffer)
-	});
+        expect(decipherResult)
+        .toEqual(expectedBuffer)
+    });
 
-	test('encryptToBase64 method', () => {
-		let cipherResult = Aes256cbc.encryptToBase64( Buffer.from(plain, "utf-8"), passwd)
-		expect(cipherResult)
-		.toBe(cipherBase64u);
-	});
+    test('encryptToBase64 method', () => {
+        let cipherResult = Aes256cbc.encryptToBase64( Buffer.from(plain, "utf-8"), passwd)
+        expect(cipherResult)
+        .toBe(cipherBase64u);
+    });
 
-	test('decryptFromBase64 method', () => {
-		let decipherResult = Aes256cbc.decryptFromBase64(cipherBase64u, passwd)
-		expect(decipherResult.toString("utf-8"))
-		.toBe(plain);
-	});
+    test('decryptFromBase64 method', () => {
+        let decipherResult = Aes256cbc.decryptFromBase64(cipherBase64u, passwd)
+        expect(decipherResult.toString("utf-8"))
+        .toBe(plain);
+    });
 
-	test('Compatibility', () => {
+    test('Compatibility', () => {
 
-		let cipherResult = Aes256cbc.encryptToBase64(Buffer.from("brown bear what do you see", "utf-8"), "password")
-		expect(cipherResult)
-		.toBe("uK7mHw5JHRD2WS-BmA2b_4mUPD9WhttY9uAC_aw9Tdc");
-	});
+        let cipherResult = Aes256cbc.encryptToBase64(Buffer.from("brown bear what do you see", "utf-8"), "password")
+        expect(cipherResult)
+        .toBe("uK7mHw5JHRD2WS-BmA2b_4mUPD9WhttY9uAC_aw9Tdc");
+    });
 })
 

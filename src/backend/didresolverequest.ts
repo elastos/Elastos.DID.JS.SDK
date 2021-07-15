@@ -29,68 +29,68 @@ import { hashCode } from "../internals";
 
 @JsonCreator()
 export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Parameters> {
-	public static PARAMETER_DID = "did";
-	public static PARAMETER_ALL = "all";
+    public static PARAMETER_DID = "did";
+    public static PARAMETER_ALL = "all";
 
-	public static METHOD_NAME = "did_resolveDID";
+    public static METHOD_NAME = "did_resolveDID";
 
-	public constructor(@JsonProperty({value: ResolveRequest.ID}) requestId: string) {
-		super(requestId, DIDResolveRequest.METHOD_NAME);
-	}
+    public constructor(@JsonProperty({value: ResolveRequest.ID}) requestId: string) {
+        super(requestId, DIDResolveRequest.METHOD_NAME);
+    }
 
-	public setParameters(didOrStringOrParams: DID | string | Parameters, all = false) {
-		if (didOrStringOrParams instanceof DID)
-			super.setParameters(new Parameters(didOrStringOrParams, all));
-		else if (didOrStringOrParams instanceof Parameters)
-			super.setParameters(didOrStringOrParams);
-		else
-			super.setParameters(new Parameters(DID.from(didOrStringOrParams), all));
-	}
+    public setParameters(didOrStringOrParams: DID | string | Parameters, all = false) {
+        if (didOrStringOrParams instanceof DID)
+            super.setParameters(new Parameters(didOrStringOrParams, all));
+        else if (didOrStringOrParams instanceof Parameters)
+            super.setParameters(didOrStringOrParams);
+        else
+            super.setParameters(new Parameters(DID.from(didOrStringOrParams), all));
+    }
 
-	public getDid(): DID {
-		return this.getParameters().did;
-	}
+    public getDid(): DID {
+        return this.getParameters().did;
+    }
 
-	public isResolveAll(): boolean {
-		return this.getParameters().all;
-	}
+    public isResolveAll(): boolean {
+        return this.getParameters().all;
+    }
 
-	public toString(): string {
-		let builder = new DIDURL.Builder(this.getParameters().did);
-		builder.setQueryParameter(DIDResolveRequest.PARAMETER_ALL, this.getParameters().all ? "true":"false");
-		return builder.build().toString();
-	}
+    public toString(): string {
+        let builder = new DIDURL.Builder(this.getParameters().did);
+        builder.setQueryParameter(DIDResolveRequest.PARAMETER_ALL, this.getParameters().all ? "true":"false");
+        return builder.build().toString();
+    }
 }
 
 @JsonCreator()
 class Parameters implements Hashable {
-	@JsonProperty({value: DIDResolveRequest.PARAMETER_DID})
-	public did: DID;
+    @JsonProperty({value: DIDResolveRequest.PARAMETER_DID})
+    public did: DID;
 
-	@JsonProperty({value: DIDResolveRequest.PARAMETER_ALL})
-	@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
-	public all: boolean;
+    @JsonProperty({value: DIDResolveRequest.PARAMETER_ALL})
+    @JsonInclude({value: JsonIncludeType.NON_DEFAULT})
+    public all: boolean;
 
-	public constructor(@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: DID, all = false) {
-		this.did = did;
-		this.all = all;
-	}
+    public constructor(@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: DID, all = false) {
+        this.did = did;
+        this.all = all;
+    }
 
-	public hashCode(): number {
-		let hash = this.did.hashCode();
-		hash += hashCode(this.all);
-		return hash;
-	}
+    public hashCode(): number {
+        let hash = this.did.hashCode();
+        hash += hashCode(this.all);
+        return hash;
+    }
 
-	public equals(o: unknown): boolean {
-		if (!(o instanceof Parameters))
-			return false;
+    public equals(o: unknown): boolean {
+        if (!(o instanceof Parameters))
+            return false;
 
-		let p = o as Parameters;
+        let p = o as Parameters;
 
-		if (!this.did.equals(p.did))
-			return false;
+        if (!this.did.equals(p.did))
+            return false;
 
-		return this.all == p.all;
-	}
+        return this.all == p.all;
+    }
 }

@@ -14,15 +14,15 @@ const {
 } = fs;
 
 BrowserFS.configure({
-	fs: "LocalStorage",
-	options: {}
+    fs: "LocalStorage",
+    options: {}
 }, function(e) {
-	if (e) {
-		throw e;
-	}
-	else {
-		//console.log("BrowserFS initialization complete");
-	}
+    if (e) {
+        throw e;
+    }
+    else {
+        //console.log("BrowserFS initialization complete");
+    }
 });
 
 export {

@@ -3,18 +3,18 @@ import type { DIDDocument } from "./internals";
 
 export class DefaultConflictHandle implements ConflictHandle {
 
-		private static instance: DefaultConflictHandle;
+        private static instance: DefaultConflictHandle;
 
-		private constructor() {}
+        private constructor() {}
 
-		public static getInstance(): DefaultConflictHandle {
-			if (!DefaultConflictHandle.instance) {
-				DefaultConflictHandle.instance = new DefaultConflictHandle();
-			}
-			return DefaultConflictHandle.instance;
-		}
+        public static getInstance(): DefaultConflictHandle {
+            if (!DefaultConflictHandle.instance) {
+                DefaultConflictHandle.instance = new DefaultConflictHandle();
+            }
+            return DefaultConflictHandle.instance;
+        }
 
-		public merge(chainDoc: DIDDocument, localDoc: DIDDocument): DIDDocument {
-			return localDoc;
-		}
+        public merge(chainDoc: DIDDocument, localDoc: DIDDocument): DIDDocument {
+            return localDoc;
+        }
 }

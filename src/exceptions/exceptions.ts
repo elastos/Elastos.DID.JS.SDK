@@ -1,5 +1,5 @@
 export class ParentException extends Error{
-	private causedBy?: Error;
+    private causedBy?: Error;
 
     constructor(message?: string, causedBy?: Error) {
         super(message + (causedBy ? "\nCaused by: " + causedBy.message + (causedBy.stack ? "\nCaused by: " + causedBy.stack : "") : ""));

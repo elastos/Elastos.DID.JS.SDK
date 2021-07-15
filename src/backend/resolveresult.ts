@@ -23,10 +23,10 @@
 import { DIDEntity } from "../internals"
 
 export abstract class ResolveResult<T> extends DIDEntity<T> {
-	/**
-	 * Post sanitize routine after deserialization.
-	 *
-	 * @throws MalformedResolveResultException if the DID object is invalid
-	 */
-	public async sanitize(): Promise<void> {}
+    /**
+     * Post sanitize routine after deserialization.
+     *
+     * @throws MalformedResolveResultException if the DID object is invalid
+     */
+    public async sanitize(): Promise<void> {}
 }

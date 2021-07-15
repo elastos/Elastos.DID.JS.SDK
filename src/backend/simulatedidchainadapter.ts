@@ -25,27 +25,27 @@ import { checkArgument } from "../internals";
 import { DIDTransactionException } from "../exceptions/exceptions"
 
 export class SimulatedIDChainAdapter extends DefaultDIDAdapter {
-	private serverURL: URL;
-	private idtxEndpoint: URL;
+    private serverURL: URL;
+    private idtxEndpoint: URL;
 
-	public constructor(endpoint: string) {
-		super(new URL("/resolve", new URL(endpoint)).toString());
-		this.serverURL = new URL(endpoint);
-		this.idtxEndpoint = new URL("/idtx", this.serverURL);
-	}
+    public constructor(endpoint: string) {
+        super(new URL("/resolve", new URL(endpoint)).toString());
+        this.serverURL = new URL(endpoint);
+        this.idtxEndpoint = new URL("/idtx", this.serverURL);
+    }
 
-	public async createIdTransaction(payload: string, memo: string) {
-		checkArgument(payload !== null && payload.length > 0, "Invalid payload");
-		try {
-			let ret = await this.performRequest(this.idtxEndpoint, payload);
-		} catch (e) {
-			throw new DIDTransactionException("Create ID transaction failed.", e);
-		}
-	}
+    public async createIdTransaction(payload: string, memo: string) {
+        checkArgument(payload !== null && payload.length > 0, "Invalid payload");
+        try {
+            let ret = await this.performRequest(this.idtxEndpoint, payload);
+        } catch (e) {
+            throw new DIDTransactionException("Create ID transaction failed.", e);
+        }
+    }
 
-	public async resetData(): Promise<void> {
-		let resetURL = new URL("/reset", this.serverURL);
+    public async resetData(): Promise<void> {
+        let resetURL = new URL("/reset", this.serverURL);
 
-		await this.performRequest(resetURL);
-	}
+        await this.performRequest(resetURL);
+    }
 }

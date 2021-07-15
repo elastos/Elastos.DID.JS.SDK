@@ -27,79 +27,79 @@ import type { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
 
 export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRequest, Parameters> {
-	public static PARAMETER_ID = "id";
-	public static PARAMETER_ISSUER = "issuer";
+    public static PARAMETER_ID = "id";
+    public static PARAMETER_ISSUER = "issuer";
 
-	public static METHOD_NAME = "did_resolveCredential";
+    public static METHOD_NAME = "did_resolveCredential";
 
-	// TODO Java - @JsonCreator
-	public constructor(
-		@JsonProperty({value: CredentialResolveRequest.ID}) requestId: string
-	) {
-		super(requestId, CredentialResolveRequest.METHOD_NAME);
-	}
+    // TODO Java - @JsonCreator
+    public constructor(
+        @JsonProperty({value: CredentialResolveRequest.ID}) requestId: string
+    ) {
+        super(requestId, CredentialResolveRequest.METHOD_NAME);
+    }
 
-	public setParameters(idOrParameters: DIDURL | Parameters, issuer: DID = null) {
-		if (idOrParameters instanceof Parameters)
-			super.setParameters(idOrParameters);
-		else
-			super.setParameters(new Parameters(idOrParameters, issuer));
-	}
+    public setParameters(idOrParameters: DIDURL | Parameters, issuer: DID = null) {
+        if (idOrParameters instanceof Parameters)
+            super.setParameters(idOrParameters);
+        else
+            super.setParameters(new Parameters(idOrParameters, issuer));
+    }
 
-	public getId(): DIDURL {
-		return this.getParameters().id;
-	}
+    public getId(): DIDURL {
+        return this.getParameters().id;
+    }
 
-	public getIssuer(): DID {
-		return this.getParameters().issuer;
-	}
+    public getIssuer(): DID {
+        return this.getParameters().issuer;
+    }
 
-	public toString(): string {
-		let builder = new DIDURL.Builder(this.getParameters().id);
-		if (this.getParameters().issuer != null)
-			builder.setQueryParameter(CredentialResolveRequest.PARAMETER_ISSUER, this.getParameters().issuer.toString());
+    public toString(): string {
+        let builder = new DIDURL.Builder(this.getParameters().id);
+        if (this.getParameters().issuer != null)
+            builder.setQueryParameter(CredentialResolveRequest.PARAMETER_ISSUER, this.getParameters().issuer.toString());
 
-		return builder.build().toString();
-	}
+        return builder.build().toString();
+    }
 }
 
 class Parameters implements Hashable {
-	@JsonProperty({value: CredentialResolveRequest.PARAMETER_ID})
-	public id: DIDURL;
-	@JsonProperty({value: CredentialResolveRequest.PARAMETER_ISSUER})
-	@JsonInclude({value: JsonIncludeType.NON_NULL})
-	public issuer: DID;
+    @JsonProperty({value: CredentialResolveRequest.PARAMETER_ID})
+    public id: DIDURL;
+    @JsonProperty({value: CredentialResolveRequest.PARAMETER_ISSUER})
+    @JsonInclude({value: JsonIncludeType.NON_NULL})
+    public issuer: DID;
 
-	// TODO Java - @JsonCreator
-	public constructor(
-		@JsonProperty({value: CredentialResolveRequest.PARAMETER_ID, required: true})id: DIDURL,
-		issuer: DID = null
-	) {
-		this.id = id;
-		this.issuer = issuer;
-	}
+    // TODO Java - @JsonCreator
+    public constructor(
+        @JsonProperty({value: CredentialResolveRequest.PARAMETER_ID, required: true})id: DIDURL,
+        issuer: DID = null
+    ) {
+        this.id = id;
+        this.issuer = issuer;
+    }
 
-	public hashCode(): number {
-		let hash = this.id.hashCode();
+    public hashCode(): number {
+        let hash = this.id.hashCode();
 
-		if (this.issuer != null)
-			hash += this.issuer.hashCode();
+        if (this.issuer != null)
+            hash += this.issuer.hashCode();
 
-		return hash;
-	}
+        return hash;
+    }
 
-	public equals(o: Object): boolean {
-		if (!(o instanceof Parameters))
-			return false;
+    public equals(o: Object): boolean {
+        if (!(o instanceof Parameters))
+            return false;
 
-		let p = o as Parameters;
+        let p = o as Parameters;
 
-		if (!this.id.equals(p.id))
-			return false;
+        if (!this.id.equals(p.id))
+            return false;
 
-		let lIssuer: DID = this.issuer != null ? this.issuer : this.id.getDid();
-		let rIssuer: DID = p.issuer != null ? p.issuer : p.id.getDid();
+        let lIssuer: DID = this.issuer != null ? this.issuer : this.id.getDid();
+        let rIssuer: DID = p.issuer != null ? p.issuer : p.id.getDid();
 
-		return lIssuer.equals(rIssuer);
-	}
+        return lIssuer.equals(rIssuer);
+    }
 }

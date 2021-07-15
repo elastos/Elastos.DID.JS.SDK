@@ -29,27 +29,27 @@ import { IDTransaction } from "./idtransaction";
  * The class records the information of the specified DID's transaction.
  */
 export class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
-	@JsonProperty({value: IDTransaction.OPERATION})
-	@JsonClassType({type: () => [DIDRequest]})
-	declare protected request: DIDRequest;
+    @JsonProperty({value: IDTransaction.OPERATION})
+    @JsonClassType({type: () => [DIDRequest]})
+    declare protected request: DIDRequest;
 
-	@JsonCreator()
-	static toDIDTransaction(): DIDTransaction {
-		return new DIDTransaction();
-	}
+    @JsonCreator()
+    static toDIDTransaction(): DIDTransaction {
+        return new DIDTransaction();
+    }
 
-	/**
-	 * Constructs the DIDTransaction with the given value.
-	 *
-	 * @param txid the transaction id string
-	 * @param timestamp the time stamp
-	 * @param request the IDChainRequest content
-	 */
-	public constructor(txid: string = null, timestamp: Date = null, request: DIDRequest = null) {
-		super(txid, timestamp, request);
-	}
+    /**
+     * Constructs the DIDTransaction with the given value.
+     *
+     * @param txid the transaction id string
+     * @param timestamp the time stamp
+     * @param request the IDChainRequest content
+     */
+    public constructor(txid: string = null, timestamp: Date = null, request: DIDRequest = null) {
+        super(txid, timestamp, request);
+    }
 
-	public getDid(): DID {
-		return this.getRequest().getDid();
-	}
+    public getDid(): DID {
+        return this.getRequest().getDid();
+    }
 }

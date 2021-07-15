@@ -24,53 +24,53 @@
 
 import { join } from "path";
 import {
-	runningInBrowser,
-	Logger
+    runningInBrowser,
+    Logger
 } from "@elastosfoundation/did-js-sdk";
 import testConfigFile from "../assets/test.config.json";
 
 export class TestConfig {
-	public static DID_INDEX_LOOPS = 10;
-	private static TEST_CONFIG_FILE = "tests/assets/test.config.json";
+    public static DID_INDEX_LOOPS = 10;
+    private static TEST_CONFIG_FILE = "tests/assets/test.config.json";
 
-	public static network: string;
-	public static rpcEndpoint: string;
-	public static contractAddress: string;
+    public static network: string;
+    public static rpcEndpoint: string;
+    public static contractAddress: string;
 
-	public static walletPath: string;
-	public static walletPassword: string;
+    public static walletPath: string;
+    public static walletPassword: string;
 
-	public static passphrase: string;
-	public static storePass: string;
+    public static passphrase: string;
+    public static storePass: string;
 
-	public static tempDir: string;
-	public static storeRoot: string;
+    public static tempDir: string;
+    public static storeRoot: string;
 
-	static initialize() {
-		let testConfig = this.loadConfiguration(this.TEST_CONFIG_FILE);
+    static initialize() {
+        let testConfig = this.loadConfiguration(this.TEST_CONFIG_FILE);
 
-		this.network = testConfig.network
-		// Java: System.setProperty("org.elastos.did.network", network);
-		this.rpcEndpoint = testConfig.idchain.rpcEndpoint;
-		this.contractAddress = testConfig.idchain.contractAddress;
+        this.network = testConfig.network
+        // Java: System.setProperty("org.elastos.did.network", network);
+        this.rpcEndpoint = testConfig.idchain.rpcEndpoint;
+        this.contractAddress = testConfig.idchain.contractAddress;
 
-		this.walletPath = testConfig.wallet.path;
-		this.walletPassword = testConfig.wallet.password;
+        this.walletPath = testConfig.wallet.path;
+        this.walletPassword = testConfig.wallet.password;
 
-		this.passphrase = testConfig.mnemonic.passphrase;
-		this.storePass = testConfig.store.pass;
+        this.passphrase = testConfig.mnemonic.passphrase;
+        this.storePass = testConfig.store.pass;
 
-		if (runningInBrowser()) // browser
-			this.tempDir = "/generated/tmp"; // TODO: does this actually work in browser ?
-		else // nodejs
-			this.tempDir = join(__dirname, "../..", "generated", "tmp");
+        if (runningInBrowser()) // browser
+            this.tempDir = "/generated/tmp"; // TODO: does this actually work in browser ?
+        else // nodejs
+            this.tempDir = join(__dirname, "../..", "generated", "tmp");
 
-		this.storeRoot = testConfig.store.root || this.tempDir + "/DIDStore";
+        this.storeRoot = testConfig.store.root || this.tempDir + "/DIDStore";
 
-		Logger.setLevel(Logger.TRACE);
-	}
+        Logger.setLevel(Logger.TRACE);
+    }
 
-	private static loadConfiguration(configFile: string): any {
-		return testConfigFile;
-	}
+    private static loadConfiguration(configFile: string): any {
+        return testConfigFile;
+    }
 }
