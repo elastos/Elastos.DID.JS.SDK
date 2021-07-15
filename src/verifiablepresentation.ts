@@ -291,8 +291,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		let holderDoc = await this.getHolder().resolve();
 		if (holderDoc == null) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: can not resolve the holder's document", this.getId());
-				listener.failed(this, "VP %s: is not genuine", this.getId());
+				listener.failed(this, "VP {}: can not resolve the holder's document", this.getId());
+				listener.failed(this, "VP {}: is not genuine", this.getId());
 			}
 			return false;
 		}		
@@ -300,8 +300,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		// Check the integrity of holder' document.
 		if (!holderDoc.isGenuine()) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: holder's document is not genuine", this.getId());
-				listener.failed(this, "VP %s: is not genuine", this.getId());
+				listener.failed(this, "VP {}: holder's document is not genuine", this.getId());
+				listener.failed(this, "VP {}: is not genuine", this.getId());
 			}
 			return false;
 		}
@@ -309,9 +309,9 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		// Unsupported public key type;
 		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: key type '%s' for proof is not supported",
+				listener.failed(this, "VP {}: key type '{}' for proof is not supported",
 						this.getId(), this.proof.getType());
-				listener.failed(this, "VP %s: is not genuine", this.getId());
+				listener.failed(this, "VP {}: is not genuine", this.getId());
 			}
 			return false;
 		}
@@ -319,9 +319,9 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		// Credential should signed by authentication key.
 		if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: Key '%s' for proof is not an authencation key of '%s'",
+				listener.failed(this, "VP {}: Key '{}' for proof is not an authencation key of '{}'",
 						this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
-				listener.failed(this, "VP %s: is not genuine", this.getId());
+				listener.failed(this, "VP {}: is not genuine", this.getId());
 			}
 			return false;
 		}
@@ -330,18 +330,18 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		for (let vc of this.credentials.values()) {
 			if (!vc.getSubject().getId().equals(this.getHolder())) {
 				if (listener != null) {
-					listener.failed(this, "VP %s: credential '%s' not owned by the holder '%s'",
+					listener.failed(this, "VP {}: credential '{}' not owned by the holder '{}'",
 							this.getId(), vc.getId(), this.getHolder());
-					listener.failed(this, "VP %s: is not genuine", this.getId());
+					listener.failed(this, "VP {}: is not genuine", this.getId());
 				}
 				return false;
 			}
 				
 			if (!await vc.isGenuine()) {
 				if (listener != null) {
-					listener.failed(this, "VP %s: credential '%s' is not genuine",
+					listener.failed(this, "VP {}: credential '{}' is not genuine",
 							this.getId(), vc.getId());
-					listener.failed(this, "VP %s: is not genuine", this.getId());
+					listener.failed(this, "VP {}: is not genuine", this.getId());
 				}
 				return false;
 			}		
@@ -355,10 +355,10 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
         if (listener != null) {
 			if (result) {
-				listener.succeeded(this, "VP %s: is genuine", this.getId());
+				listener.succeeded(this, "VP {}: is genuine", this.getId());
 			} else {
-				listener.failed(this, "VP %s: proof is invalid, signature mismatch", this.getId());
-				listener.failed(this, "VP %s: is not genuine", this.getId());
+				listener.failed(this, "VP {}: proof is invalid, signature mismatch", this.getId());
+				listener.failed(this, "VP {}: is not genuine", this.getId());
 			}
 		}
 		return result;
@@ -374,8 +374,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		let  holderDoc = await this.getHolder().resolve();
 		if (holderDoc == null) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: can not resolve the holder's document", this.getId());
-				listener.failed(this, "VP %s: is invalid", this.getId());
+				listener.failed(this, "VP {}: can not resolve the holder's document", this.getId());
+				listener.failed(this, "VP {}: is invalid", this.getId());
 			}
 			return false;
 		}
@@ -383,8 +383,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		// Check the validity of holder' document.
 		if (!holderDoc.isValid()) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: holder's document is invalid", this.getId());
-				listener.failed(this, "VP %s: is invalid", this.getId());
+				listener.failed(this, "VP {}: holder's document is invalid", this.getId());
+				listener.failed(this, "VP {}: is invalid", this.getId());
 			}
 			return false;
 		}	
@@ -392,9 +392,9 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		// Unsupported public key type;
 		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: Key type '%s' for proof is not supported",
+				listener.failed(this, "VP {}: Key type '{}' for proof is not supported",
 						this.getId(), this.proof.getType());
-				listener.failed(this, "VP %s: is invalid", this.getId());
+				listener.failed(this, "VP {}: is invalid", this.getId());
 			}
 			return false;
 		}
@@ -402,9 +402,9 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		// Credential should signed by authentication key.
 		if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
 			if (listener != null) {
-				listener.failed(this, "VP %s: Key '%s' for proof is not an authencation key of '%s'",
+				listener.failed(this, "VP {}: Key '{}' for proof is not an authencation key of '{}'",
 						this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
-				listener.failed(this, "VP %s: is invalid", this.getId());
+				listener.failed(this, "VP {}: is invalid", this.getId());
 			}
 			return false;
 		}
@@ -413,18 +413,18 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		for (let vc of this.credentials.values()) {
 			if (!vc.getSubject().getId().equals(this.getHolder())) {
 				if (listener != null) {
-					listener.failed(this, "VP %s: credential '%s' not owned by the holder '%s'",
+					listener.failed(this, "VP {}: credential '{}' not owned by the holder '{}'",
 							this.getId(), vc.getId(), this.getHolder());
-					listener.failed(this, "VP %s: is not genuine", this.getId());
+					listener.failed(this, "VP {}: is not genuine", this.getId());
 				}
 				return false;
 			}
 				
 			if (!await vc.isValid()) {
 				if (listener != null) {
-					listener.failed(this, "VP %s: credential '%s' is invalid",
+					listener.failed(this, "VP {}: credential '{}' is invalid",
 					this.getId(), vc.getId());
-					listener.failed(this, "VP %s: is invalid", this.getId());
+					listener.failed(this, "VP {}: is invalid", this.getId());
 				}
 				return false;
 			}	
@@ -438,10 +438,10 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 			Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
 		if (listener != null) {
 			if (result) {
-				listener.succeeded(this, "VP %s: is valid", this.getId());
+				listener.succeeded(this, "VP {}: is valid", this.getId());
 			} else {
-				listener.failed(this, "VP %s: proof is invalid, signature mismatch", this.getId());
-				listener.failed(this, "VP %s: is invalid", this.getId());
+				listener.failed(this, "VP {}: proof is invalid, signature mismatch", this.getId());
+				listener.failed(this, "VP {}: is invalid", this.getId());
 			}
 		}
 

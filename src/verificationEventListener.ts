@@ -19,46 +19,58 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-export abstract class VerificationEventListener {
-	public abstract done(context : Object, succeeded : boolean, message : string) : void;
+		
+export class VerificationEventListener {
+	public done(context : Object, succeeded : boolean, message : string) : void {};
 
 	public reset() : void {};
 
-	private eventprintf(format : string, args : Object[]) : string {
+	private eprintf(format : string, args : Object[]) : string {
         let content = String(format);
-        for (let i = 1; i < args.length; i++) {
-            content = content.replace(/\{\}/, args[i].toString);
+        for (let i = 0; i < args.length; i++) {
+            content = content.replace(/\{\}/, String(args[i]));
         }
 		return content;
 	}
 
 	public succeeded(context : Object, format : string, ...args: Object[]) : void {
-		let message = this.eventprintf(format, args);
+		let message = this.eprintf(format, args);
 		this.done(context, true, message);
 	}
 
 	public failed(context : Object, format : string, ...args: Object[]) : void {
-		let message = this.eventprintf(format, args);
+		let message = this.eprintf(format, args);
 		this.done(context, false, message);
 	}
 
-	public getDefault(ident : string, succeededPrefix : string, failedPrefix : string) : VerificationEventListener {
+	public static getDefault(ident : string, succeededPrefix : string, failedPrefix : string) : VerificationEventListener {
 		return new DefaultVerificationEventListener(ident, succeededPrefix, failedPrefix);
 	}
 
-	public getDefaultWithIdent(ident : string) : VerificationEventListener {
+	public static getDefaultWithIdent(ident : string) : VerificationEventListener {
 		return new DefaultVerificationEventListener(ident, null, null);
 	}
 }
 
-export class DefaultVerificationEventListener extends VerificationEventListener {
+class Record {
+	context : Object;
+	succeeded : boolean;
+	message : string;
+
+	constructor(context : Object, succeeded : boolean, message : string) {
+		this.context = context;
+		this.succeeded = succeeded;
+		this.message = message;
+	}
+}
+
+class DefaultVerificationEventListener extends VerificationEventListener {
 	private static EMPTY = "";
 
 	private ident : string;
 	private succeededPrefix : string;
 	private failedPrefix : string;
-	private records : DefaultVerificationEventListener.Record[];
+	private records : Record[];
 
 	constructor(ident : string, succeededPrefix : string, failedPrefix : string) {
 		super();
@@ -66,11 +78,11 @@ export class DefaultVerificationEventListener extends VerificationEventListener 
 		this.succeededPrefix = succeededPrefix == null ? DefaultVerificationEventListener.EMPTY : succeededPrefix;
 		this.failedPrefix = failedPrefix == null ? DefaultVerificationEventListener.EMPTY : failedPrefix;
 
-		this.records = new Array();
+		this.records = new Array<Record>();
 	}
 
 	public done(context : Object, succeeded : boolean, message : string) : void {
-		this.records.push(new DefaultVerificationEventListener.Record(context, succeeded, message));
+		this.records.unshift(new Record(context, succeeded, message));
 	}
 
 	public reset() : void {
@@ -78,27 +90,10 @@ export class DefaultVerificationEventListener extends VerificationEventListener 
 	}
 	
 	public toString() : string {
-		let strb = String();
-		for (let record of this.records) {
-			strb.concat(this.ident);
-			strb.concat(record.succeeded ? this.succeededPrefix : this.failedPrefix);
-			strb.concat(record.message);
-			strb.concat("\n");
-		}
-		return strb.toString();
+		let str = "";
+		for (let record of this.records)
+			str = str + this.ident + (record.succeeded ? this.succeededPrefix : this.failedPrefix) + record.message + "\n";
+
+		return str;
 	}
-}
-
-export namespace DefaultVerificationEventListener {
-	export class Record {
-		context : Object;
-		succeeded : boolean;
-		message : string;
-
-		constructor(context : Object, succeeded : boolean, message : string) {
-			this.context = context;
-			this.succeeded = succeeded;
-			this.message = message;
-		}
-	}		
 }

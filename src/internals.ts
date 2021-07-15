@@ -14,6 +14,7 @@ export * from "./diddocumentpublickeyreferencedeserializer";
 export * from "./abstractmetadata";
 export * from "./didmetadata"; // Should be before DIDExport (DIDStore) and DIDDocument
 export * from "./didstoremetadata";
+export * from "./verificationEventListener";
 
 // DID/URL
 export * from "./parser/DIDURLParser";
@@ -42,8 +43,6 @@ export * from "./verifiablepresentation";
 export * from "./didstore";
 
 export * from "./issuer";
-
-export * from "./verificationEventListener"
 
 export * from "./collections";
 export * from "./crypto/bytebuffer";

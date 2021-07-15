@@ -31,7 +31,8 @@ import {
 	JSONObject,
 	HDKey,
 	Base58,
-	Exceptions
+	Exceptions,
+	VerificationEventListener
 } from "@elastosfoundation/did-js-sdk";
 import {
 	TestData,
@@ -42,7 +43,6 @@ import {
 } from "./utils/utils";
 import { TestConfig } from "./utils/testconfig";
 import { DIDTestExtension } from "./utils/didtestextension";
-import { DefaultVerificationEventListener } from "../../typings/verificationEventListener";
 
 async function testGetPublicKey(version: number, testData: TestData) {
 	let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
@@ -2126,7 +2126,7 @@ describe('DIDDocument Tests', () => {
 			"bar",
 			"baz"]
 
-        let listener = new DefaultVerificationEventListener("  ", "- ", "* ");
+        let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
 		for(const did of dids){
 			let compactJson = cd.getDocumentJson(did, "compact");
 			let compact = await DIDDocument.parse<DIDDocument>(compactJson, DIDDocument);

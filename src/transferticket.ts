@@ -206,8 +206,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		let doc = await this.getDocument();
 		if (doc == null) {
 			if (listener != null) {
-				listener.failed(this, "Ticket %s: can not resolve the owner document", this.getSubject());
-				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				listener.failed(this, "Ticket {}: can not resolve the owner document", this.getSubject());
+				listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
 			}
 
 			return false;
@@ -215,8 +215,8 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
 		if (!doc.isGenuine(listener)) {
 			if (listener != null) {
-				listener.failed(this, "Ticket %s: the owner document is not genuine", this.getSubject());
-				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				listener.failed(this, "Ticket {}: the owner document is not genuine", this.getSubject());
+				listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
 			}
 
 			return false;
@@ -226,9 +226,9 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		if ((doc.getControllerCount() > 1 && this.proofs.size != doc.getMultiSignature().m()) ||
 				(doc.getControllerCount() <= 1 && this.proofs.size != 1)) {
 			if (listener != null) {
-				listener.failed(this, "Ticket %s: proof size not matched with multisig, %d expected, actual is %d",
+				listener.failed(this, "Ticket {}: proof size not matched with multisig, {} expected, actual is {}",
 						this.getSubject(), doc.getMultiSignature().m(), doc.proofs.size);
-				listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+				listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
 			}
 			return false;
 		}
@@ -240,9 +240,9 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		for (let proof of this._proofs) {
 			if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
 				if (listener != null) {
-					listener.failed(this, "Ticket %s: key type '%s' for proof is not supported",
+					listener.failed(this, "Ticket {}: key type '{}' for proof is not supported",
 							this.getSubject(), proof.getType());
-					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+					listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
 				}
 				return false;
 			}
@@ -250,43 +250,43 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 			let controllerDoc = doc.getControllerDocument(proof.getVerificationMethod().getDid());
 			if (controllerDoc == null) {
 				if (listener != null) {
-					listener.failed(this, "Ticket %s: can not resolve the document for controller '%s' to verify the proof",
+					listener.failed(this, "Ticket {}: can not resolve the document for controller '{}' to verify the proof",
 						this.getSubject(), proof.getVerificationMethod().getDid());
-					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+					listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
 				}
 				return false;
 			}
 				
 			if (!controllerDoc.isValid(listener)) {
 				if (listener != null) {
-					listener.failed(this, "Ticket %s: controller '%s' is invalid, failed to verify the proof",
+					listener.failed(this, "Ticket {}: controller '{}' is invalid, failed to verify the proof",
 							this.getSubject(), proof.getVerificationMethod().getDid());
-					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+					listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
 				}
 				return false;
 			}
 				
 			if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId())) {
 				if (listener != null) {
-					listener.failed(this, "Ticket %s: key '%s' for proof is not default key of '%s'",
+					listener.failed(this, "Ticket {}: key '{}' for proof is not default key of '{}'",
 							this.getSubject(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
-					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+					listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
 				}
 				return false;
 			}
 	
 			if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest)) {
 				if (listener != null) {
-					listener.failed(this, "Ticket %s: proof '%s' is invalid, signature mismatch",
+					listener.failed(this, "Ticket {}: proof '{}' is invalid, signature mismatch",
 							this.getSubject(), proof.getVerificationMethod());
-					listener.failed(this, "Ticket %s: is not genuine", this.getSubject());
+					listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
 				}
 				return false;
 			}
 		}
 
 		if (listener != null)
-			listener.succeeded(this, "Ticket %s: is genuine", this.getSubject());
+			listener.succeeded(this, "Ticket {}: is genuine", this.getSubject());
 
 		return true;
 	}
@@ -300,36 +300,36 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 		let doc = await this.getDocument();
 		if (doc == null) {
 			if (listener != null) {
-				listener.failed(this, "Ticket %s: can not resolve the owners document", this.getSubject());
-				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+				listener.failed(this, "Ticket {}: can not resolve the owners document", this.getSubject());
+				listener.failed(this, "Ticket {}: is not valid", this.getSubject());
 			}
 			return false;
 		}
 
 		if (!doc.isValid(listener)) {
 			if (listener != null) {
-				listener.failed(this, "Ticket %s: the owners document is not valid", this.getSubject());
-				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+				listener.failed(this, "Ticket {}: the owners document is not valid", this.getSubject());
+				listener.failed(this, "Ticket {}: is not valid", this.getSubject());
 			}
 			return false;
 		}
 
 		if (!await this.isGenuine(listener)) {
 			if (listener != null)
-				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+				listener.failed(this, "Ticket {}: is not valid", this.getSubject());
 			return false;
 		}
 
 		if (this.txid !== doc.getMetadata().getTransactionId()) {
 			if (listener != null) {
-				listener.failed(this, "Ticket %s: the transaction id already out date", this.getSubject());
-				listener.failed(this, "Ticket %s: is not valid", this.getSubject());
+				listener.failed(this, "Ticket {}: the transaction id already out date", this.getSubject());
+				listener.failed(this, "Ticket {}: is not valid", this.getSubject());
 			}
 			return false;
 		}
 	
 		if (listener != null)
-			listener.succeeded(this, "Ticket %s: is valid", this.getSubject());
+			listener.succeeded(this, "Ticket {}: is valid", this.getSubject());
 			
 		return true;
 	}

@@ -1361,9 +1361,9 @@ class DIDDocumentProofSerializer extends Serializer {
         let expectedProofs = this.multisig == null ? 1 : this.multisig.m();
         if (this.proofs.size != expectedProofs) {
             if (listener != null) {
-				listener.failed(this, "%s: proof size not matched with multisig, %d expected, actual is %d",
+				listener.failed(this, "{}: proof size not matched with multisig, {} expected, actual is {}",
 						this.getSubject(), this.multisig.m(), this.proofs.size);
-				listener.failed(this, "%s: is not genuine", this.getSubject());
+				listener.failed(this, "{}: is not genuine", this.getSubject());
 			}
             return false;
         }
@@ -1379,9 +1379,9 @@ class DIDDocumentProofSerializer extends Serializer {
             // Unsupported public key type;
             if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             	if (listener != null) {
-					listener.failed(this, "%s: key type '%s' for proof is not supported",
+					listener.failed(this, "{}: key type '{}' for proof is not supported",
 							this.getSubject(), proof.getType());
-					listener.failed(this, "%s: is not genuine", this.getSubject());
+					listener.failed(this, "{}: is not genuine", this.getSubject());
 				}
 
                 return false;
@@ -1389,9 +1389,9 @@ class DIDDocumentProofSerializer extends Serializer {
 
             if (!proof.getCreator().equals(this.getDefaultPublicKeyId())) {
 				if (listener != null) {
-					listener.failed(this, "%s: key '%s' for proof is not default key",
+					listener.failed(this, "{}: key '{}' for proof is not default key",
 							this.getSubject(), proof.getCreator());
-					listener.failed(this, "%s: is not genuine", this.getSubject());
+					listener.failed(this, "{}: is not genuine", this.getSubject());
 				}
                 return false;
             }
@@ -1399,10 +1399,10 @@ class DIDDocumentProofSerializer extends Serializer {
             let result =  this.verifyDigest(proof.getCreator(), proof.getSignature(), digest);
 			if (listener != null) {
 				if (result) {
-					listener.succeeded(this, "%s: is genuine", this.getSubject());
+					listener.succeeded(this, "{}: is genuine", this.getSubject());
 				} else {
-					listener.failed(this, "%s: can not verify the signature", this.getSubject());
-					listener.failed(this, "%s: is not genuine", this.getSubject());
+					listener.failed(this, "{}: can not verify the signature", this.getSubject());
+					listener.failed(this, "{}: is not genuine", this.getSubject());
 				}
 			}
 
@@ -1412,9 +1412,9 @@ class DIDDocumentProofSerializer extends Serializer {
                 // Unsupported public key type;
                 if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
                     if (listener != null) {
-						listener.failed(this, "%s: key type '%s' for proof is not supported",
+						listener.failed(this, "{}: key type '{}' for proof is not supported",
 								this.getSubject(), proof.getType());
-						listener.failed(this, "%s: is not genuine", this.getSubject());
+						listener.failed(this, "{}: is not genuine", this.getSubject());
 					}
 
                     return false;
@@ -1423,18 +1423,18 @@ class DIDDocumentProofSerializer extends Serializer {
                 let controllerDoc = this.getControllerDocument(proof.getCreator().getDid());
                 if (controllerDoc == null) {
                     if (listener != null) {
-						listener.failed(this, "%s: can not resolve the document for controller '%s' to verify the proof",
+						listener.failed(this, "{}: can not resolve the document for controller '{}' to verify the proof",
 								this.getSubject(), proof.getCreator().getDid());
-						listener.failed(this, "%s: is not genuine", this.getSubject());
+						listener.failed(this, "{}: is not genuine", this.getSubject());
 					}
                     return false;
                 }
                     
                 if (!controllerDoc.isGenuine(listener)) {
                     if (listener != null) {
-						listener.failed(this, "%s: controller '%s' is not genuine, failed to verify the proof",
+						listener.failed(this, "{}: controller '{}' is not genuine, failed to verify the proof",
 								this.getSubject(), proof.getCreator().getDid());
-						listener.failed(this, "%s: is not genuine", this.getSubject());
+						listener.failed(this, "{}: is not genuine", this.getSubject());
 					}
 
                     return false;
@@ -1442,25 +1442,25 @@ class DIDDocumentProofSerializer extends Serializer {
 
                 if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId())) {
                     if (listener != null) {
-						listener.failed(this, "%s: key '%s' for proof is not default key of '%s'",
+						listener.failed(this, "{}: key '{}' for proof is not default key of '{}'",
 								this.getSubject(), proof.getCreator(), proof.getCreator().getDid());
-						listener.failed(this, "%s: is not genuine", this.getSubject());
+						listener.failed(this, "{}: is not genuine", this.getSubject());
 					}
                     return false;
                 }
                     
                 if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest)) {
                     if (listener != null) {
-						listener.failed(this, "%s: proof '%s' is invalid, signature mismatch",
+						listener.failed(this, "{}: proof '{}' is invalid, signature mismatch",
 								this.getSubject(), proof.getCreator());
-						listener.failed(this, "%s: is not genuine", this.getSubject());
+						listener.failed(this, "{}: is not genuine", this.getSubject());
 					}
                     return false;  
                 }         
             }
 
             if (listener != null)
-                listener.succeeded(this, "%s: is genuine", this.getSubject());
+                listener.succeeded(this, "{}: is genuine", this.getSubject());
 
             return true;
         }
@@ -1499,23 +1499,23 @@ class DIDDocumentProofSerializer extends Serializer {
     public isValid(listener : VerificationEventListener = null): boolean {
         if (this.isDeactivated()) {
             if (listener != null) {
-				listener.failed(this, "%s: is deactivated", this.getSubject());
-				listener.failed(this, "%s: is invalid", this.getSubject());
+				listener.failed(this, "{}: is deactivated", this.getSubject());
+				listener.failed(this, "{}: is invalid", this.getSubject());
 			}
 			return false;
         }
 
         if (this.isExpired()) {
 			if (listener != null) {
-				listener.failed(this, "%s: is expired", this.getSubject());
-				listener.failed(this, "%s: is invalid", this.getSubject());
+				listener.failed(this, "{}: is expired", this.getSubject());
+				listener.failed(this, "{}: is invalid", this.getSubject());
 			}
 			return false;
         }
 
         if (!this.isGenuine(listener)) {
             if (listener != null)
-                listener.failed(this, "%s: is invalid", this.getSubject());
+                listener.failed(this, "{}: is invalid", this.getSubject());
             return false;
         }
 
@@ -1523,18 +1523,18 @@ class DIDDocumentProofSerializer extends Serializer {
             for (let doc of this.controllerDocs.values()) {
                 if (doc.isDeactivated()) {
                     if (listener != null) {
-                        listener.failed(this, "%s: controller '%s' is deactivated",
+                        listener.failed(this, "{}: controller '{}' is deactivated",
                                 this.getSubject(), doc.getSubject());
-                        listener.failed(this, "%s: is invalid", this.getSubject());
+                        listener.failed(this, "{}: is invalid", this.getSubject());
                     }
 					return false;
 				}
                 
                 if (!doc.isGenuine(listener)) {
                     if (listener != null) {
-                        listener.failed(this, "%s: controller '%s' is not genuine",
+                        listener.failed(this, "{}: controller '{}' is not genuine",
                                 this.getSubject(), doc.getSubject());
-                        listener.failed(this, "%s: is invalid", this.getSubject());
+                        listener.failed(this, "{}: is invalid", this.getSubject());
                     }
 					return false;
                 }
@@ -1542,7 +1542,7 @@ class DIDDocumentProofSerializer extends Serializer {
         }
 
         if (listener != null)
-            listener.succeeded(this, "%s: is valid", this.getSubject());
+            listener.succeeded(this, "{}: is valid", this.getSubject());
 
         return true;
     }
