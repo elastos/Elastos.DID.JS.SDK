@@ -298,7 +298,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		}		
 
 		// Check the integrity of holder' document.
-		if (!holderDoc.isGenuine()) {
+		if (!holderDoc.isGenuine(listener)) {
 			if (listener != null) {
 				listener.failed(this, "VP {}: holder's document is not genuine", this.getId());
 				listener.failed(this, "VP {}: is not genuine", this.getId());
@@ -337,7 +337,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 				return false;
 			}
 				
-			if (!await vc.isGenuine()) {
+			if (!await vc.isGenuine(listener)) {
 				if (listener != null) {
 					listener.failed(this, "VP {}: credential '{}' is not genuine",
 							this.getId(), vc.getId());
@@ -381,7 +381,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 		}
 			
 		// Check the validity of holder' document.
-		if (!holderDoc.isValid()) {
+		if (!holderDoc.isValid(listener)) {
 			if (listener != null) {
 				listener.failed(this, "VP {}: holder's document is invalid", this.getId());
 				listener.failed(this, "VP {}: is invalid", this.getId());
@@ -420,7 +420,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 				return false;
 			}
 				
-			if (!await vc.isValid()) {
+			if (!await vc.isValid(listener)) {
 				if (listener != null) {
 					listener.failed(this, "VP {}: credential '{}' is invalid",
 					this.getId(), vc.getId());

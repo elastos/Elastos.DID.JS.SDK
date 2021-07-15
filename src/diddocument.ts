@@ -78,15 +78,15 @@ import { ComparableMap } from "./comparablemap";
 import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
 
 class DIDDocumentControllerSerializer extends Serializer {
-	public static serialize(controllers: DID[], context: JsonStringifierTransformerContext): any {
-		return controllers.length > 1 ? controllers : controllers[0];
-	}
+    public static serialize(controllers: DID[], context: JsonStringifierTransformerContext): any {
+        return controllers.length > 1 ? controllers : controllers[0];
+    }
 }
 
 class DIDDocumentProofSerializer extends Serializer {
-	public static serialize(proofs: DIDDocumentProof[], context: JsonStringifierTransformerContext): any {
-		return proofs.length > 1 ? proofs : proofs[0];
-	}
+    public static serialize(proofs: DIDDocumentProof[], context: JsonStringifierTransformerContext): any {
+        return proofs.length > 1 ? proofs : proofs[0];
+    }
 }
 /**
  * The DIDDocument represents the DID information.
@@ -1361,10 +1361,10 @@ class DIDDocumentProofSerializer extends Serializer {
         let expectedProofs = this.multisig == null ? 1 : this.multisig.m();
         if (this.proofs.size != expectedProofs) {
             if (listener != null) {
-				listener.failed(this, "{}: proof size not matched with multisig, {} expected, actual is {}",
-						this.getSubject(), this.multisig.m(), this.proofs.size);
-				listener.failed(this, "{}: is not genuine", this.getSubject());
-			}
+                listener.failed(this, "{}: proof size not matched with multisig, {} expected, actual is {}",
+                        this.getSubject(), this.multisig.m(), this.proofs.size);
+                listener.failed(this, "{}: is not genuine", this.getSubject());
+            }
             return false;
         }
 
@@ -1378,44 +1378,44 @@ class DIDDocumentProofSerializer extends Serializer {
 
             // Unsupported public key type;
             if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
-            	if (listener != null) {
-					listener.failed(this, "{}: key type '{}' for proof is not supported",
-							this.getSubject(), proof.getType());
-					listener.failed(this, "{}: is not genuine", this.getSubject());
-				}
+                if (listener != null) {
+                    listener.failed(this, "{}: key type '{}' for proof is not supported",
+                            this.getSubject(), proof.getType());
+                    listener.failed(this, "{}: is not genuine", this.getSubject());
+                }
 
                 return false;
             }
 
             if (!proof.getCreator().equals(this.getDefaultPublicKeyId())) {
-				if (listener != null) {
-					listener.failed(this, "{}: key '{}' for proof is not default key",
-							this.getSubject(), proof.getCreator());
-					listener.failed(this, "{}: is not genuine", this.getSubject());
-				}
+                if (listener != null) {
+                    listener.failed(this, "{}: key '{}' for proof is not default key",
+                            this.getSubject(), proof.getCreator());
+                    listener.failed(this, "{}: is not genuine", this.getSubject());
+                }
                 return false;
             }
 
             let result =  this.verifyDigest(proof.getCreator(), proof.getSignature(), digest);
-			if (listener != null) {
-				if (result) {
-					listener.succeeded(this, "{}: is genuine", this.getSubject());
-				} else {
-					listener.failed(this, "{}: can not verify the signature", this.getSubject());
-					listener.failed(this, "{}: is not genuine", this.getSubject());
-				}
-			}
+            if (listener != null) {
+                if (result) {
+                    listener.succeeded(this, "{}: is genuine", this.getSubject());
+                } else {
+                    listener.failed(this, "{}: can not verify the signature", this.getSubject());
+                    listener.failed(this, "{}: is not genuine", this.getSubject());
+                }
+            }
 
-			return result;
+            return result;
         } else {
             for (let proof of this._proofs) {
                 // Unsupported public key type;
                 if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
                     if (listener != null) {
-						listener.failed(this, "{}: key type '{}' for proof is not supported",
-								this.getSubject(), proof.getType());
-						listener.failed(this, "{}: is not genuine", this.getSubject());
-					}
+                        listener.failed(this, "{}: key type '{}' for proof is not supported",
+                                this.getSubject(), proof.getType());
+                        listener.failed(this, "{}: is not genuine", this.getSubject());
+                    }
 
                     return false;
                 }
@@ -1423,38 +1423,38 @@ class DIDDocumentProofSerializer extends Serializer {
                 let controllerDoc = this.getControllerDocument(proof.getCreator().getDid());
                 if (controllerDoc == null) {
                     if (listener != null) {
-						listener.failed(this, "{}: can not resolve the document for controller '{}' to verify the proof",
-								this.getSubject(), proof.getCreator().getDid());
-						listener.failed(this, "{}: is not genuine", this.getSubject());
-					}
+                        listener.failed(this, "{}: can not resolve the document for controller '{}' to verify the proof",
+                                this.getSubject(), proof.getCreator().getDid());
+                        listener.failed(this, "{}: is not genuine", this.getSubject());
+                    }
                     return false;
                 }
                     
                 if (!controllerDoc.isGenuine(listener)) {
                     if (listener != null) {
-						listener.failed(this, "{}: controller '{}' is not genuine, failed to verify the proof",
-								this.getSubject(), proof.getCreator().getDid());
-						listener.failed(this, "{}: is not genuine", this.getSubject());
-					}
+                        listener.failed(this, "{}: controller '{}' is not genuine, failed to verify the proof",
+                                this.getSubject(), proof.getCreator().getDid());
+                        listener.failed(this, "{}: is not genuine", this.getSubject());
+                    }
 
                     return false;
                 }
 
                 if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId())) {
                     if (listener != null) {
-						listener.failed(this, "{}: key '{}' for proof is not default key of '{}'",
-								this.getSubject(), proof.getCreator(), proof.getCreator().getDid());
-						listener.failed(this, "{}: is not genuine", this.getSubject());
-					}
+                        listener.failed(this, "{}: key '{}' for proof is not default key of '{}'",
+                                this.getSubject(), proof.getCreator(), proof.getCreator().getDid());
+                        listener.failed(this, "{}: is not genuine", this.getSubject());
+                    }
                     return false;
                 }
                     
                 if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest)) {
                     if (listener != null) {
-						listener.failed(this, "{}: proof '{}' is invalid, signature mismatch",
-								this.getSubject(), proof.getCreator());
-						listener.failed(this, "{}: is not genuine", this.getSubject());
-					}
+                        listener.failed(this, "{}: proof '{}' is invalid, signature mismatch",
+                                this.getSubject(), proof.getCreator());
+                        listener.failed(this, "{}: is not genuine", this.getSubject());
+                    }
                     return false;  
                 }         
             }
@@ -1499,18 +1499,18 @@ class DIDDocumentProofSerializer extends Serializer {
     public isValid(listener : VerificationEventListener = null): boolean {
         if (this.isDeactivated()) {
             if (listener != null) {
-				listener.failed(this, "{}: is deactivated", this.getSubject());
-				listener.failed(this, "{}: is invalid", this.getSubject());
-			}
-			return false;
+                listener.failed(this, "{}: is deactivated", this.getSubject());
+                listener.failed(this, "{}: is invalid", this.getSubject());
+            }
+            return false;
         }
 
         if (this.isExpired()) {
-			if (listener != null) {
-				listener.failed(this, "{}: is expired", this.getSubject());
-				listener.failed(this, "{}: is invalid", this.getSubject());
-			}
-			return false;
+            if (listener != null) {
+                listener.failed(this, "{}: is expired", this.getSubject());
+                listener.failed(this, "{}: is invalid", this.getSubject());
+            }
+            return false;
         }
 
         if (!this.isGenuine(listener)) {
@@ -1527,8 +1527,8 @@ class DIDDocumentProofSerializer extends Serializer {
                                 this.getSubject(), doc.getSubject());
                         listener.failed(this, "{}: is invalid", this.getSubject());
                     }
-					return false;
-				}
+                    return false;
+                }
                 
                 if (!doc.isGenuine(listener)) {
                     if (listener != null) {
@@ -1536,7 +1536,7 @@ class DIDDocumentProofSerializer extends Serializer {
                                 this.getSubject(), doc.getSubject());
                         listener.failed(this, "{}: is invalid", this.getSubject());
                     }
-					return false;
+                    return false;
                 }
             }
         }
@@ -1569,7 +1569,7 @@ class DIDDocumentProofSerializer extends Serializer {
         return doc;
     }
 
-	public clone(): DIDDocument {
+    public clone(): DIDDocument {
         let doc = new DIDDocument(this.subject);
 
         doc.controllers = this.controllers;
@@ -1620,9 +1620,9 @@ class DIDDocumentProofSerializer extends Serializer {
         return this.signDigest(signId, storepass, digest);
     }
 
-	public signWithStorePass(storepass: string, ...data: Buffer[]): Promise<string> {
-		return this.signWithId(null, storepass, ...data);
-	}
+    public signWithStorePass(storepass: string, ...data: Buffer[]): Promise<string> {
+        return this.signWithId(null, storepass, ...data);
+    }
 
     public async signWithTicket(ticket: TransferTicket, storepass: string): Promise<TransferTicket> {
         checkArgument(ticket != null, "Invalid ticket");
@@ -1837,7 +1837,7 @@ class DIDDocumentProofSerializer extends Serializer {
             if (!source)
                 throw new DIDNotFoundException("DID not found: "+from.toString());
             if (source.isDeactivated())
-    			throw new DIDDeactivatedException(from.toString());
+                throw new DIDDeactivatedException(from.toString());
 
             if (!source.isCustomizedDid())
                 throw new NotCustomizedDIDException(from.toString());
@@ -1851,10 +1851,10 @@ class DIDDocumentProofSerializer extends Serializer {
             this.checkHasEffectiveController();
         }
 
-		let ticket:TransferTicket = await TransferTicket.newForDIDDocument(source, to);
-		await ticket.seal(this, storepass);
+        let ticket:TransferTicket = await TransferTicket.newForDIDDocument(source, to);
+        await ticket.seal(this, storepass);
 
-		return ticket;
+        return ticket;
     }
 
     public async publishWithTicket(ticket: TransferTicket, inputSignKey: DIDURL | string | null, storepass: string, adapter: DIDTransactionAdapter = null) {
@@ -1944,7 +1944,7 @@ class DIDDocumentProofSerializer extends Serializer {
             if (this.isCustomizedDid()) {
                 let curMultisig = this.getMultiSignature() == null ?
                         DIDDocumentMultiSignature.ONE_OF_ONE : this.getMultiSignature();
-				let orgMultisig = resolvedDoc.getMultiSignature() == null ?
+                let orgMultisig = resolvedDoc.getMultiSignature() == null ?
                         DIDDocumentMultiSignature.ONE_OF_ONE : resolvedDoc.getMultiSignature();
 
                 if (!curMultisig.equals(orgMultisig))
@@ -1960,7 +1960,7 @@ class DIDDocumentProofSerializer extends Serializer {
 
                 for (let i = 0; i < orgControllers.length; i++)
                     if (!orgControllers[i].equals(curControllers[i]))
-					    throw new DIDControllersChangedException();
+                        throw new DIDControllersChangedException();
             }
 
             resolvedSignature = resolvedDoc.getProof().getSignature();

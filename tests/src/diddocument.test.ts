@@ -263,7 +263,7 @@ describe('DIDDocument Tests', () => {
 
 		refs.sort();
 
-	    for (let i = 0; i < 5; i++)
+		for (let i = 0; i < 5; i++)
 			expect(refs[i].equals(ids[i])).toBeTruthy();
 
 		// PublicKey getter.
@@ -618,7 +618,7 @@ describe('DIDDocument Tests', () => {
 			ids.push(pk.getId());
 		});
 
-	    ids.sort();
+		ids.sort();
 
 		let refs = new Array<DIDURL>(7);
 		refs.push(user1.getDefaultPublicKeyId());
@@ -723,7 +723,7 @@ describe('DIDDocument Tests', () => {
 
 		refs.sort();
 
-	    for (let i = 0; i < 5; i++)
+		for (let i = 0; i < 5; i++)
 			 expect(refs[i].equals(ids[i])).toBeTruthy();
 
 		// PublicKey getter.
@@ -2126,7 +2126,7 @@ describe('DIDDocument Tests', () => {
 			"bar",
 			"baz"]
 
-        let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
+		let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
 		for(const did of dids){
 			let compactJson = cd.getDocumentJson(did, "compact");
 			let compact = await DIDDocument.parse<DIDDocument>(compactJson, DIDDocument);
@@ -2134,13 +2134,11 @@ describe('DIDDocument Tests', () => {
 			expect(compact.isValid()).toBeTruthy();
 
 			expect(compact.isGenuine(listener)).toBeTruthy();
-			let message = String(listener.toString());
-			expect(message.startsWith("  - ")).toBeTruthy();
+			expect(listener.toString().startsWith("  - ")).toBeTruthy();
 			listener.reset();
 	
 			expect(compact.isValid(listener)).toBeTruthy();
-			message = String(listener.toString());
-			expect(message.startsWith("  - ")).toBeTruthy();
+			expect(listener.toString().startsWith("  - ")).toBeTruthy();
 			listener.reset();
 
 			let normalizedJson = cd.getDocumentJson(did, "normalized");
@@ -2149,13 +2147,11 @@ describe('DIDDocument Tests', () => {
 			expect(normalized.isValid()).toBeTruthy();
 
 			expect(normalized.isGenuine(listener)).toBeTruthy();
-			message = String(listener.toString());
-			expect(message.startsWith("  - ")).toBeTruthy();
+			expect(listener.toString().startsWith("  - ")).toBeTruthy();
 			listener.reset();
 	
 			expect(normalized.isValid(listener)).toBeTruthy();
-			message = String(listener.toString());
-			expect(message.startsWith("  - ")).toBeTruthy();
+			expect(listener.toString().startsWith("  - ")).toBeTruthy();
 			listener.reset();
 
 			let doc = await cd.getDocument(did);
@@ -2163,13 +2159,11 @@ describe('DIDDocument Tests', () => {
 			expect(doc.isValid()).toBeTruthy();
 
 			expect(doc.isGenuine(listener)).toBeTruthy();
-			message = String(listener.toString());
-			expect(message.startsWith("  - ")).toBeTruthy();
+			expect(listener.toString().startsWith("  - ")).toBeTruthy();
 			listener.reset();
 	
 			expect(doc.isValid(listener)).toBeTruthy();
-			message = String(listener.toString());
-			expect(message.startsWith("  - ")).toBeTruthy();
+			expect(listener.toString().startsWith("  - ")).toBeTruthy();
 			listener.reset();
 		}
 	})
@@ -2346,7 +2340,7 @@ describe('DIDDocument Tests', () => {
 		ctrls.sort();
 
 		let docctrls = doc.getControllers();
-        docctrls.sort();
+		docctrls.sort();
 		expect(ctrls.length).toBe(docctrls.length);
 	
 		for (let i = 0; i < ctrls.length; i++)

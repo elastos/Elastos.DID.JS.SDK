@@ -27,7 +27,8 @@ import {
 	Logger,
 	VerifiableCredential,
 	IDChainRequest,
-	Exceptions
+	Exceptions,
+	VerificationEventListener
 } from "@elastosfoundation/did-js-sdk";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
@@ -250,6 +251,35 @@ describe('let Tests', () => {
 			expect(compactJson).toEqual(normalized.toString(false));
 			expect(compactJson).toEqual(compact.toString(false));
 			expect(compactJson).toEqual(credential.toString(false));
+		}
+	});
+
+	test('testGenuineAndValidWithListener', async () => {
+		let csvSource = [
+			{did:"user1", vc:"twitter"},
+			{did:"user1", vc:"passport"},
+			{did:"user1", vc:"json"},
+			{did:"foobar", vc:"license"},
+			{did:"foobar", vc:"services"},
+			{did:"foo", vc:"email"}
+		];
+
+	   	let cd = testData.getCompatibleData(2);
+	   	await cd.loadAll();
+
+		let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
+
+		for (let csv of csvSource) {
+			let credential = await cd.getCredential(csv.did, csv.vc);
+
+			await expect(await credential.isExpired()).toBeFalsy();
+			await expect(await credential.isGenuine(listener)).toBeTruthy();
+			expect(listener.toString().startsWith("  - ")).toBeTruthy();
+			listener.reset();
+
+			await expect(await credential.isValid(listener)).toBeTruthy();
+			expect(listener.toString().startsWith("  - ")).toBeTruthy();
+			listener.reset();		
 		}
 	});
 

@@ -23,7 +23,8 @@
 import {
 	DIDURL,
 	DIDStore,
-	VerifiablePresentation
+	VerifiablePresentation,
+	VerificationEventListener
 } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
@@ -107,6 +108,37 @@ describe('VerifiablePresentation Tests', () => {
 			await expect(await vp.isGenuine()).toBeTruthy();
 			await expect(await vp.isValid()).toBeTruthy();
 		}
+	});
+
+	[
+    	"user1,empty",
+    	"user1,nonempty",
+    	"user1,optionalattrs",
+    	"foobar,empty",
+    	"foobar,nonempty",
+    	"foobar,optionalattrs"
+	].forEach((entry)=>{
+		let entryParts = entry.split(',');
+		let did = entryParts[0];
+		let presentation = entryParts[1];
+		test('testGenuineAndValidWithListener', async () => {
+			let version = 2;
+			let cd = testData.getCompatibleData(version);
+			await cd.loadAll();
+
+			let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
+
+			let vp = await cd.getPresentation(did, presentation);
+			expect(vp).not.toBeNull();
+
+			await expect(await vp.isGenuine(listener)).toBeTruthy();
+			expect(listener.toString().startsWith("  - "));
+			listener.reset();
+
+			await expect(await vp.isValid(listener)).toBeTruthy();
+			expect(listener.toString().startsWith("  - "));
+			listener.reset();
+		});
 	});
 
 	[

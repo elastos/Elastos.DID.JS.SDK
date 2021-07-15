@@ -92,7 +92,7 @@ class DefaultVerificationEventListener extends VerificationEventListener {
 	public toString() : string {
 		let str = "";
 		for (let record of this.records)
-			str = str + this.ident + (record.succeeded ? this.succeededPrefix : this.failedPrefix) + record.message + "\n";
+            str = str.concat(this.ident, record.succeeded ? this.succeededPrefix : this.failedPrefix, record.message, "\n");
 
 		return str;
 	}
