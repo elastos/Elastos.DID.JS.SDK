@@ -63,6 +63,7 @@ import type {
 import { sortJSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
+import { VerificationEventListener } from "./verificationEventListener";
 
 const log = new Logger("VerifiableCredential");
 
@@ -393,35 +394,77 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return whether the Credential object is genuine
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public async isGenuine(): Promise<boolean> {
-		if (!this.getId().getDid().equals(this.getSubject().getId()))
+	public async isGenuine(listener : VerificationEventListener = null): Promise<boolean> {
+		if (!this.getId().getDid().equals(this.getSubject().getId())) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: invalid id '{}', should under the scope of '{}'",
+						this.getId(), this.getId(), this.getSubject().getId());
+				listener.failed(this, "VC {}: is not genuine", this.getId());
+			}
 			return false;
-
+		}
+			
 		let issuerDoc = await this.issuer.resolve();
-		if (issuerDoc == null)
-			throw new DIDNotFoundException(this.issuer.toString());
-
-		if (!issuerDoc.isGenuine())
+		if (issuerDoc == null) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: Can not resolve the document for issuer '{}'",
+						this.getId(), this.getIssuer());
+				listener.failed(this, "VC {}: is not genuine", this.getId());
+			}
 			return false;
+		}
+
+		if (!issuerDoc.isGenuine(listener)) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: issuer '{}' is not genuine",
+						this.getId(), this.getIssuer());
+				listener.failed(this, "VC {}: is not genuine", this.getId());
+			}
+			return false;
+		}
 
 		// Credential should signed by any authentication key.
-		if (!issuerDoc.isAuthenticationKey(this.proof.getVerificationMethod()))
+		if (!issuerDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: key '{}' for proof is not an authencation key of '{}'",
+						this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+				listener.failed(this, "VC {}: is not genuine", this.getId());
+			}			
 			return false;
-
+		}
+			
 		// Unsupported public key type;
-		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
+		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: key type '{}' for proof is not supported",
+						this.getId(), this.proof.getType());
+				listener.failed(this, "VC {}: is not genuine", this.getId());
+			}
 			return false; // TODO: should throw an exception?
+		}
 
 		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
 		let json = vc.serialize(true);
-		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json)))
+		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json))) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: proof is invalid, signature mismatch", this.getId());
+				listener.failed(this, "VC {}: is not genuine", this.getId());
+			}
 			return false;
-
+		}
+			
 		if (!this.isSelfProclaimed()) {
 			let controllerDoc = await this.subject.getId().resolve();
-			if (controllerDoc != null && !controllerDoc.isGenuine())
+			if (controllerDoc != null && !controllerDoc.isGenuine(listener)) {
+				if (listener != null) {
+					listener.failed(this, "VC {}: holder's document is not genuine", this.getId());
+					listener.failed(this, "VC {}: is not genuine", this.getId());
+				}
 				return false;
+			} 	
 		}
+		if (listener != null)
+			listener.succeeded(this, "VC {}: is genuine", this.getId());
 
 		return true;
 	}
@@ -446,38 +489,79 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 	 * @return whether the Credential object is valid
 	 * @throws DIDResolveException if error occurs when resolve the DID documents
 	 */
-	public async isValid(): Promise<boolean> {
+	public async isValid(listener : VerificationEventListener = null): Promise<boolean> {
 		if (this.expirationDate != null) {
-			if (dayjs().isAfter(dayjs(this.expirationDate)))
+			if (dayjs().isAfter(dayjs(this.expirationDate))) {
+				if (listener != null) {
+					listener.failed(this, "VC {}: is expired", this.getId());
+					listener.failed(this, "VC {}: is invalid", this.getId());
+				}
 				return false;
+			}	
 		}
 
 		let issuerDoc = await this.issuer.resolve();
-		if (issuerDoc == null)
-			throw new DIDNotFoundException(this.issuer.toString());
-
-		if (!issuerDoc.isValid())
+		if (issuerDoc == null) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: can not resolve the document for issuer '{}'",
+						this.getId(), this.getIssuer());
+				listener.failed(this, "VC {}: is invalid", this.getId());
+			}
 			return false;
-
-		// Credential should signed by any authentication key.
-		if (!issuerDoc.isAuthenticationKey(this.proof.getVerificationMethod()))
-			return false;
-
-		// Unsupported public key type;
-		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
-			return false; // TODO: should throw an exception.
-
-		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
-		let json = vc.serialize(true);
-		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json)))
-			return false;
-
-		if (!this.isSelfProclaimed()) {
-			let controllerDoc = await this.subject.getId().resolve();
-			if (controllerDoc != null && !controllerDoc.isValid())
-				return false;
 		}
 
+		if (!issuerDoc.isValid(listener)) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: issuer '{}' is invalid",
+						this.getId(), this.getIssuer());
+				listener.failed(this, "VC {}: is invalid", this.getId());
+			}
+			return false;
+		}
+
+		// Credential should signed by any authentication key.
+		if (!issuerDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: key '{}' for proof is not an authencation key of '{}'",
+						this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+				listener.failed(this, "VC {}: is invalid", this.getSubject());
+			}
+			return false;
+		}
+		
+		// Unsupported public key type;
+		if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: key type '{}' for proof is not supported",
+						this.getId(), this.proof.getType());
+				listener.failed(this, "VC {}: is invalid", this.getId());
+			}
+			return false; // TODO: should throw an exception.
+		}
+			
+		let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
+		let json = vc.serialize(true);
+		if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json))) {
+			if (listener != null) {
+				listener.failed(this, "VC {}: proof is invalid, signature mismatch", this.getId());
+				listener.failed(this, "VC {}: is invalid", this.getId());
+			}
+			return false;
+		}
+			
+		if (!this.isSelfProclaimed()) {
+			let controllerDoc = await this.subject.getId().resolve();
+			if (controllerDoc != null && !controllerDoc.isValid(listener)) {
+				if (listener != null) {
+					listener.failed(this, "VC {}: holder's document is invalid", this.getId());
+					listener.failed(this, "VC {}: is invalid", this.getId());
+				}
+				return false;
+			}	
+		}
+
+		if (listener != null)
+			listener.succeeded(this, "VC {}: is valid", this.getId());
 		return true;
 	}
 
@@ -659,38 +743,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 		await DIDBackend.getInstance().revokeCredential(id, signer, signKey, storepass, adapter);
 	}
 
-	/* public static void revoke(id: DIDURL, DIDDocument issuer, signKey: DIDURL, storepass: string) {
-		revoke(id, issuer, signKey, storepass, null);
-	}
-
-	public static void revoke(String id, DIDDocument issuer, String signKey,
-			storepass: string, adapter: DIDTransactionAdapter) {
-		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
-				storepass, adapter);
-	}
-
-	public static void revoke(String id, DIDDocument issuer, String signKey, storepass: string) {
-		revoke(DIDURL.valueOf(id), issuer, DIDURL.valueOf(issuer.getSubject(), signKey),
-				storepass, null);
-	}
-
-	public static void revoke(id: DIDURL, DIDDocument issuer, storepass: string, DIDTransactionAdapter adapter) {
-		revoke(id, issuer, null, storepass, adapter);
-	}
-
-	public static void revoke(id: DIDURL, DIDDocument issuer, storepass: string) {
-		revoke(id, issuer, null, storepass, null);
-	}
-
-	public static void revoke(String id, DIDDocument issuer, storepass: string,
-			DIDTransactionAdapter adapter) throws DIDStoreException, DIDBackendException {
-		revoke(DIDURL.valueOf(id), issuer, null, storepass, adapter);
-	}
-
-	public static void revoke(String id, DIDDocument issuer, storepass: string) {
-		revoke(DIDURL.valueOf(id), issuer, null, storepass, null);
-	} */
-
 	/**
 	 * Resolve VerifiableCredential object.
 	 *
@@ -721,20 +773,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
 		return DIDBackend.getInstance().resolveCredentialBiography(id, issuer);
 	}
-
-	/* public static CredentialBiography resolveBiography(id: DIDURL) {
-		checkArgument(id != null, "Invalid credential id");
-
-		return DIDBackend.getInstance().resolveCredentialBiography(id);
-	} */
-
-	/* public static CredentialBiography resolveBiography(String id, String issuer) {
-		return resolveBiography(DIDURL.valueOf(id), DID.from(issuer));
-	}
-
-	public static CredentialBiography resolveBiography(String id) {
-		return resolveBiography(id, null);
-	} */
 
 	public static list(did: DID, skip = 0, limit = 0): Promise<DIDURL[]> {
 		checkArgument(did != null, "Invalid did");
