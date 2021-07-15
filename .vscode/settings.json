@@ -1,5 +1,5 @@
 {
     "jestrunner.configPath": "./tests/jest.node.config.ts",
     "editor.tabSize": 4,
-    "editor.insertSpaces": false
+    "editor.insertSpaces": true
 }
