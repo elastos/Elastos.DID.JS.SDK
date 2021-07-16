@@ -37,7 +37,7 @@ export class RootIdentity {
 
     private constructor() {}
 
-    public static newFromMnemonic(mnemonic: string, passphrase: string): RootIdentity {
+    private static newFromMnemonic(mnemonic: string, passphrase: string): RootIdentity {
         let rootIdentity = new RootIdentity();
         rootIdentity.mnemonic = mnemonic;
 
@@ -63,6 +63,11 @@ export class RootIdentity {
         rootIdentity.preDerivedPublicKey = preDerivedPublicKey;
         rootIdentity.index = index;
         return rootIdentity;
+    }
+
+    public static getIdFromMnemonic(mnemonic: string, passphrase: string): string {
+        let rootidentity = this.newFromMnemonic(mnemonic, passphrase);
+        return rootidentity.getId();
     }
 
     /**
