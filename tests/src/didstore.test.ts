@@ -745,15 +745,16 @@ describe("DIDStore Tests", ()=>{
         await testData.getRootIdentity();
 
         // Store test data into current store
-        await (await testData.getInstantData()).getIssuerDocument();
-        let user = await testData.getInstantData().getUser1Document();
+        let instance = testData.getInstantData();
+        await instance.getIssuerDocument();
+        let user = await instance.getUser1Document();
         let vc = user.getCredential("#profile");
         vc.getMetadata().setAlias("MyProfile");
-        vc = await user.getCredential("#email");
+        vc = user.getCredential("#email");
         vc.getMetadata().setAlias("Email");
-        vc = await testData.getInstantData().getUser1TwitterCredential();
+        vc = await instance.getUser1TwitterCredential();
         vc.getMetadata().setAlias("Twitter");
-        vc = await testData.getInstantData().getUser1PassportCredential();
+        vc = await instance.getUser1PassportCredential();
         vc.getMetadata().setAlias("Passport");
 
         let tempDir = new File(TestConfig.tempDir);
@@ -765,7 +766,7 @@ describe("DIDStore Tests", ()=>{
         let restoreDir = new File(tempDir, "restore");
         Utils.deleteFile(restoreDir);
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
-        await store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
+        store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
 
         let storeDir = new File(TestConfig.storeRoot);
 

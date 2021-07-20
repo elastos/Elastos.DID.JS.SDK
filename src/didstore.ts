@@ -1216,6 +1216,9 @@ import { async } from "q";
                 zip.file(internalpath, data);
             }
 
+            let file = new File(zipFile);
+            file.createFile();
+        
             zip.generateAsync({type: "nodebuffer", platform: "UNIX"}).then((content) => {
                 fs.writeFile(zipFile, content, (err) => { });
             });
