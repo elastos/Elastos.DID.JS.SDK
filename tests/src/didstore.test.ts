@@ -693,10 +693,10 @@ describe("DIDStore Tests", ()=>{
 
         let tempDir = new File(TestConfig.tempDir);
         tempDir.createDirectory(true);
-        let exportFile = new File(tempDir, "didexport.json");
+        //let exportFile = new File(tempDir, "didexport.json");
 
         let data = await store.exportDid(did, "password", TestConfig.storePass);
-        exportFile.writeText(data);
+        //exportFile.writeText(data);
 
         let restoreDir = new File(tempDir, "restore");
         Utils.deleteFile(restoreDir);
@@ -724,7 +724,7 @@ describe("DIDStore Tests", ()=>{
 
         let tempDir = new File(TestConfig.tempDir);
         tempDir.createDirectory();
-        let exportFile = new File(tempDir, "idexport.json");
+        //let exportFile = new File(tempDir, "idexport.json");
 
         let data = await store.exportRootIdentity(id, "password", TestConfig.storePass);
 
@@ -741,7 +741,7 @@ describe("DIDStore Tests", ()=>{
         expect(Utils.equals(rePrivateDir, privateDir)).toBeTruthy();
     });
 
-    /*test("testExportAndImportStore", async ()=>{
+    test("testExportAndImportStore", async ()=>{
         await testData.getRootIdentity();
 
         // Store test data into current store
@@ -760,17 +760,17 @@ describe("DIDStore Tests", ()=>{
         tempDir.createDirectory();
         let exportFile = new File(tempDir, "storeexport.zip");
 
-        store.exportStore(exportFile, "password", TestConfig.storePass);
+        await store.exportStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
 
         let restoreDir = new File(tempDir, "restore");
         Utils.deleteFile(restoreDir);
-        let store2 = DIDStore.open(restoreDir.getAbsolutePath());
-        store2.importStore(exportFile, "password", TestConfig.storePass);
+        let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
+        await store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
 
         let storeDir = new File(TestConfig.storeRoot);
 
         expect(storeDir.exists()).toBeTruthy();
         expect(restoreDir.exists()).toBeTruthy();
         expect(Utils.equals(restoreDir, storeDir)).toBeTruthy();
-    });*/
+    });
 });
