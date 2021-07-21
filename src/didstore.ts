@@ -1218,13 +1218,16 @@ import { async } from "q";
 
             let file = new File(zipFile);
             file.createFile();
-        
-            await zip.generateAsync({type: "nodebuffer", platform: "UNIX"}).then(async (content) => {
+            
+            try {
+                let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
                 await fs.writeFile(zipFile, content, (err) => {
                     if (err)
-                        throw new MalformedExportDataException(err.message);
+                        throw err;
                 });
-            });
+            } catch(e) {
+                throw new MalformedExportDataException(e);
+            }
         }
 
         public async importStore(zipFile: string, password: string, storepass: string): Promise<void> {
@@ -1238,28 +1241,33 @@ import { async } from "q";
 		    if (fingerprint != null && currentFingerprint !== fingerprint)
 			    throw new WrongPasswordException("Password mismatched with previous password.");
 
-            await fs.readFile(zipFile, async (err, data) => { 
-                if (err)
-                    throw new MalformedExportDataException(err.message);
-
-                await JSZip.loadAsync(data).then(async (zip) => {
-                    await zip.forEach(async (relativePath, zipEntry) => {
-                        await zip.file(relativePath).async("string").then(async (content) => {
-                            if (relativePath.startsWith("rootidentity-")) {
-                                await this.importRootIdentity(content, password, storepass);
-                            } else {
-                                await this.importDid(content, password, storepass);
-                            }
-                        });
-                    });
-                }), (e) => {
+            try {
+                const promises = [];
+                fs.readFile(zipFile, (err, data) => { 
                     if (err)
                         throw new MalformedExportDataException(err.message);
-                }
-            });
+      
+                    JSZip.loadAsync(data).then((zip) => {
+                        zip.forEach((relativePath, zipEntry) => {
+                            zip.file(relativePath).async("string").then((content)=> {
+                                let promise = null;
+                                if (relativePath.startsWith("rootidentity-"))         
+                                    promise = this.importRootIdentity(content, password, storepass);   
+                                else
+                                    promise = this.importDid(content, password, storepass);
+
+                                promises.push(promise);
+                            });
+                        });      
+                    });
+                });
+                await Promise.all(promises);
+            } catch(e) {
+                throw new MalformedExportDataException(e);
+            }
 
             if (fingerprint == null || fingerprint == "")
-			    this.metadata.setFingerprint(currentFingerprint);
+                this.metadata.setFingerprint(currentFingerprint);
         }
 }
 
