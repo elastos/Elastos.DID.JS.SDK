@@ -766,7 +766,7 @@ describe("DIDStore Tests", ()=>{
         let restoreDir = new File(tempDir, "restore");
         Utils.deleteFile(restoreDir);
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
-        store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
+        await store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
 
         let storeDir = new File(TestConfig.storeRoot);
 

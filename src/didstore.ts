@@ -1219,23 +1219,32 @@ import { async } from "q";
             let file = new File(zipFile);
             file.createFile();
         
-            zip.generateAsync({type: "nodebuffer", platform: "UNIX"}).then((content) => {
-                fs.writeFile(zipFile, content, (err) => { });
+            await zip.generateAsync({type: "nodebuffer", platform: "UNIX"}).then(async (content) => {
+                await fs.writeFile(zipFile, content, (err) => {
+                    if (err)
+                        throw new MalformedExportDataException(err.message);
+                });
             });
         }
 
-        public importStore(zipFile: string, password: string, storepass: string): void {
+        public async importStore(zipFile: string, password: string, storepass: string): Promise<void> {
             checkArgument(zipFile != null, "Invalid zip file");
             checkArgument(password != null && password !== "", "Invalid password");
             checkArgument(storepass != null && storepass !== "", "Invalid storepass");
             
-            fs.readFile(zipFile, (err, data) => { 
+            let fingerprint = this.metadata.getFingerprint();
+		    let currentFingerprint = DIDStore.calcFingerprint(storepass);
+
+		    if (fingerprint != null && currentFingerprint !== fingerprint)
+			    throw new WrongPasswordException("Password mismatched with previous password.");
+
+            await fs.readFile(zipFile, async (err, data) => { 
                 if (err)
                     throw new MalformedExportDataException(err.message);
 
-                JSZip.loadAsync(data).then((zip) => {
-                    zip.forEach((relativePath, zipEntry) => {
-                        zip.file(relativePath).async("string").then(async (content) => {
+                await JSZip.loadAsync(data).then(async (zip) => {
+                    await zip.forEach(async (relativePath, zipEntry) => {
+                        await zip.file(relativePath).async("string").then(async (content) => {
                             if (relativePath.startsWith("rootidentity-")) {
                                 await this.importRootIdentity(content, password, storepass);
                             } else {
@@ -1243,8 +1252,14 @@ import { async } from "q";
                             }
                         });
                     });
-                });
+                }), (e) => {
+                    if (err)
+                        throw new MalformedExportDataException(err.message);
+                }
             });
+
+            if (fingerprint == null || fingerprint == "")
+			    this.metadata.setFingerprint(currentFingerprint);
         }
 }
 
