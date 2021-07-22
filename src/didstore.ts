@@ -1219,48 +1219,37 @@ import { async } from "q";
             let file = new File(zipFile);
             file.createFile();
             
-            try {
-                let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
-                await fs.writeFile(zipFile, content, (err) => {
-                    if (err)
-                        throw err;
-                });
-            } catch(e) {
-                throw new MalformedExportDataException(e);
-            }
+            let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
+            fs.writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
         }
 
         public async importStore(zipFile: string, password: string, storepass: string): Promise<void> {
             checkArgument(zipFile != null, "Invalid zip file");
             checkArgument(password != null && password !== "", "Invalid password");
             checkArgument(storepass != null && storepass !== "", "Invalid storepass");
-            
-            let fingerprint = this.metadata.getFingerprint();
-		    let currentFingerprint = DIDStore.calcFingerprint(storepass);
 
-		    if (fingerprint != null && currentFingerprint !== fingerprint)
-			    throw new WrongPasswordException("Password mismatched with previous password.");
+            let fingerprint = this.metadata.getFingerprint();
+            let currentFingerprint = DIDStore.calcFingerprint(storepass);
+
+            if (fingerprint != null && currentFingerprint !== fingerprint)
+                throw new WrongPasswordException("Password mismatched with previous password.");
 
             try {
                 const promises = [];
-                fs.readFile(zipFile, (err, data) => { 
-                    if (err)
-                        throw new MalformedExportDataException(err.message);
-      
-                    JSZip.loadAsync(data).then((zip) => {
-                        zip.forEach((relativePath, zipEntry) => {
-                            zip.file(relativePath).async("string").then((content)=> {
-                                let promise = null;
-                                if (relativePath.startsWith("rootidentity-"))         
-                                    promise = this.importRootIdentity(content, password, storepass);   
-                                else
-                                    promise = this.importDid(content, password, storepass);
 
-                                promises.push(promise);
-                            });
-                        });      
+                let data = await fs.readFileSync(zipFile);
+                let zip = await JSZip.loadAsync(data);
+                zip.forEach((relativePath, zipEntry) => {
+                    let promise = zip.file(relativePath).async("string").then(async (content) => {
+                        if (relativePath.startsWith("rootidentity-"))
+                            await this.importRootIdentity(content, password, storepass);
+                        else
+                            await this.importDid(content, password, storepass);
                     });
+
+                    promises.push(promise);
                 });
+
                 await Promise.all(promises);
             } catch(e) {
                 throw new MalformedExportDataException(e);
