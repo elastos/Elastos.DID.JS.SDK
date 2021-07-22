@@ -1219,8 +1219,12 @@ import { async } from "q";
             let file = new File(zipFile);
             file.createFile();
 
-            let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
-            fs.writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
+            try {
+                let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
+                fs.writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
+            } catch(e) {
+                throw new MalformedExportDataException(e);
+            }
         }
 
         public async importStore(zipFile: string, password: string, storepass: string): Promise<void> {
