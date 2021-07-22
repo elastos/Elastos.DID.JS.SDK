@@ -24,8 +24,9 @@ import type { Cloneable } from "./cloneable";
 import { DIDEntity } from "./internals";
 import type { DIDStore } from "./internals";
 import type { JSONObject, JSONValue } from "./json";
+import { sortJSONObject } from "./json";
 import { checkArgument } from "./internals";
-import { JsonIgnore, JsonAnySetter, JsonAnyGetter} from "@elastosfoundation/jackson-js";
+import { JsonIgnore, JsonAnySetter, JsonAnyGetter, JsonClassType} from "@elastosfoundation/jackson-js";
 
 /**
  * The class defines the base interface of Meta data.
@@ -87,8 +88,9 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
     }
 
     @JsonAnyGetter()
+    @JsonClassType({type: () => [String, Object]})
     protected getProperties(): JSONObject {
-        return this.props;
+        return sortJSONObject(this.props);
     }
 
     protected get(name: string): JSONValue {
@@ -105,7 +107,6 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
     protected getBoolean(name: string, defaultValue: boolean = false): boolean {
         let strValue = this.get(name);
         return strValue != null ? new Boolean(strValue).valueOf() : defaultValue;
-        
     }
 
     protected getInteger(name: string, defaultValue: number = -1): number {

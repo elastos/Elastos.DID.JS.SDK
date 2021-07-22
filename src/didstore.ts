@@ -22,6 +22,7 @@
 
 import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty} from "@elastosfoundation/jackson-js";
 import { CredentialMetadata } from "./internals";
+import { File } from "./internals";
 import { DID } from "./internals";
 import { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
@@ -51,6 +52,9 @@ import type { DIDStoreMetadata } from "./internals";
 import { md5 } from "./internals";
 import { BASE64 } from "./internals";
 import createHash from 'create-hash';
+import * as fs from "fs";
+import JSZip from "jszip";
+import { async } from "q";
 
 /**
  * DIDStore is local store for all DIDs.
@@ -386,7 +390,7 @@ import createHash from 'create-hash';
                 let identityMetadata = await this.loadRootIdentityMetadata(id.getId());
                 id.setMetadata(identityMetadata);
             }
-   
+
             return ids;
         }
 
@@ -865,7 +869,7 @@ import createHash from 'create-hash';
          */
         public storeLazyPrivateKey(id: DIDURL) {
             checkArgument(id != null, "Invalid private key id");
-            
+
             this.storage.storePrivateKey(id, DIDStore.DID_LAZY_PRIVATEKEY);
             this.cache.put(DIDStore.Key.forDidPrivateKey(id), DIDStore.DID_LAZY_PRIVATEKEY);
         }
@@ -893,10 +897,10 @@ import createHash from 'create-hash';
             if (value === DIDStore.NULL || !value) {
                 return null;
             } else {
-                if (value === DIDStore.DID_LAZY_PRIVATEKEY) 
+                if (value === DIDStore.DID_LAZY_PRIVATEKEY)
                     return await RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
-                else 
-                    return this.decrypt(value, storepass);              
+                else
+                    return this.decrypt(value, storepass);
             }
         }
 
@@ -919,7 +923,7 @@ import createHash from 'create-hash';
                     value: key != null ? key : DIDStore.NULL
                 };
             });
-                
+
             return value === DIDStore.NULL ? false : true;
         }
 
@@ -1189,6 +1193,74 @@ import createHash from 'create-hash';
                 this.metadata.setDefaultRootIdentity(id);
 
             return null;
+        }
+
+        public async exportStore(zipFile : string, password: string, storepass: string): Promise<void> {
+            checkArgument(zipFile != null, "Invalid zip file");
+            checkArgument(password != null && password !== "", "Invalid password");
+            checkArgument(storepass != null && storepass !== "", "Invalid storepass");
+
+            let zip = new JSZip();
+
+            let dids = await this.listDids();
+            for (let did of dids) {
+                let data = await this.exportDid(did, password, storepass);
+                zip.file(did.getMethodSpecificId(), data);
+            }
+
+            let internalpath = "rootidentity-";
+            let identities = await this.listRootIdentities();
+            for (let identity of identities) {
+                internalpath = internalpath.concat(identity.getId());
+                let data = await this.exportRootIdentity(identity.getId(), password, storepass);
+                zip.file(internalpath, data);
+            }
+
+            let file = new File(zipFile);
+            file.createFile();
+
+            try {
+                let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
+                fs.writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
+            } catch(e) {
+                throw new MalformedExportDataException(e);
+            }
+        }
+
+        public async importStore(zipFile: string, password: string, storepass: string): Promise<void> {
+            checkArgument(zipFile != null, "Invalid zip file");
+            checkArgument(password != null && password !== "", "Invalid password");
+            checkArgument(storepass != null && storepass !== "", "Invalid storepass");
+
+            let fingerprint = this.metadata.getFingerprint();
+            let currentFingerprint = DIDStore.calcFingerprint(storepass);
+
+            if (fingerprint != null && currentFingerprint !== fingerprint)
+                throw new WrongPasswordException("Password mismatched with previous password.");
+
+            try {
+                const promises = [];
+
+                let data = await fs.readFileSync(zipFile);
+                let zip = await JSZip.loadAsync(data);
+                zip.forEach((relativePath, zipEntry) => {
+                    let promise = zip.file(relativePath).async("string").then(async (content) => {
+                        if (relativePath.startsWith("rootidentity-"))
+                            await this.importRootIdentity(content, password, storepass);
+                        else
+                            await this.importDid(content, password, storepass);
+                    });
+
+                    promises.push(promise);
+                });
+
+                await Promise.all(promises);
+            } catch(e) {
+                throw new MalformedExportDataException(e);
+            }
+
+            if (fingerprint == null || fingerprint == "")
+                this.metadata.setFingerprint(currentFingerprint);
         }
 }
 
@@ -1625,3 +1697,7 @@ export namespace DIDStore {
         }
     }
 }
+function saveAs(content: Blob, zipFile: string) {
+    throw new Error("Function not implemented.");
+}
+
