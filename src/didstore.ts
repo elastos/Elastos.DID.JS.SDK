@@ -390,7 +390,7 @@ import { async } from "q";
                 let identityMetadata = await this.loadRootIdentityMetadata(id.getId());
                 id.setMetadata(identityMetadata);
             }
-   
+
             return ids;
         }
 
@@ -869,7 +869,7 @@ import { async } from "q";
          */
         public storeLazyPrivateKey(id: DIDURL) {
             checkArgument(id != null, "Invalid private key id");
-            
+
             this.storage.storePrivateKey(id, DIDStore.DID_LAZY_PRIVATEKEY);
             this.cache.put(DIDStore.Key.forDidPrivateKey(id), DIDStore.DID_LAZY_PRIVATEKEY);
         }
@@ -897,10 +897,10 @@ import { async } from "q";
             if (value === DIDStore.NULL || !value) {
                 return null;
             } else {
-                if (value === DIDStore.DID_LAZY_PRIVATEKEY) 
+                if (value === DIDStore.DID_LAZY_PRIVATEKEY)
                     return await RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
-                else 
-                    return this.decrypt(value, storepass);              
+                else
+                    return this.decrypt(value, storepass);
             }
         }
 
@@ -923,7 +923,7 @@ import { async } from "q";
                     value: key != null ? key : DIDStore.NULL
                 };
             });
-                
+
             return value === DIDStore.NULL ? false : true;
         }
 
@@ -1218,7 +1218,7 @@ import { async } from "q";
 
             let file = new File(zipFile);
             file.createFile();
-            
+
             let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
             fs.writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
         }

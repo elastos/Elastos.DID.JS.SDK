@@ -402,7 +402,7 @@ describe("DIDStore Tests", ()=>{
         for (let did of dids) {
             expect(store.deleteDid(did)).toBeTruthy();
         }
-        
+
         let empty: DID[] = Array.from(await store.listDids());
         expect(empty.length).toBe(0);
 
