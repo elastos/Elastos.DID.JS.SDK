@@ -69,6 +69,9 @@ const onwarn = warning => {
     if (warning.code && warning.code === "THIS_IS_UNDEFINED")
         return; // TMP: don't get flooded by this for now
 
+    if (warning.code && warning.code === "EVAL")
+        return; // TMP: don't get flooded by this for now
+
     console.warn("Rollup build warning:", warning);
 };
 
