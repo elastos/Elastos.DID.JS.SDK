@@ -402,7 +402,7 @@ export class RootIdentity {
             localDoc.getMetadata().attachStore(this.getStore())
         await this.getStore().storeDid(finalDoc);
         this.getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
-    
+
         return true;
     }
 

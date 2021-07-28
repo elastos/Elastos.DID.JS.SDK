@@ -20,7 +20,12 @@
  * SOFTWARE.
  */
 
-import { DIDDocument, RootIdentity, HDKey, DIDDocumentBuilder, DIDURL, DIDStore, Logger, BASE64 } from "@elastosfoundation/did-js-sdk";
+import { DIDDocument,
+        DIDDocumentBuilder,
+        DIDURL,
+        DIDStore,
+        Logger,
+        BASE64 } from "@elastosfoundation/did-js-sdk";
 import { TestData } from "../utils/testdata";
 import { TestConfig } from "../utils/testconfig";
 import { DIDTestExtension } from "../utils/didtestextension";
@@ -45,31 +50,19 @@ function printJwt(token: string) {
     }
 }
 
+let testData: TestData;
+let doc: DIDDocument;
+
 describe('JWT Tests', () => {
-    const testMethodSpecificID = "icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-    const testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-    let testData: TestData;
-    let identity: RootIdentity;
-    let doc: DIDDocument;
-    let key: HDKey;
-    let db: DIDDocumentBuilder;
-    let id: DIDURL;
-    let store: DIDStore;
-
-    test('JWT Test placeholder', () => {
-    });
-
-/*
     beforeEach(async () => {
         testData = new TestData();
-        await testData.cleanup();
-        identity = await testData.getRootIdentity();
+        let identity = await testData.getRootIdentity();
         doc = await identity.newDid(TestConfig.storePass);
-        key = TestData.generateKeypair();
-        db = DIDDocumentBuilder.newFromDocument(doc).edit();
-        id = new DIDURL("#key2", doc.getSubject());
+        let key = TestData.generateKeypair();
+        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let id = new DIDURL("#key2", doc.getSubject());
         db.addAuthenticationKey(id, key.getPublicKeyBase58());
-        store = await testData.getStore();
+        let store = await testData.getStore();
         store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
         doc = await db.seal(TestConfig.storePass);
         await store.storeDid(doc);
@@ -79,10 +72,11 @@ describe('JWT Tests', () => {
     });
 
     afterAll(async () => {
+        await testData.cleanup();
     });
 
     test('JWT Test', () => {
-        Header h = JwtBuilder.createHeader();
+        JWTHeader h = JWTBuilder.createHeader();
         h.setType(Header.JWT_TYPE)
             .setContentType("json");
         h.put("library", "Elastos DID");
@@ -141,7 +135,6 @@ describe('JWT Tests', () => {
         expect(() =>{ new DID("did:example:1234567890")}).toThrowError()
         expect(() =>{ new DID("did:elastos:")}).toThrowError()
     });
-    */
 });
 
 /*

@@ -506,7 +506,7 @@ export class DIDDocumentBuilder {
         let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), null, controller, pk);
         this.addPublicKey(key);
         this.document.authorizationKeys.set(id, key);
-        
+
         return this;
     }
 
