@@ -41,40 +41,48 @@ export class Claims {
         return claims;
     }
 
-    public setClaims(name : string, value : number | string | string[]) : void {
+    public put(name : string, value : number | string | string[]) : Claims {
         this.payload = { ... this.payload, name : value };
+        return this;
     }
 
-    public getClaims(name : string) : any {
+    public get(name : string) : any {
         return this.payload[name];
     }
 
-    public setAudience(audience : string) : void {
-        this.setClaims(Claims.AUDIENCE, audience);
+    public setAudience(audience : string) : Claims {
+        this.put(Claims.AUDIENCE, audience);
+        return this;
     }
 
-    public setExpirationTime(expire : string | number) : void {
-        this.setClaims(Claims.EXPIRATION, expire);
+    public setExpirationTime(expire : string | number) : Claims {
+        this.put(Claims.EXPIRATION, expire);
+        return this;
     }
 
-    public setIssuedAt(iat : number) : void {
-        this.setClaims(Claims.ISSUED_AT, iat);
+    public setIssuedAt(iat : number) : Claims {
+        this.put(Claims.ISSUED_AT, iat);
+        return this;
     }
 
-    public setIssuer(issuer : string) : void {
-        this.setClaims(Claims.ISSUER, issuer);
+    public setIssuer(issuer : string) : Claims {
+        this.put(Claims.ISSUER, issuer);
+        return this;
     }
 
-    public setJti(jwtid : string) : void {
-        this.setClaims(Claims.ID, jwtid);
+    public setJti(jwtid : string) : Claims {
+        this.put(Claims.ID, jwtid);
+        return this;
     }
 
-    public setNotBefore(nbf : string | number) : void {
-        this.setClaims(Claims.NOT_BEFORE, nbf);
+    public setNotBefore(nbf : string | number) : Claims {
+        this.put(Claims.NOT_BEFORE, nbf);
+        return this;
     }
 
-    public setSubject(subject : string) : void {
-        this.setClaims(Claims.SUBJECT, subject);
+    public setSubject(subject : string) : Claims {
+        this.put(Claims.SUBJECT, subject);
+        return this;
     }
 
     public getJWTPayload() : JWTPayload {

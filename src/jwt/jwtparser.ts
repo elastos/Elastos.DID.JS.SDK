@@ -21,7 +21,7 @@
  */
 
 import { jwtVerify, JWTVerifyOptions } from 'jose/jwt/verify'
-import { JWT, JWTHeader } from "../internals"
+import { JWT } from "../internals"
 import { KeyProvider } from "../crypto/keyprovider";
 import { decodeProtectedHeader } from 'jose/util/decode_protected_header';
 import { UnsecuredJWT } from 'jose/jwt/unsecured'
@@ -42,7 +42,7 @@ export class JWTParser {
 
     private getSignkey(token : string) : any {
         const protectedHeader = decodeProtectedHeader(token);
-        return protectedHeader[JWTHeader.KID];
+        return protectedHeader.kid;
     }
 
     public async parse(token : string) : Promise<JWT> {

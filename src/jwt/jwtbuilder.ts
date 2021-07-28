@@ -22,7 +22,7 @@
 
 import { SignJWT } from 'jose/jwt/sign'
 import { UnsecuredJWT } from 'jose/jwt/unsecured'
-import { DID, DIDDocument, DIDURL, checkArgument } from '../internals';
+import { DID, DIDURL, checkArgument } from '../internals';
 import { JWTHeader, Claims } from '../internals';
 import { KeyProvider } from '../internals';
 
@@ -44,16 +44,30 @@ export class JWTBuilder {
         return new JWTHeader();
     }
 
-    public setHeader(name : string, value : string) : JWTBuilder {
-        if (this.header == null)
-            this.header = new JWTHeader();
+    public static createClaims() : Claims {
+        return new Claims();
+    }
 
-        this.header.setHeader(name, value);
+    public setHeader(header : JWTHeader) : JWTBuilder {
+        this.header = header;
         return this;
     }
 
-    public setClaims(name : string, value : string | number | string[]) : JWTBuilder {
-        this.payload.setClaims(name, value);
+    public setClaims(claims : Claims) : JWTBuilder {
+        this.payload = claims;
+        return this;
+    }
+
+    public addHeader(name : string, value : string) : JWTBuilder {
+        if (this.header == null)
+            this.header = new JWTHeader();
+
+        this.header.put(name, value);
+        return this;
+    }
+
+    public addClaims(name : string, value : string | number | string[]) : JWTBuilder {
+        this.payload.put(name, value);
         return this;
     }
 
@@ -111,7 +125,7 @@ export class JWTBuilder {
             this.header = new JWTHeader();
 
         this.header.setAlgorithm("ES256");
-        this.header.setHeader(JWTHeader.KID, keyid.toString());
+        this.header.setKeyId(keyid.toString());
 
         const signjwt = new SignJWT(this.payload.getJWTPayload())
                 .setProtectedHeader(this.header.getJWSHeaderParameters());
@@ -120,7 +134,7 @@ export class JWTBuilder {
         return await signjwt.sign(sk);
     }
 
-    public Compact() : string {
+    public compact() : string {
         return new UnsecuredJWT(this.payload.getJWTPayload()).encode();
     }
 }

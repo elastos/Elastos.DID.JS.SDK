@@ -20,12 +20,9 @@
  * SOFTWARE.
  */
 
-import { JWSHeaderParameters } from 'jose/jwt/sign'
+import { JWSHeaderParameters } from "jose/webcrypto/types";
 
 export class JWTHeader {
-    public static ALG = "alg";
-    public static KID = "kid";
-
     private header : JWSHeaderParameters;
 
     public constructor() {}
@@ -36,25 +33,49 @@ export class JWTHeader {
         return object;
     }
 
-    public setAlgorithm(algorithm : string) : void {
+    public setAlgorithm(algorithm : string) : JWTHeader {
         this.header.alg = algorithm;
+        return this;
     }
 
     public getAlgorithm() : string {
         return this.header.alg;
     }
 
-    public setKid(keyid : string) : void {
+    public setKid(keyid : string) : JWTHeader {
         this.header.kid = keyid;
+        return this;
     }
 
     public getKid() : string {
         return this.header.kid;
     }
 
-    public setHeader(name : string, value: string) : void {
-        if (name != JWTHeader.ALG && name != JWTHeader.KID)
+    public setType(type : string) : JWTHeader {
+        this.header.typ = type;
+        return this;
+    }
+
+    public setKeyId(keyid : string) : JWTHeader {
+        this.header.kid = keyid;
+        return this;
+    }
+
+    public getKeyId() : string {
+        return this.header.kid;
+    }
+
+    public put(name : string, value: string) : JWTHeader {
+        if (name != "alg" && name != "kid")
             this.header = {...this.header, name : value};
+        return this;
+    }
+
+    public get(name : string) : any {
+        if (this.header)
+            this.header[name];
+
+        return null;
     }
 
     public getJWSHeaderParameters() : JWSHeaderParameters {

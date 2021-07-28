@@ -73,8 +73,6 @@ export class JWTParserBuilder {
         return this;
     }
 
-    pri
-
     public build() : JWTParser {
         let newOptions = Object.assign({} as JWTVerifyOptions, this.options);
         return new JWTParser(this.keyProvider, this.options);

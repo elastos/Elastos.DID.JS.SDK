@@ -25,10 +25,18 @@ import { DIDDocument,
         DIDURL,
         DIDStore,
         Logger,
-        BASE64 } from "@elastosfoundation/did-js-sdk";
+        BASE64,
+        JWT,
+        JWTHeader,
+        JWTBuilder,
+        JWTParser,
+        JWTParserBuilder,
+        Claims
+        } from "@elastosfoundation/did-js-sdk";
 import { TestData } from "../utils/testdata";
 import { TestConfig } from "../utils/testconfig";
 import { DIDTestExtension } from "../utils/didtestextension";
+import dayjs from "dayjs";
 
 const logger = new Logger("JWTTests");
 
@@ -75,22 +83,18 @@ describe('JWT Tests', () => {
         await testData.cleanup();
     });
 
-    test('JWT Test', () => {
-        JWTHeader h = JWTBuilder.createHeader();
-        h.setType(Header.JWT_TYPE)
-            .setContentType("json");
+    test('JWT Test', async () => {
+        let h = JWTBuilder.createHeader();
         h.put("library", "Elastos DID");
         h.put("version", "1.0");
 
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
-        Date iat = cal.getTime();
-        cal.add(Calendar.MONTH, -1);
-        Date nbf = cal.getTime();
-        cal.add(Calendar.MONTH, 4);
-        Date exp = cal.getTime();
+        let now = dayjs();
+        let iat = now;
+        let month = iat.month();
+        let nbf = iat.month(month - 1);
+        let exp = iat.month(month + 4);
 
-        Claims b = JwtBuilder.createClaims();
+        let b = JWTBuilder.createClaims();
         b.setSubject("JwtTest")
             .setId("0")
             .setAudience("Test cases")
@@ -99,177 +103,94 @@ describe('JWT Tests', () => {
             .setNotBefore(nbf)
             .put("foo", "bar");
 
-        String token = doc.jwtBuilder()
+        let token = doc.jwtBuilder()
                 .setHeader(h)
                 .setClaims(b)
                 .compact();
 
-        assertNotNull(token);
+        expect(token).not.toBeNull();
         printJwt(token);
 
-        JwtParser jp = doc.jwtParserBuilder().build();
-        Jwt<Claims> jwt = jp.parseClaimsJwt(token);
-        assertNotNull(jwt);
+        let jp = doc.jwtParserBuilder().build();
+        let jwt = await jp.parse(token);
+        expect(jwt).not.toBeNull();
 
         h = jwt.getHeader();
-        assertNotNull(h);
-        assertEquals("json", h.getContentType());
-        assertEquals(Header.JWT_TYPE, h.getType());
-        assertEquals("Elastos DID", h.get("library"));
-        assertEquals("1.0", h.get("version"));
+        expect(h).not.toBeNull();
+        expect(h.get("library")).toEqual("Elastos DID");
+        expect(h.get("version")).toEqual("1.0");
 
-        Claims c = jwt.getBody();
-        assertNotNull(c);
-        assertEquals("JwtTest", c.getSubject());
-        assertEquals("0", c.getId());
-        assertEquals(doc.getSubject().toString(), c.getIssuer());
-        assertEquals("Test cases", c.getAudience());
-        assertEquals(iat, c.getIssuedAt());
-        assertEquals(exp, c.getExpiration());
-        assertEquals(nbf, c.getNotBefore());
-        assertEquals("bar", c.get("foo", String.class));
+        let c = jwt.getBody();
+        expect(c).not.toBeNull();
+        expect(c.getSubject()).toEqual("JwtTest");
+        expect(c.getId()).toEqual("0");
+        expect(c.getIssuer()).toEqual(doc.getSubject().toString());
+        expect(c.getAudience()).toEqual("Test cases");
+        expect(c.getIssuedAt()).toBe(iat);
+        expect(c.getExpiration()).toBe(exp);
+        expect(c.getNotBefore()).toBe(nbf);
+        expect(c.get("foo")).toEqual("bar");
     });
 
-    test('Test Constructor with invalid did string', () => {
-        expect(() =>{ new DID("id:elastos:1234567890")}).toThrowError()
-        expect(() =>{ new DID("did:example:1234567890")}).toThrowError()
-        expect(() =>{ new DID("did:elastos:")}).toThrowError()
+    test('jwsTestSignWithDefaultKey',async () => {
+        let h = JWTBuilder.createJwsHeader();
+        h.setType(Header.JWT_TYPE)
+            .setContentType("json");
+        h.put("library", "Elastos DID");
+        h.put("version", "1.0");
+
+        let now = dayjs();
+        let iat = now;
+        let month = iat.month();
+        let nbf = iat.month(month - 1);
+        let exp = iat.month(month + 4);
+
+        let b = JWTBuilder.createClaims();
+        b.setSubject("JwtTest")
+            .setId("0")
+            .setAudience("Test cases")
+            .setIssuedAt(iat)
+            .setExpiration(exp)
+            .setNotBefore(nbf)
+            .put("foo", "bar");
+
+        let token = doc.jwtBuilder()
+                .setHeader(h)
+                .setClaims(b)
+                .sign(TestConfig.storePass);
+
+        expect(token).not.toBeNull();
+        printJwt(token);
+
+        let jp = doc.jwtParserBuilder().build();
+        let jwt = await jp.parse(token);
+        expect(jwt).not.toBeNull();
+
+        h = jwt.getHeader();
+        expect(h).not.toBeNull();
+        expect(h.get("library")).toEqual("Elastos DID");
+        expect(h.get("version")).toEqual("1.0");
+
+        let c = jwt.getBody();
+        expect(c).not.toBeNull();
+        expect(c.getSubject()).toEqual("JwtTest");
+        expect(c.getId()).toEqual("0");
+        expect(c.getIssuer()).toEqual(doc.getSubject().toString());
+        expect(c.getAudience()).toEqual("Test cases");
+        expect(c.getIssuedAt()).toBe(iat);
+        expect(c.getExpiration()).toBe(exp);
+        expect(c.getNotBefore()).toBe(nbf);
+        expect(c.get("foo")).toEqual("bar");
     });
-});
 
-/*
-    @Test
-    public void jwtTest()
-            throws DIDException, IOException, JwtException {
-        Header h = JwtBuilder.createHeader();
-        h.setType(Header.JWT_TYPE)
-            .setContentType("json");
-        h.put("library", "Elastos DID");
-        h.put("version", "1.0");
+    test('jwsTestSignWithSpecificKey',async () => {
+        let now = dayjs();
+        let iat = now;
+        let month = iat.month();
+        let nbf = iat.month(month - 1);
+        let exp = iat.month(month + 4);
 
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
-        Date iat = cal.getTime();
-        cal.add(Calendar.MONTH, -1);
-        Date nbf = cal.getTime();
-        cal.add(Calendar.MONTH, 4);
-        Date exp = cal.getTime();
-
-        Claims b = JwtBuilder.createClaims();
-        b.setSubject("JwtTest")
-            .setId("0")
-            .setAudience("Test cases")
-            .setIssuedAt(iat)
-            .setExpiration(exp)
-            .setNotBefore(nbf)
-            .put("foo", "bar");
-
-        String token = doc.jwtBuilder()
-                .setHeader(h)
-                .setClaims(b)
-                .compact();
-
-        assertNotNull(token);
-        printJwt(token);
-
-        JwtParser jp = doc.jwtParserBuilder().build();
-        Jwt<Claims> jwt = jp.parseClaimsJwt(token);
-        assertNotNull(jwt);
-
-        h = jwt.getHeader();
-        assertNotNull(h);
-        assertEquals("json", h.getContentType());
-        assertEquals(Header.JWT_TYPE, h.getType());
-        assertEquals("Elastos DID", h.get("library"));
-        assertEquals("1.0", h.get("version"));
-
-        Claims c = jwt.getBody();
-        assertNotNull(c);
-        assertEquals("JwtTest", c.getSubject());
-        assertEquals("0", c.getId());
-        assertEquals(doc.getSubject().toString(), c.getIssuer());
-        assertEquals("Test cases", c.getAudience());
-        assertEquals(iat, c.getIssuedAt());
-        assertEquals(exp, c.getExpiration());
-        assertEquals(nbf, c.getNotBefore());
-        assertEquals("bar", c.get("foo", String.class));
-    }
-
-    @Test
-    public void jwsTestSignWithDefaultKey()
-            throws DIDException, IOException, JwtException {
-        JwsHeader h = JwtBuilder.createJwsHeader();
-        h.setType(Header.JWT_TYPE)
-            .setContentType("json");
-        h.put("library", "Elastos DID");
-        h.put("version", "1.0");
-
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
-        Date iat = cal.getTime();
-        cal.add(Calendar.MONTH, -1);
-        Date nbf = cal.getTime();
-        cal.add(Calendar.MONTH, 4);
-        Date exp = cal.getTime();
-
-        Claims b = JwtBuilder.createClaims();
-        b.setSubject("JwtTest")
-            .setId("0")
-            .setAudience("Test cases")
-            .setIssuedAt(iat)
-            .setExpiration(exp)
-            .setNotBefore(nbf)
-            .put("foo", "bar");
-
-        String token = doc.jwtBuilder()
-                .setHeader(h)
-                .setClaims(b)
-                .sign(TestConfig.storePass)
-                .compact();
-
-        assertNotNull(token);
-        printJwt(token);
-
-        JwtParser jp = doc.jwtParserBuilder().build();
-        Jws<Claims> jwt = jp.parseClaimsJws(token);
-        assertNotNull(jwt);
-
-        h = jwt.getHeader();
-        assertNotNull(h);
-        assertEquals("json", h.getContentType());
-        assertEquals(Header.JWT_TYPE, h.getType());
-        assertEquals("Elastos DID", h.get("library"));
-        assertEquals("1.0", h.get("version"));
-
-        Claims c = jwt.getBody();
-        assertNotNull(c);
-        assertEquals("JwtTest", c.getSubject());
-        assertEquals("0", c.getId());
-        assertEquals(doc.getSubject().toString(), c.getIssuer());
-        assertEquals("Test cases", c.getAudience());
-        assertEquals(iat, c.getIssuedAt());
-        assertEquals(exp, c.getExpiration());
-        assertEquals(nbf, c.getNotBefore());
-        assertEquals("bar", c.get("foo", String.class));
-
-        String s = jwt.getSignature();
-        assertNotNull(s);
-    }
-
-    @Test
-    public void jwsTestSignWithSpecificKey()
-            throws DIDException, IOException, JwtException {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
-        Date iat = cal.getTime();
-        cal.add(Calendar.MONTH, -1);
-        Date nbf = cal.getTime();
-        cal.add(Calendar.MONTH, 4);
-        Date exp = cal.getTime();
-
-        String token = doc.jwtBuilder()
-                .addHeader(Header.TYPE, Header.JWT_TYPE)
-                .addHeader(Header.CONTENT_TYPE, "json")
+        let token = doc.jwtBuilder()
                 .addHeader("library", "Elastos DID")
                 .addHeader("version", "1.0")
                 .setSubject("JwtTest")
@@ -279,52 +200,40 @@ describe('JWT Tests', () => {
                 .setExpiration(exp)
                 .setNotBefore(nbf)
                 .claim("foo", "bar")
-                .signWith("#key2", TestConfig.storePass)
-                .compact();
+                .sign("#key2", TestConfig.storePass);
 
-        assertNotNull(token);
+        expect(token).not.toBeNull();
         printJwt(token);
 
-        JwtParser jp = doc.jwtParserBuilder().build();
-        Jws<Claims> jwt = jp.parseClaimsJws(token);
-        assertNotNull(jwt);
+        let jp = doc.jwtParserBuilder().build();
+        let jwt = jp.parse(token);
+        expect(jwt).not.toBeNull();
 
-        JwsHeader h = jwt.getHeader();
-        assertNotNull(h);
-        assertEquals("json", h.getContentType());
-        assertEquals(Header.JWT_TYPE, h.getType());
-        assertEquals("Elastos DID", h.get("library"));
-        assertEquals("1.0", h.get("version"));
+        let h = jwt.getHeader();
+        expect(h).not.toBeNull();
+        expect(h.get("library")).toEqual("Elastos DID");
+        expect(h.get("version")).toEqual("1.0");
 
-        Claims c = jwt.getBody();
-        assertNotNull(c);
-        assertEquals("JwtTest", c.getSubject());
-        assertEquals("0", c.getId());
-        assertEquals(doc.getSubject().toString(), c.getIssuer());
-        assertEquals("Test cases", c.getAudience());
-        assertEquals(iat, c.getIssuedAt());
-        assertEquals(exp, c.getExpiration());
-        assertEquals(nbf, c.getNotBefore());
-        assertEquals("bar", c.get("foo", String.class));
+        let c = jwt.getBody();
+        expect(c).not.toBeNull();
+        expect(c.getSubject()).toEqual("JwtTest");
+        expect(c.getId()).toEqual("0");
+        expect(c.getIssuer()).toEqual(doc.getSubject().toString());
+        expect(c.getAudience()).toEqual("Test cases");
+        expect(c.getIssuedAt()).toBe(iat);
+        expect(c.getExpiration()).toBe(exp);
+        expect(c.getNotBefore()).toBe(nbf);
+        expect(c.get("foo")).toEqual("bar");
+    });
 
-        String s = jwt.getSignature();
-        assertNotNull(s);
-    }
+    test('jwsTestAutoVerify',async () => {
+        let now = dayjs();
+        let iat = now;
+        let month = iat.month();
+        let nbf = iat.month(month - 1);
+        let exp = iat.month(month + 4);
 
-    @Test
-    public void jwsTestAutoVerify()
-            throws DIDException, IOException, JwtException {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
-        Date iat = cal.getTime();
-        cal.add(Calendar.MONTH, -1);
-        Date nbf = cal.getTime();
-        cal.add(Calendar.MONTH, 4);
-        Date exp = cal.getTime();
-
-        String token = doc.jwtBuilder()
-                .addHeader(Header.TYPE, Header.JWT_TYPE)
-                .addHeader(Header.CONTENT_TYPE, "json")
+        let token = doc.jwtBuilder()
                 .addHeader("library", "Elastos DID")
                 .addHeader("version", "1.0")
                 .setSubject("JwtTest")
@@ -334,57 +243,43 @@ describe('JWT Tests', () => {
                 .setExpiration(exp)
                 .setNotBefore(nbf)
                 .claim("foo", "bar")
-                .signWith("#key2", TestConfig.storePass)
-                .compact();
+                .signWith("#key2", TestConfig.storePass);
 
-        assertNotNull(token);
+        expect(token).not.toBeNull();
         printJwt(token);
 
         // The JWT parser not related with a DID document
-        JwtParser jp = new JwtParserBuilder().build();
-        Jws<Claims> jwt = jp.parseClaimsJws(token);
-        assertNotNull(jwt);
+        let jp = doc.jwtParserBuilder().build();
+        let jwt = jp.parse(token);
+        expect(jwt).not.toBeNull();
 
-        JwsHeader h = jwt.getHeader();
-        assertNotNull(h);
-        assertEquals("json", h.getContentType());
-        assertEquals(Header.JWT_TYPE, h.getType());
-        assertEquals("Elastos DID", h.get("library"));
-        assertEquals("1.0", h.get("version"));
+        let h = jwt.getHeader();
+        expect(h).not.toBeNull();
+        expect(h.get("library")).toEqual("Elastos DID");
+        expect(h.get("version")).toEqual("1.0");
 
-        Claims c = jwt.getBody();
-        assertNotNull(c);
-        assertEquals("JwtTest", c.getSubject());
-        assertEquals("0", c.getId());
-        assertEquals(doc.getSubject().toString(), c.getIssuer());
-        assertEquals("Test cases", c.getAudience());
-        assertEquals(iat, c.getIssuedAt());
-        assertEquals(exp, c.getExpiration());
-        assertEquals(nbf, c.getNotBefore());
-        assertEquals("bar", c.get("foo", String.class));
+        let c = jwt.getBody();
+        expect(c).not.toBeNull();
+        expect(c.getSubject()).toEqual("JwtTest");
+        expect(c.getId()).toEqual("0");
+        expect(c.getIssuer()).toEqual(doc.getSubject().toString());
+        expect(c.getAudience()).toEqual("Test cases");
+        expect(c.getIssuedAt()).toBe(iat);
+        expect(c.getExpiration()).toBe(exp);
+        expect(c.getNotBefore()).toBe(nbf);
+        expect(c.get("foo")).toEqual("bar");
+    });
 
-        String s = jwt.getSignature();
-        assertNotNull(s);
-    }
+    test('jwsTestAutoVerify',async () => {
+        let now = dayjs();
+        let iat = now;
+        let month = iat.month();
+        let nbf = iat.month(month - 1);
+        let exp = iat.month(month + 4);
 
-    @Test
-    public void jwsTestClaimJsonNode()
-            throws DIDException, IOException, JwtException {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
-        Date iat = cal.getTime();
-        cal.add(Calendar.MONTH, -1);
-        Date nbf = cal.getTime();
-        cal.add(Calendar.MONTH, 4);
-        Date exp = cal.getTime();
+        let vcEmail = ( await testData.getInstantData().getUser1Document()).getCredential("#email");
 
-        VerifiableCredential vcEmail = testData.getInstantData().getUser1Document().getCredential("#email");
-
-        Map<String, Object> vc = loadJson(vcEmail.serialize(true));
-
-        String token = doc.jwtBuilder()
-                .addHeader(Header.TYPE, Header.JWT_TYPE)
-                .addHeader(Header.CONTENT_TYPE, "json")
+        let token = doc.jwtBuilder()
                 .addHeader("library", "Elastos DID")
                 .addHeader("version", "1.0")
                 .setSubject("JwtTest")
@@ -393,36 +288,33 @@ describe('JWT Tests', () => {
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .claim("foo", "bar")
-                .claim("vc", vc)
-                .signWith("#key2", TestConfig.storePass)
-                .compact();
+                .addClaims("foo", "bar")
+                .addClaims("vc", vcEmail.serialize(true))
+                .sign("#key2", TestConfig.storePass);
 
-        assertNotNull(token);
+        expect(token).not.toBeNull();
         printJwt(token);
 
         // The JWT parser not related with a DID document
-        JwtParser jp = new JwtParserBuilder().build();
-        Jws<Claims> jwt = jp.parseClaimsJws(token);
-        assertNotNull(jwt);
+        let jp = doc.jwtParserBuilder().build();
+        let jwt = jp.parse(token);
+        expect(jwt).not.toBeNull();
 
-        JwsHeader h = jwt.getHeader();
-        assertNotNull(h);
-        assertEquals("json", h.getContentType());
-        assertEquals(Header.JWT_TYPE, h.getType());
-        assertEquals("Elastos DID", h.get("library"));
-        assertEquals("1.0", h.get("version"));
+        let h = jwt.getHeader();
+        expect(h).not.toBeNull();
+        expect(h.get("library")).toEqual("Elastos DID");
+        expect(h.get("version")).toEqual("1.0");
 
-        Claims c = jwt.getBody();
-        assertNotNull(c);
-        assertEquals("JwtTest", c.getSubject());
-        assertEquals("0", c.getId());
-        assertEquals(doc.getSubject().toString(), c.getIssuer());
-        assertEquals("Test cases", c.getAudience());
-        assertEquals(iat, c.getIssuedAt());
-        assertEquals(exp, c.getExpiration());
-        assertEquals(nbf, c.getNotBefore());
-        assertEquals("bar", c.get("foo", String.class));
+        let c = jwt.getBody();
+        expect(c).not.toBeNull();
+        expect(c.getSubject()).toEqual("JwtTest");
+        expect(c.getId()).toEqual("0");
+        expect(c.getIssuer()).toEqual(doc.getSubject().toString());
+        expect(c.getAudience()).toEqual("Test cases");
+        expect(c.getIssuedAt()).toBe(iat);
+        expect(c.getExpiration()).toBe(exp);
+        expect(c.getNotBefore()).toBe(nbf);
+        expect(c.get("foo")).toEqual("bar");
 
         // get as map
         @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -439,9 +331,9 @@ describe('JWT Tests', () => {
 
         String s = jwt.getSignature();
         assertNotNull(s);
-    }
+    });
 
-    @Test
+    /*@Test
     public void jwsTestClaimJsonText()
             throws DIDException, IOException, JwtException {
         Calendar cal = Calendar.getInstance();
