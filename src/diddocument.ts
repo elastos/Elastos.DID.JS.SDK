@@ -1697,7 +1697,7 @@ class DIDDocumentProofSerializer extends Serializer {
 
     public jwtBuilder(): JWTBuilder {
         let doc = this;
-        let builder = new JWTBuilder(this.getSubject(), new class provider implements KeyProvider {
+        let builder = new JWTBuilder(this.getSubject(), new class implements KeyProvider {
 
             public async getPublicKey(keyid : string) : Promise<KeyLike> {
                 let key : DIDURL;
@@ -1733,14 +1733,14 @@ class DIDDocumentProofSerializer extends Serializer {
                 let pemObj =  await keyObj.export('pem').toString();
                 return createPrivateKey(pemObj);
             }
-        });
+        }());
 
         return builder.setIssuer(this.getSubject().toString());
     }
 
     public jwtParserBuilder() : JWTParserBuilder {
         let doc = this;
-        let builder = JWTParserBuilder.newWithKeyProvider(new class provider implements KeyProvider {
+        let builder = JWTParserBuilder.newWithKeyProvider(new class implements KeyProvider {
 
             public async getPublicKey(keyid : string) : Promise<KeyLike> {
                 let key : DIDURL;
@@ -1762,7 +1762,7 @@ class DIDDocumentProofSerializer extends Serializer {
             public async getPrivateKey(keyid : string, password : string) : Promise<KeyLike> {
                 return null;
             }
-        });
+        }());
 
         builder.requireIssuer(this.getSubject().toString());
         return builder;

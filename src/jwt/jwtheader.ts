@@ -23,6 +23,11 @@
 import { JWSHeaderParameters } from "jose/webcrypto/types";
 
 export class JWTHeader {
+    public static JWT_TYPE = "JWT";
+
+    public static TYPE = "typ";
+    public static CONTENT_TYPE = "cty";
+
     private header : JWSHeaderParameters;
 
     public constructor() {}
@@ -42,12 +47,12 @@ export class JWTHeader {
         return this.header.alg;
     }
 
-    public setKid(keyid : string) : JWTHeader {
-        this.header.kid = keyid;
+    public setKeyId(kid : string) : JWTHeader {
+        this.header.kid = kid;
         return this;
     }
 
-    public getKid() : string {
+    public getKeyId() : string {
         return this.header.kid;
     }
 
@@ -56,18 +61,27 @@ export class JWTHeader {
         return this;
     }
 
-    public setKeyId(keyid : string) : JWTHeader {
-        this.header.kid = keyid;
+    public getType() : string {
+        return this.header.typ;
+    }
+
+    public setContentType(cty : string) : JWTHeader {
+        this.header.cty = cty;
         return this;
     }
 
-    public getKeyId() : string {
-        return this.header.kid;
+    public getContentType() : string {
+        return this.header.cty;
     }
 
     public put(name : string, value: string) : JWTHeader {
-        if (name != "alg" && name != "kid")
+        if (name != "alg" && name != "kid") {
+            if (this.header[name])
+                delete this.header[name];
+
             this.header = {...this.header, name : value};
+        }
+
         return this;
     }
 

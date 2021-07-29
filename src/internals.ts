@@ -24,12 +24,12 @@ export * from "./didurl";
 export * from "./didobject";
 
 //JWT
-export * from "./jwt/JWTHeader";
-export * from "./jwt/Claims";
-export * from "./jwt/JWTBuilder";
-export * from "./jwt/JWT";
-export * from "./jwt/JWTParser";
-export * from "./jwt/JWTParserBuilder";
+export * from "./jwt/jwtheader";
+export * from "./jwt/claims";
+export * from "./jwt/jwtbuilder";
+export * from "./jwt/jwt";
+export * from "./jwt/jwtparser";
+export * from "./jwt/jwtparserbuilder";
 
 
 // DID objects that could be embedded inside the DIDDocument.

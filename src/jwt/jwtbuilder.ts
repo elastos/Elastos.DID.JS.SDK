@@ -20,14 +20,13 @@
  * SOFTWARE.
  */
 
-import { SignJWT } from 'jose/jwt/sign'
-import { UnsecuredJWT } from 'jose/jwt/unsecured'
-import { DID, DIDURL, checkArgument } from '../internals';
-import { JWTHeader, Claims } from '../internals';
-import { KeyProvider } from '../internals';
+import { SignJWT } from "jose/jwt/sign";
+import { UnsecuredJWT } from "jose/jwt/unsecured";
+import { DID, DIDURL, checkArgument } from "../internals";
+import { JWTHeader, Claims } from "../internals";
+import { KeyProvider } from "../internals";
 
 export class JWTBuilder {
-    private issuer : DID;
     private header : JWTHeader = null;
     private payload : Claims = null;
     private keyprovider : KeyProvider;
@@ -35,7 +34,6 @@ export class JWTBuilder {
     public constructor(issuer : DID, keyProvider : KeyProvider) {
         checkArgument(issuer != null, "Invalid issuer");
 
-        this.issuer = issuer;
         this.setIssuer(issuer.toString());
         this.keyprovider = keyProvider;
     }
@@ -71,13 +69,18 @@ export class JWTBuilder {
         return this;
     }
 
+    public setId(jti : string) : JWTBuilder {
+        this.payload.setId(jti);
+        return this;
+    }
+
     public setAudience(subject : string) : JWTBuilder {
         this.payload.setAudience(subject);
         return this;
     }
 
-    public setExpirationTime(expire : string | number) : JWTBuilder {
-        this.payload.setExpirationTime(expire);
+    public setExpiration(expire : number) : JWTBuilder {
+        this.payload.setExpiration(expire);
         return this;
     }
 
@@ -102,7 +105,7 @@ export class JWTBuilder {
         return this;
     }
 
-    public setNotBefore(nbf : string | number) : JWTBuilder {
+    public setNotBefore(nbf : number) : JWTBuilder {
         if (this.payload == null)
             this.payload = new Claims();
 
@@ -118,14 +121,14 @@ export class JWTBuilder {
         return this;
     }
 
-    public async sign(keyid : DIDURL = null, password : string) : Promise<string> {
+    public async sign(password : string, keyid : string = null) : Promise<string> {
         checkArgument(password != null && password != "", "Invalid password");
 
         if (this.header == null)
             this.header = new JWTHeader();
 
         this.header.setAlgorithm("ES256");
-        this.header.setKeyId(keyid.toString());
+        this.header.setKeyId(keyid);
 
         const signjwt = new SignJWT(this.payload.getJWTPayload())
                 .setProtectedHeader(this.header.getJWSHeaderParameters());

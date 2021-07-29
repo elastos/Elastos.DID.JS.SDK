@@ -20,17 +20,9 @@
  * SOFTWARE.
  */
 
-import { JWTPayload } from 'jose/jwt/sign'
+import { JWTPayload } from "jose/jwt/sign";
 
 export class Claims {
-	private static ISSUER = "iss";
-	private static SUBJECT = "sub";
-	private static AUDIENCE = "aud";
-	private static EXPIRATION = "exp";
-	private static NOT_BEFORE = "nbf";
-	private static ISSUED_AT = "iat";
-	private static ID = "jti";
-
     private payload : JWTPayload;
 
     public constructor() {}
@@ -42,6 +34,9 @@ export class Claims {
     }
 
     public put(name : string, value : number | string | string[]) : Claims {
+        if (this.payload[name])
+            delete this.payload[name];
+
         this.payload = { ... this.payload, name : value };
         return this;
     }
@@ -50,39 +45,80 @@ export class Claims {
         return this.payload[name];
     }
 
-    public setAudience(audience : string) : Claims {
-        this.put(Claims.AUDIENCE, audience);
+    public setId(jti : string) : Claims {
+        this.payload.jti = jti;
         return this;
     }
 
-    public setExpirationTime(expire : string | number) : Claims {
-        this.put(Claims.EXPIRATION, expire);
+    public getId() : string {
+        return this.payload.jti;
+    }
+
+    public setAudience(audience : string | string[]) : Claims {
+        this.payload.aud = audience;
         return this;
+    }
+
+    public getAudience() : any {
+        return this.payload.aud;
+    }
+
+    public setExpiration(expire : number) : Claims {
+        this.payload.exp = expire;
+        return this;
+    }
+
+    public getExpiration() : number {
+        return this.payload.exp;
     }
 
     public setIssuedAt(iat : number) : Claims {
-        this.put(Claims.ISSUED_AT, iat);
+        this.payload.iat = iat;
         return this;
+    }
+
+    public getIssuedAt() : number {
+        return this.payload.iat;
+    }
+
+    public getIssueAt() : number {
+        return this.payload.iat;
     }
 
     public setIssuer(issuer : string) : Claims {
-        this.put(Claims.ISSUER, issuer);
+        this.payload.iss = issuer;
         return this;
+    }
+
+    public getIssuer() : string {
+        return this.payload.iss;
     }
 
     public setJti(jwtid : string) : Claims {
-        this.put(Claims.ID, jwtid);
+        this.payload.jti = jwtid;
         return this;
     }
 
-    public setNotBefore(nbf : string | number) : Claims {
-        this.put(Claims.NOT_BEFORE, nbf);
+    public getJti() : string {
+        return this.payload.jti;
+    }
+
+    public setNotBefore(nbf : number) : Claims {
+        this.payload.nbf = nbf;
         return this;
+    }
+
+    public getNotBefore() : number {
+        return this.payload.nbf;
     }
 
     public setSubject(subject : string) : Claims {
-        this.put(Claims.SUBJECT, subject);
+        this.payload.sub = subject;
         return this;
+    }
+
+    public getSubject() : string {
+        return this.payload.sub;
     }
 
     public getJWTPayload() : JWTPayload {
