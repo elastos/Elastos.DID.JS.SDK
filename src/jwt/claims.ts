@@ -21,6 +21,7 @@
  */
 
 import { JWTPayload } from "jose/jwt/sign";
+import { JSONObject, JSONValue } from "../json";
 
 export class Claims {
     private payload : JWTPayload;
@@ -33,7 +34,7 @@ export class Claims {
         return claims;
     }
 
-    public put(name : string, value : number | string | string[]) : Claims {
+    public put(name : string, value : JSONValue) : Claims {
         if (this.payload[name])
             delete this.payload[name];
 
@@ -41,8 +42,21 @@ export class Claims {
         return this;
     }
 
+    public putObject(value : JSONObject) : Claims {
+        this.payload = { ... this.payload, value};
+        return this;
+    }
+
     public get(name : string) : any {
         return this.payload[name];
+    }
+
+    public getAsJson(name : string) : string {
+        let value = this.payload[name];
+        if (value == null)
+            return null;
+
+        return JSON.stringify(value);
     }
 
     public setId(jti : string) : Claims {

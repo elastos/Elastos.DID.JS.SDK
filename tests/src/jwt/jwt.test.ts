@@ -37,6 +37,8 @@ import { TestData } from "../utils/testdata";
 import { TestConfig } from "../utils/testconfig";
 import { DIDTestExtension } from "../utils/didtestextension";
 import dayjs from "dayjs";
+import { stringify } from "querystring";
+import { exception } from "console";
 
 const logger = new Logger("JWTTests");
 
@@ -207,7 +209,7 @@ describe('JWT Tests', () => {
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .addClaims("foo", "bar")
+                .claims("foo", "bar")
                 .sign(TestConfig.storePass, "#key2");
 
         expect(token).not.toBeNull();
@@ -254,7 +256,7 @@ describe('JWT Tests', () => {
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .addClaims("foo", "bar")
+                .claims("foo", "bar")
                 .sign(TestConfig.storePass, "#key2");
 
         expect(token).not.toBeNull();
@@ -283,16 +285,6 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
     });
-
-    /*function Map<String, Object> loadJson(String json) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            JsonNode node = mapper.readTree(json);
-            return mapper.convertValue(node, new TypeReference<Map<String, Object>>(){});
-        } catch (IOException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }*/
 
     test('jwsTestAutoVerify', async () => {
         let cal = dayjs();
@@ -302,7 +294,7 @@ describe('JWT Tests', () => {
         let exp = cal.add(4, 'month').valueOf();
 
         let vcEmail = ( await testData.getInstantData().getUser1Document()).getCredential("#email");
-
+        let jsonValue = vcEmail.serialize(true);
         let token = await doc.jwtBuilder()
                 .addHeader(JWTHeader.TYPE, JWTHeader.JWT_TYPE)
                 .addHeader(JWTHeader.CONTENT_TYPE, "json")
@@ -314,8 +306,8 @@ describe('JWT Tests', () => {
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .addClaims("foo", "bar")
-                .addClaims("vc", vcEmail.serialize(true))
+                .claims("foo", "bar")
+                .claims("vc", JSON.parse(jsonValue))
                 .sign(TestConfig.storePass, "#key2");
 
         expect(token).not.toBeNull();
@@ -344,20 +336,9 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        // get as map
-        /*Class<Map<String, Object>> clazz = (Class)Map.class;
-        Map<String, Object> map = c.get("vc", clazz);
-        assertNotNull(map);
-        assertEquals(vcEmail.getId().toString(), map.get("id"));
-        assertTrue(map.equals(vc));
-
-        // get as json text
-        String json = c.getAsJson("vc");
-        assertNotNull(json);
-        assertTrue(loadJson(json).equals(vc));
-
-        String s = jwt.getSignature();
-        assertNotNull(s);*/
+        let vccontent = c.get("vc");
+        expect(vcEmail.getId().toString()).toEqual(vccontent.get("id"));
+        expect(stringify(vccontent)).toEqual(jsonValue);
     });
 
     test('jwsTestClaimJsonText', async () => {
@@ -381,8 +362,8 @@ describe('JWT Tests', () => {
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .addClaims("foo", "bar")
-                .addClaims("vc", jsonValue) //with json(claimwithjson)
+                .claims("foo", "bar")
+                .claimsWithJson("vc", jsonValue) //with json(claimwithjson)
                 .sign(TestConfig.storePass, "#key2");
 
         expect(token).not.toBeNull();
@@ -411,23 +392,14 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        /*Map<String, Object> vc = loadJson(jsonValue);
-
-        // get as map
-        @SuppressWarnings({ "rawtypes", "unchecked" })
-        Class<Map<String, Object>> clazz = (Class)Map.class;
-        Map<String, Object> map = c.get("vc", clazz);
-        assertNotNull(map);
-        assertEquals(vcPassport.getId().toString(), map.get("id"));
-        assertTrue(map.equals(vc));
+        let vccontent = c.get("vc");
+        expect(vcPassport.getId().toString()).toEqual(vccontent.get("id"));
+        expect(stringify(vccontent)).toEqual(jsonValue);
 
         // get as json text
-        String json = c.getAsJson("vc");
-        assertNotNull(json);
-        assertTrue(loadJson(json).equals(vc));
-
-        String s = jwt.getSignature();
-        assertNotNull(s);*/
+        let json = c.getAsJson("vc");
+        expect(json).not.toBeNull();
+        expect(json).toEqual(jsonValue);
     });
 
     test('jwsTestSetClaimWithJsonNode', async () => {
@@ -448,30 +420,16 @@ describe('JWT Tests', () => {
                 "  }\n" +
                 "}";
 
-        Map<String, Object> m = loadJson(json);
-
         let token = await doc.jwtBuilder()
                 .addHeader(JWTHeader.TYPE, JWTHeader.JWT_TYPE)
                 .addHeader(JWTHeader.CONTENT_TYPE, "json")
                 .addHeader("library", "Elastos DID")
                 .addHeader("version", "1.0")
-                .addClaims(m);
+                .setClaims(JSON.parse(json))
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
                 .sign(TestConfig.storePass, "#key2");
-
-        /*String token = doc.jwtBuilder()
-                .addHeader(Header.TYPE, Header.JWT_TYPE)
-                .addHeader(Header.CONTENT_TYPE, "json")
-                .addHeader("library", "Elastos DID")
-                .addHeader("version", "1.0")
-                .setClaims(m)
-                .setIssuedAt(iat)
-                .setExpiration(exp)
-                .setNotBefore(nbf)
-                .signWith("#key2", TestConfig.storePass)
-                .compact();*/
 
         expect(token).not.toBeNull();
         printJwt(token);
@@ -499,18 +457,12 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        // get as map
-        /*@SuppressWarnings({ "rawtypes", "unchecked" })
-        Class<Map<String, Object>> clazz = (Class)Map.class;
-        Map<String, Object> map = c.get("object", clazz);
-        assertNotNull(map);
+        let object = c.get("object");
+        expect(object).not.toBeNull();
 
         // get as json text
-        String v = c.getAsJson("object");
-        assertNotNull(v);
-
-        String s = jwt.getSignature();
-        assertNotNull(s);*/
+        let v = c.getAsJson("object");
+        expect(v).not.toBeNull();
     });
 
     test('jwsTestSetClaimWithJsonText', async () => {
@@ -536,22 +488,11 @@ describe('JWT Tests', () => {
                 .addHeader(JWTHeader.CONTENT_TYPE, "json")
                 .addHeader("library", "Elastos DID")
                 .addHeader("version", "1.0")
-                .addClaims(json)
-                .setIssuedAt(iat)
-                .setExpiration(exp)
-                .setNotBefore(nbf)
-                .sign(TestConfig.storePass, "#key2");
-        /*String token = doc.jwtBuilder()
-                .addHeader(Header.TYPE, Header.JWT_TYPE)
-                .addHeader(Header.CONTENT_TYPE, "json")
-                .addHeader("library", "Elastos DID")
-                .addHeader("version", "1.0")
                 .setClaimsWithJson(json)
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .signWith("#key2", TestConfig.storePass)
-                .compact();*/
+                .sign(TestConfig.storePass, "#key2");
 
         expect(token).not.toBeNull();
         printJwt(token);
@@ -579,18 +520,12 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        // get as map
-        /*@SuppressWarnings({ "rawtypes", "unchecked" })
-        Class<Map<String, Object>> clazz = (Class)Map.class;
-        Map<String, Object> map = c.get("object", clazz);
-        assertNotNull(map);
+        let object = c.get("object");
+        expect(object).not.toBeNull();
 
         // get as json text
-        String v = c.getAsJson("object");
-        assertNotNull(v);
-
-        String s = jwt.getSignature();
-        assertNotNull(s);*/
+        let v = c.getAsJson("object");
+        expect(v).not.toBeNull();
     });
 
     test('jwsTestAddClaimWithJsonNode', async () => {
@@ -611,8 +546,6 @@ describe('JWT Tests', () => {
                 "  }\n" +
                 "}";
 
-        Map<String, Object> m = loadJson(json);
-
         let token = await doc.jwtBuilder()
                 .addHeader(JWTHeader.TYPE, JWTHeader.JWT_TYPE)
                 .addHeader(JWTHeader.CONTENT_TYPE, "json")
@@ -621,19 +554,8 @@ describe('JWT Tests', () => {
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .addClaims(m)
+                .addClaims(JSON.parse(json))
                 .sign(TestConfig.storePass, "#key2");
-        /*String token = doc.jwtBuilder()
-                .addHeader(Header.TYPE, Header.JWT_TYPE)
-                .addHeader(Header.CONTENT_TYPE, "json")
-                .addHeader("library", "Elastos DID")
-                .addHeader("version", "1.0")
-                .setIssuedAt(iat)
-                .setExpiration(exp)
-                .setNotBefore(nbf)
-                .addClaims(m)
-                .signWith("#key2", TestConfig.storePass)
-                .compact();*/
 
         expect(token).not.toBeNull();
         printJwt(token);
@@ -661,18 +583,12 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        // get as map
-        /*@SuppressWarnings({ "rawtypes", "unchecked" })
-        Class<Map<String, Object>> clazz = (Class)Map.class;
-        Map<String, Object> map = c.get("object", clazz);
-        assertNotNull(map);
+        let object = c.get("object");
+        expect(object).not.toBeNull();
 
         // get as json text
-        String v = c.getAsJson("object");
-        assertNotNull(v);
-
-        String s = jwt.getSignature();
-        assertNotNull(s);*/
+        let v = c.getAsJson("object");
+        expect(v).not.toBeNull();
     });
 
     test('jwsTestAddClaimWithJsonText', async () => {
@@ -701,19 +617,8 @@ describe('JWT Tests', () => {
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .addClaims(json)
-                .sign(TestConfig.storePass, "#key2");
-        /*String token = doc.jwtBuilder()
-                .addHeader(Header.TYPE, Header.JWT_TYPE)
-                .addHeader(Header.CONTENT_TYPE, "json")
-                .addHeader("library", "Elastos DID")
-                .addHeader("version", "1.0")
-                .setIssuedAt(iat)
-                .setExpiration(exp)
-                .setNotBefore(nbf)
                 .addClaimsWithJson(json)
-                .signWith("#key2", TestConfig.storePass)
-                .compact();*/
+                .sign(TestConfig.storePass, "#key2");
 
         expect(token).not.toBeNull();
         printJwt(token);
@@ -741,18 +646,12 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        // get as map
-        /*@SuppressWarnings({ "rawtypes", "unchecked" })
-        Class<Map<String, Object>> clazz = (Class)Map.class;
-        Map<String, Object> map = c.get("object", clazz);
-        assertNotNull(map);
+        let object = c.get("object");
+        expect(object).not.toBeNull();
 
         // get as json text
-        String v = c.getAsJson("object");
-        assertNotNull(v);
-
-        String s = jwt.getSignature();
-        assertNotNull(s);*/
+        let v = c.getAsJson("object");
+        expect(v).not.toBeNull();
     });
 
     test('jwsTestExpiration', async () => {
@@ -760,7 +659,7 @@ describe('JWT Tests', () => {
         cal.millisecond(0);
         let iat = cal.valueOf();
         let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let exp = cal.add(1, 'month').valueOf();
 
         let token = await doc.jwtBuilder()
                 .addHeader(JWTHeader.TYPE, JWTHeader.JWT_TYPE)
@@ -773,33 +672,18 @@ describe('JWT Tests', () => {
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
-                .addClaims("foo", "bar")
+                .claims("foo", "bar")
                 .sign(TestConfig.storePass, "#key2");
-
-        /*String token = doc.jwtBuilder()
-                .addHeader(Header.TYPE, Header.JWT_TYPE)
-                .addHeader(Header.CONTENT_TYPE, "json")
-                .addHeader("library", "Elastos DID")
-                .addHeader("version", "1.0")
-                .setSubject("JwtTest")
-                .setId("0")
-                .setAudience("Test cases")
-                .setIssuedAt(iat)
-                .setExpiration(exp)
-                .setNotBefore(nbf)
-                .claim("foo", "bar")
-                .signWith("#key2", TestConfig.storePass)
-                .compact();*/
 
         expect(token).not.toBeNull();
         printJwt(token);
 
-        Thread.sleep(1000);
+        //Thread.sleep(5000);
 
         // The JWT token is expired
-        JwtParser jp = new JwtParserBuilder().build();
+        /*let jp = new JwtParserBuilder().build();
         assertThrows(ExpiredJwtException.class, () -> {
             jp.parseClaimsJws(token);
-        });
+        });*/
     });
-}
+})

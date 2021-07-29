@@ -25,6 +25,7 @@ import { UnsecuredJWT } from "jose/jwt/unsecured";
 import { DID, DIDURL, checkArgument } from "../internals";
 import { JWTHeader, Claims } from "../internals";
 import { KeyProvider } from "../internals";
+import { JSONObject, JSONValue } from "../json";
 
 export class JWTBuilder {
     private header : JWTHeader = null;
@@ -56,6 +57,24 @@ export class JWTBuilder {
         return this;
     }
 
+    public setClaimsWithJson(json : string) : JWTBuilder {
+        this.payload = new Claims();
+        let object = JSON.parse(json);
+        this.payload.putObject(object)
+        return this;
+    }
+
+    public addClaims(claims : JSONObject) : JWTBuilder {
+        this.payload.putObject(claims);
+        return this;
+    }
+
+    public addClaimsWithJson(json : string) : JWTBuilder {
+        let object = JSON.parse(json);
+        this.addClaims(object);
+        return this;
+    }
+
     public addHeader(name : string, value : string) : JWTBuilder {
         if (this.header == null)
             this.header = new JWTHeader();
@@ -64,8 +83,14 @@ export class JWTBuilder {
         return this;
     }
 
-    public addClaims(name : string, value : string | number | string[]) : JWTBuilder {
+    public claims(name : string, value : JSONValue) : JWTBuilder {
         this.payload.put(name, value);
+        return this;
+    }
+
+    public claimsWithJson(name : string, json : string) : JWTBuilder {
+        let object = JSON.parse(json);
+        this.claims(name, object);
         return this;
     }
 
