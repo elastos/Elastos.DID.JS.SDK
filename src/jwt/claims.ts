@@ -26,7 +26,9 @@ import { JSONObject, JSONValue } from "../json";
 export class Claims {
     private payload : JWTPayload;
 
-    public constructor() {}
+    public constructor() {
+        this.payload = {};
+    }
 
     public static newWithPayload(payload : JWTPayload) : Claims {
         let claims = new Claims();
@@ -89,10 +91,6 @@ export class Claims {
     public setIssuedAt(iat : number) : Claims {
         this.payload.iat = iat;
         return this;
-    }
-
-    public getIssuedAt() : number {
-        return this.payload.iat;
     }
 
     public getIssueAt() : number {

@@ -158,7 +158,7 @@ export class JWTBuilder {
         const signjwt = new SignJWT(this.payload.getJWTPayload())
                 .setProtectedHeader(this.header.getJWSHeaderParameters());
 
-        let sk = await this.keyprovider.getPrivateKey(keyid.toString(), password);
+        let sk = await this.keyprovider.getPrivateKey(keyid, password);
         return await signjwt.sign(sk);
     }
 

@@ -27,10 +27,14 @@ export class JWTHeader {
 
     public static TYPE = "typ";
     public static CONTENT_TYPE = "cty";
+    public static ALG = "alg";
+    public static KID = "kid";
 
     private header : JWSHeaderParameters;
 
-    public constructor() {}
+    public constructor() {
+        this.header = {};
+    }
 
     public static newWithJwsHeader(header : JWSHeaderParameters) {
         let object = new JWTHeader();
@@ -75,7 +79,7 @@ export class JWTHeader {
     }
 
     public put(name : string, value: string) : JWTHeader {
-        if (name != "alg" && name != "kid") {
+        if (name != JWTHeader.ALG && name != JWTHeader.KID) {
             if (this.header[name])
                 delete this.header[name];
 

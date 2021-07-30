@@ -29,6 +29,7 @@ export class JWTParserBuilder {
     private options : JWTVerifyOptions;
 
     public constructor() {
+        this.options = {};
         return this;
     }
 
