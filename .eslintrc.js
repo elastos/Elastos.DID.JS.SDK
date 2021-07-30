@@ -32,6 +32,7 @@ module.exports = {
         "no-constant-condition": "warn",
         "no-class-assign": "warn",
         "require-await": "error",
+        "require-yield": "off",
         "no-async-promise-executor": "error",
         "no-promise-executor-return": "error",
         "no-non-null-assertion": "off",

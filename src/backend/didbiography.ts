@@ -57,13 +57,8 @@ class DIDBiographyStatusDeserializer extends Deserializer {
 @JsonSerialize({using: DIDBiographyStatusSerializer.serialize})
 @JsonDeserialize({using: DIDBiographyStatusDeserializer.deserialize})
 export class DIDBiographyStatus {
-    protected name: string;
-    protected value: number;
 
-    public constructor(value: number, name: string, ) {
-        this.name = name;
-        this.value = value;
-    }
+    public constructor(@JsonProperty({value: 'value'}) private value: number, @JsonProperty({value: 'name'}) private name: string) {}
 
     @JsonValue()
     public getValue(): number {
