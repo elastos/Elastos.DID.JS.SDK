@@ -21,9 +21,9 @@
  */
         
 export class VerificationEventListener {
-    public done(context : Object, succeeded : boolean, message : string) : void {};
+    public done(context : Object, succeeded : boolean, message : string) : void {}
 
-    public reset() : void {};
+    public reset() : void {}
 
     private eprintf(format : string, args : Object[]) : string {
         let content = String(format);
