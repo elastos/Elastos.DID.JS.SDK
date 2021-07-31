@@ -1,5 +1,5 @@
 import {
-    JsonDeserialize, JsonSerialize
+    JsonDeserialize, JsonSerialize, JsonCreator
 } from "@elastosfoundation/jackson-js";
 import type { Comparable } from "./comparable";
 import type { DIDDocumentPublicKey } from "./internals";
@@ -17,6 +17,11 @@ export class DIDDocumentPublicKeyReference implements Comparable<DIDDocumentPubl
 
     public constructor(id: DIDURL) {
         this.id = id;
+    }
+
+    @JsonCreator()
+    public static jsonConstructor(): DIDDocumentPublicKeyReference {
+        return null;
     }
 
     static newWithURL(id: DIDURL): DIDDocumentPublicKeyReference {

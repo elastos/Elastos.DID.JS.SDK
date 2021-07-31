@@ -13,12 +13,12 @@ import { DIDURL, keyTypeFilter } from "./internals";
 /**
  * The Proof represents the proof content of DID Document.
  */
-@JsonPropertyOrder({value: ["type", "created", "creator", "signature"]})
+@JsonPropertyOrder({value: ["type", "created", "creator", "signatureValue"]})
 export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
-    public static TYPE: string = "type";
-    public static CREATOR: string = "creator";
-    public static CREATED: string = "created";
-    public static SIGNATURE_VALUE: string = "signatureValue";
+    public static TYPE = "type";
+    public static CREATOR = "creator";
+    public static CREATED = "created";
+    public static SIGNATURE_VALUE = "signatureValue";
 
     @JsonProperty({ value: DIDDocumentProof.TYPE })
     @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
@@ -33,7 +33,7 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
     public creator: DIDURL;
     @JsonProperty({ value: DIDDocumentProof.SIGNATURE_VALUE })
     @JsonClassType({type: () => [String]})
-    private signature: string;
+    private signatureValue: string;
 
     /**
      * Constructs the proof of DIDDocument with the given value.
@@ -41,14 +41,10 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
      * @param type the type of Proof
      * @param created the time to create DIDDocument
      * @param creator the key to sign
-     * @param signature the signature string
+     * @param signatureValue the signature string
      */
     // Java: @JsonCreator
-    constructor(
-        @JsonProperty({value: "creator"}) creator: DIDURL,
-        @JsonProperty({value: "signatureValue"}) signature: string,
-        @JsonProperty({value: "type"}) type?: string,
-        @JsonProperty({value: "created"}) created?: Date) {
+    constructor(creator: DIDURL, signatureValue: string, type?: string, created?: Date) {
         this.type = type ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 
         if (created === undefined)
@@ -62,7 +58,7 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
             this.created.setMilliseconds(0);
 
         this.creator = creator;
-        this.signature = signature;
+        this.signatureValue = signatureValue;
     }
 
     equals(obj: DIDDocumentProof): boolean {
@@ -102,7 +98,7 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
      * @return the signature string
      */
     public getSignature(): string {
-        return this.signature;
+        return this.signatureValue;
     }
 
     public compareTo(proof: DIDDocumentProof): number {

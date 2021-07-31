@@ -124,7 +124,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 
                 try {
                     let urlParsed = DIDURLParser.newFromURL(url);
-
+                    
                     if (urlParsed.did.isEmpty)
                         this.did = baseRef ? baseRef : null;
                     else

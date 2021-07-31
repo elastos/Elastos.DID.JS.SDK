@@ -132,7 +132,7 @@ class DIDDocumentProofSerializer extends Serializer {
     private subject: DID;
 
     @JsonProperty({ value: DIDDocument.CONTROLLER })
-    @JsonSerialize({ using: DIDDocumentControllerSerializer.serialize})
+    @JsonClassType({type: () => [Array, [DID]]})
     public controllers?: DID[];
 
     @JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
@@ -165,7 +165,7 @@ class DIDDocumentProofSerializer extends Serializer {
     public expires?: Date;
 
     @JsonProperty({ value: DIDDocument.PROOF })
-    @JsonSerialize({ using: DIDDocumentProofSerializer.serialize})
+    @JsonClassType({type: () => [Array, [DIDDocumentProof]]})
     public _proofs?: DIDDocumentProof[];
 
     @JsonIgnore()
@@ -205,26 +205,8 @@ class DIDDocumentProofSerializer extends Serializer {
     // Add custom deserialization fields to the method params here + assign.
     // Jackson does the rest automatically.
     @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any, @JsonProperty({value: "controllers"}) controllers?: any) {
-        let doc = new DIDDocument(null);
-
-        // Proofs
-        if (_proofs) {
-            if (_proofs instanceof Array)
-                doc._proofs = _proofs.map((p) => DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [DIDDocumentProof]}));
-            else
-                doc._proofs = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [DIDDocumentProof]})];
-        }
-
-        // Controllers
-        if (controllers) {
-            if (controllers instanceof Array)
-                doc.controllers = controllers.map((p) => DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [DID]}));
-            else
-                doc.controllers = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(controllers), {mainCreator: () => [DID]})];
-        }
-
-        return doc;
+    public static jacksonCreator() {
+        return new DIDDocument(null);
     }
 
     // Use the delegating mode to receive the whole object as a single JS object.
@@ -267,6 +249,7 @@ class DIDDocumentProofSerializer extends Serializer {
             newInstance._proofs = doc._proofs;
         }
         newInstance.metadata = doc.metadata;
+
         return newInstance;
     }
 
@@ -985,7 +968,7 @@ class DIDDocumentProofSerializer extends Serializer {
      */
     protected async sanitize(): Promise<void> {
         await this.sanitizeControllers();
-        this.sanitizePublickKey();
+        this.sanitizePublicKey();
         await this.sanitizeCredential();
         this.sanitizeService();
 
@@ -1037,7 +1020,7 @@ class DIDDocumentProofSerializer extends Serializer {
             this.effectiveController = this.controllers[0];
     }
 
-    private sanitizePublickKey() {
+    private sanitizePublicKey() {
         let pks = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
 
         if (this._publickeys != null && this._publickeys.length > 0) {
@@ -1285,7 +1268,7 @@ class DIDDocumentProofSerializer extends Serializer {
         this.proofs = new ComparableMap<DID, DIDDocumentProof>();
 
         for (let proof of this._proofs) {
-            if (proof.getCreator() == null) {
+                if (proof.getCreator() == null) {
                 if (this.defaultPublicKey != null)
                     proof.creator = this.defaultPublicKey.getId();
                 else if (this.controllers.length == 1)
