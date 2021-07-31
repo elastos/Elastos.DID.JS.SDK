@@ -40,7 +40,7 @@ export class Claims {
         if (this.payload[name])
             delete this.payload[name];
 
-        this.payload = { ... this.payload, name : value };
+        this.payload[name] = value;
         return this;
     }
 
@@ -93,7 +93,7 @@ export class Claims {
         return this;
     }
 
-    public getIssueAt() : number {
+    public getIssuedAt() : number {
         return this.payload.iat;
     }
 

@@ -36,7 +36,7 @@ export class JWTHeader {
         this.header = {};
     }
 
-    public static newWithJwsHeader(header : JWSHeaderParameters) {
+    public static newWithJwsHeader(header : JWSHeaderParameters) : JWTHeader{
         let object = new JWTHeader();
         object.header = header;
         return object;
@@ -83,7 +83,7 @@ export class JWTHeader {
             if (this.header[name])
                 delete this.header[name];
 
-            this.header = {...this.header, name : value};
+            this.header[name] = value;
         }
 
         return this;
@@ -91,7 +91,7 @@ export class JWTHeader {
 
     public get(name : string) : any {
         if (this.header)
-            this.header[name];
+            return this.header[name];
 
         return null;
     }

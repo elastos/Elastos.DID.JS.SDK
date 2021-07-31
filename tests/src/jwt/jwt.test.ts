@@ -44,15 +44,15 @@ const logger = new Logger("JWTTests");
 
 function printJwt(token: string) {
     if (Logger.getLevel() >= Logger.TRACE) {
-        let toks = token.split("\\.");
+        let toks = token.split(".");
 
-        if (toks.length != 2 && toks.length != 3) {
+        if (toks.length != 3) {
             logger.error("Invalid token: " + token);
             return;
         }
 
-        let sb = BASE64.decode(toks[0]) + '.' + BASE64.decode(toks[1]) + '.';
-        if (toks.length == 3)
+        let sb = BASE64.toString(toks[0]) + '.' + BASE64.toString(toks[1]) + '.';
+        if (toks[2] != "")
             sb += toks[2];
 
         logger.trace("Token: {}", token);
@@ -93,10 +93,9 @@ describe('JWT Tests', () => {
         h.put("version", "1.0");
 
         let cal = dayjs();
-        cal.millisecond(0);
-        let iat = cal.valueOf();
-        let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let iat = cal.unix();
+        let nbf = cal.add(-1, 'month').unix();
+        let exp = cal.add(4, 'month').unix();
 
         let b = JWTBuilder.createClaims();
         b.setSubject("JwtTest")
@@ -121,6 +120,7 @@ describe('JWT Tests', () => {
 
         h = jwt.getHeader();
         expect(h).not.toBeNull();
+        expect(h.getAlgorithm()).toEqual("none");
         expect(h.getType()).toEqual(JWTHeader.JWT_TYPE);
         expect(h.getContentType()).toEqual("json");
         expect(h.get("library")).toEqual("Elastos DID");
@@ -146,10 +146,9 @@ describe('JWT Tests', () => {
         h.put("version", "1.0");
 
         let cal = dayjs();
-        cal.millisecond(0);
-        let iat = cal.valueOf();
-        let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let iat = cal.unix();
+        let nbf = cal.add(-1, 'month').unix();
+        let exp = cal.add(4, 'month').unix();
 
         let b = JWTBuilder.createClaims();
         b.setSubject("JwtTest")
@@ -193,10 +192,9 @@ describe('JWT Tests', () => {
 
     test('jwsTestSignWithSpecificKey', async () => {
         let cal = dayjs();
-        cal.millisecond(0);
-        let iat = cal.valueOf();
-        let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let iat = cal.unix();
+        let nbf = cal.add(-1, 'month').unix();
+        let exp = cal.add(4, 'month').unix();
 
         let token = await doc.jwtBuilder()
                 .addHeader(JWTHeader.TYPE, JWTHeader.JWT_TYPE)
@@ -240,10 +238,9 @@ describe('JWT Tests', () => {
 
     test('jwsTestAutoVerify', async () => {
         let cal = dayjs();
-        cal.millisecond(0);
-        let iat = cal.valueOf();
-        let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let iat = cal.unix();
+        let nbf = cal.add(-1, 'month').unix();
+        let exp = cal.add(4, 'month').unix();
 
         let token = await doc.jwtBuilder()
                 .addHeader(JWTHeader.TYPE, JWTHeader.JWT_TYPE)
@@ -288,10 +285,9 @@ describe('JWT Tests', () => {
 
     test('jwsTestAutoVerify', async () => {
         let cal = dayjs();
-        cal.millisecond(0);
-        let iat = cal.valueOf();
-        let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let iat = cal.unix();
+        let nbf = cal.add(-1, 'month').unix();
+        let exp = cal.add(4, 'month').unix();
 
         let vcEmail = ( await testData.getInstantData().getUser1Document()).getCredential("#email");
         let jsonValue = vcEmail.serialize(true);
@@ -343,10 +339,9 @@ describe('JWT Tests', () => {
 
     test('jwsTestClaimJsonText', async () => {
         let cal = dayjs();
-        cal.millisecond(0);
-        let iat = cal.valueOf();
-        let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let iat = cal.unix();
+        let nbf = cal.add(-1, 'month').unix();
+        let exp = cal.add(4, 'month').unix();
 
         let vcPassport = await testData.getInstantData().getUser1PassportCredential();
         let jsonValue = vcPassport.serialize(true);
@@ -404,10 +399,9 @@ describe('JWT Tests', () => {
 
     test('jwsTestSetClaimWithJsonNode', async () => {
         let cal = dayjs();
-        cal.millisecond(0);
-        let iat = cal.valueOf();
-        let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let iat = cal.unix();
+        let nbf = cal.add(-1, 'month').unix();
+        let exp = cal.add(4, 'month').unix();
 
         let json = "{\n" +
                 "  \"sub\":\"JwtTest\",\n" +
@@ -467,10 +461,9 @@ describe('JWT Tests', () => {
 
     test('jwsTestSetClaimWithJsonText', async () => {
         let cal = dayjs();
-        cal.millisecond(0);
-        let iat = cal.valueOf();
-        let nbf = cal.add(-1, 'month').valueOf();
-        let exp = cal.add(4, 'month').valueOf();
+        let iat = cal.unix();
+        let nbf = cal.add(-1, 'month').unix();
+        let exp = cal.add(4, 'month').unix();
 
         let json = "{\n" +
                 "  \"sub\":\"JwtTest\",\n" +
@@ -687,3 +680,4 @@ describe('JWT Tests', () => {
         });*/
     });
 })
+

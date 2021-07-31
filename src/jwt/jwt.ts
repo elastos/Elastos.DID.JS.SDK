@@ -24,8 +24,8 @@ import { JWSHeaderParameters, JWTPayload } from "jose/webcrypto/types";
 import { JWTHeader, Claims } from "../internals";
 
 export class JWT {
-    private header : JWTHeader = null;
-    private claims : Claims = null;
+    private header : JWTHeader;
+    private claims : Claims;
 
     public constructor(header : JWSHeaderParameters, payload : JWTPayload) {
         this.header = JWTHeader.newWithJwsHeader(header);

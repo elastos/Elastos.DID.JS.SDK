@@ -22,7 +22,7 @@
 
 import { SignJWT } from "jose/jwt/sign";
 import { UnsecuredJWT } from "jose/jwt/unsecured";
-import { DID, DIDURL, checkArgument } from "../internals";
+import { DID, DIDURL, checkArgument, BASE64 } from "../internals";
 import { JWTHeader, Claims } from "../internals";
 import { KeyProvider } from "../internals";
 import { JSONObject, JSONValue } from "../json";
@@ -32,11 +32,16 @@ export class JWTBuilder {
     private payload : Claims = null;
     private keyprovider : KeyProvider;
 
+    private issuer : DID;
+
     public constructor(issuer : DID, keyProvider : KeyProvider) {
         checkArgument(issuer != null, "Invalid issuer");
 
-        this.setIssuer(issuer.toString());
+        this.header = new JWTHeader();
+        this.payload = new Claims();
+        this.payload.setIssuer(issuer.toString());
         this.keyprovider = keyProvider;
+        this.issuer = issuer;
     }
 
     public static createHeader() : JWTHeader {
@@ -54,6 +59,9 @@ export class JWTBuilder {
 
     public setClaims(claims : Claims) : JWTBuilder {
         this.payload = claims;
+        if (!claims.getIssuer())
+            this.payload.setIssuer(this.issuer.toString());
+
         return this;
     }
 
@@ -76,9 +84,6 @@ export class JWTBuilder {
     }
 
     public addHeader(name : string, value : string) : JWTBuilder {
-        if (this.header == null)
-            this.header = new JWTHeader();
-
         this.header.put(name, value);
         return this;
     }
@@ -115,42 +120,27 @@ export class JWTBuilder {
     }
 
     public setIssuer(issuer : string) : JWTBuilder {
-        if (this.payload == null)
-            this.payload = new Claims();
-
         this.payload.setIssuer(issuer);
         return this;
     }
 
     public setJti(jwtid : string) : JWTBuilder {
-        if (this.payload == null)
-            this.payload = new Claims();
-
         this.payload.setJti(jwtid);
         return this;
     }
 
     public setNotBefore(nbf : number) : JWTBuilder {
-        if (this.payload == null)
-            this.payload = new Claims();
-
         this.payload.setNotBefore(nbf);
         return this;
     }
 
     public setSubject(subject : string) : JWTBuilder {
-        if (this.payload == null)
-            this.payload = new Claims();
-
         this.payload.setSubject(subject);
         return this;
     }
 
     public async sign(password : string, keyid : string = null) : Promise<string> {
         checkArgument(password != null && password != "", "Invalid password");
-
-        if (this.header == null)
-            this.header = new JWTHeader();
 
         this.header.setAlgorithm("ES256");
         this.header.setKeyId(keyid);
@@ -162,8 +152,12 @@ export class JWTBuilder {
         return await signjwt.sign(sk);
     }
 
-    public compact() : string {
-        return new UnsecuredJWT(this.payload.getJWTPayload()).encode();
+    public async compact() : Promise<string> {
+        this.header.setAlgorithm("none");
+        const header = BASE64.fromString(JSON.stringify(this.header.getJWSHeaderParameters()));
+        const payload = BASE64.fromString(JSON.stringify(this.payload.getJWTPayload()));
+
+        return `${header}.${payload}.`
     }
 }
 
