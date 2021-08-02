@@ -36,7 +36,7 @@ Or:
 
 ### Performance issue
 
-We are still optimzing tests migrated from the Java implementation. Running all tests on an up to date CPU can take several hours. The main source of this problem has been located in the BigNumber operations of the Elliptic library and in the key operations of the hdkey-secp256r1 library. Since there shouldn't be huge impacts on the runtime code, the selected solution has been to develop an automated CI to automatically run tests remotely. Here are some metrics and graphics to show latency sources:
+We are still optimizing tests migrated from the Java implementation. Running all tests on an up-to-date CPU can take several hours. The main source of this problem has been located in the BigNumber operations of the Elliptic library and the key operations of the hdkey-secp256r1 library. Since there shouldn't be huge impacts on the runtime code, the selected solution has been to develop an automated CI to automatically run tests remotely. Here are some metrics and graphics to show latency sources:
 
 **Profiling metrics showing 'mul' method latency**
 
@@ -131,7 +131,7 @@ DIDBackend.initialize(didAdapter);
 
 ### Publishing account (NPM)
 
-- Be a member ot organization: @elastosfoundation
+- Be a member of organization: @elastosfoundation
 
 ### Useful commands
 
