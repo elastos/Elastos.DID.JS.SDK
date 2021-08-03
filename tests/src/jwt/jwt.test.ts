@@ -332,10 +332,13 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        let vccontent = c.get("vc");
+        let vccontent = c.getAsObject("vc");
         expect(vccontent).not.toBeNull();
-        //expect(vcEmail.getId().toString()).toEqual(vccontent.get("id"));
-        expect(stringify(vccontent)).toEqual(jsonValue);
+        expect(vcEmail.getId().toString()).toEqual(vccontent["id"]);
+        expect(JSON.stringify(vccontent)).toEqual(jsonValue);
+
+        vccontent = c.getAsObject("aa");
+        expect(vccontent).toBeNull();
     });
 
     test('jwsTestClaimJsonText', async () => {
@@ -388,14 +391,15 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        let vccontent = c.get("vc");
-        expect(vcPassport.getId().toString()).toEqual(vccontent.get("id"));
-        expect(stringify(vccontent)).toEqual(jsonValue);
+        let vccontent = c.getAsObject("vc");
+        expect(vcPassport.getId().toString()).toEqual(vccontent["id"]);
+        expect(JSON.stringify(vccontent)).toEqual(jsonValue);
 
         // get as json text
         let json = c.getAsJson("vc");
         expect(json).not.toBeNull();
         expect(json).toEqual(jsonValue);
+        expect(json).toEqual(JSON.stringify(vccontent));
     });
 
     test('jwsTestSetClaimWithJsonNode', async () => {
@@ -420,7 +424,7 @@ describe('JWT Tests', () => {
                 .addHeader(JWTHeader.CONTENT_TYPE, "json")
                 .addHeader("library", "Elastos DID")
                 .addHeader("version", "1.0")
-                .setClaims(JSON.parse(json))
+                .setClaimsWithObject(JSON.parse(json))
                 .setIssuedAt(iat)
                 .setExpiration(exp)
                 .setNotBefore(nbf)
@@ -452,8 +456,9 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        let object = c.get("object");
+        let object = c.getAsObject("object");
         expect(object).not.toBeNull();
+        expect(object["hello"]).toEqual("world");
 
         // get as json text
         let v = c.getAsJson("object");
@@ -514,8 +519,9 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        let object = c.get("object");
+        let object = c.getAsObject("object");
         expect(object).not.toBeNull();
+        expect(object["hello"]).toEqual("world");
 
         // get as json text
         let v = c.getAsJson("object");
@@ -576,8 +582,9 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        let object = c.get("object");
+        let object = c.getAsObject("object");
         expect(object).not.toBeNull();
+        expect(object["hello"]).toEqual("world");
 
         // get as json text
         let v = c.getAsJson("object");
@@ -638,8 +645,9 @@ describe('JWT Tests', () => {
         expect(c.getNotBefore()).toBe(nbf);
         expect(c.get("foo")).toEqual("bar");
 
-        let object = c.get("object");
+        let object = c.getAsObject("object");
         expect(object).not.toBeNull();
+        expect(object["hello"]).toEqual("world");
 
         // get as json text
         let v = c.getAsJson("object");

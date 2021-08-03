@@ -67,13 +67,24 @@ export class JWTBuilder {
 
     public setClaimsWithJson(json : string) : JWTBuilder {
         this.payload = new Claims();
-        let object = JSON.parse(json);
-        this.payload.putObject(object)
+        this.payload.putWithJson(json);
+        if (!this.payload.getIssuer())
+            this.payload.setIssuer(this.issuer.toString());
+
+        return this;
+    }
+
+    public setClaimsWithObject(object : JSONObject) : JWTBuilder {
+        this.payload = new Claims();
+        this.payload.putWithObject(object);
+        if (!this.payload.getIssuer())
+            this.payload.setIssuer(this.issuer.toString());
+
         return this;
     }
 
     public addClaims(claims : JSONObject) : JWTBuilder {
-        this.payload.putObject(claims);
+        this.payload.putWithObject(claims);
         return this;
     }
 
