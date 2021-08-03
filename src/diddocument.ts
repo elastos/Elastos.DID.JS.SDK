@@ -1699,7 +1699,7 @@ class DIDDocumentProofSerializer extends Serializer {
         let doc = this;
         let builder = new JWTBuilder(this.getSubject(), new class implements KeyProvider {
 
-            public async getPublicKey(keyid : string) : Promise<KeyLike> {
+            public async getPublicKey(keyid : string = null) : Promise<KeyLike> {
                 let key : DIDURL;
 
                 if (keyid == null)
@@ -1712,11 +1712,12 @@ class DIDDocumentProofSerializer extends Serializer {
 
                 let pk = doc.getPublicKey(key).getPublicKeyBytes();
                 const keyObj = new keyutil.Key('oct', pk, { namedCurve: "P-256" });
-                let pemObj =  await keyObj.export('pem').toString();
-                return createPublicKey(pemObj);
+                let pemObj =  await keyObj.export('pem');
+                let pemStr = pemObj.toString();
+                return createPublicKey(pemStr);
             }
 
-            public async getPrivateKey(keyid : string, password : string) : Promise<KeyLike> {
+            public async getPrivateKey(keyid : string = null, password : string) : Promise<KeyLike> {
                 let key : DIDURL;
 
                 if (keyid == null)
@@ -1728,10 +1729,11 @@ class DIDDocumentProofSerializer extends Serializer {
                 if (!store.containsPrivateKey(key))
                     return null;
 
-                let sk = await store.loadPrivateKey(key, password);
-                const keyObj = new keyutil.Key('oct', sk, { namedCurve: "P-256" });
-                let pemObj =  await keyObj.export('pem').toString();
-                return createPrivateKey(pemObj);
+                let hk = HDKey.deserialize(await store.loadPrivateKey(key, password));
+                const keyObj = new keyutil.Key('oct', hk.getPrivateKeyBytes(), { namedCurve: "P-256" });
+                let pemObj = await keyObj.export('pem');
+                let pemStr = pemObj.toString();
+                return createPrivateKey(pemStr);
             }
         }());
 
@@ -1742,7 +1744,7 @@ class DIDDocumentProofSerializer extends Serializer {
         let doc = this;
         let builder = JWTParserBuilder.newWithKeyProvider(new class implements KeyProvider {
 
-            public async getPublicKey(keyid : string) : Promise<KeyLike> {
+            public async getPublicKey(keyid : string = null) : Promise<KeyLike> {
                 let key : DIDURL;
 
                 if (keyid == null)
@@ -1755,11 +1757,12 @@ class DIDDocumentProofSerializer extends Serializer {
 
                 let pk = doc.getPublicKey(key).getPublicKeyBytes();
                 const keyObj = new keyutil.Key('oct', pk, { namedCurve: "P-256" });
-                let pemObj =  await keyObj.export('pem').toString();
-                return createPublicKey(pemObj);
+                let pemObj =  await keyObj.export('pem');
+                let pemStr = pemObj.toString();
+                return createPublicKey(pemStr);
             }
 
-            public async getPrivateKey(keyid : string, password : string) : Promise<KeyLike> {
+            public async getPrivateKey(keyid : string = null, password : string) : Promise<KeyLike> {
                 return null;
             }
         }());

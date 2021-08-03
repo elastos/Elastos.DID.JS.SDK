@@ -143,7 +143,8 @@ export class JWTBuilder {
         checkArgument(password != null && password != "", "Invalid password");
 
         this.header.setAlgorithm("ES256");
-        this.header.setKeyId(keyid);
+        if (keyid)
+            this.header.setKeyId(keyid);
 
         const signjwt = new SignJWT(this.payload.getJWTPayload())
                 .setProtectedHeader(this.header.getJWSHeaderParameters());
@@ -152,7 +153,7 @@ export class JWTBuilder {
         return await signjwt.sign(sk);
     }
 
-    public async compact() : Promise<string> {
+    public compact() : string {
         this.header.setAlgorithm("none");
         const header = BASE64.fromString(JSON.stringify(this.header.getJWSHeaderParameters()));
         const payload = BASE64.fromString(JSON.stringify(this.payload.getJWTPayload()));
