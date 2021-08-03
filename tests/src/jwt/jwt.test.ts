@@ -23,22 +23,16 @@
 import { DIDDocument,
         DIDDocumentBuilder,
         DIDURL,
-        DIDStore,
         Logger,
         BASE64,
-        JWT,
         JWTHeader,
         JWTBuilder,
-        JWTParser,
-        JWTParserBuilder,
-        Claims
+        JWTParserBuilder
         } from "@elastosfoundation/did-js-sdk";
 import { TestData } from "../utils/testdata";
 import { TestConfig } from "../utils/testconfig";
 import { DIDTestExtension } from "../utils/didtestextension";
 import dayjs from "dayjs";
-import { stringify } from "querystring";
-import { exception } from "console";
 
 const logger = new Logger("JWTTests");
 
@@ -259,8 +253,7 @@ describe('JWT Tests', () => {
         expect(token).not.toBeNull();
         printJwt(token);
 
-        // The JWT parser not related with a DID document
-        let jp = doc.jwtParserBuilder().build();
+        let jp = new JWTParserBuilder().build();
         let jwt = await jp.parse(token);
         expect(jwt).not.toBeNull();
 
@@ -684,6 +677,28 @@ describe('JWT Tests', () => {
         assertThrows(ExpiredJwtException.class, () -> {
             jp.parseClaimsJws(token);
         });*/
+    });
+
+    test('jwsTestCompatible', async () => {
+        let token = "eyJ0eXAiOiJKV1QiLCJjdHkiOiJqc29uIiwibGlicmFyeSI6IkVsYXN0b3MgRElEIiwidmVyc2lvbiI6IjEuMCIsImtpZCI6IiNrZXkyIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJkaWQ6ZWxhc3RvczppV0ZBVVloVGEzNWMxZlBlM2lDSnZpaFpIeDZxdXVtbnltIiwic3ViIjoiSnd0VGVzdCIsImp0aSI6IjAiLCJhdWQiOiJUZXN0IGNhc2VzIiwiaWF0IjoxNjAwMDczOTUwLCJleHAiOjE3NTUxNjE5NTAsIm5iZiI6MTU5NzM5NTU1MCwiZm9vIjoiYmFyIn0.qzo5joBg_89JoIO5ERSXrRZvBxa9CtHYyrkc8jFdo4hO_LpEDbZ8Y8rXOGw-h4-1rVX2Q5xqRexuEpApTAsWkw";
+        expect(token).not.toBeNull();
+        printJwt(token);
+
+        let jp = new JWTParserBuilder().build();
+        let jwt = await jp.parse(token);
+        expect(jwt).not.toBeNull();
+
+        let h = jwt.getHeader();
+        expect(h).not.toBeNull();
+        expect(h.get("library")).toEqual("Elastos DID");
+        expect(h.get("version")).toEqual("1.0");
+
+        let c = jwt.getBody();
+        expect(c).not.toBeNull();
+        expect(c.getSubject()).toEqual("JwtTest");
+        expect(c.getId()).toEqual("0");
+        expect(c.getAudience()).toEqual("Test cases");
+        expect(c.get("foo")).toEqual("bar");
     });
 })
 

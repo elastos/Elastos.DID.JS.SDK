@@ -21,10 +21,11 @@
  */
 
 import { jwtVerify, JWTVerifyOptions } from "jose/jwt/verify";
-import { JWT } from "../internals"
+import { BASE64, DID, JWT } from "../internals"
 import { KeyProvider } from "../crypto/keyprovider";
 import { decodeProtectedHeader } from "jose/util/decode_protected_header";
 import { UnsecuredJWT } from "jose/jwt/unsecured";
+import { DIDResolveException, JWTException } from "../exceptions/exceptions";
 
 export class JWTParser {
     private keyprovider : KeyProvider;
@@ -45,12 +46,35 @@ export class JWTParser {
         return protectedHeader.kid;
     }
 
+    private getIssuer(token : string) : string {
+        let toks = token.split(".");
+
+        if(toks.length != 3)
+            throw new JWTException("Invalid jwt token.");
+
+        let payload = JSON.parse(BASE64.toString(toks[1]));
+        let issuer = payload["iss"];
+        if (issuer == null)
+            throw new JWTException("No issuer in the token.");
+
+        return issuer;
+    }
+
     public async parse(token : string) : Promise<JWT> {
         if (!this.isSigned(token)) {
             const result = UnsecuredJWT.decode(token, this.options);
             return new JWT(result.header, result.payload);
         } else {
+            if (this.keyprovider == null) {
+                let issuerDoc = await DID.from(this.getIssuer(token)).resolve();
+                if (issuerDoc == null)
+                    throw new DIDResolveException("No issuer doc from chain.");
+
+                this.keyprovider = issuerDoc.getKeyProvider();
+            }
+
             let pk = await this.keyprovider.getPublicKey(this.getSignkey(token));
+
             const result = await jwtVerify(token, pk, this.options);
             return new JWT(result.protectedHeader, result.payload);
         }

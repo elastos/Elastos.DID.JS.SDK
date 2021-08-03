@@ -25,7 +25,7 @@ import { KeyProvider } from "../crypto/keyprovider";
 import { JWTParser } from "../internals";
 
 export class JWTParserBuilder {
-    private keyProvider : KeyProvider;
+    private keyProvider : KeyProvider = null;
     private options : JWTVerifyOptions;
 
     public constructor() {

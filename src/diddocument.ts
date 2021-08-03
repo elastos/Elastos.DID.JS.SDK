@@ -1695,9 +1695,9 @@ class DIDDocumentProofSerializer extends Serializer {
         return EcdsaSigner.verify(binkey, sig, digest);
     }
 
-    public jwtBuilder(): JWTBuilder {
+    public getKeyProvider() : KeyProvider {
         let doc = this;
-        let builder = new JWTBuilder(this.getSubject(), new class implements KeyProvider {
+        return new class implements KeyProvider {
 
             public async getPublicKey(keyid : string = null) : Promise<KeyLike> {
                 let key : DIDURL;
@@ -1735,38 +1735,16 @@ class DIDDocumentProofSerializer extends Serializer {
                 let pemStr = pemObj.toString();
                 return createPrivateKey(pemStr);
             }
-        }());
+        }();
+    }
 
+    public jwtBuilder(): JWTBuilder {
+        let builder = new JWTBuilder(this.getSubject(), this.getKeyProvider());
         return builder.setIssuer(this.getSubject().toString());
     }
 
     public jwtParserBuilder() : JWTParserBuilder {
-        let doc = this;
-        let builder = JWTParserBuilder.newWithKeyProvider(new class implements KeyProvider {
-
-            public async getPublicKey(keyid : string = null) : Promise<KeyLike> {
-                let key : DIDURL;
-
-                if (keyid == null)
-                    key = doc.getDefaultPublicKeyId();
-                else
-                    key = doc.canonicalId(keyid);
-
-                if (!doc.hasPublicKey(key))
-                    return null;
-
-                let pk = doc.getPublicKey(key).getPublicKeyBytes();
-                const keyObj = new keyutil.Key('oct', pk, { namedCurve: "P-256" });
-                let pemObj =  await keyObj.export('pem');
-                let pemStr = pemObj.toString();
-                return createPublicKey(pemStr);
-            }
-
-            public async getPrivateKey(keyid : string = null, password : string) : Promise<KeyLike> {
-                return null;
-            }
-        }());
-
+        let builder = JWTParserBuilder.newWithKeyProvider(this.getKeyProvider());
         builder.requireIssuer(this.getSubject().toString());
         return builder;
     }
