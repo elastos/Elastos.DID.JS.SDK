@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Elastos Foundation
+ * Copyright (c) 2021 Elastos Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -60,8 +60,9 @@ let testData: TestData;
 let doc: DIDDocument;
 
 describe('JWT Tests', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
         testData = new TestData();
+        await testData.cleanup();
         let identity = await testData.getRootIdentity();
         doc = await identity.newDid(TestConfig.storePass);
 
@@ -79,7 +80,6 @@ describe('JWT Tests', () => {
     });
 
     afterAll(async () => {
-        await testData.cleanup();
     });
 
     test('JWT Test', async () => {
@@ -654,7 +654,7 @@ describe('JWT Tests', () => {
         let cal = dayjs();
         let iat = cal.unix();
         let nbf = cal.add(-1, 'month').unix();
-        let exp = cal.add(1, 'month').unix();
+        let exp = iat;
 
         let token = await doc.jwtBuilder()
                 .addHeader(JWTHeader.TYPE, JWTHeader.JWT_TYPE)
@@ -673,11 +673,11 @@ describe('JWT Tests', () => {
         expect(token).not.toBeNull();
         printJwt(token);
 
-        await sleep(3000);
+        await sleep(1000);
 
         // The JWT token is expired
         let jp = new JWTParserBuilder().build();
-        expect(async() => await jp.parse(token)).rejects.toThrowError(Exceptions.JWTException);
+        await expect(async() => await jp.parse(token)).rejects.toThrowError(Exceptions.JWTException);
     });
 
     test('jwsTestCompatible', async () => {
