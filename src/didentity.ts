@@ -32,16 +32,17 @@ import {
 } from "./internals";
 import {
     DIDSyntaxException,
-    UnknownInternalException,
+    IllegalArgumentException,
     InvalidDateFormat
 } from "./exceptions/exceptions";
 import type { JSONObject } from "./json";
 import { checkArgument } from "./internals";
+import { Serializable } from "./serializable";
 
 /**
  * Base class for all DID objects.
  */
-export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
+export class DIDEntity<T> implements Serializable<T> { //implements Cloneable<DIDEntity<T>> {
 
     public static CONTEXT_KEY = "org.elastos.did.context";
 
@@ -144,34 +145,6 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
         } catch (e) {
             throw new DIDSyntaxException("Invalid JSON syntax" + (Logger.levelIs(Logger.DEBUG) ? (" (" + clazz.name + "): " + content) : ""), e);
         }
-    }
-
-    /**
-     * Serialize DID object to a JSON string.
-     *
-     * @param normalized whether normalized output
-     * @return the serialized JSON string
-     * @throws DIDSyntaxException if a serialization error occurs
-     */
-    public serialize(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
-        try {
-            return this.getObjectMapper(normalized).stringify(this);
-        } catch (e) {
-            // JsonProcessingException
-            throw new UnknownInternalException(e);
-        }
-        return null;
-    }
-
-
-    /**
-     * Get the JSON string representation of the object.
-     *
-     * @param normalized whether normalized output
-     * @return a JSON string representation of the object
-     */
-    public toString(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
-        return this.serialize(normalized);
     }
 }
 
