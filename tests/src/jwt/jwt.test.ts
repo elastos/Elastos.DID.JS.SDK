@@ -27,7 +27,9 @@ import { DIDDocument,
         BASE64,
         JWTHeader,
         JWTBuilder,
-        JWTParserBuilder
+        JWTParserBuilder,
+        RootIdentity,
+        Exceptions
         } from "@elastosfoundation/did-js-sdk";
 import { TestData } from "../utils/testdata";
 import { TestConfig } from "../utils/testconfig";
@@ -62,6 +64,7 @@ describe('JWT Tests', () => {
         testData = new TestData();
         let identity = await testData.getRootIdentity();
         doc = await identity.newDid(TestConfig.storePass);
+
         let key = TestData.generateKeypair();
         let db = DIDDocumentBuilder.newFromDocument(doc).edit();
         let id = new DIDURL("#key2", doc.getSubject());
@@ -670,17 +673,20 @@ describe('JWT Tests', () => {
         expect(token).not.toBeNull();
         printJwt(token);
 
-        //Thread.sleep(5000);
+        await sleep(3000);
 
         // The JWT token is expired
-        /*let jp = new JwtParserBuilder().build();
-        assertThrows(ExpiredJwtException.class, () -> {
-            jp.parseClaimsJws(token);
-        });*/
+        let jp = new JWTParserBuilder().build();
+        expect(async() => await jp.parse(token)).rejects.toThrowError(Exceptions.JWTException);
     });
 
     test('jwsTestCompatible', async () => {
-        let token = "eyJ0eXAiOiJKV1QiLCJjdHkiOiJqc29uIiwibGlicmFyeSI6IkVsYXN0b3MgRElEIiwidmVyc2lvbiI6IjEuMCIsImtpZCI6IiNrZXkyIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJkaWQ6ZWxhc3RvczppV0ZBVVloVGEzNWMxZlBlM2lDSnZpaFpIeDZxdXVtbnltIiwic3ViIjoiSnd0VGVzdCIsImp0aSI6IjAiLCJhdWQiOiJUZXN0IGNhc2VzIiwiaWF0IjoxNjAwMDczOTUwLCJleHAiOjE3NTUxNjE5NTAsIm5iZiI6MTU5NzM5NTU1MCwiZm9vIjoiYmFyIn0.qzo5joBg_89JoIO5ERSXrRZvBxa9CtHYyrkc8jFdo4hO_LpEDbZ8Y8rXOGw-h4-1rVX2Q5xqRexuEpApTAsWkw";
+        let mnemonic = "have scorpion powder shoulder pretty sentence humble tenant frog march finger title";
+        let identity = RootIdentity.createFromMnemonic(mnemonic, "secret", await testData.getStore(), TestConfig.storePass);
+        let issuerDoc = await identity.newDid(TestConfig.storePass, 0, true);
+        await issuerDoc.publish(TestConfig.storePass);
+
+        let token = "eyJ0eXAiOiJKV1QiLCJjdHkiOiJqc29uIiwibGlicmFyeSI6IkVsYXN0b3MgRElEIiwidmVyc2lvbiI6IjEuMCIsImFsZyI6IkVTMjU2In0.eyJzdWIiOiJKd3RUZXN0IiwianRpIjoiMCIsImF1ZCI6IlRlc3QgY2FzZXMiLCJpYXQiOjE2Mjc5OTI3NDgsImV4cCI6MTc4MzA4MDc0OCwibmJmIjoxNjI1MzE0MzQ4LCJmb28iOiJiYXIiLCJpc3MiOiJkaWQ6ZWxhc3RvczppWTVOY3NjWWV0U2Z3WWRjUEtrTkpEYkVER2ducThnajZqIn0.KveoHk1FcZQ4hSzEpH27Psb_fbkezylpa2GuCNNYlNLRnmAJBKXsgWsdjLKrXxVRFR29z6udkbHtDBjp_wXYPA";
         expect(token).not.toBeNull();
         printJwt(token);
 
@@ -701,4 +707,9 @@ describe('JWT Tests', () => {
         expect(c.get("foo")).toEqual("bar");
     });
 })
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 

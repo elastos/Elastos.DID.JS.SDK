@@ -66,16 +66,26 @@ export class JWTParser {
             return new JWT(result.header, result.payload);
         } else {
             if (this.keyprovider == null) {
-                let issuerDoc = await DID.from(this.getIssuer(token)).resolve();
+                let issuer = DID.from(this.getIssuer(token));
+                if (issuer == null)
+                    throw new JWTException("No issuer in the token");
+
+                let issuerDoc = await issuer.resolve();
                 if (issuerDoc == null)
-                    throw new DIDResolveException("No issuer doc from chain.");
+                    throw new DIDResolveException("No issuer doc in the chain.");
 
                 this.keyprovider = issuerDoc.getKeyProvider();
             }
 
             let pk = await this.keyprovider.getPublicKey(this.getSignkey(token));
 
-            const result = await jwtVerify(token, pk, this.options);
+            var result;
+            try {
+                result = await jwtVerify(token, pk, this.options);
+            } catch(e) {
+                throw new JWTException(e);
+            }
+
             return new JWT(result.protectedHeader, result.payload);
         }
     }
