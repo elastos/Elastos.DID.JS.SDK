@@ -80,6 +80,7 @@ describe('JWT Tests', () => {
     });
 
     afterAll(async () => {
+        await testData.cleanup();
     });
 
     test('JWT Test', async () => {

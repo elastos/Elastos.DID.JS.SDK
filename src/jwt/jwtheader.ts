@@ -32,14 +32,8 @@ export class JWTHeader {
 
     private header : JWSHeaderParameters;
 
-    public constructor() {
-        this.header = {};
-    }
-
-    public static newWithJwsHeader(header : JWSHeaderParameters) : JWTHeader{
-        let object = new JWTHeader();
-        object.header = header;
-        return object;
+    public constructor(header ?: JWSHeaderParameters) {
+        this.header = header ? header : {};
     }
 
     public setAlgorithm(algorithm : string) : JWTHeader {

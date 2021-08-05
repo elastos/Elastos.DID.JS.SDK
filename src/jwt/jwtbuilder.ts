@@ -120,13 +120,15 @@ export class JWTBuilder {
         return this;
     }
 
-    public setExpiration(expire : number) : JWTBuilder {
-        this.payload.setExpiration(expire);
+    public setExpiration(expire : number | Date) : JWTBuilder {
+        let expiration = expire instanceof Date ?  expire.getUTCSeconds() : expire;
+        this.payload.setExpiration(expiration);
         return this;
     }
 
-    public setIssuedAt(iat : number) : JWTBuilder {
-        this.payload.setIssuedAt(iat);
+    public setIssuedAt(iat : number | Date) : JWTBuilder {
+        let issuedAt = iat instanceof Date ?  iat.getUTCSeconds() : iat;
+        this.payload.setIssuedAt(issuedAt);
         return this;
     }
 
@@ -140,8 +142,9 @@ export class JWTBuilder {
         return this;
     }
 
-    public setNotBefore(nbf : number) : JWTBuilder {
-        this.payload.setNotBefore(nbf);
+    public setNotBefore(nbf : number | Date) : JWTBuilder {
+        let notBefore = nbf instanceof Date ?  nbf.getUTCSeconds() : nbf;
+        this.payload.setNotBefore(notBefore);
         return this;
     }
 

@@ -28,8 +28,8 @@ export class JWT {
     private claims : Claims;
 
     public constructor(header : JWSHeaderParameters, payload : JWTPayload) {
-        this.header = JWTHeader.newWithJwsHeader(header);
-        this.claims = Claims.newWithPayload(payload);
+        this.header = new JWTHeader(header);
+        this.claims = new Claims(payload);
     }
 
     public getHeader() : JWTHeader {

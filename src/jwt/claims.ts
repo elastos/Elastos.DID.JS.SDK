@@ -21,20 +21,13 @@
  */
 
 import { JWTPayload } from "jose/jwt/sign";
-import { type } from "os";
 import { JSONObject, JSONValue } from "../json";
 
 export class Claims {
     private payload : JWTPayload;
 
-    public constructor() {
-        this.payload = {};
-    }
-
-    public static newWithPayload(payload : JWTPayload) : Claims {
-        let claims = new Claims();
-        claims.payload = payload;
-        return claims;
+    public constructor(payload ?: JWTPayload) {
+        this.payload = payload ? payload : {};
     }
 
     public put(name : string, value : JSONValue) : Claims {
