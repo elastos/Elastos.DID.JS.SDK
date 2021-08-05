@@ -195,7 +195,6 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
                 for (let tx of this.txs)
                     await tx.sanitize();
             } catch (e) {
-                // MalformedIDChainTransactionException
                 throw new MalformedResolveResultException("Invalid transaction", e);
             }
         } else {
