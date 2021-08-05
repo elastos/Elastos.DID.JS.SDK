@@ -20,13 +20,13 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty, JsonFormat,
-    JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder,
+import { JsonClassType, JsonCreator, JsonProperty,
+    JsonInclude, JsonIncludeType, JsonPropertyOrder,
     JsonValue, JsonSetter, JsonSerialize, JsonDeserialize, JsonIgnore
 } from "@elastosfoundation/jackson-js";
 import type { Class } from "../class";
 import { Constants } from "../constants";
-import { BASE64, Serializer, DIDBiographyStatus } from "../internals";
+import { BASE64, Serializer } from "../internals";
 import type { DID } from "../internals";
 import type { DIDDocument } from "../internals";
 import { DIDEntity } from "../internals";
