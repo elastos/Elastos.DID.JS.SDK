@@ -22,7 +22,6 @@
 
 import { SHA256 } from "./sha256";
 import {ec as EC} from "elliptic"
-import { KeyPair } from "./keypair";
 
 export class EcdsaSigner {
 

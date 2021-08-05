@@ -29,6 +29,7 @@ import { DefaultDIDAdapter } from "./internals";
 import { SimulatedIDChain } from "./internals";
 import { SimulatedIDChainAdapter } from "./internals";
 import { runningInBrowser } from "./utils";
+import { JWT, JWTBuilder, JWTHeader, JWTParserBuilder, JWTParser, Claims} from "./internals";
 
 Logger.setLevel(Logger.TRACE);
 
@@ -71,7 +72,6 @@ export type {
 
 export {
     //initialize,
-
     DID,
     DIDDocument,
     DIDDocumentPublicKey,
@@ -95,7 +95,13 @@ export {
     Exceptions,
     VerificationEventListener,
 
-    // TODO - others
+    // jwt
+    JWT,
+    Claims,
+    JWTHeader,
+    JWTBuilder,
+    JWTParser,
+    JWTParserBuilder,
 
     // Utilities
     runningInBrowser,
