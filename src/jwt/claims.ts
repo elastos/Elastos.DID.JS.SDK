@@ -21,7 +21,7 @@
  */
 
 import { JWTPayload } from "jose/jwt/sign";
-import { JSONObject, JSONValue } from "../json";
+import { JSONObject, JSONValue, sortJSONObject } from "../json";
 
 export class Claims {
     private payload : JWTPayload;
@@ -39,16 +39,13 @@ export class Claims {
     }
 
     public putWithObject(value : JSONObject) : Claims {
-        let str = JSON.stringify(value);
-        return this.putWithJson(str);
+        this.payload = { ...this.payload, ...value };
+        return this;
     }
 
     public putWithJson(json : string) : Claims {
-        let object = JSON.parse(json, (key, value) => {
-            this.put(key, value);
-            return value;
-        });
-
+        let object = JSON.parse(json);
+        this.putWithObject(object);
         return this;
     }
 
@@ -57,8 +54,11 @@ export class Claims {
     }
 
     public getAsObject(name : string) : JSONObject {
-        let value = this.getAsJson(name);
-        return JSON.parse(value);
+        let value = this.payload[name];
+        if (value != null)
+            return value as JSONObject;
+
+        return null;
     }
 
     public getAsJson(name : string) : string {

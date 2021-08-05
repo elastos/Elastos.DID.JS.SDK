@@ -21,8 +21,7 @@
  */
 
 import { SignJWT } from "jose/jwt/sign";
-import { UnsecuredJWT } from "jose/jwt/unsecured";
-import { DID, DIDURL, checkArgument, BASE64 } from "../internals";
+import { DID, checkArgument, BASE64 } from "../internals";
 import { JWTHeader, Claims } from "../internals";
 import { KeyProvider } from "../internals";
 import { JSONObject, JSONValue } from "../json";
