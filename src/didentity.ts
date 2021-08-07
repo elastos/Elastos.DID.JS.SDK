@@ -186,19 +186,4 @@ export namespace DIDEntity {
             this.did = did ? did.toString() : null;
         }
     }
-
-    export class DateSerializer {
-        static serialize(key: string, dateObj: Date, context: JsonStringifierTransformerContext): string {
-            return dateObj ? dateObj.toISOString().split('.')[0]+"Z" : null;
-        }
-
-        static deserialize(key: string, dateStr: string /* | Date */, context: JsonParserTransformerContext): Date {
-            /* if (dateStr instanceof Date)
-                return dateStr; */
-
-            if (dateStr && isNaN(Date.parse(dateStr)))
-                throw new InvalidDateFormat(dateStr);
-            return dateStr ? new Date(dateStr + (dateStr.slice(dateStr.length - 1) == 'Z' ? '':'Z')) : null;
-        }
-    }
 }

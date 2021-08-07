@@ -29,7 +29,8 @@ import {
     JsonPropertyOrder,
     JsonIgnore,
     JsonCreator,
-    JsonSerialize
+    JsonSerialize,
+    JsonStringifier
 } from "@elastosfoundation/jackson-js";
 import { Collections, Serializer } from "./internals";
 import { Constants } from "./constants";
@@ -76,7 +77,7 @@ import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
 import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
-
+import { DateSerializer } from "./dateserializer"
 class DIDDocumentControllerSerializer extends Serializer {
     public static serialize(controllers: DID[], context: JsonStringifierTransformerContext): any {
         return controllers.length > 1 ? controllers : controllers[0];
@@ -227,6 +228,98 @@ class DIDDocumentProofSerializer extends Serializer {
         return doc;
     }
 
+    public serialize(normalized = true): any {
+        let jsonObj = {};
+        
+        if (this.controllers) {
+            jsonObj[DIDDocument.CONTROLLER] = this.controllers.length > 1 ? this.controllers.map(c => {c.serialize(normalized)}) : this.controllers[0].serialize(normalized);
+        }
+
+        if (this._proofs) {
+            jsonObj[DIDDocument.PROOF] = this._proofs.length > 1 ? this._proofs.map(p => {p.serialize(normalized)}) : this._proofs[0].serialize(normalized);
+        }
+
+        if (this.subject) {
+            jsonObj[DIDDocument.ID] = this.subject.serialize(normalized);
+        }
+
+        if (this.multisig) {
+            jsonObj[DIDDocument.MULTI_SIGNATURE] = this.multisig.serialize(normalized);
+        }
+
+        if (this._publickeys) {
+            jsonObj[DIDDocument.PUBLICKEY] = this._publickeys.serialize(normalized);
+        }
+
+        if (this._authentications) {
+            jsonObj[DIDDocument.AUTHENTICATION] = this._authentications.serialize(normalized);
+        }
+
+        if (this._authorizations) {
+            jsonObj[DIDDocument.AUTHORIZATION] = this._authorizations.serialize(normalized);
+        }
+    
+        if (this._credentials) {
+            jsonObj[DIDDocument.VERIFIABLE_CREDENTIAL] = this._credentials.serialize(normalized);
+        }
+    
+        if (this._services) {
+            jsonObj[DIDDocument.SERVICE] = this._services.serialize(normalized);
+        }
+    
+        if (this.expires) {
+            jsonObj[DIDDocument.EXPIRES] = DateSerializer.serialize(this.expires);
+        }
+
+        return jsonObj;
+    }
+
+    public static deserialize(jsonObj: any): DIDDocument {
+        let newObj = new DIDDocument();
+        
+        if (jsonObj[DIDDocument.CONTROLLER]) {
+            newObj.setControllers(Array.isArray(jsonObj[DIDDocument.CONTROLLER]) ? jsonObj[DIDDocument.CONTROLLER].map(c => {DID.deserialize(c)}) : [ DID.deserialize(json[DIDDocument.CONTROLLER]) ]);
+        }
+
+        if (jsonObj[DIDDocument.PROOF]) {
+            newObj.setProofs(Array.isArray(jsonObj[DIDDocument.PROOF]) ? jsonObj[DIDDocument.PROOF].map(p => {DIDDocumentProof.deserialize(p)}) : [ DIDDocumentProof.deserialize(jsonObj[DIDDocument.PROOF]) ]);
+        }
+
+        if (jsonObj[DIDDocument.ID]) {
+            newObj.setSubject(DID.deserialize(jsonObj[DIDDocument.ID]));
+        }
+
+        if (jsonObj[DIDDocument.MULTI_SIGNATURE]) {
+            newObj.setMultiSignature(DIDDocumentMultiSignature.deserialize(jsonObj[DIDDocument.MULTI_SIGNATURE]));
+        }
+
+        if (jsonObj[DIDDocument.PUBLICKEY] && jsonObj[DIDDocument.PUBLICKEY].length > 0) {
+            newObj.setInternalPublicKeys(jsonObj[DIDDocument.PUBLICKEY].map(k => { DIDDocumentPublicKey.deserialize(k)}));
+        }
+
+        if (jsonObj[DIDDocument.AUTHENTICATION] && jsonObj[DIDDocument.AUTHENTICATION].length > 0) {
+            newObj.setInternalAuthenticationKeys(jsonObj[DIDDocument.AUTHENTICATION].map(k => { DIDDocumentPublicKeyReference.deserialize(k)}));
+        }
+
+        if (jsonObj[DIDDocument.AUTHORIZATION] && jsonObj[DIDDocument.AUTHORIZATION].length > 0) {
+            newObj.setInternalAuthorizationKeys(jsonObj[DIDDocument.AUTHORIZATION].map(k => { DIDDocumentPublicKeyReference.deserialize(k)}));
+        }
+
+        if (jsonObj[DIDDocument.VERIFIABLE_CREDENTIAL] && jsonObj[DIDDocument.VERIFIABLE_CREDENTIAL].length > 0) {
+            newObj.setCredentials(jsonObj[DIDDocument.VERIFIABLE_CREDENTIAL].map(k => { VerifiableCredential.deserialize(k)}));
+        }
+    
+        if (jsonObj[DIDDocument.SERVICE] && jsonObj[DIDDocument.SERVICE].length > 0) {
+            newObj.setServices(jsonObj[DIDDocument.SERVICE].map(k => { DIDDocumentService.deserialize(k)}));
+        }
+
+        if (jsonObj[DIDDocument.EXPIRES]) {
+            newObj.setExpires(DateSerializer.deserialize(jsonObj[DIDDocument.ID]));
+        }
+
+        return newObj;
+    }
+
     // Use the delegating mode to receive the whole object as a single JS object.
     // This seems to be the only way to receive already deserialized fields such as _proofs without
     // jackson doing a double deserialization when trying to resolve the constructor
@@ -279,6 +372,10 @@ class DIDDocumentProofSerializer extends Serializer {
         return this.subject;
     }
 
+    public setSubject(subject: DID): void {
+        this.subject = subject;
+    }
+
     private canonicalId(id: DIDURL | string): DIDURL {
         if (id instanceof DIDURL) {
             if (id == null || id.getDid() != null)
@@ -322,6 +419,11 @@ class DIDDocumentProofSerializer extends Serializer {
     public getControllers(): DID[] {
         return this.controllers;
     }
+
+    public setControllers(controllers: DID[]): void {
+        this.controllers = controllers;
+    }
+
 
     /**
      * Get controller count.
@@ -397,6 +499,10 @@ class DIDDocumentProofSerializer extends Serializer {
         return this.multisig;
     }
 
+    public setMultiSignature(signature: DIDDocumentMultiSignature): void {
+        this.multisig = signature;
+    }
+
     /**
      * Get the count of public keys.
      *
@@ -427,6 +533,10 @@ class DIDDocumentProofSerializer extends Serializer {
         }
 
         return pks;
+    }
+
+    public setInternalPublicKeys(publicKeys: DIDDocumentPublicKey[]): void {
+        this._publickeys = publicKeys;
     }
 
     /**
@@ -679,6 +789,10 @@ class DIDDocumentProofSerializer extends Serializer {
         return pks;
     }
 
+    public setInternalAuthenticationKeys(keys: DIDDocumentPublicKeyReference[]): void {
+        this._authentications = keys;
+    }
+
     /**
      * Select the authentication key matched the key id or the type.
      *
@@ -763,6 +877,10 @@ class DIDDocumentProofSerializer extends Serializer {
         return pks;
     }
 
+    public setInternalAuthorizationKeys(keys: DIDDocumentPublicKeyReference[]): void {
+        this._authorizations = keys;
+    }
+
     /**
      * Select the authorization key array matched the key id or the type.
      *
@@ -830,6 +948,12 @@ class DIDDocumentProofSerializer extends Serializer {
         return this._credentials;
     }
 
+    public setCredentials(credentials: VerifiableCredential[]): void {
+        this._credentials = credentials;
+    }
+
+    
+
     /**
      * Select the Credential array matched the given credential id or the type.
      *
@@ -886,6 +1010,12 @@ class DIDDocumentProofSerializer extends Serializer {
         return this._services;
     }
 
+    public setServices(services: DIDDocumentService[]): void {
+        this._services = services;
+    }
+
+    
+
     /**
      * Select Service array matched the given service id or the type.
      *
@@ -928,8 +1058,12 @@ class DIDDocumentProofSerializer extends Serializer {
      *
      * @return the expires time
      */
-    public getExpires(): Date {
+     public getExpires(): Date {
         return this.expires;
+    }
+
+    public setExpires(expires: Date): void {
+        this.expires = expires;
     }
 
     /**
@@ -966,6 +1100,10 @@ class DIDDocumentProofSerializer extends Serializer {
      */
     public getProofs(): DIDDocumentProof[] {
         return this._proofs;
+    }
+
+    public setProofs(proofs: DIDDocumentProof[]): void {
+        this._proofs = proofs;
     }
 
     /**
