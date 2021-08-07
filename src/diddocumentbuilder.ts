@@ -694,53 +694,6 @@ export class DIDDocumentBuilder {
     }
 
     /**
-     * Add Credential with the given values.
-     * Credential subject supports json string.
-     *
-     * @param id the Credential id
-     * @param types the Credential types
-     * @param json the Credential subject(json string)
-     * @param expirationDate the Credential expires time
-     * @param storepass the password for DIDStore
-     * @return the DID Document Builder
-     * @throws DIDStoreException there is no DID store to attach.
-     * @throws InvalidKeyException there is no authentication key.
-     */
-    // NOTE: compared to java, almost all addCredential overrides have been removed for clarity.
-    // Callers must use DIDURL.valueOf(string) for the id, and a json object (not a map nor a Map).
-    // TODO: also remove this "json subject" version + use json objec tinstead of subject map
-    /* public addCredential(id: DIDURL, types: string[], json: string, expirationDate: Date, storepass: string): DIDDocumentBuilder {
-        this.checkNotSealed();
-        checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
-                "Invalid publicKey id");
-        checkArgument(json != null && !json.isEmpty(), "Invalid json");
-        checkArgument(storepass != null && !storepass.isEmpty(), "Invalid storepass");
-
-        let issuer = new Issuer(this.document);
-        let cb = issuer.issueFor(this.document.getSubject());
-        if (types == null)
-            types = ["SelfProclaimedCredential"];
-
-        if (expirationDate == null)
-            expirationDate = this.document.expires;
-
-        try {
-            let vc = cb.id(this.canonicalId(id))
-                    .type(types)
-                    .properties(json)
-                    .expirationDate(expirationDate)
-                    .seal(storepass);
-
-            this.addCredential(vc);
-        } catch (ignore) {
-            // MalformedCredentialException
-            throw new UnknownInternalException(ignore);
-        }
-
-        return this;
-    } */
-
-    /**
      * Remove Credential with the specified id.
      *
      * @param id the Credential id
@@ -795,18 +748,6 @@ export class DIDDocumentBuilder {
 
         return this;
     }
-
-    /**
-     * Add Service.
-     *
-     * @param id the specified Service id string
-     * @param type the Service type
-     * @param endpoint the service point's adderss
-     * @return the DID Document Builder
-     */
-    /* public addService(id: string, type: string, endpoint: string): DIDDocumentBuilder {
-        return addService(canonicalId(id), type, endpoint, null);
-    } */
 
     /**
      * Remove the Service with the specified id.
@@ -934,7 +875,6 @@ export class DIDDocumentBuilder {
             this.document._authorizations = [];
 
             if (this.document.authenticationKeys.size == 0) {
-                //this.document._authentications = [];
                 this.document.authenticationKeys = new ComparableMap();
             } else {
                 for (let pk of this.document.authenticationKeys.values())
@@ -943,7 +883,6 @@ export class DIDDocumentBuilder {
             }
 
             if (this.document.authorizationKeys.size == 0) {
-                //this.document._authorizations = [];
                 this.document.authorizationKeys = new ComparableMap();
             } else {
                 for (let pk of this.document.authorizationKeys.values())

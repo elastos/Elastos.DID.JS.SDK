@@ -42,7 +42,6 @@ import { CredentialMetadata } from "./internals";
 import type { DID } from "./internals";
 import type { DIDAdapter } from "./internals";
 import type { DIDDocument } from "./internals";
-import { DIDMetadata } from "./internals";
 import type { DIDTransactionAdapter } from "./didtransactionadapter";
 import type { DIDURL } from "./internals";
 import { DIDResolveException } from "./exceptions/exceptions";
@@ -185,7 +184,7 @@ export class DIDBackend {
         let resolvedJson = await this.getAdapter().resolve(requestJson);
         if (resolvedJson == null)
             throw new DIDResolveException("Unknown error, got null result.");
-            
+
         let response: ResolveResponse<any, any> = null;
         try {
             switch (request.getMethod()) {
@@ -315,7 +314,7 @@ export class DIDBackend {
         metadata.setPublished(tx.getTimestamp());
         if (bio.getStatus().equals(DIDBiographyStatus.DEACTIVATED))
             metadata.setDeactivated(true);
-            
+
         return doc;
     }
 

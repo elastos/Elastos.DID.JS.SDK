@@ -37,10 +37,7 @@ import {
 } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { Mnemonic } from "./internals";
-import {
-    checkArgument,
-    promisify
-} from "./internals";
+import { checkArgument } from "./internals";
 import { DefaultConflictHandle } from "./internals";
 import type { ConflictHandle } from "./internals";
 import { DIDDocumentBuilder } from "./internals";

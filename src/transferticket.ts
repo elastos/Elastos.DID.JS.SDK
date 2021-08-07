@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonIgnore, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize, JsonClassType } from "@elastosfoundation/jackson-js";
+import { JsonPropertyOrder, JsonProperty, JsonIgnore, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize, JsonClassType } from "@elastosfoundation/jackson-js";
 import { Collections, Serializer } from "./internals";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
@@ -246,7 +246,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 }
                 return false;
             }
-                
+
             let controllerDoc = doc.getControllerDocument(proof.getVerificationMethod().getDid());
             if (controllerDoc == null) {
                 if (listener != null) {
@@ -256,7 +256,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 }
                 return false;
             }
-                
+
             if (!controllerDoc.isValid(listener)) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: controller '{}' is invalid, failed to verify the proof",
@@ -265,7 +265,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 }
                 return false;
             }
-                
+
             if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId())) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: key '{}' for proof is not default key of '{}'",
@@ -274,7 +274,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 }
                 return false;
             }
-    
+
             if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest)) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: proof '{}' is invalid, signature mismatch",
@@ -327,10 +327,10 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             }
             return false;
         }
-    
+
         if (listener != null)
             listener.succeeded(this, "Ticket {}: is valid", this.getSubject());
-            
+
         return true;
     }
 

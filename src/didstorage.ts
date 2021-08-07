@@ -153,7 +153,6 @@ export interface DIDStorage {
     /**
      * Store meta data for the specified Credential.
      *
-     * @param did the owner of the specified Credential
      * @param id the identifier of Credential
      * @param metadata the meta data for Credential
      * @throws DIDStorageException DIDStorage error.
@@ -163,7 +162,6 @@ export interface DIDStorage {
     /**
      * Load the meta data about the specified Credential.
      *
-     * @param did the owner of Credential
      * @param id the identifier of Credential
      * @return the meta data for Credential
      * @throws DIDStorageException DIDStorage error.
@@ -181,7 +179,6 @@ export interface DIDStorage {
     /**
      * Load the specified Credential.
      *
-     * @param did the owner of Credential
      * @param id the identifier of Credential
      * @return the Credential object
      * @throws DIDStorageException DIDStorage error.
@@ -200,7 +197,6 @@ export interface DIDStorage {
     /**
      * Delete the specified Credential
      *
-     * @param did the owner of Credential
      * @param id the identifier of Credential
      * @return the returned value is true if there is no credential owned the specific DID;
      *         the returned value is false if there is credentials owned the specific DID.
@@ -220,7 +216,6 @@ export interface DIDStorage {
     /**
      * Store private key. Encrypt and encode private key with base64url method.
      *
-     * @param did the owner of key
      * @param id the identifier of key
      * @param privateKey the original private key(32 bytes)
      * @throws DIDStorageException DIDStorage error.
@@ -230,7 +225,6 @@ export interface DIDStorage {
     /**
      * Load private key.
      *
-     * @param did the owner of key
      * @param id the identifier of key
      * @return the encrypted private key
      * @throws DIDStorageException DIDStorage error.
@@ -250,7 +244,6 @@ export interface DIDStorage {
     /**
      * Delete the private key owned to the specified key.
      *
-     * @param did the owner of key
      * @param id the identifier of key
      * @return the returned value is true if deleting private keys successfully;
      *         the returned value is false if deleting private keys failed.
