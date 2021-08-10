@@ -30,6 +30,7 @@ import { DIDURL } from "./internals";
 import {
     DIDAlreadyExistException,
     DIDDeactivatedException,
+    DIDResolveException,
     DIDStoreException,
     IllegalArgumentException,
     RootIdentityAlreadyExistException,
@@ -328,7 +329,7 @@ export class RootIdentity {
                     throw new DIDAlreadyExistException("DID already published.");
             }
         } catch(e) {
-            if (!overwrite)
+            if (e instanceof DIDResolveException && !overwrite)
                 throw e;
         }
 
