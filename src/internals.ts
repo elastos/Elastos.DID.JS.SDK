@@ -53,7 +53,6 @@ export * from "./jwt/jwt";
 export * from "./jwt/jwtparser";
 export * from "./jwt/jwtparserbuilder";
 
-
 // DID objects that could be embedded inside the DIDDocument.
 // Should be before DIDDocument
 export * from "./diddocumentmultisignature";

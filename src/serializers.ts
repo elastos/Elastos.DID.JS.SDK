@@ -21,7 +21,6 @@
  */
 
 import { DIDEntity } from "./internals";
-import type { DID } from "./internals";
 import { Constants } from "./constants";
 import type {
     JsonStringifierTransformerContext,

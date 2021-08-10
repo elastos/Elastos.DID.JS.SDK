@@ -22,7 +22,7 @@
 
 import dayjs, { Dayjs } from "dayjs";
 import {
-    JsonAnySetter, JsonAnyGetter, JsonClassType, JsonFilter, JsonGetter, JsonIgnore, JsonInclude,
+    JsonAnySetter, JsonAnyGetter, JsonClassType, JsonGetter, JsonIgnore, JsonInclude,
     JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonCreator
 } from "@elastosfoundation/jackson-js";
 import type {
@@ -403,7 +403,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false;
         }
-            
+
         let issuerDoc = await this.issuer.resolve();
         if (issuerDoc == null) {
             if (listener != null) {
@@ -429,10 +429,10 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                 listener.failed(this, "VC {}: key '{}' for proof is not an authencation key of '{}'",
                         this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
                 listener.failed(this, "VC {}: is not genuine", this.getId());
-            }           
+            }
             return false;
         }
-            
+
         // Unsupported public key type;
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
@@ -452,7 +452,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false;
         }
-            
+
         if (!this.isSelfProclaimed()) {
             let controllerDoc = await this.subject.getId().resolve();
             if (controllerDoc != null && !controllerDoc.isGenuine(listener)) {
@@ -461,7 +461,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                     listener.failed(this, "VC {}: is not genuine", this.getId());
                 }
                 return false;
-            }   
+            }
         }
         if (listener != null)
             listener.succeeded(this, "VC {}: is genuine", this.getId());
@@ -497,7 +497,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                     listener.failed(this, "VC {}: is invalid", this.getId());
                 }
                 return false;
-            }   
+            }
         }
 
         let issuerDoc = await this.issuer.resolve();
@@ -528,7 +528,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false;
         }
-        
+
         // Unsupported public key type;
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
@@ -538,7 +538,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false; // TODO: should throw an exception.
         }
-            
+
         let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
         let json = vc.serialize(true);
         if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json))) {
@@ -548,7 +548,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false;
         }
-            
+
         if (!this.isSelfProclaimed()) {
             let controllerDoc = await this.subject.getId().resolve();
             if (controllerDoc != null && !controllerDoc.isValid(listener)) {
@@ -557,7 +557,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                     listener.failed(this, "VC {}: is invalid", this.getId());
                 }
                 return false;
-            }   
+            }
         }
 
         if (listener != null)
@@ -626,27 +626,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         await DIDBackend.getInstance().declareCredential(this, owner, signKey, storepass, adapter);
     }
 
-    /* public declare(signKey: DIDURL, storepass: string) {
-        this.declare(signKey, storepass, null);
-    }
-
-    public declare(signKey: string, storepass: string, adapter: DIDTransactionAdapter) {
-        declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
-    }
-
-    public declare(signKey: string, storepass: string) {
-        declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, null);
-    }
-
-    public declare(storepass: string, adapter: DIDTransactionAdapter) {
-        declare((DIDURL)null, storepass, adapter);
-    }
-
-    public declare(storepass: string) {
-        declare((DIDURL)null, storepass, null);
-    } */
-
-    public async revoke(signKey: DIDURL | string, signer: DIDDocument = null, storepass: string = null, adapter: DIDTransactionAdapter = null) {
+    public async revoke(signKey: DIDURL, signer: DIDDocument = null, storepass: string = null, adapter: DIDTransactionAdapter = null) {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
         this.checkAttachedStore();
 

@@ -54,17 +54,6 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
     @JsonIgnore()
     private signer: DIDDocument;
 
-    /*
-    public constructor(source: CredentialRequest | IDChainRequest.Operation) {
-        super();
-        if (source instanceof CredentialRequest) {
-            this.constructWithIDChainRequest(source);
-        } else {
-            this.constructWithOperation(source);
-        }
-    }
-    */
-
     private static newWithOperation(operation: IDChainRequest.Operation): CredentialRequest {
         let credentialRequest = new CredentialRequest();
         credentialRequest.constructWithOperation(operation);
@@ -202,7 +191,6 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
                 this.id = DIDURL.from(payload);
             }
         } catch (e) {
-            // DIDException
             throw new MalformedIDChainRequestException("Invalid payload", e);
         }
 

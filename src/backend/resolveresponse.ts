@@ -20,10 +20,9 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSubTypes, JsonTypeInfo, JsonTypeInfoAs, JsonTypeInfoId } from "@elastosfoundation/jackson-js";
+import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder } from "@elastosfoundation/jackson-js";
 import { DIDEntity } from "../internals";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
-import { ResolveError } from "./resolveerror";
 import type { ResolveResult } from "./resolveresult";
 
 export class RpcConstants {
@@ -80,26 +79,6 @@ export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T>
 
     protected constructor() { super(); }
 
-    /*
-    protected constructor(responseId: string, resultOrError: R | ResolveError | JsonRpcError) {
-        super();
-        this.jsonRpcVersion = ResolveResponse.JSON_RPC_VERSION;
-        this.responseId = responseId;
-        if (resultOrError instanceof ResolveError) {
-            this.error = new JsonRpcError(resultOrError.code, resultOrError.message);
-        } else if (resultOrError instanceof JsonRpcError) {
-            this.error = resultOrError;
-        }
-    }
-
-    @JsonCreator()
-    //public static jacksonCreatorParent(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.JSON_RPC, required: false}) jsonVersion?: string, @JsonProperty({value: RpcConstants.ID, required: false}) error?: JsonRpcError) {
-    public static emptyInstance(): ResolveResponse) {
-        let newInstance = new ResolveResponse(id, error);
-        newInstance.jsonRpcVersion = jsonVersion;
-        return newInstance;
-    }
-*/
     public getResponseId(): string {
         return this.id;
     }

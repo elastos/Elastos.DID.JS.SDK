@@ -41,12 +41,12 @@ export class Mnemonic {
     /**
      * language: "chinese_traditional"
      */
-    //public static CHINESE_TRADITIONAL = "chinese_traditional";
+    public static CHINESE_TRADITIONAL = "chinese_traditional";
 
     /**
      * language: "czech"
      */
-    //public static CZECH = "czech";
+    public static CZECH = "czech";
 
     /**
      * language: "english"
@@ -61,17 +61,17 @@ export class Mnemonic {
     /**
      * language: "italian"
      */
-    //public static ITALIAN = "italian";
+    public static ITALIAN = "italian";
 
     /**
      * language: "japanese"
      */
-    //public static JAPANESE = "japanese";
+    public static JAPANESE = "japanese";
 
     /**
      * language: "korean"
      */
-    //public static KOREAN = "korean";
+    public static KOREAN = "korean";
 
     /**
      * language: "spanish"

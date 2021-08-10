@@ -44,9 +44,7 @@ export interface DIDURLValues{
 }
 
 export class DIDURLParser{
-
-    public static newFromURL(url: string): DIDURLValues{
-
+    public static newFromURL(url: string): DIDURLValues {
         return {
             url,
             did: this.extractDID(url),
@@ -89,7 +87,7 @@ export class DIDURLParser{
         return new DIDValues(did, didValues[1], didValues[2])
     }
 
-    private static extractParams(url: string): Map<string, string>{
+    private static extractParams(url: string): Map<string, string> {
         let startIn = url.indexOf(";")
         if (startIn < 0) return new Map<string, string>();
 
@@ -105,7 +103,7 @@ export class DIDURLParser{
         return this.generateMapValues(values)
     }
 
-    private static extractPath(url: string): string{
+    private static extractPath(url: string): string {
         let startIn = url.indexOf("/")
         if (startIn < 0) return "";
 
@@ -119,7 +117,7 @@ export class DIDURLParser{
         return path
     }
 
-    private static extractQuery(url: string): Map<string, string>{
+    private static extractQuery(url: string): Map<string, string> {
         let startIn = url.indexOf("?")
         if (startIn < 0) return new Map<string, string>();
 
@@ -135,7 +133,7 @@ export class DIDURLParser{
         return this.generateMapValues(values)
     }
 
-    private static generateMapValues(values: string[]): Map<string, string>{
+    private static generateMapValues(values: string[]): Map<string, string> {
         let response = new Map<string, string>();
 
         values.forEach(value => {
@@ -152,7 +150,6 @@ export class DIDURLParser{
     }
 
     private static extractFragment(url: string): string{
-
         let indexOf = url.indexOf("#")
         if (indexOf < 0) return "";
 

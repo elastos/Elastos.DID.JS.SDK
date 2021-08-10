@@ -114,16 +114,15 @@ export class HDKey {
     }
 
     private static transformBip32HeaderToBuffer(bip32HeaderValue: number) : Buffer{
-        let buffer = Buffer.alloc(4)
-        buffer[0] = ((bip32HeaderValue >> 24) & 0xFF)
-        buffer[1] = ((bip32HeaderValue >> 16) & 0xFF)
-        buffer[2] = ((bip32HeaderValue >> 8) & 0xFF)
-        buffer[3] = (bip32HeaderValue & 0xFF)
-        return buffer
+        let buffer = Buffer.alloc(4);
+        buffer[0] = ((bip32HeaderValue >> 24) & 0xFF);
+        buffer[1] = ((bip32HeaderValue >> 16) & 0xFF);
+        buffer[2] = ((bip32HeaderValue >> 8) & 0xFF);
+        buffer[3] = (bip32HeaderValue & 0xFF);
+        return buffer;
     }
 
     public static paddingToExtendedPrivateKey(pk: Buffer): Buffer {
-
         let extendedPrivateKeyBytes = Buffer.alloc(HDKey.EXTENDED_PRIVATEKEY_BYTES)
         let bip32Header = HDKey.transformBip32HeaderToBuffer(this.bip32HeaderP2PKHpriv);
         bip32Header.copy(extendedPrivateKeyBytes)
@@ -135,9 +134,7 @@ export class HDKey {
         let hash = SHA256.hashTwice(buftoHash)
         hash.copy(extendedPrivateKeyBytes, 78, 0, 4)
 
-
-        return extendedPrivateKeyBytes
-
+        return extendedPrivateKeyBytes;
     }
 
     public static paddingToExtendedPublicKey(pk: Buffer): Buffer{
@@ -194,7 +191,6 @@ export class HDKey {
 
     public getAddress(): string {
         let binAddress = this.getBinAddress()
-
         return Base58.encode(binAddress);
     }
 

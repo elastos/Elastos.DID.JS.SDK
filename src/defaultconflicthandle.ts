@@ -24,7 +24,6 @@ import type { ConflictHandle } from "./internals";
 import type { DIDDocument } from "./internals";
 
 export class DefaultConflictHandle implements ConflictHandle {
-
         private static instance: DefaultConflictHandle;
 
         private constructor() {}

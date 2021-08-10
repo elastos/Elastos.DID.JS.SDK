@@ -25,8 +25,7 @@ import {
     JsonIncludeType,
     JsonProperty,
     JsonPropertyOrder,
-    JsonClassType,
-    JsonCreator
+    JsonClassType
 } from "@elastosfoundation/jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";

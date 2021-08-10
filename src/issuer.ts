@@ -21,8 +21,6 @@
  */
 
 import { checkArgument } from "./internals";
-import { DIDNotFoundException } from "./exceptions/exceptions";
-import { DIDStoreException } from "./exceptions/exceptions";
 import { InvalidKeyException } from "./exceptions/exceptions";
 import { DIDURL } from "./internals";
 import type { DIDDocument } from "./internals";

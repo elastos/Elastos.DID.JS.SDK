@@ -23,9 +23,7 @@
 import type { AbstractMetadata } from "./internals";
 import {
     ParentException,
-    MalformedDIDURLException,
-    IllegalArgumentException
-} from "./exceptions/exceptions";
+    MalformedDIDURLException } from "./exceptions/exceptions";
 import {
     DID,
     DIDURLParser,

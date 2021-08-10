@@ -27,7 +27,7 @@ export class EcdsaSigner {
 
     public static sign(privateKey: Buffer | string, digest: Buffer): Buffer {
         const ec = new EC('p256');
-        const key = ec.keyFromPrivate(privateKey, 'hex')
+        const key = ec.keyFromPrivate(privateKey, 'hex');
         const signature = key.sign(digest);
         return Buffer.from(signature.r.toString("hex", 64) + signature.s.toString("hex", 64), "hex");
     }
@@ -43,7 +43,7 @@ export class EcdsaSigner {
 
         const rs = { r: signature.slice(0, 32).toString("hex"), s: signature.slice(32).toString("hex") };
 
-        return key.verify(data, rs)
+        return key.verify(data, rs);
     }
 
     public static verifyData(publicKey: Buffer | string, sig: Buffer, ...data: Buffer[]): boolean {
@@ -51,7 +51,7 @@ export class EcdsaSigner {
     }
 
     public static sha256Digest(...inputs: Buffer[]): Buffer{
-        return SHA256.encodeToBuffer(...inputs)
+        return SHA256.encodeToBuffer(...inputs);
     }
 
 

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-export class ParentException extends Error{
+export class ParentException extends Error {
     private causedBy?: Error;
 
     constructor(message?: string, causedBy?: Error) {
@@ -31,7 +31,6 @@ export class ParentException extends Error{
 
     public from(e:any) {
         this.message += (" Caused by " + e.message);
-
         return this;
     }
 }
