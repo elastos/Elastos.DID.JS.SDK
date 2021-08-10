@@ -318,14 +318,19 @@ export class RootIdentity {
                 throw new DIDAlreadyExistException("DID already exists in the store.");
         }
 
-        doc = await did.resolve();
-        if (doc != null) {
-            if (doc.isDeactivated())
-                throw new DIDDeactivatedException(did.toString());
+        try {
+            doc = await did.resolve();
+            if (doc != null) {
+                if (doc.isDeactivated())
+                    throw new DIDDeactivatedException(did.toString());
 
-            throw new DIDAlreadyExistException("DID already published.");
+                if (!overwrite)
+                    throw new DIDAlreadyExistException("DID already published.");
+            }
+        } catch(e) {
+            if (!overwrite)
+                throw e;
         }
-
 
         log.debug("Creating new DID {} at index {}...", did.toString(), index);
 
