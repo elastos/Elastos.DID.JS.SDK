@@ -21,55 +21,16 @@
  */
 
 import type { AbstractMetadata } from "./internals";
+import { DID } from "./internals";
 import {
-    ParentException,
-    MalformedDIDURLException,
-    IllegalArgumentException
-} from "./exceptions/exceptions";
-import {
-    DID,
     DIDURLParser,
     checkArgument,
     checkNotNull,
     hashCode,
-    Serializer,
-    Deserializer
 } from "./internals";
-import type {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js";
-import {
-    JsonSerialize,
-    JsonDeserialize,
-    JsonCreator,
-} from "@elastosfoundation/jackson-js";
 import type { Hashable } from "./hashable";
 import type { Comparable } from "./comparable";
-import {
-
-} from "./internals";
-
-class URLSerializer extends Serializer {
-    public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
-        let base: DID = null;
-        let serializeContext = URLSerializer.context(context);
-        if (!serializeContext.isNormalized())
-            base = serializeContext.getDid() != null ? serializeContext.getDid() : id.getDid();
-
-        return id.toString(base);
-    }
-}
-
-class URLDeserializer extends Deserializer {
-    public static deserialize(value: any, context: JsonParserTransformerContext): DIDURL {
-        try {
-            return new DIDURL(value);
-        } catch (e) {
-            throw new ParentException("URLDeserializer deserialization exception", e);
-        }
-    }
-}
+import { MalformedDIDURLException } from "./exceptions/exceptions";
 
 /**
  * DID URL defines by the did-url rule, refers to a URL that begins with a DID
@@ -78,8 +39,6 @@ class URLDeserializer extends Deserializer {
  * A DID URL always identifies the resource to be located.
  * DIDURL includes DID and Url fragment by user defined.
  */
-@JsonSerialize({using: URLSerializer.serialize})
-@JsonDeserialize({using: URLDeserializer.deserialize})
 export class DIDURL implements Hashable, Comparable<DIDURL> {
     //private static SEPS = ":;/?#";
     private static SEPS = [':', ';', '/', '?', '#'];
@@ -90,11 +49,6 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
     private query: Map<string, string> = new Map();
     private fragment = "";
     private metadata?: AbstractMetadata;
-
-    @JsonCreator()
-    public static jsonConstructor(): DIDURL {
-        return null;
-    }
 
     // Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
     public constructor(url?: DIDURL | string, baseRef?: DID) {
@@ -338,6 +292,14 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
      */
     public getMetadata(): AbstractMetadata | null {
         return this.metadata;
+    }
+
+    public toJSON(key: string = null): string {
+        let base: DID = null;
+        if (key)
+            base = new DID(key);
+
+        return this.toString(base);
     }
 
     public toString(base: DID = null): string {

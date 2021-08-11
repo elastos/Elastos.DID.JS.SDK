@@ -20,33 +20,24 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonIgnore, JsonProperty } from "@elastosfoundation/jackson-js";
 import { BASE64 } from "../internals";
 import { DID } from "../internals";
 import { DIDDocument } from "../internals";
 import type { DIDURL } from "../internals";
-import { InvalidKeyException, MalformedIDChainRequestException, UnknownInternalException } from "../exceptions/exceptions";
+import { DIDEntity } from "../internals";
+import { JSONObject } from "../json";
+import { InvalidKeyException,
+    MalformedIDChainRequestException,
+    UnknownInternalException
+} from "../exceptions/exceptions";
 import type { TransferTicket } from "../internals";
 import { IDChainRequest } from "./idchaindrequest";
 
 /**
  * The DID request class.
  */
- @JsonCreator()
 export class DIDRequest extends IDChainRequest<DIDRequest> {
-    @JsonProperty({value: IDChainRequest.HEADER})
-    @JsonClassType({type: () => [IDChainRequest.Header]})
-    declare protected header: IDChainRequest.Header;
-    @JsonProperty({value: IDChainRequest.PAYLOAD})
-    @JsonClassType({type: () => [String]})
-    declare protected payload: string;
-    @JsonProperty({value: IDChainRequest.PROOF})
-    @JsonClassType({type: () => [IDChainRequest.Proof]})
-    declare protected proof: IDChainRequest.Proof;
-
-    @JsonIgnore()
     private did: DID;
-    @JsonIgnore()
     private doc: DIDDocument;
 
     private static newWithOperation(operation: IDChainRequest.Operation): DIDRequest {
@@ -243,7 +234,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
         }
     }
 
-    public async sanitize(): Promise<void> {
+    protected sanitize(): void {
         let header = this.getHeader();
 
         if (header == null)
@@ -282,7 +273,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
         try {
             if (!header.getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
                 let json = BASE64.toString(payload)
-                this.doc = await DIDDocument.parse(json, DIDDocument);
+                this.doc = DIDDocument._parseOnly(json); // CHECKME: !!!
                 this.did = this.doc.getSubject();
             } else {
                 this.did = new DID(payload);
@@ -326,5 +317,17 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
             this.doc = await this.did.resolve();
 
         return this.doc;
+    }
+
+    public static parse(content: string | JSONObject, context = null): DIDRequest {
+        try {
+            return DIDEntity.deserialize(content, DIDRequest, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedIDChainRequestException)
+                throw e;
+            else
+                throw new MalformedIDChainRequestException(e);
+        }
     }
 }

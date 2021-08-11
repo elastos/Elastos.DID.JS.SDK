@@ -20,18 +20,15 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty } from "@elastosfoundation/jackson-js";
 import { DIDBiography } from "./didbiography";
 import { ResolveError } from "./resolveerror";
-import { ResolveResponse, RpcConstants, JsonRpcError } from "./resolveresponse";
+import { ResolveResponse, JsonRpcError } from "./resolveresponse";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
+import { DIDEntity } from "../internals";
+import { JSONObject } from "../json";
 
 export class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDBiography> {
-    @JsonProperty({value: RpcConstants.RESULT})
-    @JsonClassType({type: ()=>[DIDBiography]})
-    protected result: DIDBiography;
-
-    constructor(responseId: string, resultOrError: DIDBiography | ResolveError | JsonRpcError) {
+    constructor(responseId: string = null, resultOrError: DIDBiography | ResolveError | JsonRpcError = null) {
         super();
         this.jsonrpc = ResolveResponse.JSON_RPC_VERSION;
         this.id = responseId;
@@ -45,30 +42,23 @@ export class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDB
         }
     }
 
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.RESULT, required: false}) result: DIDBiography, @JsonProperty({value: RpcConstants.ERROR, required: false}) error: JsonRpcError): DIDResolveResponse {
-        let newInstance = result ? new DIDResolveResponse(id, result) : new DIDResolveResponse(id, error);
-        if (result) newInstance.result = result;
-        return newInstance;
-    }
-
     public getResult(): DIDBiography {
         return this.result;
     }
 
-    protected async sanitize(): Promise<void> {
-        await super.sanitize();
+    protected resultFromJson(json: JSONObject): DIDBiography {
+        return DIDBiography.parse(json);
+    }
 
-        if (this.result == null && this.error == null)
-            throw new MalformedResolveResponseException("Missing result or error");
-
-        if (this.result != null) {
-            try {
-                await this.result.sanitize();
-            } catch (e) {
-                // MalformedResolveResultException
-                throw new MalformedResolveResponseException("Invalid result", e);
-            }
+    public static parse(content: string | JSONObject, context = null): DIDResolveResponse {
+        try {
+            return DIDEntity.deserialize(content, DIDResolveResponse, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveResponseException)
+                throw e;
+            else
+                throw new MalformedResolveResponseException(e);
         }
     }
 }

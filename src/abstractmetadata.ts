@@ -20,13 +20,13 @@
  * SOFTWARE.
  */
 
-import type { Cloneable } from "./cloneable";
 import { DIDEntity } from "./internals";
+import type { DID } from "./internals";
 import type { DIDStore } from "./internals";
 import type { JSONObject, JSONValue } from "./json";
 import { sortJSONObject } from "./json";
+import type { Cloneable } from "./cloneable";
 import { checkArgument } from "./internals";
-import { JsonIgnore, JsonAnySetter, JsonAnyGetter, JsonClassType} from "@elastosfoundation/jackson-js";
 
 /**
  * The class defines the base interface of Meta data.
@@ -39,9 +39,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
     // TODO @carl (BPI): I temporarily remplace this Map/String/String type with a raw Object, because
     // this throws a "incompatible receiver 'size' or #Map" runtime error. Not sure how to fix this correctly
     // but for now i want to keep validating the "internals" fix and Object does the job for now.
-    @JsonIgnore()
     public props: JSONObject = {};
-    @JsonIgnore()
     protected store?: DIDStore;
 
     /**
@@ -87,17 +85,10 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         return this.store != null;
     }
 
-    @JsonAnyGetter()
-    @JsonClassType({type: () => [String, Object]})
-    protected getProperties(): JSONObject {
-        return sortJSONObject(this.props);
-    }
-
     protected get(name: string): JSONValue {
         return this.props[name];
     }
 
-    @JsonAnySetter()
     protected put(name: string, value: JSONValue | Date ) {
         this.props[name] = value instanceof Date ? value.toISOString() : value;
 
@@ -230,6 +221,14 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 
         return result;
      }
+
+     public toJSON(key: string = null): JSONObject {
+        return sortJSONObject(this.props);
+    }
+
+    protected fromJSON(json: JSONObject, context: DID = null): void {
+        this.props = JSON.parse(JSON.stringify(json));
+    }
 
     protected abstract save();
 }

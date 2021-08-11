@@ -38,6 +38,7 @@ export class InvalidKeyException extends ParentException {}
 export class MalformedIDChainTransactionException extends ParentException {}
 export class MalformedResolveResultException extends ParentException {}
 export class DIDSyntaxException extends ParentException {}
+export class MalformedResolveRequestException extends ParentException {}
 export class MalformedResolveResponseException extends ParentException {}
 export class DIDNotFoundException extends ParentException {}
 export class MalformedDIDURLException extends ParentException {}
@@ -64,3 +65,4 @@ export class OutOfBoundException extends ParentException {}
 export class DIDTransactionException extends ParentException {}
 export class MalformedExportDataException extends ParentException {}
 export class DIDControllersChangedException extends ParentException {}
+export class MalformedMetadataException extends ParentException {}

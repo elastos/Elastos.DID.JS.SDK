@@ -37,7 +37,6 @@ import type { DIDTransaction } from "./internals";
 import { IDChainRequest } from "./internals";
 import type { ResolveRequest } from "./internals";
 import type { ResolveResponse } from "./internals";
-import type { ResolveResult } from "./internals";
 import { CredentialMetadata } from "./internals";
 import type { DID } from "./internals";
 import type { DIDAdapter } from "./internals";
@@ -78,7 +77,7 @@ export class DIDBackend {
     private adapter: DIDAdapter;
     private resolveHandle: LocalResolveHandle;
 
-    private cache: LRUCache<ResolveRequest<any, any>, ResolveResult<any>>;
+    private cache: LRUCache<ResolveRequest<any, any>, ResolveResponse.Result<any>>;
 
     private static instance: DIDBackend = null;
 
@@ -178,14 +177,14 @@ export class DIDBackend {
         this.resolveHandle = handle;
     }
 
-    private async resolve(request: ResolveRequest<any, any>): Promise<ResolveResult<any>> {
+    private async resolve(request: ResolveRequest<any, any>): Promise<ResolveResponse.Result<any>> {
         log.debug("Resolving request {}...", request);
 
         let requestJson = request.serialize(true);
         let resolvedJson = await this.getAdapter().resolve(requestJson);
         if (resolvedJson == null)
             throw new DIDResolveException("Unknown error, got null result.");
-            
+
         let response: ResolveResponse<any, any> = null;
         try {
             switch (request.getMethod()) {
@@ -315,7 +314,7 @@ export class DIDBackend {
         metadata.setPublished(tx.getTimestamp());
         if (bio.getStatus().equals(DIDBiographyStatus.DEACTIVATED))
             metadata.setDeactivated(true);
-            
+
         return doc;
     }
 
