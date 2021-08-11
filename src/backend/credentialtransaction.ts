@@ -20,18 +20,14 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty } from "@elastosfoundation/jackson-js";
 import type { DIDURL } from "../internals";
+import { JSONObject } from "../json";
+import { DIDEntity } from "../internals";
 import { CredentialRequest } from "./credentialrequest";
 import { IDTransaction } from "./idtransaction";
+import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
 
 export class CredentialTransaction extends IDTransaction<CredentialTransaction, CredentialRequest> {
-    @JsonProperty({value: IDTransaction.OPERATION})
-    @JsonClassType({type: () => [CredentialRequest]})
-    declare protected request: CredentialRequest;
-
-    protected CredentialTransaction() {}
-
     /**
      * Constructs the DIDTransaction with the given value.
      *
@@ -39,12 +35,27 @@ export class CredentialTransaction extends IDTransaction<CredentialTransaction, 
      * @param timestamp the time stamp
      * @param request the IDChainRequest content
      */
-    // Java: @JsonCreator
     constructor(txid: string = null, timestamp: Date = null, request: CredentialRequest = null) {
         super(txid, timestamp, request);
     }
 
     public getId(): DIDURL {
         return this.getRequest().getCredentialId();
+    }
+
+    protected requestFromJSON(json: JSONObject): CredentialRequest {
+        return CredentialRequest.parse(json);
+    }
+
+    public static parse(content: string | JSONObject, context = null): CredentialTransaction {
+        try {
+            return DIDEntity.deserialize(content, CredentialTransaction, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedIDChainTransactionException)
+                throw e;
+            else
+                throw new MalformedIDChainTransactionException(e);
+        }
     }
 }

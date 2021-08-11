@@ -1,26 +1,6 @@
-import {
-    JsonValue,
-    JsonCreator,
-    JsonDeserialize
-} from "@elastosfoundation/jackson-js";
-import type {
-    JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js";
 import { IllegalArgumentException } from "./exceptions/exceptions"
-import { checkArgument, Deserializer } from "./internals";
+import { checkArgument } from "./internals";
 
-class MultisigDeserializer extends Deserializer {
-    public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocumentMultiSignature {
-        try {
-            if (value)
-               return DIDDocumentMultiSignature.newFormJson(value);
-        } catch (e) {
-            throw new IllegalArgumentException("Invalid multisig specification");
-        }
-    }
-}
-
-@JsonDeserialize({using:  MultisigDeserializer.deserialize})
 export class DIDDocumentMultiSignature {
     public static ONE_OF_ONE = new DIDDocumentMultiSignature(1, 1);
     private mv: number;
@@ -30,15 +10,7 @@ export class DIDDocumentMultiSignature {
         this.apply(m, n);
     }
 
-    @JsonCreator()
-    public static placeHolder(mOfN: string): DIDDocumentMultiSignature {
-        // The Jackson parser will call JsonCreator with null after called the
-        // customized deserializer. Here should return null to keep the
-        // deserialized result.
-        return null;
-    }
-
-    public static newFormJson(mOfN: string): DIDDocumentMultiSignature {
+    public static fromString(mOfN: string): DIDDocumentMultiSignature {
         if (!mOfN || mOfN == null)
             throw new IllegalArgumentException("Invalid multisig spec");
 
@@ -76,7 +48,6 @@ export class DIDDocumentMultiSignature {
         return this.mv == multisig.mv && this.nv == multisig.nv;
     }
 
-    @JsonValue()
     public toString(): string {
         return this.mv.toString() + ":" + this.nv.toString();
     }

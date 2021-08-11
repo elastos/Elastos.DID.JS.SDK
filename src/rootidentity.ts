@@ -1,17 +1,20 @@
 import crypto from "crypto"
 import { AbstractMetadata } from "./internals";
 import { HDKey } from "./internals";
-import { DID } from "./internals";
+import { DID, DIDURL } from "./internals";
 import type { DIDDocument } from "./internals";
 import type { DIDStore } from "./internals";
-import { DIDURL } from "./internals";
+import { DIDEntity } from "./internals";
+import { JSONObject } from "./json";
+
 import {
     DIDAlreadyExistException,
     DIDDeactivatedException,
     DIDStoreException,
     IllegalArgumentException,
     RootIdentityAlreadyExistException,
-    UnknownInternalException
+    UnknownInternalException,
+    MalformedMetadataException
 } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { Mnemonic } from "./internals";
@@ -402,7 +405,7 @@ export class RootIdentity {
             localDoc.getMetadata().attachStore(this.getStore())
         await this.getStore().storeDid(finalDoc);
         this.getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
-    
+
         return true;
     }
 
@@ -446,7 +449,7 @@ export namespace RootIdentity {
 
         private id: string;
 
-        constructor(id: string, store: DIDStore | null = null) {
+        constructor(id: string = null, store: DIDStore | null = null) {
             super(store);
             this.id = id;
         }
@@ -482,6 +485,18 @@ export namespace RootIdentity {
                         log.error("INTERNAL - error store metadata for credential {}", this.id);
                     throw e;
                 }
+            }
+        }
+
+        public static parse(content: string | JSONObject, context: DID = null): Metadata {
+            try {
+                return DIDEntity.deserialize(content, Metadata, context);
+            } catch (e) {
+                // DIDSyntaxException
+                if (e instanceof MalformedMetadataException)
+                    throw e;
+                else
+                    throw new MalformedMetadataException(e);
             }
         }
     }

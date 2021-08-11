@@ -20,19 +20,15 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty } from "@elastosfoundation/jackson-js";
 import { CredentialList } from "./credentiallist";
 import { ResolveError } from "./resolveerror";
-import { ResolveResponse, RpcConstants, JsonRpcError } from "./resolveresponse";
+import { ResolveResponse, JsonRpcError } from "./resolveresponse";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
+import { DIDEntity } from "../internals";
+import { JSONObject } from "../json";
 
-@JsonCreator()
 export class CredentialListResponse extends ResolveResponse<CredentialListResponse, CredentialList> {
-    @JsonProperty({value: RpcConstants.RESULT})
-    @JsonClassType({type: ()=>[CredentialList]})
-    protected result: CredentialList;
-
-    constructor(responseId: string, resultOrError: CredentialList | ResolveError | JsonRpcError) {
+    constructor(responseId: string = null, resultOrError: CredentialList | ResolveError | JsonRpcError = null) {
         super();
         this.jsonrpc = ResolveResponse.JSON_RPC_VERSION;
         this.id = responseId;
@@ -46,31 +42,23 @@ export class CredentialListResponse extends ResolveResponse<CredentialListRespon
         }
     }
 
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.RESULT, required: false}) result: CredentialList, @JsonProperty({value: RpcConstants.ERROR, required: false}) error: JsonRpcError): CredentialListResponse {
-        let newInstance = result ? new CredentialListResponse(id, result) : new CredentialListResponse(id, error);
-        if (result) newInstance.result = result;
-        return newInstance;
-    }
-
     public getResult(): CredentialList {
         return this.result;
     }
 
-    protected async sanitize(): Promise<void> {
-        await super.sanitize();
-
-        if (this.result == null && this.error == null)
-            throw new MalformedResolveResponseException("Missing result or error");
-
-        if (this.result != null) {
-            try {
-                await this.result.sanitize();
-            } catch (e) {
-                // MalformedResolveResultException
-                throw new MalformedResolveResponseException("Invalid result", e);
-            }
-        }
+    protected resultFromJson(json: JSONObject): CredentialList {
+        return CredentialList.parse(json);
     }
 
+    public static parse(content: string | JSONObject, context = null): CredentialListResponse {
+        try {
+            return DIDEntity.deserialize(content, CredentialListResponse, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveResponseException)
+                throw e;
+            else
+                throw new MalformedResolveResponseException(e);
+        }
+    }
 }

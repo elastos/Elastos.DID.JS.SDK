@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonIdentityInfo, JsonInclude, JsonIncludeType, JsonProperty, ObjectIdGenerator } from "@elastosfoundation/jackson-js";
 import { DID } from "../internals";
 import { DIDURL } from "../internals";
-import type { Hashable } from "../hashable";
+import { DIDEntity  } from "../internals";
 import { ResolveRequest } from "./resolverequest";
+import { JSONObject } from "../json"
 import { hashCode } from "../internals";
+import { MalformedResolveRequestException } from "../exceptions/exceptions";
 
-@JsonCreator()
 export class CredentialListRequest extends ResolveRequest<CredentialListRequest, Parameters> {
     public static PARAMETER_DID = "did";
     public static PARAMETER_SKIP = "skip";
@@ -35,7 +35,7 @@ export class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 
     public static METHOD_NAME = "did_listCredentials";
 
-    public constructor(@JsonProperty({value: CredentialListRequest.ID}) requestId: string) {
+    public constructor(requestId: string = null) {
         super(requestId, CredentialListRequest.METHOD_NAME);
     }
 
@@ -66,22 +66,31 @@ export class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 
         return builder.build().toString();
     }
+
+    protected paramsFromJson(json: JSONObject): Parameters {
+        return Parameters.parse(json);
+    }
+
+    public static parse(content: string | JSONObject, context = null): CredentialListRequest {
+        try {
+            return DIDEntity.deserialize(content, CredentialListRequest, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveRequestException)
+                throw e;
+            else
+                throw new MalformedResolveRequestException(e);
+        }
+    }
 }
 
-@JsonCreator()
-class Parameters implements Hashable {
-    @JsonProperty({value: CredentialListRequest.PARAMETER_DID}) @JsonClassType({type: () => [DID]})
+class Parameters extends ResolveRequest.Parameters<Parameters> {
     public did: DID;
-
-    @JsonProperty({value: CredentialListRequest.PARAMETER_SKIP})
-    @JsonInclude({value: JsonIncludeType.NON_DEFAULT})
     public skip: number;
-
-    @JsonProperty({value: CredentialListRequest.PARAMETER_LIMIT})
-    @JsonInclude({value: JsonIncludeType.NON_DEFAULT})
     public limit: number;
 
-    public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip = 0, limit = 0) {
+    public constructor(did: DID = null, skip = 0, limit = 0) {
+        super();
         this.did = did;
         this.skip = skip;
         this.limit = limit;
@@ -107,5 +116,37 @@ class Parameters implements Hashable {
             return false;
 
         return this.limit == p.limit;
+    }
+
+    public toJSON(key: string = null): JSONObject {
+        let json: JSONObject = {};
+
+        json.did = this.did.toString();
+
+        if (this.skip && this.skip != 0)
+            json.skip = this.skip;
+
+        if (this.limit && this.limit != 0)
+            json.limit = this.limit;
+
+        return json;
+    }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        this.did = super.getDid("did", json.did, {mandatory: true, nullable: false});
+        this.skip = this.getNumber("skip", json.skip, {mandatory: false, nullable: false, defaultValue: 0});
+        this.limit = this.getNumber("limit", json.limit, {mandatory: false, nullable: false, defaultValue: 0});
+    }
+
+    public static parse(content: string | JSONObject, context = null): Parameters {
+        try {
+            return DIDEntity.deserialize(content, Parameters, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveRequestException)
+                throw e;
+            else
+                throw new MalformedResolveRequestException(e);
+        }
     }
 }

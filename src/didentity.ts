@@ -20,32 +20,30 @@
  * SOFTWARE.
  */
 
-import { ObjectMapper } from "@elastosfoundation/jackson-js";
-import type {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js";
-import type { Class } from "./class";
-import { 
-    DID, 
-    Logger 
-} from "./internals";
+import { DID, DIDURL } from "./internals";
+import { JSONObject } from "./json";
+import { checkArgument } from "./internals";
 import {
     DIDSyntaxException,
     UnknownInternalException,
     InvalidDateFormat
 } from "./exceptions/exceptions";
-import type { JSONObject } from "./json";
-import { checkArgument } from "./internals";
+
+export interface ValueOptions {
+    mandatory?: boolean;
+    nullable?: boolean;
+    emptiable?: boolean;
+    defaultValue?: number | boolean | string | string[] | DID | DID[] | DIDURL | Date;
+    context?: DID;
+}
 
 /**
  * Base class for all DID objects.
  */
-export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
-
-    public static CONTEXT_KEY = "org.elastos.did.context";
-
+export abstract class DIDEntity<T> {
     private static NORMALIZED_DEFAULT = true;
+    //protected static NORMALIZED_KEY = "elastos.did.normalized";
+    //protected static COMPACT_KEY = "elastos.did.compact";
 
     /**
      * Get current object's DID context.
@@ -56,13 +54,6 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
         return null;
     }
 
-    /**
-     * Post sanitize routine after deserialization.
-     *
-     * @throws DIDSyntaxException if the DID object is invalid
-     */
-    protected async sanitize(): Promise<void> {}
-
     // TODO: CHECK THIS! NOT SURE THIS REALLY CLONES INHERITING CLASSES (FIELDS, METHODS) WELL
     public clone(): DIDEntity<T> {
         const clone = Object.assign({}, this);
@@ -70,50 +61,9 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
         return clone;
     }
 
-    /**
-     * Get the ObjectMapper for serialization or deserialization.
-     *
-     * @return the ObjectMapper instance.
-     */
-    public static getDefaultObjectMapper(): ObjectMapper {
-        let mapper = new ObjectMapper();
+    public abstract toJSON(key: string): JSONObject;
 
-        mapper.defaultStringifierContext.features.serialization.DEFAULT_VIEW_INCLUSION = false;
-        mapper.defaultStringifierContext.features.serialization.WRITE_SELF_REFERENCES_AS_NULL = true;
-        mapper.defaultStringifierContext.features.serialization.FAIL_ON_SELF_REFERENCES = true;
-
-        mapper.defaultStringifierContext.serializers.push({
-            type: () => Date,
-            order: 0,
-            mapper: this.DateSerializer.serialize
-        });
-
-        mapper.defaultParserContext.features.deserialization.FAIL_ON_UNKNOWN_PROPERTIES = false;
-        mapper.defaultParserContext.features.deserialization.DEFAULT_VIEW_INCLUSION = false;
-
-        mapper.defaultParserContext.deserializers.push({
-            type: () => Date,
-            order: 0,
-            mapper: this.DateSerializer.deserialize
-        });
-
-        return mapper;
-    }
-
-    /**
-     * Get the ObjectMapper for serialization.
-     *
-     * @param normalized if normalized output, ignored when the sign is true
-     * @return the ObjectMapper instance
-     */
-    protected getObjectMapper(normalized: boolean = undefined): ObjectMapper {
-        let mapper = DIDEntity.getDefaultObjectMapper();
-        let serializeContext = new DIDEntity.SerializeContext(normalized, mapper, this.getSerializeContextDid());
-
-        mapper.defaultStringifierContext.attributes[DIDEntity.CONTEXT_KEY] = serializeContext;
-
-        return mapper;
-    }
+    protected abstract fromJSON(json: JSONObject, context: DID): void;
 
     /**
      * Generic method to parse a DID object from a string JSON
@@ -125,25 +75,36 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
      * @return the parsed DID object
      * @throws DIDSyntaxException if a parse error occurs
      */
-    public static async parse <T extends DIDEntity<T>>(source: JSONObject | string, clazz: Class<T>): Promise<T> {
+    protected static deserialize<T extends DIDEntity<T>>(source: JSONObject | string, type: (new () => T), context: DID = null): T {
         checkArgument(source && source !== "", "Invalid JSON content");
-        checkArgument(clazz && clazz !== null, "Invalid result class object");
-        let content: string;
-        if (typeof source !== "string") {
-            content = JSON.stringify(source);
+
+        let content: JSONObject;
+        if (typeof source === "string") {
+            content = JSON.parse(source);
         } else {
             content = source;
         }
-        let mapper = DIDEntity.getDefaultObjectMapper();
 
-        try {
-            mapper.defaultParserContext.mainCreator = () => [clazz];
-            let obj = mapper.parse<T>(content);
-            await obj.sanitize();
-            return obj;
-        } catch (e) {
-            throw new DIDSyntaxException("Invalid JSON syntax" + (Logger.levelIs(Logger.DEBUG) ? (" (" + clazz.name + "): " + content) : ""), e);
+        let obj = new type();
+        obj.fromJSON(content, context);
+
+        return obj;
+    }
+
+    protected static async deserializeAsync<T extends DIDEntity<T>>(source: JSONObject | string, type: (new () => T), context: DID = null): Promise<T> {
+        checkArgument(source && source !== "", "Invalid JSON content");
+
+        let content: JSONObject;
+        if (typeof source === "string") {
+            content = JSON.parse(source);
+        } else {
+            content = source;
         }
+
+        let obj = new type();
+        await obj.fromJSON(content, context);
+
+        return obj;
     }
 
     /**
@@ -155,14 +116,13 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
      */
     public serialize(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
         try {
-            return this.getObjectMapper(normalized).stringify(this);
+            let key = (normalized) ? null : this.getSerializeContextDid()?.toString();
+            return JSON.stringify(this.toJSON(key));
         } catch (e) {
-            // JsonProcessingException
             throw new UnknownInternalException(e);
         }
         return null;
     }
-
 
     /**
      * Get the JSON string representation of the object.
@@ -173,59 +133,249 @@ export class DIDEntity<T> { //implements Cloneable<DIDEntity<T>> {
     public toString(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
         return this.serialize(normalized);
     }
-}
 
-export namespace DIDEntity {
+    protected dateToString(dateObj: Date): string {
+        return dateObj ? dateObj.toISOString().split('.')[0]+"Z" : null;
+    }
 
-    export class SerializeContext {
-        private normalized: boolean;
-        // We use a stringified DID instead of a DID because jackson does deep cloning on its context,
-        // which includes our custom SerializeContext. But then, lodash deepClones tries to clone our DID,
-        // which contains circular dependencies, therefore leading to infinite loop in deepClone. This
-        // is not related to serialization or deserialization itself.
-        private did: string;
-        private objectMapper: ObjectMapper;
+    protected dateFromString(dateStr: string): Date {
+        if (dateStr && isNaN(Date.parse(dateStr)))
+            throw new InvalidDateFormat(dateStr);
 
-        public constructor(normalized = false, objectMapper: ObjectMapper, did?: DID) {
-            this.normalized = normalized;
-            this.did = did ? did.toString() : null;
-            this.objectMapper = objectMapper;
+        return dateStr ? new Date(dateStr + (dateStr.slice(dateStr.length - 1) == 'Z' ? '':'Z')) : null;
+    }
+
+    protected getString(name: string, value: any, option: ValueOptions = {} as ValueOptions): string | null {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as string : null;
         }
 
-        public isNormalized(): boolean {
-            return this.normalized;
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
+
+            return option.defaultValue ? option.defaultValue as string : null;
         }
 
-        public setNormalized(normalized: boolean): SerializeContext {
-            this.normalized = normalized;
-            return this;
+        if (typeof value !== 'string')
+            throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+
+        return value;
+    }
+
+    protected getNumber(name: string, value: any, option: ValueOptions = {} as ValueOptions): number | null {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as number : null;
         }
 
-        public getObjectMapper() {
-            return this.objectMapper;
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
+
+            return option.defaultValue ? option.defaultValue as number : null;
         }
 
-        public getDid(): DID  {
-            return DID.from(this.did);
+        if (typeof value !== 'number')
+            throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+
+        return value;
+    }
+
+    protected getBoolean(name: string, value: any, option: ValueOptions = {} as ValueOptions): boolean | null {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as boolean : null;
         }
 
-        public setDid(did: DID): void {
-            this.did = did ? did.toString() : null;
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
+
+            return option.defaultValue ? option.defaultValue as boolean : null;
+        }
+
+        if (typeof value !== 'boolean')
+            throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+
+        return value;
+    }
+
+    protected getStrings(name: string, value: any, option: ValueOptions = {} as ValueOptions): string[] | null {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as string[] : null;
+        }
+
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
+
+            return option.defaultValue ? option.defaultValue as string[] : null;
+        }
+
+        if (typeof value === 'string')
+            return [ value as string ];
+
+        if (Array.isArray(value)) {
+            let strings = Array.from(value, (s) => {
+                if(typeof s !== 'string')
+                    new DIDSyntaxException("Invalid property value: " + name + ", type error");
+                return s;
+            });
+
+            return strings.sort();
+        }
+
+        throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+    }
+
+    protected getDids(name: string, value: any, option: ValueOptions = {} as ValueOptions): DID[] | null {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as DID[] : null;
+        }
+
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
+
+            return option.defaultValue ? option.defaultValue as DID[] : null;
+        }
+
+        if (typeof value === 'string') {
+            try {
+                return [ new DID(value) ];
+            } catch (e) {
+                new DIDSyntaxException("Invalid property value: " + name + ", " + e, e);
+            }
+        }
+
+        if (Array.isArray(value)) {
+            let dids = Array.from(value, (s) => {
+                if(typeof s !== 'string')
+                    new DIDSyntaxException("Invalid property value: " + name + ", type error");
+
+                try {
+                    return new DID(s);
+                } catch (e) {
+                    new DIDSyntaxException("Invalid property value: " + name + ", " + e, e);
+                }
+            });
+
+            return dids.sort((a, b) => a.compareTo(b));
+        }
+
+        throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+    }
+
+    protected getDate(name: string, value: any, option: ValueOptions = {} as ValueOptions): Date | null {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as Date : null;
+        }
+
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
+
+            return option.defaultValue ? option.defaultValue as Date : null;
+        }
+
+        if (typeof value !== 'string')
+            throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+
+        try {
+            return this.dateFromString(value);
+        } catch (e) {
+            throw new DIDSyntaxException("Invalid property value: " + name + ", " + e, e);
         }
     }
 
-    export class DateSerializer {
-        static serialize(key: string, dateObj: Date, context: JsonStringifierTransformerContext): string {
-            return dateObj ? dateObj.toISOString().split('.')[0]+"Z" : null;
+    protected getDid(name: string, value: any, option: ValueOptions = {} as ValueOptions): DID | null {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as DID : null;
         }
 
-        static deserialize(key: string, dateStr: string /* | Date */, context: JsonParserTransformerContext): Date {
-            /* if (dateStr instanceof Date)
-                return dateStr; */
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
 
-            if (dateStr && isNaN(Date.parse(dateStr)))
-                throw new InvalidDateFormat(dateStr);
-            return dateStr ? new Date(dateStr + (dateStr.slice(dateStr.length - 1) == 'Z' ? '':'Z')) : null;
+            return option.defaultValue ? option.defaultValue as DID : null;
+        }
+
+        if (typeof value !== 'string')
+            throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+
+        try {
+            return new DID(value);
+        } catch (e) {
+            throw new DIDSyntaxException("Invalid property value: " + name + ", " + e, e);
+        }
+    }
+
+    protected getDidUrl(name: string, value: any, option: ValueOptions = {} as ValueOptions): DIDURL | null | undefined {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as DIDURL : null;
+        }
+
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
+
+            return option.defaultValue ? option.defaultValue as DIDURL : null;
+        }
+
+        if (typeof value !== 'string')
+            throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+
+        try {
+            return new DIDURL(value, option.context);
+        } catch (e) {
+            throw new DIDSyntaxException("Invalid property value: " + name + ", " + e, e);
         }
     }
 }

@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-        
+
 export class VerificationEventListener {
     public done(context : Object, succeeded : boolean, message : string) : void {};
 
@@ -88,7 +88,7 @@ class DefaultVerificationEventListener extends VerificationEventListener {
     public reset() : void {
         this.records = [];
     }
-    
+
     public toString() : string {
         let str = "";
         for (let record of this.records)

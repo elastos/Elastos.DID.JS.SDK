@@ -26,7 +26,6 @@ import { Base58 } from "./crypto/base58";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
 import type { JSONObject, JSONValue } from "./json";
 import { DefaultDIDAdapter } from "./internals";
-import { SimulatedIDChain } from "./internals";
 import { SimulatedIDChainAdapter } from "./internals";
 import { runningInBrowser } from "./utils";
 
@@ -90,7 +89,6 @@ export {
     DIDBiographyStatus,
     IDChainRequest,
     DefaultDIDAdapter,
-    SimulatedIDChain,
     SimulatedIDChainAdapter,
     Exceptions,
     VerificationEventListener,

@@ -20,24 +20,17 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty } from "@elastosfoundation/jackson-js";
 import type { DID } from "../internals";
+import { JSONObject } from "../json";
+import { DIDEntity } from "../internals";
 import { DIDRequest } from "./didrequest";
 import { IDTransaction } from "./idtransaction";
+import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
 
 /**
  * The class records the information of the specified DID's transaction.
  */
 export class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
-    @JsonProperty({value: IDTransaction.OPERATION})
-    @JsonClassType({type: () => [DIDRequest]})
-    declare protected request: DIDRequest;
-
-    @JsonCreator()
-    static toDIDTransaction(): DIDTransaction {
-        return new DIDTransaction();
-    }
-
     /**
      * Constructs the DIDTransaction with the given value.
      *
@@ -51,5 +44,21 @@ export class DIDTransaction extends IDTransaction<DIDTransaction, DIDRequest> {
 
     public getDid(): DID {
         return this.getRequest().getDid();
+    }
+
+    protected requestFromJSON(json: JSONObject): DIDRequest {
+        return DIDRequest.parse(json);
+    }
+
+    public static parse(content: string | JSONObject, context = null): DIDTransaction {
+        try {
+            return DIDEntity.deserialize(content, DIDTransaction, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedIDChainTransactionException)
+                throw e;
+            else
+                throw new MalformedIDChainTransactionException(e);
+        }
     }
 }

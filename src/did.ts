@@ -20,58 +20,20 @@
  * SOFTWARE.
  */
 
+import type { DIDDocument, DIDBiography } from "./internals";
 import { DIDMetadata } from "./internals";
+import { DIDBackend } from "./internals";
 import {
+    DIDURLParser,
     checkEmpty,
     checkNotNull,
-    isEmpty,
-    hashCode,
-    DIDURLParser
+    hashCode
 } from "./internals";
-import type { DIDDocument } from "./internals";
-import { DIDBackend } from "./internals";
-import type { DIDBiography } from "./internals";
-import {
-    JsonSerialize,
-    JsonDeserialize,
-    JsonCreator,
-    JsonProperty,
-    JsonClassType
-} from "@elastosfoundation/jackson-js";
-import {
-    Serializer,
-    Deserializer
-} from "./internals";
-import type {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js";
-import { IllegalArgumentException } from "./exceptions/exceptions";
-
-class DIDSerializer extends Serializer {
-    public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
-        return did ? did.toString() : null;
-    }
-}
-
-class DIDDeserializer extends Deserializer {
-    public static deserialize(value: string, context: JsonParserTransformerContext): DID {
-        try {
-            if (value && value.includes("{"))
-                throw new IllegalArgumentException("Invalid DIDURL");
-            return new DID(value);
-        } catch (e) {
-            throw new IllegalArgumentException("Invalid DID");
-        }
-    }
-}
 
 /**
  * DID is a globally unique identifier that does not require
  * a centralized registration authority.
  */
-@JsonSerialize({using:  DIDSerializer.serialize})
-@JsonDeserialize({using:  DIDDeserializer.deserialize})
 export class DID {
     public static METHOD = "elastos";
     //public static METHOD_SPECIFIC_ID = "elastos";
@@ -81,14 +43,9 @@ export class DID {
     private methodSpecificId: string | null;
     private metadata: DIDMetadata | null;
 
-    public constructor(methodOrDID: string, methodSpecificId: string | null = null, internal = false) {
+    public constructor(methodOrDID: string, methodSpecificId: string | null = null) {
         this.metadata = null;
-        if (internal) {
-            // For jackson creation only
-            this.method = null;
-            this.methodSpecificId = null;
-        }
-        else if (methodSpecificId) {
+        if (methodSpecificId) {
             let method: string = methodOrDID;
             checkEmpty(method, "Invalid method");
             checkEmpty(methodSpecificId, "Invalid methodSpecificId");
@@ -104,15 +61,6 @@ export class DID {
             this.method = didParsed.did.method;
             this.methodSpecificId = didParsed.did.methodSpecificId;
         }
-    }
-
-    @JsonCreator()
-    public static jacksonCreator() {
-        // Already deserialized by our custom deserializer. Don't return an object here otherwise
-        // it will replace the deserialized one from the custom deserializer.
-        // Jackson seems to call BOTH the custom deserializer first, then call the creator (either "constructor",
-        // or the custom @JsonCreator method).
-        return null;
     }
 
     public static from(did: DID | string | null): DID | null {
@@ -135,6 +83,10 @@ export class DID {
 
     public setMetadata(metadata: DIDMetadata): void {
         this.metadata = metadata;
+    }
+
+    public toJSON(key: String = null): string {
+        return this.toString();
     }
 
     public async getMetadata(): Promise<DIDMetadata> {
@@ -219,46 +171,3 @@ export class DID {
         return rc == 0 ? strcmp(this.methodSpecificId, did.methodSpecificId) : rc;
     }
 }
-
-
-
-/*
-import { CoinType, ChangeChain, SignType } from './constants'
-import { MnemonicManager, KeyManager } from "./core"
-
-const bip39 = require('bip39')
-
-export class DID {
-
-    public async generateNew (password = "") {
-        let mnemonic = MnemonicManager.generateMnemonic(password);
-        return await this.loadFromMnemonic(mnemonic, password);
-    }
-
-    public async loadFromMnemonic (mnemonic, password = "", index = 0) {
-        if (!bip39.validateMnemonic(mnemonic)) {
-            return null;
-        }
-        let seed = await MnemonicManager.getSeedFromMnemonic(mnemonic, password);
-        let privateKey = KeyManager.generateSubPrivateKey(this.buf2hex(seed), CoinType.ELA, ChangeChain.EXTERNAL, index).toString('hex');
-        let masterPublicKey = KeyManager.getMasterPublicKey(seed, CoinType.ELA);
-        let publicKey = KeyManager.generateSubPublicKey(masterPublicKey, ChangeChain.EXTERNAL, index).toString('hex')
-        let did = KeyManager.getAddressBase(publicKey, SignType.ELA_IDCHAIN).toString()
-        let publicBase58 = KeyManager.getPublicKeyBase58(masterPublicKey)
-
-        return {
-            mnemonic: mnemonic,
-            seed: this.buf2hex(seed),
-            did: `did:elastos:${did}`,
-            publicKey: publicKey,
-            privateKey: privateKey,
-            publicKeyBase58: publicBase58
-        }
-
-    }
-
-    private buf2hex(buffer: Buffer): Buffer {
-        return Buffer.from(Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join(''));
-    }
-}
-*/

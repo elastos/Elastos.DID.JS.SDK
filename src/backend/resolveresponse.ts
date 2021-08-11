@@ -20,33 +20,18 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSubTypes, JsonTypeInfo, JsonTypeInfoAs, JsonTypeInfoId } from "@elastosfoundation/jackson-js";
 import { DIDEntity } from "../internals";
-import { MalformedResolveResponseException } from "../exceptions/exceptions";
+import { JSONObject } from "../json";
 import { ResolveError } from "./resolveerror";
-import type { ResolveResult } from "./resolveresult";
+import { MalformedResolveResponseException } from "../exceptions/exceptions";
 
-export class RpcConstants {
-    public static ID = "id";
-    public static JSON_RPC = "jsonrpc";
-    public static RESULT = "result";
-    public static ERROR = "error";
-    public static ERROR_CODE = "code";
-    public static ERROR_MESSAGE = "message";
-    public static ERROR_DATA = "data";
-}
-
-@JsonPropertyOrder({value: ["code", "message", "data" ]})
-@JsonCreator()
-export class JsonRpcError {
-    @JsonProperty({value: RpcConstants.ERROR_CODE}) @JsonClassType({type: ()=>[Number]})
+export class JsonRpcError extends DIDEntity<JsonRpcError> {
     private code: number;
-    @JsonProperty({value: RpcConstants.ERROR_MESSAGE}) @JsonClassType({type: ()=>[String]})
     private message: string;
-    @JsonProperty({value: RpcConstants.ERROR_DATA}) @JsonClassType({type: ()=>[String]})
     private data: string;
 
-    constructor(@JsonProperty({value: RpcConstants.ERROR_CODE, required: true}) code: number, @JsonProperty({value: RpcConstants.ERROR_MESSAGE, required: true}) message: string, @JsonProperty({value: RpcConstants.ERROR_DATA, required: false}) data?: string) {
+    constructor(code: number = 0, message: string = null, data: string = null) {
+        super();
         this.code = code;
         this.message = message;
         this.data = data;
@@ -63,43 +48,55 @@ export class JsonRpcError {
     public getData(): string {
         return this.data;
     }
+
+    public toJSON(key: string = null): JSONObject {
+        return {
+            code: this.code,
+            message: this.message,
+            data: this.data
+        }
+    }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        this.code = this.getNumber("code", json.code, {mandatory: true, nullable: false, defaultValue: 0});
+        this.message = this.getString("message", json.message, {mandatory: false, nullable: true});
+        this.data = this.getString("data", json.data, {mandatory: false, nullable: true});
+    }
+
+    public static parse(content: string | JSONObject, context = null): JsonRpcError {
+        try {
+            return DIDEntity.deserialize(content, JsonRpcError, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveResponseException)
+                throw e;
+            else
+                throw new MalformedResolveResponseException(e);
+        }
+    }
 }
 
-@JsonPropertyOrder({value: ["id", "jsonrpc", "result", "error"]})
-@JsonInclude({value: JsonIncludeType.NON_NULL})
-export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
+export abstract class ResolveResponse<T, R extends ResolveResponse.Result<R>> extends DIDEntity<T> {
     protected static JSON_RPC_VERSION = "2.0";
 
-    @JsonProperty({value: RpcConstants.ID}) @JsonClassType({type: ()=>[String]})
     protected id: string;
-    @JsonProperty({value: RpcConstants.JSON_RPC}) @JsonClassType({type: ()=>[String]})
     protected jsonrpc: string;
-    @JsonProperty({value: RpcConstants.ERROR}) @JsonClassType({type: ()=>[JsonRpcError]})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
+    protected result: R;
     protected error: JsonRpcError;
 
-    protected constructor() { super(); }
-
-    /*
-    protected constructor(responseId: string, resultOrError: R | ResolveError | JsonRpcError) {
+    protected constructor(responseId: string = null, resultOrError: R | ResolveError | JsonRpcError = null) {
         super();
-        this.jsonRpcVersion = ResolveResponse.JSON_RPC_VERSION;
-        this.responseId = responseId;
+        this.jsonrpc = ResolveResponse.JSON_RPC_VERSION;
+        this.id = responseId;
         if (resultOrError instanceof ResolveError) {
             this.error = new JsonRpcError(resultOrError.code, resultOrError.message);
         } else if (resultOrError instanceof JsonRpcError) {
             this.error = resultOrError;
+        } else {
+            this.result = resultOrError;
         }
     }
 
-    @JsonCreator()
-    //public static jacksonCreatorParent(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.JSON_RPC, required: false}) jsonVersion?: string, @JsonProperty({value: RpcConstants.ID, required: false}) error?: JsonRpcError) {
-    public static emptyInstance(): ResolveResponse) {
-        let newInstance = new ResolveResponse(id, error);
-        newInstance.jsonRpcVersion = jsonVersion;
-        return newInstance;
-    }
-*/
     public getResponseId(): string {
         return this.id;
     }
@@ -112,11 +109,44 @@ export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T>
         return this.error.getMessage();
     }
 
-    // eslint-disable-next-line require-await
-    protected async sanitize(): Promise<void> {
-        if (this.jsonrpc == null || this.jsonrpc !== ResolveResponse.JSON_RPC_VERSION)
-            throw new MalformedResolveResponseException("Invalid JsonRPC version");
+    public getResult (): R {
+        return this.result;
     }
 
-    public getResult () { return null; }
+    public toJSON(key: string = null): JSONObject {
+        let json: JSONObject = {};
+        json.id = this.id;
+        json.jsonrpc = this.jsonrpc;
+
+        if (this.result)
+            json.result = this.result.toJSON(null);
+
+        if (this.error)
+            json.error = this.error.toJSON();
+
+        return json;
+    }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        this.id = this.getString("id", json.id, {mandatory: false, nullable: true, defaultValue: null});
+        this.jsonrpc = this.getString("jsonrpc", json.jsonrpc, {mandatory: true, nullable: false});
+        if (this.jsonrpc == null || this.jsonrpc !== ResolveResponse.JSON_RPC_VERSION)
+            throw new MalformedResolveResponseException("Invalid JsonRPC version");
+
+        if (!json.result && !json.error)
+            throw new MalformedResolveResponseException("Missing response data");
+
+        if (json.result)
+            this.result = this.resultFromJson(json.result as JSONObject);
+
+        if (json.error)
+            this.error = JsonRpcError.parse(json.error as JSONObject);
+    }
+
+    protected abstract resultFromJson(json: JSONObject): R;
+}
+
+export namespace ResolveResponse {
+    export abstract class Result<T> extends DIDEntity<T> {
+    }
 }

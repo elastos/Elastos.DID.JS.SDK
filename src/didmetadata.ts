@@ -24,7 +24,9 @@ import { AbstractMetadata } from "./internals";
 import type { Cloneable } from "./cloneable";
 import type { DID } from "./internals";
 import type { DIDStore } from "./internals";
-import { DIDStoreException } from "./exceptions/exceptions";
+import { DIDEntity } from "./internals";
+import { JSONObject } from "./json";
+import { DIDStoreException, MalformedMetadataException } from "./exceptions/exceptions";
 
 /**
  * The class defines the implement of DID Metadata.
@@ -188,6 +190,18 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
                     console.log("INTERNAL - error store metadata for DID {}", this.did);
                 throw e;
             }
+        }
+    }
+
+    public static parse(content: string | JSONObject, context: DID = null): DIDMetadata {
+        try {
+            return DIDEntity.deserialize(content, DIDMetadata, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedMetadataException)
+                throw e;
+            else
+                throw new MalformedMetadataException(e);
         }
     }
 }

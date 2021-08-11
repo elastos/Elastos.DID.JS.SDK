@@ -21,37 +21,25 @@
  */
 
 import dayjs from "dayjs";
-import {
-    JsonInclude,
-    JsonIncludeType,
-    JsonProperty,
-    JsonClassType,
-    JsonPropertyOrder,
-    JsonIgnore,
-    JsonCreator,
-    JsonSerialize
-} from "@elastosfoundation/jackson-js";
-import { Collections, Serializer } from "./internals";
+import { DID, DIDURL } from "./internals";
+import { Collections } from "./internals";
 import { Constants } from "./constants";
 import { ByteBuffer } from "./internals";
 import { EcdsaSigner } from "./internals";
 import { HDKey } from "./internals";
 import type { KeyPair } from "./crypto/keypair";
 import { SHA256 } from "./internals";
-import { DID } from "./internals";
 import { DIDBackend } from "./internals";
 import { DIDDocumentBuilder } from "./internals";
 import { DIDDocumentMultiSignature } from "./internals";
 import { DIDDocumentProof } from "./internals";
 import { DIDDocumentPublicKey } from "./internals";
-import { DIDDocumentPublicKeyReference } from "./internals";
 import { DIDDocumentService } from "./internals";
 import { DIDEntity } from "./internals";
 import { DIDMetadata } from "./internals";
 import { VerificationEventListener } from "./internals";
 import type { DIDStore } from "./internals";
 import type { DIDTransactionAdapter } from "./didtransactionadapter";
-import { DIDURL } from "./internals";
 import {
     AlreadySignedException,
     DIDAlreadyExistException,
@@ -75,19 +63,9 @@ import { TransferTicket } from "./internals";
 import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
-import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
+import type { JSONObject } from "./json";
+import { arrayish2Buffer } from "browserfs/dist/node/core/util";
 
-class DIDDocumentControllerSerializer extends Serializer {
-    public static serialize(controllers: DID[], context: JsonStringifierTransformerContext): any {
-        return controllers.length > 1 ? controllers : controllers[0];
-    }
-}
-
-class DIDDocumentProofSerializer extends Serializer {
-    public static serialize(proofs: DIDDocumentProof[], context: JsonStringifierTransformerContext): any {
-        return proofs.length > 1 ? proofs : proofs[0];
-    }
-}
 /**
  * The DIDDocument represents the DID information.
  *
@@ -99,23 +77,9 @@ class DIDDocumentProofSerializer extends Serializer {
  * services. One document must be have one subject, and at least one public
  * key.
  */
-// The values should be the real class field names, not the final JSON output field names.
-// Or keep the class field names same with the JSON field namas.
- @JsonPropertyOrder({value: [
-    "subject",
-    "controllers",
-    "multisig",
-    "_publickeys",
-    "_authentications",
-    "_authorizations",
-    "_credentials",
-    "_services",
-    "expires",
-    "_proofs" ]})
- @JsonInclude({value: JsonIncludeType.NON_EMPTY})
- export class DIDDocument extends DIDEntity<DIDDocument> {
-
+export class DIDDocument extends DIDEntity<DIDDocument> {
     private static log = new Logger("DIDDocument");
+    /*
     private static ID = "id";
     private static PUBLICKEY = "publicKey";
     private static CONTROLLER = "controller";
@@ -126,70 +90,23 @@ class DIDDocumentProofSerializer extends Serializer {
     private static VERIFIABLE_CREDENTIAL = "verifiableCredential";
     private static EXPIRES = "expires";
     private static PROOF = "proof";
+    */
 
-    @JsonProperty({ value: DIDDocument.ID })
-    @JsonClassType({type: () => [DID]})
     private subject: DID;
-
-    @JsonProperty({ value: DIDDocument.CONTROLLER })
-    @JsonSerialize({ using: DIDDocumentControllerSerializer.serialize})
     public controllers?: DID[];
-
-    @JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
-    @JsonClassType({type: () => [DIDDocumentMultiSignature]})
     public multisig?: DIDDocumentMultiSignature;
-
-    @JsonProperty({ value: DIDDocument.PUBLICKEY })
-    @JsonClassType({type: () => [Array, [DIDDocumentPublicKey]]})
-    public _publickeys?: DIDDocumentPublicKey[];
-
-    @JsonProperty({ value: DIDDocument.AUTHENTICATION })
-    @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
-    public _authentications?: DIDDocumentPublicKeyReference[];
-
-    @JsonProperty({ value: DIDDocument.AUTHORIZATION })
-    @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
-    public _authorizations?: DIDDocumentPublicKeyReference[];
-
-    @JsonProperty({ value: DIDDocument.VERIFIABLE_CREDENTIAL })
-    @JsonClassType({type: () => [Array, [VerifiableCredential]]})
-    public _credentials?: VerifiableCredential[];
-
-    @JsonProperty({ value: DIDDocument.SERVICE })
-    @JsonClassType({type: () => [Array, [DIDDocumentService]]})
-    public _services?: DIDDocumentService[];
-
-    @JsonProperty({ value: DIDDocument.EXPIRES })
-    @JsonInclude({ value: JsonIncludeType.NON_NULL}) // Need to force to NON_NULL because it inherits from class NON_EMPTY and jackson seems to consider Date objects as "empty" in utils_1.isEmptyValue()...
-    @JsonClassType({type: () => [Date]})
-    public expires?: Date;
-
-    @JsonProperty({ value: DIDDocument.PROOF })
-    @JsonSerialize({ using: DIDDocumentProofSerializer.serialize})
-    public _proofs?: DIDDocumentProof[];
-
-    @JsonIgnore()
-    public defaultPublicKey?: DIDDocumentPublicKey;
-
-    // Internal properties for DIDDocumentBuilder
-    @JsonIgnore()
-    public controllerDocs?: ComparableMap<DID, DIDDocument>;
-    @JsonIgnore()
     public publicKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
-    @JsonIgnore()
     public authenticationKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
-    @JsonIgnore()
     public authorizationKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
-    @JsonIgnore()
     public credentials?: ComparableMap<DIDURL, VerifiableCredential>;
-    @JsonIgnore()
     public services?: ComparableMap<DIDURL, DIDDocumentService>;
-    @JsonIgnore()
+    public expires?: Date;
     public proofs?: ComparableMap<DID, DIDDocumentProof>;
-    @JsonIgnore()
+
+    public defaultPublicKey?: DIDDocumentPublicKey;
+    public controllerDocs?: ComparableMap<DID, DIDDocument>;
     public effectiveController?: DID;
 
-    @JsonIgnore()
     private metadata?: DIDMetadata;
 
     /**
@@ -201,43 +118,6 @@ class DIDDocumentProofSerializer extends Serializer {
         super();
         this.subject = subject;
     }
-
-    // Add custom deserialization fields to the method params here + assign.
-    // Jackson does the rest automatically.
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any, @JsonProperty({value: "controllers"}) controllers?: any) {
-        let doc = new DIDDocument(null);
-
-        // Proofs
-        if (_proofs) {
-            if (_proofs instanceof Array)
-                doc._proofs = _proofs.map((p) => DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [DIDDocumentProof]}));
-            else
-                doc._proofs = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [DIDDocumentProof]})];
-        }
-
-        // Controllers
-        if (controllers) {
-            if (controllers instanceof Array)
-                doc.controllers = controllers.map((p) => DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [DID]}));
-            else
-                doc.controllers = [DIDDocument.getDefaultObjectMapper().parse(JSON.stringify(controllers), {mainCreator: () => [DID]})];
-        }
-
-        return doc;
-    }
-
-    // Use the delegating mode to receive the whole object as a single JS object.
-    // This seems to be the only way to receive already deserialized fields such as _proofs without
-    // jackson doing a double deserialization when trying to resolve the constructor
-    // parameters.
-    /* @JsonCreator({mode: JsonCreatorMode.PROPERTIES})
-    public static jacksonCreator(deserializedData: any) {
-        let doc = new DIDDocument(null);
-        doc._proofs = deserializedData._proofs; // set only the manually deserialized fields here ?
-        //Object.assign(doc, deserializedData);
-        return doc;
-    } */
 
     /**
      * Copy constructor.
@@ -251,20 +131,14 @@ class DIDDocumentProofSerializer extends Serializer {
         newInstance.effectiveController = doc.effectiveController;
         newInstance.multisig = doc.multisig;
         newInstance.publicKeys = doc.publicKeys;
-        newInstance._publickeys = doc._publickeys;
         newInstance.authenticationKeys = doc.authenticationKeys;
-        newInstance._authentications = doc._authentications;
         newInstance.authorizationKeys = doc.authorizationKeys;
-        newInstance._authorizations = doc._authorizations;
         newInstance.defaultPublicKey = doc.defaultPublicKey;
         newInstance.credentials = doc.credentials;
-        newInstance._credentials = doc._credentials;
         newInstance.services = doc.services;
-        newInstance._services = doc._services;
         newInstance.expires = doc.expires;
         if (withProof) {
             newInstance.proofs = doc.proofs;
-            newInstance._proofs = doc._proofs;
         }
         newInstance.metadata = doc.metadata;
         return newInstance;
@@ -570,7 +444,7 @@ class DIDDocumentProofSerializer extends Serializer {
                 throw new NoEffectiveControllerException(this.getSubject().toString());
         } else {
             if (!this.hasPublicKey(id))
-                throw new InvalidKeyException(DIDDocument.ID.toString());
+                throw new InvalidKeyException(id.toString());
         }
 
         if (!this.getMetadata().getStore().containsPrivateKey(id))
@@ -759,8 +633,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the  array
      */
     public getAuthorizationKeys(): DIDDocumentPublicKey[] {
-        let pks: DIDDocumentPublicKey[] = Array.from(this.authorizationKeys.values());
-        return pks;
+        return Array.from(this.authorizationKeys.values());
     }
 
     /**
@@ -827,7 +700,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the Credential array
      */
     public getCredentials(): VerifiableCredential[] {
-        return this._credentials;
+        return Array.from(this.credentials.values());
     }
 
     /**
@@ -883,7 +756,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the Service array
      */
     public getServices(): DIDDocumentService[] {
-        return this._services;
+        return Array.from(this.services.values());
     }
 
     /**
@@ -956,7 +829,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the Proof object
      */
     public getProof(): DIDDocumentProof {
-        return this._proofs[0];
+        return this.getProofs()[0];
     }
 
     /**
@@ -965,7 +838,7 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return list of the Proof objects
      */
     public getProofs(): DIDDocumentProof[] {
-        return this._proofs;
+        return this.proofs.valuesAsSortedArray();
     }
 
     /**
@@ -977,51 +850,88 @@ class DIDDocumentProofSerializer extends Serializer {
         return this.getSubject();
     }
 
-    /**
-     * Sanitize routine before sealing or after deserialization.
-     *
-     * @param withProof check the proof object or not
-     * @throws MalformedDocumentException if the document object is invalid
-     */
-    protected async sanitize(): Promise<void> {
-        await this.sanitizeControllers();
-        this.sanitizePublickKey();
-        await this.sanitizeCredential();
-        this.sanitizeService();
+    public toJSON(key: string = null): JSONObject {
+        let context: DID = key ? new DID(key) : null;
 
-        if (this.expires == null)
-            throw new MalformedDocumentException("Missing document expires.");
+        let json: JSONObject = {};
+        json.id = this.subject.toString();
 
-        this.sanitizeProof();
+        if (this.controllers)
+            json.controller = this.controllers.length == 1 ? this.controllers[0].toString() :
+                    Array.from(this.controllers, (c) => c.toString());
+
+        if (this.multisig)
+            json.multisig = this.multisig.toString();
+
+        if (this.publicKeys.size > 0)
+            json.publicKey = Array.from(this.publicKeys.valuesAsSortedArray(), (pk) => pk.toJSON(key));
+
+        if (this.authenticationKeys.size > 0)
+            json.authentication = Array.from(this.authenticationKeys.valuesAsSortedArray(),
+                    (pk) => pk.getId().toString(context));
+
+        if (this.authorizationKeys.size > 0)
+            json.authorization = Array.from(this.authorizationKeys.valuesAsSortedArray(),
+                    (pk) => pk.getId().toString(context));
+
+        if (this.credentials.size > 0)
+            json.verifiableCredential = Array.from(this.credentials.valuesAsSortedArray(), (vc) => vc.toJSON(key));
+
+        if (this.services.size > 0)
+            json.service = Array.from(this.services.valuesAsSortedArray(), (svc) => svc.toJSON(key));
+
+        if (this.expires)
+            json.expires = this.dateToString(this.expires);
+
+        if (this.proofs) {
+            let proofs = this.proofs.valuesAsSortedArray();
+            if (proofs.length == 1)
+                json.proof = proofs[0].toJSON(key);
+            else
+                json.proof = Array.from(proofs, v => v.toJSON(key));
+        }
+
+        return json;
+    }
+    protected async fromJSON(json: JSONObject, context: DID = null): Promise<void> {
+        this.fromJSONOnly(json, context);
+        await this.resolveControllers();
     }
 
-    private async sanitizeControllers() {
-        if (this.controllers == null || this.controllers.length == 0) {
-            this.controllers = [];
-            this.controllerDocs = new ComparableMap();
+    private async resolveControllers(): Promise<void> {
+        let ps: Promise<void>[] = [];
+        for (let controller of this.controllers) {
+            let rp = controller.resolve().then((doc) => {
+                if (doc == null)
+                    throw new MalformedDocumentException("Can not resolve controller: " + controller);
 
-            if (this.multisig != null)
-                throw new MalformedDocumentException("Invalid multisig property");
+                if (this.controllerDocs.has(controller))
+                    throw new MalformedDocumentException("Duplicated controller: " + controller);
 
-            return;
+                this.controllerDocs.set(controller, doc);
+            });
+
+            ps.push(rp);
         }
+        try {
+            await Promise.all(ps);
+        } catch (e) {
+            throw new  MalformedDocumentException("Can not resolve the controller's DID: " + e, e);
+        }
+    }
+
+    private fromJSONOnly(json: JSONObject, context: DID = null): void {
+        this.subject = this.getDid("id", json.id, {mandatory: false, nullable: false, defaultValue: null});
+        context = this.subject; // set the JSON parser context
+        this.controllers = this.getDids("controller", json.controller, {mandatory: false, nullable: false});
+        let ms = this.getString("multisig", json.multisig, {mandatory: false, nullable: false});
+        if (ms)
+            this.multisig = DIDDocumentMultiSignature.fromString(ms);
 
         this.controllerDocs = new ComparableMap<DID, DIDDocument>();
-        try {
-            for (let did of this.controllers) {
-                let doc = await did.resolve();
-                if (doc == null)
-                    throw new MalformedDocumentException("Can not resolve controller: " + did);
-
-                this.controllerDocs.set(did, doc);
-            }
-        } catch (e) {
-            // DIDResolveException
-            throw new MalformedDocumentException("Can not resolve the controller's DID");
-        }
 
         if (this.controllers.length == 1) {
-            if (this.multisig != null)
+            if (this.multisig)
                 throw new MalformedDocumentException("Invalid multisig property");
         } else {
             if (this.multisig == null)
@@ -1031,286 +941,170 @@ class DIDDocumentProofSerializer extends Serializer {
                 throw new MalformedDocumentException("Invalid multisig property");
         }
 
-        Collections.sort(this.controllers);
+        this.publicKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
+        if (json.publicKey) {
+            if (!Array.isArray(json.publicKey))
+                throw new MalformedDocumentException("Invalid property: publicKey, type error.");
 
-        if (this.controllers.length == 1)
-            this.effectiveController = this.controllers[0];
-    }
+            for (let obj of json.publicKey ) {
+                let pk: DIDDocumentPublicKey;
+                let pkJson = obj as JSONObject;
 
-    private sanitizePublickKey() {
-        let pks = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
-
-        if (this._publickeys != null && this._publickeys.length > 0) {
-            for (let pk of this._publickeys) {
-                if (pk.getId().getDid() == null) {
-                    pk.getId().setDid(this.getSubject());
-                } else {
-                    if (!pk.getId().getDid().equals(this.getSubject()))
-                        throw new MalformedDocumentException("Invalid public key id: " + pk.getId());
+                try {
+                    pk = DIDDocumentPublicKey.deserialize(pkJson , DIDDocumentPublicKey, context);
+                } catch (e) {
+                    throw new MalformedDocumentException("Invalid publicKey: " + pkJson.id, e);
                 }
 
-                if (pks.has(pk.getId()))
-                    throw new MalformedDocumentException("Public key already exists: " + pk.getId());
+                if (this.publicKeys.has(pk.getId()))
+                    throw new MalformedDocumentException("Duplicated publicKey: " + pk.getId());
 
-                if (!pk.getPublicKeyBase58())
-                    throw new MalformedDocumentException("Invalid public key base58 value.");
-
-                if (pk.getType() == null)
-                    pk.type = Constants.DEFAULT_PUBLICKEY_TYPE;
-
-                if (pk.getController() == null)
-                    pk.controller = this.getSubject();
-
-                pks.set(pk.getId(), pk);
+                this.publicKeys.set(pk.getId(), pk);
             }
         }
 
-        if (this._authentications != null && this._authentications.length > 0) {
-            this.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
-            let pk: DIDDocumentPublicKey;
+        this.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
+        if (json.authentication) {
+            if (!Array.isArray(json.authentication))
+                throw new MalformedDocumentException("Invalid property: authentication, type error.");
 
-            for (let keyRef of this._authentications) {
-                if (keyRef.isVirtual()) {
-                    if (keyRef.getId().getDid() == null) {
-                        keyRef.getId().setDid(this.getSubject());
-                    } else {
-                        if (!keyRef.getId().getDid().equals(this.getSubject()))
-                            throw new MalformedDocumentException("Invalid publicKey id: " + keyRef.getId());
-                    }
+            for (let obj of json.authentication ) {
+                let pk: DIDDocumentPublicKey;
 
-                    pk = pks.get(keyRef.getId());
-                    if (pk == null)
-                        throw new MalformedDocumentException("Not exists publicKey reference: " + keyRef.getId());
+                if (typeof obj === 'string') {
+                    let id = new DIDURL(obj as string, context);
+                    if (!this.publicKeys.has(id))
+                        throw new MalformedDocumentException("Not exists publicKey reference: " + id);
 
-                    keyRef.update(pk);
+                    pk = this.publicKeys.get(id);
                 } else {
-                    pk = keyRef.getPublicKey();
+                    obj = obj as JSONObject;
 
-                    if (keyRef.getId().getDid() == null) {
-                        keyRef.getId().setDid(this.getSubject());
-                    } else {
-                        if (!keyRef.getId().getDid().equals(this.getSubject()))
-                            throw new MalformedDocumentException("Invalid publicKey id: " + keyRef.getId());
+                    try {
+                        pk = DIDDocumentPublicKey.deserialize(obj , DIDDocumentPublicKey, context);
+                    } catch (e) {
+                        throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                     }
 
-                    if (pks.has(pk.getId()))
-                        throw new MalformedDocumentException("Public key already exists: " + pk.getId());
+                    if (this.publicKeys.has(pk.getId()))
+                        throw new MalformedDocumentException("Duplicated publicKey: " + pk.getId());
 
-                    if (!pk.getPublicKeyBase58())
-                        throw new MalformedDocumentException("Invalid public key base58 value.");
-
-                    if (pk.getType() == null)
-                        pk.type = Constants.DEFAULT_PUBLICKEY_TYPE;
-
-                    if (pk.getController() == null)
-                        pk.controller = this.getSubject();
-
-                    pks.set(pk.getId(), pk);
+                    this.publicKeys.set(pk.getId(), pk);
                 }
+
+                if (!pk.getController().equals(context))
+                    throw new MalformedDocumentException("Invalid authentication key: " + pk.getId());
 
                 this.authenticationKeys.set(pk.getId(), pk);
             }
-
-            Collections.sort(this._authentications);
-        } else {
-            this._authentications = [];
-            this.authenticationKeys = new ComparableMap();
         }
 
-        if (this._authorizations != null && this._authorizations.length > 0) {
-            this.authorizationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
-            let pk: DIDDocumentPublicKey;
+        this.authorizationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
+        if (json.authorization) {
+            if (!Array.isArray(json.authorization))
+                throw new MalformedDocumentException("Invalid property: authorization, type error.");
 
-            for (let keyRef of this._authorizations) {
-                if (keyRef.isVirtual()) {
-                    if (keyRef.getId().getDid() == null) {
-                        keyRef.getId().setDid(this.getSubject());
-                    } else {
-                        if (!keyRef.getId().getDid().equals(this.getSubject()))
-                            throw new MalformedDocumentException("Invalid publicKey id: " + keyRef.getId());
-                    }
+            for (let obj of json.authorization ) {
+                let pk: DIDDocumentPublicKey;
 
-                    pk = pks.get(keyRef.getId());
-                    if (pk == null)
-                        throw new MalformedDocumentException("Not exists publicKey reference: " + keyRef.getId());
+                if (typeof obj === 'string') {
+                    let id = new DIDURL(obj as string, context);
+                    if (!this.publicKeys.has(id))
+                        throw new MalformedDocumentException("Not exists publicKey reference: " + id);
 
-                    keyRef.update(pk);
+                    pk = this.publicKeys.get(id);
                 } else {
-                    pk = keyRef.getPublicKey();
+                    obj = obj as JSONObject;
 
-                    if (keyRef.getId().getDid() == null) {
-                        keyRef.getId().setDid(this.getSubject());
-                    } else {
-                        if (!keyRef.getId().getDid().equals(this.getSubject()))
-                            throw new MalformedDocumentException("Invalid publicKey id: " + keyRef.getId());
+                    try {
+                        pk = DIDDocumentPublicKey.deserialize(obj , DIDDocumentPublicKey, context);
+                    } catch (e) {
+                        throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                     }
 
-                    if (pks.has(pk.getId()))
-                        throw new MalformedDocumentException("Public key already exists: " + pk.getId());
+                    if (this.publicKeys.has(pk.getId()))
+                        throw new MalformedDocumentException("Duplicated publicKey: " + pk.getId());
 
-                    if (!pk.getPublicKeyBase58())
-                        throw new MalformedDocumentException("Invalid public key base58 value.");
-
-                    if (pk.getType() == null)
-                        pk.type = Constants.DEFAULT_PUBLICKEY_TYPE;
-
-                    if (pk.getController() == null)
-                        throw new MalformedDocumentException("Public key missing controller: " + pk.getId());
-                    else {
-                        if (pk.getController().equals(this.getSubject()))
-                            throw new MalformedDocumentException("Authorization key with wrong controller: " + pk.getId());
-                    }
-
-                    pks.set(pk.getId(), pk);
+                    this.publicKeys.set(pk.getId(), pk);
                 }
+
+                if (pk.getController().equals(context))
+                    throw new MalformedDocumentException("Invalid authorization key: " + pk.getId());
 
                 this.authorizationKeys.set(pk.getId(), pk);
             }
-
-            Collections.sort(this._authorizations);
-        } else {
-            this._authorizations = [];
-            this.authorizationKeys = new ComparableMap();
         }
 
-        // for customized DID with controller, could be no public keys
-        if (pks.size > 0) {
-            this.publicKeys = pks;
-            this._publickeys = pks.valuesAsSortedArray();
-        } else {
-            this.publicKeys = new ComparableMap();
-            this._publickeys = [];
-        }
+        this.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
+        if (json.verifiableCredential) {
+            if (!Array.isArray(json.verifiableCredential))
+                throw new MalformedDocumentException("Invalid property: verifiableCredential, type error.");
 
-        // Find default key
-        for (let pk of this.publicKeys.values()) {
-            if (pk.getController().equals(this.getSubject())) {
-                let address = HDKey.toAddress(pk.getPublicKeyBytes());
-                if (address === this.getSubject().getMethodSpecificId()) {
-                    this.defaultPublicKey = pk;
-                    if (!this.authenticationKeys.has(pk.getId())) {
-                        if (this._authentications.length == 0) {
-                            this._authentications = [];
-                            this.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
-                        }
+            for (let obj of json.verifiableCredential ) {
+                let vc: VerifiableCredential;
+                let vcJson = obj as JSONObject;
 
-                        this._authentications.push(DIDDocumentPublicKeyReference.newWithKey(pk));
-                        this.authenticationKeys.set(pk.getId(), pk);
-                        Collections.sort(this._authentications);  
-                    }
-                    break;
+                try {
+                    vc = VerifiableCredential.deserialize(vcJson , VerifiableCredential, context);
+                } catch (e) {
+                    throw new MalformedDocumentException("Invalid verifiableCredential: " + vcJson.id, e);
                 }
+
+                if (this.credentials.has(vc.getId()))
+                    throw new MalformedDocumentException("Duplicated verifiableCredential: " + vc.getId());
+
+                this.credentials.set(vc.getId(), vc);
             }
         }
 
-        if (this.controllers.length == 0 && this.defaultPublicKey == null)
-            throw new MalformedDocumentException("Missing default public key.");
-    }
+        this.services = new ComparableMap<DIDURL, DIDDocumentService>();
+        if (json.service) {
+            if (!Array.isArray(json.service))
+                throw new MalformedDocumentException("Invalid property: service, type error.");
 
-    private async sanitizeCredential(): Promise<void> {
-        if (this._credentials == null || this._credentials.length == 0) {
-            this._credentials = [];
-            this.credentials = new ComparableMap();
-            return;
-        }
+            for (let obj of json.service ) {
+                let svc: DIDDocumentService;
+                let svcJson = obj as JSONObject;
 
-        let vcs = new ComparableMap<DIDURL, VerifiableCredential>();
-        for (let vc of this._credentials) {
-            if (vc.getId() == null)
-                throw new MalformedDocumentException("Missing credential id.");
-
-            if (vc.getId().getDid() == null) {
-                vc.getId().setDid(this.getSubject());
-            } else {
-                if (!vc.getId().getDid().equals(this.getSubject()))
-                    throw new MalformedDocumentException("Invalid crdential id: " + vc.getId());
-            }
-
-            if (vcs.has(vc.getId()))
-                throw new MalformedDocumentException("Credential already exists: " + vc.getId());
-
-            if (vc.getSubject().getId() == null)
-                vc.getSubject().setId(this.getSubject());
-
-            try {
-                await vc.sanitize();
-            } catch (e) {
-                // DIDSyntaxException
-                throw new MalformedDocumentException("Invalid credential: " + vc.getId(), e);
-            }
-
-            vcs.set(vc.getId(), vc);
-        }
-
-        this.credentials = vcs;
-        this._credentials = Array.from(this.credentials.values());
-    }
-
-    private sanitizeService() {
-        if (this._services == null || this._services.length == 0) {
-            this._services = [];
-            this.services = new ComparableMap();
-            return;
-        }
-
-        let svcs = new ComparableMap<DIDURL, DIDDocumentService>();
-        for (let svc of this._services) {
-            if (svc.getId().getDid() == null) {
-                svc.getId().setDid(this.getSubject());
-            } else {
-                if (!svc.getId().getDid().equals(this.getSubject()))
-                    throw new MalformedDocumentException("Invalid crdential id: " + svc.getId());
-            }
-
-            if (!svc.getType())
-                throw new MalformedDocumentException("Invalid service type.");
-
-            if (!svc.getServiceEndpoint() || svc.getServiceEndpoint() == null)
-                throw new MalformedDocumentException("Missing service endpoint.");
-
-            if (svcs.has(svc.getId()))
-                throw new MalformedDocumentException("Service already exists: " + svc.getId());
-
-            svcs.set(svc.getId(), svc);
-        }
-
-        this.services = svcs;
-        this._services = Array.from(svcs.values());
-    }
-
-    private sanitizeProof() {
-        if (this._proofs == null || this._proofs.length == 0)
-            throw new MalformedDocumentException("Missing document proof");
-
-        this.proofs = new ComparableMap<DID, DIDDocumentProof>();
-
-        for (let proof of this._proofs) {
-            if (proof.getCreator() == null) {
-                if (this.defaultPublicKey != null)
-                    proof.creator = this.defaultPublicKey.getId();
-                else if (this.controllers.length == 1)
-                    proof.creator = this.controllerDocs.get(this.controllers[0]).getDefaultPublicKeyId();
-                else
-                    throw new MalformedDocumentException("Missing creator key");
-            } else {
-                if (proof.getCreator().getDid() == null) {
-                    if (this.defaultPublicKey != null)
-                        proof.getCreator().setDid(this.getSubject());
-                    else if (this.controllers.length == 1)
-                        proof.getCreator().setDid(this.controllers[0]);
-                    else
-                        throw new MalformedDocumentException("Invalid creator key");
+                try {
+                    svc = DIDDocumentService.deserialize(svcJson , DIDDocumentService, context);
+                } catch (e) {
+                    throw new MalformedDocumentException("Invalid service: " + svcJson.id, e);
                 }
+
+                if (this.services.has(svc.getId()))
+                    throw new MalformedDocumentException("Duplicated service: " + svc.getId());
+
+                this.services.set(svc.getId(), svc);
             }
-
-            if (this.proofs.has(proof.getCreator().getDid()))
-                throw new MalformedDocumentException("Aleady exist proof from " + proof.getCreator().getDid());
-
-            this.proofs.set(proof.getCreator().getDid(), proof);
         }
 
-        this._proofs = Array.from(this.proofs.values());
-        Collections.sort(this._proofs);
+        this.expires = this.getDate("expires", json.expires, {mandatory: true, nullable: false});
+
+        if (!json.proof)
+            throw new MalformedDocumentException("Missing property: proof");
+
+        if (!Array.isArray(json.proof)) {
+            let po = json.proof as JSONObject;
+            let proof = DIDDocumentProof.deserialize(po, DIDDocumentProof, context);
+            if (proof.getCreator().getDid() == null)
+                throw new MalformedDocumentException("Invalid proof creater: " + proof.getCreator());
+
+            this.proofs.set(proof.getCreator().getDid(), proof)
+        } else {
+            for (let v of json.proof) {
+                let po = v as JSONObject;
+                let proof = DIDDocumentProof.deserialize(po, DIDDocumentProof, context);
+
+                if (proof.getCreator().getDid() == null)
+                    throw new MalformedDocumentException("Invalid proof creater: " + proof.getCreator());
+
+                if (this.proofs.has(proof.getCreator().getDid()))
+                    throw new MalformedDocumentException("Aleady exist proof from " + proof.getCreator().getDid());
+
+                this.proofs.set(proof.getCreator().getDid(), proof);
+            }
+        }
     }
 
     /**
@@ -1408,7 +1202,7 @@ class DIDDocumentProofSerializer extends Serializer {
 
             return result;
         } else {
-            for (let proof of this._proofs) {
+            for (let proof of this.proofs.values()) {
                 // Unsupported public key type;
                 if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
                     if (listener != null) {
@@ -1429,7 +1223,7 @@ class DIDDocumentProofSerializer extends Serializer {
                     }
                     return false;
                 }
-                    
+
                 if (!controllerDoc.isGenuine(listener)) {
                     if (listener != null) {
                         listener.failed(this, "{}: controller '{}' is not genuine, failed to verify the proof",
@@ -1448,15 +1242,15 @@ class DIDDocumentProofSerializer extends Serializer {
                     }
                     return false;
                 }
-                    
+
                 if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest)) {
                     if (listener != null) {
                         listener.failed(this, "{}: proof '{}' is invalid, signature mismatch",
                                 this.getSubject(), proof.getCreator());
                         listener.failed(this, "{}: is not genuine", this.getSubject());
                     }
-                    return false;  
-                }         
+                    return false;
+                }
             }
 
             if (listener != null)
@@ -1484,10 +1278,10 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return true is the ticket is qualified else false
      */
     public isQualified(): boolean {
-        if (this._proofs == null || this._proofs.length == 0)
+        if (this.proofs == null || this.proofs.size == 0)
             return false;
 
-        return this._proofs.length == (this.multisig == null ? 1 : this.multisig.m());
+        return this.proofs.size == (this.multisig == null ? 1 : this.multisig.m());
     }
 
     /**
@@ -1529,7 +1323,7 @@ class DIDDocumentProofSerializer extends Serializer {
                     }
                     return false;
                 }
-                
+
                 if (!doc.isGenuine(listener)) {
                     if (listener != null) {
                         listener.failed(this, "{}: controller '{}' is not genuine",
@@ -1576,19 +1370,13 @@ class DIDDocumentProofSerializer extends Serializer {
         doc.controllerDocs = this.controllerDocs;
         doc.multisig = this.multisig;
         doc.publicKeys = this.publicKeys;
-        doc._publickeys = this._publickeys;
         doc.authenticationKeys = this.authenticationKeys;
-        doc._authentications = this._authentications;
         doc.authorizationKeys = this.authorizationKeys;
-        doc._authorizations = this._authorizations;
         doc.defaultPublicKey = this.defaultPublicKey;
         doc.credentials = this.credentials;
-        doc._credentials = this._credentials;
         doc.services = this.services;
-        doc._services = this._services;
         doc.expires = this.expires;
         doc.proofs = this.proofs;
-        doc._proofs = this._proofs;
         doc.metadata = this.getMetadata().clone();
 
         return doc;
@@ -2038,7 +1826,7 @@ class DIDDocumentProofSerializer extends Serializer {
             doc.getMetadata().attachStore(this.getStore());
 
         doc.effectiveController = this.effectiveController;
-        
+
         if (signKey == null) {
             signKey = doc.getDefaultPublicKeyId();
         } else {
@@ -2147,9 +1935,31 @@ class DIDDocumentProofSerializer extends Serializer {
      * @return the DIDDocument object.
      * @throws MalformedDocumentException if a parse error occurs.
      */
-    public static parseContent(content: string): Promise<DIDDocument> {
+    public static async parseAsync(source: JSONObject | string): Promise<DIDDocument> {
         try {
-            return DIDEntity.parse(content, DIDDocument);
+            return await DIDEntity.deserializeAsync(source, DIDDocument);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedDocumentException)
+                throw e;
+            else
+                throw new MalformedDocumentException(e);
+        }
+    }
+
+    public static _parseOnly(source: JSONObject | string): DIDDocument {
+        checkArgument(source && source !== "", "Invalid JSON content");
+        try {
+            let content: JSONObject;
+            if (typeof source === "string") {
+                content = JSON.parse(source);
+            } else {
+                content = source;
+            }
+
+            let obj = new DIDDocument();
+            obj.fromJSONOnly(content);
+            return obj;
         } catch (e) {
             // DIDSyntaxException
             if (e instanceof MalformedDocumentException)

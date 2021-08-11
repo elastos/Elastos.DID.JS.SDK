@@ -20,15 +20,13 @@
  * SOFTWARE.
  */
 
-import { JsonInclude, JsonIncludeType, JsonPropertyOrder, JsonClassType, JsonIgnoreType, JsonProperty} from "@elastosfoundation/jackson-js";
 import { CredentialMetadata } from "./internals";
 import { File } from "./internals";
-import { DID } from "./internals";
+import { DID, DIDURL } from "./internals";
 import { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
 import { DIDMetadata } from "./internals";
 import type { DIDStorage } from "./internals";
-import { DIDURL } from "./internals";
 import { DIDStoreCryptoException,
         DIDStoreException,
         IllegalArgumentException,
@@ -49,27 +47,24 @@ import dayjs from "dayjs";
 import type { ConflictHandle } from "./internals";
 import { DefaultConflictHandle } from "./internals";
 import type { DIDStoreMetadata } from "./internals";
+import { JSONObject } from "./json";
 import { md5 } from "./internals";
 import { BASE64 } from "./internals";
 import createHash from 'create-hash';
 import * as fs from "fs";
 import JSZip from "jszip";
-import { async } from "q";
 
 /**
  * DIDStore is local store for all DIDs.
  */
- const log = new Logger("DIDStore");
+const log = new Logger("DIDStore");
 
- // The @JsonIgnoreType() decorator is mandatory to avoid the cyclic references
- @JsonIgnoreType()
- export class DIDStore {
+export class DIDStore {
     private static CACHE_INITIAL_CAPACITY = 16;
     private static CACHE_MAX_CAPACITY = 128;
 
     private static NULL = null;
 
-    private static DID_EXPORT = "did.elastos.export/2.0";
     private static DID_LAZY_PRIVATEKEY = "lazy-private-key";
 
     private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
@@ -1123,12 +1118,12 @@ import { async } from "q";
             return de.serialize(true);
         }
 
-        public async importDid(data: string, password: string, storepass: string): Promise<void> {
+        public importDid(data: string, password: string, storepass: string): void {
             checkArgument(data != null && data !== "", "Invalid import data");
             checkArgument(password != null && password !== "", "Invalid password");
             checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-            let de = await DIDStore.DIDExport.parse(data, DIDStore.DIDExport);
+            let de = DIDStore.DIDExport.parse(data);
             de.verify(password);
 
             let doc = de.getDocument();
@@ -1172,12 +1167,12 @@ import { async } from "q";
             return rie.serialize(true);
         }
 
-        public async importRootIdentity(data: string, password: string, storepass: string): Promise<void> {
+        public importRootIdentity(data: string, password: string, storepass: string): void {
             checkArgument(data != null && data !== "", "Invalid import data");
             checkArgument(password != null && password !== "", "Invalid password");
             checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-            let rie = await DIDStore.RootIdentityExport.parse(data, DIDStore.RootIdentityExport);
+            let rie = DIDStore.RootIdentityExport.parse(data);
             rie.verify(password);
 
             let encryptedMnemonic = rie.getMnemonic(password, storepass);
@@ -1344,42 +1339,19 @@ export namespace DIDStore {
         select(id: DIDURL): boolean;
     }
 
-    @JsonPropertyOrder({ value: [
-        "type",
-        "id",
-        "document",
-        "credentials",
-        "privatekeys",
-        "created",
-        "fingerprint"]})
-    @JsonInclude({value : JsonIncludeType.NON_NULL})
     export class DIDExport extends DIDEntity<DIDExport> {
         private static DID_EXPORT = "did.elastos.export/2.0";
 
-        @JsonProperty({ value: "type"})
         private type: string;
-        @JsonProperty({ value: "id"})
-        @JsonClassType({type: () => [DID]})
         private id: DID;
-        @JsonProperty({value: "document"})
-        @JsonClassType({type: () => [DIDExport.Document]})
         private document: DIDExport.Document | null = null;
-        @JsonProperty({ value: "credential"})
-        @JsonClassType({type: () => [Array, [DIDExport.Credential]]})
         private credentials: DIDExport.Credential[] = [];
-        @JsonProperty({ value: "privatekey"})
-        @JsonClassType({type: () => [Array, [DIDExport.PrivateKey]]})
         private privatekeys: DIDExport.PrivateKey[] = [];
-        @JsonProperty({value: "created"})
-        @JsonClassType({type: () => [Date]})
         private created: Date | null = null;
-        @JsonProperty({ value: "fingerprint"})
         private fingerprint: string | null = null;
 
-        //@JsonCreator
-        public constructor(@JsonProperty({value: "id", required: true}) id: DID) {
-                        super();
-
+        public constructor(id: DID = null) {
+            super();
             this.type = DIDExport.DID_EXPORT;
             this.id = id;
         }
@@ -1468,6 +1440,52 @@ export namespace DIDStore {
                         "Invalid export data, fingerprint mismatch.");
         }
 
+       public toJSON(key: string = null): JSONObject {
+            let json: JSONObject = {};
+            json.type = this.type;
+            json.id = this.id.toString(),
+            json.document = this.document.toJSON();
+            if (this.credentials && this.credentials.length > 0)
+                json.credentials = Array.from(this.credentials, (vc) => vc.toJSON());
+            if (this.privatekeys && this.privatekeys.length > 0)
+                json.privatekeys = Array.from(this.privatekeys, (sk) => sk.toJSON());
+            json.created = this.dateToString(this.created);
+            json.fingerprint = this.fingerprint;
+
+            return json;
+        }
+
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.type = this.getString("type", json.type, {mandatory: true, nullable: false});
+            if (!this.type || this.type !== DIDExport.DID_EXPORT)
+                throw new MalformedExportDataException("Invalid export data, unknown type.");
+
+            this.id = this.getDid("id", json.id, {mandatory: true, nullable: false});
+
+            if (!json.document)
+                throw new MalformedExportDataException("Invalid export data, missing document.");
+            this.document = DIDExport.Document.parse(json.document as JSONObject);
+
+            if (json.credentials) {
+                if (!Array.isArray(json.credentials))
+                    throw new MalformedExportDataException("Invalid export data, invalid credentials.");
+
+                this.credentials = Array.from(json.credentials,
+                        (o) => DIDExport.Credential.parse(o as JSONObject));
+            }
+
+            if (json.privatekeys) {
+                if (!Array.isArray(json.privatekeys))
+                    throw new MalformedExportDataException("Invalid export data, invalid privatekeys.");
+
+                this.privatekeys = Array.from(json.privatekeys,
+                        (o) => DIDExport.PrivateKey.parse(o as JSONObject));
+            }
+
+            this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
+            this.fingerprint = this.getString("fingerprint", json.fingerprint, {mandatory: true, nullable: false});
+        }
+
         protected async sanitize(): Promise<void> {
             if (this.type == null || this.type !== DIDExport.DID_EXPORT)
                 throw new MalformedExportDataException(
@@ -1508,53 +1526,103 @@ export namespace DIDStore {
                 throw new MalformedExportDataException(
                         "Invalid export data, missing fingerprint.");
         }
+
+        public static parse(content: string | JSONObject, context: DID = null): DIDExport {
+            try {
+                return DIDEntity.deserialize(content, DIDExport, context);
+            } catch (e) {
+                // DIDSyntaxException
+                if (e instanceof MalformedExportDataException)
+                    throw e;
+                else
+                    throw new MalformedExportDataException(e);
+            }
+        }
     }
 
     export namespace DIDExport {
-        @JsonPropertyOrder({value: ["content", "metadata"] })
-        export class Document {
-            @JsonProperty({value: "content"})
-            @JsonClassType({type: () => [DIDDocument]})
+        export class Document extends DIDEntity<Document> {
             public content: DIDDocument;
-            @JsonProperty({value: "metadata"})
-            @JsonClassType({type: () => [DIDMetadata]})
             public metadata: DIDMetadata;
 
-            //@JsonCreator
-            constructor(@JsonProperty({value: "content", required: true}) content: DIDDocument,
-                    @JsonProperty({value: "metadata"}) metadata: DIDMetadata) {
+            constructor(content: DIDDocument = null, metadata: DIDMetadata = null) {
+                super();
                 this.content = content;
                 this.metadata = metadata;
             }
+
+            public toJSON(key: string = null): JSONObject {
+                return {
+                    content: this.content.toJSON(),
+                    key: this.metadata.toJSON()
+                }
+            }
+
+            protected fromJSON(json: JSONObject, context: DID = null): void {
+                if (!json.content)
+                    throw new MalformedExportDataException("Invalid export data, missing document content");
+                this.content = DIDDocument._parseOnly(json.content as JSONObject);
+                if (json.metadata)
+                    this.metadata = DIDMetadata.parse(json.metadata as JSONObject);
+            }
+
+            public static parse(content: string | JSONObject, context: DID = null): Document {
+                try {
+                    return DIDEntity.deserialize(content, Document, context);
+                } catch (e) {
+                    // DIDSyntaxException
+                    if (e instanceof MalformedExportDataException)
+                        throw e;
+                    else
+                        throw new MalformedExportDataException(e);
+                }
+            }
         }
 
-        @JsonPropertyOrder({ value: ["content", "metadata"]})
-        export class Credential {
-            @JsonProperty({value:"content"})
-            @JsonClassType({type: () => [VerifiableCredential]})
+        export class Credential extends DIDEntity<Credential> {
             public content: VerifiableCredential;
-            @JsonProperty({value:"metadata"})
-            @JsonClassType({type: () => [CredentialMetadata]})
             public metadata: CredentialMetadata;
 
-            // Java: @JsonCreator
-            constructor(@JsonProperty({value:"content", required: true}) content: VerifiableCredential,
-                @JsonProperty({value:"metadata"}) metadata: CredentialMetadata) {
+            constructor(content: VerifiableCredential = null, metadata: CredentialMetadata = null) {
+                super();
                 this.content = content;
                 this.metadata = metadata;
             }
+
+            public toJSON(key: string = null): JSONObject {
+                return {
+                    content: this.content.toJSON(),
+                    key: this.metadata.toJSON()
+                }
+            }
+
+            protected async fromJSON(json: JSONObject, context: DID = null): Promise<void> {
+                if (!json.content)
+                    throw new MalformedExportDataException("Invalid export data, missing credential content");
+                this.content = VerifiableCredential.parse(json.content as JSONObject);
+                if (json.metadata)
+                    this.metadata = CredentialMetadata.parse(json.metadata as JSONObject);
+            }
+
+            public static parse(content: string | JSONObject, context: DID = null): Credential {
+                try {
+                    return DIDEntity.deserialize(content, Credential, context);
+                } catch (e) {
+                    // DIDSyntaxException
+                    if (e instanceof MalformedExportDataException)
+                        throw e;
+                    else
+                        throw new MalformedExportDataException(e);
+                }
+            }
         }
 
-        @JsonPropertyOrder({ value: ["id", "key"]})
-        export class PrivateKey {
-            @JsonProperty({value: "id"})
-            @JsonClassType({type: () => [DIDURL]})
+        export class PrivateKey extends DIDEntity<PrivateKey> {
             public id: DIDURL;
-            @JsonProperty({value: "key"})
             public key: string;
 
-            // Java: @JsonCreator
-            constructor(@JsonProperty({value: "id", required: true}) id: DIDURL) {
+            constructor(id: DIDURL = null) {
+                super();
                 this.id = id;
             }
 
@@ -1573,36 +1641,45 @@ export namespace DIDStore {
             public setKey(key: string, storepass: string, exportpass: string) {
                 this.key = DIDStore.reEncrypt(key, storepass, exportpass);
             }
+
+            public toJSON(key: string = null): JSONObject {
+                return {
+                    id: this.id.toString(),
+                    key: this.key
+                }
+            }
+
+            protected fromJSON(json: JSONObject, context: DID = null): void {
+                this.id = this.getDidUrl("id", json.id, {mandatory: true, nullable: false});
+                this.key = this.getString("key", json.key, {mandatory: true, nullable: false});
+            }
+
+            public static parse(content: string | JSONObject, context: DID = null): PrivateKey {
+                try {
+                    return DIDEntity.deserialize(content, PrivateKey, context);
+                } catch (e) {
+                    // DIDSyntaxException
+                    if (e instanceof MalformedExportDataException)
+                        throw e;
+                    else
+                        throw new MalformedExportDataException(e);
+                }
+            }
         }
     }
 
-    @JsonPropertyOrder({ value: [ "type", "mnemonic", "privatekey", "publickey",
-        "index", "default",  "created", "fingerprint"]})
-    @JsonInclude({value : JsonIncludeType.NON_NULL})
     export class RootIdentityExport extends DIDEntity<RootIdentityExport> {
         private static DID_EXPORT = "did.elastos.export/2.0";
 
-        @JsonProperty({ value: "type"})
         private type: string;
-        @JsonProperty({ value: "mnemonic"})
         private mnemonic: string;
-        @JsonProperty({value: "privateKey"})
         private privatekey: string;
-        @JsonProperty({ value: "publicKey"})
         private publickey: string;
-        @JsonProperty({ value: "index"})
-        @JsonClassType({type: () => [Number]})
         private index: number;
-        @JsonProperty({value: "default"})
-        @JsonClassType({type: () => [Boolean]})
         private default: boolean;
-        @JsonProperty({value: "created"})
-        @JsonClassType({type: () => [Date]})
         private created: Date;
-        @JsonProperty({ value: "fingerprint"})
         private fingerprint: string;
 
-        //@JsonCreator
         public constructor() {
             super();
             this.type = RootIdentityExport.DID_EXPORT;
@@ -1674,30 +1751,47 @@ export namespace DIDStore {
 
         public verify(password: string): void {
             if (this.fingerprint !== this.calculateFingerprint(password))
-                throw new MalformedExportDataException(
-                    "Invalid export data, fingerprint mismatch.");
+                throw new MalformedExportDataException("Invalid export data, fingerprint mismatch.");
         }
 
-        protected async sanitize(): Promise<void> {
-            if (this.type == null || this.type !== RootIdentityExport.DID_EXPORT)
-            throw new MalformedExportDataException(
-                    "Invalid export data, unknown type.");
+        public toJSON(key: string = null): JSONObject {
+            return {
+                type: this.type,
+                mnemonic: this.mnemonic,
+                privatekey: this.privatekey,
+                publickey: this.publickey,
+                index: this.index,
+                default: this.default,
+                created: this.dateToString(this.created),
+                fingerprint: this.fingerprint
+            }
+        }
 
-            if (this.created == null)
-                throw new MalformedExportDataException(
-                        "Invalid export data, missing created time.");
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.type = this.getString("type", json.type, {mandatory: true, nullable: false});
+            if (!this.type || this.type !== RootIdentityExport.DID_EXPORT)
+                throw new MalformedExportDataException("Invalid export data, unknown type.");
 
-            if (this.privatekey == null || this.privatekey == "")
-                throw new MalformedExportDataException(
-                        "Invalid export data, missing key.");
+            this.mnemonic = this.getString("mnemonic", json.mnemonic, {mandatory: true, nullable: false});
+            this.privatekey = this.getString("privatekey", json.privatekey, {mandatory: true, nullable: false});
+            this.publickey = this.getString("publickey", json.publickey, {mandatory: true, nullable: false});
+            this.index = this.getNumber("index", json.index, {mandatory: true, nullable: false, defaultValue: 0});
+            this.default = this.getBoolean("default", json.default, {mandatory: true, nullable: false, defaultValue: false});
+            this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
+            this.fingerprint = this.getString("fingerprint", json.fingerprint, {mandatory: true, nullable: false});
 
-            if (this.fingerprint == null || this.fingerprint == "")
-                throw new MalformedExportDataException(
-                        "Invalid export data, missing fingerprint.");
+        }
+
+        public static parse(content: string | JSONObject, context: DID = null): RootIdentityExport {
+            try {
+                return DIDEntity.deserialize(content, RootIdentityExport, context);
+            } catch (e) {
+                // DIDSyntaxException
+                if (e instanceof MalformedExportDataException)
+                    throw e;
+                else
+                    throw new MalformedExportDataException(e);
+            }
         }
     }
 }
-function saveAs(content: Blob, zipFile: string) {
-    throw new Error("Function not implemented.");
-}
-

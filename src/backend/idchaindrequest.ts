@@ -20,28 +20,20 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty, JsonFormat,
-    JsonFormatShape, JsonInclude, JsonIncludeType, JsonPropertyOrder,
-    JsonValue, JsonSetter, JsonSerialize, JsonDeserialize, JsonIgnore
-} from "@elastosfoundation/jackson-js";
-import type { Class } from "../class";
 import { Constants } from "../constants";
-import { BASE64, Serializer, DIDBiographyStatus } from "../internals";
+import { BASE64 } from "../internals";
 import type { DID } from "../internals";
 import type { DIDDocument } from "../internals";
 import { DIDEntity } from "../internals";
 import { DIDURL } from "../internals";
-import { IllegalArgumentException } from "../exceptions/exceptions";
+import { IllegalArgumentException, MalformedIDChainRequestException } from "../exceptions/exceptions";
 import type { JSONObject } from "../json";
 import { TransferTicket } from "../internals";
 import { checkArgument } from "../internals";
-import type { JsonParserTransformerContext, JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
-import { Deserializer } from "../serializers";
 
 /**
  * The class records the information of IDChain Request.
  */
-@JsonPropertyOrder({value: ["header", "payload", "proof"]})
 export abstract class IDChainRequest<T> extends DIDEntity<T> {
     /**
      * The specification string of IDChain DID Request
@@ -53,24 +45,13 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
      */
     public static CREDENTIAL_SPECIFICATION = "elastos/credential/1.0";
 
-    public static HEADER = "header";
-    public static PAYLOAD = "payload";
-    public static PROOF = "proof";
-
-    public static SPECIFICATION = "specification";
-    public static OPERATION = "operation";
-    public static PREVIOUS_TXID = "previousTxid";
-    public static TICKET = "ticket";
-
-    public static TYPE = "type";
-    public static VERIFICATION_METHOD = "verificationMethod";
-    public static SIGNATURE = "signature";
-
     protected header: IDChainRequest.Header;
     protected payload: string;
     protected proof: IDChainRequest.Proof;
 
-    protected IDChainRequest() {}
+    public constructor() {
+        super();
+    }
 
     // Called by inheriting constructors
     protected constructWithOperation(operation: IDChainRequest.Operation) {
@@ -146,9 +127,6 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 
     protected abstract getSignerDocument(): Promise<DIDDocument>;
 
-    public async sanitize(): Promise<void> {
-    }
-
     /**
      * Judge whether the IDChain Request is valid or not.
      *
@@ -178,28 +156,37 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
         return doc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), ...this.getSigningInputs());
     }
 
-    public static parse<T extends DIDEntity<unknown>>(content: JSONObject, clazz: Class<T>): Promise<T> {
-        return DIDEntity.parse(content, clazz);
+    public toJSON(key: string = null): JSONObject {
+        return {
+            header: this.header.toJSON(),
+            payload: this.payload,
+            proof: this.proof.toJSON()
+        }
     }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        if (!json.header)
+            throw new MalformedIDChainRequestException("Missing header");
+        this.header = IDChainRequest.Header.parse(json.header as JSONObject);
+
+        if (!json.payload)
+            throw new MalformedIDChainRequestException("Missing payload");
+        this.payload = this.getString("payload", json.payload, {mandatory: true, nullable: false});
+
+        if (!json.proof)
+            throw new MalformedIDChainRequestException("Missing proof");
+        this.proof = IDChainRequest.Proof.parse(json.proof as JSONObject);
+
+        this.sanitize();
+    }
+
+    protected abstract sanitize(): void;
 }
 
 export namespace IDChainRequest {
-    class OperationSerializer extends Serializer {
-        public static serialize(value: Operation, context: JsonStringifierTransformerContext): string {
-            return value ? String(value) : null;
-        }
-    }
-    class OperationDeserializer extends Deserializer {
-        public static deserialize(value: string | number, context: JsonParserTransformerContext): Operation {
-            return Operation.fromString(String(value));
-        }
-    }
-
     /**
      * The IDChain Request Operation
      */
-     @JsonSerialize({using: OperationSerializer.serialize})
-     @JsonDeserialize({using: OperationDeserializer.deserialize})
      export class Operation {
         constructor(private name: string, private specification: string) {}
 
@@ -207,12 +194,10 @@ export namespace IDChainRequest {
             return this.specification;
         }
 
-        @JsonValue()
         public toString(): string {
             return this.name;
         }
 
-        @JsonCreator()
         public static fromString(name: string): Operation {
             return Operation[name.toUpperCase()];
         }
@@ -249,34 +234,16 @@ export namespace IDChainRequest {
             export const REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
     }
 
-    @JsonPropertyOrder({value: [
-        "specification",
-        "operation",
-        "previousTxid",
-        "ticket"
-    ]})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonCreator()
-    export class Header {
-        @JsonProperty({value: IDChainRequest.SPECIFICATION})
-        @JsonClassType({type: () => [String]})
+    export class Header extends DIDEntity<Header> {
         private specification: string;
-        @JsonProperty({value: IDChainRequest.OPERATION})
-        @JsonClassType({type: () => [Operation]})
         private operation: Operation;
-        @JsonProperty({value: IDChainRequest.PREVIOUS_TXID})
-        @JsonInclude({value: JsonIncludeType.NON_NULL})
-        @JsonClassType({type: () => [String]})
         private previousTxid: string;
-        @JsonProperty({value: IDChainRequest.TICKET})
-        @JsonInclude({value: JsonIncludeType.NON_NULL})
-        @JsonClassType({type: () => [String]})
         private ticket: string;
 
-        @JsonIgnore()
         private transferTicket: TransferTicket;
 
-        constructor(@JsonProperty({value: IDChainRequest.SPECIFICATION, required: true}) spec: string) {
+        constructor(spec: string = null) {
+            super();
             this.specification = spec;
         }
 
@@ -316,17 +283,18 @@ export namespace IDChainRequest {
             return this.ticket;
         }
 
-        @JsonSetter({value: IDChainRequest.TICKET})
+        /*
         private setTicket(ticket: string) {
             checkArgument(ticket != null && ticket !== "", "Invalid ticket");
             this.ticket = ticket;
         }
+        */
 
-        public async getTransferTicket(): Promise<TransferTicket> {
+        public getTransferTicket(): TransferTicket {
             if (this.ticket && !this.transferTicket) {
                 let json = BASE64.toString(this.ticket)
                 try {
-                    this.transferTicket = await TransferTicket.parseContent(json);
+                    this.transferTicket = TransferTicket.parse(json);
                 } catch (e) {
                     // MalformedTransferTicketException
                     throw new IllegalArgumentException("Invalid ticket", e);
@@ -335,26 +303,50 @@ export namespace IDChainRequest {
 
             return this.transferTicket;
         }
+
+        public toJSON(key: string = null): JSONObject {
+            let json: JSONObject = {};
+
+            json.specification = this.specification;
+            json.operation = this.operation.toString();
+            if (this.previousTxid)
+                json.previousTxid = this.previousTxid;
+            if (this.ticket)
+                json.ticket = this.ticket;
+
+            return json;
+        }
+
+        protected fromJSON(json: JSONObject, context = null): void {
+            this.specification = this.getString("specification", json.specification, {mandatory: true, nullable: false});
+            let op = this.getString("operation", json.operation, {mandatory: true, nullable: false});
+            this.operation = Operation.fromString(op);
+
+            this.previousTxid = this.getString("previousTxid", json.previousTxid, {mandatory: false, nullable: false, defaultValue: null});
+            this.ticket = this.getString("ticket", json.ticket, {mandatory: false, nullable: false, defaultValue: null});
+        }
+
+        public static parse(content: string | JSONObject, context = null): Header {
+            try {
+                return DIDEntity.deserialize(content, Header, context);
+            } catch (e) {
+                // DIDSyntaxException
+                if (e instanceof MalformedIDChainRequestException)
+                    throw e;
+                else
+                    throw new MalformedIDChainRequestException(e);
+            }
+        }
     }
 
-    @JsonPropertyOrder({value:["type", "verificationMethod", "signature"]})
-    export class Proof {
-        @JsonProperty({value: IDChainRequest.TYPE})
-        @JsonClassType({type: () => [String]})
+    export class Proof extends DIDEntity<Proof> {
         private type: string;
-        @JsonProperty({value: IDChainRequest.VERIFICATION_METHOD})
-        @JsonClassType({type: () => [DIDURL]})
         private verificationMethod: DIDURL;
-        @JsonProperty({value: IDChainRequest.SIGNATURE})
-        @JsonClassType({type: () => [String]})
         private signature: string;
 
-        // Java: @JsonCreator()
-        public constructor(
-                @JsonProperty({value: IDChainRequest.VERIFICATION_METHOD, required: true}) verificationMethod: DIDURL,
-                @JsonProperty({value: IDChainRequest.SIGNATURE, required: true}) signature: string,
-                @JsonProperty({value: IDChainRequest.TYPE}) type: string = null
-        ) {
+        public constructor(verificationMethod: DIDURL = null, signature: string = null,
+                type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            super();
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
             this.verificationMethod = verificationMethod;
             this.signature = signature;
@@ -376,6 +368,32 @@ export namespace IDChainRequest {
 
         public getSignature(): string {
             return this.signature;
+        }
+
+        public toJSON(key: string = null): JSONObject {
+            return {
+                type: this.type,
+                verificationMethod: this.verificationMethod.toString(),
+                signature: this.signature
+            }
+        }
+
+        protected fromJSON(json: JSONObject, context = null): void {
+            this.type = this.getString("type", json.type, {mandatory: true, nullable: false});
+            this.verificationMethod = this.getDidUrl("verificationMethod", json.verificationMethod, {mandatory: true, nullable: false});
+            this.signature = this.getString("signature", json.signature, {mandatory: true, nullable: false});
+        }
+
+        public static parse(content: string | JSONObject, context = null): Proof {
+            try {
+                return DIDEntity.deserialize(content, Proof, context);
+            } catch (e) {
+                // DIDSyntaxException
+                if (e instanceof MalformedIDChainRequestException)
+                    throw e;
+                else
+                    throw new MalformedIDChainRequestException(e);
+            }
         }
     }
 }

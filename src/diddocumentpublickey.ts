@@ -1,61 +1,24 @@
-import {
-    JsonProperty,
-    JsonPropertyOrder,
-    JsonClassType,
-    JsonIgnore,
-    JsonInclude,
-    JsonIncludeType
-} from "@elastosfoundation/jackson-js";
-import type {
-    JsonStringifierTransformerContext,
-} from "@elastosfoundation/jackson-js";
-import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { Base58 } from "./internals";
-import { DID } from "./internals";
+import { DID, DIDURL } from "./internals";
 import { DIDEntity } from "./internals";
+import { JSONObject } from "./json";
 import type { DIDObject } from "./internals";
-import { DIDURL } from "./internals";
-import { keyTypeFilter } from "./internals";
-
-function keyControllerFilter(value: any, context?: JsonStringifierTransformerContext): boolean {
-    let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
-
-    if (!serializeContext || serializeContext.isNormalized())
-        return false;
-
-        return serializeContext.getDid() ? serializeContext.getDid().equals(value as DID) : false;
-}
+import type { Comparable } from "./comparable";
 
 /**
  * Publickey is used for digital signatures, encryption and
  * other cryptographic operations, which are the basis for purposes such as
  * authentication or establishing secure communication with service endpoints.
  */
-@JsonPropertyOrder({value: ["id", "type", "controller", "publicKeyBase58"]})
-export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDocumentPublicKey> {
-    private static ID = "id";
-    private static TYPE = "type";
-    private static CONTROLLER = "controller";
-    private static PUBLICKEY_BASE58 = "publicKeyBase58";
-
-    @JsonProperty({ value: DIDDocumentPublicKey.ID })
-    @JsonClassType({type: () => [DIDURL]})
+export class DIDDocumentPublicKey extends DIDEntity<DIDDocumentPublicKey>
+        implements DIDObject<string>, Comparable<DIDDocumentPublicKey> {
     public id: DIDURL;
-    @JsonProperty({ value: DIDDocumentPublicKey.TYPE })
-    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
-    @JsonClassType({type: () => [String]})
     public type: string;
-    @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER })
-    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyControllerFilter})
-    @JsonClassType({type: () => [DID]})
     public controller: DID;
-    @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58 })
     public publicKeyBase58: string;
-    @JsonIgnore()
-    private authenticationKey: boolean;
-    @JsonIgnore()
-    private authorizationKey: boolean;
+    //private authenticationKey: boolean;
+    //private authorizationKey: boolean;
 
     /**
      * Constructs Publickey with the given value.
@@ -65,11 +28,9 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
      * @param controller the DID who holds private key
      * @param publicKeyBase58 the string from encoded base58 of public key
      */
-    // Java: @JsonCreator
-    constructor(@JsonProperty({ value: DIDDocumentPublicKey.ID, required: true }) id: DIDURL,
-        @JsonProperty({ value: DIDDocumentPublicKey.TYPE }) type: string,
-        @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER }) controller: DID,
-        @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58, required: true }) publicKeyBase58: string) {
+    constructor(id: DIDURL = null, controller: DID = null, publicKeyBase58: string = null,
+            type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+        super();
         this.id = id;
         this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
         this.controller = controller;
@@ -148,5 +109,30 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
             return rc;
         else
             return this.controller.compareTo(key.controller);
+    }
+
+    public toJSON(key: string = null): JSONObject {
+        let context: DID = key ? new DID(key) : null;
+
+        let json: JSONObject = {};
+        json.id = this.id.toString(context);
+        if (!context || this.type !== Constants.DEFAULT_PUBLICKEY_TYPE)
+            json.type = this.type;
+        if (!context || !this.controller.equals(context))
+            json.controller = this.controller.toString();
+        json.publicKeyBase58 = this.publicKeyBase58;
+
+        return json;
+    }
+
+    protected fromJSON(json: JSONObject, context: DID = null): void {
+        this.id = this.getDidUrl("publicKey.id", json.id,
+                {mandatory: true, nullable: false, context: context});
+        this.type = this.getString("publicKey.type", json.type,
+                {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+        this.controller = this.getDid("publicKey.controller", json.controller,
+                {mandatory: false, nullable: false, defaultValue: context});
+        this.publicKeyBase58 = this.getString("publicKey.publicKeyBase58", json.publicKeyBase58,
+                {mandatory: true, nullable: false});
     }
 }

@@ -7,7 +7,6 @@ import { DIDDocument } from "./internals";
 import { DIDDocumentMultiSignature } from "./internals";
 import { DIDDocumentProof } from "./internals";
 import { DIDDocumentPublicKey } from "./internals";
-import { DIDDocumentPublicKeyReference } from "./internals";
 import { DIDDocumentService } from "./internals";
 import { DIDMetadata } from "./internals";
 import type { DIDStore } from "./internals";
@@ -307,7 +306,7 @@ export class DIDDocumentBuilder {
         if (controller == null)
             controller = this.getSubject();
 
-        this.addPublicKey(new DIDDocumentPublicKey(this.canonicalId(id), type, controller, pk));
+        this.addPublicKey(new DIDDocumentPublicKey(this.canonicalId(id), controller, pk, type));
         return this;
     }
 
@@ -399,7 +398,7 @@ export class DIDDocumentBuilder {
             "Invalid publicKey id");
         checkArgument(pk && pk != null, "Invalid publicKey");
 
-        let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), null, this.getSubject(), pk);
+        let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), this.getSubject(), pk);
         this.addPublicKey(key);
         this.document.authenticationKeys.set(id, key);
 
@@ -503,10 +502,10 @@ export class DIDDocumentBuilder {
         if (controller.equals(this.getSubject()))
             throw new IllegalUsage("Key's controller is self.");
 
-        let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), null, controller, pk);
+        let key: DIDDocumentPublicKey = new DIDDocumentPublicKey(this.canonicalId(id), controller, pk);
         this.addPublicKey(key);
         this.document.authorizationKeys.set(id, key);
-        
+
         return this;
     }
 
@@ -557,8 +556,8 @@ export class DIDDocumentBuilder {
         if (targetPk == null)
             throw new DIDObjectNotExistException(key.toString());
 
-        let pk = new DIDDocumentPublicKey(this.canonicalId(id), targetPk.getType(),
-            controller, targetPk.getPublicKeyBase58());
+        let pk = new DIDDocumentPublicKey(this.canonicalId(id),
+            controller, targetPk.getPublicKeyBase58(), targetPk.getType());
         this.addPublicKey(pk);
         this.document.authorizationKeys.set(id, pk);
 
@@ -901,49 +900,14 @@ export class DIDDocumentBuilder {
             this.document.publicKeys = new ComparableMap();
             this.document.authenticationKeys = new ComparableMap();
             this.document.authorizationKeys = new ComparableMap();
-            this.document._publickeys = [];
-            this.document._authentications = [];
-            this.document._authorizations = [];
-        } else {
-            this.document._publickeys = Array.from(this.document.publicKeys.values());
-            Collections.sort(this.document._publickeys);
-
-            this.document._authentications = [];
-            this.document._authorizations = [];
-
-            if (this.document.authenticationKeys.size == 0) {
-                //this.document._authentications = [];
-                this.document.authenticationKeys = new ComparableMap();
-            } else {
-                for (let pk of this.document.authenticationKeys.values())
-                    this.document._authentications.push(DIDDocumentPublicKeyReference.newWithKey(pk));
-                Collections.sort(this.document._authentications);
-            }
-
-            if (this.document.authorizationKeys.size == 0) {
-                //this.document._authorizations = [];
-                this.document.authorizationKeys = new ComparableMap();
-            } else {
-                for (let pk of this.document.authorizationKeys.values())
-                    this.document._authorizations.push(DIDDocumentPublicKeyReference.newWithKey(pk));
-                Collections.sort(this.document._authentications);
-            }
         }
 
-        if (this.document.credentials == null || this.document.credentials.size == 0) {
+        if (this.document.credentials == null) {
             this.document.credentials = new ComparableMap();
-            this.document._credentials = [];
-        } else {
-            this.document._credentials = Array.from(this.document.credentials.values());
-            this.document._credentials.sort((vc1, vc2) => { return vc1.getId().compareTo(vc2.getId()); });
         }
 
-        if (this.document.services == null || this.document.services.size == 0) {
+        if (this.document.services == null) {
             this.document.services = new ComparableMap();
-            this.document._services = [];
-        } else {
-            this.document._services = Array.from(this.document.services.values());
-            Collections.sort(this.document._services);
         }
 
         if (this.document.proofs == null || this.document.proofs.size == 0) {
@@ -953,8 +917,6 @@ export class DIDDocumentBuilder {
 
         if (this.document.proofs == null)
             this.document.proofs = new ComparableMap<DID, DIDDocumentProof>();
-
-        this.document._proofs = null;
     }
 
     /**
@@ -984,8 +946,6 @@ export class DIDDocumentBuilder {
         let sig = await this.document.signWithId(signKey, storepass, Buffer.from(json));
         let proof = new DIDDocumentProof(signKey, sig);
         this.document.proofs.set(proof.getCreator().getDid(), proof);
-        this.document._proofs = Array.from(this.document.proofs.values());
-        Collections.sort(this.document._proofs);
 
         // Invalidate builder
         let doc: DIDDocument = this.document;
