@@ -20,26 +20,22 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonGetter, JsonIgnore, JsonProperty, JsonPropertyOrder, JsonSetter } from "@elastosfoundation/jackson-js";
-import type { Class } from "../class";
 import { DIDEntity } from "../internals";
+import { JSONObject } from "../json";
 import type { Hashable } from "../hashable";
 import { hashCode } from "../internals";
+import { MalformedResolveRequestException } from "../exceptions/exceptions";
 
-@JsonPropertyOrder({ value: ["requestId", "method"]})
-export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T> {
+export abstract class ResolveRequest<T, P extends ResolveRequest.Parameters<P>> extends DIDEntity<T> {
     protected static ID = "id";
     protected static METHOD = "method";
     protected static PARAMETERS = "params";
 
-    @JsonProperty({ value: ResolveRequest.ID }) @JsonClassType({type: ()=>[String]})
     private requestId: string;
-    @JsonProperty({ value: ResolveRequest.METHOD }) @JsonClassType({type: ()=>[String]})
     private method: string;
-    @JsonIgnore()
-    private _params: P;
+    private params: P;
 
-    protected constructor(requestId: string, method: string) {
+    public constructor(requestId: string = null, method: string = null) {
         super();
         this.requestId = requestId;
         this.method = method;
@@ -54,50 +50,15 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
     }
 
     protected setParameters(params: P) {
-        this._params = params;
+        this.params = params;
     }
 
     protected getParameters(): P {
-        return this._params;
-    }
-
-    /**
-     * Map an array(single element) of the parameter objects to parameter object.
-     *
-     * <p>
-     * NOTICE: this is required by the Ethereum RPC call schema.
-     * </p>
-     *
-     * @param params an array of the parameter objects
-     */
-    @JsonSetter({ value: ResolveRequest.PARAMETERS })
-    @JsonIgnore()
-    private _setParameters(params: P[]) {
-        this._params = (params == null || params.length == 0) ? null : params[0];
-    }
-
-    /**
-     * Map the parameter object to an single element array.
-     *
-     * <p>
-     * NOTICE: this is required by the Ethereum RPC call schema.
-     * </p>
-     *
-     * @return an array(single element) of the parameter objects
-     */
-    @JsonGetter({ value: ResolveRequest.PARAMETERS })
-    @JsonClassType({type: ()=>[Array, [String]]})
-    private _getParameters(): P[] {
-        if (this._params != null) {
-            let ret: P[] = [this._params];
-            return ret;
-        } else {
-            return null;
-        }
+        return this.params;
     }
 
     public hashCode(): number {
-        return hashCode(this.method) + this._params.hashCode();
+        return hashCode(this.method) + this.params.hashCode();
     }
 
     public equals(o: unknown): boolean {
@@ -109,10 +70,36 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
         if (this.method !== rr.method)
             return false;
 
-        return this._params === rr._params; // TODO: PROBABLY BUGGY
+        return this.params === rr.params; // TODO: PROBABLY BUGGY
     }
 
-    public static parse<T extends DIDEntity<T>>(content: string, clazz: Class<T>): Promise<T> {
-        return DIDEntity.parse(content, clazz);
+    public toJSON(key: string = null): JSONObject {
+        return {
+            id: this.requestId,
+            method: this.method,
+            params: [this.params.toJSON(null)]
+        };
+
+    }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        this.requestId = super.getString("id", json.id, {mandatory: false, nullable: true});
+        this.method = this.getString("method", json.method, {mandatory: true, nullable: false});
+
+        if (!json.params)
+            throw new MalformedResolveRequestException("Missing parameters");
+
+        if (!Array.isArray(json.params))
+            throw new MalformedResolveRequestException("Invalid parameters");
+
+        this.params = this.paramsFromJson(json.params[0] as JSONObject);
+    }
+
+    protected abstract paramsFromJson(json: JSONObject): P;
+}
+
+export namespace ResolveRequest {
+    export abstract class Parameters<T> extends DIDEntity<T> implements Hashable {
+        public abstract hashCode(): number;
     }
 }

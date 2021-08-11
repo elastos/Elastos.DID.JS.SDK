@@ -20,9 +20,10 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonIgnore, JsonProperty } from "@elastosfoundation/jackson-js";
 import { DIDDocument } from "../internals";
 import { DIDURL } from "../internals";
+import { DIDEntity } from "../internals";
+import { JSONObject } from "../json";
 import { BASE64 } from "../internals";
 import {
     InvalidKeyException,
@@ -35,35 +36,14 @@ import { IDChainRequest } from "./idchaindrequest";
 /**
  * The credential request class.
  */
-@JsonCreator()
 export class CredentialRequest extends IDChainRequest<CredentialRequest> {
-    @JsonProperty({value: IDChainRequest.HEADER})
-    @JsonClassType({type: () => [IDChainRequest.Header]})
-    declare protected header: IDChainRequest.Header;
-    @JsonProperty({value: IDChainRequest.PAYLOAD})
-    @JsonClassType({type: () => [String]})
-    declare protected payload: string;
-    @JsonProperty({value: IDChainRequest.PROOF})
-    @JsonClassType({type: () => [IDChainRequest.Proof]})
-    declare protected proof: IDChainRequest.Proof;
-
-    @JsonIgnore()
     private id: DIDURL;
-    @JsonIgnore()
     private vc: VerifiableCredential;
-    @JsonIgnore()
     private signer: DIDDocument;
 
-    /*
-    public constructor(source: CredentialRequest | IDChainRequest.Operation) {
+    public constructor() {
         super();
-        if (source instanceof CredentialRequest) {
-            this.constructWithIDChainRequest(source);
-        } else {
-            this.constructWithOperation(source);
-        }
     }
-    */
 
     private static newWithOperation(operation: IDChainRequest.Operation): CredentialRequest {
         let credentialRequest = new CredentialRequest();
@@ -142,7 +122,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
         return this.vc;
     }
 
-     setPayload(id: DIDURL | VerifiableCredential | string) {
+    public setPayload(id: DIDURL | VerifiableCredential | string) {
         if (id instanceof VerifiableCredential) {
             let vc: VerifiableCredential = id;
             this.id = vc.getId();
@@ -167,8 +147,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
         }
     }
 
-    // eslint-disable-next-line require-await
-    public async sanitize(): Promise<void> {
+    protected sanitize(): void {
         let header = this.getHeader();
 
         if (header == null)
@@ -196,7 +175,7 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
             if (header.getOperation().equals(IDChainRequest.Operation.DECLARE)) {
                 let json = BASE64.toString(payload);
 
-                this.vc = await VerifiableCredential.parseContent(json);
+                this.vc = VerifiableCredential.parse(json);
                 this.id = this.vc.getId();
             } else {
                 this.id = DIDURL.from(payload);
@@ -234,5 +213,17 @@ export class CredentialRequest extends IDChainRequest<CredentialRequest> {
         }
 
         return this.signer;
+    }
+
+    public static parse(content: string | JSONObject, context = null): CredentialRequest {
+        try {
+            return DIDEntity.deserialize(content, CredentialRequest, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedIDChainRequestException)
+                throw e;
+            else
+                throw new MalformedIDChainRequestException(e);
+        }
     }
 }

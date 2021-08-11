@@ -20,27 +20,18 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonProperty, JsonPropertyOrder, JsonClassType,
-    JsonInclude, JsonIncludeType } from "@elastosfoundation/jackson-js";
 import { DID } from "../internals";
 import { DIDURL } from "../internals";
+import { DIDEntity } from "../internals";
+import { JSONObject } from "../json";
 import { MalformedResolveResultException } from "../exceptions/exceptions";
-import { ResolveResult } from "./resolveresult";
+import { ResolveResponse } from "./ResolveResponse";
 
-@JsonPropertyOrder({value: ["did", "credentialIds"]})
-@JsonCreator()
-export class CredentialList extends ResolveResult<CredentialList> {
-    protected static DID = "did";
-    protected static CREDENTIALS = "credentials";
-
+export class CredentialList extends ResolveResponse.Result<CredentialList> {
     public static DEFAULT_SIZE = 128;
     public static MAX_SIZE = 512;
 
-    @JsonProperty({ value: CredentialList.DID })
     private did: DID;
-    @JsonProperty({ value: CredentialList.CREDENTIALS })
-    @JsonInclude({ value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [Array, [DIDURL]]})
     private credentialIds: DIDURL[];
 
     public constructor(did: DID = null) {
@@ -71,9 +62,38 @@ export class CredentialList extends ResolveResult<CredentialList> {
         this.credentialIds.push(id);
     }
 
-    // eslint-disable-next-line require-await
-    public async sanitize(): Promise<void> {
-        if (this.did == null)
-            throw new MalformedResolveResultException("Missing did");
+    public toJSON(key: string = null): JSONObject {
+        let json: JSONObject = {};
+
+        json.did = this.did.toString();
+        if (this.credentialIds && this.credentialIds.length > 0)
+            json.credentials = Array.from(this.credentialIds, (id) => id.toString())
+
+        return json;
+
+    }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        this.did = super.getDid("did", json.did, {mandatory: true, nullable: false});
+
+        if (json.credentials) {
+            if (!Array.isArray(json.credentials))
+                throw new MalformedResolveResultException("Invalid credential list");
+
+            if (json.credentials.length > 0)
+                this.credentialIds = Array.from(json.credentials, (v) => new DIDURL(String(v)));
+        }
+    }
+
+    public static parse(content: string | JSONObject, context = null): CredentialList {
+        try {
+            return DIDEntity.deserialize(content, CredentialList, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveResultException)
+                throw e;
+            else
+                throw new MalformedResolveResultException(e);
+        }
     }
 }

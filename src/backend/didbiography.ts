@@ -20,27 +20,27 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonValue } from "@elastosfoundation/jackson-js";
 import { DID } from "../internals";
+import { DIDEntity } from "../internals";
+import { JSONObject } from "../json";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
-import { ResolveResult } from "./resolveresult";
+import { ResolveResponse } from "./ResolveResponse";
 import { DIDTransaction } from "./didtransaction";
-import {
-    Serializer,
-    Deserializer
-} from "../internals";
-import type {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js";
 
-class DIDBiographyStatusSerializer extends Serializer {
-    public static serialize(value: DIDBiographyStatus, context: JsonStringifierTransformerContext): string {
-        return value ? String(value) : null;
+export class DIDBiographyStatus {
+    protected name: string;
+    protected value: number;
+
+    public constructor(value: number, name: string, ) {
+        this.name = name;
+        this.value = value;
     }
-}
-class DIDBiographyStatusDeserializer extends Deserializer {
-    public static deserialize(value: string | number, context: JsonParserTransformerContext): DIDBiographyStatus {
+
+    public getValue(): number {
+        return this.value;
+    }
+
+    public static fromValue(value: string | number): DIDBiographyStatus {
         switch(String(value)) {
             case "0":
                 return DIDBiographyStatus.VALID;
@@ -51,23 +51,6 @@ class DIDBiographyStatusDeserializer extends Deserializer {
             default:
                 throw new IllegalArgumentException("Invalid DIDBiographyStatus");
         }
-    }
-}
-
-@JsonSerialize({using: DIDBiographyStatusSerializer.serialize})
-@JsonDeserialize({using: DIDBiographyStatusDeserializer.deserialize})
-export class DIDBiographyStatus {
-    protected name: string;
-    protected value: number;
-
-    public constructor(value: number, name: string, ) {
-        this.name = name;
-        this.value = value;
-    }
-
-    @JsonValue()
-    public getValue(): number {
-        return this.value;
     }
 
     public toString(): string {
@@ -97,37 +80,12 @@ export namespace DIDBiographyStatus {
 /**
  * The class records the resolved content.
  */
-@JsonPropertyOrder({value: ["did", "status", "txs"]})
-@JsonInclude({value: JsonIncludeType.NON_NULL})
-export class DIDBiography extends ResolveResult<DIDBiography> {
-    protected static DID = "did";
-    protected static STATUS = "status";
-    protected static TRANSACTION = "transaction";
-
-    @JsonProperty({value: DIDBiography.DID}) @JsonClassType({type: ()=>[DID]})
+export class DIDBiography extends ResolveResponse.Result<DIDBiography> {
     private did: DID;
-    @JsonProperty({value: DIDBiography.STATUS}) @JsonClassType({type: ()=>[DIDBiographyStatus]})
     private status: DIDBiographyStatus;
-    @JsonProperty({value: DIDBiography.TRANSACTION}) @JsonClassType({type: ()=>[Array, [DIDTransaction]]})
     private txs: DIDTransaction[];
 
-    /**
-     * Constructs the Resolve Result with the given value.
-     *
-     * @param did the specified DID
-     * @param status the DID's status
-     */
-    @JsonCreator()
-    public static toDIDBiography(
-        @JsonProperty({value: DIDBiography.DID, required: true}) did: DID,
-        @JsonProperty({value: DIDBiography.STATUS, required: true}) status: DIDBiographyStatus
-    ) {
-            let didBiography = new DIDBiography(did);
-            didBiography.status = status;
-            return didBiography;
-    }
-
-    public constructor(did: DID) {
+    public constructor(did: DID = null) {
         super();
         this.did = did;
     }
@@ -173,24 +131,48 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
         this.txs.push(tx);
     }
 
-    public async sanitize(): Promise<void> {
-        if (this.did == null)
-            throw new MalformedResolveResultException("Missing did");
+    public toJSON(key: string = null): JSONObject {
+        let json: JSONObject = {};
+
+        json.did = this.did.toString();
+        json.status = this.status.toString();
+
+        if (this.txs && this.txs.length > 0)
+            json.txs = Array.from(this.txs, (tx) => tx.toJSON())
+
+        return json;
+
+    }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        this.did = super.getDid("did", json.did, {mandatory: true, nullable: false});
+
+        let s = this.getString("status", json.status, {mandatory: true, nullable: false});
+        this.status = DIDBiographyStatus.fromValue(s);
 
         if (!this.status.equals(DIDBiographyStatus.NOT_FOUND)) {
-            if (this.txs == null || this.txs.length == 0)
+            if (!json.txs)
                 throw new MalformedResolveResultException("Missing transaction");
 
-            try {
-                for (let tx of this.txs)
-                    await tx.sanitize();
-            } catch (e) {
-                // MalformedIDChainTransactionException
-                throw new MalformedResolveResultException("Invalid transaction", e);
-            }
+            if (!Array.isArray(json.txs) || json.txs.length == 0)
+                throw new MalformedResolveResultException("Invalid transaction");
+
+            this.txs = Array.from(json.txs, (o) => DIDTransaction.parse(o as JSONObject));
         } else {
-            if (this.txs != null)
+            if (json.txs)
                 throw new MalformedResolveResultException("Should not include transaction");
+        }
+    }
+
+    public static parse(content: string | JSONObject, context = null): DIDBiography {
+        try {
+            return DIDEntity.deserialize(content, DIDBiography, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveResultException)
+                throw e;
+            else
+                throw new MalformedResolveResultException(e);
         }
     }
 }

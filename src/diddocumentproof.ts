@@ -1,38 +1,16 @@
-import {
-    JsonInclude,
-    JsonIncludeType,
-    JsonProperty,
-    JsonPropertyOrder,
-    JsonClassType,
-    JsonCreator
-} from "@elastosfoundation/jackson-js";
-import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
-import { DIDURL, keyTypeFilter } from "./internals";
+import { DID, DIDURL } from "./internals";
+import { DIDEntity } from "./internals";
+import { JSONObject } from "./json";
+import type { Comparable } from "./comparable";
 
 /**
  * The Proof represents the proof content of DID Document.
  */
-@JsonPropertyOrder({value: ["type", "created", "creator", "signature"]})
-export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
-    public static TYPE: string = "type";
-    public static CREATOR: string = "creator";
-    public static CREATED: string = "created";
-    public static SIGNATURE_VALUE: string = "signatureValue";
-
-    @JsonProperty({ value: DIDDocumentProof.TYPE })
-    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
+export class DIDDocumentProof extends DIDEntity<DIDDocumentProof> implements Comparable<DIDDocumentProof> {
     private type: string;
-    @JsonInclude({ value: JsonIncludeType.NON_NULL })
-    @JsonProperty({ value: DIDDocumentProof.CREATED })
-    @JsonClassType({ type: () => [Date] })
     private created: Date;
-    @JsonInclude({ value: JsonIncludeType.NON_NULL })
-    @JsonProperty({ value: DIDDocumentProof.CREATOR })
-    @JsonClassType({type: () => [DIDURL]})
     public creator: DIDURL;
-    @JsonProperty({ value: DIDDocumentProof.SIGNATURE_VALUE })
-    @JsonClassType({type: () => [String]})
     private signature: string;
 
     /**
@@ -43,12 +21,9 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
      * @param creator the key to sign
      * @param signature the signature string
      */
-    // Java: @JsonCreator
-    constructor(
-        @JsonProperty({value: "creator"}) creator: DIDURL,
-        @JsonProperty({value: "signatureValue"}) signature: string,
-        @JsonProperty({value: "type"}) type?: string,
-        @JsonProperty({value: "created"}) created?: Date) {
+    constructor(creator: DIDURL = null, signature: string = null,
+            created: Date = new Date(), type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+        super();
         this.type = type ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 
         if (created === undefined)
@@ -110,5 +85,31 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
         if (rc == 0)
             rc = this.creator.compareTo(proof.creator);
         return rc;
+    }
+
+    public toJSON(key: string = null): JSONObject {
+        let context: DID = key ? new DID(key) : null;
+
+        let json: JSONObject = {};
+        if (!context || this.type !== Constants.DEFAULT_PUBLICKEY_TYPE)
+            json.type = this.type;
+        if (this.created)
+            json.created = this.dateToString(this.created);
+
+        json.creator = this.creator.toString(context);
+        json.signature = this.signature;
+
+        return json;
+    }
+
+    protected fromJSON(json: JSONObject, context: DID = null): void {
+        this.type = this.getString("proof.type", json.type,
+                {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+        this.created = this.getDate("proof.created", json.created,
+                {mandatory: false});
+        this.creator = this.getDidUrl("proof.creator", json.verificationMethod,
+                {mandatory: true, nullable: false, context: context});
+        this.signature = this.getString("proof.signature", json.signature,
+                {mandatory: true, nullable: false});
     }
 }

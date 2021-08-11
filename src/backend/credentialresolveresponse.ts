@@ -20,18 +20,15 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty } from "@elastosfoundation/jackson-js";
 import { CredentialBiography } from "./credentialbiography";
 import { ResolveError } from "./resolveerror";
-import { ResolveResponse, RpcConstants, JsonRpcError } from "./resolveresponse";
+import { ResolveResponse, JsonRpcError } from "./resolveresponse";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
+import { DIDEntity } from "../internals";
+import { JSONObject } from "../json";
 
 export class CredentialResolveResponse extends ResolveResponse<CredentialResolveResponse, CredentialBiography> {
-    @JsonProperty({value: RpcConstants.RESULT})
-    @JsonClassType({type: ()=>[CredentialBiography]})
-    protected result: CredentialBiography;
-
-    constructor(responseId: string, resultOrError: CredentialBiography | ResolveError | JsonRpcError) {
+    constructor(responseId: string = null, resultOrError: CredentialBiography | ResolveError | JsonRpcError = null) {
         super();
         this.jsonrpc = ResolveResponse.JSON_RPC_VERSION;
         this.id = responseId;
@@ -45,30 +42,23 @@ export class CredentialResolveResponse extends ResolveResponse<CredentialResolve
         }
     }
 
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.RESULT, required: false}) result: CredentialBiography, @JsonProperty({value: RpcConstants.ERROR, required: false}) error: JsonRpcError): CredentialResolveResponse {
-        let newInstance = result ? new CredentialResolveResponse(id, result) : new CredentialResolveResponse(id, error);
-        if (result) newInstance.result = result;
-        return newInstance;
-    }
-
     public getResult(): CredentialBiography {
         return this.result;
     }
 
-    protected async sanitize(): Promise<void> {
-        await super.sanitize();
+    protected resultFromJson(json: JSONObject): CredentialBiography {
+        return CredentialBiography.parse(json);
+    }
 
-        if (this.result == null && this.error == null)
-            throw new MalformedResolveResponseException("Missing result or error");
-
-        if (this.result != null) {
-            try {
-                await this.result.sanitize();
-            } catch (e) {
-                // MalformedResolveResultException
-                throw new MalformedResolveResponseException("Invalid result", e);
-            }
+    public static parse(content: string | JSONObject, context = null): CredentialResolveResponse {
+        try {
+            return DIDEntity.deserialize(content, CredentialResolveResponse, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveResponseException)
+                throw e;
+            else
+                throw new MalformedResolveResponseException(e);
         }
     }
 }

@@ -141,7 +141,7 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    private async checkStore(): Promise<void> {
+    private checkStore(): void {
         log.debug("Checking DID store at {}", this.storeRoot.getAbsolutePath());
 
         if (this.storeRoot.isFile()) {
@@ -180,7 +180,7 @@ export class FileSystemStorage implements DIDStorage {
 
         try {
             let metadataContent = metadataFile.readText();
-            let metadata = await DIDStoreMetadata.parse<DIDStoreMetadata>(metadataContent, DIDStoreMetadata);
+            let metadata = DIDStoreMetadata.parse(metadataContent);
 
             if (metadata.getType() !== DIDStoreMetadata.DID_STORE_TYPE)
                 throw new DIDStorageException("Unknown DIDStore type");
@@ -256,12 +256,12 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public async loadMetadata(): Promise<DIDStoreMetadata> {
+    public loadMetadata(): DIDStoreMetadata {
         try {
             let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
             let metadata: DIDStoreMetadata = null;
             if (file.exists())
-                metadata = await DIDStoreMetadata.parse<DIDStoreMetadata>(file.readText(), DIDStoreMetadata);
+                metadata = DIDStoreMetadata.parse(file.readText());
 
             return metadata;
         } catch (e) {
@@ -292,12 +292,12 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public async loadRootIdentityMetadata(id: string): Promise<RootIdentity.Metadata> {
+    public loadRootIdentityMetadata(id: string): RootIdentity.Metadata {
         try {
             let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
             let metadata: RootIdentity.Metadata = null;
             if (file.exists())
-                metadata = await RootIdentity.Metadata.parse<RootIdentity.Metadata>(file.readText(), RootIdentity.Metadata);
+                metadata = RootIdentity.Metadata.parse(file.readText());
 
             return metadata;
         } catch (e) {
@@ -455,12 +455,12 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public async loadDidMetadata(did: DID): Promise<DIDMetadata> {
+    public loadDidMetadata(did: DID): DIDMetadata {
         try {
             let file = this.getDidMetadataFile(did, false);
             let metadata: DIDMetadata = null;
             if (file.exists())
-                metadata = await DIDMetadata.parse<DIDMetadata>(file.readText(), DIDMetadata);
+                metadata = DIDMetadata.parse(file.readText());
 
             return metadata;
         } catch (e) {
@@ -485,7 +485,7 @@ export class FileSystemStorage implements DIDStorage {
             if (!file.exists())
                 return null;
 
-            return await DIDDocument.parse<DIDDocument>(file.readText(), DIDDocument);
+            return await DIDDocument.parseAsync(file.readText());
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load DID document error: " + did, e);
@@ -556,13 +556,13 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public async loadCredentialMetadata(id: DIDURL): Promise<CredentialMetadata> {
+    public loadCredentialMetadata(id: DIDURL): CredentialMetadata {
         try {
             let file = this.getCredentialMetadataFile(id, false);
             if (!file.exists())
                 return null;
 
-            return await CredentialMetadata.parse<CredentialMetadata>(file.readText(), CredentialMetadata);
+            return CredentialMetadata.parse(file.readText());
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load credential metadata error: " + id, e);
@@ -579,13 +579,13 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public loadCredential(id: DIDURL): Promise<VerifiableCredential> {
+    public loadCredential(id: DIDURL): VerifiableCredential {
         try {
             let file = this.getCredentialFile(id, false);
             if (!file.exists())
                 return null;
 
-            return VerifiableCredential.parseContent(file.readText());
+            return VerifiableCredential.parse(file.readText());
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load credential error: " + id, e);

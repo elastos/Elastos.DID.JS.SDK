@@ -23,9 +23,12 @@
 import { AbstractMetadata } from "./internals";
 import type { Cloneable } from "./cloneable";
 import type { DIDStore } from "./internals";
-import type { DIDURL } from "./internals";
+import type { DID, DIDURL } from "./internals";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
+import { DIDEntity } from "./internals";
+import { JSONObject } from "./json";
+import { MalformedMetadataException } from "./exceptions/exceptions";
 
 //const log = new Logger("CredentialMetadata");
 
@@ -141,6 +144,18 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
                 CredentialMetadata.log.error("INTERNAL - error store metadata for credential {}", this.id);
                 throw e;
             }
+        }
+    }
+
+    public static parse(content: string | JSONObject, context: DID = null): CredentialMetadata {
+        try {
+            return DIDEntity.deserialize(content, CredentialMetadata, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedMetadataException)
+                throw e;
+            else
+                throw new MalformedMetadataException(e);
         }
     }
 }

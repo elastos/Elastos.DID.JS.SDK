@@ -20,11 +20,12 @@
  * SOFTWARE.
  */
 
-import { JsonCreator, JsonInclude, JsonIncludeType, JsonProperty } from "@elastosfoundation/jackson-js";
 import type { DID } from "../internals";
 import { DIDURL } from "../internals";
-import type { Hashable } from "../hashable";
+import { DIDEntity } from "../internals";
 import { ResolveRequest } from "./resolverequest";
+import { JSONObject } from "../json"
+import { MalformedResolveRequestException } from "../exceptions/exceptions";
 
 export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRequest, Parameters> {
     public static PARAMETER_ID = "id";
@@ -33,9 +34,7 @@ export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
     public static METHOD_NAME = "did_resolveCredential";
 
     // TODO Java - @JsonCreator
-    public constructor(
-        @JsonProperty({value: CredentialResolveRequest.ID}) requestId: string
-    ) {
+    public constructor(requestId: string = null) {
         super(requestId, CredentialResolveRequest.METHOD_NAME);
     }
 
@@ -61,20 +60,30 @@ export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 
         return builder.build().toString();
     }
+
+    protected paramsFromJson(json: JSONObject): Parameters {
+        return Parameters.parse(json);
+    }
+
+    public static parse(content: string | JSONObject, context = null): CredentialResolveRequest {
+        try {
+            return DIDEntity.deserialize(content, CredentialResolveRequest, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveRequestException)
+                throw e;
+            else
+                throw new MalformedResolveRequestException(e);
+        }
+    }
 }
 
-class Parameters implements Hashable {
-    @JsonProperty({value: CredentialResolveRequest.PARAMETER_ID})
+class Parameters extends ResolveRequest.Parameters<Parameters> {
     public id: DIDURL;
-    @JsonProperty({value: CredentialResolveRequest.PARAMETER_ISSUER})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
     public issuer: DID;
 
-    // TODO Java - @JsonCreator
-    public constructor(
-        @JsonProperty({value: CredentialResolveRequest.PARAMETER_ID, required: true})id: DIDURL,
-        issuer: DID = null
-    ) {
+    public constructor(id: DIDURL = null, issuer: DID = null) {
+        super();
         this.id = id;
         this.issuer = issuer;
     }
@@ -101,5 +110,33 @@ class Parameters implements Hashable {
         let rIssuer: DID = p.issuer != null ? p.issuer : p.id.getDid();
 
         return lIssuer.equals(rIssuer);
+    }
+
+    public toJSON(key: string = null): JSONObject {
+        let json: JSONObject = {};
+
+        json.id = this.id.toString();
+
+        if (this.issuer)
+            json.issuer = this.issuer.toString();
+
+        return json;
+    }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        this.id = super.getDidUrl("id", json.id, {mandatory: true, nullable: false});
+        this.issuer = this.getDid("issuer", json.issuer, {mandatory: false, nullable: true, defaultValue: null});
+    }
+
+    public static parse(content: string | JSONObject, context = null): Parameters {
+        try {
+            return DIDEntity.deserialize(content, Parameters, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedResolveRequestException)
+                throw e;
+            else
+                throw new MalformedResolveRequestException(e);
+        }
     }
 }

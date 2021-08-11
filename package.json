@@ -19,7 +19,6 @@
   },
   "typings": "typings/",
   "dependencies": {
-    "@elastosfoundation/jackson-js": "^1.1.7",
     "assert": "^2.0.0",
     "axios": "^0.19.2",
     "bip32": "^2.0.6",

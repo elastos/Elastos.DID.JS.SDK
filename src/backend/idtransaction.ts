@@ -20,22 +20,17 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonCreator, JsonProperty, JsonPropertyOrder } from "@elastosfoundation/jackson-js";
 import { DIDEntity } from "../internals";
 import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
 import type { IDChainRequest } from "./idchaindrequest";
+import { JSONObject } from "../json";
 
-@JsonPropertyOrder({value: ["txId", "timestamp", "request"]})
 export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDEntity<T> {
     protected static TXID = "txid";
     protected static TIMESTAMP = "timestamp";
     protected static OPERATION = "operation";
 
-    @JsonProperty({value: IDTransaction.TXID})
-    @JsonClassType({type: () => [String]})
     private txId: string;
-    @JsonProperty({value: IDTransaction.TIMESTAMP})
-    @JsonClassType({type: () => [Date]})
     private timestamp: Date;
     protected request: R;
 
@@ -46,7 +41,7 @@ export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
      * @param timestamp the time stamp
      * @param request the IDChainRequest content
      */
-    protected constructor(txid: string = null, timestamp: Date = null, request: R = null) {
+    public constructor(txid: string = null, timestamp: Date = null, request: R = null) {
         super();
         this.txId = txid;
         this.timestamp = timestamp;
@@ -70,21 +65,21 @@ export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDE
         return this.request;
     }
 
-    public async sanitize(): Promise<void> {
-        if (this.txId == null || this.txId === "")
-            throw new MalformedIDChainTransactionException("Missing txid");
-
-        if (this.timestamp == null)
-            throw new MalformedIDChainTransactionException("Missing timestamp");
-
-        if (this.request == null)
-            throw new MalformedIDChainTransactionException("Missing request");
-
-        try {
-            await this.request.sanitize();
-        } catch (e) {
-            // MalformedIDChainRequestException
-            throw new MalformedIDChainTransactionException("Invalid request", e);
+    public toJSON(key: string = null): JSONObject {
+        return {
+            txid: this.txId,
+            timestamp: this.dateToString(this.timestamp),
+            operation: this.request.toJSON()
         }
     }
+
+    protected fromJSON(json: JSONObject, context = null): void {
+        this.txId = this.getString("txid", json.txid, {mandatory: true, nullable: false});
+        this.timestamp = this.getDate("timestamp", json.timestamp, {mandatory: true, nullable: false});
+        if (!json.operation)
+            throw new MalformedIDChainTransactionException("Missing request");
+        this.request = this.requestFromJSON(json.operation as JSONObject);
+    }
+
+    protected abstract requestFromJSON(json: JSONObject): R;
 }

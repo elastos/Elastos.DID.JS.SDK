@@ -1,13 +1,5 @@
-import {
-    JsonClassType,
-    JsonProperty,
-    JsonPropertyOrder,
-    JsonAnySetter,
-    JsonCreator,
-    JsonIgnore,
-    JsonAnyGetter
-} from "@elastosfoundation/jackson-js";
-import { DIDURL } from "./internals";
+import { DID, DIDURL } from "./internals";
+import { DIDEntity } from "./internals";
 import type { DIDObject } from "./internals";
 import type { JSONObject, JSONValue } from "./json";
 import { sortJSONObject } from "./json";
@@ -18,23 +10,10 @@ import type { Comparable } from "./comparable";
  * wishes to advertise, including decentralized identity management services
  * for further discovery, authentication, authorization, or interaction.
  */
-@JsonPropertyOrder({value: ["id", "type", "endpoint"]})
-export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocumentService> {
-    private static ID = "id";
-    private static TYPE = "type";
-    private static SERVICE_ENDPOINT = "serviceEndpoint";
-
-    @JsonProperty({ value: DIDDocumentService.ID })
-    @JsonClassType({type: () => [DIDURL]})
+export class DIDDocumentService extends DIDEntity<DIDDocumentService> implements DIDObject<string>, Comparable<DIDDocumentService> {
     public id: DIDURL;
-    @JsonProperty({ value: DIDDocumentService.TYPE })
-    @JsonClassType({ type: () => [String] })
     public type: string;
-    @JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT })
-    @JsonClassType({ type: () => [String] })
-    public endpoint: string;
-
-    @JsonIgnore()
+    public serviceEndpoint: string;
     private properties: JSONObject;
 
     /**
@@ -44,22 +23,19 @@ export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocu
      * @param type the type of Service
      * @param endpoint the address of service point
      */
-    constructor(id?: DIDURL, type?: string, endpoint?: string, properties?: JSONObject) {
+    constructor(id: DIDURL = null, type: string = null,
+            serviceEndpoint: string = null, properties?: JSONObject) {
+        super();
         this.id = id;
         this.type = type;
-        this.endpoint = endpoint;
-        this.properties = properties ? properties : {};
+        this.serviceEndpoint = serviceEndpoint;
+        this.properties = properties ? sortJSONObject(properties) : {};
 
         if (Object.keys(this.properties).length > 0) {
-            delete this.properties[DIDDocumentService.ID];
-            delete this.properties[DIDDocumentService.TYPE];
-            delete this.properties[DIDDocumentService.SERVICE_ENDPOINT];
+            delete this.properties["id"];
+            delete this.properties["type"];
+            delete this.properties["serviceEndpoint"];
         }
-    }
-
-    @JsonCreator()
-    public static jacksonCreator() {
-        return new DIDDocumentService();
     }
 
     /**
@@ -86,38 +62,7 @@ export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocu
      * @return the service point string
      */
     public getServiceEndpoint(): string {
-        return this.endpoint;
-    }
-
-    /**
-     * Helper getter method for properties serialization.
-     * NOTICE: Should keep the alphabetic serialization order.
-     *
-     * @return a String to object map include all application defined
-     *         properties
-     */
-    @JsonAnyGetter()
-    @JsonClassType({type: () => [String, Object]})
-    //@JsonPropertyOrder({ alphabetic: true })
-    private getAllProperties(): JSONObject {
-        return sortJSONObject(this.properties);
-    }
-
-    /**
-     * Helper setter method for properties deserialization.
-     *
-     * @param name the property name
-     * @param value the property value
-     */
-    @JsonAnySetter()
-    private setProperty(name: string, value: JSONValue) {
-        if (name === DIDDocumentService.ID || name === DIDDocumentService.TYPE || name === DIDDocumentService.SERVICE_ENDPOINT)
-            return;
-
-        if (this.properties == null)
-            this.properties = {};
-
-        this.properties[name] = value;
+        return this.serviceEndpoint;
     }
 
     public getProperties(): JSONObject {
@@ -144,6 +89,33 @@ export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocu
         if (rc != 0)
             return rc;
         else
-            return this.endpoint.localeCompare(svc.endpoint);
+            return this.serviceEndpoint.localeCompare(svc.serviceEndpoint);
+    }
+
+    public toJSON(key: string = null): JSONObject {
+        let context: DID = key ? new DID(key) : null;
+
+        let json: JSONObject = {};
+        json.id = this.id.toString(context);
+        json.type = this.type;
+        json.serviceEndpoint = this.serviceEndpoint;
+
+        return {...json, ...this.properties};
+    }
+
+    protected fromJSON(json: JSONObject, context: DID = null): void {
+        this.id = this.getDidUrl("service.id", json.id,
+                {mandatory: true, nullable: false, context: context});
+        this.type = this.getString("service.type", json.type,
+                {mandatory: true, nullable: false});
+        this.serviceEndpoint = this.getString("service.serviceEndpoint", json.serviceEndpoint,
+                {mandatory: true, nullable: false});
+
+        if (Object.keys(json).length > 3) {
+            this.properties = sortJSONObject(json);
+            delete this.properties["id"];
+            delete this.properties["type"];
+            delete this.properties["serviceEndpoint"];
+        }
     }
 }

@@ -20,43 +20,24 @@
  * SOFTWARE.
  */
 
-import { JsonClassType, JsonInclude, JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonSerialize, JsonDeserialize, JsonCreator, JsonIgnore } from "@elastosfoundation/jackson-js";
-import { Collections } from "./internals";
 import { Constants } from "./constants";
-import { DID } from "./internals";
+import { DID, DIDURL } from "./internals";
 import type { DIDDocument } from "./internals";
 import { DIDEntity } from "./internals";
 import type { DIDStore } from "./internals";
-import { DIDURL } from "./internals";
-import { ParentException, AlreadySealedException, DIDNotFoundException, DIDObjectAlreadyExistException, IllegalUsage, InvalidKeyException, MalformedPresentationException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
-import type {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js";
-import {
-    Serializer,
-    Deserializer
-} from "./internals";
+import { Collections } from "./internals";
 import { ComparableMap } from "./comparablemap";
+import { JSONObject } from "./json";
 import { VerificationEventListener } from "./verificationEventListener";
-
-class NormalizedURLDeserializer extends Deserializer {
-    public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
-        try {
-            return new DIDURL(value);
-        } catch (e) {
-            throw new ParentException("Invalid public key");
-        }
-    }
-}
-
-class PresentationTypeSerializer extends Serializer {
-    public static serialize(type: string[], context: JsonStringifierTransformerContext): any {
-        return type.length > 1 ? type : type[0];
-    }
-}
+import {
+    AlreadySealedException,
+    DIDNotFoundException,
+    DIDObjectAlreadyExistException,
+    IllegalUsage, InvalidKeyException,
+    MalformedPresentationException
+} from "./exceptions/exceptions";
 
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
@@ -65,54 +46,18 @@ class PresentationTypeSerializer extends Serializer {
  * This also helps prevent a verifier from reusing a verifiable presentation as
  * their own.
  */
-@JsonPropertyOrder({value: [
-    "id",
-    "type",
-    "holder",
-    "created",
-    "_credentials",
-    "proof" ]})
 export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
     /**
      * Default presentation type
      */
     public static DEFAULT_PRESENTATION_TYPE = "VerifiablePresentation";
 
-    public static ID = "id";
-    public static TYPE = "type";
-    public static HOLDER = "holder";
-    public static VERIFIABLE_CREDENTIAL = "verifiableCredential";
-    public static CREATED = "created";
-    public static PROOF = "proof";
-    public static NONCE = "nonce";
-    public static REALM = "realm";
-    public static VERIFICATION_METHOD = "verificationMethod";
-    public static SIGNATURE = "signature";
-
-    @JsonProperty({value: VerifiablePresentation.ID})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [DIDURL]})
-    public id: DIDURL = null;
-    @JsonProperty({value: VerifiablePresentation.TYPE})
-    @JsonSerialize({using: PresentationTypeSerializer.serialize})
+    public id: DIDURL;
     public type: string[];
-    @JsonProperty({value: VerifiablePresentation.HOLDER})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [DID]})
     public holder: DID;
-    @JsonProperty({value: VerifiablePresentation.CREATED})
-    @JsonClassType({type: () => [Date]})
     public created: Date;
-    @JsonProperty({value: VerifiablePresentation.VERIFIABLE_CREDENTIAL})
-    @JsonClassType({type: () => [Array, [VerifiableCredential]]})
-    public _credentials: VerifiableCredential[];
-    @JsonProperty({value: VerifiablePresentation.PROOF})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [VerifiablePresentation.Proof]})
-    public proof: VerifiablePresentation.Proof;
-
-    @JsonIgnore()
     public credentials: ComparableMap<DIDURL, VerifiableCredential>;
+    public proof: VerifiablePresentation.Proof;
 
     /**
      * Constructs the simplest Presentation.
@@ -121,23 +66,6 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         super();
         this.holder = holder;
         this.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
-    }
-
-    // Add custom deserialization fields to the method params here + assign.
-    // Jackson does the rest automatically.
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: VerifiablePresentation.TYPE}) type?: any) {
-        let vp = new VerifiablePresentation(null);
-
-        // Proofs
-        if (type) {
-            if (type instanceof Array)
-                vp.type = type.map((p) => VerifiablePresentation.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [String]}));
-            else
-                vp.type = [VerifiablePresentation.getDefaultObjectMapper().parse(JSON.stringify(type), {mainCreator: () => [String]})];
-        }
-
-        return vp;
     }
 
     /**
@@ -152,7 +80,6 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         presentation.holder = vp.holder;
         presentation.created = vp.created;
         presentation.credentials = vp.credentials;
-        presentation._credentials = vp._credentials;
         if (withProof)
             presentation.proof = vp.proof;
 
@@ -213,7 +140,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
      * @return the Credential array
      */
     public getCredentials(): VerifiableCredential[] {
-        return this._credentials;
+        return this.credentials.valuesAsSortedArray();
     }
 
     /**
@@ -243,45 +170,6 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
     }
 
     /**
-     * Sanitize routine before sealing or after deserialization.
-     *
-     * @param withProof check the proof object or not
-     * @throws MalformedPresentationException if the presentation object is invalid
-     */
-    protected async sanitize(): Promise<void> {
-        if (this.type == null || this.type.length == 0)
-            throw new MalformedPresentationException("Missing presentation type");
-
-        if (this.created == null)
-            throw new MalformedPresentationException("Missing presentation create timestamp");
-
-        if (this._credentials != null && this._credentials.length > 0) {
-            for (let vc of this._credentials) {
-                try {
-                    await vc.sanitize();
-                } catch (e) {
-                    // MalformedCredentialException
-                    throw new MalformedPresentationException("credential invalid: " + vc.getId(), e);
-                }
-
-                if (this.credentials.has(vc.getId()))
-                    throw new MalformedPresentationException("Duplicated credential id: " + vc.getId());
-
-                    this.credentials.set(vc.getId(), vc);
-            }
-        }
-
-        if (this.proof == null)
-            throw new MalformedPresentationException("Missing presentation proof");
-
-        if (this.proof.getVerificationMethod().getDid() == null)
-            throw new MalformedPresentationException("Invalid verification method");
-
-        Collections.sort(this.type);
-        this._credentials = Array.from(this.credentials.values());
-    }
-
-    /**
      * Check whether the Presentation is genuine or not.
      *
      * @return whether the Credential object is genuine
@@ -295,7 +183,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 listener.failed(this, "VP {}: is not genuine", this.getId());
             }
             return false;
-        }       
+        }
 
         // Check the integrity of holder' document.
         if (!holderDoc.isGenuine(listener)) {
@@ -305,7 +193,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // Unsupported public key type;
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
@@ -315,7 +203,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // Credential should signed by authentication key.
         if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
             if (listener != null) {
@@ -325,7 +213,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // All credentials should owned by holder
         for (let vc of this.credentials.values()) {
             if (!vc.getSubject().getId().equals(this.getHolder())) {
@@ -336,7 +224,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 }
                 return false;
             }
-                
+
             if (!await vc.isGenuine(listener)) {
                 if (listener != null) {
                     listener.failed(this, "VP {}: credential '{}' is not genuine",
@@ -344,7 +232,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                     listener.failed(this, "VP {}: is not genuine", this.getId());
                 }
                 return false;
-            }       
+            }
         }
 
         let vp = VerifiablePresentation.newFromPresentation(this, false);
@@ -379,7 +267,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // Check the validity of holder' document.
         if (!holderDoc.isValid(listener)) {
             if (listener != null) {
@@ -387,7 +275,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 listener.failed(this, "VP {}: is invalid", this.getId());
             }
             return false;
-        }   
+        }
 
         // Unsupported public key type;
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
@@ -398,7 +286,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // Credential should signed by authentication key.
         if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
             if (listener != null) {
@@ -408,7 +296,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-        
+
         // All credentials should owned by holder
         for (let vc of this.credentials.values()) {
             if (!vc.getSubject().getId().equals(this.getHolder())) {
@@ -419,7 +307,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 }
                 return false;
             }
-                
+
             if (!await vc.isValid(listener)) {
                 if (listener != null) {
                     listener.failed(this, "VP {}: credential '{}' is invalid",
@@ -427,7 +315,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                     listener.failed(this, "VP {}: is invalid", this.getId());
                 }
                 return false;
-            }   
+            }
         }
 
         let vp = VerifiablePresentation.newFromPresentation(this, false);
@@ -448,6 +336,61 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         return result;
     }
 
+    public toJSON(key: string = null): JSONObject {
+        let json: JSONObject = {};
+        json.id = this.id.toString();
+        json.type = this.type.length == 1 ? this.type[0] : this.type;
+        if (this.holder)
+            json.holder = this.holder.toString();
+        json.created = this.dateToString(this.created);
+
+        json.verifiableCredential = Array.from(this.credentials.valuesAsSortedArray(),
+            (vc) => vc.toJSON());
+
+        if (this.proof)
+            json.proof = this.proof.toJSON();
+
+        return json;
+    }
+
+    protected fromJSON(json: JSONObject, context: DID = null): void {
+        this.holder = this.getDid("holder", json.holder, {mandatory: false, nullable: false, defaultValue: null});
+        this.id = this.getDidUrl("id", json.id, {mandatory: true, nullable: false, context: this.holder});
+        this.type = this.getStrings("type", json.type,
+                    {mandatory: true, nullable: false, defaultValue: [VerifiablePresentation.DEFAULT_PRESENTATION_TYPE]});
+        this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
+
+        this.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
+
+        if (json.verifiableCredential) {
+            if (!Array.isArray(json.verifiableCredential))
+                throw new MalformedPresentationException("Invalid property: verifiableCredential, type error.");
+
+            for (let obj of json.verifiableCredential ) {
+                let vc: VerifiableCredential;
+                let vcJson = obj as JSONObject;
+
+                try {
+                    vc = VerifiableCredential.deserialize(vcJson , VerifiableCredential, this.holder);
+                } catch (e) {
+                    // MalformedCredentialException
+                    throw new MalformedPresentationException("credential invalid: " + vcJson.id, e);
+                }
+
+                if (this.credentials.has(vc.getId()))
+                    throw new MalformedPresentationException("Duplicated credential id: " + vc.getId());
+
+                this.credentials.set(vc.getId(), vc);
+            }
+        }
+
+        if (!json.proof)
+            throw new MalformedPresentationException("Missing property: proof");
+
+        let proof = json.proof as JSONObject;
+        this.proof = VerifiablePresentation.Proof.deserialize(proof, VerifiablePresentation.Proof, this.holder);
+    }
+
     /**
      * Parse a VerifiablePresentation object from from a string JSON
      * representation.
@@ -456,9 +399,9 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
      * @return the VerifiablePresentation object
      * @throws DIDSyntaxException if a parse error occurs
      */
-    public static parseContent(content: string): Promise<VerifiablePresentation> {
+    public static parse(content: JSONObject | string): VerifiablePresentation {
         try {
-            return this.parse(content, VerifiablePresentation);
+            return DIDEntity.deserialize(content, VerifiablePresentation);
         } catch (e) {
             if (e instanceof MalformedPresentationException)
                 throw e;
@@ -639,8 +582,6 @@ export namespace VerifiablePresentation {
             if (this.presentation.created)
                 this.presentation.created.setMilliseconds(0);
 
-            this.presentation._credentials = Array.from(this.presentation.credentials.values());
-
             let json = this.presentation.serialize(true);
             let sig = await this.holder.signWithId(this.signKey, storepass, Buffer.from(json),
                     Buffer.from(this._realm), Buffer.from(this._nonce));
@@ -660,91 +601,100 @@ export namespace VerifiablePresentation {
      *
      * The default proof type is ECDSAsecp256r1.
      */
-     @JsonPropertyOrder({value: [
-         "type",
-         "verificationMethod",
-         "realm",
-         "nonce",
-         "signature" ]})
-     export class Proof {
-         @JsonProperty({value: VerifiablePresentation.TYPE})
-         private type: string;
-         @JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD})
-         @JsonDeserialize({using: NormalizedURLDeserializer.deserialize})
-         private verificationMethod: DIDURL;
-         @JsonProperty({value: VerifiablePresentation.REALM})
-         private realm: string;
-         @JsonProperty({value: VerifiablePresentation.NONCE})
-         private nonce: string;
-         @JsonProperty({value: VerifiablePresentation.SIGNATURE})
-         private signature: string;
+    export class Proof extends DIDEntity<Proof> {
+        private type: string;
+        private verificationMethod: DIDURL;
+        private realm: string;
+        private nonce: string;
+        private signature: string;
 
-         /**
-          * Create the proof object with the given values.
-          *
-          * @param type the type string
-          * @param method the sign key
-          * @param realm where is presentation use
-          * @param nonce the nonce string
-          * @param signature the signature string
-          */
-         // TODO java: @JsonCreator
-         constructor(
-                 @JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD, required: true}) method: DIDURL,
-                 @JsonProperty({value: VerifiablePresentation.REALM, required: true}) realm: string,
-                 @JsonProperty({value: VerifiablePresentation.NONCE, required: true}) nonce: string,
-                 @JsonProperty({value: VerifiablePresentation.SIGNATURE, required: true}) signature: string,
-                 @JsonProperty({value: VerifiablePresentation.TYPE}) type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
-             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-             this.verificationMethod = method;
-             this.realm = realm;
-             this.nonce = nonce;
-             this.signature = signature;
-         }
+        /**
+         * Create the proof object with the given values.
+         *
+         * @param type the type string
+         * @param method the sign key
+         * @param realm where is presentation use
+         * @param nonce the nonce string
+         * @param signature the signature string
+         */
+        constructor(method: DIDURL = null, realm: string = null, nonce: string = null,
+                signature: string = null, type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            super();
+            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+            this.verificationMethod = method;
+            this.realm = realm;
+            this.nonce = nonce;
+            this.signature = signature;
+        }
 
-         /**
-          * Get presentation type.
-          *
-          * @return the type string
-          */
-         public getType(): string {
-             return this.type;
-         }
+        /**
+         * Get presentation type.
+         *
+         * @return the type string
+         */
+        public getType(): string {
+            return this.type;
+        }
 
-         /**
-          * Get key to sign Presentation.
-          *
-          * @return the sign key
-          */
-         public getVerificationMethod(): DIDURL {
-             return this.verificationMethod;
-         }
+        /**
+         * Get key to sign Presentation.
+         *
+         * @return the sign key
+         */
+        public getVerificationMethod(): DIDURL {
+            return this.verificationMethod;
+        }
 
-         /**
-          * Get realm string of Presentation.
-          *
-          * @return the realm string
-          */
-         public getRealm(): string {
-             return this.realm;
-         }
+        /**
+         * Get realm string of Presentation.
+         *
+         * @return the realm string
+         */
+        public getRealm(): string {
+            return this.realm;
+        }
 
-         /**
-          * Get nonce string of Presentation.
-          *
-          * @return the nonce string
-          */
-         public getNonce(): string {
-             return this.nonce;
-         }
+        /**
+         * Get nonce string of Presentation.
+         *
+         * @return the nonce string
+         */
+        public getNonce(): string {
+            return this.nonce;
+        }
 
-         /**
-          * Get signature string of Presentation.
-          *
-          * @return the signature string
-          */
-         public getSignature(): string {
-             return this.signature;
-         }
-     }
+        /**
+         * Get signature string of Presentation.
+         *
+         * @return the signature string
+         */
+        public getSignature(): string {
+            return this.signature;
+        }
+
+        public toJSON(key: string = null): JSONObject {
+            let context: DID = key ? new DID(key) : null;
+
+            return {
+                type: this.type,
+                verificationMethod: this.verificationMethod.toString(),
+                realm: this.realm,
+                nonce: this.nonce,
+                signature: this.signature
+            };
+        }
+
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.type = this.getString("proof.type", json.type,
+                { mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE });
+            this.verificationMethod = this.getDidUrl("proof.verificationMethod", json.verificationMethod,
+                { mandatory: true, nullable: false, context: context });
+            this.realm = this.getString("proof.realm", json.realm,
+                { mandatory: true, nullable: false });
+            this.nonce = this.getString("proof.nonce", json.nonce,
+                { mandatory: true, nullable: false });
+            this.signature = this.getString("proof.signature", json.signature,
+                { mandatory: true, nullable: false });
+        }
+    }
 }

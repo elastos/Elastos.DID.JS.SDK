@@ -20,26 +20,23 @@
  * SOFTWARE.
  */
 
-import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonIgnore, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize, JsonClassType } from "@elastosfoundation/jackson-js";
-import { Collections, Serializer } from "./internals";
-import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
-import { EcdsaSigner } from "./internals";
-import { DID } from "./internals";
+import { DID, DIDURL, DIDEntity } from "./internals";
 import type { DIDDocument } from "./internals";
-import { DIDEntity } from "./internals";
-import { DIDURL } from "./internals";
-import { NotCustomizedDIDException, UnknownInternalException, NotControllerException, NoEffectiveControllerException, AlreadySignedException, MalformedTransferTicketException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
+import { EcdsaSigner } from "./internals";
+import { JSONObject } from "./json";
 import { ComparableMap } from "./comparablemap";
-import type { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
+import type { Comparable } from "./comparable";
 import { VerificationEventListener } from "./verificationEventListener";
-
-class TransferTicketProofSerializer extends Serializer {
-    public static serialize(proof: string[], context: JsonStringifierTransformerContext): any {
-        return proof.length > 1 ? proof : proof[0];
-    }
-}
+import {
+    NotCustomizedDIDException,
+    UnknownInternalException,
+    NotControllerException,
+    NoEffectiveControllerException,
+    AlreadySignedException,
+    MalformedTransferTicketException
+} from "./exceptions/exceptions";
 
 /**
  * Transfer ticket class.
@@ -51,66 +48,19 @@ class TransferTicketProofSerializer extends Serializer {
  * The new owner(s) can use this ticket create a transfer transaction, get
  * the subject DID's ownership.
  */
-// The values should be the real class field names, not the final JSON output field names.
-// Or keep the class field names same with the JSON field namas.
-@JsonPropertyOrder({value:["id", "to", "txid", "_proofs"]})
 export class TransferTicket extends DIDEntity<TransferTicket> {
-    public static ID = "id";
-    public static TO = "to";
-    public static TXID = "txid";
-    public static PROOF = "proof";
-    public static TYPE = "type";
-    public static VERIFICATION_METHOD = "verificationMethod";
-    public static CREATED = "created";
-    public static SIGNATURE = "signature";
-
-    @JsonProperty({value:TransferTicket.ID})
-    @JsonClassType({type: () => [DID]})
     private id: DID;
-
-    @JsonProperty({value:TransferTicket.TO})
-    @JsonClassType({type: () => [DID]})
     private to: DID;
-
-    @JsonProperty({value:TransferTicket.TXID})
-    @JsonClassType({type: () => [String]})
     private txid: string;
-
-    @JsonProperty({value:TransferTicket.PROOF})
-    @JsonInclude({value: JsonIncludeType.NON_EMPTY})
-    @JsonSerialize({using: TransferTicketProofSerializer.serialize})
-    private _proofs: TransferTicket.Proof[];
-
-    @JsonIgnore()
-    private doc: DIDDocument;
-
-    @JsonIgnore()
     private proofs: ComparableMap<DID, TransferTicket.Proof>;
 
-    public constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
-            @JsonProperty({value: TransferTicket.TO, required: true}) to: DID,
-            @JsonProperty({value: TransferTicket.TXID, required: true}) txid: string) {
+    private doc: DIDDocument;
+
+    public constructor(did: DID = null, to: DID = null, txid: string = null) {
         super();
         this.id = did;
         this.to = to;
         this.txid = txid;
-    }
-
-    // Add custom deserialization fields to the method params here + assign.
-    // Jackson does the rest automatically.
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any) {
-        let tt = new TransferTicket(null, null, null);
-
-        // Proofs
-        if (_proofs) {
-            if (_proofs instanceof Array)
-                tt._proofs = _proofs.map((p) => TransferTicket.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [TransferTicket.Proof]}));
-            else
-                tt._proofs = [TransferTicket.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [TransferTicket.Proof]})];
-        }
-
-        return tt;
     }
 
     /**
@@ -141,7 +91,6 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
         newTicket.doc = ticket.doc;
         if (withProof) {
             newTicket.proofs = ticket.proofs;
-            newTicket._proofs = ticket._proofs;
         }
         return newTicket;
     }
@@ -179,7 +128,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
      * @return the Proof object
      */
     public getProof(): TransferTicket.Proof {
-        return this._proofs[0];
+        return this.getProofs()[0];
     }
 
     /**
@@ -188,7 +137,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
      * @return list of the Proof objects
      */
     public getProofs(): TransferTicket.Proof[] {
-        return this._proofs;
+        return this.proofs.valuesAsSortedArray();
     }
 
     private async getDocument(): Promise<DIDDocument> {
@@ -237,7 +186,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
         let json = tt.serialize(true);
         let digest = EcdsaSigner.sha256Digest(Buffer.from(json, 'utf-8'));
 
-        for (let proof of this._proofs) {
+        for (let proof of this.proofs.values()) {
             if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: key type '{}' for proof is not supported",
@@ -246,7 +195,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 }
                 return false;
             }
-                
+
             let controllerDoc = doc.getControllerDocument(proof.getVerificationMethod().getDid());
             if (controllerDoc == null) {
                 if (listener != null) {
@@ -256,7 +205,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 }
                 return false;
             }
-                
+
             if (!controllerDoc.isValid(listener)) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: controller '{}' is invalid, failed to verify the proof",
@@ -265,7 +214,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 }
                 return false;
             }
-                
+
             if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId())) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: key '{}' for proof is not default key of '{}'",
@@ -274,7 +223,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 }
                 return false;
             }
-    
+
             if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest)) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: proof '{}' is invalid, signature mismatch",
@@ -327,10 +276,10 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             }
             return false;
         }
-    
+
         if (listener != null)
             listener.succeeded(this, "Ticket {}: is valid", this.getSubject());
-            
+
         return true;
     }
 
@@ -349,39 +298,52 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
         return this.proofs.size == (multisig == null ? 1 : multisig.m());
     }
 
-    /**
-     * Sanitize routine before sealing or after deserialization.
-     *
-     * @param withProof check the proof object or not
-     * @throws MalformedDocumentException if the document object is invalid
-     */
-    protected sanitize(): Promise<void> {
-        if (this._proofs == null || this._proofs.length == 0)
-            throw new MalformedTransferTicketException("Missing ticket proof");
-
-        // CAUTION: can not resolve the target document here!
-        //          will cause recursive resolve.
-
-        this.proofs = new ComparableMap<DID, TransferTicket.Proof>();
-
-        for (let proof of this._proofs) {
-            if (proof.getVerificationMethod() == null) {
-                throw new MalformedTransferTicketException("Missing verification method");
-            } else {
-                if (proof.getVerificationMethod().getDid() == null)
-                    throw new MalformedTransferTicketException("Invalid verification method");
-            }
-
-            if (this.proofs.has(proof.getVerificationMethod().getDid()))
-                throw new MalformedTransferTicketException("Aleady exist proof from " + proof.getVerificationMethod().getDid());
-
-            this.proofs.set(proof.getVerificationMethod().getDid(), proof);
+    public toJSON(key: string = null): JSONObject {
+        let json: JSONObject = {};
+        json.id = this.id.toString();
+        json.to = this.to.toString();
+        json.txid = this.txid;
+        if (this.proofs) {
+            let proofs = this.proofs.valuesAsSortedArray();
+            if (proofs.length == 1)
+                json.proof = proofs[0].toJSON(key);
+            else
+                json.proof = Array.from(proofs, v => v.toJSON(key));
         }
 
-        this._proofs = Array.from(this.proofs).map(([k, v]) => v);
-        Collections.sort(this._proofs);
+        return json;
+    }
 
-        return null;
+    protected fromJSON(json: JSONObject, context: DID = null): void {
+        this.id = this.getDid("id", json.id, {mandatory: true, nullable: false});
+        this.to = this.getDid("to", json.to, {mandatory: true, nullable: false});
+        this.txid = this.getString("txid", json.txid, {mandatory: true, nullable: false});
+
+        if (!json.proof)
+            throw new MalformedTransferTicketException("Missing property: proof");
+
+        if (!Array.isArray(json.proof)) {
+            let po = json.proof as JSONObject;
+            let proof = TransferTicket.Proof.deserialize(po, TransferTicket.Proof, this.id);
+            if (proof.getVerificationMethod().getDid() == null)
+                throw new MalformedTransferTicketException("Invalid verification method: " + proof.getVerificationMethod());
+
+            this.proofs.set(proof.getVerificationMethod().getDid(), proof)
+        } else {
+            for (let v of json.proof) {
+                let po = v as JSONObject;
+                let proof = TransferTicket.Proof.deserialize(po, TransferTicket.Proof, this.id);
+
+                if (proof.getVerificationMethod().getDid() == null)
+                    throw new MalformedTransferTicketException("Invalid verification method: " + proof.getVerificationMethod());
+
+                if (this.proofs.has(proof.getVerificationMethod().getDid()))
+                    throw new MalformedTransferTicketException("Aleady exist proof from " + proof.getVerificationMethod().getDid());
+
+                this.proofs.set(proof.getVerificationMethod().getDid(), proof);
+
+            }
+        }
     }
 
     public async seal(controller: DIDDocument, storepass: string): Promise<void> {
@@ -415,16 +377,11 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 throw new AlreadySignedException(signKey.getDid().toString());
         }
 
-        this._proofs = null;
-
         let tt = TransferTicket.newWithTicket(this, false);
         let json = tt.serialize(true);
         let sig = await controller.signWithStorePass(storepass, Buffer.from(json));
-        let proof = TransferTicket.Proof.newWithDIDURL(signKey, sig);
+        let proof = new TransferTicket.Proof(signKey, sig);
         this.proofs.set(proof.getVerificationMethod().getDid(), proof);
-
-        this._proofs = Array.from(this.proofs).map(([k, v]) => v);
-        Collections.sort(this._proofs);
     }
 
     /**
@@ -434,9 +391,9 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
      * @return the TransferTicket object.
      * @throws DIDSyntaxException if a parse error occurs.
      */
-    public static async parseContent(content: string): Promise<TransferTicket> {
+    public static parse(content: string): TransferTicket {
         try {
-            return await DIDEntity.parse<TransferTicket>(content, TransferTicket);
+            return DIDEntity.deserialize(content, TransferTicket);
         } catch (e) {
             // DIDSyntaxException
             if (e instanceof MalformedTransferTicketException)
@@ -453,21 +410,10 @@ export namespace TransferTicket {
      *
      * The default proof type is ECDSAsecp256r1.
      */
-    @JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
-    @JsonCreator()
-    export class Proof implements Comparable<Proof> {
-        @JsonProperty({value: "type"})
-        @JsonClassType({type: () => [String]})
+    export class Proof extends DIDEntity<Proof> implements Comparable<Proof> {
         private type: string;
-        @JsonProperty({value: "created"})
-        @JsonInclude({value: JsonIncludeType.NON_NULL})
-        @JsonClassType({type: () => [Date]})
         private created: Date;
-        @JsonProperty({value: "verificationMethod"})
-        @JsonClassType({type: () => [DIDURL]})
         private verificationMethod: DIDURL;
-        @JsonProperty({value: "signature"})
-        @JsonClassType({type: () => [String]})
         private signature: string;
 
         /**
@@ -477,31 +423,15 @@ export namespace TransferTicket {
          * @param method the verification method, normally it's a public key
          * @param signature the signature encoded in base64 URL safe format
          */
-        /*
-        public constructor(
-                @JsonProperty({value: "type"}) type: string,
-                @JsonProperty({value: "verificationMethod", required: true}) method: DIDURL,
-                @JsonProperty({value: "created"}) created: Date,
-                @JsonProperty({value: "signature", required: true}) signature: string
-        ) {
+        public constructor(method: DIDURL = null, signature: string = null,
+                created: Date = new Date(), type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            super();
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-            this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
+            this.created = created == null ? new Date() : created;
             if (this.created)
                 this.created.setMilliseconds(0);
             this.verificationMethod = method;
             this.signature = signature;
-        }
-        */
-        public static newWithDIDURL(method: DIDURL, signature: string): Proof {
-            let proof = new Proof();
-
-            proof.type = Constants.DEFAULT_PUBLICKEY_TYPE;
-            proof.verificationMethod = method;
-            proof.signature = signature;
-            proof.created = new Date();
-            proof.created.setMilliseconds(0);
-
-            return proof;
         }
 
         /**
@@ -549,6 +479,32 @@ export namespace TransferTicket {
             if (rc == 0)
                 rc = this.verificationMethod.compareTo(proof.verificationMethod);
             return rc;
+        }
+
+        public toJSON(key: string = null): JSONObject {
+            let context: DID = key ? new DID(key) : null;
+
+            let json: JSONObject = {};
+            if (!context || this.type !== Constants.DEFAULT_PUBLICKEY_TYPE)
+                json.type = this.type;
+            if (this.created)
+                json.created = this.dateToString(this.created);
+
+            json.verificationMethod = this.verificationMethod.toString(context);
+            json.signature = this.signature;
+
+            return json;
+        }
+
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.type = this.getString("proof.type", json.type,
+                    {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+            this.created = this.getDate("proof.created", json.created,
+                    {mandatory: false});
+            this.verificationMethod = this.getDidUrl("proof.verificationMethod", json.verificationMethod,
+                    {mandatory: true, nullable: false, context: context});
+            this.signature = this.getString("proof.signature", json.signature,
+                    {mandatory: true, nullable: false});
         }
     }
 }

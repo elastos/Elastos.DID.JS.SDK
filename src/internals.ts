@@ -3,12 +3,8 @@
 // Common utils classes
 export * from "./logger";
 
-export * from "./serializers"; // Should be before filters
-
 // Serializer helper classes
 export * from "./didentity";
-export * from "./diddocumentpublickeyreferenceserializer";
-export * from "./diddocumentpublickeyreferencedeserializer";
 
 // Abstract metadata object shoud be efore all metadata objects
 export * from "./abstractmetadata";
@@ -27,7 +23,6 @@ export * from "./didobject";
 // Should be before DIDDocument
 export * from "./diddocumentmultisignature";
 export * from "./diddocumentpublickey"; // Should be before diddocumentpublickeyreference
-export * from "./diddocumentpublickeyreference";
 export * from "./diddocumentservice";
 export * from "./diddocumentproof";
 export * from "./credentialmetadata";
@@ -73,14 +68,12 @@ export * from "./backend/didbiography";
 export * from "./backend/credentiallistresponse";
 export * from "./backend/idchaindrequest";
 export * from "./backend/credentialrequest";
-export * from "./backend/resolveresult";
 export * from "./backend/didresolveresponse";
 export * from "./backend/resolveresponse";
 export * from "./backend/didrequest";
 export * from "./backend/credentialbiography";
 export * from "./defaultdidadapter";
 export * from "./backend/simulatedidchainadapter";
-export * from "./backend/simulatedidchain";
 export * from "./diddocumentbuilder";
 export * from "./rootidentity";
 export * from "./filesystemstorage";

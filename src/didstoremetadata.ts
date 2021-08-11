@@ -1,11 +1,11 @@
-import { JsonCreator, JsonInclude, JsonIncludeType } from "@elastosfoundation/jackson-js";
 import { AbstractMetadata } from "./internals";
 import type { DIDStore } from "./internals";
-import { DIDStoreException } from "./exceptions/exceptions";
+import { DIDEntity } from "./internals";
+import { JSONObject } from "./json";
+import { DIDStoreException, MalformedMetadataException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
 
-@JsonInclude({value: JsonIncludeType.NON_NULL})
 export class DIDStoreMetadata extends AbstractMetadata {
     static DID_STORE_TYPE = "did:elastos:store";
     static DID_STORE_VERSION = 3;
@@ -20,16 +20,6 @@ export class DIDStoreMetadata extends AbstractMetadata {
         super(store);
         this.put(DIDStoreMetadata.TYPE, DIDStoreMetadata.DID_STORE_TYPE);
         this.put(DIDStoreMetadata.VERSION, DIDStoreMetadata.DID_STORE_VERSION);
-    }
-
-    /**
-     * Called by Jackson when it wants to restore a class from json. Without this, it calls the constructor
-     * with a json object and we don't want this.
-     * Here we don't handle the json data as everything will be handled by the AbstractMetadata JsonAnySetter.
-     */
-    @JsonCreator()
-    public static jacksonCreator(json: any) {
-        return new DIDStoreMetadata(null);
     }
 
     public getType(): string {
@@ -67,6 +57,18 @@ export class DIDStoreMetadata extends AbstractMetadata {
                     DIDStoreMetadata.log.error("INTERNAL - error store metadata for DIDStore");
                 throw e;
             }
+        }
+    }
+
+    public static parse(content: string | JSONObject, context = null): DIDStoreMetadata {
+        try {
+            return DIDEntity.deserialize(content, DIDStoreMetadata, context);
+        } catch (e) {
+            // DIDSyntaxException
+            if (e instanceof MalformedMetadataException)
+                throw e;
+            else
+                throw new MalformedMetadataException(e);
         }
     }
 }

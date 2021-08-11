@@ -21,26 +21,21 @@
  */
 
 import dayjs, { Dayjs } from "dayjs";
-import {
-    JsonAnySetter, JsonAnyGetter, JsonClassType, JsonFilter, JsonGetter, JsonIgnore, JsonInclude,
-    JsonIncludeType, JsonProperty, JsonPropertyOrder, JsonCreator
-} from "@elastosfoundation/jackson-js";
-import type {
-    JsonStringifierTransformerContext,
-} from "@elastosfoundation/jackson-js";
-import { CredentialBiography, CredentialBiographyStatus } from "./internals";
-import { IDChainRequest } from "./internals";
-import { Collections } from "./internals";
 import { Constants } from "./constants";
-import { CredentialMetadata } from "./internals";
-import { DID } from "./internals";
-import { DIDBackend } from "./internals";
-import type { DIDDocument } from "./internals";
+import { DID, DIDURL } from "./internals";
+import { CredentialMetadata, CredentialBiography, CredentialBiographyStatus } from "./internals";
+import { IDChainRequest, DIDBackend } from "./internals";
+import { Collections } from "./internals";
 import { DIDEntity } from "./internals";
 import type { DIDObject } from "./internals";
+import type { DIDDocument, Issuer } from "./internals";
 import type { DIDStore } from "./internals";
 import type { DIDTransactionAdapter } from "./didtransactionadapter";
-import { DIDURL } from "./internals";
+import type { JSONObject, JSONValue } from "./json";
+import { sortJSONObject } from "./json";
+import { checkArgument } from "./internals";
+import { VerificationEventListener } from "./verificationEventListener";
+import { Logger } from "./logger";
 import {
     AlreadySealedException,
     CredentialAlreadyExistException,
@@ -51,30 +46,10 @@ import {
     IllegalArgumentException,
     InvalidKeyException,
     MalformedCredentialException,
-    NotAttachedWithStoreException,
-    UnknownInternalException
+    NotAttachedWithStoreException
 } from "./exceptions/exceptions";
-import { keyTypeFilter } from "./internals";
-import type { Issuer } from "./internals";
-import type {
-    JSONObject,
-    JSONValue
-} from "./json";
-import { sortJSONObject } from "./json";
-import { Logger } from "./logger";
-import { checkArgument } from "./internals";
-import { VerificationEventListener } from "./verificationEventListener";
 
 const log = new Logger("VerifiableCredential");
-
-function vcIssuerFilter(value: any, context?: JsonStringifierTransformerContext): boolean {
-    let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
-
-    if (!serializeContext || serializeContext.isNormalized())
-        return false;
-
-    return serializeContext.getDid() ? serializeContext.getDid().equals(value as DID) : false;
-}
 
 /**
  * VerifiableCredential is a set of one or more claims made by the same entity.
@@ -82,74 +57,19 @@ function vcIssuerFilter(value: any, context?: JsonStringifierTransformerContext)
  * Credential might also include an identifier and metadata to
  * describe properties of the credential.
  */
-@JsonPropertyOrder({value:[
-    "id",
-    "type",
-    "issuer",
-    "issuanceDate",
-    "expirationDate",
-    "subject",
-    "proof" ]})
-@JsonInclude({value: JsonIncludeType.NON_EMPTY})
-// TODO: convert from java - @JsonFilter("credentialFilter")
 export class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject<string> {
-    public static ID = "id";
-    public static TYPE = "type";
-    public static ISSUER = "issuer";
-    public static ISSUANCE_DATE = "issuanceDate";
-    public static EXPIRATION_DATE = "expirationDate";
-    public static CREDENTIAL_SUBJECT = "credentialSubject";
-    public static PROOF = "proof";
-    public static VERIFICATION_METHOD = "verificationMethod";
-    public static CREATED = "created";
-    public static SIGNATURE = "signature";
-
-    @JsonProperty({value:VerifiableCredential.ID})
-    @JsonClassType({type: () => [DIDURL]})
     public id: DIDURL;
-    @JsonProperty({value:VerifiableCredential.TYPE})
     public type: string[];
-    @JsonProperty({value:VerifiableCredential.ISSUER})
-    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: vcIssuerFilter})
-    @JsonClassType({type: () => [DID]})
     public issuer: DID;
-    @JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
-    @JsonClassType({type: () => [Date]})
     public issuanceDate: Date;
-    @JsonProperty({value:VerifiableCredential.EXPIRATION_DATE})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [Date]})
     public expirationDate: Date;
-    @JsonProperty({value:VerifiableCredential.CREDENTIAL_SUBJECT})
-    @JsonClassType({type: () => [VerifiableCredential.Subject]})
     public subject: VerifiableCredential.Subject;
-    @JsonProperty({value:VerifiableCredential.PROOF})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [VerifiableCredential.Proof]})
     public proof: VerifiableCredential.Proof;
 
-    @JsonIgnore()
-    public metadata: CredentialMetadata;
+    private metadata: CredentialMetadata;
 
     constructor() {
         super();
-    }
-
-    // Add custom deserialization fields to the method params here + assign.
-    // Jackson does the rest automatically.
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: VerifiableCredential.TYPE}) type?: any) {
-        let vc = new VerifiableCredential();
-
-        // Proofs
-        if (type) {
-            if (type instanceof Array)
-                vc.type = type.map((p) => VerifiableCredential.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [String]}));
-            else
-                vc.type = [VerifiableCredential.getDefaultObjectMapper().parse(JSON.stringify(type), {mainCreator: () => [String]})];
-        }
-
-        return vc;
     }
 
     /**
@@ -270,46 +190,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
     }
 
     /**
-     * Sanitize routine before sealing or after deserialization.
-     *
-     * @param withProof check the proof object or not
-     * @throws MalformedCredentialException if the credential object is invalid
-     */
-    public sanitize(): Promise<void> {
-        if (this.id == null)
-            throw new MalformedCredentialException("Missing credential id");
-
-        if (this.type == null || this.type.length == 0)
-            throw new MalformedCredentialException("Missing credential type");
-
-        if (this.issuanceDate == null)
-            throw new MalformedCredentialException("Missing credential issuance date");
-
-        if (this.subject == null)
-            throw new MalformedCredentialException("Missing credential subject");
-
-        if (this.subject.getId() == null)
-            throw new MalformedCredentialException("Missing credential subject id");
-
-        if (this.proof == null)
-            throw new MalformedCredentialException("Missing credential proof");
-
-        Collections.sort(this.type);
-
-        // Update id references
-        if (this.issuer == null)
-            this.issuer = this.subject.getId();
-
-        if (this.id.getDid() == null)
-            this.id.setDid(this.subject.getId());
-
-        if (this.proof.verificationMethod.getDid() == null)
-            this.proof.verificationMethod.setDid(this.issuer);
-
-        return null; // Silence the promise warning, not a real return
-    }
-
-    /**
      * Get current object's DID context.
      *
      * @return the DID object or null
@@ -403,7 +283,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false;
         }
-            
+
         let issuerDoc = await this.issuer.resolve();
         if (issuerDoc == null) {
             if (listener != null) {
@@ -429,10 +309,10 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                 listener.failed(this, "VC {}: key '{}' for proof is not an authencation key of '{}'",
                         this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
                 listener.failed(this, "VC {}: is not genuine", this.getId());
-            }           
+            }
             return false;
         }
-            
+
         // Unsupported public key type;
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
@@ -452,7 +332,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false;
         }
-            
+
         if (!this.isSelfProclaimed()) {
             let controllerDoc = await this.subject.getId().resolve();
             if (controllerDoc != null && !controllerDoc.isGenuine(listener)) {
@@ -461,7 +341,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                     listener.failed(this, "VC {}: is not genuine", this.getId());
                 }
                 return false;
-            }   
+            }
         }
         if (listener != null)
             listener.succeeded(this, "VC {}: is genuine", this.getId());
@@ -497,7 +377,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                     listener.failed(this, "VC {}: is invalid", this.getId());
                 }
                 return false;
-            }   
+            }
         }
 
         let issuerDoc = await this.issuer.resolve();
@@ -528,7 +408,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false;
         }
-        
+
         // Unsupported public key type;
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
@@ -538,7 +418,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false; // TODO: should throw an exception.
         }
-            
+
         let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
         let json = vc.serialize(true);
         if (!issuerDoc.verify(this.proof.getVerificationMethod(), this.proof.getSignature(), Buffer.from(json))) {
@@ -548,7 +428,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             }
             return false;
         }
-            
+
         if (!this.isSelfProclaimed()) {
             let controllerDoc = await this.subject.getId().resolve();
             if (controllerDoc != null && !controllerDoc.isValid(listener)) {
@@ -557,7 +437,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                     listener.failed(this, "VC {}: is invalid", this.getId());
                 }
                 return false;
-            }   
+            }
         }
 
         if (listener != null)
@@ -625,26 +505,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         await DIDBackend.getInstance().declareCredential(this, owner, signKey, storepass, adapter);
     }
-
-    /* public declare(signKey: DIDURL, storepass: string) {
-        this.declare(signKey, storepass, null);
-    }
-
-    public declare(signKey: string, storepass: string, adapter: DIDTransactionAdapter) {
-        declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, adapter);
-    }
-
-    public declare(signKey: string, storepass: string) {
-        declare(DIDURL.valueOf(getSubject().getId(), signKey), storepass, null);
-    }
-
-    public declare(storepass: string, adapter: DIDTransactionAdapter) {
-        declare((DIDURL)null, storepass, adapter);
-    }
-
-    public declare(storepass: string) {
-        declare((DIDURL)null, storepass, null);
-    } */
 
     public async revoke(signKey: DIDURL | string, signer: DIDDocument = null, storepass: string = null, adapter: DIDTransactionAdapter = null) {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -779,6 +639,50 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         return DIDBackend.getInstance().listCredentials(did, skip, limit);
     }
 
+    public toJSON(key: string = null): JSONObject {
+        let context: DID = key ? new DID(key) : null;
+
+        let json: JSONObject = {};
+        json.id = this.id.toString(context);
+        json.type = this.type;
+        if (!context || !this.issuer.equals(context))
+            json.issuer = this.issuer.toString();
+        if (this.issuanceDate)
+            json.issuanceDate = this.dateToString(this.issuanceDate);
+        if (this.expirationDate)
+            json.expirationDate = this.dateToString(this.expirationDate);
+        json.subject = this.subject.toJSON(key);
+
+        if (this.proof)
+            json.proof = this.proof.toJSON(key);
+
+        return json;
+    }
+
+    protected fromJSON(json: JSONObject, context: DID = null): void {
+        if (!json.subject)
+            throw new MalformedCredentialException("Missing property: subject");
+
+        let subject = json.subject as JSONObject;
+        let holder = this.getDid("subject.id", subject.id,
+                {mandatory: false, nullable: false, defaultValue: context});
+        if (!holder)
+            throw new MalformedCredentialException("Missing property: subject.id");
+
+        this.id = this.getDidUrl("id", json.id, {mandatory: true, nullable: false, context: holder});
+        this.type = this.getStrings("type", json.type, {mandatory: true, nullable: false});
+        this.issuer = this.getDid("issuer", json.issuer, {mandatory: false, nullable: false, defaultValue: holder});
+        this.issuanceDate = this.getDate("issuanceDate", json.issuanceDate, {mandatory: true, nullable: false});
+        this.expirationDate = this.getDate("expirationDate", json.expirationDate, {mandatory: true, nullable: true});
+        this.subject = VerifiableCredential.Subject.deserialize(subject, VerifiableCredential.Subject, holder);
+
+        if (!json.proof)
+            throw new MalformedCredentialException("Missing property: proof");
+
+        let proof = json.proof as JSONObject;
+        this.proof = VerifiableCredential.Proof.deserialize(proof, VerifiableCredential.Proof, this.issuer);
+    }
+
     /**
      * Parse a VerifiableCredential object from from a string JSON
      * representation.
@@ -787,9 +691,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      * @return the VerifiableCredential object
      * @throws DIDSyntaxException if a parse error occurs
      */
-    public static parseContent(content: string): Promise<VerifiableCredential> {
+    public static parse(content: string | JSONObject, context: DID = null): VerifiableCredential {
         try {
-            return this.parse(content, VerifiableCredential);
+            return DIDEntity.deserialize(content, VerifiableCredential, context);
         } catch (e) {
             // DIDSyntaxException
             if (e instanceof MalformedCredentialException)
@@ -800,7 +704,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
     }
 }
 
-
 export namespace VerifiableCredential {
     /**
      * The object keeps the credential subject contents.
@@ -810,210 +713,191 @@ export namespace VerifiableCredential {
      * In order to support the JSON serialization, all values should be
      * JSON serializable.
      */
-     @JsonPropertyOrder({value: ["id"]})
-     export class Subject {
-        @JsonProperty({value: VerifiableCredential.ID})
-        @JsonClassType({type: () => [DID]})
+    export class Subject extends DIDEntity<Subject> {
         private id: DID;
-        @JsonIgnore()
         private properties: JSONObject;
 
-         /**
-          * Constructs the CredentialSubject object with given controller.
-          *
-          * @param id the controller of Credential Subject
-          */
-         // Java: @JsonCreator()
-         constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
-             this.id = id;
-             this.properties = {};
-         }
+        /**
+         * Constructs the CredentialSubject object with given controller.
+         *
+         * @param id the controller of Credential Subject
+         * @param properties the credential properties
+         */
+        constructor(id: DID = null, properties: JSONObject = {}) {
+            super();
+            this.id = id;
+            this.properties = sortJSONObject(JSON.parse(JSON.stringify(properties)));
+        }
 
-         /**
-          * Get the controller.
-          *
-          * @return the controller's DID
-          */
-         @JsonGetter({value: VerifiableCredential.ID})
-         public getId(): DID {
-             return this.id;
-         }
+        /**
+         * Get the controller.
+         *
+         * @return the controller's DID
+         */
+        public getId(): DID {
+            return this.id;
+        }
 
-         /**
-          * Set the controller.
-          *
-          * @param did the controller's DID
-          */
-         public setId(did: DID) {
-             this.id = did;
-         }
-
-         /**
-          * Helper getter method for properties serialization.
-          * NOTICE: Should keep the alphabetic serialization order.
-          *
-          * @return a String to Object map include all application defined
-          *         properties
-          */
-         @JsonAnyGetter()
-         @JsonClassType({type: () => [String, Object]})
-         //@JsonPropertyOrder({ alphabetic: true })
-         private getAllProperties(): JSONObject {
-             return sortJSONObject(this.properties);
-         }
-
-         /**
-          * Helper setter method for properties deserialization.
-          *
-          * @param name the property name
-          * @param value the property value
-          */
-         @JsonAnySetter()
-         public setProperty(name: string, value: JSONValue) {
-             if (name === VerifiableCredential.ID)
-                 return;
-
-             this.properties[name] = value;
-         }
-
-         /**
-          * Get the subject properties.
-          *
-          * @return the properties in String to Object map. It's a read-only map
-          */
-         public getProperties(): JSONObject {
+        /**
+         * Get the subject properties.
+         *
+         * @return the properties in String to Object map. It's a read-only map
+         */
+        public getProperties(): JSONObject {
             return JSON.parse(JSON.stringify(this.properties));
-         }
+        }
 
-         public setProperties(newProperties: JSONObject): JSONObject {
-            return this.properties = newProperties;
-         }
+        /**
+         * Get the count of properties.
+         *
+         * @return the fields count
+         */
+        public getPropertyCount(): number {
+            return Object.keys(this.properties).length;
+        }
 
-         /**
-          * Get the count of properties.
-          *
-          * @return the fields count
-          */
-         public getPropertyCount(): number {
-             return Object.keys(this.properties).length;
-         }
+        /**
+         * Get the specified property.
+         *
+         * @param name the property name
+         * @return the property value
+         */
+        public getProperty(name: string): any {
+            return this.properties[name];
+        }
 
-         /**
-          * Get the specified property.
-          *
-          * @param name the property name
-          * @return the property value
-          */
-         public getProperty(name: string): any {
-             return this.properties[name];
-         }
+        /**
+         * Get properties as a JSON string.
+         *
+         * @return the JSON string
+         */
+        public getPropertiesAsString(): string {
+            return JSON.stringify(this.properties);
+        }
 
-         /**
-          * Get properties as a JSON string.
-          *
-          * @return the JSON string
-          */
-         public getPropertiesAsString(): string {
-             try {
-                 return DIDEntity.getDefaultObjectMapper().stringify(this.properties);
-             } catch (ignore) {
-                 // JsonProcessingException
-                 throw new UnknownInternalException(ignore);
-             }
-         }
-     }
+        public toJSON(key: string = null): JSONObject {
+            let context: DID = key ? new DID(key) : null;
 
-     /**
-      * The proof information for verifiable credential.
-      *
-      * The default proof type is ECDSAsecp256r1.
-      */
-     @JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
-     export class Proof {
-         @JsonProperty({value: VerifiableCredential.TYPE})
-         @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
-         @JsonClassType({type: ()=>[String]})
-         public type: string;
-         @JsonProperty({value: VerifiableCredential.CREATED})
-         @JsonInclude({value: JsonIncludeType.NON_EMPTY})
-         @JsonClassType({type: ()=>[Date]})
-         public created: Date;
-         @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD})
-         @JsonClassType({type: ()=>[DIDURL]})
-         public verificationMethod: DIDURL;
-         @JsonProperty({value: VerifiableCredential.SIGNATURE})
-         @JsonClassType({type: ()=>[String]})
-         public signature: string;
+            let json: JSONObject = {};
+            if (!context || !this.id.equals(context))
+                json.id = this.id.toString();
 
-         /**
-          * Constructs the Proof object with the given values.
-          *
-          * @param type the verification method type
-          * @param method the verification method, normally it's a public key
-          * @param signature the signature encoded in base64 URL safe format
-          */
-         // Java: @JsonCreator()
-         constructor(
-                 @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD, required: true}) method: DIDURL,
-                 @JsonProperty({value: VerifiableCredential.SIGNATURE, required: true}) signature: string,
-                 @JsonProperty({value: VerifiableCredential.CREATED}) created: Date = new Date(),
-                 @JsonProperty({value: VerifiableCredential.TYPE}) type: string = Constants.DEFAULT_PUBLICKEY_TYPE
-        ) {
-             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
-             this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
-             if (this.created)
-                this.created.setMilliseconds(0);
-             this.verificationMethod = method;
-             this.signature = signature;
-         }
+            json = {...json, ...this.properties};
+            return json;
+        }
 
-         /**
-          * Get the verification method type.
-          *
-          * @return the type string
-          */
-         public getType(): string {
-             return this.type;
-         }
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.id = this.getDid("subject.id", json.id,
+                    {mandatory: false, defaultValue: context});
+            let props = JSON.parse(JSON.stringify(json));
+            delete props.id; // or props['id']?
+            this.properties = sortJSONObject(props);
+        }
+    }
 
-         /**
-          * Get the verification method, normally it's a public key id.
-          *
-          * @return the sign key
-          */
-         public getVerificationMethod(): DIDURL {
-             return this.verificationMethod;
-         }
-
-         /**
-          * Get the created timestamp.
-          *
-          * @return the created date
-          */
-         public getCreated(): Date {
-             return this.created;
-         }
-
-         /**
-          * Get the signature.
-          *
-          * @return the signature encoded in URL safe base64 string
-          */
-         public getSignature(): string {
-             return this.signature;
-         }
-     }
-
-     /**
-     * The builder object defines the APIs to create the Credential.
+    /**
+     * The proof information for verifiable credential.
      *
-     * The credential object is sealed object. After set the contents for new
-     * credential, should call seal {@link Builder#seal(String)} method to
-     * create the final credential object.
+     * The default proof type is ECDSAsecp256r1.
      */
+    export class Proof extends DIDEntity<Proof> {
+        private type: string;
+        private created: Date;
+        private verificationMethod: DIDURL;
+        private signature: string;
+
+        /**
+         * Constructs the Proof object with the given values.
+         *
+         * @param type the verification method type
+         * @param method the verification method, normally it's a public key
+         * @param signature the signature encoded in base64 URL safe format
+         */
+        constructor(method: DIDURL = null, signature: string = null,
+            created: Date = new Date(), type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            super();
+            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+            this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
+            if (this.created)
+                this.created.setMilliseconds(0);
+            this.verificationMethod = method;
+            this.signature = signature;
+        }
+
+        /**
+         * Get the verification method type.
+         *
+         * @return the type string
+         */
+        public getType(): string {
+            return this.type;
+        }
+
+        /**
+         * Get the verification method, normally it's a public key id.
+         *
+         * @return the sign key
+         */
+        public getVerificationMethod(): DIDURL {
+            return this.verificationMethod;
+        }
+
+        /**
+         * Get the created timestamp.
+         *
+         * @return the created date
+         */
+        public getCreated(): Date {
+            return this.created;
+        }
+
+        /**
+         * Get the signature.
+         *
+         * @return the signature encoded in URL safe base64 string
+         */
+        public getSignature(): string {
+            return this.signature;
+        }
+
+        public toJSON(key: string = null): JSONObject {
+            let context: DID = key ? new DID(key) : null;
+
+            let json: JSONObject = {};
+            if (!context || this.type !== Constants.DEFAULT_PUBLICKEY_TYPE)
+                json.type = this.type;
+            if (this.created)
+                json.created = this.dateToString(this.created);
+
+            json.verificationMethod = this.verificationMethod.toJSON(key);
+            json.signature = this.signature;
+
+            return json;
+        }
+
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.type = this.getString("proof.type", json.type,
+                    {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+            this.created = this.getDate("proof.created", json.created,
+                    {mandatory: false});
+            this.verificationMethod = this.getDidUrl("proof.verificationMethod", json.verificationMethod,
+                    {mandatory: true, nullable: false, context: context});
+            this.signature = this.getString("proof.signature", json.signature,
+                    {mandatory: true, nullable: false});
+        }
+    }
+
+    /**
+    * The builder object defines the APIs to create the Credential.
+    *
+    * The credential object is sealed object. After set the contents for new
+    * credential, should call seal {@link Builder#seal(String)} method to
+    * create the final credential object.
+    */
     export class Builder {
         private issuer: Issuer;
         private target: DID;
+        private subjectProperties: JSONObject;
         private credential: VerifiableCredential;
 
         /**
@@ -1027,7 +911,6 @@ export namespace VerifiableCredential {
 
             this.credential = new VerifiableCredential();
             this.credential.issuer = issuer.getDid();
-            this.credential.subject = new Subject(target);
         }
 
         private checkNotSealed() {
@@ -1069,7 +952,6 @@ export namespace VerifiableCredential {
             checkArgument(types != null && types.length > 0, "Invalid types");
 
             this.credential.type = Array.from(types);
-            Collections.sort(this.credential.type);
             return this;
         }
 
@@ -1087,7 +969,7 @@ export namespace VerifiableCredential {
         private defaultExpirationDate(): Builder {
             this.checkNotSealed();
             this.credential.expirationDate = this.getMaxExpires();
-            if(this.credential.expirationDate)
+            if (this.credential.expirationDate)
                 this.credential.expirationDate.setMilliseconds(0);
             return this;
         }
@@ -1108,7 +990,7 @@ export namespace VerifiableCredential {
                 expDate = dayjs(maxExpires);
 
             this.credential.expirationDate = expDate.toDate();
-            if(this.credential.expirationDate)
+            if (this.credential.expirationDate)
                 this.credential.expirationDate.setMilliseconds(0);
 
             return this;
@@ -1123,20 +1005,18 @@ export namespace VerifiableCredential {
         public properties(newProperties: JSONObject | string): Builder {
             this.checkNotSealed();
 
-            if (typeof newProperties === "string")
-                newProperties = JSON.parse(newProperties);
+            let props = typeof newProperties === "string" ?
+                        JSON.parse(newProperties) :
+                        JSON.parse(JSON.stringify(newProperties));
 
-            this.credential.subject.setProperties({});
+            delete props.id;
 
-            if (newProperties == null || Object.keys(newProperties).length == 0)
+            if (newProperties == null || Object.keys(newProperties).length == 0) {
+                this.subjectProperties = {};
                 return this;
-
-            let properties = this.credential.subject.getProperties();
-            for (let key in newProperties as JSONObject) {
-                properties[key] = newProperties[key];
             }
-            delete properties.id;
-            this.credential.subject.setProperties(properties);
+
+            this.subjectProperties = props;
             return this;
         }
 
@@ -1149,9 +1029,9 @@ export namespace VerifiableCredential {
          */
         public property(name: string, value: JSONValue): Builder {
             this.checkNotSealed();
-            checkArgument(name != null && name !== "" && name !== VerifiableCredential.ID, "Invalid name");
+            checkArgument(name != null && name !== "" && name !== "id", "Invalid name");
 
-            this.credential.subject.setProperty(name, value);
+            this.subjectProperties[name] = value;
             return this;
         }
 
@@ -1162,12 +1042,16 @@ export namespace VerifiableCredential {
             if (this.credential.type == null || this.credential.type.length == 0)
                 throw new MalformedCredentialException("Missing credential type");
 
+            this.credential.type.sort();
+
             this.credential.issuanceDate = new Date();
-            if(this.credential.issuanceDate)
+            if (this.credential.issuanceDate)
                 this.credential.issuanceDate.setMilliseconds(0);
 
             if (!this.credential.hasExpirationDate())
                 this.defaultExpirationDate();
+
+            this.subjectProperties = sortJSONObject(this.subjectProperties);
 
             this.credential.proof = null;
         }
@@ -1187,10 +1071,10 @@ export namespace VerifiableCredential {
 
             this.sanitize();
 
+            this.credential.subject = new VerifiableCredential.Subject(this.target, this.subjectProperties);
             let json = this.credential.serialize(true);
             let sig = await this.issuer.sign(storepass, Buffer.from(json));
-            let proof = new VerifiableCredential.Proof(this.issuer.getSignKey(), sig);
-            this.credential.proof = proof;
+            this.credential.proof = new VerifiableCredential.Proof(this.issuer.getSignKey(), sig);
 
             // Invalidate builder
             let vc = this.credential;
