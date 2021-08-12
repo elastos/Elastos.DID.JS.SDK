@@ -1986,6 +1986,68 @@ class DIDDocumentProofSerializer extends Serializer {
         this.getMetadata().setSignature(this.getProof().getSignature());
     }
 
+    	// TODO: to be remove in the future
+	public async publishUntrusted(signKey : DIDURL, storepass : string, adapter: DIDTransactionAdapter = null) : Promise<void> {
+        checkArgument(storepass != null && storepass != "", "Invalid storepass");
+        this.checkIsPrimitive();
+        this.checkAttachedStore();
+
+        if (signKey == null && this.getDefaultPublicKeyId() == null)
+            throw new NoEffectiveControllerException(this.getSubject().toString());
+
+        DIDDocument.log.info("Publishing untrusted DID {}...", this.getSubject());
+
+        if (!this.isGenuine()) {
+            DIDDocument.log.error("Publish failed because document is not genuine.");
+            throw new DIDNotGenuineException(this.getSubject().toString());
+        }
+
+        if (this.isDeactivated()) {
+            DIDDocument.log.error("Publish failed because DID is deactivated.");
+            throw new DIDDeactivatedException(this.getSubject().toString());
+        }
+
+        if (this.isExpired()) {
+            DIDDocument.log.error("Publish failed because document is expired.");
+            throw new DIDExpiredException(this.getSubject().toString());
+        }
+
+        let lastTxid: string = null;
+        let resolvedSignature: string = null;
+        let resolvedDoc = await DIDBackend.getInstance().resolveUntrustedDid(this.getSubject(), true);
+        if (resolvedDoc != null) {
+            if (resolvedDoc.isDeactivated()) {
+                this.getMetadata().setDeactivated(true);
+
+                DIDDocument.log.error("Publish failed because DID is deactivated.");
+                throw new DIDDeactivatedException(this.getSubject().toString());
+            }
+
+            resolvedSignature = resolvedDoc.getProof().getSignature();
+            lastTxid = resolvedDoc.getMetadata().getTransactionId();
+        }
+
+        if (signKey == null) {
+            signKey = this.getDefaultPublicKeyId();
+        } else {
+            if (this.getAuthenticationKey(signKey) == null)
+                throw new InvalidKeyException(signKey.toString());
+        }
+
+        if (!lastTxid || lastTxid == null) {
+            DIDDocument.log.info("Try to publish[create] {}...", this.getSubject());
+            await DIDBackend.getInstance().createDid(this, signKey, storepass, adapter);
+        } else {
+            DIDDocument.log.info("Try to publish[update] {}...", this.getSubject());
+            await DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
+        }
+
+        if (resolvedSignature != null )
+            this.getMetadata().setPreviousSignature(resolvedSignature);
+        this.getMetadata().setSignature(this.getProof().getSignature());
+}
+
+
     /**
      * Deactivate self use authentication key.
      *
