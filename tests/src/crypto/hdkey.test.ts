@@ -89,10 +89,4 @@ describe('HDKey Tests', () => {
             expect(key.getAddress()).toBe(keyPubOnly.getAddress())
         }
     });
-
-
-
-
-
-
 })

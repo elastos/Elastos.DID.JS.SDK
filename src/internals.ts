@@ -39,7 +39,6 @@ export * from "./didstoremetadata";
 export * from "./verificationEventListener";
 
 // DID/URL
-export * from "./parser/DIDURLParser";
 export * from "./did"; // Should be before didurl because didurl's constructor has a "DID" type.
 export * from "./didurl";
 

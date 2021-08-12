@@ -20,216 +20,346 @@
  * SOFTWARE.
  */
 
-import { DID, DIDURL } from "@elastosfoundation/did-js-sdk";
-
-const verifyNewDidCreation = (valueToValidate: string, base: DID = null) =>{
-    let url: DIDURL = new DIDURL(valueToValidate, base);
-    expect(url.toString()).toEqual((base ? base.toString() : "") + valueToValidate);
-}
+import { DID, DIDURL, Exceptions } from "@elastosfoundation/did-js-sdk";
 
 describe('DIDURL Tests', () => {
-    let testDID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-    let params = ";elastos:foo=testvalue;bar=123;keyonly;elastos:foobar=12345";
-    let path = "/path/to/the/resource";
-    let query = "?qkey=qvalue&qkeyonly&test=true";
-    let fragment = "#testfragment";
-    let testURL = testDID + params + path + query + fragment;
+    const TEST_DID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
+	const TEST_PATH = "/path/to/the/test-%E6%B5%8B%E8%AF%95-2020/resource";
+	const TEST_QUERY = "?qkey=qvalue&qkeyonly&hello=%E4%BD%A0%E5%A5%BD&test=true&a=%E5%95%8A";
+	const TEST_FRAGMENT = "#testfragment";
 
-    let did: DID;
-    let url: DIDURL;
+	const WITH_DID : number = 0x01;
+	const WITH_PATH : number = 0x02;
+	const WITH_QUERY : number = 0x04;
+	const WITH_FRAGMENT : number = 0x08;
 
-    beforeEach(()=>{
-        did = new DID(testDID);
-        url = new DIDURL(testURL);
-    })
+    let  provideDIDURLs = [
+        { spec : TEST_DID, part : WITH_DID },
+        { spec : TEST_DID + TEST_PATH, part : WITH_DID | WITH_PATH },
+        { spec : TEST_DID + TEST_QUERY, part : WITH_DID | WITH_QUERY },
+        { spec : TEST_DID + TEST_FRAGMENT, part : WITH_DID | WITH_FRAGMENT },
+        { spec : TEST_DID + TEST_PATH + TEST_FRAGMENT, part : WITH_DID | WITH_PATH | WITH_FRAGMENT },
+        { spec : TEST_DID + TEST_QUERY + TEST_FRAGMENT, part : WITH_DID | WITH_QUERY | WITH_FRAGMENT },
+        { spec : TEST_DID + TEST_PATH + TEST_QUERY, part : WITH_DID | WITH_PATH | WITH_QUERY },
+        { spec : TEST_DID + TEST_PATH + TEST_QUERY + TEST_FRAGMENT, part : WITH_DID | WITH_PATH | WITH_QUERY | WITH_FRAGMENT },
 
-    test('Test Constructor with Canonical URL', () => {
-        verifyNewDidCreation(testDID);
+        { spec : TEST_PATH, part : WITH_PATH },
+        { spec : TEST_QUERY, part : WITH_QUERY },
+        { spec : TEST_FRAGMENT, part : WITH_FRAGMENT },
+        { spec : TEST_PATH + TEST_FRAGMENT, part : WITH_PATH | WITH_FRAGMENT },
+        { spec : TEST_QUERY + TEST_FRAGMENT, part : WITH_QUERY | WITH_FRAGMENT },
+        { spec : TEST_PATH + TEST_QUERY, part : WITH_PATH | WITH_QUERY },
+        { spec : TEST_PATH + TEST_QUERY + TEST_FRAGMENT, part : WITH_PATH | WITH_QUERY | WITH_FRAGMENT },
 
-        verifyNewDidCreation(testDID + params);
+        { spec : "  \n \t " + TEST_DID + "\t	\n", part : WITH_DID },
+        { spec : "\t   \n" + TEST_DID + TEST_PATH + "  \n \t", part : WITH_DID | WITH_PATH },
+        { spec : "   " + TEST_DID + TEST_QUERY + "\n", part : WITH_DID | WITH_QUERY },
+        { spec : "\n" + TEST_DID + TEST_FRAGMENT + "	  ", part : WITH_DID | WITH_FRAGMENT },
+        { spec : "\t" + TEST_DID + TEST_PATH + TEST_FRAGMENT + "  \n", part : WITH_DID | WITH_PATH | WITH_FRAGMENT },
+        { spec : " " + TEST_DID + TEST_QUERY + TEST_FRAGMENT + "\t", part : WITH_DID | WITH_QUERY | WITH_FRAGMENT },
+        { spec : "   " + TEST_DID + TEST_PATH + TEST_QUERY, part : WITH_DID | WITH_PATH | WITH_QUERY },
+        { spec : TEST_DID + TEST_PATH + TEST_QUERY + TEST_FRAGMENT + "	  ", part : WITH_DID | WITH_PATH | WITH_QUERY | WITH_FRAGMENT },
 
-        verifyNewDidCreation(testDID + path);
+        { spec : "  \t" + TEST_PATH + "	", part : WITH_PATH },
+        { spec : " \n \t " + TEST_QUERY + "   \n", part : WITH_QUERY },
+        { spec : "   " + TEST_FRAGMENT + "\t", part : WITH_FRAGMENT },
+        { spec : " " + TEST_PATH + TEST_FRAGMENT + "	", part : WITH_PATH | WITH_FRAGMENT },
+        { spec : "   " + TEST_QUERY + TEST_FRAGMENT, part : WITH_QUERY | WITH_FRAGMENT },
+        { spec : TEST_PATH + TEST_QUERY + "  \n \t  ", part : WITH_PATH | WITH_QUERY },
+        { spec : "   " + TEST_PATH + TEST_QUERY + TEST_FRAGMENT + " \n\t\t\n  ", part : WITH_PATH | WITH_QUERY | WITH_FRAGMENT }
+    ];
 
-        verifyNewDidCreation(testDID + query);
+    test('testDIDURL', () => {
+        for (let didurl of provideDIDURLs) {
+            let url = new DIDURL(didurl.spec);
+            let refURLString = "";
 
-        verifyNewDidCreation(testDID + fragment);
+            // getDid()
+            if ((didurl.part & WITH_DID) == WITH_DID) {
+                expect(url.getDid().equals(new DID(TEST_DID))).toBeTruthy();
+                expect(url.getDid().toString()).toEqual(TEST_DID);
 
-        verifyNewDidCreation(testDID + params + path);
+                refURLString = refURLString + TEST_DID;
+            } else {
+                expect(url.getDid()).toBeNull();
+            }
 
-        verifyNewDidCreation(testDID + params + path + query);
+            // getPath()
+            if ((didurl.part & WITH_PATH) == WITH_PATH) {
+                expect(url.getPath()).toEqual(TEST_PATH);
 
-        verifyNewDidCreation(testDID + params + path + query + fragment);
+                refURLString = refURLString + TEST_PATH;
+            } else {
+                expect(url.getPath()).toBeNull();
+            }
 
-        verifyNewDidCreation(testDID + path + query + fragment);
+            // getQuery(), getQueryString(), getQueryParameter(), hasQueryParameter()
+            if ((didurl.part & WITH_QUERY) == WITH_QUERY) {
+                expect(url.getQueryString()).toEqual(TEST_QUERY.substring(1));
+                expect(url.getQuery().size).toBe(5);
 
-        verifyNewDidCreation(testDID + params + query + fragment);
+                expect(url.getQueryParameter("qkey")).toEqual("qvalue");
+                expect(url.getQueryParameter("test")).toEqual("true");
+                expect(decodeURIComponent(url.getQueryParameter("hello"))).toEqual("你好");
+                expect(decodeURIComponent(url.getQueryParameter("a"))).toEqual("啊");
+                expect(url.getQueryParameter("qkeyonly")).toBeNull();
 
-        verifyNewDidCreation(testDID + params + path + fragment);
+                expect(url.hasQueryParameter("qkeyonly")).toBeTruthy();
+                expect(url.hasQueryParameter("qkey")).toBeTruthy();
+                expect(url.hasQueryParameter("test")).toBeTruthy();
+                expect(url.hasQueryParameter("hello")).toBeTruthy();
+                expect(url.hasQueryParameter("a")).toBeTruthy();
+                expect(url.hasQueryParameter("notexist")).toBeFalsy();
 
-        verifyNewDidCreation(testDID + params + path + query);
+                refURLString = refURLString + TEST_QUERY;
+            } else {
+                expect(url.getQueryString()).toBeNull();
+                expect(url.getQuery().size).toBe(0);
 
-    });
+                expect(url.getQueryParameter("qkey")).toBeNull();
+                expect(url.hasQueryParameter("qkey")).toBeFalsy();
+            }
 
-    test('Test Constructor with Base and Relative URL', () => {
+            // getFragment()
+            if ((didurl.part & WITH_FRAGMENT) == WITH_FRAGMENT) {
+                expect(url.getFragment()).toEqual(TEST_FRAGMENT.substring(1));
+                refURLString = refURLString + TEST_FRAGMENT;
+            } else {
+                expect(url.getFragment()).toBeNull();
+            }
 
-        verifyNewDidCreation(params, did);
+            let refURL = new DIDURL(refURLString);
 
-        verifyNewDidCreation(path, did);
+            // toString()
+            expect(url.toString()).toEqual(refURLString);
 
-        verifyNewDidCreation(query, did);
+            // toString(DID)
+            let pos = (didurl.part & WITH_DID) == WITH_DID ? TEST_DID.length : 0;
+            expect(url.toString(DID.from(TEST_DID))).toEqual(refURLString.substring(pos));
+            expect(url.toString(DID.from("did:elastos:abc"))).toEqual(refURLString);
 
-        verifyNewDidCreation(fragment, did);
+            // equals()
+            expect(url.equals(refURL)).toBeTruthy();
+            expect(url.equals(refURLString)).toBeTruthy();
 
-        verifyNewDidCreation(params + path, did);
+            let difURLString = refURLString + "_abc";
+            let difURL = new DIDURL(difURLString);
+            expect(url.equals(difURL)).toBeFalsy();
+            expect(url.equals(difURLString)).toBeFalsy();
 
-        verifyNewDidCreation(params + path + query, did);
+            // hashCode()
+            expect(url.hashCode()).toEqual(refURL.hashCode());
+            expect(url.hashCode()).toEqual(difURL.hashCode());
+        }
+	});
 
-        verifyNewDidCreation(params + path + query + fragment, did);
+	test('testDIDURLWithContext', () => {
+		let context = new DID("did:elastos:foobar");
 
-        verifyNewDidCreation(path + query + fragment, did);
+        for (let didurl of provideDIDURLs) {
+            let url = new DIDURL(didurl.spec, context);
+            let refURLString = "";
 
-        verifyNewDidCreation(params + query + fragment, did);
+            // getDid()
+            if ((didurl.part & WITH_DID) == WITH_DID) {
+                expect(url.getDid().equals(new DID(TEST_DID))).toBeTruthy();
+                expect(url.getDid().toString()).toEqual(TEST_DID);
 
-        verifyNewDidCreation(params + path + fragment, did);
+                refURLString = refURLString + TEST_DID;
+            } else {
+                expect(url.getDid().equals(context)).toBeTruthy();
+                expect(url.getDid().toString()).toEqual(context.toString());
 
-        verifyNewDidCreation(params + path + query, did);
-    });
+                refURLString = refURLString + context.toString();
+            }
 
-    test('Test Constructor with Relative URL', () => {
+            // getPath()
+            if ((didurl.part & WITH_PATH) == WITH_PATH) {
+                expect(url.getPath()).toEqual(TEST_PATH);
 
-        verifyNewDidCreation(params);
+                refURLString = refURLString + TEST_PATH;
+            } else {
+                expect(url.getPath()).toBeNull();
+            }
 
-        verifyNewDidCreation(path);
+            // getQuery(), getQueryString(), getQueryParameter(), hasQueryParameter()
+            if ((didurl.part & WITH_QUERY) == WITH_QUERY) {
+                expect(url.getQueryString()).toEqual(TEST_QUERY.substring(1));
+                expect(url.getQuery().size).toBe(5);
 
-        verifyNewDidCreation(query);
+                expect(url.getQueryParameter("qkey")).toEqual("qvalue");
+                expect(url.getQueryParameter("test")).toEqual("true");
+                expect(decodeURIComponent(url.getQueryParameter("hello"))).toEqual("你好");
+                expect(decodeURIComponent(url.getQueryParameter("a"))).toEqual("啊");
+                expect(url.getQueryParameter("qkeyonly")).toBeNull();
 
-        verifyNewDidCreation(fragment);
+                expect(url.hasQueryParameter("qkeyonly")).toBeTruthy();
+                expect(url.hasQueryParameter("qkey")).toBeTruthy();
+                expect(url.hasQueryParameter("test")).toBeTruthy();
+                expect(url.hasQueryParameter("hello")).toBeTruthy();
+                expect(url.hasQueryParameter("a")).toBeTruthy();
+                expect(url.hasQueryParameter("notexist")).toBeFalsy();
 
-        verifyNewDidCreation(params + path);
+                refURLString = refURLString + TEST_QUERY;
+            } else {
+                expect(url.getQueryString()).toBeNull();
+                expect(url.getQuery().size).toBe(0);
 
-        verifyNewDidCreation(params + path + query);
+                expect(url.getQueryParameter("qkey")).toBeNull();
+                expect(url.hasQueryParameter("qkey")).toBeFalsy();
+            }
 
-        verifyNewDidCreation(params + path + query + fragment);
+            // getFragment()
+            if ((didurl.part & WITH_FRAGMENT) == WITH_FRAGMENT) {
+                expect(url.getFragment()).toEqual(TEST_FRAGMENT.substring(1));
+                refURLString = refURLString + TEST_FRAGMENT;
+            } else {
+                expect(url.getFragment()).toBeNull();
+            }
 
-        verifyNewDidCreation(path + query + fragment);
+            let refURL = new DIDURL(refURLString);
 
-        verifyNewDidCreation(params + query + fragment);
+            // toString()
+            expect(url.toString()).toEqual(refURLString);
 
-        verifyNewDidCreation(params + path + fragment);
+            // toString(DID)
+            if ((didurl.part & WITH_DID) == WITH_DID) {
+                expect(url.toString(DID.from(TEST_DID))).toEqual(TEST_DID.length);
+                expect(url.toString(context)).toEqual(refURLString);
+            } else {
+                expect(url.toString(context)).toEqual(refURLString.substring(context.toString().length);
+                expect(url.toString(DID.from(TEST_DID))).toEqual(refURLString);
+            }
 
-        verifyNewDidCreation(params + path + query);
-    });
+            // equals()
 
-    test('Test compatible with plain fragment', () => {
+            expect(url.equals(refURL)).toBeTruthy();
+            expect(url.equals(refURLString)).toBeTruthy();
 
-        let testURL = testDID + "#test";
-        let url = new DIDURL(testURL);
+            let difURLString = refURLString + "_abc";
+            let difURL = new DIDURL(difURLString);
+            expect(url.equals(difURL)).toBeFalsy();
+            expect(url.equals(difURLString)).toBeFalsy();
 
-        expect(url.toString()).toEqual(testURL);
+            // hashCode()
+            expect(url.hashCode()).toEqual(refURL.hashCode());
+            expect(url.hashCode()).toEqual(difURL.hashCode());
+        }
+	});
+
+	test('testCompatibleWithPlainFragment', () => {
+		let testURL = TEST_DID + "#test";
+
+		let url1 = new DIDURL(testURL);
+        expect(url1.toString()).toEqual(testURL);
+        expect(url1.getFragment()).toEqual("test");
+        expect(url1.equals(testURL)).toBeTruthy();
+
+		let url2 = new DIDURL("test", DID.from(TEST_DID));
+        expect(url2.toString()).toEqual(testURL);
+        expect(url2.getFragment()).toEqual("test");
+        expect(url2.equals(testURL)).toBeTruthy();
+
+        expect(url1.equals(url2)).toBeTruthy();
+
+		let url = new DIDURL("test");
+        expect(url.toString()).toEqual("#test");
         expect(url.getFragment()).toEqual("test");
+        expect(url.equals("#test")).toBeTruthy();
+	});
 
-        url = new DIDURL("test", did)
+	function trim(str : string) : string {
+		let start = 0;
+		let limit = str.length;
 
-        expect(url.toString()).toEqual(testURL);
-        expect(url.getFragment()).toEqual("test");
+		// trim the leading and trailing spaces
+		while ((limit > 0) && (str.charAt(limit - 1) <= ' '))
+			limit--;		//eliminate trailing whitespace
 
-        url = new DIDURL("test")
-        expect(url.getFragment()).toEqual("test");
+		while ((start < limit) && (str.charAt(start) <= ' '))
+			start++;		// eliminate leading whitespace
+
+		return str.substring(start, limit);
+	};
+
+	test('testParseUrlWithSpecialChars', () => {
+	    let specs = [
+			"did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld",
+			"did:elastos:foobar/p.a_t-h/to-/resource_?te_st=tr_ue&ke.y=va_lue&na_me=foobar#helloworld_",
+	  		"did:elastos:foobar/path_/to./resource_?test-=true.&ke.y_=va_lue.&name_=foobar.#helloworld_-.",
+	  		"did:elastos:foobar/pa...th/to.../resource_-_?test-__.=true...&ke...y_---=va_lue.&name_=foo...bar.#helloworld_-.",
+			"did:elastos:foobar/path/to/resou___rce?test=tr----ue&key=va----lue&name=foobar#hello....---world__",
+        ];
+
+        for (let spec of specs) {
+            let url = new DIDURL(spec);
+
+            expect(url.getDid().equals(new DID(DID.METHOD, "foobar"))).toBeTruthy();
+
+            let urlString = trim(spec);
+            expect(url.toString()).toEqual(urlString);
+            expect(url.equals(urlString)).toBeTruthy();
+        }
+	});
+
+	test('testParseWrongUrl', () => {
+	    let checks = [
+			{ spec : "did1:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 4" },
+			{ spec : "did:unknown:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid did at: 0" },
+			{ spec : "did:elastos:foobar:/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid did at: 0" },
+			{ spec : "did:elastos:foobar/-path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
+			{ spec : "did:elastos:foobar/._path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
+			{ spec : "did:elastos:foobar/-._path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
+			{ spec : "did:elastos:foobar/path/-to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+			{ spec : "did:elastos:foobar/path/.to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+			{ spec : "did:elastos:foobar/path/_to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+			{ spec : "did:elastos:foobar/path/*to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+			{ spec : "did:elastos:foobar/path/$to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+			{ spec : "did:elastos:foobar/path./$to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 25" },
+			{ spec : "did:elastos:foobar/path/%to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid hex char at: 25" },
+			{ spec : "did:elastos:foobar/path/to//resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 27" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&&&key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&_key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&*key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&-key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true.&-key=value&name=foobar#helloworld", err : "Invalid char at: 47" },
+			{ spec : "did:elastos:foobar/path/to/resource%20?test=true.&-key=value&name=foobar#helloworld", err : "Invalid char at: 50" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name==foobar#helloworld", err : "Invalid char at: 61" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name%=foobar#helloworld", err : "Invalid hex char at: 61" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=va--lue&name%=foobar#helloworld", err : "Invalid hex char at: 63" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=t.rue&ke.y=val_ue&nam-e=^foobar#helloworld", err : "Invalid char at: 65" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar*#helloworld", err : "Invalid char at: 67" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar?#helloworld", err : "Invalid char at: 67" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar##helloworld", err : "Invalid char at: 68" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld*", err : "Invalid char at: 78" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld&", err : "Invalid char at: 78" },
+			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld%", err : "Invalid char at: 78" },
+        ];
+
+        for (let check of checks) {
+            expect(() => {
+                new DIDURL(check.spec);
+            }).rejects.toThrowError(check.err);
+        };
+	});
+
+	test('testParseWrongUrlWithPadding', () => {
+        expect(() => {
+            new DIDURL("       \t did:elastos:foobar/-path/to/resource?test=true&key=value&name=foobar#helloworld");
+        }).rejects.toThrowError("Invalid char at: 28");
+	});
+
+    test('testParseEmptyAndNull', () => {
+        expect(() => {
+            new DIDURL(null);
+        }).rejects.toThrowError(Exceptions.IllegalArgumentException);
+
+        expect(() => {
+            new DIDURL("");
+        }).rejects.toThrowError(Exceptions.IllegalArgumentException);
+
+        expect(() => {
+            new DIDURL("		   ");
+        }).rejects.toThrowError("empty DIDURL string");
     });
-
-    test('Test Constructor Error 1', () => {
-        expect(() => {new DIDURL("did:elastos:1234567890;" + params + path + query + fragment)}).toThrowError();
-    })
-
-    test('Test Constructor Error 2', () => {
-        expect(() => {new DIDURL("did:example:1234567890" + params + path + query + fragment)}).toThrowError();
-    })
-
-    test('Test Constructor Error 3', () => {
-        expect(() => {new DIDURL("did:elastos::1234567890" + params + path + query + fragment)}).toThrowError();
-    })
-
-    test('Test Constructor Error 4', () => {
-        expect(() => {new DIDURL("did:example:1234567890" + params + path + "?" + "#" + fragment)}).toThrowError();
-    })
-
-    test('Test Constructor Error 5', () => {
-        expect(() => {new DIDURL("did:example:1234567890" + params + path + query + "#")}).toThrowError();
-    })
-
-    test('Test GetDID', () => {
-        expect(url.getDid().toString()).toEqual(testDID);
-    })
-
-    test('Test GetParameters', () => {
-        expect(url.getParametersString()).toEqual(params.substring(1));
-    })
-
-    test('Test GetParameter', () => {
-        expect(url.getParameter("elastos:foo")).toEqual("testvalue");
-        expect(url.getParameter("foo")).toBeUndefined();
-        expect(url.getParameter("bar")).toEqual("123");
-        expect(url.getParameter("elastos:foobar")).toEqual("12345");
-        expect(url.getParameter("foobar")).toBeUndefined();
-        expect(url.getParameter("keyonly")).toBeNull();
-    })
-
-    test('Test HasParameter', () => {
-        expect(url.hasParameter("elastos:foo")).toBeTruthy();
-        expect(url.hasParameter("bar")).toBeTruthy();
-        expect(url.hasParameter("elastos:foobar")).toBeTruthy();
-        expect(url.hasParameter("keyonly")).toBeTruthy();
-
-        expect(url.hasParameter("notexist")).toBeFalsy();
-        expect(url.hasParameter("foo")).toBeFalsy();
-        expect(url.hasParameter("boobar")).toBeFalsy();
-    })
-
-    test('Test GetPath', () => {
-        expect(url.getPath()).toEqual(path);
-    })
-
-    test('Test GetQuery', () => {
-        expect(url.getQueryString()).toEqual(query.substring(1));
-    })
-
-    test('Test GetQueryParameter', () => {
-        expect(url.getQueryParameter("qkey")).toEqual("qvalue");
-        expect(url.getQueryParameter("test")).toEqual("true");
-        expect(url.getQueryParameter("qkeyonly")).toBeNull();
-    })
-
-    test('Test HasQueryParameter', () => {
-        expect(url.hasQueryParameter("qkeyonly")).toBeTruthy();
-        expect(url.hasQueryParameter("qkey")).toBeTruthy();
-        expect(url.hasQueryParameter("test")).toBeTruthy();
-        expect(url.hasQueryParameter("notexist")).toBeFalsy();
-    })
-
-    test('Test GetFragment', () => {
-        expect(url.getFragment()).toBe(fragment.substring(1));
-    })
-
-    test('Test ToString', () => {
-        expect(url.toString()).toEqual(testURL);
-    })
-
-    test('Test HashCode', () => {
-        let other = new DIDURL(testURL);
-        expect(other.hashCode()).toEqual(url.hashCode());
-
-        other = new DIDURL("did:elastos:1234567890#test");
-        expect(other.hashCode()).not.toEqual(url.hashCode());
-    })
-
-    test('Test Equals', () => {
-        let other = new DIDURL(testURL);
-
-        expect(url.equals(other)).toBeTruthy()
-        expect(url.equals(testURL)).toBeTruthy()
-
-        other = new DIDURL("did:elastos:1234567890#test");
-        expect(url.equals(other)).toBeFalsy();
-        expect(url.equals("did:elastos:1234567890#test")).toBeFalsy()
-    })
-})
+});

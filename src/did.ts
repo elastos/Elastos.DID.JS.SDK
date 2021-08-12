@@ -24,9 +24,7 @@ import { DIDMetadata } from "./internals";
 import {
     checkEmpty,
     checkNotNull,
-    isEmpty,
-    hashCode,
-    DIDURLParser
+    hashCode
 } from "./internals";
 import type { DIDDocument } from "./internals";
 import { DIDBackend } from "./internals";
@@ -34,9 +32,7 @@ import type { DIDBiography } from "./internals";
 import {
     JsonSerialize,
     JsonDeserialize,
-    JsonCreator,
-    JsonProperty,
-    JsonClassType
+    JsonCreator
 } from "@elastosfoundation/jackson-js";
 import {
     Serializer,
@@ -46,7 +42,8 @@ import type {
     JsonStringifierTransformerContext,
     JsonParserTransformerContext
 } from "@elastosfoundation/jackson-js";
-import { IllegalArgumentException } from "./exceptions/exceptions";
+import { IllegalArgumentException, MalformedDIDException } from "./exceptions/exceptions";
+import { checkArgument } from "./utils";
 
 class DIDSerializer extends Serializer {
     public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
@@ -73,13 +70,109 @@ class DIDDeserializer extends Deserializer {
 @JsonSerialize({using:  DIDSerializer.serialize})
 @JsonDeserialize({using:  DIDDeserializer.deserialize})
 export class DID {
+    public static SCHEMA = "did";
     public static METHOD = "elastos";
-    //public static METHOD_SPECIFIC_ID = "elastos";
     public static METADATA = "metadata";
+
+    private repr : string = null;
 
     private method: string | null;
     private methodSpecificId: string | null;
     private metadata: DIDMetadata | null;
+
+    public parser = new class {
+        constructor(public superThis: DID) {
+        }
+		public isTokenChar(ch : string, start : boolean ) : boolean {
+			if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+					(ch >= '0' && ch <= '9'))
+				return true;
+
+			if (start)
+				return false;
+			else
+				return (ch  == '.' || ch == '_' || ch == '-');
+		}
+
+		public scanNextPart(did : String, start : number, limit : number, delimiter : string | string[]) : number {
+			let nextPart = limit;
+			let tokenStart = true;
+
+			for (let i = start; i < limit; i++) {
+				let ch = did.charAt(i);
+                if (typeof ch == 'string') {
+                    if (ch == delimiter) {
+                        nextPart = i;
+                        break;
+                    }
+				} else {
+                    for (let i = 0; i < delimiter.length; i++) {
+                        if (ch == delimiter[i]) {
+                            nextPart = i;
+                            break;
+                        }
+                    }
+                }
+
+				if (this.isTokenChar(ch, tokenStart)) {
+					tokenStart = false;
+					continue;
+				}
+
+				throw new MalformedDIDException("Invalid char at: " + i);
+			}
+
+			return nextPart;
+		}
+
+		public parse(did : String, start : number = 0, limit ?: number) : void {
+			if (did == null)
+				throw new MalformedDIDException("null DID string");
+
+            if (limit == undefined)
+                limit = did.length;
+
+			// trim the leading and trailing spaces
+			while ((limit > start) && (did.charAt(limit - 1) <= ' '))
+				limit--;		//eliminate trailing whitespace
+
+			while ((start < limit) && (did.charAt(start) <= ' '))
+				start++;		// eliminate leading whitespace
+
+			if (start == limit) // empty did string
+				throw new MalformedDIDException("empty DID string");
+
+			let pos = start;
+
+			// did
+			let nextPart = this.scanNextPart(did, pos, limit, ':');
+			let schema = did.substring(pos, nextPart);
+			if (schema == DID.SCHEMA)
+				throw new MalformedDIDException("Invalid DID schema: '" + schema + "', at: " + pos);
+
+			pos = nextPart;
+
+			// method
+			if (pos + 1 >= limit || did.charAt(pos) != ':')
+				throw new MalformedDIDException("Missing method and id string at: " + pos);
+
+			nextPart = this.scanNextPart(did, ++pos, limit, ':');
+			let method = did.substring(pos, nextPart);
+			if (method != DID.METHOD)
+				throw new MalformedDIDException("Unknown DID method: '" + method + "', at: " + pos);
+
+		    this.superThis.method = DID.METHOD;
+			pos = nextPart;
+
+			// id string
+			if (pos + 1 >= limit || did.charAt(pos) != ':')
+				throw new MalformedDIDException("Missing id string at: " +
+						(pos + 1 > limit ? pos : pos + 1));
+
+			nextPart = this.scanNextPart(did, ++pos, limit, ["'", '"']);
+			this.superThis.methodSpecificId = did.substring(pos, nextPart);
+		}
+    }(this);
 
     public constructor(methodOrDID: string, methodSpecificId: string | null = null, internal = false) {
         this.metadata = null;
@@ -87,8 +180,7 @@ export class DID {
             // For jackson creation only
             this.method = null;
             this.methodSpecificId = null;
-        }
-        else if (methodSpecificId) {
+        } else if (methodSpecificId) {
             let method: string = methodOrDID;
             checkEmpty(method, "Invalid method");
             checkEmpty(methodSpecificId, "Invalid methodSpecificId");
@@ -96,14 +188,18 @@ export class DID {
             this.method = method;
             this.methodSpecificId = methodSpecificId;
         } else {
-            let did = methodOrDID;
-            checkEmpty(did, "Invalid DID string");
-            this.method = null;
-            this.methodSpecificId = null;
-            let didParsed = DIDURLParser.newFromURL(methodOrDID)
-            this.method = didParsed.did.method;
-            this.methodSpecificId = didParsed.did.methodSpecificId;
+            checkEmpty(methodOrDID, "Invalid DID string");
+            this.parser.parse(methodOrDID);
         }
+    }
+
+    public static newByPos(methodOrDID: string, start : number, limit : number) : DID {
+		checkArgument(methodOrDID != null && methodOrDID != "", "Invalid DID string");
+		checkArgument(start < limit, "Invalid offsets");
+
+        let did = new DID("", "", true);
+        did.parser.parse(methodOrDID, start, limit);
+        return did;
     }
 
     @JsonCreator()
@@ -115,6 +211,7 @@ export class DID {
         return null;
     }
 
+    //equal to java 'valueof'
     public static from(did: DID | string | null): DID | null {
         if (!did)
             return null;
@@ -181,11 +278,14 @@ export class DID {
     }
 
     public toString(): string {
-        return "did:"+this.method+":"+this.methodSpecificId;
+        if (this.repr == null)
+            this.repr = "did:"+this.method+":"+this.methodSpecificId;
+
+        return this.repr;
     }
 
     public hashCode(): number {
-        return hashCode(DID.METHOD) + hashCode(this.methodSpecificId);
+        return 0x0D1D + hashCode(this.toString());
     }
 
     public equals(obj: unknown): boolean {
@@ -219,6 +319,8 @@ export class DID {
         return rc == 0 ? strcmp(this.methodSpecificId, did.methodSpecificId) : rc;
     }
 }
+
+
 
 
 
