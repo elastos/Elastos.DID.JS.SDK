@@ -477,7 +477,7 @@ export class DIDBackend {
         if (adapter == null)
             adapter = this.getAdapter();
 
-        await adapter.createIdTransaction(payload, payload);
+        await adapter.createIdTransaction(payload, null);
 
         log.info("ID transaction complete.");
     }

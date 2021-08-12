@@ -52,6 +52,7 @@ export class NotPrimitiveDIDException extends ParentException {}
 export class NoEffectiveControllerException extends ParentException {}
 export class NotControllerException extends ParentException {}
 export class AlreadySignedException extends ParentException {}
+export class MalformedDIDException extends ParentException {}
 export class MalformedTransferTicketException extends ParentException {}
 export class MalformedCredentialException extends ParentException {}
 export class MalformedIDChainRequestException extends ParentException {}
