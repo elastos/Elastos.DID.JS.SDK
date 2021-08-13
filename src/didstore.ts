@@ -52,8 +52,8 @@ import type { DIDStoreMetadata } from "./internals";
 import { md5 } from "./internals";
 import { BASE64 } from "./internals";
 import createHash from 'create-hash';
-import * as fs from "fs";
 import JSZip from "jszip";
+import { readFileSync, writeFileSync } from "./fs";
 
 /**
  * DIDStore is local store for all DIDs.
@@ -1125,7 +1125,7 @@ import JSZip from "jszip";
             return null;
         }
 
-        public async exportRootIdentity(id: string, password: string, storepass: string): Promise<string> {
+        public exportRootIdentity(id: string, password: string, storepass: string): Promise<string> {
             checkArgument(id != null && id !== "", "Invalid id");
             checkArgument(password != null && password !== "", "Invalid password");
             checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -1146,7 +1146,7 @@ import JSZip from "jszip";
                 rie.setDefault();
 
             rie.seal(password);
-            return rie.serialize(true);
+            return Promise.resolve(rie.serialize(true));
         }
 
         public async importRootIdentity(data: string, password: string, storepass: string): Promise<void> {
@@ -1198,7 +1198,7 @@ import JSZip from "jszip";
 
             try {
                 let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
-                fs.writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
+                writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
             } catch(e) {
                 throw new MalformedExportDataException(e);
             }
@@ -1218,7 +1218,7 @@ import JSZip from "jszip";
             try {
                 const promises = [];
 
-                let data = await fs.readFileSync(zipFile);
+                let data = await readFileSync(zipFile);
                 let zip = await JSZip.loadAsync(data);
                 zip.forEach((relativePath, zipEntry) => {
                     let promise = zip.file(relativePath).async("string").then(async (content) => {
@@ -1445,7 +1445,7 @@ export namespace DIDStore {
                         "Invalid export data, fingerprint mismatch.");
         }
 
-        protected async sanitize(): Promise<void> {
+        protected sanitize(): Promise<void> {
             if (this.type == null || this.type !== DIDExport.DID_EXPORT)
                 throw new MalformedExportDataException(
                         "Invalid export data, unknown type.");
@@ -1484,6 +1484,8 @@ export namespace DIDStore {
             if (this.fingerprint == null || this.fingerprint == "")
                 throw new MalformedExportDataException(
                         "Invalid export data, missing fingerprint.");
+
+            return;
         }
     }
 
@@ -1655,7 +1657,7 @@ export namespace DIDStore {
                     "Invalid export data, fingerprint mismatch.");
         }
 
-        protected async sanitize(): Promise<void> {
+        protected sanitize(): Promise<void> {
             if (this.type == null || this.type !== RootIdentityExport.DID_EXPORT)
             throw new MalformedExportDataException(
                     "Invalid export data, unknown type.");
@@ -1671,6 +1673,8 @@ export namespace DIDStore {
             if (this.fingerprint == null || this.fingerprint == "")
                 throw new MalformedExportDataException(
                         "Invalid export data, missing fingerprint.");
+
+            return;
         }
     }
 }
