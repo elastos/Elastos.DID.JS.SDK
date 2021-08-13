@@ -77,10 +77,10 @@ class URLDeserializer extends Deserializer {
 export class DIDURL implements Hashable, Comparable<DIDURL> {
     private static SEPS = [':', ';', '/', '?', '#'];
 
-    private did?: DID;
-    private path = "";
+    private did: DID = null;
+    private path = null;
     private query : Map<string, string>;
-    private fragment = "";
+    private fragment = null;
     private metadata?: AbstractMetadata;
     //private queryString : String;
     private queryString : string;
@@ -160,6 +160,9 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 		}
 
 		public parse(context : DID, url : String) : void {
+            if (context == undefined)
+                context = null;
+
 			this.superThis.did = context;
 
 			if (url == null)
@@ -182,7 +185,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 			let pos = start;
 
 			// DID
-			if (pos < limit && url.substring(pos, 4) == "did:") {
+			if (pos < limit && url.substr(pos, 4) == "did:") {
 				nextPart = this.scanNextPart(url, pos, limit, "/?#", ":");
 				try {
 					this.superThis.did = DID.newByPos(url.toString(), pos, nextPart);
@@ -243,7 +246,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 
     // Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
     public constructor(url?: DIDURL | string, context?: DID) {
-        checkArgument(!url || !context, "No args");
+        checkArgument( !!url || !!context, "Invalid context and url");
 
         if (!url) {
             this.did = context;
@@ -376,7 +379,8 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
      */
     public getQueryParameter(name: string): string | undefined {
         checkArgument(name != null && name !== "", "Invalid parameter name");
-        return this.query.get(name);
+        let value = this.query.get(name);
+        return value == undefined ? null : value;
     }
 
     /**
