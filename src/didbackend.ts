@@ -56,7 +56,7 @@ const log = new Logger("DIDBackend");
 /**
  * The interface to indicate how to get local did document, if this did is not published to chain.
  */
-interface LocalResolveHandle {
+ export interface LocalResolveHandle {
     /**
      * Resolve DID content(DIDDocument).
      *

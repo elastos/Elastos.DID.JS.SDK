@@ -61,8 +61,8 @@ describe('DID Tests', () => {
             expect(did.equals(dif)).toBeFalsy();
 
             // hash code
-            expect(did.hashCode()).toEqual(ref.hashCode());
-            expect(did.hashCode()).toEqual(dif.hashCode());
+            expect(did.hashCode()).toBe(ref.hashCode());
+            expect(did.hashCode()).not.toBe(dif.hashCode());
         }
     });
 
@@ -70,7 +70,7 @@ describe('DID Tests', () => {
         let csvsource = [
             { spec : "did:elastos:ic-J4_z2D.ULrHEzYSvjKNJpKyhqFDxvYV7pN", methodSpecificId : "ic-J4_z2D.ULrHEzYSvjKNJpKyhqFDxvYV7pN" },
             { spec : "did:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-", methodSpecificId : "icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-" },
-            { spec : "udid:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_", methodSpecificId : "icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_" },
+            { spec : "did:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_", methodSpecificId : "icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_" },
             { spec : "did:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_.", methodSpecificId : "icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_." },
             { spec : "did:elastos:icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_.-", methodSpecificId : "icJ.4z2D.ULrHE.zYSvj-KNJp_KyhqFDxvYV7pN-_.-" }
         ];
@@ -115,33 +115,33 @@ describe('DID Tests', () => {
             { value : "did::icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN", err : "Unknown DID method: '', at: 4" },
             { value : "did:elastos:", err : "Missing id string at: 12" },
             { value : "did:elastos", err : "Missing id string at: 11" },
-            { value : "did:elastos:abc: ", err : " Invalid char at: 15" }
+            { value : "did:elastos:abc: ", err : "Invalid char at: 15" }
         ];
 
         for (let check of checks) {
             expect(() => {
                 new DID(check.value);
-            }).rejects.toThrowError(check.err);
+            }).toThrowError(check.err);
         };
      });
 
     test('testParseWrongDidWithPadding', () => {
         expect(() => {
             new DID("   d-i.d:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN");
-        }).rejects.toThrowError("Invalid DID schema: 'd-i.d', at: 3");
+        }).toThrowError("Invalid DID schema: 'd-i.d', at: 3");
 	});
 
 	test('testParseEmptyAndNull', () => {
         expect(() => {
             new DID(null);
-        }).rejects.toThrowError(Exceptions.IllegalArgumentException);
+        }).toThrowError();
 
         expect(() => {
             new DID("");
-        }).rejects.toThrowError(Exceptions.IllegalArgumentException);
+        }).toThrowError();
 
         expect(() => {
             new DID("		   ");
-        }).rejects.toThrowError("empty DID string");
+        }).toThrowError("empty DID string");
 	});
 });

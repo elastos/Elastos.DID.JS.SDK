@@ -147,7 +147,7 @@ export class DID {
 			// did
 			let nextPart = this.scanNextPart(did, pos, limit, ':');
 			let schema = did.substring(pos, nextPart);
-			if (schema == DID.SCHEMA)
+			if (schema != DID.SCHEMA)
 				throw new MalformedDIDException("Invalid DID schema: '" + schema + "', at: " + pos);
 
 			pos = nextPart;

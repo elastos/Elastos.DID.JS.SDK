@@ -33,7 +33,7 @@ describe('DIDURL Tests', () => {
 	const WITH_QUERY : number = 0x04;
 	const WITH_FRAGMENT : number = 0x08;
 
-    let  provideDIDURLs = [
+    const  provideDIDURLs = [
         { spec : TEST_DID, part : WITH_DID },
         { spec : TEST_DID + TEST_PATH, part : WITH_DID | WITH_PATH },
         { spec : TEST_DID + TEST_QUERY, part : WITH_DID | WITH_QUERY },
@@ -148,8 +148,8 @@ describe('DIDURL Tests', () => {
             expect(url.equals(difURLString)).toBeFalsy();
 
             // hashCode()
-            expect(url.hashCode()).toEqual(refURL.hashCode());
-            expect(url.hashCode()).toEqual(difURL.hashCode());
+            expect(url.hashCode()).toBe(refURL.hashCode());
+            expect(url.hashCode()).not.toBe(difURL.hashCode());
         }
 	});
 
@@ -224,15 +224,14 @@ describe('DIDURL Tests', () => {
 
             // toString(DID)
             if ((didurl.part & WITH_DID) == WITH_DID) {
-                expect(url.toString(DID.from(TEST_DID))).toEqual(TEST_DID.length);
+                expect(url.toString(DID.from(TEST_DID))).toEqual(refURLString.substring(TEST_DID.length));
                 expect(url.toString(context)).toEqual(refURLString);
             } else {
-                expect(url.toString(context)).toEqual(refURLString.substring(context.toString().length);
+                expect(url.toString(context)).toEqual(refURLString.substring(context.toString().length));
                 expect(url.toString(DID.from(TEST_DID))).toEqual(refURLString);
             }
 
             // equals()
-
             expect(url.equals(refURL)).toBeTruthy();
             expect(url.equals(refURLString)).toBeTruthy();
 
@@ -242,8 +241,8 @@ describe('DIDURL Tests', () => {
             expect(url.equals(difURLString)).toBeFalsy();
 
             // hashCode()
-            expect(url.hashCode()).toEqual(refURL.hashCode());
-            expect(url.hashCode()).toEqual(difURL.hashCode());
+            expect(url.hashCode()).toBe(refURL.hashCode());
+            expect(url.hashCode()).not.toBe(difURL.hashCode());
         }
 	});
 
@@ -339,27 +338,27 @@ describe('DIDURL Tests', () => {
         for (let check of checks) {
             expect(() => {
                 new DIDURL(check.spec);
-            }).rejects.toThrowError(check.err);
+            }).toThrowError(check.err);
         };
 	});
 
 	test('testParseWrongUrlWithPadding', () => {
         expect(() => {
             new DIDURL("       \t did:elastos:foobar/-path/to/resource?test=true&key=value&name=foobar#helloworld");
-        }).rejects.toThrowError("Invalid char at: 28");
+        }).toThrowError("Invalid char at: 28");
 	});
 
     test('testParseEmptyAndNull', () => {
         expect(() => {
             new DIDURL(null);
-        }).rejects.toThrowError(Exceptions.IllegalArgumentException);
+        }).toThrowError();
 
         expect(() => {
             new DIDURL("");
-        }).rejects.toThrowError(Exceptions.IllegalArgumentException);
+        }).toThrowError();
 
         expect(() => {
             new DIDURL("		   ");
-        }).rejects.toThrowError("empty DIDURL string");
+        }).toThrowError("empty DIDURL string");
     });
 });

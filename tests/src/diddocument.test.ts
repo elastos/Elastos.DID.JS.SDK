@@ -32,7 +32,8 @@ import {
     HDKey,
     Base58,
     Exceptions,
-    VerificationEventListener
+    VerificationEventListener,
+    DIDBackend
 } from "@elastosfoundation/did-js-sdk";
 import {
     TestData,
@@ -43,6 +44,7 @@ import {
 } from "./utils/utils";
 import { TestConfig } from "./utils/testconfig";
 import { DIDTestExtension } from "./utils/didtestextension";
+import { LocalResolveHandle } from "../../typings/didbackend";
 
 async function testGetPublicKey(version: number, testData: TestData) {
     let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
@@ -2136,7 +2138,7 @@ describe('DIDDocument Tests', () => {
             expect(compact.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
-    
+
             expect(compact.isValid(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
@@ -2149,7 +2151,7 @@ describe('DIDDocument Tests', () => {
             expect(normalized.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
-    
+
             expect(normalized.isValid(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
@@ -2161,7 +2163,7 @@ describe('DIDDocument Tests', () => {
             expect(doc.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
-    
+
             expect(doc.isValid(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
@@ -2235,7 +2237,7 @@ describe('DIDDocument Tests', () => {
             expect(sk).toEqual(key.getPrivateKeyBytes());
         }
     })
-    
+
     test("testCreateCustomizedDid", async () => {
         let identity = await testData.getRootIdentity();
 
@@ -2342,7 +2344,7 @@ describe('DIDDocument Tests', () => {
         let docctrls = doc.getControllers();
         docctrls.sort();
         expect(ctrls.length).toBe(docctrls.length);
-    
+
         for (let i = 0; i < ctrls.length; i++)
             expect(ctrls[i].equals(docctrls[i])).toBeTruthy();
 
@@ -4085,4 +4087,30 @@ describe('DIDDocument Tests', () => {
         doc = await doc.getSubject().resolve();
         expect(doc.isDeactivated()).toBeFalsy();
     });
+
+    test("testResolveLocal", async () => {
+		let json = "{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKey\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"type\":\"ECDSAsecp256r1\",\"controller\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKeyBase58\":\"21YM84C9hbap4GfFSB3QbjauUfhAN4ETKg2mn4bSqx4Kp\"}],\"authentication\":[\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\"],\"verifiableCredential\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#name\",\"type\":[\"BasicProfileCredential\",\"SelfProclaimedCredential\"],\"issuer\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"issuanceDate\":\"2020-07-01T00:46:40Z\",\"expirationDate\":\"2025-06-30T00:46:40Z\",\"credentialSubject\":{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"name\":\"KP Test\"},\"proof\":{\"type\":\"ECDSAsecp256r1\",\"verificationMethod\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signature\":\"jQ1OGwpkYqjxooyaPseqyr_1MncOZDrMS_SvwYzqkCHVrRfjv_b7qfGCjxy7Gbx-LS3bvxZKeMxU1B-k3Ysb3A\"}}],\"expires\":\"2025-07-01T00:46:40Z\",\"proof\":{\"type\":\"ECDSAsecp256r1\",\"created\":\"2020-07-01T00:47:20Z\",\"creator\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signatureValue\":\"TOpNt-pWeQDJFaS5EkpMOuCqnZKhPCizf7LYQQDBrNLVIZ_7AR73m-KJk7Aja0wmZWXd7S4n7SC2W4ZQayJlMA\"}}";
+		let did = new DID("did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab");
+
+		let doc = await did.resolve();
+		expect(doc).toBeNull();
+
+        let parserDoc = await DIDDocument.parse<DIDDocument>(json, DIDDocument);
+		DIDBackend.getInstance().setResolveHandle(new class implements LocalResolveHandle {
+            public resolve(d: DID): DIDDocument {
+                if (d.equals(did))
+                    return parserDoc;
+
+                return null;
+            }
+        });
+
+		doc = await did.resolve();
+        expect(doc).not.toBeNull();
+        expect(doc.getSubject().equals(did)).toBeTruthy();
+
+		DIDBackend.getInstance().setResolveHandle(null);
+		doc = await did.resolve();
+        expect(doc).toBeNull();
+	});
 });
