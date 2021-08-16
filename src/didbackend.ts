@@ -318,61 +318,56 @@ export class DIDBackend {
         return doc;
     }
 
-	// TODO: to be remove in the future
-	public async resolveUntrustedDid(did : DID, force : boolean) : Promise<DIDDocument> {
-		log.debug("Resolving untrusted DID {}...", did.toString());
+    // TODO: to be remove in the future
+    public async resolveUntrustedDid(did : DID, force : boolean) : Promise<DIDDocument> {
+        log.debug("Resolving untrusted DID {}...", did.toString());
 
-		if (this.resolveHandle != null) {
-			let doc = this.resolveHandle.resolve(did);
-			if (doc != null)
-				return doc;
-		}
+        if (this.resolveHandle != null) {
+            let doc = this.resolveHandle.resolve(did);
+            if (doc != null)
+                return doc;
+        }
 
-		let bio = await this.resolveDidBiography(did, false, force);
+        let bio = await this.resolveDidBiography(did, false, force);
 
-		let tx : DIDTransaction = null;
-		switch (bio.getStatus()) {
-		case DIDBiographyStatus.VALID:
-			tx = bio.getTransaction(0);
-			break;
+        let tx : DIDTransaction = null;
+        if(bio.getStatus().equals(DIDBiographyStatus.VALID)) {
+            tx = bio.getTransaction(0);
+        } else if(bio.getStatus().equals(DIDBiographyStatus.DEACTIVATED)) {
+            if (bio.getTransactionCount() != 2)
+                throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
 
-		case DIDBiographyStatus.DEACTIVATED:
-			if (bio.getTransactionCount() != 2)
-				throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
+            tx = bio.getTransaction(0);
+            if (tx.getRequest().getOperation() != IDChainRequest.Operation.DEACTIVATE)
+                throw new DIDResolveException("Invalid DID biography, wrong status.");
 
-			tx = bio.getTransaction(0);
-			if (tx.getRequest().getOperation() != IDChainRequest.Operation.DEACTIVATE)
-				throw new DIDResolveException("Invalid DID biography, wrong status.");
+            let doc = bio.getTransaction(1).getRequest().getDocument();
+            if (doc == null)
+                throw new DIDResolveException("Invalid DID biography, invalid trancations.");
 
-			let doc = bio.getTransaction(1).getRequest().getDocument();
-			if (doc == null)
-				throw new DIDResolveException("Invalid DID biography, invalid trancations.");
+            tx = bio.getTransaction(1);
+        } else if(bio.getStatus().equals(DIDBiographyStatus.NOT_FOUND)) {
+            return null;
+        }
 
-			tx = bio.getTransaction(1);
-			break;
+        if (tx.getRequest().getOperation() != IDChainRequest.Operation.CREATE &&
+                tx.getRequest().getOperation() != IDChainRequest.Operation.UPDATE &&
+                tx.getRequest().getOperation() != IDChainRequest.Operation.TRANSFER)
+            throw new DIDResolveException("Invalid ID transaction, unknown operation.");
 
-		case DIDBiographyStatus.NOT_FOUND:
-			return null;
-		}
+        // NOTICE: Make a copy from DIDBackend cache.
+        // 		   Avoid share same DIDDocument instance between DIDBackend
+        //         cache and DIDStore cache.
+        let doc = tx.getRequest().getDocument().clone();
+        let metadata = doc.getMetadata();
+        metadata.setTransactionId(tx.getTransactionId());
+        metadata.setSignature(doc.getProof().getSignature());
+        metadata.setPublished(tx.getTimestamp());
+        if (bio.getStatus() == DIDBiographyStatus.DEACTIVATED)
+            metadata.setDeactivated(true);
 
-		if (tx.getRequest().getOperation() != IDChainRequest.Operation.CREATE &&
-				tx.getRequest().getOperation() != IDChainRequest.Operation.UPDATE &&
-				tx.getRequest().getOperation() != IDChainRequest.Operation.TRANSFER)
-			throw new DIDResolveException("Invalid ID transaction, unknown operation.");
-
-		// NOTICE: Make a copy from DIDBackend cache.
-		// 		   Avoid share same DIDDocument instance between DIDBackend
-		//         cache and DIDStore cache.
-		let doc = tx.getRequest().getDocument().clone();
-		let metadata = doc.getMetadata();
-		metadata.setTransactionId(tx.getTransactionId());
-		metadata.setSignature(doc.getProof().getSignature());
-		metadata.setPublished(tx.getTimestamp());
-		if (bio.getStatus() == DIDBiographyStatus.DEACTIVATED)
-			metadata.setDeactivated(true);
-
-		return doc;
-	}
+        return doc;
+    }
 
     public resolveCredentialBiography(id: DIDURL, issuer: DID = null, force = false): Promise<CredentialBiography> {
         log.info("Resolving credential {}, issuer={}...", id, issuer);
