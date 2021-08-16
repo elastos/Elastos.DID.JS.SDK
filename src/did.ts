@@ -80,32 +80,32 @@ export class DID {
     private methodSpecificId: string | null;
     private metadata: DIDMetadata | null;
 
-    public parser = new class {
+    private parser = new class {
         constructor(public superThis: DID) {
         }
-		public isTokenChar(ch : string, start : boolean ) : boolean {
-			if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-					(ch >= '0' && ch <= '9'))
-				return true;
+        public isTokenChar(ch : string, start : boolean ) : boolean {
+            if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+                    (ch >= '0' && ch <= '9'))
+                return true;
 
-			if (start)
-				return false;
-			else
-				return (ch  == '.' || ch == '_' || ch == '-');
-		}
+            if (start)
+                return false;
+            else
+                return (ch  == '.' || ch == '_' || ch == '-');
+        }
 
-		public scanNextPart(did : String, start : number, limit : number, delimiter : string | string[]) : number {
-			let nextPart = limit;
-			let tokenStart = true;
+        public scanNextPart(did : String, start : number, limit : number, delimiter : string | string[]) : number {
+            let nextPart = limit;
+            let tokenStart = true;
 
-			for (let i = start; i < limit; i++) {
-				let ch = did.charAt(i);
+            for (let i = start; i < limit; i++) {
+                let ch = did.charAt(i);
                 if (typeof ch == 'string') {
                     if (ch == delimiter) {
                         nextPart = i;
                         break;
                     }
-				} else {
+                } else {
                     for (let i = 0; i < delimiter.length; i++) {
                         if (ch == delimiter[i]) {
                             nextPart = i;
@@ -114,64 +114,64 @@ export class DID {
                     }
                 }
 
-				if (this.isTokenChar(ch, tokenStart)) {
-					tokenStart = false;
-					continue;
-				}
+                if (this.isTokenChar(ch, tokenStart)) {
+                    tokenStart = false;
+                    continue;
+                }
 
-				throw new MalformedDIDException("Invalid char at: " + i);
-			}
+                throw new MalformedDIDException("Invalid char at: " + i);
+            }
 
-			return nextPart;
-		}
+            return nextPart;
+        }
 
-		public parse(did : String, start : number = 0, limit ?: number) : void {
-			if (did == null)
-				throw new MalformedDIDException("null DID string");
+        public parse(did : String, start : number = 0, limit ?: number) : void {
+            if (did == null)
+                throw new MalformedDIDException("null DID string");
 
             if (limit == undefined)
                 limit = did.length;
 
-			// trim the leading and trailing spaces
-			while ((limit > start) && (did.charAt(limit - 1) <= ' '))
-				limit--;		//eliminate trailing whitespace
+            // trim the leading and trailing spaces
+            while ((limit > start) && (did.charAt(limit - 1) <= ' '))
+                limit--;		//eliminate trailing whitespace
 
-			while ((start < limit) && (did.charAt(start) <= ' '))
-				start++;		// eliminate leading whitespace
+            while ((start < limit) && (did.charAt(start) <= ' '))
+                start++;		// eliminate leading whitespace
 
-			if (start == limit) // empty did string
-				throw new MalformedDIDException("empty DID string");
+            if (start == limit) // empty did string
+                throw new MalformedDIDException("empty DID string");
 
-			let pos = start;
+            let pos = start;
 
-			// did
-			let nextPart = this.scanNextPart(did, pos, limit, ':');
-			let schema = did.substring(pos, nextPart);
-			if (schema != DID.SCHEMA)
-				throw new MalformedDIDException("Invalid DID schema: '" + schema + "', at: " + pos);
+            // did
+            let nextPart = this.scanNextPart(did, pos, limit, ':');
+            let schema = did.substring(pos, nextPart);
+            if (schema != DID.SCHEMA)
+                throw new MalformedDIDException("Invalid DID schema: '" + schema + "', at: " + pos);
 
-			pos = nextPart;
+            pos = nextPart;
 
-			// method
-			if (pos + 1 >= limit || did.charAt(pos) != ':')
-				throw new MalformedDIDException("Missing method and id string at: " + pos);
+            // method
+            if (pos + 1 >= limit || did.charAt(pos) != ':')
+                throw new MalformedDIDException("Missing method and id string at: " + pos);
 
-			nextPart = this.scanNextPart(did, ++pos, limit, ':');
-			let method = did.substring(pos, nextPart);
-			if (method != DID.METHOD)
-				throw new MalformedDIDException("Unknown DID method: '" + method + "', at: " + pos);
+            nextPart = this.scanNextPart(did, ++pos, limit, ':');
+            let method = did.substring(pos, nextPart);
+            if (method != DID.METHOD)
+                throw new MalformedDIDException("Unknown DID method: '" + method + "', at: " + pos);
 
-		    this.superThis.method = DID.METHOD;
-			pos = nextPart;
+            this.superThis.method = DID.METHOD;
+            pos = nextPart;
 
-			// id string
-			if (pos + 1 >= limit || did.charAt(pos) != ':')
-				throw new MalformedDIDException("Missing id string at: " +
-						(pos + 1 > limit ? pos : pos + 1));
+            // id string
+            if (pos + 1 >= limit || did.charAt(pos) != ':')
+                throw new MalformedDIDException("Missing id string at: " +
+                        (pos + 1 > limit ? pos : pos + 1));
 
-			nextPart = this.scanNextPart(did, ++pos, limit, ["'", '"']);
-			this.superThis.methodSpecificId = did.substring(pos, nextPart);
-		}
+            nextPart = this.scanNextPart(did, ++pos, limit, "\\0");
+            this.superThis.methodSpecificId = did.substring(pos, nextPart);
+        }
     }(this);
 
     public constructor(methodOrDID: string, methodSpecificId: string | null = null, internal = false) {
@@ -193,9 +193,9 @@ export class DID {
         }
     }
 
-    public static newByPos(methodOrDID: string, start : number, limit : number) : DID {
-		checkArgument(methodOrDID != null && methodOrDID != "", "Invalid DID string");
-		checkArgument(start < limit, "Invalid offsets");
+    public static createFrom(methodOrDID: string, start : number, limit : number) : DID {
+        checkArgument(methodOrDID != null && methodOrDID != "", "Invalid DID string");
+        checkArgument(start < limit, "Invalid offsets");
 
         let did = new DID("", "", true);
         did.parser.parse(methodOrDID, start, limit);

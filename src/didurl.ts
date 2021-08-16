@@ -82,7 +82,6 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
     private query : Map<string, string>;
     private fragment = null;
     private metadata?: AbstractMetadata;
-    //private queryString : String;
     private queryString : string;
     private repr : string;
 
@@ -91,156 +90,156 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         return null;
     }
 
-    public parser = new class {
+    private parser = new class {
         constructor(public superThis: DIDURL) {
         }
 
-		public isHexChar(ch : string) : boolean {
-			return ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f') ||
-					(ch >= '0' && ch <= '9'));
-		}
+        public isHexChar(ch : string) : boolean {
+            return ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f') ||
+                    (ch >= '0' && ch <= '9'));
+        }
 
-		public isTokenChar(ch : string, start : boolean) : boolean {
-			if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-					(ch >= '0' && ch <= '9'))
-				return true;
+        public isTokenChar(ch : string, start : boolean) : boolean {
+            if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+                    (ch >= '0' && ch <= '9'))
+                return true;
 
-			if (start)
-				return false;
-			else
-				return (ch  == '.' || ch == '_' || ch == '-');
-		}
+            if (start)
+                return false;
+            else
+                return (ch  == '.' || ch == '_' || ch == '-');
+        }
 
-		public scanNextPart(url : String, start : number, limit : number,
-				partSeps : string, tokenSeps : String) : number {
-			let nextPart = limit;
-			let tokenStart = true;
+        public scanNextPart(url : String, start : number, limit : number,
+                partSeps : string, tokenSeps : String) : number {
+            let nextPart = limit;
+            let tokenStart = true;
 
-			for (let i = start; i < limit; i++) {
-				let ch = url.charAt(i);
+            for (let i = start; i < limit; i++) {
+                let ch = url.charAt(i);
 
-				if (partSeps != null && partSeps.indexOf(ch) >= 0) {
-					nextPart = i;
-					break;
-				}
+                if (partSeps != null && partSeps.indexOf(ch) >= 0) {
+                    nextPart = i;
+                    break;
+                }
 
-				if (tokenSeps != null && tokenSeps.indexOf(ch) >= 0) {
-					if (tokenStart)
-						throw new MalformedDIDURLException("Invalid char at: " + i);
+                if (tokenSeps != null && tokenSeps.indexOf(ch) >= 0) {
+                    if (tokenStart)
+                        throw new MalformedDIDURLException("Invalid char at: " + i);
 
-					tokenStart = true;
-					continue;
-				}
+                    tokenStart = true;
+                    continue;
+                }
 
-				if (this.isTokenChar(ch, tokenStart)) {
-					tokenStart = false;
-					continue;
-				}
+                if (this.isTokenChar(ch, tokenStart)) {
+                    tokenStart = false;
+                    continue;
+                }
 
-				if (ch == '%') {
-					if (i + 2 >= limit)
-						throw new MalformedDIDURLException("Invalid char at: " + i);
+                if (ch == '%') {
+                    if (i + 2 >= limit)
+                        throw new MalformedDIDURLException("Invalid char at: " + i);
 
-					let seq = url.charAt(++i);
-					if (!this.isHexChar(seq))
-						throw new MalformedDIDURLException("Invalid hex char at: " + i);
+                    let seq = url.charAt(++i);
+                    if (!this.isHexChar(seq))
+                        throw new MalformedDIDURLException("Invalid hex char at: " + i);
 
-					seq = url.charAt(++i);
-					if (!this.isHexChar(seq))
-						throw new MalformedDIDURLException("Invalid hex char at: " + i);
+                    seq = url.charAt(++i);
+                    if (!this.isHexChar(seq))
+                        throw new MalformedDIDURLException("Invalid hex char at: " + i);
 
-					tokenStart = false;
-					continue;
-				}
+                    tokenStart = false;
+                    continue;
+                }
 
-				throw new MalformedDIDURLException("Invalid char at: " + i);
-			}
+                throw new MalformedDIDURLException("Invalid char at: " + i);
+            }
 
-			return nextPart;
-		}
+            return nextPart;
+        }
 
-		public parse(context : DID, url : String) : void {
+        public parse(context : DID, url : String) : void {
             if (context == undefined)
                 context = null;
 
-			this.superThis.did = context;
+            this.superThis.did = context;
 
-			if (url == null)
-				throw new MalformedDIDURLException("null DIDURL string");
+            if (url == null)
+                throw new MalformedDIDURLException("null DIDURL string");
 
-			let start = 0;
-			let limit = url.length;
-			let nextPart;
+            let start = 0;
+            let limit = url.length;
+            let nextPart;
 
-			// trim the leading and trailing spaces
-			while ((limit > 0) && (url.charAt(limit - 1) <= ' '))
-				limit--;		//eliminate trailing whitespace
+            // trim the leading and trailing spaces
+            while ((limit > 0) && (url.charAt(limit - 1) <= ' '))
+                limit--;		//eliminate trailing whitespace
 
-			while ((start < limit) && (url.charAt(start) <= ' '))
-				start++;		// eliminate leading whitespace
+            while ((start < limit) && (url.charAt(start) <= ' '))
+                start++;		// eliminate leading whitespace
 
-			if (start == limit) // empty url string
-				throw new MalformedDIDURLException("empty DIDURL string");
+            if (start == limit) // empty url string
+                throw new MalformedDIDURLException("empty DIDURL string");
 
-			let pos = start;
+            let pos = start;
 
-			// DID
-			if (pos < limit && url.substr(pos, 4) == "did:") {
-				nextPart = this.scanNextPart(url, pos, limit, "/?#", ":");
-				try {
-					this.superThis.did = DID.newByPos(url.toString(), pos, nextPart);
-				} catch (e) {
-					throw new MalformedDIDURLException("Invalid did at: " + pos, e);
-				}
+            // DID
+            if (pos < limit && url.substr(pos, 4) == "did:") {
+                nextPart = this.scanNextPart(url, pos, limit, "/?#", ":");
+                try {
+                    this.superThis.did = DID.createFrom(url.toString(), pos, nextPart);
+                } catch (e) {
+                    throw new MalformedDIDURLException("Invalid did at: " + pos, e);
+                }
 
-				pos = nextPart;
-			}
+                pos = nextPart;
+            }
 
-			// path
-			if (pos < limit && url.charAt(pos) == '/') {
-				nextPart = this.scanNextPart(url, pos + 1, limit, "?#", "/");
-				this.superThis.path = url.substring(pos, nextPart);
-				pos = nextPart;
-			}
+            // path
+            if (pos < limit && url.charAt(pos) == '/') {
+                nextPart = this.scanNextPart(url, pos + 1, limit, "?#", "/");
+                this.superThis.path = url.substring(pos, nextPart);
+                pos = nextPart;
+            }
 
-			// query
-			if (pos < limit && url.charAt(pos) == '?') {
-				nextPart = this.scanNextPart(url, pos + 1, limit, "#", "&=");
-				let queryString = url.substring(pos + 1, nextPart);
-				pos = nextPart;
+            // query
+            if (pos < limit && url.charAt(pos) == '?') {
+                nextPart = this.scanNextPart(url, pos + 1, limit, "#", "&=");
+                let queryString = url.substring(pos + 1, nextPart);
+                pos = nextPart;
 
-				if (queryString != "") {
-					let query = new Map<string, string>();
+                if (queryString != "") {
+                    let query = new Map<string, string>();
 
-					let pairs = queryString.split("&");
-					for (let pair of pairs) {
-						let parts = pair.split("=");
-						if (parts.length > 0 && parts[0] != "") {
-							let name = parts[0];
-							let value = parts.length == 2 ? parts[1] : null;
-							query.set(name, value);
-						}
-					}
+                    let pairs = queryString.split("&");
+                    for (let pair of pairs) {
+                        let parts = pair.split("=");
+                        if (parts.length > 0 && parts[0] != "") {
+                            let name = parts[0];
+                            let value = parts.length == 2 ? parts[1] : null;
+                            query.set(name, value);
+                        }
+                    }
 
-					this.superThis.query = query;
-				}
-			} else {
+                    this.superThis.query = query;
+                }
+            } else {
                 this.superThis.query = new Map();
-			}
+            }
 
-			// fragment
-			// condition: pos == start
-			//	Compatible with v1, support fragment without leading '#'
-			if ((pos < limit && url.charAt(pos) == '#') || (pos == start)) {
-				if (url.charAt(pos) == '#')
-					pos++;
+            // fragment
+            // condition: pos == start
+            //	Compatible with v1, support fragment without leading '#'
+            if ((pos < limit && url.charAt(pos) == '#') || (pos == start)) {
+                if (url.charAt(pos) == '#')
+                    pos++;
 
-				nextPart = this.scanNextPart(url, pos, limit, "", null);
-				let fragment = url.substring(pos, nextPart);
-				if (fragment != "")
+                nextPart = this.scanNextPart(url, pos, limit, "", null);
+                let fragment = url.substring(pos, nextPart);
+                if (fragment != "")
                     this.superThis.fragment = fragment;
-			}
-		}
+            }
+        }
 
     } (this);
 

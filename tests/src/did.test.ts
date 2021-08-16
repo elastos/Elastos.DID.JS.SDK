@@ -81,9 +81,9 @@ describe('DID Tests', () => {
             expect(did.getMethodSpecificId()).toEqual(source.methodSpecificId);
             expect(did.toString()).toEqual(source.spec);
         }
-	});
+    });
 
-	test('testParseWrongDid', () => {
+    test('testParseWrongDid', () => {
         let checks = [
             { value : "did1:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN", err : "Invalid DID schema: 'did1', at: 0" },
             { value : "d-i_d:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN", err : "Invalid DID schema: 'd-i_d', at: 0" },
@@ -129,9 +129,9 @@ describe('DID Tests', () => {
         expect(() => {
             new DID("   d-i.d:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN");
         }).toThrowError("Invalid DID schema: 'd-i.d', at: 3");
-	});
+    });
 
-	test('testParseEmptyAndNull', () => {
+    test('testParseEmptyAndNull', () => {
         expect(() => {
             new DID(null);
         }).toThrowError();
@@ -143,5 +143,5 @@ describe('DID Tests', () => {
         expect(() => {
             new DID("		   ");
         }).toThrowError("empty DID string");
-	});
+    });
 });
