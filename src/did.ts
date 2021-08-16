@@ -115,6 +115,14 @@ export class DID {
         return null;
     }
 
+    public static deserialize(json: string): DID {
+        return null;
+    }
+
+    public serialize(normalized: boolean): string {
+        return "";
+    }
+    
     public static from(did: DID | string | null): DID | null {
         if (!did)
             return null;

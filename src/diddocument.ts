@@ -78,13 +78,34 @@ import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
 import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
 import { DateSerializer } from "./dateserializer"
-class DIDDocumentControllerSerializer extends Serializer {
-    public static serialize(controllers: DID[], context: JsonStringifierTransformerContext): any {
-        return controllers.length > 1 ? controllers : controllers[0];
+import { FieldInfo, GenericSerializer, FieldType } from "./serializers"
+import { isNullOrUndefined } from "util";
+
+
+class DIDDocumentControllerSerializer {
+    public static serialize(controllers: DID[], instance: DIDDocument): string {
+
+        let jsonControllers = [];
+        if (controllers) {
+            jsonControllers = controllers.map((did: DID, index: number, array: DID[]) => {
+                return did.serialize(true);
+            });
+        }
+
+        return JSON.stringify(jsonControllers);
+    }
+    public static deserialize(jsonValue: string, fullJsonObj: any): DID[] {
+        let jsonObj = JSON.parse(jsonValue);
+        if (!(jsonObj instanceof Array)) {
+            jsonObj = [jsonObj];
+        }
+        return jsonObj.map((value: any, index: number, array: any[]) => {
+            return DID.deserialize(JSON.stringify(value));
+        });
     }
 }
 
-class DIDDocumentProofSerializer extends Serializer {
+class DIDDocumentProofSerializer {
     public static serialize(proofs: DIDDocumentProof[], context: JsonStringifierTransformerContext): any {
         return proofs.length > 1 ? proofs : proofs[0];
     }
@@ -115,7 +136,7 @@ class DIDDocumentProofSerializer extends Serializer {
     "_proofs" ]})
  @JsonInclude({value: JsonIncludeType.NON_EMPTY})
  export class DIDDocument extends DIDEntity<DIDDocument> {
-
+    
     private static log = new Logger("DIDDocument");
     private static ID = "id";
     private static PUBLICKEY = "publicKey";
@@ -127,6 +148,11 @@ class DIDDocumentProofSerializer extends Serializer {
     private static VERIFIABLE_CREDENTIAL = "verifiableCredential";
     private static EXPIRES = "expires";
     private static PROOF = "proof";
+
+    private static FIELDSMAP = new Map<string, FieldInfo>([
+        [DIDDocument.ID, FieldInfo.forType(FieldType.TYPE).withTypeName("DID")],
+        [DIDDocument.CONTROLLER, FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(DIDDocumentControllerSerializer.deserialize).withSerializerMethod(DIDDocumentControllerSerializer.serialize)]
+    ]);
 
     @JsonProperty({ value: DIDDocument.ID })
     @JsonClassType({type: () => [DID]})
@@ -202,6 +228,13 @@ class DIDDocumentProofSerializer extends Serializer {
         super();
         this.subject = subject;
     }
+
+    public static createFromValues(fieldValues: Map<string, any>): DIDDocument {
+        let newInstance = new DIDDocument() {
+
+        }
+    }
+
 
     // Add custom deserialization fields to the method params here + assign.
     // Jackson does the rest automatically.

@@ -48,6 +48,10 @@ export class DIDEntity<T> implements Serializable<T> { //implements Cloneable<DI
 
     private static NORMALIZED_DEFAULT = true;
 
+    public getAllValues(): Map<string, any> {
+        return new Map<string, any>();
+    }
+
     /**
      * Get current object's DID context.
      *
