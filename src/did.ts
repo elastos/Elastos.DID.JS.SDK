@@ -169,7 +169,7 @@ export class DID {
                 throw new MalformedDIDException("Missing id string at: " +
                         (pos + 1 > limit ? pos : pos + 1));
 
-            nextPart = this.scanNextPart(did, ++pos, limit, "\\0");
+            nextPart = this.scanNextPart(did, ++pos, limit, "\x00");
             this.superThis.methodSpecificId = did.substring(pos, nextPart);
         }
     }(this);
