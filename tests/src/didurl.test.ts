@@ -24,14 +24,14 @@ import { DID, DIDURL, Exceptions } from "@elastosfoundation/did-js-sdk";
 
 describe('DIDURL Tests', () => {
     const TEST_DID = "did:elastos:icJ4z2DULrHEzYSvjKNJpKyhqFDxvYV7pN";
-	const TEST_PATH = "/path/to/the/test-%E6%B5%8B%E8%AF%95-2020/resource";
-	const TEST_QUERY = "?qkey=qvalue&qkeyonly&hello=%E4%BD%A0%E5%A5%BD&test=true&a=%E5%95%8A";
-	const TEST_FRAGMENT = "#testfragment";
+    const TEST_PATH = "/path/to/the/test-%E6%B5%8B%E8%AF%95-2020/resource";
+    const TEST_QUERY = "?qkey=qvalue&qkeyonly&hello=%E4%BD%A0%E5%A5%BD&test=true&a=%E5%95%8A";
+    const TEST_FRAGMENT = "#testfragment";
 
-	const WITH_DID : number = 0x01;
-	const WITH_PATH : number = 0x02;
-	const WITH_QUERY : number = 0x04;
-	const WITH_FRAGMENT : number = 0x08;
+    const WITH_DID : number = 0x01;
+    const WITH_PATH : number = 0x02;
+    const WITH_QUERY : number = 0x04;
+    const WITH_FRAGMENT : number = 0x08;
 
     const  provideDIDURLs = [
         { spec : TEST_DID, part : WITH_DID },
@@ -151,10 +151,10 @@ describe('DIDURL Tests', () => {
             expect(url.hashCode()).toBe(refURL.hashCode());
             expect(url.hashCode()).not.toBe(difURL.hashCode());
         }
-	});
+    });
 
-	test('testDIDURLWithContext', () => {
-		let context = new DID("did:elastos:foobar");
+    test('testDIDURLWithContext', () => {
+        let context = new DID("did:elastos:foobar");
 
         for (let didurl of provideDIDURLs) {
             let url = new DIDURL(didurl.spec, context);
@@ -244,50 +244,50 @@ describe('DIDURL Tests', () => {
             expect(url.hashCode()).toBe(refURL.hashCode());
             expect(url.hashCode()).not.toBe(difURL.hashCode());
         }
-	});
+    });
 
-	test('testCompatibleWithPlainFragment', () => {
-		let testURL = TEST_DID + "#test";
+    test('testCompatibleWithPlainFragment', () => {
+        let testURL = TEST_DID + "#test";
 
-		let url1 = new DIDURL(testURL);
+        let url1 = new DIDURL(testURL);
         expect(url1.toString()).toEqual(testURL);
         expect(url1.getFragment()).toEqual("test");
         expect(url1.equals(testURL)).toBeTruthy();
 
-		let url2 = new DIDURL("test", DID.from(TEST_DID));
+        let url2 = new DIDURL("test", DID.from(TEST_DID));
         expect(url2.toString()).toEqual(testURL);
         expect(url2.getFragment()).toEqual("test");
         expect(url2.equals(testURL)).toBeTruthy();
 
         expect(url1.equals(url2)).toBeTruthy();
 
-		let url = new DIDURL("test");
+        let url = new DIDURL("test");
         expect(url.toString()).toEqual("#test");
         expect(url.getFragment()).toEqual("test");
         expect(url.equals("#test")).toBeTruthy();
-	});
+    });
 
-	function trim(str : string) : string {
-		let start = 0;
-		let limit = str.length;
+    function trim(str : string) : string {
+        let start = 0;
+        let limit = str.length;
 
-		// trim the leading and trailing spaces
-		while ((limit > 0) && (str.charAt(limit - 1) <= ' '))
-			limit--;		//eliminate trailing whitespace
+        // trim the leading and trailing spaces
+        while ((limit > 0) && (str.charAt(limit - 1) <= ' '))
+            limit--;		//eliminate trailing whitespace
 
-		while ((start < limit) && (str.charAt(start) <= ' '))
-			start++;		// eliminate leading whitespace
+        while ((start < limit) && (str.charAt(start) <= ' '))
+            start++;		// eliminate leading whitespace
 
-		return str.substring(start, limit);
-	};
+        return str.substring(start, limit);
+    };
 
-	test('testParseUrlWithSpecialChars', () => {
-	    let specs = [
-			"did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld",
-			"did:elastos:foobar/p.a_t-h/to-/resource_?te_st=tr_ue&ke.y=va_lue&na_me=foobar#helloworld_",
-	  		"did:elastos:foobar/path_/to./resource_?test-=true.&ke.y_=va_lue.&name_=foobar.#helloworld_-.",
-	  		"did:elastos:foobar/pa...th/to.../resource_-_?test-__.=true...&ke...y_---=va_lue.&name_=foo...bar.#helloworld_-.",
-			"did:elastos:foobar/path/to/resou___rce?test=tr----ue&key=va----lue&name=foobar#hello....---world__",
+    test('testParseUrlWithSpecialChars', () => {
+        let specs = [
+            "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld",
+            "did:elastos:foobar/p.a_t-h/to-/resource_?te_st=tr_ue&ke.y=va_lue&na_me=foobar#helloworld_",
+              "did:elastos:foobar/path_/to./resource_?test-=true.&ke.y_=va_lue.&name_=foobar.#helloworld_-.",
+              "did:elastos:foobar/pa...th/to.../resource_-_?test-__.=true...&ke...y_---=va_lue.&name_=foo...bar.#helloworld_-.",
+            "did:elastos:foobar/path/to/resou___rce?test=tr----ue&key=va----lue&name=foobar#hello....---world__",
         ];
 
         for (let spec of specs) {
@@ -299,40 +299,40 @@ describe('DIDURL Tests', () => {
             expect(url.toString()).toEqual(urlString);
             expect(url.equals(urlString)).toBeTruthy();
         }
-	});
+    });
 
-	test('testParseWrongUrl', () => {
-	    let checks = [
-			{ spec : "did1:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 4" },
-			{ spec : "did:unknown:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid did at: 0" },
-			{ spec : "did:elastos:foobar:/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid did at: 0" },
-			{ spec : "did:elastos:foobar/-path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
-			{ spec : "did:elastos:foobar/._path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
-			{ spec : "did:elastos:foobar/-._path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
-			{ spec : "did:elastos:foobar/path/-to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
-			{ spec : "did:elastos:foobar/path/.to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
-			{ spec : "did:elastos:foobar/path/_to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
-			{ spec : "did:elastos:foobar/path/*to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
-			{ spec : "did:elastos:foobar/path/$to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
-			{ spec : "did:elastos:foobar/path./$to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 25" },
-			{ spec : "did:elastos:foobar/path/%to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid hex char at: 25" },
-			{ spec : "did:elastos:foobar/path/to//resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 27" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&&&key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&_key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&*key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&-key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true.&-key=value&name=foobar#helloworld", err : "Invalid char at: 47" },
-			{ spec : "did:elastos:foobar/path/to/resource%20?test=true.&-key=value&name=foobar#helloworld", err : "Invalid char at: 50" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name==foobar#helloworld", err : "Invalid char at: 61" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name%=foobar#helloworld", err : "Invalid hex char at: 61" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=va--lue&name%=foobar#helloworld", err : "Invalid hex char at: 63" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=t.rue&ke.y=val_ue&nam-e=^foobar#helloworld", err : "Invalid char at: 65" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar*#helloworld", err : "Invalid char at: 67" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar?#helloworld", err : "Invalid char at: 67" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar##helloworld", err : "Invalid char at: 68" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld*", err : "Invalid char at: 78" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld&", err : "Invalid char at: 78" },
-			{ spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld%", err : "Invalid char at: 78" },
+    test('testParseWrongUrl', () => {
+        let checks = [
+            { spec : "did1:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 4" },
+            { spec : "did:unknown:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid did at: 0" },
+            { spec : "did:elastos:foobar:/path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid did at: 0" },
+            { spec : "did:elastos:foobar/-path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
+            { spec : "did:elastos:foobar/._path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
+            { spec : "did:elastos:foobar/-._path/to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 19" },
+            { spec : "did:elastos:foobar/path/-to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+            { spec : "did:elastos:foobar/path/.to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+            { spec : "did:elastos:foobar/path/_to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+            { spec : "did:elastos:foobar/path/*to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+            { spec : "did:elastos:foobar/path/$to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 24" },
+            { spec : "did:elastos:foobar/path./$to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 25" },
+            { spec : "did:elastos:foobar/path/%to/resource?test=true&key=value&name=foobar#helloworld", err : "Invalid hex char at: 25" },
+            { spec : "did:elastos:foobar/path/to//resource?test=true&key=value&name=foobar#helloworld", err : "Invalid char at: 27" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&&&key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&_key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&*key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&-key=value&name=foobar#helloworld", err : "Invalid char at: 46" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true.&-key=value&name=foobar#helloworld", err : "Invalid char at: 47" },
+            { spec : "did:elastos:foobar/path/to/resource%20?test=true.&-key=value&name=foobar#helloworld", err : "Invalid char at: 50" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name==foobar#helloworld", err : "Invalid char at: 61" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name%=foobar#helloworld", err : "Invalid hex char at: 61" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=va--lue&name%=foobar#helloworld", err : "Invalid hex char at: 63" },
+            { spec : "did:elastos:foobar/path/to/resource?test=t.rue&ke.y=val_ue&nam-e=^foobar#helloworld", err : "Invalid char at: 65" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar*#helloworld", err : "Invalid char at: 67" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar?#helloworld", err : "Invalid char at: 67" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar##helloworld", err : "Invalid char at: 68" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld*", err : "Invalid char at: 78" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld&", err : "Invalid char at: 78" },
+            { spec : "did:elastos:foobar/path/to/resource?test=true&key=value&name=foobar#helloworld%", err : "Invalid char at: 78" },
         ];
 
         for (let check of checks) {
@@ -340,13 +340,13 @@ describe('DIDURL Tests', () => {
                 new DIDURL(check.spec);
             }).toThrowError(check.err);
         };
-	});
+    });
 
-	test('testParseWrongUrlWithPadding', () => {
+    test('testParseWrongUrlWithPadding', () => {
         expect(() => {
             new DIDURL("       \t did:elastos:foobar/-path/to/resource?test=true&key=value&name=foobar#helloworld");
         }).toThrowError("Invalid char at: 28");
-	});
+    });
 
     test('testParseEmptyAndNull', () => {
         expect(() => {
