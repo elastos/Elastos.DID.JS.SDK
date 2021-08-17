@@ -61,8 +61,8 @@ import { async } from "q";
  */
  const log = new Logger("DIDStore");
 
- // The @JsonIgnoreType() decorator is mandatory to avoid the cyclic references
- @JsonIgnoreType()
+ // The //@JsonIgnoreType() decorator is mandatory to avoid the cyclic references
+ //@JsonIgnoreType()
  export class DIDStore {
     private static CACHE_INITIAL_CAPACITY = 16;
     private static CACHE_MAX_CAPACITY = 128;
@@ -1344,7 +1344,7 @@ export namespace DIDStore {
         select(id: DIDURL): boolean;
     }
 
-    @JsonPropertyOrder({ value: [
+    /*@JsonPropertyOrder({ value: [
         "type",
         "id",
         "document",
@@ -1352,32 +1352,33 @@ export namespace DIDStore {
         "privatekeys",
         "created",
         "fingerprint"]})
-    @JsonInclude({value : JsonIncludeType.NON_NULL})
+        */
+    //@JsonInclude({value : JsonIncludeType.NON_NULL})
     export class DIDExport extends DIDEntity<DIDExport> {
         private static DID_EXPORT = "did.elastos.export/2.0";
 
-        @JsonProperty({ value: "type"})
+        //@JsonProperty({ value: "type"})
         private type: string;
-        @JsonProperty({ value: "id"})
-        @JsonClassType({type: () => [DID]})
+        //@JsonProperty({ value: "id"})
+        //@JsonClassType({type: () => [DID]})
         private id: DID;
-        @JsonProperty({value: "document"})
-        @JsonClassType({type: () => [DIDExport.Document]})
+        //@JsonProperty({value: "document"})
+        //@JsonClassType({type: () => [DIDExport.Document]})
         private document: DIDExport.Document | null = null;
-        @JsonProperty({ value: "credential"})
-        @JsonClassType({type: () => [Array, [DIDExport.Credential]]})
+        //@JsonProperty({ value: "credential"})
+        //@JsonClassType({type: () => [Array, [DIDExport.Credential]]})
         private credentials: DIDExport.Credential[] = [];
-        @JsonProperty({ value: "privatekey"})
-        @JsonClassType({type: () => [Array, [DIDExport.PrivateKey]]})
+        //@JsonProperty({ value: "privatekey"})
+        //@JsonClassType({type: () => [Array, [DIDExport.PrivateKey]]})
         private privatekeys: DIDExport.PrivateKey[] = [];
-        @JsonProperty({value: "created"})
-        @JsonClassType({type: () => [Date]})
+        //@JsonProperty({value: "created"})
+        //@JsonClassType({type: () => [Date]})
         private created: Date | null = null;
-        @JsonProperty({ value: "fingerprint"})
+        //@JsonProperty({ value: "fingerprint"})
         private fingerprint: string | null = null;
 
         //@JsonCreator
-        public constructor(@JsonProperty({value: "id", required: true}) id: DID) {
+        public constructor(id: DID) {
                         super();
 
             this.type = DIDExport.DID_EXPORT;
@@ -1511,50 +1512,50 @@ export namespace DIDStore {
     }
 
     export namespace DIDExport {
-        @JsonPropertyOrder({value: ["content", "metadata"] })
+        //@JsonPropertyOrder({value: ["content", "metadata"] })
         export class Document {
-            @JsonProperty({value: "content"})
-            @JsonClassType({type: () => [DIDDocument]})
+            //@JsonProperty({value: "content"})
+            //@JsonClassType({type: () => [DIDDocument]})
             public content: DIDDocument;
-            @JsonProperty({value: "metadata"})
-            @JsonClassType({type: () => [DIDMetadata]})
+            //@JsonProperty({value: "metadata"})
+            //@JsonClassType({type: () => [DIDMetadata]})
             public metadata: DIDMetadata;
 
             //@JsonCreator
-            constructor(@JsonProperty({value: "content", required: true}) content: DIDDocument,
-                    @JsonProperty({value: "metadata"}) metadata: DIDMetadata) {
+            constructor(content: DIDDocument,
+                    metadata: DIDMetadata) {
                 this.content = content;
                 this.metadata = metadata;
             }
         }
 
-        @JsonPropertyOrder({ value: ["content", "metadata"]})
+        //@JsonPropertyOrder({ value: ["content", "metadata"]})
         export class Credential {
-            @JsonProperty({value:"content"})
-            @JsonClassType({type: () => [VerifiableCredential]})
+            //@JsonProperty({value:"content"})
+            //@JsonClassType({type: () => [VerifiableCredential]})
             public content: VerifiableCredential;
-            @JsonProperty({value:"metadata"})
-            @JsonClassType({type: () => [CredentialMetadata]})
+            //@JsonProperty({value:"metadata"})
+            //@JsonClassType({type: () => [CredentialMetadata]})
             public metadata: CredentialMetadata;
 
             // Java: @JsonCreator
-            constructor(@JsonProperty({value:"content", required: true}) content: VerifiableCredential,
-                @JsonProperty({value:"metadata"}) metadata: CredentialMetadata) {
+            constructor(content: VerifiableCredential,
+                metadata: CredentialMetadata) {
                 this.content = content;
                 this.metadata = metadata;
             }
         }
 
-        @JsonPropertyOrder({ value: ["id", "key"]})
+        //@JsonPropertyOrder({ value: ["id", "key"]})
         export class PrivateKey {
-            @JsonProperty({value: "id"})
-            @JsonClassType({type: () => [DIDURL]})
+            //@JsonProperty({value: "id"})
+            //@JsonClassType({type: () => [DIDURL]})
             public id: DIDURL;
-            @JsonProperty({value: "key"})
+            //@JsonProperty({value: "key"})
             public key: string;
 
             // Java: @JsonCreator
-            constructor(@JsonProperty({value: "id", required: true}) id: DIDURL) {
+            constructor(id: DIDURL) {
                 this.id = id;
             }
 
@@ -1576,30 +1577,30 @@ export namespace DIDStore {
         }
     }
 
-    @JsonPropertyOrder({ value: [ "type", "mnemonic", "privatekey", "publickey",
+    //@JsonPropertyOrder({ value: [ "type", "mnemonic", "privatekey", "publickey",
         "index", "default",  "created", "fingerprint"]})
-    @JsonInclude({value : JsonIncludeType.NON_NULL})
+    //@JsonInclude({value : JsonIncludeType.NON_NULL})
     export class RootIdentityExport extends DIDEntity<RootIdentityExport> {
         private static DID_EXPORT = "did.elastos.export/2.0";
 
-        @JsonProperty({ value: "type"})
+        //@JsonProperty({ value: "type"})
         private type: string;
-        @JsonProperty({ value: "mnemonic"})
+        //@JsonProperty({ value: "mnemonic"})
         private mnemonic: string;
-        @JsonProperty({value: "privateKey"})
+        //@JsonProperty({value: "privateKey"})
         private privatekey: string;
-        @JsonProperty({ value: "publicKey"})
+        //@JsonProperty({ value: "publicKey"})
         private publickey: string;
-        @JsonProperty({ value: "index"})
-        @JsonClassType({type: () => [Number]})
+        //@JsonProperty({ value: "index"})
+        //@JsonClassType({type: () => [Number]})
         private index: number;
-        @JsonProperty({value: "default"})
-        @JsonClassType({type: () => [Boolean]})
+        //@JsonProperty({value: "default"})
+        //@JsonClassType({type: () => [Boolean]})
         private default: boolean;
-        @JsonProperty({value: "created"})
-        @JsonClassType({type: () => [Date]})
+        //@JsonProperty({value: "created"})
+        //@JsonClassType({type: () => [Date]})
         private created: Date;
-        @JsonProperty({ value: "fingerprint"})
+        //@JsonProperty({ value: "fingerprint"})
         private fingerprint: string;
 
         //@JsonCreator

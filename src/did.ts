@@ -24,38 +24,19 @@ import { DIDMetadata } from "./internals";
 import {
     checkEmpty,
     checkNotNull,
-    isEmpty,
     hashCode,
     DIDURLParser
 } from "./internals";
 import type { DIDDocument } from "./internals";
 import { DIDBackend } from "./internals";
 import type { DIDBiography } from "./internals";
-import {
-    JsonSerialize,
-    JsonDeserialize,
-    JsonCreator,
-    JsonProperty,
-    JsonClassType
-} from "@elastosfoundation/jackson-js";
-import {
-    Serializer,
-    Deserializer
-} from "./internals";
-import type {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js";
 import { IllegalArgumentException } from "./exceptions/exceptions";
 
-class DIDSerializer extends Serializer {
-    public static serialize(did: DID, context: JsonStringifierTransformerContext): string {
+class DIDSerializer{
+    public static serialize(did: DID): string {
         return did ? did.toString() : null;
     }
-}
-
-class DIDDeserializer extends Deserializer {
-    public static deserialize(value: string, context: JsonParserTransformerContext): DID {
+    public static deserialize(value: string): DID {
         try {
             if (value && value.includes("{"))
                 throw new IllegalArgumentException("Invalid DIDURL");
@@ -70,8 +51,8 @@ class DIDDeserializer extends Deserializer {
  * DID is a globally unique identifier that does not require
  * a centralized registration authority.
  */
-@JsonSerialize({using:  DIDSerializer.serialize})
-@JsonDeserialize({using:  DIDDeserializer.deserialize})
+//@JsonSerialize({using:  DIDSerializer.serialize})
+//@JsonDeserialize({using:  DIDSerializer.deserialize})
 export class DID {
     public static METHOD = "elastos";
     //public static METHOD_SPECIFIC_ID = "elastos";
@@ -106,7 +87,7 @@ export class DID {
         }
     }
 
-    @JsonCreator()
+    //@JsonCreator()
     public static jacksonCreator() {
         // Already deserialized by our custom deserializer. Don't return an object here otherwise
         // it will replace the deserialized one from the custom deserializer.
@@ -116,13 +97,13 @@ export class DID {
     }
 
     public static deserialize(json: string): DID {
-        return null;
+        return DIDSerializer.deserialize(json);
     }
 
     public serialize(normalized: boolean): string {
-        return "";
+        return DIDSerializer.serialize(this);
     }
-    
+
     public static from(did: DID | string | null): DID | null {
         if (!did)
             return null;

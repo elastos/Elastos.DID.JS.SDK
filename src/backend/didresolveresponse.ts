@@ -27,8 +27,8 @@ import { ResolveResponse, RpcConstants, JsonRpcError } from "./resolveresponse";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 
 export class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDBiography> {
-    @JsonProperty({value: RpcConstants.RESULT})
-    @JsonClassType({type: ()=>[DIDBiography]})
+    //@JsonProperty({value: RpcConstants.RESULT})
+    //@JsonClassType({type: ()=>[DIDBiography]})
     protected result: DIDBiography;
 
     constructor(responseId: string, resultOrError: DIDBiography | ResolveError | JsonRpcError) {
@@ -45,8 +45,8 @@ export class DIDResolveResponse extends ResolveResponse<DIDResolveResponse, DIDB
         }
     }
 
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.RESULT, required: false}) result: DIDBiography, @JsonProperty({value: RpcConstants.ERROR, required: false}) error: JsonRpcError): DIDResolveResponse {
+    //@JsonCreator()
+    public static jacksonCreator(//@JsonProperty({value: RpcConstants.ID, required: true}) id: string, //@JsonProperty({value: RpcConstants.RESULT, required: false}) result: DIDBiography, //@JsonProperty({value: RpcConstants.ERROR, required: false}) error: JsonRpcError): DIDResolveResponse {
         let newInstance = result ? new DIDResolveResponse(id, result) : new DIDResolveResponse(id, error);
         if (result) newInstance.result = result;
         return newInstance;

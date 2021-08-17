@@ -1,38 +1,39 @@
-import {
-    JsonInclude,
-    JsonIncludeType,
-    JsonProperty,
-    JsonPropertyOrder,
-    JsonClassType,
-    JsonCreator
-} from "@elastosfoundation/jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
-import { DIDURL, keyTypeFilter } from "./internals";
+import { DIDURL } from "./internals";
+import { DateSerializer } from "./dateserializer"
+import { FieldInfo, GenericSerializer, FieldType, FilteredTypeSerializer } from "./serializers"
 
 /**
  * The Proof represents the proof content of DID Document.
  */
-@JsonPropertyOrder({value: ["type", "created", "creator", "signature"]})
+//@JsonPropertyOrder({value: ["type", "created", "creator", "signature"]})
 export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
-    public static TYPE: string = "type";
-    public static CREATOR: string = "creator";
-    public static CREATED: string = "created";
-    public static SIGNATURE_VALUE: string = "signatureValue";
+    private static TYPE = "type";
+    private static CREATOR = "creator";
+    private static CREATED = "created";
+    private static SIGNATURE_VALUE = "signatureValue";
 
-    @JsonProperty({ value: DIDDocumentProof.TYPE })
-    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
+    private static FIELDSMAP = new Map<string, FieldInfo>([
+        [DIDDocumentProof.TYPE, FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(FilteredTypeSerializer.deserialize).withSerializerMethod(FilteredTypeSerializer.serialize)],
+        [DIDDocumentProof.CREATED, FieldInfo.forType(FieldType.DATE)],
+        [DIDDocumentProof.CREATOR, FieldInfo.forType(FieldType.TYPE).withTypeName("DIDURL")],
+        [DIDDocumentProof.SIGNATURE_VALUE, FieldInfo.forType(FieldType.LITERAL)]
+    ]);
+
+    //@JsonProperty({ value: DIDDocumentProof.TYPE })
+    ////@JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
     private type: string;
-    @JsonInclude({ value: JsonIncludeType.NON_NULL })
-    @JsonProperty({ value: DIDDocumentProof.CREATED })
-    @JsonClassType({ type: () => [Date] })
+    ////@JsonInclude({ value: JsonIncludeType.NON_NULL })
+    //@JsonProperty({ value: DIDDocumentProof.CREATED })
+    //@JsonClassType({ type: () => [Date] })
     private created: Date;
-    @JsonInclude({ value: JsonIncludeType.NON_NULL })
-    @JsonProperty({ value: DIDDocumentProof.CREATOR })
-    @JsonClassType({type: () => [DIDURL]})
+    ////@JsonInclude({ value: JsonIncludeType.NON_NULL })
+    //@JsonProperty({ value: DIDDocumentProof.CREATOR })
+    //@JsonClassType({type: () => [DIDURL]})
     public creator: DIDURL;
-    @JsonProperty({ value: DIDDocumentProof.SIGNATURE_VALUE })
-    @JsonClassType({type: () => [String]})
+    //@JsonProperty({ value: DIDDocumentProof.SIGNATURE_VALUE })
+    //@JsonClassType({type: () => [String]})
     private signature: string;
 
     /**
@@ -45,10 +46,10 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
      */
     // Java: @JsonCreator
     constructor(
-        @JsonProperty({value: "creator"}) creator: DIDURL,
-        @JsonProperty({value: "signatureValue"}) signature: string,
-        @JsonProperty({value: "type"}) type?: string,
-        @JsonProperty({value: "created"}) created?: Date) {
+        creator: DIDURL,
+        signature: string,
+        type?: string,
+        created?: Date) {
         this.type = type ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 
         if (created === undefined)
@@ -63,6 +64,34 @@ export class DIDDocumentProof implements Comparable<DIDDocumentProof> {
 
         this.creator = creator;
         this.signature = signature;
+    }
+
+    public static createFromValues(fieldValues: Map<string, any>): DIDDocumentProof {
+        let newInstance = new DIDDocumentProof(
+            fieldValues[DIDDocumentProof.CREATOR],
+            fieldValues[DIDDocumentProof.SIGNATURE_VALUE],
+            fieldValues[DIDDocumentProof.TYPE],
+            fieldValues[DIDDocumentProof.CREATED]
+        );
+
+        return newInstance;
+    }
+
+    public getAllValues(): Map<string, any> {
+        return new Map<string, any>([
+            [DIDDocumentProof.TYPE, this.getType()],
+            [DIDDocumentProof.CREATED, this.getCreated()],
+            [DIDDocumentProof.CREATOR, this.getCreator()],
+            [DIDDocumentProof.SIGNATURE_VALUE, this.getSignature()]
+        ]);
+    }
+
+    public serialize(normalized = true): string {
+        return GenericSerializer.serialize(normalized, this, DIDDocumentProof.FIELDSMAP);
+    }
+
+    public static deserialize(json: string): DIDDocumentProof {
+        return GenericSerializer.deserialize(json, DIDDocumentProof, DIDDocumentProof.FIELDSMAP);
     }
 
     equals(obj: DIDDocumentProof): boolean {

@@ -32,21 +32,21 @@ import { IDChainRequest } from "./idchaindrequest";
 /**
  * The DID request class.
  */
- @JsonCreator()
+ //@JsonCreator()
 export class DIDRequest extends IDChainRequest<DIDRequest> {
-    @JsonProperty({value: IDChainRequest.HEADER})
-    @JsonClassType({type: () => [IDChainRequest.Header]})
+    //@JsonProperty({value: IDChainRequest.HEADER})
+    //@JsonClassType({type: () => [IDChainRequest.Header]})
     declare protected header: IDChainRequest.Header;
-    @JsonProperty({value: IDChainRequest.PAYLOAD})
-    @JsonClassType({type: () => [String]})
+    //@JsonProperty({value: IDChainRequest.PAYLOAD})
+    //@JsonClassType({type: () => [String]})
     declare protected payload: string;
-    @JsonProperty({value: IDChainRequest.PROOF})
-    @JsonClassType({type: () => [IDChainRequest.Proof]})
+    //@JsonProperty({value: IDChainRequest.PROOF})
+    //@JsonClassType({type: () => [IDChainRequest.Proof]})
     declare protected proof: IDChainRequest.Proof;
 
-    @JsonIgnore()
+    //@JsonIgnore()
     private did: DID;
-    @JsonIgnore()
+    //@JsonIgnore()
     private doc: DIDDocument;
 
     private static newWithOperation(operation: IDChainRequest.Operation): DIDRequest {

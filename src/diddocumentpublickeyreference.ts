@@ -9,8 +9,8 @@ import { DIDURL } from "./internals";
 import { checkArgument } from "./internals";
 
 
-@JsonSerialize({ using: DIDDocumentPublicKeyReferenceSerializer.serialize })
-@JsonDeserialize({ using: DIDDocumentPublicKeyReferenceDeserializer.deserialize })
+//@JsonSerialize({ using: DIDDocumentPublicKeyReferenceSerializer.serialize })
+//@JsonDeserialize({ using: DIDDocumentPublicKeyReferenceDeserializer.deserialize })
 export class DIDDocumentPublicKeyReference implements Comparable<DIDDocumentPublicKeyReference> {
     private id: DIDURL;
     private key?: DIDDocumentPublicKey;

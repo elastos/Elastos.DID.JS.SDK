@@ -23,46 +23,29 @@
 import type { AbstractMetadata } from "./internals";
 import {
     ParentException,
-    MalformedDIDURLException,
-    IllegalArgumentException
-} from "./exceptions/exceptions";
+    MalformedDIDURLException} from "./exceptions/exceptions";
 import {
     DID,
     DIDURLParser,
     checkArgument,
     checkNotNull,
-    hashCode,
-    Serializer,
-    Deserializer
-} from "./internals";
-import type {
-    JsonStringifierTransformerContext,
-    JsonParserTransformerContext
-} from "@elastosfoundation/jackson-js";
-import {
-    JsonSerialize,
-    JsonDeserialize,
-    JsonCreator,
-} from "@elastosfoundation/jackson-js";
+    hashCode} from "./internals";
 import type { Hashable } from "./hashable";
 import type { Comparable } from "./comparable";
-import {
-
-} from "./internals";
-
-class URLSerializer extends Serializer {
-    public static serialize(id: DIDURL, context: JsonStringifierTransformerContext): string {
+import { FieldInfo, GenericSerializer, FieldType } from "./serializers"
+class URLSerializer {
+    public static serialize(normalized: boolean, id: DIDURL, sourceInstance: any): string {
+        let contextDid = null;
+        if (!(typeof sourceInstance['getSerializeContextDid'] === 'function')) {
+            contextDid = sourceInstance.getSerializeContextDid();
+        }
         let base: DID = null;
-        let serializeContext = URLSerializer.context(context);
-        if (!serializeContext.isNormalized())
-            base = serializeContext.getDid() != null ? serializeContext.getDid() : id.getDid();
+        if (!normalized)
+            base = contextDid != null ? contextDid : id.getDid();
 
         return id.toString(base);
     }
-}
-
-class URLDeserializer extends Deserializer {
-    public static deserialize(value: any, context: JsonParserTransformerContext): DIDURL {
+    public static deserialize(value: string, fullJsonObj: any): DIDURL {
         try {
             return new DIDURL(value);
         } catch (e) {
@@ -78,11 +61,15 @@ class URLDeserializer extends Deserializer {
  * A DID URL always identifies the resource to be located.
  * DIDURL includes DID and Url fragment by user defined.
  */
-@JsonSerialize({using: URLSerializer.serialize})
-@JsonDeserialize({using: URLDeserializer.deserialize})
+//@JsonSerialize({using: URLSerializer.serialize})
+//@JsonDeserialize({using: URLDeserializer.deserialize})
 export class DIDURL implements Hashable, Comparable<DIDURL> {
     //private static SEPS = ":;/?#";
     private static SEPS = [':', ';', '/', '?', '#'];
+
+    public static FIELDSMAP = new Map<string, FieldInfo>([
+        ["id", FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(URLSerializer.deserialize).withSerializerMethod(URLSerializer.serialize)]
+    ]);
 
     private did?: DID;
     private parameters: Map<string, string> = new Map();
@@ -91,7 +78,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
     private fragment = "";
     private metadata?: AbstractMetadata;
 
-    @JsonCreator()
+    //@JsonCreator()
     public static jsonConstructor(): DIDURL {
         return null;
     }
@@ -142,6 +129,24 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
             if (baseRef)
                 this.did = baseRef;
         }
+    }
+
+    public static createFromValues(fieldValues: Map<string, any>): DIDURL {
+        return new DIDURL(fieldValues["id"]);
+    }
+
+    public getAllValues(): Map<string, any> {
+        return new Map<string, any>([
+            ["id", this.toString()]
+        ]);
+    }
+
+    public serialize(normalized = true): string {
+        return GenericSerializer.serialize(normalized, this, DIDURL.FIELDSMAP);
+    }
+
+    public static deserialize(json: string): DIDURL {
+        return GenericSerializer.deserialize(json, DIDURL, DIDURL.FIELDSMAP);
     }
 
     public static fromDID(did: DID): DIDURL {

@@ -25,17 +25,17 @@ import { DIDEntity } from "../internals";
 import { MalformedIDChainTransactionException } from "../exceptions/exceptions";
 import type { IDChainRequest } from "./idchaindrequest";
 
-@JsonPropertyOrder({value: ["txId", "timestamp", "request"]})
+//@JsonPropertyOrder({value: ["txId", "timestamp", "request"]})
 export abstract class IDTransaction<T, R extends IDChainRequest<R>> extends DIDEntity<T> {
     protected static TXID = "txid";
     protected static TIMESTAMP = "timestamp";
     protected static OPERATION = "operation";
 
-    @JsonProperty({value: IDTransaction.TXID})
-    @JsonClassType({type: () => [String]})
+    //@JsonProperty({value: IDTransaction.TXID})
+    //@JsonClassType({type: () => [String]})
     private txId: string;
-    @JsonProperty({value: IDTransaction.TIMESTAMP})
-    @JsonClassType({type: () => [Date]})
+    //@JsonProperty({value: IDTransaction.TIMESTAMP})
+    //@JsonClassType({type: () => [Date]})
     private timestamp: Date;
     protected request: R;
 

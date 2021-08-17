@@ -35,12 +35,12 @@ import type {
     JsonParserTransformerContext
 } from "@elastosfoundation/jackson-js";
 
-class CredentialBiographyStatusSerializer extends Serializer {
+class CredentialBiographyStatusSerializer  {
     public static serialize(value: CredentialBiographyStatus, context: JsonStringifierTransformerContext): string {
         return value ? String(value) : null;
     }
 }
-class CredentialBiographyStatusDeserializer extends Deserializer {
+class CredentialBiographyStatusDeserializer  {
     public static deserialize(value: string | number, context: JsonParserTransformerContext): CredentialBiographyStatus {
         switch(String(value)) {
             case "0":
@@ -55,8 +55,8 @@ class CredentialBiographyStatusDeserializer extends Deserializer {
     }
 }
 
-@JsonSerialize({using: CredentialBiographyStatusSerializer.serialize})
-@JsonDeserialize({using: CredentialBiographyStatusDeserializer.deserialize})
+//@JsonSerialize({using: CredentialBiographyStatusSerializer.serialize})
+//@JsonDeserialize({using: CredentialBiographyStatusDeserializer.deserialize})
 export class CredentialBiographyStatus {
     protected name: string;
     protected value: number;
@@ -66,7 +66,7 @@ export class CredentialBiographyStatus {
         this.value = value;
     }
 
-    @JsonValue()
+    //@JsonValue()
     public getValue(): number {
         return this.value;
     }
@@ -99,21 +99,21 @@ export namespace CredentialBiographyStatus {
     export const NOT_FOUND = new CredentialBiographyStatus(3, "not_found");
 }
 
-@JsonPropertyOrder({value: ["id", "status", "txs"]})
-@JsonCreator()
+//@JsonPropertyOrder({value: ["id", "status", "txs"]})
+//@JsonCreator()
 export class CredentialBiography extends ResolveResult<CredentialBiography> {
     protected static ID = "id";
     protected static STATUS = "status";
     protected static TRANSACTION = "transaction";
 
-    @JsonProperty({value: CredentialBiography.ID})
-    @JsonClassType({type: () => [DIDURL]})
+    //@JsonProperty({value: CredentialBiography.ID})
+    //@JsonClassType({type: () => [DIDURL]})
     private id: DIDURL;
-    @JsonProperty({value: CredentialBiography.STATUS})
-    @JsonClassType({type: () => [CredentialBiographyStatus]})
+    //@JsonProperty({value: CredentialBiography.STATUS})
+    //@JsonClassType({type: () => [CredentialBiographyStatus]})
     private status: CredentialBiographyStatus;
-    @JsonProperty({value: CredentialBiography.TRANSACTION})
-    @JsonClassType({type: () => [Array, [CredentialTransaction]]})
+    //@JsonProperty({value: CredentialBiography.TRANSACTION})
+    //@JsonClassType({type: () => [Array, [CredentialTransaction]]})
     private txs: CredentialTransaction[];
 
     /**
@@ -123,8 +123,8 @@ export class CredentialBiography extends ResolveResult<CredentialBiography> {
      * @param status the DID's status
      */
     public constructor(
-            @JsonProperty({value: CredentialBiography.ID, required: true}) id: DIDURL,
-            @JsonProperty({value: CredentialBiography.STATUS, required: true}) status: CredentialBiographyStatus = undefined) {
+            //@JsonProperty({value: CredentialBiography.ID, required: true}) id: DIDURL,
+            //@JsonProperty({value: CredentialBiography.STATUS, required: true}) status: CredentialBiographyStatus = undefined) {
         super();
         this.id = id;
         this.status = status;

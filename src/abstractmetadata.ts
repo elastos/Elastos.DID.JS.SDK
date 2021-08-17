@@ -39,9 +39,9 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
     // TODO @carl (BPI): I temporarily remplace this Map/String/String type with a raw Object, because
     // this throws a "incompatible receiver 'size' or #Map" runtime error. Not sure how to fix this correctly
     // but for now i want to keep validating the "internals" fix and Object does the job for now.
-    @JsonIgnore()
+    //@JsonIgnore()
     public props: JSONObject = {};
-    @JsonIgnore()
+    //@JsonIgnore()
     protected store?: DIDStore;
 
     /**
@@ -87,8 +87,8 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         return this.store != null;
     }
 
-    @JsonAnyGetter()
-    @JsonClassType({type: () => [String, Object]})
+    //@JsonAnyGetter()
+    //@JsonClassType({type: () => [String, Object]})
     protected getProperties(): JSONObject {
         return sortJSONObject(this.props);
     }
@@ -97,7 +97,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         return this.props[name];
     }
 
-    @JsonAnySetter()
+    //@JsonAnySetter()
     protected put(name: string, value: JSONValue | Date ) {
         this.props[name] = value instanceof Date ? value.toISOString() : value;
 

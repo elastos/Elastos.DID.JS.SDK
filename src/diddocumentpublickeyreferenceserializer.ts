@@ -4,7 +4,7 @@ import type {
 import { DID, DIDEntity, Serializer } from "./internals";
 import type { DIDDocumentPublicKeyReference } from "./internals";
 
-export class DIDDocumentPublicKeyReferenceSerializer extends Serializer {
+export class DIDDocumentPublicKeyReferenceSerializer  {
     public static serialize(keyRef: DIDDocumentPublicKeyReference, context: JsonStringifierTransformerContext): string | null {
         let serializeContext: DIDEntity.SerializeContext = DIDDocumentPublicKeyReferenceSerializer.context(context)
         

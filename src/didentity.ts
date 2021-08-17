@@ -37,12 +37,13 @@ import {
 } from "./exceptions/exceptions";
 import type { JSONObject } from "./json";
 import { checkArgument } from "./internals";
-import { Serializable } from "./serializable";
+import { Cloneable } from "./cloneable";
+import { GenericSerializer } from "./serializers";
 
 /**
  * Base class for all DID objects.
  */
-export class DIDEntity<T> implements Serializable<T> { //implements Cloneable<DIDEntity<T>> {
+export class DIDEntity<T> implements Cloneable<DIDEntity<T>> {
 
     public static CONTEXT_KEY = "org.elastos.did.context";
 
@@ -80,7 +81,9 @@ export class DIDEntity<T> implements Serializable<T> { //implements Cloneable<DI
      *
      * @return the ObjectMapper instance.
      */
+    /*
     public static getDefaultObjectMapper(): ObjectMapper {
+        
         let mapper = new ObjectMapper();
 
         mapper.defaultStringifierContext.features.serialization.DEFAULT_VIEW_INCLUSION = false;
@@ -103,14 +106,16 @@ export class DIDEntity<T> implements Serializable<T> { //implements Cloneable<DI
         });
 
         return mapper;
+    
     }
-
+    */
     /**
      * Get the ObjectMapper for serialization.
      *
      * @param normalized if normalized output, ignored when the sign is true
      * @return the ObjectMapper instance
      */
+    /*
     protected getObjectMapper(normalized: boolean = undefined): ObjectMapper {
         let mapper = DIDEntity.getDefaultObjectMapper();
         let serializeContext = new DIDEntity.SerializeContext(normalized, mapper, this.getSerializeContextDid());
@@ -119,7 +124,7 @@ export class DIDEntity<T> implements Serializable<T> { //implements Cloneable<DI
 
         return mapper;
     }
-
+    */
     /**
      * Generic method to parse a DID object from a string JSON
      * representation into given DIDObject type.
@@ -133,17 +138,19 @@ export class DIDEntity<T> implements Serializable<T> { //implements Cloneable<DI
     public static async parse <T extends DIDEntity<T>>(source: JSONObject | string, clazz: Class<T>): Promise<T> {
         checkArgument(source && source !== "", "Invalid JSON content");
         checkArgument(clazz && clazz !== null, "Invalid result class object");
+
         let content: string;
         if (typeof source !== "string") {
             content = JSON.stringify(source);
         } else {
             content = source;
         }
-        let mapper = DIDEntity.getDefaultObjectMapper();
+        //let mapper = DIDEntity.getDefaultObjectMapper();
 
         try {
-            mapper.defaultParserContext.mainCreator = () => [clazz];
-            let obj = mapper.parse<T>(content);
+            //mapper.defaultParserContext.mainCreator = () => [clazz];
+            //let obj = mapper.parse<T>(content);
+            let obj = GenericSerializer.deserialize(content, clazz, clazz['FIELDSMAP']);
             await obj.sanitize();
             return obj;
         } catch (e) {

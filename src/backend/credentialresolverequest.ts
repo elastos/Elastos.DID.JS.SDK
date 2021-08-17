@@ -34,7 +34,7 @@ export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 
     // TODO Java - @JsonCreator
     public constructor(
-        @JsonProperty({value: CredentialResolveRequest.ID}) requestId: string
+        //@JsonProperty({value: CredentialResolveRequest.ID}) requestId: string
     ) {
         super(requestId, CredentialResolveRequest.METHOD_NAME);
     }
@@ -64,15 +64,15 @@ export class CredentialResolveRequest extends ResolveRequest<CredentialResolveRe
 }
 
 class Parameters implements Hashable {
-    @JsonProperty({value: CredentialResolveRequest.PARAMETER_ID})
+    //@JsonProperty({value: CredentialResolveRequest.PARAMETER_ID})
     public id: DIDURL;
-    @JsonProperty({value: CredentialResolveRequest.PARAMETER_ISSUER})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
+    //@JsonProperty({value: CredentialResolveRequest.PARAMETER_ISSUER})
+    //@JsonInclude({value: JsonIncludeType.NON_NULL})
     public issuer: DID;
 
     // TODO Java - @JsonCreator
     public constructor(
-        @JsonProperty({value: CredentialResolveRequest.PARAMETER_ID, required: true})id: DIDURL,
+        //@JsonProperty({value: CredentialResolveRequest.PARAMETER_ID, required: true})id: DIDURL,
         issuer: DID = null
     ) {
         this.id = id;

@@ -8,7 +8,7 @@ import {
 import { Deserializer } from "./internals";
 import { DIDDocumentProof } from "./diddocumentproof";
 
-export class DIDDocumentProofDeserializer extends Deserializer {
+export class DIDDocumentProofDeserializer  {
     public static deserialize(value: any | Array<any>, context: JsonParserTransformerContext): DIDDocumentProof[] {
         try {
             if (value instanceof Array) {

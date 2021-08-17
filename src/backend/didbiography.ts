@@ -34,12 +34,12 @@ import type {
     JsonParserTransformerContext
 } from "@elastosfoundation/jackson-js";
 
-class DIDBiographyStatusSerializer extends Serializer {
+class DIDBiographyStatusSerializer  {
     public static serialize(value: DIDBiographyStatus, context: JsonStringifierTransformerContext): string {
         return value ? String(value) : null;
     }
 }
-class DIDBiographyStatusDeserializer extends Deserializer {
+class DIDBiographyStatusDeserializer  {
     public static deserialize(value: string | number, context: JsonParserTransformerContext): DIDBiographyStatus {
         switch(String(value)) {
             case "0":
@@ -54,8 +54,8 @@ class DIDBiographyStatusDeserializer extends Deserializer {
     }
 }
 
-@JsonSerialize({using: DIDBiographyStatusSerializer.serialize})
-@JsonDeserialize({using: DIDBiographyStatusDeserializer.deserialize})
+//@JsonSerialize({using: DIDBiographyStatusSerializer.serialize})
+//@JsonDeserialize({using: DIDBiographyStatusDeserializer.deserialize})
 export class DIDBiographyStatus {
     protected name: string;
     protected value: number;
@@ -65,7 +65,7 @@ export class DIDBiographyStatus {
         this.value = value;
     }
 
-    @JsonValue()
+    //@JsonValue()
     public getValue(): number {
         return this.value;
     }
@@ -97,18 +97,18 @@ export namespace DIDBiographyStatus {
 /**
  * The class records the resolved content.
  */
-@JsonPropertyOrder({value: ["did", "status", "txs"]})
-@JsonInclude({value: JsonIncludeType.NON_NULL})
+//@JsonPropertyOrder({value: ["did", "status", "txs"]})
+//@JsonInclude({value: JsonIncludeType.NON_NULL})
 export class DIDBiography extends ResolveResult<DIDBiography> {
     protected static DID = "did";
     protected static STATUS = "status";
     protected static TRANSACTION = "transaction";
 
-    @JsonProperty({value: DIDBiography.DID}) @JsonClassType({type: ()=>[DID]})
+    //@JsonProperty({value: DIDBiography.DID}) //@JsonClassType({type: ()=>[DID]})
     private did: DID;
-    @JsonProperty({value: DIDBiography.STATUS}) @JsonClassType({type: ()=>[DIDBiographyStatus]})
+    //@JsonProperty({value: DIDBiography.STATUS}) //@JsonClassType({type: ()=>[DIDBiographyStatus]})
     private status: DIDBiographyStatus;
-    @JsonProperty({value: DIDBiography.TRANSACTION}) @JsonClassType({type: ()=>[Array, [DIDTransaction]]})
+    //@JsonProperty({value: DIDBiography.TRANSACTION}) //@JsonClassType({type: ()=>[Array, [DIDTransaction]]})
     private txs: DIDTransaction[];
 
     /**
@@ -117,10 +117,10 @@ export class DIDBiography extends ResolveResult<DIDBiography> {
      * @param did the specified DID
      * @param status the DID's status
      */
-    @JsonCreator()
+    //@JsonCreator()
     public static toDIDBiography(
-        @JsonProperty({value: DIDBiography.DID, required: true}) did: DID,
-        @JsonProperty({value: DIDBiography.STATUS, required: true}) status: DIDBiographyStatus
+        //@JsonProperty({value: DIDBiography.DID, required: true}) did: DID,
+        //@JsonProperty({value: DIDBiography.STATUS, required: true}) status: DIDBiographyStatus
     ) {
             let didBiography = new DIDBiography(did);
             didBiography.status = status;

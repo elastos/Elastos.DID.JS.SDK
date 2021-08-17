@@ -54,7 +54,6 @@ import {
     NotAttachedWithStoreException,
     UnknownInternalException
 } from "./exceptions/exceptions";
-import { keyTypeFilter } from "./internals";
 import type { Issuer } from "./internals";
 import type {
     JSONObject,
@@ -82,7 +81,7 @@ function vcIssuerFilter(value: any, context?: JsonStringifierTransformerContext)
  * Credential might also include an identifier and metadata to
  * describe properties of the credential.
  */
-@JsonPropertyOrder({value:[
+/*@JsonPropertyOrder({value:[
     "id",
     "type",
     "issuer",
@@ -90,7 +89,8 @@ function vcIssuerFilter(value: any, context?: JsonStringifierTransformerContext)
     "expirationDate",
     "subject",
     "proof" ]})
-@JsonInclude({value: JsonIncludeType.NON_EMPTY})
+    */
+//@JsonInclude({value: JsonIncludeType.NON_EMPTY})
 // TODO: convert from java - @JsonFilter("credentialFilter")
 export class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject<string> {
     public static ID = "id";
@@ -104,31 +104,31 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
     public static CREATED = "created";
     public static SIGNATURE = "signature";
 
-    @JsonProperty({value:VerifiableCredential.ID})
-    @JsonClassType({type: () => [DIDURL]})
+    //@JsonProperty({value:VerifiableCredential.ID})
+    //@JsonClassType({type: () => [DIDURL]})
     public id: DIDURL;
-    @JsonProperty({value:VerifiableCredential.TYPE})
+    //@JsonProperty({value:VerifiableCredential.TYPE})
     public type: string[];
-    @JsonProperty({value:VerifiableCredential.ISSUER})
-    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: vcIssuerFilter})
-    @JsonClassType({type: () => [DID]})
+    //@JsonProperty({value:VerifiableCredential.ISSUER})
+    //@JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: vcIssuerFilter})
+    //@JsonClassType({type: () => [DID]})
     public issuer: DID;
-    @JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
-    @JsonClassType({type: () => [Date]})
+    //@JsonProperty({value:VerifiableCredential.ISSUANCE_DATE})
+    //@JsonClassType({type: () => [Date]})
     public issuanceDate: Date;
-    @JsonProperty({value:VerifiableCredential.EXPIRATION_DATE})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [Date]})
+    //@JsonProperty({value:VerifiableCredential.EXPIRATION_DATE})
+    //@JsonInclude({value: JsonIncludeType.NON_NULL})
+    //@JsonClassType({type: () => [Date]})
     public expirationDate: Date;
-    @JsonProperty({value:VerifiableCredential.CREDENTIAL_SUBJECT})
-    @JsonClassType({type: () => [VerifiableCredential.Subject]})
+    //@JsonProperty({value:VerifiableCredential.CREDENTIAL_SUBJECT})
+    //@JsonClassType({type: () => [VerifiableCredential.Subject]})
     public subject: VerifiableCredential.Subject;
-    @JsonProperty({value:VerifiableCredential.PROOF})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [VerifiableCredential.Proof]})
+    //@JsonProperty({value:VerifiableCredential.PROOF})
+    //@JsonInclude({value: JsonIncludeType.NON_NULL})
+    //@JsonClassType({type: () => [VerifiableCredential.Proof]})
     public proof: VerifiableCredential.Proof;
 
-    @JsonIgnore()
+    //@JsonIgnore()
     public metadata: CredentialMetadata;
 
     constructor() {
@@ -137,8 +137,8 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
     // Add custom deserialization fields to the method params here + assign.
     // Jackson does the rest automatically.
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: VerifiableCredential.TYPE}) type?: any) {
+    //@JsonCreator()
+    public static jacksonCreator(type?: any) {
         let vc = new VerifiableCredential();
 
         // Proofs
@@ -810,12 +810,12 @@ export namespace VerifiableCredential {
      * In order to support the JSON serialization, all values should be
      * JSON serializable.
      */
-     @JsonPropertyOrder({value: ["id"]})
+     //@JsonPropertyOrder({value: ["id"]})
      export class Subject {
-        @JsonProperty({value: VerifiableCredential.ID})
-        @JsonClassType({type: () => [DID]})
+        //@JsonProperty({value: VerifiableCredential.ID})
+        //@JsonClassType({type: () => [DID]})
         private id: DID;
-        @JsonIgnore()
+        //@JsonIgnore()
         private properties: JSONObject;
 
          /**
@@ -823,8 +823,8 @@ export namespace VerifiableCredential {
           *
           * @param id the controller of Credential Subject
           */
-         // Java: @JsonCreator()
-         constructor(@JsonProperty({value: VerifiableCredential.ID}) id: DID) {
+         // Java: //@JsonCreator()
+         constructor(id: DID) {
              this.id = id;
              this.properties = {};
          }
@@ -855,9 +855,9 @@ export namespace VerifiableCredential {
           * @return a String to Object map include all application defined
           *         properties
           */
-         @JsonAnyGetter()
-         @JsonClassType({type: () => [String, Object]})
-         //@JsonPropertyOrder({ alphabetic: true })
+         //@JsonAnyGetter()
+         //@JsonClassType({type: () => [String, Object]})
+         ////@JsonPropertyOrder({ alphabetic: true })
          private getAllProperties(): JSONObject {
              return sortJSONObject(this.properties);
          }
@@ -868,7 +868,7 @@ export namespace VerifiableCredential {
           * @param name the property name
           * @param value the property value
           */
-         @JsonAnySetter()
+         //@JsonAnySetter()
          public setProperty(name: string, value: JSONValue) {
              if (name === VerifiableCredential.ID)
                  return;
@@ -928,21 +928,21 @@ export namespace VerifiableCredential {
       *
       * The default proof type is ECDSAsecp256r1.
       */
-     @JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
+     //@JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
      export class Proof {
-         @JsonProperty({value: VerifiableCredential.TYPE})
-         @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
-         @JsonClassType({type: ()=>[String]})
+         //@JsonProperty({value: VerifiableCredential.TYPE})
+         //@JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
+         //@JsonClassType({type: ()=>[String]})
          public type: string;
-         @JsonProperty({value: VerifiableCredential.CREATED})
-         @JsonInclude({value: JsonIncludeType.NON_EMPTY})
-         @JsonClassType({type: ()=>[Date]})
+         //@JsonProperty({value: VerifiableCredential.CREATED})
+         //@JsonInclude({value: JsonIncludeType.NON_EMPTY})
+         //@JsonClassType({type: ()=>[Date]})
          public created: Date;
-         @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD})
-         @JsonClassType({type: ()=>[DIDURL]})
+         //@JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD})
+         //@JsonClassType({type: ()=>[DIDURL]})
          public verificationMethod: DIDURL;
-         @JsonProperty({value: VerifiableCredential.SIGNATURE})
-         @JsonClassType({type: ()=>[String]})
+         //@JsonProperty({value: VerifiableCredential.SIGNATURE})
+         //@JsonClassType({type: ()=>[String]})
          public signature: string;
 
          /**
@@ -952,12 +952,12 @@ export namespace VerifiableCredential {
           * @param method the verification method, normally it's a public key
           * @param signature the signature encoded in base64 URL safe format
           */
-         // Java: @JsonCreator()
+         // Java: //@JsonCreator()
          constructor(
-                 @JsonProperty({value: VerifiableCredential.VERIFICATION_METHOD, required: true}) method: DIDURL,
-                 @JsonProperty({value: VerifiableCredential.SIGNATURE, required: true}) signature: string,
-                 @JsonProperty({value: VerifiableCredential.CREATED}) created: Date = new Date(),
-                 @JsonProperty({value: VerifiableCredential.TYPE}) type: string = Constants.DEFAULT_PUBLICKEY_TYPE
+                 method: DIDURL,
+                 signature: string,
+                 created: Date = new Date(),
+                 type: string = Constants.DEFAULT_PUBLICKEY_TYPE
         ) {
              this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
              this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);

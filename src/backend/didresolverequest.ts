@@ -27,14 +27,14 @@ import type { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
 import { hashCode } from "../internals";
 
-@JsonCreator()
+//@JsonCreator()
 export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Parameters> {
     public static PARAMETER_DID = "did";
     public static PARAMETER_ALL = "all";
 
     public static METHOD_NAME = "did_resolveDID";
 
-    public constructor(@JsonProperty({value: ResolveRequest.ID}) requestId: string) {
+    public constructor(//@JsonProperty({value: ResolveRequest.ID}) requestId: string) {
         super(requestId, DIDResolveRequest.METHOD_NAME);
     }
 
@@ -62,16 +62,16 @@ export class DIDResolveRequest extends ResolveRequest<DIDResolveRequest, Paramet
     }
 }
 
-@JsonCreator()
+//@JsonCreator()
 class Parameters implements Hashable {
-    @JsonProperty({value: DIDResolveRequest.PARAMETER_DID})
+    //@JsonProperty({value: DIDResolveRequest.PARAMETER_DID})
     public did: DID;
 
-    @JsonProperty({value: DIDResolveRequest.PARAMETER_ALL})
-    @JsonInclude({value: JsonIncludeType.NON_DEFAULT})
+    //@JsonProperty({value: DIDResolveRequest.PARAMETER_ALL})
+    //@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
     public all: boolean;
 
-    public constructor(@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: DID, all = false) {
+    public constructor(//@JsonProperty({value: DIDResolveRequest.PARAMETER_DID, required: true}) did: DID, all = false) {
         this.did = did;
         this.all = all;
     }

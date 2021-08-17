@@ -27,8 +27,8 @@ import { DIDURL } from "../internals";
 import { MalformedResolveResultException } from "../exceptions/exceptions";
 import { ResolveResult } from "./resolveresult";
 
-@JsonPropertyOrder({value: ["did", "credentialIds"]})
-@JsonCreator()
+//@JsonPropertyOrder({value: ["did", "credentialIds"]})
+//@JsonCreator()
 export class CredentialList extends ResolveResult<CredentialList> {
     protected static DID = "did";
     protected static CREDENTIALS = "credentials";
@@ -36,11 +36,11 @@ export class CredentialList extends ResolveResult<CredentialList> {
     public static DEFAULT_SIZE = 128;
     public static MAX_SIZE = 512;
 
-    @JsonProperty({ value: CredentialList.DID })
+    //@JsonProperty({ value: CredentialList.DID })
     private did: DID;
-    @JsonProperty({ value: CredentialList.CREDENTIALS })
-    @JsonInclude({ value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [Array, [DIDURL]]})
+    //@JsonProperty({ value: CredentialList.CREDENTIALS })
+    //@JsonInclude({ value: JsonIncludeType.NON_NULL})
+    //@JsonClassType({type: () => [Array, [DIDURL]]})
     private credentialIds: DIDURL[];
 
     public constructor(did: DID = null) {

@@ -42,7 +42,7 @@ import {
 import { ComparableMap } from "./comparablemap";
 import { VerificationEventListener } from "./verificationEventListener";
 
-class NormalizedURLDeserializer extends Deserializer {
+class NormalizedURLDeserializer  {
     public static deserialize(value: string, context: JsonParserTransformerContext): DIDURL {
         try {
             return new DIDURL(value);
@@ -52,7 +52,7 @@ class NormalizedURLDeserializer extends Deserializer {
     }
 }
 
-class PresentationTypeSerializer extends Serializer {
+class PresentationTypeSerializer  {
     public static serialize(type: string[], context: JsonStringifierTransformerContext): any {
         return type.length > 1 ? type : type[0];
     }
@@ -65,7 +65,7 @@ class PresentationTypeSerializer extends Serializer {
  * This also helps prevent a verifier from reusing a verifiable presentation as
  * their own.
  */
-@JsonPropertyOrder({value: [
+//@JsonPropertyOrder({value: [
     "id",
     "type",
     "holder",
@@ -89,29 +89,29 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
     public static VERIFICATION_METHOD = "verificationMethod";
     public static SIGNATURE = "signature";
 
-    @JsonProperty({value: VerifiablePresentation.ID})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [DIDURL]})
+    //@JsonProperty({value: VerifiablePresentation.ID})
+    //@JsonInclude({value: JsonIncludeType.NON_NULL})
+    //@JsonClassType({type: () => [DIDURL]})
     public id: DIDURL = null;
-    @JsonProperty({value: VerifiablePresentation.TYPE})
-    @JsonSerialize({using: PresentationTypeSerializer.serialize})
+    //@JsonProperty({value: VerifiablePresentation.TYPE})
+    //@JsonSerialize({using: PresentationTypeSerializer.serialize})
     public type: string[];
-    @JsonProperty({value: VerifiablePresentation.HOLDER})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [DID]})
+    //@JsonProperty({value: VerifiablePresentation.HOLDER})
+    //@JsonInclude({value: JsonIncludeType.NON_NULL})
+    //@JsonClassType({type: () => [DID]})
     public holder: DID;
-    @JsonProperty({value: VerifiablePresentation.CREATED})
-    @JsonClassType({type: () => [Date]})
+    //@JsonProperty({value: VerifiablePresentation.CREATED})
+    //@JsonClassType({type: () => [Date]})
     public created: Date;
-    @JsonProperty({value: VerifiablePresentation.VERIFIABLE_CREDENTIAL})
-    @JsonClassType({type: () => [Array, [VerifiableCredential]]})
+    //@JsonProperty({value: VerifiablePresentation.VERIFIABLE_CREDENTIAL})
+    //@JsonClassType({type: () => [Array, [VerifiableCredential]]})
     public _credentials: VerifiableCredential[];
-    @JsonProperty({value: VerifiablePresentation.PROOF})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonClassType({type: () => [VerifiablePresentation.Proof]})
+    //@JsonProperty({value: VerifiablePresentation.PROOF})
+    //@JsonInclude({value: JsonIncludeType.NON_NULL})
+    //@JsonClassType({type: () => [VerifiablePresentation.Proof]})
     public proof: VerifiablePresentation.Proof;
 
-    @JsonIgnore()
+    //@JsonIgnore()
     public credentials: ComparableMap<DIDURL, VerifiableCredential>;
 
     /**
@@ -125,8 +125,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
     // Add custom deserialization fields to the method params here + assign.
     // Jackson does the rest automatically.
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: VerifiablePresentation.TYPE}) type?: any) {
+    //@JsonCreator()
+    public static jacksonCreator(//@JsonProperty({value: VerifiablePresentation.TYPE}) type?: any) {
         let vp = new VerifiablePresentation(null);
 
         // Proofs
@@ -660,23 +660,23 @@ export namespace VerifiablePresentation {
      *
      * The default proof type is ECDSAsecp256r1.
      */
-     @JsonPropertyOrder({value: [
+     //@JsonPropertyOrder({value: [
          "type",
          "verificationMethod",
          "realm",
          "nonce",
          "signature" ]})
      export class Proof {
-         @JsonProperty({value: VerifiablePresentation.TYPE})
+         //@JsonProperty({value: VerifiablePresentation.TYPE})
          private type: string;
-         @JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD})
-         @JsonDeserialize({using: NormalizedURLDeserializer.deserialize})
+         //@JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD})
+         //@JsonDeserialize({using: NormalizedURLDeserializer.deserialize})
          private verificationMethod: DIDURL;
-         @JsonProperty({value: VerifiablePresentation.REALM})
+         //@JsonProperty({value: VerifiablePresentation.REALM})
          private realm: string;
-         @JsonProperty({value: VerifiablePresentation.NONCE})
+         //@JsonProperty({value: VerifiablePresentation.NONCE})
          private nonce: string;
-         @JsonProperty({value: VerifiablePresentation.SIGNATURE})
+         //@JsonProperty({value: VerifiablePresentation.SIGNATURE})
          private signature: string;
 
          /**
@@ -690,11 +690,11 @@ export namespace VerifiablePresentation {
           */
          // TODO java: @JsonCreator
          constructor(
-                 @JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD, required: true}) method: DIDURL,
-                 @JsonProperty({value: VerifiablePresentation.REALM, required: true}) realm: string,
-                 @JsonProperty({value: VerifiablePresentation.NONCE, required: true}) nonce: string,
-                 @JsonProperty({value: VerifiablePresentation.SIGNATURE, required: true}) signature: string,
-                 @JsonProperty({value: VerifiablePresentation.TYPE}) type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+                 //@JsonProperty({value: VerifiablePresentation.VERIFICATION_METHOD, required: true}) method: DIDURL,
+                 //@JsonProperty({value: VerifiablePresentation.REALM, required: true}) realm: string,
+                 //@JsonProperty({value: VerifiablePresentation.NONCE, required: true}) nonce: string,
+                 //@JsonProperty({value: VerifiablePresentation.SIGNATURE, required: true}) signature: string,
+                 //@JsonProperty({value: VerifiablePresentation.TYPE}) type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
              this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
              this.verificationMethod = method;
              this.realm = realm;

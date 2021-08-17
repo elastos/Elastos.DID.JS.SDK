@@ -9,7 +9,7 @@ import {
 } from "./exceptions/exceptions";
 import { Deserializer } from "./internals";
 
-export class DIDDocumentPublicKeyReferenceDeserializer extends Deserializer {
+export class DIDDocumentPublicKeyReferenceDeserializer  {
     public static deserialize(value: string, context: JsonParserTransformerContext): DIDDocumentPublicKeyReference {
         try {
             if (value && value.includes("{")) {

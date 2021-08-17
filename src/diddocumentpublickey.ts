@@ -1,30 +1,27 @@
-import {
-    JsonProperty,
-    JsonPropertyOrder,
-    JsonClassType,
-    JsonIgnore,
-    JsonInclude,
-    JsonIncludeType
-} from "@elastosfoundation/jackson-js";
-import type {
-    JsonStringifierTransformerContext,
-} from "@elastosfoundation/jackson-js";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { Base58 } from "./internals";
 import { DID } from "./internals";
-import { DIDEntity } from "./internals";
 import type { DIDObject } from "./internals";
 import { DIDURL } from "./internals";
-import { keyTypeFilter } from "./internals";
+import { FieldInfo, GenericSerializer, FieldType, FilteredTypeSerializer } from "./serializers"
 
-function keyControllerFilter(value: any, context?: JsonStringifierTransformerContext): boolean {
-    let serializeContext: DIDEntity.SerializeContext = context.attributes[DIDEntity.CONTEXT_KEY];
+export class FilteredControllerSerializer {
+    public static serialize(normalized: boolean, value: DID, sourceInstance: any): string {
+        let contextDid = null;
+        if (!(typeof sourceInstance['getSerializeContextDid'] === 'function')) {
+            contextDid = sourceInstance.getSerializeContextDid();
+        }
 
-    if (!serializeContext || serializeContext.isNormalized())
-        return false;
+        if (!normalized && contextDid != null && contextDid.equals(value)) {
+            return value.serialize(normalized);
+        }
+        return null;
+    }
 
-        return serializeContext.getDid() ? serializeContext.getDid().equals(value as DID) : false;
+    public static deserialize(value: string, fullJsonObj: any): DID {
+        return DID.deserialize(value);
+    }
 }
 
 /**
@@ -32,29 +29,36 @@ function keyControllerFilter(value: any, context?: JsonStringifierTransformerCon
  * other cryptographic operations, which are the basis for purposes such as
  * authentication or establishing secure communication with service endpoints.
  */
-@JsonPropertyOrder({value: ["id", "type", "controller", "publicKeyBase58"]})
+//@JsonPropertyOrder({value: ["id", "type", "controller", "publicKeyBase58"]})
 export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDocumentPublicKey> {
     private static ID = "id";
     private static TYPE = "type";
     private static CONTROLLER = "controller";
     private static PUBLICKEY_BASE58 = "publicKeyBase58";
 
-    @JsonProperty({ value: DIDDocumentPublicKey.ID })
-    @JsonClassType({type: () => [DIDURL]})
+    private static FIELDSMAP = new Map<string, FieldInfo>([
+        [DIDDocumentPublicKey.ID, FieldInfo.forType(FieldType.TYPE).withTypeName("DID")],
+        [DIDDocumentPublicKey.TYPE, FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(FilteredTypeSerializer.deserialize).withSerializerMethod(FilteredTypeSerializer.serialize)],
+        [DIDDocumentPublicKey.CONTROLLER, FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(FilteredControllerSerializer.deserialize).withSerializerMethod(FilteredControllerSerializer.serialize)],
+        [DIDDocumentPublicKey.PUBLICKEY_BASE58, FieldInfo.forType(FieldType.LITERAL)]
+    ]);
+
+    //@JsonProperty({ value: DIDDocumentPublicKey.ID })
+    //@JsonClassType({type: () => [DIDURL]})
     public id: DIDURL;
-    @JsonProperty({ value: DIDDocumentPublicKey.TYPE })
-    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
-    @JsonClassType({type: () => [String]})
+    //@JsonProperty({ value: DIDDocumentPublicKey.TYPE })
+    ////@JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyTypeFilter})
+    //@JsonClassType({type: () => [String]})
     public type: string;
-    @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER })
-    @JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyControllerFilter})
-    @JsonClassType({type: () => [DID]})
+    //@JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER })
+    //@JsonInclude({value: JsonIncludeType.CUSTOM, valueFilter: keyControllerFilter})
+    //@JsonClassType({type: () => [DID]})
     public controller: DID;
-    @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58 })
+    //@JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58 })
     public publicKeyBase58: string;
-    @JsonIgnore()
+    //@JsonIgnore()
     private authenticationKey: boolean;
-    @JsonIgnore()
+    //@JsonIgnore()
     private authorizationKey: boolean;
 
     /**
@@ -66,14 +70,42 @@ export class DIDDocumentPublicKey implements DIDObject<string>, Comparable<DIDDo
      * @param publicKeyBase58 the string from encoded base58 of public key
      */
     // Java: @JsonCreator
-    constructor(@JsonProperty({ value: DIDDocumentPublicKey.ID, required: true }) id: DIDURL,
-        @JsonProperty({ value: DIDDocumentPublicKey.TYPE }) type: string,
-        @JsonProperty({ value: DIDDocumentPublicKey.CONTROLLER }) controller: DID,
-        @JsonProperty({ value: DIDDocumentPublicKey.PUBLICKEY_BASE58, required: true }) publicKeyBase58: string) {
+    constructor(id: DIDURL,
+        type: string,
+        controller: DID,
+        publicKeyBase58: string) {
         this.id = id;
         this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
         this.controller = controller;
         this.publicKeyBase58 = publicKeyBase58;
+    }
+
+    public static createFromValues(fieldValues: Map<string, any>): DIDDocumentPublicKey {
+        let newInstance = new DIDDocumentPublicKey(
+            fieldValues[DIDDocumentPublicKey.ID],
+            fieldValues[DIDDocumentPublicKey.TYPE],
+            fieldValues[DIDDocumentPublicKey.CONTROLLER],
+            fieldValues[DIDDocumentPublicKey.PUBLICKEY_BASE58]
+        );
+
+        return newInstance;
+    }
+
+    public getAllValues(): Map<string, any> {
+        return new Map<string, any>([
+            [DIDDocumentPublicKey.ID, this.getId()],
+            [DIDDocumentPublicKey.TYPE, this.getType()],
+            [DIDDocumentPublicKey.CONTROLLER, this.getController()],
+            [DIDDocumentPublicKey.PUBLICKEY_BASE58, this.getPublicKeyBase58()]
+        ]);
+    }
+
+    public serialize(normalized = true): string {
+        return GenericSerializer.serialize(normalized, this, DIDDocumentPublicKey.FIELDSMAP);
+    }
+
+    public static deserialize(json: string): DIDDocumentPublicKey {
+        return GenericSerializer.deserialize(json, DIDDocumentPublicKey, DIDDocumentPublicKey.FIELDSMAP);
     }
 
     /**

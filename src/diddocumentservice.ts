@@ -18,23 +18,23 @@ import type { Comparable } from "./comparable";
  * wishes to advertise, including decentralized identity management services
  * for further discovery, authentication, authorization, or interaction.
  */
-@JsonPropertyOrder({value: ["id", "type", "endpoint"]})
+//@JsonPropertyOrder({value: ["id", "type", "endpoint"]})
 export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocumentService> {
     private static ID = "id";
     private static TYPE = "type";
     private static SERVICE_ENDPOINT = "serviceEndpoint";
 
-    @JsonProperty({ value: DIDDocumentService.ID })
-    @JsonClassType({type: () => [DIDURL]})
+    //@JsonProperty({ value: DIDDocumentService.ID })
+    //@JsonClassType({type: () => [DIDURL]})
     public id: DIDURL;
-    @JsonProperty({ value: DIDDocumentService.TYPE })
-    @JsonClassType({ type: () => [String] })
+    //@JsonProperty({ value: DIDDocumentService.TYPE })
+    //@JsonClassType({ type: () => [String] })
     public type: string;
-    @JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT })
-    @JsonClassType({ type: () => [String] })
+    //@JsonProperty({ value: DIDDocumentService.SERVICE_ENDPOINT })
+    //@JsonClassType({ type: () => [String] })
     public endpoint: string;
 
-    @JsonIgnore()
+    //@JsonIgnore()
     private properties: JSONObject;
 
     /**
@@ -57,7 +57,7 @@ export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocu
         }
     }
 
-    @JsonCreator()
+    //@JsonCreator()
     public static jacksonCreator() {
         return new DIDDocumentService();
     }
@@ -96,9 +96,9 @@ export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocu
      * @return a String to object map include all application defined
      *         properties
      */
-    @JsonAnyGetter()
-    @JsonClassType({type: () => [String, Object]})
-    //@JsonPropertyOrder({ alphabetic: true })
+    //@JsonAnyGetter()
+    //@JsonClassType({type: () => [String, Object]})
+    ////@JsonPropertyOrder({ alphabetic: true })
     private getAllProperties(): JSONObject {
         return sortJSONObject(this.properties);
     }
@@ -109,7 +109,7 @@ export class DIDDocumentService implements DIDObject<string>, Comparable<DIDDocu
      * @param name the property name
      * @param value the property value
      */
-    @JsonAnySetter()
+    //@JsonAnySetter()
     private setProperty(name: string, value: JSONValue) {
         if (name === DIDDocumentService.ID || name === DIDDocumentService.TYPE || name === DIDDocumentService.SERVICE_ENDPOINT)
             return;

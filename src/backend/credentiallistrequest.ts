@@ -27,7 +27,7 @@ import type { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
 import { hashCode } from "../internals";
 
-@JsonCreator()
+//@JsonCreator()
 export class CredentialListRequest extends ResolveRequest<CredentialListRequest, Parameters> {
     public static PARAMETER_DID = "did";
     public static PARAMETER_SKIP = "skip";
@@ -35,7 +35,7 @@ export class CredentialListRequest extends ResolveRequest<CredentialListRequest,
 
     public static METHOD_NAME = "did_listCredentials";
 
-    public constructor(@JsonProperty({value: CredentialListRequest.ID}) requestId: string) {
+    public constructor(//@JsonProperty({value: CredentialListRequest.ID}) requestId: string) {
         super(requestId, CredentialListRequest.METHOD_NAME);
     }
 
@@ -68,20 +68,20 @@ export class CredentialListRequest extends ResolveRequest<CredentialListRequest,
     }
 }
 
-@JsonCreator()
+//@JsonCreator()
 class Parameters implements Hashable {
-    @JsonProperty({value: CredentialListRequest.PARAMETER_DID}) @JsonClassType({type: () => [DID]})
+    //@JsonProperty({value: CredentialListRequest.PARAMETER_DID}) //@JsonClassType({type: () => [DID]})
     public did: DID;
 
-    @JsonProperty({value: CredentialListRequest.PARAMETER_SKIP})
-    @JsonInclude({value: JsonIncludeType.NON_DEFAULT})
+    //@JsonProperty({value: CredentialListRequest.PARAMETER_SKIP})
+    //@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
     public skip: number;
 
-    @JsonProperty({value: CredentialListRequest.PARAMETER_LIMIT})
-    @JsonInclude({value: JsonIncludeType.NON_DEFAULT})
+    //@JsonProperty({value: CredentialListRequest.PARAMETER_LIMIT})
+    //@JsonInclude({value: JsonIncludeType.NON_DEFAULT})
     public limit: number;
 
-    public constructor(@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip = 0, limit = 0) {
+    public constructor(//@JsonProperty({value: CredentialListRequest.PARAMETER_DID, required: true}) did: DID, skip = 0, limit = 0) {
         this.did = did;
         this.skip = skip;
         this.limit = limit;

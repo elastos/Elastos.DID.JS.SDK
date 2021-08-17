@@ -41,7 +41,7 @@ import { Deserializer } from "../serializers";
 /**
  * The class records the information of IDChain Request.
  */
-@JsonPropertyOrder({value: ["header", "payload", "proof"]})
+//@JsonPropertyOrder({value: ["header", "payload", "proof"]})
 export abstract class IDChainRequest<T> extends DIDEntity<T> {
     /**
      * The specification string of IDChain DID Request
@@ -184,12 +184,12 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 }
 
 export namespace IDChainRequest {
-    class OperationSerializer extends Serializer {
+    class OperationSerializer  {
         public static serialize(value: Operation, context: JsonStringifierTransformerContext): string {
             return value ? String(value) : null;
         }
     }
-    class OperationDeserializer extends Deserializer {
+    class OperationDeserializer  {
         public static deserialize(value: string | number, context: JsonParserTransformerContext): Operation {
             return Operation.fromString(String(value));
         }
@@ -198,8 +198,8 @@ export namespace IDChainRequest {
     /**
      * The IDChain Request Operation
      */
-     @JsonSerialize({using: OperationSerializer.serialize})
-     @JsonDeserialize({using: OperationDeserializer.deserialize})
+     //@JsonSerialize({using: OperationSerializer.serialize})
+     //@JsonDeserialize({using: OperationDeserializer.deserialize})
      export class Operation {
         constructor(private name: string, private specification: string) {}
 
@@ -207,12 +207,12 @@ export namespace IDChainRequest {
             return this.specification;
         }
 
-        @JsonValue()
+        //@JsonValue()
         public toString(): string {
             return this.name;
         }
 
-        @JsonCreator()
+        //@JsonCreator()
         public static fromString(name: string): Operation {
             return Operation[name.toUpperCase()];
         }
@@ -249,34 +249,34 @@ export namespace IDChainRequest {
             export const REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
     }
 
-    @JsonPropertyOrder({value: [
+    //@JsonPropertyOrder({value: [
         "specification",
         "operation",
         "previousTxid",
         "ticket"
     ]})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
-    @JsonCreator()
+    //@JsonInclude({value: JsonIncludeType.NON_NULL})
+    //@JsonCreator()
     export class Header {
-        @JsonProperty({value: IDChainRequest.SPECIFICATION})
-        @JsonClassType({type: () => [String]})
+        //@JsonProperty({value: IDChainRequest.SPECIFICATION})
+        //@JsonClassType({type: () => [String]})
         private specification: string;
-        @JsonProperty({value: IDChainRequest.OPERATION})
-        @JsonClassType({type: () => [Operation]})
+        //@JsonProperty({value: IDChainRequest.OPERATION})
+        //@JsonClassType({type: () => [Operation]})
         private operation: Operation;
-        @JsonProperty({value: IDChainRequest.PREVIOUS_TXID})
-        @JsonInclude({value: JsonIncludeType.NON_NULL})
-        @JsonClassType({type: () => [String]})
+        //@JsonProperty({value: IDChainRequest.PREVIOUS_TXID})
+        //@JsonInclude({value: JsonIncludeType.NON_NULL})
+        //@JsonClassType({type: () => [String]})
         private previousTxid: string;
-        @JsonProperty({value: IDChainRequest.TICKET})
-        @JsonInclude({value: JsonIncludeType.NON_NULL})
-        @JsonClassType({type: () => [String]})
+        //@JsonProperty({value: IDChainRequest.TICKET})
+        //@JsonInclude({value: JsonIncludeType.NON_NULL})
+        //@JsonClassType({type: () => [String]})
         private ticket: string;
 
-        @JsonIgnore()
+        //@JsonIgnore()
         private transferTicket: TransferTicket;
 
-        constructor(@JsonProperty({value: IDChainRequest.SPECIFICATION, required: true}) spec: string) {
+        constructor(//@JsonProperty({value: IDChainRequest.SPECIFICATION, required: true}) spec: string) {
             this.specification = spec;
         }
 
@@ -337,23 +337,23 @@ export namespace IDChainRequest {
         }
     }
 
-    @JsonPropertyOrder({value:["type", "verificationMethod", "signature"]})
+    //@JsonPropertyOrder({value:["type", "verificationMethod", "signature"]})
     export class Proof {
-        @JsonProperty({value: IDChainRequest.TYPE})
-        @JsonClassType({type: () => [String]})
+        //@JsonProperty({value: IDChainRequest.TYPE})
+        //@JsonClassType({type: () => [String]})
         private type: string;
-        @JsonProperty({value: IDChainRequest.VERIFICATION_METHOD})
-        @JsonClassType({type: () => [DIDURL]})
+        //@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD})
+        //@JsonClassType({type: () => [DIDURL]})
         private verificationMethod: DIDURL;
-        @JsonProperty({value: IDChainRequest.SIGNATURE})
-        @JsonClassType({type: () => [String]})
+        //@JsonProperty({value: IDChainRequest.SIGNATURE})
+        //@JsonClassType({type: () => [String]})
         private signature: string;
 
-        // Java: @JsonCreator()
+        // Java: //@JsonCreator()
         public constructor(
-                @JsonProperty({value: IDChainRequest.VERIFICATION_METHOD, required: true}) verificationMethod: DIDURL,
-                @JsonProperty({value: IDChainRequest.SIGNATURE, required: true}) signature: string,
-                @JsonProperty({value: IDChainRequest.TYPE}) type: string = null
+                //@JsonProperty({value: IDChainRequest.VERIFICATION_METHOD, required: true}) verificationMethod: DIDURL,
+                //@JsonProperty({value: IDChainRequest.SIGNATURE, required: true}) signature: string,
+                //@JsonProperty({value: IDChainRequest.TYPE}) type: string = null
         ) {
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
             this.verificationMethod = verificationMethod;

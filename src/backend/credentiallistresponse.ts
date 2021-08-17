@@ -26,10 +26,10 @@ import { ResolveError } from "./resolveerror";
 import { ResolveResponse, RpcConstants, JsonRpcError } from "./resolveresponse";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 
-@JsonCreator()
+//@JsonCreator()
 export class CredentialListResponse extends ResolveResponse<CredentialListResponse, CredentialList> {
-    @JsonProperty({value: RpcConstants.RESULT})
-    @JsonClassType({type: ()=>[CredentialList]})
+    //@JsonProperty({value: RpcConstants.RESULT})
+    //@JsonClassType({type: ()=>[CredentialList]})
     protected result: CredentialList;
 
     constructor(responseId: string, resultOrError: CredentialList | ResolveError | JsonRpcError) {
@@ -46,8 +46,8 @@ export class CredentialListResponse extends ResolveResponse<CredentialListRespon
         }
     }
 
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.RESULT, required: false}) result: CredentialList, @JsonProperty({value: RpcConstants.ERROR, required: false}) error: JsonRpcError): CredentialListResponse {
+    //@JsonCreator()
+    public static jacksonCreator(//@JsonProperty({value: RpcConstants.ID, required: true}) id: string, //@JsonProperty({value: RpcConstants.RESULT, required: false}) result: CredentialList, //@JsonProperty({value: RpcConstants.ERROR, required: false}) error: JsonRpcError): CredentialListResponse {
         let newInstance = result ? new CredentialListResponse(id, result) : new CredentialListResponse(id, error);
         if (result) newInstance.result = result;
         return newInstance;

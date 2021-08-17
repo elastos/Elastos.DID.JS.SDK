@@ -79,20 +79,24 @@ import { ComparableMap } from "./comparablemap";
 import { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
 import { DateSerializer } from "./dateserializer"
 import { FieldInfo, GenericSerializer, FieldType } from "./serializers"
+
 import { isNullOrUndefined } from "util";
 
 
 class DIDDocumentControllerSerializer {
-    public static serialize(controllers: DID[], instance: DIDDocument): string {
-
-        let jsonControllers = [];
-        if (controllers) {
-            jsonControllers = controllers.map((did: DID, index: number, array: DID[]) => {
-                return did.serialize(true);
-            });
+    public static serialize(normalized: boolean, controllers: DID[], instance: any): string {
+        if (controllers && controllers.length > 0) {
+            if (controllers.length > 1) {
+                let jsonControllers = [];
+                jsonControllers = controllers.map((did: DID, index: number, array: DID[]) => {
+                    return did.serialize(normalized);
+                });
+                return JSON.stringify(jsonControllers);
+            } else {
+                return controllers[0].serialize(normalized);
+            }
         }
-
-        return JSON.stringify(jsonControllers);
+        return null;
     }
     public static deserialize(jsonValue: string, fullJsonObj: any): DID[] {
         let jsonObj = JSON.parse(jsonValue);
@@ -106,8 +110,28 @@ class DIDDocumentControllerSerializer {
 }
 
 class DIDDocumentProofSerializer {
-    public static serialize(proofs: DIDDocumentProof[], context: JsonStringifierTransformerContext): any {
-        return proofs.length > 1 ? proofs : proofs[0];
+    public static serialize(normalized: boolean, proofs: DIDDocumentProof[], instance: any): string {
+        if (proofs && proofs.length > 0) {
+            if (proofs.length > 1) {
+                let jsonProofs = [];
+                jsonProofs = proofs.map((proof: DIDDocumentProof, index: number, array: DIDDocumentProof[]) => {
+                    return proof.serialize(normalized);
+                });
+                return JSON.stringify(jsonProofs);
+            } else {
+                return proofs[0].serialize(normalized);
+            }
+        }
+        return null;
+    }
+    public static deserialize(jsonValue: string, fullJsonObj: any): DID[] {
+        let jsonObj = JSON.parse(jsonValue);
+        if (!(jsonObj instanceof Array)) {
+            jsonObj = [jsonObj];
+        }
+        return jsonObj.map((value: any, index: number, array: any[]) => {
+            return DID.deserialize(JSON.stringify(value));
+        });
     }
 }
 /**
@@ -123,7 +147,7 @@ class DIDDocumentProofSerializer {
  */
 // The values should be the real class field names, not the final JSON output field names.
 // Or keep the class field names same with the JSON field namas.
- @JsonPropertyOrder({value: [
+ /*@JsonPropertyOrder({value: [
     "subject",
     "controllers",
     "multisig",
@@ -134,7 +158,8 @@ class DIDDocumentProofSerializer {
     "_services",
     "expires",
     "_proofs" ]})
- @JsonInclude({value: JsonIncludeType.NON_EMPTY})
+    */
+ ////@JsonInclude({value: JsonIncludeType.NON_EMPTY})
  export class DIDDocument extends DIDEntity<DIDDocument> {
     
     private static log = new Logger("DIDDocument");
@@ -151,72 +176,80 @@ class DIDDocumentProofSerializer {
 
     private static FIELDSMAP = new Map<string, FieldInfo>([
         [DIDDocument.ID, FieldInfo.forType(FieldType.TYPE).withTypeName("DID")],
-        [DIDDocument.CONTROLLER, FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(DIDDocumentControllerSerializer.deserialize).withSerializerMethod(DIDDocumentControllerSerializer.serialize)]
+        [DIDDocument.CONTROLLER, FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(DIDDocumentControllerSerializer.deserialize).withSerializerMethod(DIDDocumentControllerSerializer.serialize)],
+        [DIDDocument.MULTI_SIGNATURE, FieldInfo.forType(FieldType.TYPE).withTypeName("DIDDocumentMultiSignature")],
+        [DIDDocument.PUBLICKEY, FieldInfo.forType(FieldType.TYPE).withTypeName("DIDDocumentPublicKey")],
+        [DIDDocument.AUTHENTICATION, FieldInfo.forType(FieldType.TYPE).withTypeName("DIDDocumentPublicKeyReference")],
+        [DIDDocument.AUTHORIZATION, FieldInfo.forType(FieldType.TYPE).withTypeName("DIDDocumentPublicKeyReference")],
+        [DIDDocument.VERIFIABLE_CREDENTIAL, FieldInfo.forType(FieldType.TYPE).withTypeName("VerifiableCredential")],
+        [DIDDocument.SERVICE, FieldInfo.forType(FieldType.TYPE).withTypeName("DIDDocumentService")],
+        [DIDDocument.EXPIRES, FieldInfo.forType(FieldType.DATE)],
+        [DIDDocument.PROOF, FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(DIDDocumentProofSerializer.deserialize).withSerializerMethod(DIDDocumentProofSerializer.serialize)],
     ]);
 
-    @JsonProperty({ value: DIDDocument.ID })
-    @JsonClassType({type: () => [DID]})
+    //@JsonProperty({ value: DIDDocument.ID })
+    //@JsonClassType({type: () => [DID]})
     private subject: DID;
 
-    @JsonProperty({ value: DIDDocument.CONTROLLER })
-    @JsonSerialize({ using: DIDDocumentControllerSerializer.serialize})
+    //@JsonProperty({ value: DIDDocument.CONTROLLER })
+    //@JsonSerialize({ using: DIDDocumentControllerSerializer.serialize})
     public controllers?: DID[];
 
-    @JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
-    @JsonClassType({type: () => [DIDDocumentMultiSignature]})
+    //@JsonProperty({ value: DIDDocument.MULTI_SIGNATURE })
+    //@JsonClassType({type: () => [DIDDocumentMultiSignature]})
     public multisig?: DIDDocumentMultiSignature;
 
-    @JsonProperty({ value: DIDDocument.PUBLICKEY })
-    @JsonClassType({type: () => [Array, [DIDDocumentPublicKey]]})
+    //@JsonProperty({ value: DIDDocument.PUBLICKEY })
+    //@JsonClassType({type: () => [Array, [DIDDocumentPublicKey]]})
     public _publickeys?: DIDDocumentPublicKey[];
 
-    @JsonProperty({ value: DIDDocument.AUTHENTICATION })
-    @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
+    //@JsonProperty({ value: DIDDocument.AUTHENTICATION })
+    //@JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
     public _authentications?: DIDDocumentPublicKeyReference[];
 
-    @JsonProperty({ value: DIDDocument.AUTHORIZATION })
-    @JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
+    //@JsonProperty({ value: DIDDocument.AUTHORIZATION })
+    //@JsonClassType({type: () => [Array, [DIDDocumentPublicKeyReference]]})
     public _authorizations?: DIDDocumentPublicKeyReference[];
 
-    @JsonProperty({ value: DIDDocument.VERIFIABLE_CREDENTIAL })
-    @JsonClassType({type: () => [Array, [VerifiableCredential]]})
+    //@JsonProperty({ value: DIDDocument.VERIFIABLE_CREDENTIAL })
+    //@JsonClassType({type: () => [Array, [VerifiableCredential]]})
     public _credentials?: VerifiableCredential[];
 
-    @JsonProperty({ value: DIDDocument.SERVICE })
-    @JsonClassType({type: () => [Array, [DIDDocumentService]]})
+    //@JsonProperty({ value: DIDDocument.SERVICE })
+    //@JsonClassType({type: () => [Array, [DIDDocumentService]]})
     public _services?: DIDDocumentService[];
 
-    @JsonProperty({ value: DIDDocument.EXPIRES })
-    @JsonInclude({ value: JsonIncludeType.NON_NULL}) // Need to force to NON_NULL because it inherits from class NON_EMPTY and jackson seems to consider Date objects as "empty" in utils_1.isEmptyValue()...
-    @JsonClassType({type: () => [Date]})
+    //@JsonProperty({ value: DIDDocument.EXPIRES })
+    //@JsonInclude({ value: JsonIncludeType.NON_NULL}) // Need to force to NON_NULL because it inherits from class NON_EMPTY and jackson seems to consider Date objects as "empty" in utils_1.isEmptyValue()...
+    //@JsonClassType({type: () => [Date]})
     public expires?: Date;
 
-    @JsonProperty({ value: DIDDocument.PROOF })
-    @JsonSerialize({ using: DIDDocumentProofSerializer.serialize})
+    //@JsonProperty({ value: DIDDocument.PROOF })
+    //@JsonSerialize({ using: DIDDocumentProofSerializer.serialize})
     public _proofs?: DIDDocumentProof[];
 
-    @JsonIgnore()
+    //@JsonIgnore()
     public defaultPublicKey?: DIDDocumentPublicKey;
 
     // Internal properties for DIDDocumentBuilder
-    @JsonIgnore()
+    //@JsonIgnore()
     public controllerDocs?: ComparableMap<DID, DIDDocument>;
-    @JsonIgnore()
+    //@JsonIgnore()
     public publicKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
-    @JsonIgnore()
+    //@JsonIgnore()
     public authenticationKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
-    @JsonIgnore()
+    //@JsonIgnore()
     public authorizationKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
-    @JsonIgnore()
+    //@JsonIgnore()
     public credentials?: ComparableMap<DIDURL, VerifiableCredential>;
-    @JsonIgnore()
+    //@JsonIgnore()
     public services?: ComparableMap<DIDURL, DIDDocumentService>;
-    @JsonIgnore()
+    //@JsonIgnore()
     public proofs?: ComparableMap<DID, DIDDocumentProof>;
-    @JsonIgnore()
+    //@JsonIgnore()
     public effectiveController?: DID;
 
-    @JsonIgnore()
+    //@JsonIgnore()
     private metadata?: DIDMetadata;
 
     /**
@@ -230,16 +263,44 @@ class DIDDocumentProofSerializer {
     }
 
     public static createFromValues(fieldValues: Map<string, any>): DIDDocument {
-        let newInstance = new DIDDocument() {
+        let newInstance = new DIDDocument();
 
-        }
+        fieldValues.forEach((value, key) => {
+            if (value && value != null) {
+                newInstance[key] = value;
+            }
+        });
+        
+        return newInstance;
     }
 
+    public getAllValues(): Map<string, any> {
+        return new Map<string, any>([
+            [DIDDocument.ID, this.getSubject()],
+            [DIDDocument.CONTROLLER, this.getControllers()],
+            [DIDDocument.MULTI_SIGNATURE, this.getMultiSignature()],
+            [DIDDocument.PUBLICKEY, this.getPublicKeys()],
+            [DIDDocument.AUTHENTICATION, this.getAuthenticationKeys()],
+            [DIDDocument.AUTHORIZATION, this.getAuthorizationKeys()],
+            [DIDDocument.VERIFIABLE_CREDENTIAL, this.getCredentials()],
+            [DIDDocument.SERVICE, this.getServices()],
+            [DIDDocument.EXPIRES, this.getExpires()],
+            [DIDDocument.PROOF, this.getProofs()]
+        ]);
+    }
+
+    public serialize(normalized = true): string {
+        return GenericSerializer.serialize(normalized, this, DIDDocument.FIELDSMAP);
+    }
+
+    public static deserialize(json: string): DIDDocument {
+        return GenericSerializer.deserialize(json, DIDDocument, DIDDocument.FIELDSMAP);
+    }
 
     // Add custom deserialization fields to the method params here + assign.
     // Jackson does the rest automatically.
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any, @JsonProperty({value: "controllers"}) controllers?: any) {
+    //@JsonCreator()
+    public static jacksonCreator(_proofs?: any, controllers?: any) {
         let doc = new DIDDocument(null);
 
         // Proofs
@@ -261,7 +322,8 @@ class DIDDocumentProofSerializer {
         return doc;
     }
 
-    public serialize(normalized = true): any {
+    /*
+    public serializeOld(normalized = true): any {
         let jsonObj = {};
         
         if (this.controllers) {
@@ -307,7 +369,7 @@ class DIDDocumentProofSerializer {
         return jsonObj;
     }
 
-    public static deserialize(jsonObj: any): DIDDocument {
+    public static deserializeOld(jsonObj: any): DIDDocument {
         let newObj = new DIDDocument();
         
         if (jsonObj[DIDDocument.CONTROLLER]) {
@@ -352,12 +414,12 @@ class DIDDocumentProofSerializer {
 
         return newObj;
     }
-
+*/
     // Use the delegating mode to receive the whole object as a single JS object.
     // This seems to be the only way to receive already deserialized fields such as _proofs without
     // jackson doing a double deserialization when trying to resolve the constructor
     // parameters.
-    /* @JsonCreator({mode: JsonCreatorMode.PROPERTIES})
+    /* //@JsonCreator({mode: JsonCreatorMode.PROPERTIES})
     public static jacksonCreator(deserializedData: any) {
         let doc = new DIDDocument(null);
         doc._proofs = deserializedData._proofs; // set only the manually deserialized fields here ?

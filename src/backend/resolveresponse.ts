@@ -36,17 +36,17 @@ export class RpcConstants {
     public static ERROR_DATA = "data";
 }
 
-@JsonPropertyOrder({value: ["code", "message", "data" ]})
-@JsonCreator()
+//@JsonPropertyOrder({value: ["code", "message", "data" ]})
+//@JsonCreator()
 export class JsonRpcError {
-    @JsonProperty({value: RpcConstants.ERROR_CODE}) @JsonClassType({type: ()=>[Number]})
+    //@JsonProperty({value: RpcConstants.ERROR_CODE}) //@JsonClassType({type: ()=>[Number]})
     private code: number;
-    @JsonProperty({value: RpcConstants.ERROR_MESSAGE}) @JsonClassType({type: ()=>[String]})
+    //@JsonProperty({value: RpcConstants.ERROR_MESSAGE}) //@JsonClassType({type: ()=>[String]})
     private message: string;
-    @JsonProperty({value: RpcConstants.ERROR_DATA}) @JsonClassType({type: ()=>[String]})
+    //@JsonProperty({value: RpcConstants.ERROR_DATA}) //@JsonClassType({type: ()=>[String]})
     private data: string;
 
-    constructor(@JsonProperty({value: RpcConstants.ERROR_CODE, required: true}) code: number, @JsonProperty({value: RpcConstants.ERROR_MESSAGE, required: true}) message: string, @JsonProperty({value: RpcConstants.ERROR_DATA, required: false}) data?: string) {
+    constructor(//@JsonProperty({value: RpcConstants.ERROR_CODE, required: true}) code: number, //@JsonProperty({value: RpcConstants.ERROR_MESSAGE, required: true}) message: string, //@JsonProperty({value: RpcConstants.ERROR_DATA, required: false}) data?: string) {
         this.code = code;
         this.message = message;
         this.data = data;
@@ -65,17 +65,17 @@ export class JsonRpcError {
     }
 }
 
-@JsonPropertyOrder({value: ["id", "jsonrpc", "result", "error"]})
-@JsonInclude({value: JsonIncludeType.NON_NULL})
+//@JsonPropertyOrder({value: ["id", "jsonrpc", "result", "error"]})
+//@JsonInclude({value: JsonIncludeType.NON_NULL})
 export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T> {
     protected static JSON_RPC_VERSION = "2.0";
 
-    @JsonProperty({value: RpcConstants.ID}) @JsonClassType({type: ()=>[String]})
+    //@JsonProperty({value: RpcConstants.ID}) //@JsonClassType({type: ()=>[String]})
     protected id: string;
-    @JsonProperty({value: RpcConstants.JSON_RPC}) @JsonClassType({type: ()=>[String]})
+    //@JsonProperty({value: RpcConstants.JSON_RPC}) //@JsonClassType({type: ()=>[String]})
     protected jsonrpc: string;
-    @JsonProperty({value: RpcConstants.ERROR}) @JsonClassType({type: ()=>[JsonRpcError]})
-    @JsonInclude({value: JsonIncludeType.NON_NULL})
+    //@JsonProperty({value: RpcConstants.ERROR}) //@JsonClassType({type: ()=>[JsonRpcError]})
+    //@JsonInclude({value: JsonIncludeType.NON_NULL})
     protected error: JsonRpcError;
 
     protected constructor() { super(); }
@@ -92,8 +92,8 @@ export class ResolveResponse<T, R extends ResolveResult<R>> extends DIDEntity<T>
         }
     }
 
-    @JsonCreator()
-    //public static jacksonCreatorParent(@JsonProperty({value: RpcConstants.ID, required: true}) id: string, @JsonProperty({value: RpcConstants.JSON_RPC, required: false}) jsonVersion?: string, @JsonProperty({value: RpcConstants.ID, required: false}) error?: JsonRpcError) {
+    //@JsonCreator()
+    //public static jacksonCreatorParent(//@JsonProperty({value: RpcConstants.ID, required: true}) id: string, //@JsonProperty({value: RpcConstants.JSON_RPC, required: false}) jsonVersion?: string, //@JsonProperty({value: RpcConstants.ID, required: false}) error?: JsonRpcError) {
     public static emptyInstance(): ResolveResponse) {
         let newInstance = new ResolveResponse(id, error);
         newInstance.jsonRpcVersion = jsonVersion;

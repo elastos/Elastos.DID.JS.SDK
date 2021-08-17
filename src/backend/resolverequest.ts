@@ -26,17 +26,17 @@ import { DIDEntity } from "../internals";
 import type { Hashable } from "../hashable";
 import { hashCode } from "../internals";
 
-@JsonPropertyOrder({ value: ["requestId", "method"]})
+//@JsonPropertyOrder({ value: ["requestId", "method"]})
 export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T> {
     protected static ID = "id";
     protected static METHOD = "method";
     protected static PARAMETERS = "params";
 
-    @JsonProperty({ value: ResolveRequest.ID }) @JsonClassType({type: ()=>[String]})
+    //@JsonProperty({ value: ResolveRequest.ID }) //@JsonClassType({type: ()=>[String]})
     private requestId: string;
-    @JsonProperty({ value: ResolveRequest.METHOD }) @JsonClassType({type: ()=>[String]})
+    //@JsonProperty({ value: ResolveRequest.METHOD }) //@JsonClassType({type: ()=>[String]})
     private method: string;
-    @JsonIgnore()
+    //@JsonIgnore()
     private _params: P;
 
     protected constructor(requestId: string, method: string) {
@@ -71,7 +71,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
      * @param params an array of the parameter objects
      */
     @JsonSetter({ value: ResolveRequest.PARAMETERS })
-    @JsonIgnore()
+    //@JsonIgnore()
     private _setParameters(params: P[]) {
         this._params = (params == null || params.length == 0) ? null : params[0];
     }
@@ -86,7 +86,7 @@ export abstract class ResolveRequest<T, P extends Hashable> extends DIDEntity<T>
      * @return an array(single element) of the parameter objects
      */
     @JsonGetter({ value: ResolveRequest.PARAMETERS })
-    @JsonClassType({type: ()=>[Array, [String]]})
+    //@JsonClassType({type: ()=>[Array, [String]]})
     private _getParameters(): P[] {
         if (this._params != null) {
             let ret: P[] = [this._params];

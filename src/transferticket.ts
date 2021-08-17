@@ -20,8 +20,7 @@
  * SOFTWARE.
  */
 
-import { JsonPropertyOrder, JsonProperty, JsonFormat, JsonIgnore, JsonInclude, JsonCreator, JsonIncludeType, JsonSerialize, JsonClassType } from "@elastosfoundation/jackson-js";
-import { Collections, Serializer } from "./internals";
+import { Collections } from "./internals";
 import type { Comparable } from "./comparable";
 import { Constants } from "./constants";
 import { EcdsaSigner } from "./internals";
@@ -34,10 +33,31 @@ import { checkArgument } from "./internals";
 import { ComparableMap } from "./comparablemap";
 import type { JsonStringifierTransformerContext } from "@elastosfoundation/jackson-js";
 import { VerificationEventListener } from "./verificationEventListener";
+import { FieldInfo, GenericSerializer, FieldType, FilteredTypeSerializer } from "./serializers"
 
-class TransferTicketProofSerializer extends Serializer {
-    public static serialize(proof: string[], context: JsonStringifierTransformerContext): any {
-        return proof.length > 1 ? proof : proof[0];
+class TransferTicketProofSerializer  {
+    public static serialize(normalized: boolean, proofs: TransferTicket.Proof[], instance: any): string {
+        if (proofs && proofs.length > 0) {
+            if (proofs.length > 1) {
+                let jsonProofs = [];
+                jsonProofs = proofs.map((proof: TransferTicket.Proof, index: number, array: TransferTicket.Proof[]) => {
+                    return proof.serialize(normalized);
+                });
+                return JSON.stringify(jsonProofs);
+            } else {
+                return proofs[0].serialize(normalized);
+            }
+        }
+        return null;
+    }
+    public static deserialize(jsonValue: string, fullJsonObj: any): TransferTicket.Proof[] {
+        let jsonObj = JSON.parse(jsonValue);
+        if (!(jsonObj instanceof Array)) {
+            jsonObj = [jsonObj];
+        }
+        return jsonObj.map((value: any, index: number, array: any[]) => {
+            return TransferTicket.Proof.deserialize(JSON.stringify(value));
+        });
     }
 }
 
@@ -53,7 +73,7 @@ class TransferTicketProofSerializer extends Serializer {
  */
 // The values should be the real class field names, not the final JSON output field names.
 // Or keep the class field names same with the JSON field namas.
-@JsonPropertyOrder({value:["id", "to", "txid", "_proofs"]})
+//@JsonPropertyOrder({value:["id", "to", "txid", "_proofs"]})
 export class TransferTicket extends DIDEntity<TransferTicket> {
     public static ID = "id";
     public static TO = "to";
@@ -64,50 +84,82 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
     public static CREATED = "created";
     public static SIGNATURE = "signature";
 
-    @JsonProperty({value:TransferTicket.ID})
-    @JsonClassType({type: () => [DID]})
+    private static FIELDSMAP = new Map<string, FieldInfo>([
+        [TransferTicket.ID, FieldInfo.forType(FieldType.TYPE).withTypeName("DID")],
+        [TransferTicket.TO, FieldInfo.forType(FieldType.TYPE).withTypeName("DID")],
+        [TransferTicket.TXID, FieldInfo.forType(FieldType.LITERAL)],
+        [TransferTicket.PROOF, FieldInfo.forType(FieldType.METHOD).withDeserializerMethod(TransferTicketProofSerializer.deserialize).withSerializerMethod(TransferTicketProofSerializer.serialize)]
+    ]);
+
+    //@JsonProperty({value:TransferTicket.ID})
+    //@JsonClassType({type: () => [DID]})
     private id: DID;
 
-    @JsonProperty({value:TransferTicket.TO})
-    @JsonClassType({type: () => [DID]})
+    //@JsonProperty({value:TransferTicket.TO})
+    //@JsonClassType({type: () => [DID]})
     private to: DID;
 
-    @JsonProperty({value:TransferTicket.TXID})
-    @JsonClassType({type: () => [String]})
+    //@JsonProperty({value:TransferTicket.TXID})
+    //@JsonClassType({type: () => [String]})
     private txid: string;
 
-    @JsonProperty({value:TransferTicket.PROOF})
-    @JsonInclude({value: JsonIncludeType.NON_EMPTY})
-    @JsonSerialize({using: TransferTicketProofSerializer.serialize})
+    //@JsonProperty({value:TransferTicket.PROOF})
+    //@JsonInclude({value: JsonIncludeType.NON_EMPTY})
+    //@JsonSerialize({using: TransferTicketProofSerializer.serialize})
     private _proofs: TransferTicket.Proof[];
 
-    @JsonIgnore()
+    //@JsonIgnore()
     private doc: DIDDocument;
 
-    @JsonIgnore()
+    //@JsonIgnore()
     private proofs: ComparableMap<DID, TransferTicket.Proof>;
 
-    public constructor(@JsonProperty({value: TransferTicket.ID, required:true}) did: DID,
-            @JsonProperty({value: TransferTicket.TO, required: true}) to: DID,
-            @JsonProperty({value: TransferTicket.TXID, required: true}) txid: string) {
+    public constructor(did: DID,
+            to: DID,
+            txid: string) {
         super();
         this.id = did;
         this.to = to;
         this.txid = txid;
     }
 
+    public static createFromValues(fieldValues: Map<string, any>): TransferTicket {
+        return new TransferTicket(
+            fieldValues[TransferTicket.ID],
+            fieldValues[TransferTicket.TO],
+            fieldValues[TransferTicket.TXID]
+        );
+    }
+
+    public getAllValues(): Map<string, any> {
+        return new Map<string, any>([
+            [TransferTicket.ID, this.getSubject()],
+            [TransferTicket.TO, this.getTo()],
+            [TransferTicket.TXID, this.getTransactionId()],
+            [TransferTicket.PROOF, this.getProofs()]
+        ]);
+    }
+
+    public serialize(normalized = true): string {
+        return GenericSerializer.serialize(normalized, this, TransferTicket.FIELDSMAP);
+    }
+
+    public static deserialize(json: string): TransferTicket {
+        return GenericSerializer.deserialize(json, TransferTicket, TransferTicket.FIELDSMAP);
+    }
+
     // Add custom deserialization fields to the method params here + assign.
     // Jackson does the rest automatically.
-    @JsonCreator()
-    public static jacksonCreator(@JsonProperty({value: "proof"}) _proofs?: any) {
+    //@JsonCreator()
+    public static jacksonCreator(_proofs?: any) {
         let tt = new TransferTicket(null, null, null);
 
         // Proofs
         if (_proofs) {
             if (_proofs instanceof Array)
-                tt._proofs = _proofs.map((p) => TransferTicket.getDefaultObjectMapper().parse(JSON.stringify(p), {mainCreator: () => [TransferTicket.Proof]}));
+                tt._proofs = _proofs.map((p) => TransferTicket.Proof.deserialize(JSON.stringify(p)));
             else
-                tt._proofs = [TransferTicket.getDefaultObjectMapper().parse(JSON.stringify(_proofs), {mainCreator: () => [TransferTicket.Proof]})];
+                tt._proofs = [TransferTicket.Proof.deserialize(JSON.stringify(_proofs))];
         }
 
         return tt;
@@ -453,21 +505,28 @@ export namespace TransferTicket {
      *
      * The default proof type is ECDSAsecp256r1.
      */
-    @JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
-    @JsonCreator()
+    //@JsonPropertyOrder({value: ["type", "created", "verificationMethod", "signature"]})
+    //@JsonCreator()
     export class Proof implements Comparable<Proof> {
-        @JsonProperty({value: "type"})
-        @JsonClassType({type: () => [String]})
+        public static FIELDSMAP = new Map<string, FieldInfo>([
+            ["type", FieldInfo.forType(FieldType.LITERAL)],
+            ["created", FieldInfo.forType(FieldType.DATE)],
+            ["verificationMethod", FieldInfo.forType(FieldType.TYPE).withTypeName("DIDURL")],
+            ["signature", FieldInfo.forType(FieldType.LITERAL)]
+        ]);
+
+        //@JsonProperty({value: "type"})
+        //@JsonClassType({type: () => [String]})
         private type: string;
-        @JsonProperty({value: "created"})
-        @JsonInclude({value: JsonIncludeType.NON_NULL})
-        @JsonClassType({type: () => [Date]})
+        //@JsonProperty({value: "created"})
+        //@JsonInclude({value: JsonIncludeType.NON_NULL})
+        //@JsonClassType({type: () => [Date]})
         private created: Date;
-        @JsonProperty({value: "verificationMethod"})
-        @JsonClassType({type: () => [DIDURL]})
+        //@JsonProperty({value: "verificationMethod"})
+        //@JsonClassType({type: () => [DIDURL]})
         private verificationMethod: DIDURL;
-        @JsonProperty({value: "signature"})
-        @JsonClassType({type: () => [String]})
+        //@JsonProperty({value: "signature"})
+        //@JsonClassType({type: () => [String]})
         private signature: string;
 
         /**
@@ -479,10 +538,10 @@ export namespace TransferTicket {
          */
         /*
         public constructor(
-                @JsonProperty({value: "type"}) type: string,
-                @JsonProperty({value: "verificationMethod", required: true}) method: DIDURL,
-                @JsonProperty({value: "created"}) created: Date,
-                @JsonProperty({value: "signature", required: true}) signature: string
+                //@JsonProperty({value: "type"}) type: string,
+                //@JsonProperty({value: "verificationMethod", required: true}) method: DIDURL,
+                //@JsonProperty({value: "created"}) created: Date,
+                //@JsonProperty({value: "signature", required: true}) signature: string
         ) {
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
             this.created = created == null ? null : new Date(created.getTime() / 1000 * 1000);
@@ -492,6 +551,33 @@ export namespace TransferTicket {
             this.signature = signature;
         }
         */
+
+        public static createFromValues(fieldValues: Map<string, any>): TransferTicket.Proof {
+            let newInstance = new TransferTicket.Proof();
+            newInstance.type = fieldValues["type"];
+            newInstance.created = fieldValues["created"];
+            newInstance.verificationMethod = fieldValues["verificationMethod"];
+            newInstance.signature = fieldValues["signature"];
+            return newInstance;
+        }
+    
+        public getAllValues(): Map<string, any> {
+            return new Map<string, any>([
+                ["type", this.type],
+                ["created", this.created],
+                ["verificationMethod", this.verificationMethod],
+                ["signature", this.signature]
+            ]);
+        }
+    
+        public serialize(normalized = true): string {
+            return GenericSerializer.serialize(normalized, this, TransferTicket.Proof.FIELDSMAP);
+        }
+    
+        public static deserialize(json: string): TransferTicket.Proof {
+            return GenericSerializer.deserialize(json, TransferTicket.Proof, TransferTicket.Proof.FIELDSMAP);
+        }
+
         public static newWithDIDURL(method: DIDURL, signature: string): Proof {
             let proof = new Proof();
 

@@ -35,23 +35,23 @@ import { IDChainRequest } from "./idchaindrequest";
 /**
  * The credential request class.
  */
-@JsonCreator()
+//@JsonCreator()
 export class CredentialRequest extends IDChainRequest<CredentialRequest> {
-    @JsonProperty({value: IDChainRequest.HEADER})
-    @JsonClassType({type: () => [IDChainRequest.Header]})
+    //@JsonProperty({value: IDChainRequest.HEADER})
+    //@JsonClassType({type: () => [IDChainRequest.Header]})
     declare protected header: IDChainRequest.Header;
-    @JsonProperty({value: IDChainRequest.PAYLOAD})
-    @JsonClassType({type: () => [String]})
+    //@JsonProperty({value: IDChainRequest.PAYLOAD})
+    //@JsonClassType({type: () => [String]})
     declare protected payload: string;
-    @JsonProperty({value: IDChainRequest.PROOF})
-    @JsonClassType({type: () => [IDChainRequest.Proof]})
+    //@JsonProperty({value: IDChainRequest.PROOF})
+    //@JsonClassType({type: () => [IDChainRequest.Proof]})
     declare protected proof: IDChainRequest.Proof;
 
-    @JsonIgnore()
+    //@JsonIgnore()
     private id: DIDURL;
-    @JsonIgnore()
+    //@JsonIgnore()
     private vc: VerifiableCredential;
-    @JsonIgnore()
+    //@JsonIgnore()
     private signer: DIDDocument;
 
     /*

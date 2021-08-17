@@ -5,7 +5,7 @@ import { DIDStoreException } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
 
-@JsonInclude({value: JsonIncludeType.NON_NULL})
+//@JsonInclude({value: JsonIncludeType.NON_NULL})
 export class DIDStoreMetadata extends AbstractMetadata {
     static DID_STORE_TYPE = "did:elastos:store";
     static DID_STORE_VERSION = 3;
@@ -27,7 +27,7 @@ export class DIDStoreMetadata extends AbstractMetadata {
      * with a json object and we don't want this.
      * Here we don't handle the json data as everything will be handled by the AbstractMetadata JsonAnySetter.
      */
-    @JsonCreator()
+    //@JsonCreator()
     public static jacksonCreator(json: any) {
         return new DIDStoreMetadata(null);
     }
