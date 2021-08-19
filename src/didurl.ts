@@ -275,7 +275,15 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         if (!url)
             return null;
 
-        let base = context ? DID.from(context) : null;
+        let base : DID;
+        if (context == null) {
+            base = null;
+        } else {
+            if (context instanceof DID)
+                base = context;
+            else
+                base = DID.from(context);
+        }
 
         if (url instanceof DIDURL)
             return base ? new DIDURL(url, base) : url;
@@ -425,24 +433,27 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         return this.metadata;
     }
 
-    public toString(base: DID = null): string {
-        if (!base && this.repr)
+    public toString(context: DID = null): string {
+        if (!context && this.repr)
             return this.repr;
 
-        this.repr = "";
-        if (this.did != null && (base == null || !this.did.equals(base)))
-            this.repr += this.did;
+        let base = "";
+        if (this.did != null && (context == null || !this.did.equals(context)))
+            base += this.did;
 
-        if (this.path !== null && this.path !== "")
-            this.repr += this.path;
+        if (this.path != null && this.path !== "")
+            base += this.path;
 
         if (this.query != null && this.query.size != 0)
-            this.repr += "?" + this.getQueryString();
+            base += "?" + this.getQueryString();
 
         if (this.fragment != null && this.fragment !== "")
-            this.repr += "#" + this.getFragment();
+            base += "#" + this.getFragment();
 
-        return this.repr;
+        if (!context)
+            this.repr = base;
+
+        return base;
     }
 
     public equals(obj: unknown): boolean {

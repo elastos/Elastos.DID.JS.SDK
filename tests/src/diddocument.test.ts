@@ -1282,7 +1282,7 @@ describe('DIDDocument Tests', () => {
         // Credential getter.
         let vc = doc.getCredential("#profile");
         expect(vc).not.toBeNull();
-        expect(vc.getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
+        expect(vc.getId().equals(DIDURL.from("#profile", doc.getSubject()))).toBeTruthy();
 
         vc = doc.getCredential(DIDURL.from("#email", doc.getSubject()));
         expect(vc).not.toBeNull();
@@ -1340,11 +1340,11 @@ describe('DIDDocument Tests', () => {
         // Credential getter.
         let vc = doc.getCredential("#profile");
         expect(vc).not.toBeNull();
-        expect(vc.getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
+        expect(vc.getId().equals(DIDURL.from("#profile", doc.getSubject()))).toBeTruthy();
 
         vc = doc.getCredential(DIDURL.from("#email", doc.getSubject()));
         expect(vc).not.toBeNull();
-        expect(vc.getId()).toEqual(DIDURL.from("#email", doc.getSubject()));
+        expect(vc.getId().equals(DIDURL.from("#email", doc.getSubject()))).toBeTruthy();
 
         // Credential not exist.
         vc = doc.getCredential("#notExistVc");
@@ -3976,11 +3976,11 @@ describe('DIDDocument Tests', () => {
 
         let target = await identity.newDid(TestConfig.storePass);
         let db = DIDDocumentBuilder.newFromDocument(target).edit();
-        await db.authorizeDid(new DIDURL("#recovery"), doc.getSubject(), null);
+        await db.authorizeDid(new DIDURL("#recovery", target.getSubject()), doc.getSubject(), null);
         target = await db.seal(TestConfig.storePass);
         expect(target).not.toBeNull();
         expect(target.getAuthorizationKeyCount()).toBe(1);
-        expect(target.getAuthorizationKeys()[0].getController()).toEqual(doc.getSubject());
+        expect(target.getAuthorizationKeys()[0].getController().equals(doc.getSubject())).toBeTruthy();
         await store.storeDid(target);
 
         await target.publish(TestConfig.storePass);
