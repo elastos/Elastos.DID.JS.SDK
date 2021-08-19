@@ -316,7 +316,7 @@ export class DIDDocumentBuilder {
         this.checkNotSealed();
 
         if (typeof id === "string")
-            id = DIDURL.from(id);
+            id = this.canonicalId(id);
 
         if (controller === undefined)
             controller = null as DID;
@@ -662,7 +662,7 @@ export class DIDDocumentBuilder {
         checkArgument(id != null, "Invalid publicKey id");
 
         if (typeof id === "string")
-            id = DIDURL.from(id);
+            id = this.canonicalId(id);
 
         checkArgument(id != null, "Invalid publicKey id");
         checkArgument((id.getDid() == null || id.getDid().equals(this.getSubject())),
