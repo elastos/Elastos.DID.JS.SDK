@@ -274,8 +274,19 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         if (this.proof == null)
             throw new MalformedPresentationException("Missing presentation proof");
 
-        if (this.proof.getVerificationMethod().getDid() == null)
-            throw new MalformedPresentationException("Invalid verification method");
+        if (this.holder == null) {
+            if (this.id != null && this.id.getDid() == null)
+                throw new MalformedPresentationException("Invalid presentation id");
+
+            if (this.proof.getVerificationMethod().getDid() == null)
+                throw new MalformedPresentationException("Invalid verification method");
+        } else {
+            if (this.id != null && this.id.getDid() == null)
+                this.id.setDid(this.holder);
+
+            if (this.proof.getVerificationMethod().getDid() == null)
+                this.proof.getVerificationMethod().setDid(this.holder);
+        }
 
         Collections.sort(this.type);
         this._credentials = Array.from(this.credentials.values());
@@ -295,7 +306,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 listener.failed(this, "VP {}: is not genuine", this.getId());
             }
             return false;
-        }       
+        }
 
         // Check the integrity of holder' document.
         if (!holderDoc.isGenuine(listener)) {
@@ -305,7 +316,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // Unsupported public key type;
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
@@ -315,7 +326,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // Credential should signed by authentication key.
         if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
             if (listener != null) {
@@ -325,7 +336,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // All credentials should owned by holder
         for (let vc of this.credentials.values()) {
             if (!vc.getSubject().getId().equals(this.getHolder())) {
@@ -336,7 +347,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 }
                 return false;
             }
-                
+
             if (!await vc.isGenuine(listener)) {
                 if (listener != null) {
                     listener.failed(this, "VP {}: credential '{}' is not genuine",
@@ -344,7 +355,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                     listener.failed(this, "VP {}: is not genuine", this.getId());
                 }
                 return false;
-            }       
+            }
         }
 
         let vp = VerifiablePresentation.newFromPresentation(this, false);
@@ -379,7 +390,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // Check the validity of holder' document.
         if (!holderDoc.isValid(listener)) {
             if (listener != null) {
@@ -387,7 +398,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 listener.failed(this, "VP {}: is invalid", this.getId());
             }
             return false;
-        }   
+        }
 
         // Unsupported public key type;
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
@@ -398,7 +409,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-            
+
         // Credential should signed by authentication key.
         if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
             if (listener != null) {
@@ -408,7 +419,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
             return false;
         }
-        
+
         // All credentials should owned by holder
         for (let vc of this.credentials.values()) {
             if (!vc.getSubject().getId().equals(this.getHolder())) {
@@ -419,7 +430,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 }
                 return false;
             }
-                
+
             if (!await vc.isValid(listener)) {
                 if (listener != null) {
                     listener.failed(this, "VP {}: credential '{}' is invalid",
@@ -427,7 +438,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                     listener.failed(this, "VP {}: is invalid", this.getId());
                 }
                 return false;
-            }   
+            }
         }
 
         let vp = VerifiablePresentation.newFromPresentation(this, false);
