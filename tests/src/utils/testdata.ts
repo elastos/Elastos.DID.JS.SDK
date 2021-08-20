@@ -217,6 +217,13 @@ export class CompatibleData {
         return this.fileContent(this.dataPath + "/" + fileName);
     }
 
+    private getTransferTicketFile(name : string) : string {
+        if (this.version == 1)
+            return null;
+
+        return this.fileContent(this.dataPath + "/" + name + ".tt.json");
+    }
+
     public async getDocument(did: string, type: string = null): Promise<DIDDocument> {
         let baseKey = "res:did:" + did;
         let key = type != null ? baseKey + ":" + type : baseKey;
@@ -340,6 +347,21 @@ export class CompatibleData {
         return file;
     }
 
+    public async getTransferTicket(did : string) : Promise<TransferTicket> {
+        if (this.version == 1)
+            throw new Exceptions.UnsupportedOperationException("Not exists");
+
+        let key = "res:tt:" + did;
+        if (this.data[key] !== null &&
+            this.data[key] !== undefined)
+                return this.data[key] as TransferTicket;
+
+        // load the presentation
+        let tt = await TransferTicket.parseContent(this.getTransferTicketFile(did));
+
+        this.data[key] = tt;
+        return tt;
+    }
 
     public getStoreDir(): string {
         return this.storePath;
