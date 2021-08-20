@@ -1509,6 +1509,7 @@ class DIDDocumentProofSerializer extends Serializer {
         doc.controllerDocs = new ComparableMap<DID, DIDDocument>(this.controllerDocs);
         if (this.multisig != null)
             doc.multisig = DIDDocumentMultiSignature.newFromMultiSignature(this.multisig);
+        doc.effectiveController = this.effectiveController;
         doc.publicKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.publicKeys);
         doc.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.authenticationKeys);
         doc.authorizationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.authorizationKeys);
@@ -1529,6 +1530,7 @@ class DIDDocumentProofSerializer extends Serializer {
 
         doc.controllers = this.controllers;
         doc.controllerDocs = this.controllerDocs;
+        doc.effectiveController = this.effectiveController;
         doc.multisig = this.multisig;
         doc.publicKeys = this.publicKeys;
         doc._publickeys = this._publickeys;
