@@ -437,23 +437,23 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         if (!context && this.repr)
             return this.repr;
 
-        let base = "";
+        let result = "";
         if (this.did != null && (context == null || !this.did.equals(context)))
-            base += this.did;
+            result += this.did;
 
         if (this.path != null && this.path !== "")
-            base += this.path;
+            result += this.path;
 
         if (this.query != null && this.query.size != 0)
-            base += "?" + this.getQueryString();
+            result += "?" + this.getQueryString();
 
         if (this.fragment != null && this.fragment !== "")
-            base += "#" + this.getFragment();
+            result += "#" + this.getFragment();
 
         if (!context)
-            this.repr = base;
+            this.repr = result;
 
-        return base;
+        return result;
     }
 
     public equals(obj: unknown): boolean {
