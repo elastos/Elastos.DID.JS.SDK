@@ -99,7 +99,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
 
     @JsonAnySetter()
     protected put(name: string, value: JSONValue | Date ) {
-        if  (!value)
+        if  (value === null || value === undefined)
             delete this.props[name];
         else
             this.props[name] = value instanceof Date ? value.toISOString() : value;
