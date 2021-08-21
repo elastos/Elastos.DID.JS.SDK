@@ -774,4 +774,175 @@ describe("DIDStore Tests", ()=>{
         expect(restoreDir.exists()).toBeTruthy();
         expect(Utils.equals(restoreDir, storeDir)).toBeTruthy();
     });
+
+    test("testImportCompatible", async ()=>{
+        await testData.getRootIdentity();
+
+        let cb = testData.getCompatibleData(2);
+
+        let exportFile = new File(cb.getDataPath(), "store-export.zip");
+
+        let tempDir = new File(TestConfig.tempDir);
+        tempDir.createDirectory();
+        let restoreDir = new File(tempDir, "imported-store");
+        Utils.deleteFile(restoreDir);
+
+        let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
+        await store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
+
+        // Root identity
+        let ids = await store2.listRootIdentities();
+        expect(ids.length).toBe(1);
+        expect(ids[0].getId()).toEqual("d2f3c0f07eda4e5130cbdc59962426b1");
+        expect(ids[0].getIndex()).toBe(5);
+
+        // DIDs
+        let dids = await store2.listDids();
+        expect(dids.length).toBe(10);
+
+        let user1Did = new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y");
+        let user2Did = new DID("did:elastos:idwuEMccSpsTH4ZqrhuHqg6y8XMVQAsY5g");
+        let user3Did = new DID("did:elastos:igXiyCJEUjGJV1DMsMa4EbWunQqVg97GcS");
+        let user4Did = new DID("did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d");
+        let issuerDid = new DID("did:elastos:imUUPBfrZ1yZx6nWXe6LNN59VeX2E6PPKj");
+        let exampleDid = new DID("did:elastos:example");
+        let fooDid = new DID("did:elastos:foo");
+        let foobarDid = new DID("did:elastos:foobar");
+        let barDid = new DID("did:elastos:bar");
+        let bazDid = new DID("did:elastos:baz");
+
+        for (let i = 0; i < dids.length; i++) {
+            let d = dids[i];
+            expect(d.equals(user1Did) || d.equals(user2Did) || d.equals(user3Did) ||
+                    d.equals(user4Did) || d.equals(issuerDid) || d.equals(exampleDid) ||
+                    d.equals(fooDid) || d.equals(foobarDid) || d.equals(barDid) || d.equals(bazDid));
+        }
+
+        // DID: User1
+        let doc = await store2.loadDid(user1Did);
+        expect(doc).not.toBeNull();
+        expect(doc.getMetadata().getAlias()).toEqual("User1");
+        await doc.publish(TestConfig.storePass);
+
+        //List<String> names = new ArrayList<String>();
+        let names : string[] = [];
+        names.push("email");
+        names.push("json");
+        names.push("passport");
+        names.push("profile");
+        names.push("twitter");
+
+        let vcIds = await store2.listCredentials(user1Did);
+        expect(vcIds.length).toBe(names.length);
+        for (let id of vcIds) {
+            let vc = await store2.loadCredential(id);
+            expect(vc).not.toBeNull();
+            delete names[vc.getId().getFragment()];
+        }
+        expect(names.length).toBe(0);
+
+        // DID: User2
+        doc = await store2.loadDid(user2Did);
+        expect(doc).not.toBeNull();
+        expect(doc.getMetadata().getAlias()).toEqual("User2");
+        await doc.publish(TestConfig.storePass);
+
+        vcIds = await store2.listCredentials(user2Did);
+        expect(vcIds.length).toBe(1);
+        expect(vcIds[0].getFragment()).toEqual("profile");
+        let vc = await store2.loadCredential(vcIds[0]);
+        expect(vc).not.toBeNull();
+
+        // DID: User3
+        doc = await store2.loadDid(user3Did);
+        expect(doc).not.toBeNull();
+        expect(doc.getMetadata().getAlias()).toEqual("User3");
+        await doc.publish(TestConfig.storePass);
+
+        vcIds = await store2.listCredentials(user3Did);
+        expect(vcIds.length).toBe(0);
+
+        // DID: User4
+        doc = await store2.loadDid(user4Did);
+        expect(doc).not.toBeNull();
+        expect(doc.getMetadata().getAlias()).toEqual("User4");
+        await doc.publish(TestConfig.storePass);
+
+        vcIds = await store2.listCredentials(user4Did);
+        expect(vcIds.length).toBe(0);
+
+        // DID: Issuer
+        doc = await store2.loadDid(issuerDid);
+        expect(doc).not.toBeNull();
+        expect(doc.getMetadata().getAlias()).toEqual("Issuer");
+        await doc.publish(TestConfig.storePass);
+
+        vcIds = await store2.listCredentials(issuerDid);
+        expect(vcIds.length).toBe(1);
+        expect(vcIds[0].getFragment()).toEqual("profile");
+        vc = await store2.loadCredential(vcIds[0]);
+        expect(vc).not.toBeNull();
+
+        // DID: Example
+        doc = await store2.loadDid(exampleDid);
+        expect(doc).not.toBeNull();
+        await doc.publish(TestConfig.storePass);
+
+        vcIds = await store2.listCredentials(exampleDid);
+        expect(vcIds.length).toBe(1);
+        expect(vcIds[0].getFragment()).toEqual("profile");
+        vc = await store2.loadCredential(vcIds[0]);
+        expect(vc).not.toBeNull();
+
+        // DID: Foo
+        doc = await store2.loadDid(fooDid);
+        expect(doc).not.toBeNull();
+        doc.setEffectiveController(new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"));
+        await doc.publish(TestConfig.storePass);
+
+        vcIds = await store2.listCredentials(fooDid);
+        expect(vcIds.length).toBe(1);
+        expect(vcIds[0].getFragment()).toEqual("email");
+        vc = await store2.loadCredential(vcIds[0]);
+        expect(vc).not.toBeNull();
+
+        // DID: FooBar
+        doc = await store2.loadDid(foobarDid);
+        expect(doc).not.toBeNull();
+        doc.setEffectiveController(new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"));
+        await doc.publish(TestConfig.storePass);
+
+        names = [];
+        names.push("email");
+        names.push("license");
+        names.push("profile");
+        names.push("services");
+
+        vcIds = await store2.listCredentials(foobarDid);
+        expect(vcIds.length).toBe(names.length);
+        for (let id of vcIds) {
+            let vc = await store2.loadCredential(id);
+            expect(vc).not.toBeNull();
+            delete names[vc.getId().getFragment()];
+        }
+        expect(names.length).toBe(0);
+
+        // DID: Bar
+        doc = await store2.loadDid(barDid);
+        expect(doc).not.toBeNull();
+        doc.setEffectiveController(new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"));
+        await doc.publish(TestConfig.storePass);
+
+        vcIds = await store2.listCredentials(barDid);
+        expect(vcIds.length).toBe(0);
+
+        // DID: Baz
+        doc = await store2.loadDid(bazDid);
+        expect(doc).not.toBeNull();
+        doc.setEffectiveController(new DID("did:elastos:iXcRhYB38gMt1phi5JXJMjeXL2TL8cg58y"));
+        await doc.publish(TestConfig.storePass);
+
+        vcIds = await store2.listCredentials(bazDid);
+        expect(vcIds.length).toBe(0);
+    });
 });

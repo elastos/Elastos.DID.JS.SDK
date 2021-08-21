@@ -97,7 +97,7 @@ describe('VerifiablePresentation Tests', () => {
                 expect(vp.getId()).toBeNull();
             else
                 expect(vp.getId()).not.toBeNull();
-                
+
             expect(vp.getType().length).toBe(1);
             expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
             expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
@@ -152,7 +152,7 @@ describe('VerifiablePresentation Tests', () => {
         let entryParts = entry.split(',');
         let did = entryParts[0];
         let presentation = entryParts[1];
-        test('testParseAndSerializeNonempty', async () => {
+        test('testParseAndSerialize', async () => {
             let version = 2;
             let cd = testData.getCompatibleData(version);
             // For integrity check

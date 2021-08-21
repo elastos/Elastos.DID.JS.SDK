@@ -2068,7 +2068,7 @@ describe('DIDDocument Tests', () => {
         expect(doc.getServiceCount()).toBe(0);
     })
 
-    test("testParseAndSerializeDocument", async () => {
+    test("testParseAndSerialize", async () => {
         let version = 2;
         let cd = testData.getCompatibleData(version);
         await cd.loadAll();
