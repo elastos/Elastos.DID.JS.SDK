@@ -174,6 +174,10 @@ export class CompatibleData {
         this.version = version;
     }
 
+    public getDataPath() : string {
+        return this.dataPath;
+    }
+
     public isLatestVersion(): boolean {
         return this.version == 2;
     }

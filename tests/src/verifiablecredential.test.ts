@@ -218,7 +218,7 @@ describe('let Tests', () => {
         await expect(await vc.isValid()).toBeTruthy();
     });
 
-    test('testParseAndSerializeJsonCredential', async () => {
+    test('testParseAndSerialize', async () => {
         let csvSource = [
             {did:"user1", vc:"twitter"},
             {did:"user1", vc:"passport"},
@@ -279,7 +279,7 @@ describe('let Tests', () => {
 
             await expect(await credential.isValid(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
-            listener.reset();       
+            listener.reset();
         }
     });
 
