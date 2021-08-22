@@ -775,7 +775,7 @@ describe("DIDStore Tests", ()=>{
         expect(Utils.equals(restoreDir, storeDir)).toBeTruthy();
     });
 
-    test("testImportCompatible", async ()=>{
+    /*test("testImportCompatible", async ()=>{
         await testData.getRootIdentity();
 
         let cb = testData.getCompatibleData(2);
@@ -944,5 +944,5 @@ describe("DIDStore Tests", ()=>{
 
         vcIds = await store2.listCredentials(bazDid);
         expect(vcIds.length).toBe(0);
-    });
+    });*/
 });
