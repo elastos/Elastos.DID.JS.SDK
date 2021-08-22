@@ -1188,7 +1188,7 @@ import { readFileSync, writeFileSync } from "./fs";
             let identities = await this.listRootIdentities();
             for (let identity of identities) {
                 let data = await this.exportRootIdentity(identity.getId(), password, storepass);
-                zip.file("rootidentity-" + identity.getId(), data);
+                zip.file("rootIdentity-" + identity.getId(), data);
             }
 
             let file = new File(zipFile);
@@ -1220,13 +1220,12 @@ import { readFileSync, writeFileSync } from "./fs";
                 let zip = await JSZip.loadAsync(data);
                 zip.forEach((relativePath, zipEntry) => {
                     let promise = zip.file(relativePath).async("string").then(async (content) => {
-                        if (relativePath.startsWith("rootidentity-"))
+                        if (relativePath.startsWith("rootIdentity-"))
                             await this.importRootIdentity(content, password, storepass);
                         else if (relativePath.startsWith("did-"))
                             await this.importDid(content, password, storepass);
                         else
                             console.log("Skip unknow export entry: " + relativePath);
-
                     });
 
                     promises.push(promise);
@@ -1326,8 +1325,8 @@ export namespace DIDStore {
         "type",
         "id",
         "document",
-        "credentials",
-        "privatekeys",
+        "credential",
+        "privateKey",
         "created",
         "fingerprint"]})
     @JsonInclude({value : JsonIncludeType.NON_NULL})
@@ -1345,7 +1344,7 @@ export namespace DIDStore {
         @JsonProperty({ value: "credential"})
         @JsonClassType({type: () => [Array, [DIDExport.Credential]]})
         private credentials: DIDExport.Credential[] = [];
-        @JsonProperty({ value: "privatekey"})
+        @JsonProperty({ value: "privateKey"})
         @JsonClassType({type: () => [Array, [DIDExport.PrivateKey]]})
         private privatekeys: DIDExport.PrivateKey[] = [];
         @JsonProperty({value: "created"})
@@ -1408,28 +1407,28 @@ export namespace DIDStore {
 
         private calculateFingerprint(exportpass: string): string {
             let hash = createHash('sha256');
-            hash.update(exportpass);
-            hash.update(this.type);
-            hash.update(this.id.toString());
-            hash.update(this.document.content.toString(true));
+            hash.update(Buffer.from(exportpass, "utf-8"));
+            hash.update(Buffer.from(this.type, "utf-8"));
+            hash.update(Buffer.from(this.id.toString(), "utf-8"));
+            hash.update(Buffer.from(this.document.content.toString(true), "utf-8"));
             if (this.document.metadata)
-                hash.update(this.document.metadata.toString(true));
+                hash.update(Buffer.from(this.document.metadata.toString(true), "utf-8"));
             if (this.credentials) {
                 for (let vc of this.credentials) {
-                    hash.update(vc.toString());
+                    hash.update(Buffer.from(vc.toString(), "utf-8"));
                     if (vc.metadata)
-                        hash.update(vc.metadata.toString());
+                        hash.update(Buffer.from(vc.metadata.toString(), "utf-8"));
                 }
             }
 
             for (let sk of this.privatekeys) {
-                hash.update(sk.id.toString());
-                hash.update(sk.key);
+                hash.update(Buffer.from(sk.id.toString(), "utf-8"));
+                hash.update(Buffer.from(sk.key, "utf-8"));
             }
 
-            hash.update(this.created.toUTCString());
+            hash.update(Buffer.from(this.created.toISOString().split('.')[0]+"Z", "utf-8"));
             let digest = hash.digest();
-            return BASE64.fromHex(digest);
+            return BASE64.toUrlFormat(digest.toString("base64"));
         }
 
         public seal(exportpass: string): DIDExport {
@@ -1556,7 +1555,7 @@ export namespace DIDStore {
         }
     }
 
-    @JsonPropertyOrder({ value: [ "type", "mnemonic", "privatekey", "publickey",
+    @JsonPropertyOrder({ value: [ "type", "mnemonic", "privateKey", "publicKey",
         "index", "default",  "created", "fingerprint"]})
     @JsonInclude({value : JsonIncludeType.NON_NULL})
     export class RootIdentityExport extends DIDEntity<RootIdentityExport> {
@@ -1630,18 +1629,19 @@ export namespace DIDStore {
 
         private calculateFingerprint(exportpass: string): string {
             let hash = createHash("sha256");
-            hash.update(exportpass);
-            hash.update(this.type);
+            hash.update(Buffer.from(exportpass, "utf-8"));
+            hash.update(Buffer.from(this.type, "utf-8"));
             if (this.mnemonic)
-                hash.update(this.mnemonic);
-            hash.update(this.privatekey);
-            hash.update(this.publickey);
-            hash.update(this.index.toString());
-            hash.update(this.default.toString());
-            hash.update(this.created.toUTCString());
+                hash.update(Buffer.from(this.mnemonic, "utf-8"));
+
+            hash.update(Buffer.from(this.privatekey, "utf-8"));
+            hash.update(Buffer.from(this.publickey, "utf-8"));
+            hash.update(Buffer.from(this.index.toString(), "utf-8"));
+            hash.update(Buffer.from(this.default.toString(), "utf-8"));
+            hash.update(Buffer.from(this.created.toISOString().split('.')[0]+"Z", "utf-8"));
 
             let digest = hash.digest();
-            return BASE64.fromHex(digest);
+            return BASE64.toUrlFormat(digest.toString("base64"));
         }
 
         public seal(exportpass: string): RootIdentityExport {

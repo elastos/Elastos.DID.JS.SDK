@@ -26,9 +26,9 @@ import type {
     JsonParserTransformerContext
 } from "@elastosfoundation/jackson-js";
 import type { Class } from "./class";
-import { 
-    DID, 
-    Logger 
+import {
+    DID,
+    Logger
 } from "./internals";
 import {
     DIDSyntaxException,
