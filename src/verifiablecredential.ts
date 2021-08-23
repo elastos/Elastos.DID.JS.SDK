@@ -651,7 +651,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             json.issuanceDate = this.dateToString(this.issuanceDate);
         if (this.expirationDate)
             json.expirationDate = this.dateToString(this.expirationDate);
-        json.subject = this.subject.toJSON(key);
+        json.credentialSubject = this.subject.toJSON(key);
 
         if (this.proof)
             json.proof = this.proof.toJSON(key);
@@ -660,11 +660,11 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
     }
 
     protected fromJSON(json: JSONObject, context: DID = null): void {
-        if (!json.subject)
+        if (!json.credentialSubject)
             throw new MalformedCredentialException("Missing property: subject");
 
-        let subject = json.subject as JSONObject;
-        let holder = this.getDid("subject.id", subject.id,
+        let subject = json.credentialSubject as JSONObject;
+        let holder = this.getDid("credentialSubject.id", subject.id,
                 {mandatory: false, nullable: false, defaultValue: context});
         if (!holder)
             throw new MalformedCredentialException("Missing property: subject.id");

@@ -107,9 +107,9 @@ export class DIDDocumentProof extends DIDEntity<DIDDocumentProof> implements Com
                 {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
         this.created = this.getDate("proof.created", json.created,
                 {mandatory: false});
-        this.creator = this.getDidUrl("proof.creator", json.verificationMethod,
+        this.creator = this.getDidUrl("proof.creator", json.creator,
                 {mandatory: true, nullable: false, context: context});
-        this.signature = this.getString("proof.signature", json.signature,
+        this.signature = this.getString("proof.signatureValue", json.signatureValue,
                 {mandatory: true, nullable: false});
     }
 }
