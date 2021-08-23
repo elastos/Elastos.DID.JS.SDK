@@ -21,13 +21,12 @@
  */
 
 import type { DIDAdapter } from "@elastosfoundation/did-js-sdk";
-import { DIDBackend, SimulatedIDChain, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
+import { DIDBackend, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
 import { Web3Adapter } from "../backend/web3adapter";
 import { TestConfig } from "./testconfig";
 
 export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource */ {
     private static adapter: DIDAdapter;
-    private static simChain: SimulatedIDChain;
 
     public static setup(/* name: string */) {
         // Force load TestConfig first!!!
@@ -44,11 +43,9 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
                 "http://127.0.0.1:9123");
         // }
 
-        if (DIDTestExtension.adapter == null) {
-            DIDTestExtension.simChain = new SimulatedIDChain();
-            //simChain.start();
-            DIDTestExtension.adapter = DIDTestExtension.simChain.getAdapter();
-        }
+        // if (DIDTestExtension.adapter == null) {
+        //     DIDTestExtension.adapter = DIDTestExtension.simChain.getAdapter();
+        // }
 
         DIDBackend.initialize(DIDTestExtension.adapter);
     }

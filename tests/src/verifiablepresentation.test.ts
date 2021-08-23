@@ -97,7 +97,7 @@ describe('VerifiablePresentation Tests', () => {
                 expect(vp.getId()).toBeNull();
             else
                 expect(vp.getId()).not.toBeNull();
-                
+
             expect(vp.getType().length).toBe(1);
             expect(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE).toEqual(vp.getType()[0]);
             expect(user.getSubject().equals(vp.getHolder())).toBeTruthy();
@@ -166,7 +166,7 @@ describe('VerifiablePresentation Tests', () => {
 
             let normalizedJson = cd.getPresentationJson(did, presentation, "normalized");
 
-            let normalized = await VerifiablePresentation.parseContent(normalizedJson);
+            let normalized = VerifiablePresentation.parse(normalizedJson);
             expect(normalized).not.toBeNull();
             await expect(await normalized.isGenuine()).toBeTruthy();
             await expect(await normalized.isValid()).toBeTruthy();

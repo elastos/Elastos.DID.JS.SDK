@@ -2084,12 +2084,12 @@ describe('DIDDocument Tests', () => {
 
         for(const did of dids){
             let compactJson = cd.getDocumentJson(did, "compact");
-            let compact = await DIDDocument.parse<DIDDocument>(compactJson, DIDDocument);
+            let compact = await DIDDocument.parseAsync(compactJson);
             expect(compact).not.toBeNull();
             expect(compact.isValid()).toBeTruthy();
 
             let normalizedJson = cd.getDocumentJson(did, "normalized");
-            let normalized = await DIDDocument.parse<DIDDocument>(normalizedJson, DIDDocument);
+            let normalized = await DIDDocument.parseAsync(normalizedJson);
             expect(normalized).not.toBeNull();
             expect(normalized.isValid()).toBeTruthy();
 
@@ -2129,27 +2129,27 @@ describe('DIDDocument Tests', () => {
         let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
         for(const did of dids){
             let compactJson = cd.getDocumentJson(did, "compact");
-            let compact = await DIDDocument.parse<DIDDocument>(compactJson, DIDDocument);
+            let compact = await DIDDocument.parseAsync(compactJson);
             expect(compact).not.toBeNull();
             expect(compact.isValid()).toBeTruthy();
 
             expect(compact.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
-    
+
             expect(compact.isValid(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
 
             let normalizedJson = cd.getDocumentJson(did, "normalized");
-            let normalized = await DIDDocument.parse<DIDDocument>(normalizedJson, DIDDocument);
+            let normalized = await DIDDocument.parseAsync(normalizedJson);
             expect(normalized).not.toBeNull();
             expect(normalized.isValid()).toBeTruthy();
 
             expect(normalized.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
-    
+
             expect(normalized.isValid(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
@@ -2161,7 +2161,7 @@ describe('DIDDocument Tests', () => {
             expect(doc.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
-    
+
             expect(doc.isValid(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
@@ -2235,7 +2235,7 @@ describe('DIDDocument Tests', () => {
             expect(sk).toEqual(key.getPrivateKeyBytes());
         }
     })
-    
+
     test("testCreateCustomizedDid", async () => {
         let identity = await testData.getRootIdentity();
 
@@ -2342,7 +2342,7 @@ describe('DIDDocument Tests', () => {
         let docctrls = doc.getControllers();
         docctrls.sort();
         expect(ctrls.length).toBe(docctrls.length);
-    
+
         for (let i = 0; i < ctrls.length; i++)
             expect(ctrls[i].equals(docctrls[i])).toBeTruthy();
 

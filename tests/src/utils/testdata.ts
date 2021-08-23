@@ -224,7 +224,7 @@ export class CompatibleData {
             return this.data[key];
 
         // load the document
-        let doc = await DIDDocument.parseContent(this.getDidFile(did, type));
+        let doc = await DIDDocument.parseAsync(this.getDidFile(did, type));
 
         if (!(baseKey in this.data)) {
             // If not stored before, store it and load private keys
@@ -282,7 +282,7 @@ export class CompatibleData {
         if (this.data[key] !== null && this.data[key] !== undefined)
             return this.data[key];
 
-        let credential = await VerifiableCredential.parseContent(this.getCredentialFile(did, vc, type));
+        let credential = await VerifiableCredential.parse(this.getCredentialFile(did, vc, type));
 
         await this.testData.store.storeCredential(credential);
 
@@ -317,7 +317,7 @@ export class CompatibleData {
             return  this.data[key];
 
         // load the presentation
-        let presentation = VerifiablePresentation.parseContent(this.getPresentationFile(did, vp, type));
+        let presentation = VerifiablePresentation.parse(this.getPresentationFile(did, vp, type));
         this.data[key] = presentation;
         return presentation;
     }
