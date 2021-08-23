@@ -87,7 +87,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
     }
 
     public getId(): DIDURL {
-        return this.id;
+        return this.id ? this.id : null;
     }
 
     /**
@@ -338,7 +338,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
     public toJSON(key: string = null): JSONObject {
         let json: JSONObject = {};
-        json.id = this.id.toString();
+        if (this.id)
+            json.id = this.id.toString();
         json.type = this.type.length == 1 ? this.type[0] : this.type;
         if (this.holder)
             json.holder = this.holder.toString();
@@ -355,7 +356,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
     protected fromJSON(json: JSONObject, context: DID = null): void {
         this.holder = this.getDid("holder", json.holder, {mandatory: false, nullable: false, defaultValue: null});
-        this.id = this.getDidUrl("id", json.id, {mandatory: true, nullable: false, context: this.holder});
+        this.id = this.getDidUrl("id", json.id, {mandatory: false, nullable: false, context: this.holder, defaultValue: null});
         this.type = this.getStrings("type", json.type,
                     {mandatory: true, nullable: false, defaultValue: [VerifiablePresentation.DEFAULT_PRESENTATION_TYPE]});
         this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
