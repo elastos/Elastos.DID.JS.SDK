@@ -285,8 +285,12 @@ export class DIDBackend {
                     this.constructWithIDChainRequest(request);
                 }
 
-                getSignerDocument(): Promise<DIDDocument> {
-                    return Promise.resolve(this.getDocument() == null ? doc : this.getDocument());
+                protected async getSignerDocument(): Promise<DIDDocument> {
+                    let sd = this.getDocument() == null ? doc : this.getDocument();
+                    if (sd.isCustomizedDid())
+                        await sd.resolveControllers();
+
+                    return sd;
                 }
             }(tx.getRequest());
 
@@ -308,6 +312,7 @@ export class DIDBackend {
             throw new DIDResolveException("Invalid ID transaction, signature mismatch.");
 
         let doc = tx.getRequest().getDocument().clone();
+        await doc.resolveControllers();
         let metadata = doc.getMetadata();
         metadata.setTransactionId(tx.getTransactionId());
         metadata.setSignature(doc.getProof().getSignature());

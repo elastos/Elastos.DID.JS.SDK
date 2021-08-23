@@ -315,6 +315,10 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
     protected async getSignerDocument(): Promise<DIDDocument> {
         if (this.doc == null)
             this.doc = await this.did.resolve();
+        else {
+            if (this.doc.isCustomizedDid())
+                await this.doc.resolveControllers();
+        }
 
         return this.doc;
     }
