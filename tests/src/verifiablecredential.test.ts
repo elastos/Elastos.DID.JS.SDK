@@ -233,10 +233,10 @@ describe('let Tests', () => {
 
         for (let csv of csvSource) {
             let normalizedJson = cd.getCredentialJson(csv.did, csv.vc, "normalized");
-            let normalized = await VerifiableCredential.parseContent(normalizedJson);
+            let normalized = VerifiableCredential.parse(normalizedJson);
 
             let compactJson = cd.getCredentialJson(csv.did, csv.vc, "compact");
-            let compact = await VerifiableCredential.parseContent(compactJson);
+            let compact = VerifiableCredential.parse(compactJson);
 
             let credential = await cd.getCredential(csv.did, csv.vc);
 
@@ -279,7 +279,7 @@ describe('let Tests', () => {
 
             await expect(await credential.isValid(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
-            listener.reset();       
+            listener.reset();
         }
     });
 
