@@ -221,6 +221,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return true if has, otherwise false
      */
     public hasController(did: DID = null): boolean {
+        if (this.controllers == null || this.controllers == undefined)
+            return false;
+
         if (did)
             return this.controllers.find((d) => d.equals(did)) !== undefined;
         else
