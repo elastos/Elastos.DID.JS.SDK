@@ -23,7 +23,7 @@ describe('TransferTicket Tests', () => {
 
         let ticket = await td.getFooBarTransferTicket();
         let json = ticket.serialize();
-        let parsedTicket = await TransferTicket.parse(json, TransferTicket);
+        let parsedTicket = TransferTicket.parse(json);
 
         expect(parsedTicket.getSubject().equals(ticket.getSubject())).toBeTruthy();
         expect(parsedTicket.getTo().equals(ticket.getTo())).toBeTruthy();
@@ -39,7 +39,7 @@ describe('TransferTicket Tests', () => {
 
         let ticket = await td.getBazTransferTicket();
         let json = ticket.serialize();
-        let parsedTicket = await TransferTicket.parse(json, TransferTicket);
+        let parsedTicket = TransferTicket.parse(json);
 
         expect(parsedTicket.getSubject().equals(ticket.getSubject())).toBeTruthy();
         expect(parsedTicket.getTo().equals(ticket.getTo())).toBeTruthy();
