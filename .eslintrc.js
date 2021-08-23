@@ -5,12 +5,15 @@ module.exports = {
         project: "./tsconfig.json"
     },
     plugins: [
-      '@typescript-eslint'
+      '@typescript-eslint',
+      'import'
     ],
     extends: [
       'eslint:recommended',
       'plugin:node/recommended',
       'plugin:@typescript-eslint/recommended',
+      'plugin:import/recommended',
+      'plugin:import/typescript'
     ],
     rules: {
         // Generic JS
@@ -52,6 +55,8 @@ module.exports = {
         "@typescript-eslint/no-this-alias": "off",
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/no-empty-interface": "off"
+        "@typescript-eslint/no-empty-interface": "off",
+
+        "import/no-unresolved": "error"
     }
 };
