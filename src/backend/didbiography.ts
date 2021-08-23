@@ -138,7 +138,7 @@ export class DIDBiography extends ResolveResponse.Result<DIDBiography> {
         json.status = this.status.toString();
 
         if (this.txs && this.txs.length > 0)
-            json.txs = Array.from(this.txs, (tx) => tx.toJSON())
+            json.transaction = Array.from(this.txs, (tx) => tx.toJSON())
 
         return json;
 
@@ -151,15 +151,15 @@ export class DIDBiography extends ResolveResponse.Result<DIDBiography> {
         this.status = DIDBiographyStatus.fromValue(s);
 
         if (!this.status.equals(DIDBiographyStatus.NOT_FOUND)) {
-            if (!json.txs)
+            if (!json.transaction)
                 throw new MalformedResolveResultException("Missing transaction");
 
-            if (!Array.isArray(json.txs) || json.txs.length == 0)
+            if (!Array.isArray(json.transaction) || json.transaction.length == 0)
                 throw new MalformedResolveResultException("Invalid transaction");
 
-            this.txs = Array.from(json.txs, (o) => DIDTransaction.parse(o as JSONObject));
+            this.txs = Array.from(json.transaction, (o) => DIDTransaction.parse(o as JSONObject));
         } else {
-            if (json.txs)
+            if (json.transaction)
                 throw new MalformedResolveResultException("Should not include transaction");
         }
     }

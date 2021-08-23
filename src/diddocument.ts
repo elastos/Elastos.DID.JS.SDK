@@ -221,9 +221,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return true if has, otherwise false
      */
     public hasController(did: DID = null): boolean {
-        if (this.controllers == null || this.controllers == undefined)
-            return false;
-
         if (did)
             return this.controllers.find((d) => d.equals(did)) !== undefined;
         else
@@ -859,7 +856,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let json: JSONObject = {};
         json.id = this.subject.toString();
 
-        if (this.controllers)
+        if (this.controllers.length > 0)
             json.controller = this.controllers.length == 1 ? this.controllers[0].toString() :
                     Array.from(this.controllers, (c) => c.toString());
 
@@ -898,7 +895,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
     protected async fromJSON(json: JSONObject, context: DID = null): Promise<void> {
         this.fromJSONOnly(json, context);
-        if (this.controllers && this.controllers.length > 0)
+        if (this.controllers.length > 0)
             await this.resolveControllers();
     }
 
@@ -927,14 +924,14 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     private fromJSONOnly(json: JSONObject, context: DID = null): void {
         this.subject = this.getDid("id", json.id, {mandatory: false, nullable: false, defaultValue: null});
         context = this.subject; // set the JSON parser context
-        this.controllers = this.getDids("controller", json.controller, {mandatory: false, nullable: false});
+        this.controllers = this.getDids("controller", json.controller, {mandatory: false, nullable: false, defaultValue: []});
         let ms = this.getString("multisig", json.multisig, {mandatory: false, nullable: false});
         if (ms)
             this.multisig = DIDDocumentMultiSignature.fromString(ms);
 
         this.controllerDocs = new ComparableMap<DID, DIDDocument>();
 
-        if (!this.controllers || this.controllers.length == 1) {
+        if (this.controllers.length <= 1) {
             if (this.multisig)
                 throw new MalformedDocumentException("Invalid multisig property");
         } else {
@@ -1039,7 +1036,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
         }
 
-        if (this.controllers) {
+        if (this.controllers.length > 0) {
             if (this.controllers.length == 1)
                 this.effectiveController = this.controllers[0];
         } else {
@@ -1060,7 +1057,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     }
                 }
             }
+
+            if (!this.defaultPublicKey)
+                throw new MalformedDocumentException("Missing default public key");
         }
+
         this.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
         if (json.verifiableCredential) {
             if (!Array.isArray(json.verifiableCredential))
