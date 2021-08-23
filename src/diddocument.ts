@@ -883,7 +883,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (this.expires)
             json.expires = this.dateToString(this.expires);
 
-        if (this.proofs) {
+        if (this.proofs && this.proofs.size > 0) {
             let proofs = this.proofs.valuesAsSortedArray();
             if (proofs.length == 1)
                 json.proof = proofs[0].toJSON(key);
