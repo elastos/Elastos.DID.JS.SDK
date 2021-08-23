@@ -941,7 +941,10 @@ export class DIDDocumentBuilder {
         if (this.document.proofs.has(signerDoc.getSubject()))
             throw new AlreadySignedException(signerDoc.getSubject().toString());
 
+        let proofs = this.document.proofs;
+        this.document.proofs = null;
         let json = this.document.serialize(true);
+        this.document.proofs = proofs;
 
         let sig = await this.document.signWithId(signKey, storepass, Buffer.from(json));
         let proof = new DIDDocumentProof(signKey, sig);
