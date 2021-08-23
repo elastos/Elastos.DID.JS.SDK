@@ -154,7 +154,7 @@ export class CredentialBiography extends ResolveResponse.Result<CredentialBiogra
     protected fromJSON(json: JSONObject, context = null): void {
         this.id = this.getDidUrl("id", json.id, {mandatory: true, nullable: false});
 
-        let s = this.getString("status", json.status, {mandatory: true, nullable: false});
+        let s = this.getNumber("status", json.status, {mandatory: true, nullable: false});
         this.status = CredentialBiographyStatus.fromValue(s);
 
         if (!this.status.equals(CredentialBiographyStatus.NOT_FOUND)) {
