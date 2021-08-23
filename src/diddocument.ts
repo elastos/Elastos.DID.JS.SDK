@@ -899,7 +899,10 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             await this.resolveControllers();
     }
 
-    private async resolveControllers(): Promise<void> {
+    public async resolveControllers(): Promise<void> {
+        if (this.controllerDocs.size === this.controllers.length)
+            return;
+
         let ps: Promise<void>[] = [];
         for (let controller of this.controllers) {
             let rp = controller.resolve().then((doc) => {
