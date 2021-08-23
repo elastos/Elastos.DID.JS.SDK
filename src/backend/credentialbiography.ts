@@ -146,7 +146,7 @@ export class CredentialBiography extends ResolveResponse.Result<CredentialBiogra
         json.status = this.status.toString();
 
         if (this.txs && this.txs.length > 0)
-            json.txs = Array.from(this.txs, (tx) => tx.toJSON())
+            json.transaction = Array.from(this.txs, (tx) => tx.toJSON())
 
         return json;
     }
@@ -158,15 +158,15 @@ export class CredentialBiography extends ResolveResponse.Result<CredentialBiogra
         this.status = CredentialBiographyStatus.fromValue(s);
 
         if (!this.status.equals(CredentialBiographyStatus.NOT_FOUND)) {
-            if (!json.txs)
+            if (!json.transaction)
                 throw new MalformedResolveResultException("Missing transaction");
 
-            if (!Array.isArray(json.txs) || json.txs.length == 0)
+            if (!Array.isArray(json.transaction) || json.transaction.length == 0)
                 throw new MalformedResolveResultException("Invalid transaction");
 
-            this.txs = Array.from(json.txs, (o) => CredentialTransaction.parse(o as JSONObject));
+            this.txs = Array.from(json.transaction, (o) => CredentialTransaction.parse(o as JSONObject));
         } else {
-            if (json.txs)
+            if (json.transaction)
                 throw new MalformedResolveResultException("Should not include transaction");
         }
     }
