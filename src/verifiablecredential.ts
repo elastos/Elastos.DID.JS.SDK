@@ -779,8 +779,8 @@ export namespace VerifiableCredential {
             let context: DID = key ? new DID(key) : null;
 
             let json: JSONObject = {};
-            if (!context || !this.id.equals(context))
-                json.id = this.id.toString();
+            //if (!context || !this.id.equals(context))
+            json.id = this.id.toString();
 
             json = {...json, ...this.properties};
             return json;
