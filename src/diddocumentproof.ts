@@ -97,7 +97,7 @@ export class DIDDocumentProof extends DIDEntity<DIDDocumentProof> implements Com
             json.created = this.dateToString(this.created);
 
         json.creator = this.creator.toString(context);
-        json.signature = this.signature;
+        json.signatureValue = this.signature;
 
         return json;
     }
