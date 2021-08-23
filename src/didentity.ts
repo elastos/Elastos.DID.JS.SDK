@@ -150,9 +150,6 @@ export abstract class DIDEntity<T> {
             if (option.mandatory)
                 throw new DIDSyntaxException("Missing property: " + name);
 
-            if (!option.defaultValue && !option.nullable)
-                throw new DIDSyntaxException("Missing property: " + name);
-
             return option.defaultValue ? option.defaultValue as string : null;
         }
 
@@ -172,9 +169,6 @@ export abstract class DIDEntity<T> {
     protected getNumber(name: string, value: any, option: ValueOptions = {} as ValueOptions): number | null {
         if (typeof value === 'undefined') {
             if (option.mandatory)
-                throw new DIDSyntaxException("Missing property: " + name);
-
-            if (!option.defaultValue && !option.nullable)
                 throw new DIDSyntaxException("Missing property: " + name);
 
             return option.defaultValue ? option.defaultValue as number : null;
@@ -198,9 +192,6 @@ export abstract class DIDEntity<T> {
             if (option.mandatory)
                 throw new DIDSyntaxException("Missing property: " + name);
 
-            if (!option.defaultValue && !option.nullable)
-                throw new DIDSyntaxException("Missing property: " + name);
-
             return option.defaultValue ? option.defaultValue as boolean : null;
         }
 
@@ -220,9 +211,6 @@ export abstract class DIDEntity<T> {
     protected getStrings(name: string, value: any, option: ValueOptions = {} as ValueOptions): string[] | null {
         if (typeof value === 'undefined') {
             if (option.mandatory)
-                throw new DIDSyntaxException("Missing property: " + name);
-
-            if (!option.defaultValue && !option.nullable)
                 throw new DIDSyntaxException("Missing property: " + name);
 
             return option.defaultValue ? option.defaultValue as string[] : null;
@@ -254,9 +242,6 @@ export abstract class DIDEntity<T> {
     protected getDids(name: string, value: any, option: ValueOptions = {} as ValueOptions): DID[] | null {
         if (typeof value === 'undefined') {
             if (option.mandatory)
-                throw new DIDSyntaxException("Missing property: " + name);
-
-            if (!option.defaultValue && !option.nullable)
                 throw new DIDSyntaxException("Missing property: " + name);
 
             return option.defaultValue ? option.defaultValue as DID[] : null;
@@ -300,9 +285,6 @@ export abstract class DIDEntity<T> {
             if (option.mandatory)
                 throw new DIDSyntaxException("Missing property: " + name);
 
-            if (!option.defaultValue && !option.nullable)
-                throw new DIDSyntaxException("Missing property: " + name);
-
             return option.defaultValue ? option.defaultValue as Date : null;
         }
 
@@ -328,9 +310,6 @@ export abstract class DIDEntity<T> {
             if (option.mandatory)
                 throw new DIDSyntaxException("Missing property: " + name);
 
-            if (!option.defaultValue && !option.nullable)
-                throw new DIDSyntaxException("Missing property: " + name);
-
             return option.defaultValue ? option.defaultValue as DID : null;
         }
 
@@ -354,9 +333,6 @@ export abstract class DIDEntity<T> {
     protected getDidUrl(name: string, value: any, option: ValueOptions = {} as ValueOptions): DIDURL | null | undefined {
         if (typeof value === 'undefined') {
             if (option.mandatory)
-                throw new DIDSyntaxException("Missing property: " + name);
-
-            if (!option.defaultValue && !option.nullable)
                 throw new DIDSyntaxException("Missing property: " + name);
 
             return option.defaultValue ? option.defaultValue as DIDURL : null;

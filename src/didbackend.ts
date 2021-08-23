@@ -189,15 +189,15 @@ export class DIDBackend {
         try {
             switch (request.getMethod()) {
             case DIDResolveRequest.METHOD_NAME:
-                response = await DIDResolveResponse.parse(resolvedJson, DIDResolveResponse);
+                response = DIDResolveResponse.parse(resolvedJson, DIDResolveResponse);
                 break;
 
             case CredentialResolveRequest.METHOD_NAME:
-                response = await CredentialResolveResponse.parse(resolvedJson, CredentialResolveResponse);
+                response = CredentialResolveResponse.parse(resolvedJson, CredentialResolveResponse);
                 break;
 
             case CredentialListRequest.METHOD_NAME:
-                response = await CredentialListResponse.parse(resolvedJson, CredentialListResponse);
+                response = CredentialListResponse.parse(resolvedJson, CredentialListResponse);
                 break;
 
             default:
