@@ -25,7 +25,7 @@ import { DIDURL } from "../internals";
 import { DIDEntity } from "../internals";
 import { JSONObject } from "../json";
 import { MalformedResolveResultException } from "../exceptions/exceptions";
-import { ResolveResponse } from "./ResolveResponse";
+import { ResolveResponse } from "../internals";
 
 export class CredentialList extends ResolveResponse.Result<CredentialList> {
     public static DEFAULT_SIZE = 128;
