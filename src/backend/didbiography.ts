@@ -147,7 +147,7 @@ export class DIDBiography extends ResolveResponse.Result<DIDBiography> {
     protected fromJSON(json: JSONObject, context = null): void {
         this.did = super.getDid("did", json.did, {mandatory: true, nullable: false});
 
-        let s = this.getString("status", json.status, {mandatory: true, nullable: false});
+        let s = this.getNumber("status", json.status, {mandatory: true, nullable: false});
         this.status = DIDBiographyStatus.fromValue(s);
 
         if (!this.status.equals(DIDBiographyStatus.NOT_FOUND)) {

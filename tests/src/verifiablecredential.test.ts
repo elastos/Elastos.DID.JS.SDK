@@ -97,12 +97,12 @@ describe('let Tests', () => {
         expect("S653258Z07").toEqual(vc.getSubject().getProperty("passport"));
 
         expect(vc.getIssuanceDate()).not.toBeNull();
-        await expect(await vc.getExpirationDate()).not.toBeNull();
+        expect(await vc.getExpirationDate()).not.toBeNull();
 
         expect(vc.isSelfProclaimed()).toBeTruthy();
-        await expect(await vc.isExpired()).toBeFalsy();
-        await expect(await vc.isGenuine()).toBeTruthy();
-        await expect(await vc.isValid()).toBeTruthy();
+        expect(await vc.isExpired()).toBeFalsy();
+        expect(await vc.isGenuine()).toBeTruthy();
+        expect(await vc.isValid()).toBeTruthy();
     });
 
     test('testJsonCredential', async () => {

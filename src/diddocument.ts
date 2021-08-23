@@ -895,7 +895,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
     protected async fromJSON(json: JSONObject, context: DID = null): Promise<void> {
         this.fromJSONOnly(json, context);
-        await this.resolveControllers();
+        if (this.controllers && this.controllers.length > 0)
+            await this.resolveControllers();
     }
 
     private async resolveControllers(): Promise<void> {
@@ -930,7 +931,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         this.controllerDocs = new ComparableMap<DID, DIDDocument>();
 
-        if (this.controllers.length == 1) {
+        if (!this.controllers || this.controllers.length == 1) {
             if (this.multisig)
                 throw new MalformedDocumentException("Invalid multisig property");
         } else {
@@ -1035,6 +1036,28 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
         }
 
+        if (this.controllers) {
+            if (this.controllers.length == 1)
+                this.effectiveController = this.controllers[0];
+        } else {
+            if (!this.publicKeys || this.publicKeys.size == 0)
+                throw new MalformedDocumentException("Missing publicKeys");
+
+            for (let pk of this.publicKeys.values()) {
+                if (pk.getController().equals(this.subject)) {
+                    let address = HDKey.toAddress(pk.getPublicKeyBytes());
+                    if (address === this.subject.getMethodSpecificId()) {
+                        this.defaultPublicKey = pk;
+
+                        if (!this.authenticationKeys.has(pk.getId())) {
+                            this.authenticationKeys.set(pk.getId(), pk);
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
         this.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
         if (json.verifiableCredential) {
             if (!Array.isArray(json.verifiableCredential))
@@ -1045,7 +1068,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 let vcJson = obj as JSONObject;
 
                 try {
-                    vc = VerifiableCredential.deserialize(vcJson , VerifiableCredential, context);
+                    vc = VerifiableCredential.deserialize(vcJson, VerifiableCredential, context);
                 } catch (e) {
                     throw new MalformedDocumentException("Invalid verifiableCredential: " + vcJson.id, e);
                 }
@@ -1084,6 +1107,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (!json.proof)
             throw new MalformedDocumentException("Missing property: proof");
 
+        this.proofs = new ComparableMap<DID, DIDDocumentProof>();
         if (!Array.isArray(json.proof)) {
             let po = json.proof as JSONObject;
             let proof = DIDDocumentProof.deserialize(po, DIDDocumentProof, context);
