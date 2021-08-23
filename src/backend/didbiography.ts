@@ -24,8 +24,8 @@ import { DID } from "../internals";
 import { DIDEntity } from "../internals";
 import { JSONObject } from "../json";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
-import { ResolveResponse } from "./ResolveResponse";
-import { DIDTransaction } from "./didtransaction";
+import { ResolveResponse } from "../internals";
+import { DIDTransaction } from "../internals";
 
 export class DIDBiographyStatus {
     protected name: string;
