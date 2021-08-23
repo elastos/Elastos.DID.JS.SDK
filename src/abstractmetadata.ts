@@ -90,7 +90,10 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
     }
 
     protected put(name: string, value: JSONValue | Date ) {
-        this.props[name] = value instanceof Date ? value.toISOString() : value;
+        if  (value === null || value === undefined)
+            delete this.props[name];
+        else
+            this.props[name] = value instanceof Date ? value.toISOString() : value;
 
         this.save();
     }
