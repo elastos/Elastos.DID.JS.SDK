@@ -946,14 +946,14 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (!Array.isArray(json.publicKey))
                 throw new MalformedDocumentException("Invalid property: publicKey, type error.");
 
-            for (let obj of json.publicKey ) {
+            for (let o of json.publicKey) {
                 let pk: DIDDocumentPublicKey;
-                let pkJson = obj as JSONObject;
+                let obj = o as JSONObject;
 
                 try {
-                    pk = DIDDocumentPublicKey.deserialize(pkJson , DIDDocumentPublicKey, context);
+                    pk = DIDDocumentPublicKey.deserialize(obj , DIDDocumentPublicKey, context);
                 } catch (e) {
-                    throw new MalformedDocumentException("Invalid publicKey: " + pkJson.id, e);
+                    throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                 }
 
                 if (this.publicKeys.has(pk.getId()))

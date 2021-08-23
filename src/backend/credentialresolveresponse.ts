@@ -22,28 +22,14 @@
 
 import { CredentialBiography } from "./credentialbiography";
 import { ResolveError } from "./resolveerror";
-import { ResolveResponse, JsonRpcError } from "./resolveresponse";
+import { ResolveResponse } from "../internals";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 import { DIDEntity } from "../internals";
 import { JSONObject } from "../json";
 
 export class CredentialResolveResponse extends ResolveResponse<CredentialResolveResponse, CredentialBiography> {
-    constructor(responseId: string = null, resultOrError: CredentialBiography | ResolveError | JsonRpcError = null) {
-        super();
-        this.jsonrpc = ResolveResponse.JSON_RPC_VERSION;
-        this.id = responseId;
-        if (resultOrError instanceof ResolveError) {
-            this.error = new JsonRpcError(resultOrError.code, resultOrError.message);
-        } else if (resultOrError instanceof JsonRpcError) {
-            this.error = resultOrError;
-        }
-        if (resultOrError instanceof CredentialBiography) {
-            this.result = resultOrError
-        }
-    }
-
-    public getResult(): CredentialBiography {
-        return this.result;
+    constructor(responseId: string = null, resultOrError: CredentialBiography | ResolveError | ResolveResponse.JsonRpcError = null) {
+        super(responseId, resultOrError);
     }
 
     protected resultFromJson(json: JSONObject): CredentialBiography {

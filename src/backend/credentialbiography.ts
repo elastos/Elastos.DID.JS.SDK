@@ -23,8 +23,8 @@
 import { DIDURL } from "../internals";
 import { DIDEntity } from "../internals";
 import { IllegalArgumentException, MalformedResolveResultException } from "../exceptions/exceptions";
-import { CredentialTransaction } from "./credentialtransaction";
-import { ResolveResponse } from "./ResolveResponse";
+import { CredentialTransaction } from "../internals";
+import { ResolveResponse } from "../internals";
 import { JSONObject } from "../json";
 
 export class CredentialBiographyStatus {

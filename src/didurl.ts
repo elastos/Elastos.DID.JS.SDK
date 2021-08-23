@@ -305,7 +305,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
     public toString(base: DID = null): string {
         let output = "";
         if (this.did != null && (base == null || !this.did.equals(base)))
-            output += this.did;
+            output += this.did.toString();
 
         if (this.parameters != null && this.parameters.size != 0)
             output += ";" + this.getParametersString();

@@ -25,72 +25,21 @@ import { JSONObject } from "../json";
 import { ResolveError } from "./resolveerror";
 import { MalformedResolveResponseException } from "../exceptions/exceptions";
 
-export class JsonRpcError extends DIDEntity<JsonRpcError> {
-    private code: number;
-    private message: string;
-    private data: string;
-
-    constructor(code: number = 0, message: string = null, data: string = null) {
-        super();
-        this.code = code;
-        this.message = message;
-        this.data = data;
-    }
-
-    public getCode(): number {
-        return this.code;
-    }
-
-    public getMessage(): string {
-        return this.message;
-    }
-
-    public getData(): string {
-        return this.data;
-    }
-
-    public toJSON(key: string = null): JSONObject {
-        return {
-            code: this.code,
-            message: this.message,
-            data: this.data
-        }
-    }
-
-    protected fromJSON(json: JSONObject, context = null): void {
-        this.code = this.getNumber("code", json.code, {mandatory: true, nullable: false, defaultValue: 0});
-        this.message = this.getString("message", json.message, {mandatory: false, nullable: true});
-        this.data = this.getString("data", json.data, {mandatory: false, nullable: true});
-    }
-
-    public static parse(content: string | JSONObject, context = null): JsonRpcError {
-        try {
-            return DIDEntity.deserialize(content, JsonRpcError, context);
-        } catch (e) {
-            // DIDSyntaxException
-            if (e instanceof MalformedResolveResponseException)
-                throw e;
-            else
-                throw new MalformedResolveResponseException(e);
-        }
-    }
-}
-
 export abstract class ResolveResponse<T, R extends ResolveResponse.Result<R>> extends DIDEntity<T> {
     protected static JSON_RPC_VERSION = "2.0";
 
     protected id: string;
     protected jsonrpc: string;
     protected result: R;
-    protected error: JsonRpcError;
+    protected error: ResolveResponse.JsonRpcError;
 
-    protected constructor(responseId: string = null, resultOrError: R | ResolveError | JsonRpcError = null) {
+    protected constructor(responseId: string = null, resultOrError: R | ResolveError | ResolveResponse.JsonRpcError = null) {
         super();
         this.jsonrpc = ResolveResponse.JSON_RPC_VERSION;
         this.id = responseId;
         if (resultOrError instanceof ResolveError) {
-            this.error = new JsonRpcError(resultOrError.code, resultOrError.message);
-        } else if (resultOrError instanceof JsonRpcError) {
+            this.error = new ResolveResponse.JsonRpcError(resultOrError.code, resultOrError.message);
+        } else if (resultOrError instanceof ResolveResponse.JsonRpcError) {
             this.error = resultOrError;
         } else {
             this.result = resultOrError;
@@ -140,13 +89,64 @@ export abstract class ResolveResponse<T, R extends ResolveResponse.Result<R>> ex
             this.result = this.resultFromJson(json.result as JSONObject);
 
         if (json.error)
-            this.error = JsonRpcError.parse(json.error as JSONObject);
+            this.error = ResolveResponse.JsonRpcError.parse(json.error as JSONObject);
     }
 
     protected abstract resultFromJson(json: JSONObject): R;
 }
 
 export namespace ResolveResponse {
-    export abstract class Result<T> extends DIDEntity<T> {
+    export class JsonRpcError extends DIDEntity<JsonRpcError> {
+        private code: number;
+        private message: string;
+        private data: string;
+
+        constructor(code = 0, message: string = null, data: string = null) {
+            super();
+            this.code = code;
+            this.message = message;
+            this.data = data;
+        }
+
+        public getCode(): number {
+            return this.code;
+        }
+
+        public getMessage(): string {
+            return this.message;
+        }
+
+        public getData(): string {
+            return this.data;
+        }
+
+        public toJSON(key: string = null): JSONObject {
+            return {
+                code: this.code,
+                message: this.message,
+                data: this.data
+            }
+        }
+
+        protected fromJSON(json: JSONObject, context = null): void {
+            this.code = this.getNumber("code", json.code, {mandatory: true, nullable: false, defaultValue: 0});
+            this.message = this.getString("message", json.message, {mandatory: false, nullable: true});
+            this.data = this.getString("data", json.data, {mandatory: false, nullable: true});
+        }
+
+        public static parse(content: string | JSONObject, context = null): JsonRpcError {
+            try {
+                return DIDEntity.deserialize(content, JsonRpcError, context);
+            } catch (e) {
+                // DIDSyntaxException
+                if (e instanceof MalformedResolveResponseException)
+                    throw e;
+                else
+                    throw new MalformedResolveResponseException(e);
+            }
+        }
+    }
+
+    export abstract class Result<R> extends DIDEntity<R> {
     }
 }
