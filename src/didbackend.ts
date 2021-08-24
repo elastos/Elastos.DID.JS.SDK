@@ -41,7 +41,6 @@ import { CredentialMetadata } from "./internals";
 import type { DID } from "./internals";
 import type { DIDAdapter } from "./internals";
 import type { DIDDocument } from "./internals";
-import { DIDMetadata } from "./internals";
 import type { DIDTransactionAdapter } from "./didtransactionadapter";
 import type { DIDURL } from "./internals";
 import { DIDResolveException } from "./exceptions/exceptions";
