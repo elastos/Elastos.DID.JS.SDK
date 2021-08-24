@@ -57,25 +57,30 @@ export interface DIDStorage {
     /**
      * Load DID Metadata.
      *
-     * @param did the owner of Metadata.
+     * @param id the owner of Metadata.
      * @return the meta data
      * @throws DIDStorageException DIDStorage error.
      */
     loadRootIdentityMetadata(id: string): RootIdentity.Metadata;
 
     /**
-     * Store private identity.
+     * Save the raw root identity to the storage.
      *
-     * @param key the private identity
-     * @throws DIDStorageException store private identity failed.
+     * @param id the id of the RootIdentity
+     * @param mnemonic mnemonic words that the identity was generate from or null
+     * @param privateKey the encrypted private key of the RootIdentity
+     * @param publicKey the pre-derived public key of the RootIdentity
+     * @param index the index hint for DID deriving
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     storeRootIdentity(id: string, mnemonic: string, privateKey: string, publicKey: string, index: number);
 
     /**
-     * Load private identity.
+     * Read the RootIdentity object from the storage.
      *
-     * @return the private identity from file
-     * @throws DIDStorageException load private identity failed.
+     * @param id the id of the RootIdentity
+     * @return the RootIdentity object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     loadRootIdentity(id: string): RootIdentity;
 
@@ -84,10 +89,11 @@ export interface DIDStorage {
     loadRootIdentityPrivateKey(id: string): string;
 
     /**
-     * Load mnemonic.
+     * Read the mnemonic that generate the RootIdentity.
      *
-     * @return the mnemonic string
-     * @throws DIDStorageException DIDStorage error.
+     * @param id the id of the RootIdentity
+     * @return the mnemonic string or null if not exists
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     loadRootIdentityMnemonic(id: string): string;
 
@@ -98,37 +104,37 @@ export interface DIDStorage {
     containsRootIdenities(): boolean;
 
     /**
-     * Store DID Metadata.
+     * Save the DID metadata object to this storage.
      *
-     * @param did the owner of Metadata
-     * @param metadata the meta data
-     * @throws DIDStorageException DIDStorage error.
+     * @param did the owner of the metadata object
+     * @param metadata a DIDMetadata object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     storeDidMetadata(did: DID, metadata: DIDMetadata);
 
     /**
-     * Load DID Metadata.
+     * Read the DID metadata object from this storage.
      *
-     * @param did the owner of Metadata.
-     * @return the meta data
-     * @throws DIDStorageException DIDStorage error.
+     * @param did the target DID object
+     * @return the DIDMetadata object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     loadDidMetadata(did: DID): DIDMetadata;
 
     /**
-     * Store DID Document.
+     * Save the DID document to this storage.
      *
-     * @param doc the DIDDocument object.
-     * @throws DIDStorageException DIDStorage error.
+     * @param doc a DIDDocument object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     storeDid(doc: DIDDocument);
 
     /**
-     * Load DID content(DIDDocument).
+     * Read the DID document from this storage.
      *
-     * @param did the specified DID
-     * @return the DID Document object
-     * @throws DIDStorageException DIDStorage error.
+     * @param did the target DID object
+     * @return the DIDDocument object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     loadDid(did: DID): Promise<DIDDocument>;
 
@@ -151,60 +157,57 @@ export interface DIDStorage {
     listDids(): DID[];
 
     /**
-     * Store meta data for the specified Credential.
+     * Save the credential's metadata to this storage.
      *
-     * @param did the owner of the specified Credential
-     * @param id the identifier of Credential
-     * @param metadata the meta data for Credential
-     * @throws DIDStorageException DIDStorage error.
+     * @param id the id of the credential
+     * @param metadata the credential's metadata object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata);
 
     /**
-     * Load the meta data about the specified Credential.
+     * Read the credential's metadata object from this storage.
      *
-     * @param did the owner of Credential
-     * @param id the identifier of Credential
-     * @return the meta data for Credential
-     * @throws DIDStorageException DIDStorage error.
+     * @param id the id of the target credential
+     * @return the credential's metadata object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     loadCredentialMetadata(id: DIDURL): CredentialMetadata;
 
     /**
-     * Store the specified Credential.
+     * Save the credential object to this storage.
      *
-     * @param credential the Credential object
-     * @throws DIDStorageException DIDStorage error.
+     * @param credential a VerifiableCredential object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     storeCredential(credential: VerifiableCredential);
 
     /**
-     * Load the specified Credential.
+     * Read the specified credential object from this storage.
      *
-     * @param did the owner of Credential
-     * @param id the identifier of Credential
-     * @return the Credential object
-     * @throws DIDStorageException DIDStorage error.
+     * @param id the id of the target credential
+     * @return the VerifiableCredential object
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     loadCredential(id: DIDURL): VerifiableCredential;
 
     /**
-     * Judge whether does DIDStore contain any credential owned the specific DID.
+     * Check whether this storage contains the credentials that owned by the
+     * given DID.
      *
-     * @param did the owner of Credential
-     * @return the returned value is true if there is no credential owned the specific DID.
-     * @throws DIDStorageException DIDStorage error.
+     * @param did the target DID object
+     * @return true if contains credential object owned by the given DID,
+     * 		   false otherwise
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     containsCredentials(did: DID): boolean;
 
     /**
-     * Delete the specified Credential
+     * Delete the specified credential from this storage.
      *
-     * @param did the owner of Credential
-     * @param id the identifier of Credential
-     * @return the returned value is true if there is no credential owned the specific DID;
-     *         the returned value is false if there is credentials owned the specific DID.
-     * @throws DIDStorageException DIDStorage error.
+     * @param id the id of the target credential to be delete
+     * @return true if the credential exists and deleted successful, false otherwise
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     deleteCredential(id: DIDURL): boolean;
 
@@ -218,43 +221,40 @@ export interface DIDStorage {
     listCredentials(did: DID): DIDURL[];
 
     /**
-     * Store private key. Encrypt and encode private key with base64url method.
+     * Save the encrypted private key to this storage.
      *
-     * @param did the owner of key
-     * @param id the identifier of key
-     * @param privateKey the original private key(32 bytes)
-     * @throws DIDStorageException DIDStorage error.
+     * @param id the key id
+     * @param privateKey the encrypted private key
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     storePrivateKey(id: DIDURL, privateKey: string);
 
     /**
-     * Load private key.
+     * Read the encrypted private key from this storage
      *
-     * @param did the owner of key
-     * @param id the identifier of key
+     * @param id the key id
      * @return the encrypted private key
-     * @throws DIDStorageException DIDStorage error.
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     loadPrivateKey(id: DIDURL): string;
 
     /**
-     * Judge whether there is private key owned the specified DID in DIDStore.
+     * Check whether this storage contains the private key that owned by the
+     * given DID.
      *
-     * @param did the specified DID
-     * @return the returned value is true if there is private keys owned the specified DID;
-     *         the returned value is false if there is no private keys owned the specified DID.
-     * @throws DIDStorageException DIDStorage error.
+     * @param did the target DID object
+     * @return true if contains private key that owned by the given DID,
+     * 		   false otherwise
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     containsPrivateKeys(did: DID): boolean;
 
     /**
-     * Delete the private key owned to the specified key.
+     * Delete the specific private key from this storage.
      *
-     * @param did the owner of key
-     * @param id the identifier of key
-     * @return the returned value is true if deleting private keys successfully;
-     *         the returned value is false if deleting private keys failed.
-     * @throws DIDStorageException DIDStorage error.
+     * @param id the id of the key to be delete
+     * @return true if the key exists and deleted successful, false otherwise
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
     deletePrivateKey(id: DIDURL): boolean;
 

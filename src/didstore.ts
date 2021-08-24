@@ -116,7 +116,6 @@ export class DIDStore {
         }
 
         public close() {
-            // log.verbose("Cache statistics: {}", cache.stats().toString());
             this.cache.invalidateAll();
             this.cache = null;
             this.metadata = null;
@@ -630,7 +629,6 @@ export class DIDStore {
         /**
          * Load the specified Credential.
          *
-         * @param did the owner of Credential
          * @param id the identifier of Credential
          * @return the Credential object
          * @throws DIDStoreException DIDStore error.
@@ -662,7 +660,6 @@ export class DIDStore {
         /**
          * Judge whether does DIDStore contain the specified credential.
          *
-         * @param did the owner of Credential
          * @param id the identifier of Credential
          * @return the returned value is true if there is no credential owned the specific DID;
          *         the returned value is false if there is credentials owned the specific DID.
@@ -680,26 +677,14 @@ export class DIDStore {
          * @return the returned value is true if there is no credential owned the specific DID.
          * @throws DIDStoreException DIDStore error.
          */
-        /* public boolean containsCredentials(DID did) throws DIDStoreException {
+         public containsCredentials(did : DID) : boolean {
             checkArgument(did != null, "Invalid did");
-            return storage.containsCredentials(did);
-        } */
-
-        /**
-         * Judge whether does DIDStore contain any credential owned the specific DID.
-         *
-         * @param did the owner of Credential
-         * @return the returned value is true if there is no credential owned the specific DID.
-         * @throws DIDStoreException DIDStore error.
-         */
-        /* public boolean containsCredentials(String did) throws DIDStoreException {
-            return containsCredentials(DID.from(did));
-        } */
+            return this.storage.containsCredentials(did);
+        }
 
         /**
          * Store meta data for the specified Credential.
          *
-         * @param did the owner of the specified Credential
          * @param id the identifier of Credential
          * @param metadata the meta data for Credential
          * @throws DIDStoreException DIDStore error.
@@ -717,7 +702,6 @@ export class DIDStore {
         /**
          * Load the meta data about the specified Credential.
          *
-         * @param did the owner of Credential
          * @param id the identifier of Credential
          * @return the meta data for Credential
          * @throws DIDStoreException DIDStore error.
@@ -748,8 +732,7 @@ export class DIDStore {
         /**
          * Delete the specified Credential
          *
-         * @param did the owner of Credential
-         * @param id the identifier of Credential
+         * @param idOrString the identifier of Credential
          * @return the returned value is true if there is no credential owned the specific DID;
          *         the returned value is false if there is credentials owned the specific DID.
          * @throws DIDStoreException DIDStore error.
@@ -771,7 +754,7 @@ export class DIDStore {
         /**
          * List the Credentials owned the specified DID.
          *
-         * @param did the owner of Credential
+         * @param didOrString the owner of Credential
          * @return the Credential array owned the specified DID.
          * @throws DIDStoreException DIDStore error.
          */
@@ -803,9 +786,8 @@ export class DIDStore {
         /**
          * Select the Credentials according to the specified condition.
          *
-         * @param did the owner of Credential
-         * @param id the identifier of Credential
-         * @param type the Credential type
+         * @param didOrString the identifier of Credential
+         * @param filter a credential filter
          * @return the Credential array
          * @throws DIDStoreException DIDStore error.
          */
@@ -836,8 +818,7 @@ export class DIDStore {
         /**
          * Store private key. Encrypt and encode private key with base64url method.
          *
-         * @param did the owner of key
-         * @param id the identifier of key
+         * @param idOrString the identifier of key
          * @param privateKey the original private key(32 bytes)
          * @param storepass the password for DIDStore
          * @throws DIDStoreException DIDStore error.
@@ -872,7 +853,6 @@ export class DIDStore {
         /**
          * Load private key.
          *
-         * @param did the owner of key
          * @param id the identifier of key
          * @param storepass the password for DIDStore
          * @return the original private key
@@ -902,7 +882,6 @@ export class DIDStore {
         /**
          * Judge that the specified key has private key in DIDStore.
          *
-         * @param did the owner of key
          * @param id the identifier of key
          * @return the returned value is true if there is private keys owned the specified key;
          *         the returned value is false if there is no private keys owned the specified key.
@@ -942,8 +921,7 @@ export class DIDStore {
         /**
          * Delete the private key owned to the specified key.
          *
-         * @param did the owner of key
-         * @param id the identifier of key
+         * @param idOrString the identifier of key
          * @return the returned value is true if deleting private keys successfully;
          *         the returned value is false if deleting private keys failed.
          * @throws DIDStoreException DIDStore error.
@@ -963,7 +941,6 @@ export class DIDStore {
         /**
          * Sign the digest data by the specified key.
          *
-         * @param did the owner of sign key
          * @param id the identifier of sign key
          * @param storepass the password for DIDStore
          * @param digest the digest data
