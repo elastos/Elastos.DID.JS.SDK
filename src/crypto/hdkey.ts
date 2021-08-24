@@ -48,7 +48,7 @@ export class HDKey {
     public static PRE_DERIVED_PUBLICKEY_PATH = "m/44'/0'/0'" //"44H/0H/0H";
 
     public static newWithMnemonic(mnemonic: string, passphrase: string): HDKey {
-        let seed = Mnemonic.toSeed(mnemonic, passphrase)
+        let seed = Mnemonic.toSeed(mnemonic, passphrase);
         return HDKey.newWithSeed(seed);
     }
 
@@ -57,7 +57,7 @@ export class HDKey {
     }
 
     public static newWithKey(key: DeterministicKey): HDKey {
-        return new HDKey(key)
+        return new HDKey(key);
     }
 
     private constructor(private key: DeterministicKey) {
@@ -68,15 +68,15 @@ export class HDKey {
     }
 
     public getPrivateKeyBase58(): string {
-        return Base58.encode(this.getPrivateKeyBytes())
+        return Base58.encode(this.getPrivateKeyBytes());
     }
 
     public getPublicKeyBytes(): Buffer {
-        return this.key.publicKey
+        return this.key.publicKey;
     }
 
     public getPublicKeyBase58(): string {
-        return Base58.encode(this.getPublicKeyBytes())
+        return Base58.encode(this.getPublicKeyBytes());
     }
 
     public serialize(): Buffer {
@@ -84,11 +84,11 @@ export class HDKey {
     }
 
     public serializeBase58(): string {
-        let buffer = Base58.decode(this.key.privateExtendedKey)
-        let base58Buffer = Buffer.alloc(82)
-        buffer.copy(base58Buffer)
-        let hash = SHA256.hashTwice(buffer)
-        hash.copy(base58Buffer, 78, 0, 4)
+        let buffer = Base58.decode(this.key.privateExtendedKey);
+        let base58Buffer = Buffer.alloc(82);
+        buffer.copy(base58Buffer);
+        let hash = SHA256.hashTwice(buffer);
+        hash.copy(base58Buffer, 78, 0, 4);
         return Base58.encode(base58Buffer);
     }
 
@@ -97,11 +97,11 @@ export class HDKey {
     }
 
     public serializePublicKeyBase58(): string {
-        let buffer = Base58.decode(this.key.publicExtendedKey)
-        let base58Buffer = Buffer.alloc(82)
-        buffer.copy(base58Buffer)
-        let hash = SHA256.hashTwice(buffer)
-        hash.copy(base58Buffer, 78, 0, 4)
+        let buffer = Base58.decode(this.key.publicExtendedKey);
+        let base58Buffer = Buffer.alloc(82);
+        buffer.copy(base58Buffer);
+        let hash = SHA256.hashTwice(buffer);
+        hash.copy(base58Buffer, 78, 0, 4);
         return Base58.encode(base58Buffer);
     }
 
@@ -114,45 +114,43 @@ export class HDKey {
     }
 
     private static transformBip32HeaderToBuffer(bip32HeaderValue: number) : Buffer{
-        let buffer = Buffer.alloc(4)
-        buffer[0] = ((bip32HeaderValue >> 24) & 0xFF)
-        buffer[1] = ((bip32HeaderValue >> 16) & 0xFF)
-        buffer[2] = ((bip32HeaderValue >> 8) & 0xFF)
-        buffer[3] = (bip32HeaderValue & 0xFF)
-        return buffer
+        let buffer = Buffer.alloc(4);
+        buffer[0] = ((bip32HeaderValue >> 24) & 0xFF);
+        buffer[1] = ((bip32HeaderValue >> 16) & 0xFF);
+        buffer[2] = ((bip32HeaderValue >> 8) & 0xFF);
+        buffer[3] = (bip32HeaderValue & 0xFF);
+        return buffer;
     }
 
     public static paddingToExtendedPrivateKey(pk: Buffer): Buffer {
 
-        let extendedPrivateKeyBytes = Buffer.alloc(HDKey.EXTENDED_PRIVATEKEY_BYTES)
+        let extendedPrivateKeyBytes = Buffer.alloc(HDKey.EXTENDED_PRIVATEKEY_BYTES);
         let bip32Header = HDKey.transformBip32HeaderToBuffer(this.bip32HeaderP2PKHpriv);
-        bip32Header.copy(extendedPrivateKeyBytes)
+        bip32Header.copy(extendedPrivateKeyBytes);
 
-        pk.copy(extendedPrivateKeyBytes, 46, 0, 32)
+        pk.copy(extendedPrivateKeyBytes, 46, 0, 32);
 
         let buftoHash = Buffer.alloc(78);
-        extendedPrivateKeyBytes.copy(buftoHash, 0 , 0 , 78)
-        let hash = SHA256.hashTwice(buftoHash)
-        hash.copy(extendedPrivateKeyBytes, 78, 0, 4)
+        extendedPrivateKeyBytes.copy(buftoHash, 0 , 0 , 78);
+        let hash = SHA256.hashTwice(buftoHash);
+        hash.copy(extendedPrivateKeyBytes, 78, 0, 4);
 
-
-        return extendedPrivateKeyBytes
-
+        return extendedPrivateKeyBytes;
     }
 
     public static paddingToExtendedPublicKey(pk: Buffer): Buffer{
-        let extendedPublicKeyBytes = Buffer.alloc(HDKey.EXTENDED_PUBLICKEY_BYTES)
+        let extendedPublicKeyBytes = Buffer.alloc(HDKey.EXTENDED_PUBLICKEY_BYTES);
         let bip32Header = HDKey.transformBip32HeaderToBuffer(this.bip32HeaderP2PKHpub);
-        bip32Header.copy(extendedPublicKeyBytes)
+        bip32Header.copy(extendedPublicKeyBytes);
 
-        pk.copy(extendedPublicKeyBytes, 45, 0, 33)
+        pk.copy(extendedPublicKeyBytes, 45, 0, 33);
 
         let buftoHash = Buffer.alloc(78);
-        extendedPublicKeyBytes.copy(buftoHash, 0 , 0 , 78)
-        let hash = SHA256.hashTwice(buftoHash)
-        hash.copy(extendedPublicKeyBytes, 78, 0, 4)
+        extendedPublicKeyBytes.copy(buftoHash, 0 , 0 , 78);
+        let hash = SHA256.hashTwice(buftoHash);
+        hash.copy(extendedPublicKeyBytes, 78, 0, 4);
 
-        return extendedPublicKeyBytes
+        return extendedPublicKeyBytes;
     }
 
     public deriveWithPath(path: string): HDKey {
@@ -165,7 +163,7 @@ export class HDKey {
     }
 
     private static getRedeemScript(pk: Buffer): Buffer {
-        let script = Buffer.alloc(35)
+        let script = Buffer.alloc(35);
         script[0] = 33;
         pk.copy(script,1);
         script[34] = HDKey.PADDING_STANDARD;
@@ -180,10 +178,10 @@ export class HDKey {
         programHash[0] = HDKey.PADDING_IDENTITY;
         hash.copy(programHash,1);
 
-        hash =  SHA256.hashTwice(programHash)
+        hash =  SHA256.hashTwice(programHash);
         let binAddress = Buffer.alloc(programHash.length + 4);
-        programHash.copy(binAddress, 0)
-        hash.copy(binAddress, programHash.length, 0, 4)
+        programHash.copy(binAddress, 0);
+        hash.copy(binAddress, programHash.length, 0, 4);
 
         return binAddress;
     }
@@ -193,7 +191,7 @@ export class HDKey {
     }
 
     public getAddress(): string {
-        let binAddress = this.getBinAddress()
+        let binAddress = this.getBinAddress();
 
         return Base58.encode(binAddress);
     }
@@ -212,7 +210,7 @@ export class HDKey {
             return false;
 
         // Hash twice
-        let hash = SHA256.hashTwice(Buffer.from(binAddress.toString("hex").substr(0,21)))
+        let hash = SHA256.hashTwice(Buffer.from(binAddress.toString("hex").substr(0,21)));
 
         return (hash[0] == binAddress[21] && hash[1] == binAddress[22]
                 && hash[2] == binAddress[23] && hash[3] == binAddress[24]);
