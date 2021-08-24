@@ -36,7 +36,8 @@ import {
     IllegalArgumentException,
     RootIdentityAlreadyExistException,
     UnknownInternalException,
-    MalformedMetadataException
+    MalformedMetadataException,
+    DIDResolveException
 } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { Mnemonic } from "./internals";
@@ -324,14 +325,19 @@ export class RootIdentity {
                 throw new DIDAlreadyExistException("DID already exists in the store.");
         }
 
-        doc = await did.resolve();
-        if (doc != null) {
-            if (doc.isDeactivated())
-                throw new DIDDeactivatedException(did.toString());
+        try {
+            doc = await did.resolve();
+            if (doc != null) {
+                if (doc.isDeactivated())
+                    throw new DIDDeactivatedException(did.toString());
 
-            throw new DIDAlreadyExistException("DID already published.");
+                if (!overwrite)
+                    throw new DIDAlreadyExistException("DID already published.");
+            }
+        } catch(e) {
+            if (e instanceof DIDResolveException && !overwrite)
+                throw e;
         }
-
 
         log.debug("Creating new DID {} at index {}...", did.toString(), index);
 
