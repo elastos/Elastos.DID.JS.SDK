@@ -22,12 +22,12 @@
 
 import dayjs from "dayjs";
 import { DID, DIDURL } from "./internals";
-import { Collections } from "./internals";
+import { JWTBuilder, JWTParserBuilder } from "./internals";
 import { Constants } from "./constants";
 import { ByteBuffer } from "./internals";
 import { EcdsaSigner } from "./internals";
 import { HDKey } from "./internals";
-import type { KeyPair } from "./crypto/keypair";
+import type { KeyProvider } from "./crypto/keyprovider";
 import { SHA256 } from "./internals";
 import { DIDBackend } from "./internals";
 import { DIDDocumentBuilder } from "./internals";
@@ -65,6 +65,10 @@ import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
 import type { JSONObject } from "./json";
 import { arrayish2Buffer } from "browserfs/dist/node/core/util";
+import keyutil from "js-crypto-key-utils";
+import { createPrivateKey, createPublicKey} from "crypto";
+import { KeyLike } from 'jose/types'
+
 
 /**
  * The DIDDocument represents the DID information.
@@ -406,54 +410,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             return this.getControllerDocument(this.effectiveController).getDefaultPublicKey();
 
         return null;
-    }
-
-    /**
-     * Get KeyPair object according to the given key id.
-     *
-     * @param id the given key id
-     * @return the KeyPair object
-     * @throws InvalidKeyException there is no the matched key
-     */
-    public getKeyPair(inputId: DIDURL | string): KeyPair {
-        let pk: DIDDocumentPublicKey;
-        let id = typeof inputId === "string" ? this.canonicalId(inputId) : inputId;
-
-        if (id == null) {
-            pk = this.getDefaultPublicKey();
-            if (pk == null)
-                throw new NoEffectiveControllerException(this.getSubject().toString());
-        } else {
-            pk = this.getPublicKey(id);
-            if (pk == null)
-                throw new InvalidKeyException(id.toString());
-        }
-
-        let key = HDKey.deserialize(HDKey.paddingToExtendedPublicKey(pk.getPublicKeyBytes()));
-
-        return key.getJCEKeyPair();
-    }
-
-    private async getKeyPairWithPass(id: DIDURL, storepass: string): Promise<KeyPair> {
-        checkArgument(storepass && storepass != null, "Invalid storepass");
-        this.checkAttachedStore();
-
-        if (id == null) {
-            id = this.getDefaultPublicKeyId();
-            if (id == null)
-                throw new NoEffectiveControllerException(this.getSubject().toString());
-        } else {
-            if (!this.hasPublicKey(id))
-                throw new InvalidKeyException(id.toString());
-        }
-
-        if (!this.getMetadata().getStore().containsPrivateKey(id))
-            throw new InvalidKeyException("No private key: " + id);
-
-        let key = HDKey.deserialize(await this.getMetadata().getStore().loadPrivateKey(
-                id, storepass));
-
-        return key.getJCEKeyPair();
     }
 
     /**
@@ -1559,40 +1515,59 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return EcdsaSigner.verify(binkey, sig, digest);
     }
 
-    /* public JwtBuilder jwtBuilder() {
-        JwtBuilder builder = new JwtBuilder(this.getSubject().toString(), new KeyProvider() {
+    public getKeyProvider() : KeyProvider {
+        let doc = this;
+        return new class implements KeyProvider {
 
-            @Override
-            public java.security.PublicKey getPublicKey(id: string) {
-                return getKeyPair(canonicalId(id)).getPublic();
+            public async getPublicKey(keyid : string = null) : Promise<KeyLike> {
+                let key : DIDURL;
+
+                if (keyid == null)
+                    key = doc.getDefaultPublicKeyId();
+                else
+                    key = doc.canonicalId(keyid);
+
+                if (!doc.hasPublicKey(key))
+                    return null;
+
+                let pk = doc.getPublicKey(key).getPublicKeyBytes();
+                const keyObj = new keyutil.Key('oct', pk, { namedCurve: "P-256" });
+                let pemObj =  await keyObj.export('pem');
+                let pemStr = pemObj.toString();
+                return createPublicKey(pemStr);
             }
 
-            @Override
-            public PrivateKey getPrivateKey(id: string, storepass: string) {
-                return getKeyPair(canonicalId(id), storepass).getPrivate();
-            }
-        });
+            public async getPrivateKey(keyid : string = null, password : string) : Promise<KeyLike> {
+                let key : DIDURL;
 
+                if (keyid == null)
+                    key = doc.getDefaultPublicKeyId();
+                else
+                    key = doc.canonicalId(keyid);
+
+                let store = doc.getMetadata().getStore();
+                if (!store.containsPrivateKey(key))
+                    return null;
+
+                let hk = HDKey.deserialize(await store.loadPrivateKey(key, password));
+                const keyObj = new keyutil.Key('oct', hk.getPrivateKeyBytes(), { namedCurve: "P-256" });
+                let pemObj = await keyObj.export('pem');
+                let pemStr = pemObj.toString();
+                return createPrivateKey(pemStr);
+            }
+        }();
+    }
+
+    public jwtBuilder(): JWTBuilder {
+        let builder = new JWTBuilder(this.getSubject(), this.getKeyProvider());
         return builder.setIssuer(this.getSubject().toString());
-    } */
+    }
 
-    /* public JwtParserBuilder jwtParserBuilder() {
-        JwtParserBuilder jpb = new JwtParserBuilder(new KeyProvider() {
-
-            @Override
-            public java.security.PublicKey getPublicKey(id: string) {
-                return getKeyPair(canonicalId(id)).getPublic();
-            }
-
-            @Override
-            public PrivateKey getPrivateKey(id: string, storepass: string) {
-                return null;
-            }
-        });
-
-        jpb.requireIssuer(this.getSubject().toString());
-        return jpb;
-    } */
+    public jwtParserBuilder() : JWTParserBuilder {
+        let builder = JWTParserBuilder.newWithKeyProvider(this.getKeyProvider());
+        builder.requireIssuer(this.getSubject().toString());
+        return builder;
+    }
 
     public newCustomized(inputDID: DID | string, multisig: number, storepass: string, force?: boolean): Promise<DIDDocument> {
         return this.newCustomizedDidWithController(inputDID, [], 1, storepass, force);
