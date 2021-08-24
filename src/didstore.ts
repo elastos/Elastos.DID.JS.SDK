@@ -51,7 +51,7 @@ import { JSONObject } from "./json";
 import { md5 } from "./internals";
 import { BASE64 } from "./internals";
 import createHash from 'create-hash';
-import * as fs from "fs";
+import { readFileSync, writeFileSync } from "./fs";
 import JSZip from "jszip";
 
 /**
@@ -1120,7 +1120,7 @@ export class DIDStore {
             return null;
         }
 
-        public async exportRootIdentity(id: string, password: string, storepass: string): Promise<string> {
+        public exportRootIdentity(id: string, password: string, storepass: string): string {
             checkArgument(id != null && id !== "", "Invalid id");
             checkArgument(password != null && password !== "", "Invalid password");
             checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -1193,7 +1193,7 @@ export class DIDStore {
 
             try {
                 let content = await zip.generateAsync({type: "nodebuffer", platform: "UNIX"});
-                fs.writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
+                writeFileSync(zipFile, content, {mode: 0o644, flag: "w+"});
             } catch(e) {
                 throw new MalformedExportDataException(e);
             }
@@ -1213,7 +1213,7 @@ export class DIDStore {
             try {
                 const promises = [];
 
-                let data = await fs.readFileSync(zipFile);
+                let data = await readFileSync(zipFile);
                 let zip = await JSZip.loadAsync(data);
                 zip.forEach((relativePath, zipEntry) => {
                     let promise = zip.file(relativePath).async("string").then(async (content) => {
