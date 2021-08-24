@@ -24,7 +24,6 @@ import { Mnemonic } from "../internals";
 import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
 import { Base58 } from './base58'
 import { SHA256 } from "./sha256";
-import { KeyPair } from "./keypair";
 
 export class HDKey {
     public static PUBLICKEY_BYTES = 33;
@@ -165,12 +164,6 @@ export class HDKey {
         return new HDKey(this.key.deriveChild(index));
     }
 
-    // public getJCEKeyPair(): KeyPair{
-
-
-    //  return new KeyPair("", "")
-    // }
-
     private static getRedeemScript(pk: Buffer): Buffer {
         let script = Buffer.alloc(35)
         script[0] = 33;
@@ -224,36 +217,6 @@ export class HDKey {
         return (hash[0] == binAddress[21] && hash[1] == binAddress[22]
                 && hash[2] == binAddress[23] && hash[3] == binAddress[24]);
     }
-
-    // public sign(sha25Hash: Buffer): Buffer{
-    //  let sig = this.key.sign(sha25Hash)
-
-    //  //TODO: Find to EncodeToDER
-    //  return Buffer.alloc(0)
-    // }
-
-    // public signData(...inputs: Buffer[]) : Buffer{
-    //  let hash = SHA256.encodeToBuffer(...inputs);
-    //  return this.sign(hash)
-    // }
-
-    // public verify(sha256Hash: Buffer, signature: Buffer): boolean {
-    //  try {
-    //      return this.key.verify(sha256Hash, signature);
-    //  } catch (e) {
-    //      return false;
-    //  }
-    // }
-
-    // public verifyData(signature: Buffer, ...inputs:Buffer[]): boolean {
-    //  let hash = SHA256.encodeToBuffer(...inputs);
-    //  return this.verify(hash, signature);
-    // }
-
-    public getJCEKeyPair(): KeyPair{
-        return new KeyPair(this.key.publicKey, this.key.privateKey)
-    }
-
 
     public wipe() {
         // TODO

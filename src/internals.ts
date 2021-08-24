@@ -19,6 +19,14 @@ export * from "./didurl";
 
 export * from "./didobject";
 
+//JWT
+export * from "./jwt/jwtheader";
+export * from "./jwt/claims";
+export * from "./jwt/jwtbuilder";
+export * from "./jwt/jwt";
+export * from "./jwt/jwtparser";
+export * from "./jwt/jwtparserbuilder";
+
 // DID objects that could be embedded inside the DIDDocument.
 // Should be before DIDDocument
 export * from "./diddocumentmultisignature";
@@ -30,6 +38,8 @@ export * from "./verifiablecredential";
 
 // DIDDocument, the primary class for DID
 export * from "./diddocument"; // Should be before DIDExport (DIDStore)
+export * from "./rootidentity";
+export * from "./filesystemstorage";
 
 export * from "./transferticket";
 
@@ -48,6 +58,7 @@ export * from "./crypto/base64";
 export * from "./crypto/hdkey";
 export * from "./crypto/base58";
 export * from "./crypto/aes256cbc";
+export * from "./crypto/keyprovider";
 export * from "./mnemonic";
 export * from "./file";
 export * from "./defaultconflicthandle";
@@ -75,8 +86,6 @@ export * from "./didbackend";
 export * from "./defaultdidadapter";
 export * from "./backend/simulatedidchainadapter";
 export * from "./diddocumentbuilder";
-export * from "./rootidentity";
-export * from "./filesystemstorage";
 export * from "./didadapter";
 export * from "./utils";
 export * from "./lrucache";

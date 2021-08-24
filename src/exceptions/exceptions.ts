@@ -66,3 +66,4 @@ export class DIDTransactionException extends ParentException {}
 export class MalformedExportDataException extends ParentException {}
 export class DIDControllersChangedException extends ParentException {}
 export class MalformedMetadataException extends ParentException {}
+export class JWTException extends ParentException {}
