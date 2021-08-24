@@ -1398,7 +1398,7 @@ export namespace DIDStore {
                 hash.update(sk.key);
             }
 
-            hash.update(this.created.toUTCString());
+            hash.update(this.dateToString(this.created));
             let digest = hash.digest();
             return BASE64.fromHex(digest);
         }
@@ -1463,47 +1463,6 @@ export namespace DIDStore {
             this.fingerprint = this.getString("fingerprint", json.fingerprint, {mandatory: true, nullable: false});
         }
 
-        protected async sanitize(): Promise<void> {
-            if (this.type == null || this.type !== DIDExport.DID_EXPORT)
-                throw new MalformedExportDataException(
-                        "Invalid export data, unknown type.");
-
-            if (this.created == null)
-                throw new MalformedExportDataException(
-                        "Invalid export data, missing created time.");
-
-            if (this.id == null)
-                throw new MalformedExportDataException(
-                        "Invalid export data, missing id.");
-
-            if (this.document == null || this.document.content == null)
-                throw new MalformedExportDataException(
-                        "Invalid export data, missing document.");
-            this.document.content.setMetadata(this.document.metadata);
-
-            if (this.credentials != null) {
-                for (let vc of this.credentials) {
-                    if (vc == null || vc.content == null)
-                        throw new MalformedExportDataException(
-                                "Invalid export data, invalid credential.");
-
-                    vc.content.setMetadata(vc.metadata);
-                }
-            }
-
-            if (this.privatekeys != null) {
-                for (let sk of this.privatekeys) {
-                    if (sk == null || sk.id == null || sk.key == null || sk.key == "")
-                        throw new MalformedExportDataException(
-                                "Invalid export data, invalid privatekey.");
-                }
-            }
-
-            if (this.fingerprint == null || this.fingerprint == "")
-                throw new MalformedExportDataException(
-                        "Invalid export data, missing fingerprint.");
-        }
-
         public static parse(content: string | JSONObject, context: DID = null): DIDExport {
             try {
                 return DIDEntity.deserialize(content, DIDExport, context);
@@ -1529,18 +1488,23 @@ export namespace DIDStore {
             }
 
             public toJSON(key: string = null): JSONObject {
-                return {
-                    content: this.content.toJSON(),
-                    key: this.metadata.toJSON()
-                }
+                let json: JSONObject = {};
+
+                json.content = this.content.toJSON();
+                if (this.metadata)
+                    json.metadata = this.metadata.toJSON();
+
+                return json;
             }
 
             protected fromJSON(json: JSONObject, context: DID = null): void {
                 if (!json.content)
                     throw new MalformedExportDataException("Invalid export data, missing document content");
                 this.content = DIDDocument._parseOnly(json.content as JSONObject);
-                if (json.metadata)
+                if (json.metadata) {
                     this.metadata = DIDMetadata.parse(json.metadata as JSONObject);
+                    this.content.setMetadata(this.metadata);
+                }
             }
 
             public static parse(content: string | JSONObject, context: DID = null): Document {
@@ -1567,18 +1531,23 @@ export namespace DIDStore {
             }
 
             public toJSON(key: string = null): JSONObject {
-                return {
-                    content: this.content.toJSON(),
-                    key: this.metadata.toJSON()
-                }
+                let json: JSONObject = {};
+
+                json.content = this.content.toJSON();
+                if (this.metadata)
+                    json.metadata = this.metadata.toJSON();
+
+                return json;
             }
 
             protected async fromJSON(json: JSONObject, context: DID = null): Promise<void> {
                 if (!json.content)
                     throw new MalformedExportDataException("Invalid export data, missing credential content");
                 this.content = VerifiableCredential.parse(json.content as JSONObject);
-                if (json.metadata)
+                if (json.metadata) {
                     this.metadata = CredentialMetadata.parse(json.metadata as JSONObject);
+                    this.content.setMetadata(this.metadata);
+                }
             }
 
             public static parse(content: string | JSONObject, context: DID = null): Credential {

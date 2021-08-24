@@ -322,6 +322,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
         if (!json.proof)
             throw new MalformedTransferTicketException("Missing property: proof");
 
+        this.proofs = new ComparableMap<DID, TransferTicket.Proof>();
         if (!Array.isArray(json.proof)) {
             let po = json.proof as JSONObject;
             let proof = TransferTicket.Proof.deserialize(po, TransferTicket.Proof, this.id);
