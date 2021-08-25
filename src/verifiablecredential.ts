@@ -930,7 +930,7 @@ export namespace VerifiableCredential {
             checkArgument(id != null, "Invalid id");
 
             if (typeof id === "string")
-                id = DIDURL.from(id);
+                id = DIDURL.from(id, this.target);
 
             checkArgument(id.getDid() == null || id.getDid().equals(this.target), "Invalid id");
 
