@@ -34,7 +34,6 @@ import { Mnemonic } from "./internals";
 import { TransferTicket } from "./internals";
 import { Issuer } from "./internals";
 import { DIDURL,  } from "./internals";
-import { DIDURLParser, DIDURLValues } from "./parser/DIDURLParser";
 import { DIDBiography, DIDBiographyStatus } from "./internals";
 import { IDChainRequest } from "./internals";
 import * as Exceptions from "./exceptions/exceptions";
@@ -85,7 +84,6 @@ Logger.setLevel(Logger.TRACE);
 } */
 
 export type {
-    DIDURLValues,
     DIDAdapter,
     JSONObject,
     JSONValue
@@ -107,7 +105,6 @@ export {
     TransferTicket,
     Issuer,
     DIDURL,
-    DIDURLParser,
     DIDBiography,
     DIDBiographyStatus,
     IDChainRequest,
