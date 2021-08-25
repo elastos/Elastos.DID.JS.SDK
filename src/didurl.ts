@@ -23,7 +23,6 @@
 import type { AbstractMetadata } from "./internals";
 import { DID } from "./internals";
 import {
-    DIDURLParser,
     checkArgument,
     checkNotNull,
     hashCode,
@@ -43,58 +42,188 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
     //private static SEPS = ":;/?#";
     private static SEPS = [':', ';', '/', '?', '#'];
 
-    private did?: DID;
-    private parameters: Map<string, string> = new Map();
-    private path = "";
-    private query: Map<string, string> = new Map();
-    private fragment = "";
+    private did : DID = null;
+    private path = null;
+    private query: Map<string, string>;
+    private fragment = null;
     private metadata?: AbstractMetadata;
+    private queryString : string;
+    private repr : string;
 
-    // Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
-    public constructor(url?: DIDURL | string, baseRef?: DID) {
-        if (url) {
-            if(url instanceof DIDURL) {
-                this.did = (!url.did && baseRef) ? baseRef : url.did;
-                this.parameters = url.parameters;
-                this.path = url.path;
-                this.query = url.query;
-                this.fragment = url.fragment;
-                this.metadata = url.metadata;
-            } else {
-                // Compatible with v1, support fragment without leading '#'
-                if (!url.startsWith("did:")) {
-                    let noSep = true;
-                    let chars: string[] = url.split("");
-                    for (let ch of chars) {
-                        if (DIDURL.SEPS.indexOf(ch) >= 0) {
-                            noSep = false;
-                            break;
+    private parser = new class {
+        constructor(public superThis: DIDURL) {
+        }
+
+        public isHexChar(ch : string) : boolean {
+            return ((ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f') ||
+                    (ch >= '0' && ch <= '9'));
+        }
+
+        public isTokenChar(ch : string, start : boolean) : boolean {
+            if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+                    (ch >= '0' && ch <= '9'))
+                return true;
+
+            if (start)
+                return false;
+            else
+                return (ch  == '.' || ch == '_' || ch == '-');
+        }
+
+        public scanNextPart(url : String, start : number, limit : number,
+                partSeps : string, tokenSeps : String) : number {
+            let nextPart = limit;
+            let tokenStart = true;
+
+            for (let i = start; i < limit; i++) {
+                let ch = url.charAt(i);
+
+                if (partSeps != null && partSeps.indexOf(ch) >= 0) {
+                    nextPart = i;
+                    break;
+                }
+
+                if (tokenSeps != null && tokenSeps.indexOf(ch) >= 0) {
+                    if (tokenStart)
+                        throw new MalformedDIDURLException("Invalid char at: " + i);
+
+                    tokenStart = true;
+                    continue;
+                }
+
+                if (this.isTokenChar(ch, tokenStart)) {
+                    tokenStart = false;
+                    continue;
+                }
+
+                if (ch == '%') {
+                    if (i + 2 >= limit)
+                        throw new MalformedDIDURLException("Invalid char at: " + i);
+
+                    let seq = url.charAt(++i);
+                    if (!this.isHexChar(seq))
+                        throw new MalformedDIDURLException("Invalid hex char at: " + i);
+
+                    seq = url.charAt(++i);
+                    if (!this.isHexChar(seq))
+                        throw new MalformedDIDURLException("Invalid hex char at: " + i);
+
+                    tokenStart = false;
+                    continue;
+                }
+
+                throw new MalformedDIDURLException("Invalid char at: " + i);
+            }
+
+            return nextPart;
+        }
+
+        public parse(context : DID, url : String) : void {
+            if (context == undefined)
+                context = null;
+
+            this.superThis.did = context;
+
+            if (url == null)
+                throw new MalformedDIDURLException("null DIDURL string");
+
+            let start = 0;
+            let limit = url.length;
+            let nextPart;
+
+            // trim the leading and trailing spaces
+            while ((limit > 0) && (url.charAt(limit - 1) <= ' '))
+                limit--;		//eliminate trailing whitespace
+
+            while ((start < limit) && (url.charAt(start) <= ' '))
+                start++;		// eliminate leading whitespace
+
+            if (start == limit) // empty url string
+                throw new MalformedDIDURLException("empty DIDURL string");
+
+            let pos = start;
+
+            // DID
+            if (pos < limit && url.substr(pos, 4) == "did:") {
+                nextPart = this.scanNextPart(url, pos, limit, "/?#", ":");
+                try {
+                    this.superThis.did = DID.createFrom(url.toString(), pos, nextPart);
+                } catch (e) {
+                    throw new MalformedDIDURLException("Invalid did at: " + pos, e);
+                }
+
+                pos = nextPart;
+            }
+
+            // path
+            if (pos < limit && url.charAt(pos) == '/') {
+                nextPart = this.scanNextPart(url, pos + 1, limit, "?#", "/");
+                this.superThis.path = url.substring(pos, nextPart);
+                pos = nextPart;
+            }
+
+            // query
+            if (pos < limit && url.charAt(pos) == '?') {
+                nextPart = this.scanNextPart(url, pos + 1, limit, "#", "&=");
+                let queryString = url.substring(pos + 1, nextPart);
+                pos = nextPart;
+
+                if (queryString != "") {
+                    let query = new Map<string, string>();
+
+                    let pairs = queryString.split("&");
+                    for (let pair of pairs) {
+                        let parts = pair.split("=");
+                        if (parts.length > 0 && parts[0] != "") {
+                            let name = parts[0];
+                            let value = parts.length == 2 ? parts[1] : null;
+                            query.set(name, value);
                         }
                     }
 
-                    if (noSep) // fragment only
-                        url = "#" + url;
+                    this.superThis.query = query;
                 }
-
-                try {
-                    let urlParsed = DIDURLParser.newFromURL(url);
-
-                    if (urlParsed.did.isEmpty)
-                        this.did = baseRef ? baseRef : null;
-                    else
-                        this.did = new DID(urlParsed.did.method, urlParsed.did.methodSpecificId);
-
-                    this.parameters = urlParsed.params;
-                    this.path = urlParsed.path;
-                    this.query = urlParsed.query;
-                    this.fragment = urlParsed.fragment;
-                } catch (e) {
-                    throw new MalformedDIDURLException(url, e);
-                }
+            } else {
+                this.superThis.query = new Map();
             }
+
+            // fragment
+            // condition: pos == start
+            //	Compatible with v1, support fragment without leading '#'
+            if ((pos < limit && url.charAt(pos) == '#') || (pos == start)) {
+                if (url.charAt(pos) == '#')
+                    pos++;
+
+                nextPart = this.scanNextPart(url, pos, limit, "", null);
+                let fragment = url.substring(pos, nextPart);
+                if (fragment != "")
+                    this.superThis.fragment = fragment;
+            }
+        }
+
+    } (this);
+
+    // Note: needs to be public to be able to use DIDURL as a constructable json type in other classes
+    public constructor(url?: DIDURL | string, context?: DID) {
+        checkArgument(!!url || !!context, "Invalid context and url");
+
+        if (!url) {
+            this.did = context;
+            this.query = new Map();
+            return this;
+        }
+
+        if (typeof url === 'string') {
+            this.parser.parse(context, url);
         } else {
-            if (baseRef)
-                this.did = baseRef;
+            if (url.did != null)
+                this.did = url.did;
+            this.path = url.path;
+            this.query = url.query;
+            this.queryString = url.queryString;
+            this.fragment = url.fragment;
+            this.repr = url.repr;
+            this.metadata = url.metadata;
         }
     }
 
@@ -102,31 +231,41 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         return new DIDURL(null, did);
     }
 
-    public static from(url: DIDURL | string, baseRef?: DID | string): DIDURL | null {
+    public static from(url: DIDURL | string, context?: DID | string): DIDURL | null {
         if (!url)
-            return null;
+             return null;
 
-        let base = baseRef ? DID.from(baseRef) : null;
+         let base : DID;
+         if (context == null) {
+             base = null;
+         } else {
+             if (context instanceof DID)
+                 base = context;
+             else
+                 base = DID.from(context);
+         }
 
-        if (url instanceof DIDURL)
-            return base ? new DIDURL(url, base) : url;
+         if (url instanceof DIDURL)
+             return base ? new DIDURL(url, base) : url;
         else
             return new DIDURL(url, base);
     }
 
     // Deep-copy constructor
-    public static clone(url: DIDURL): DIDURL {
+    public clone(readonly : boolean): DIDURL {
         let newInstance = new DIDURL();
-        newInstance.did = url.did;
-        newInstance.parameters = !url.parameters ? new Map() :
-                new Map<string, string>(url.parameters);
-        newInstance.path = url.path;
-        newInstance.query = !url.query ? new Map() :
-                new Map<string, string>(url.query);
-        newInstance.fragment = url.fragment;
+        newInstance.did = this.did;
+        newInstance.path = this.path;
+        newInstance.query = (this.query.size == 0 && readonly)  ? new Map() :
+                new Map<string, string>(this.query);
+
+        newInstance.queryString = this.queryString;
+        newInstance.fragment = this.fragment;
+        newInstance.repr = this.repr;
 
         return newInstance;
     }
+
 
     /**
      * Get owner of DIDURL.
@@ -164,49 +303,6 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
     }
 
     /**
-     * Get all parameters.
-     *
-     * @return the parameters string
-     */
-    public getParametersString(): string | null {
-        if (this.parameters.size == 0)
-            return null;
-
-        return this.mapToString(this.parameters, ";");
-    }
-
-    public getParameters(): Map<string, string> {
-        return this.parameters;
-    }
-
-    public setParameters(parameters: Map<string, string>): void {
-        this.parameters = new Map(parameters);
-    }
-
-    /**
-     * Get the parameter according to the given name.
-     *
-     * @param name the name string
-     * @return the parameter string
-     */
-    public getParameter(name: string): string | undefined {
-        checkArgument(name != null && name !== "", "Invalid parameter name");
-        return this.parameters.get(name);
-    }
-
-    /**
-     * Judge whether there is 'name' parameter in DIDStorage.
-     *
-     * @param name the key of parameter
-     * @return the returned value is true if there is 'name' parameter;
-     *         the returned value is true if there is no 'name' parameter.
-     */
-    public hasParameter(name: string): boolean {
-        checkArgument(name != null && name !== "", "Invalid parameter name");
-        return this.parameters.has(name);
-    }
-
-    /**
      * Get the path of DIDURL.
      *
      * @return the path string
@@ -216,7 +312,6 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
     }
 
     public setPath(path: string): void {
-
         this.path = path;
     }
 
@@ -229,7 +324,10 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         if (this.query.size == 0)
             return null;
 
-        return this.mapToString(this.query, "&");
+        if (this.queryString == null)
+            this.queryString = this.mapToString(this.query, "&");
+
+        return this.queryString;
     }
 
     public getQuery(): Map<string, string> {
@@ -248,7 +346,8 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
      */
     public getQueryParameter(name: string): string | undefined {
         checkArgument(name != null && name !== "", "Invalid parameter name");
-        return this.query.get(name);
+        let value = this.query.get(name);
+        return value == undefined ? null : value;
     }
 
     /**
@@ -302,24 +401,27 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         return this.toString(base);
     }
 
-    public toString(base: DID = null): string {
-        let output = "";
-        if (this.did != null && (base == null || !this.did.equals(base)))
-            output += this.did.toString();
+    public toString(context: DID = null): string {
+        if (!context && this.repr)
+            return this.repr;
 
-        if (this.parameters != null && this.parameters.size != 0)
-            output += ";" + this.getParametersString();
+        let result = "";
+        if (this.did != null && (context == null || !this.did.equals(context)))
+            result += this.did;
 
-        if (this.path !== null && this.path !== "")
-            output += this.path;
+        if (this.path != null && this.path !== "")
+            result += this.path;
 
         if (this.query != null && this.query.size != 0)
-            output += "?" + this.getQueryString();
+            result += "?" + this.getQueryString();
 
         if (this.fragment != null && this.fragment !== "")
-            output += "#" + this.getFragment();
+            result += "#" + this.getFragment();
 
-        return output;
+        if (!context)
+            this.repr = result;
+
+        return result;
     }
 
     public equals(obj: unknown): boolean {
@@ -351,26 +453,8 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         return strcmp(this.toString(), id.toString());
     }
 
-    private mapHashCode(map: Map<string, string>): number {
-        let hash = 0;
-
-        for (let entry of map.entries()) {
-            hash += hashCode(entry[0]); // key
-            if (entry[1] != null) // value
-                hash += hashCode(entry[1]);
-        }
-
-        return hash;
-    }
-
     public hashCode(): number {
-        let hash = this.did.hashCode();
-        hash += this.mapHashCode(this.parameters);
-        hash += this.path == null ? 0 : hashCode(this.path);
-        hash += this.mapHashCode(this.query);
-        hash += this.fragment == null ? 0 : hashCode(this.fragment);
-
-        return hash;
+        return hashCode(this.toString());
     }
 }
 
@@ -378,24 +462,12 @@ export namespace DIDURL {
     export class Builder {
         private url: DIDURL;
 
-        public constructor(didOrDidUrl: DIDURL | DID | string) {
-            let didUrl: DIDURL;
+        public constructor(didOrDidUrl: DIDURL | DID) {
             if (didOrDidUrl instanceof DID) {
-                didUrl = DIDURL.fromDID(didOrDidUrl as DID);
+                this.url = DIDURL.fromDID(didOrDidUrl as DID);
+            } else {
+                this.url = didOrDidUrl.clone(false);
             }
-            else if (typeof didOrDidUrl === "string") {
-                didUrl = DIDURL.from(didOrDidUrl);
-            }
-            else {
-                didUrl = didOrDidUrl as DIDURL;
-            }
-
-            this.url = new DIDURL();
-            this.url.setDid(didUrl.getDid());
-            this.url.setParameters(didUrl.getParameters());
-            this.url.setPath(didUrl.getPath());
-            this.url.setQuery(didUrl.getQuery());
-            this.url.setFragment(didUrl.getFragment());
         }
 
         public setDid(didOrString: DID | string): Builder {
@@ -410,35 +482,6 @@ export namespace DIDURL {
 
         public clearDid(): Builder {
             this.url.setDid(null);
-            return this;
-        }
-
-        public setParameter(name: string, value: string): Builder {
-            checkArgument(name != null && name !== "", "Invalid parameter name");
-
-            this.url.getParameters().set(name, value);
-            return this;
-        }
-
-        public setParameters(params: Map<string, string>): Builder {
-            this.url.getParameters().clear();
-
-            if (params != null && params.size > 0)
-            params.forEach((v,k)=> this.url.getParameters().set(k, v));
-
-            return this;
-        }
-
-        public removeParameter(name: string): Builder {
-            checkArgument(name != null && name !== "", "Invalid parameter name");
-
-            this.url.getParameters().delete(name);
-
-            return this;
-        }
-
-        public clearParameters(): Builder {
-            this.url.getParameters().clear();
             return this;
         }
 
@@ -491,7 +534,7 @@ export namespace DIDURL {
         }
 
         public build(): DIDURL {
-            return DIDURL.clone(this.url);
+            return this.url.clone(true);
         }
     }
 }

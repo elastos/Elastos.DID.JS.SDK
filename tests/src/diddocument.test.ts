@@ -32,7 +32,8 @@ import {
     HDKey,
     Base58,
     Exceptions,
-    VerificationEventListener
+    VerificationEventListener,
+    DIDBackend
 } from "@elastosfoundation/did-js-sdk";
 import {
     TestData,
@@ -43,6 +44,7 @@ import {
 } from "./utils/utils";
 import { TestConfig } from "./utils/testconfig";
 import { DIDTestExtension } from "./utils/didtestextension";
+import { LocalResolveHandle } from "../../typings/didbackend";
 
 async function testGetPublicKey(version: number, testData: TestData) {
     let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
@@ -1280,7 +1282,7 @@ describe('DIDDocument Tests', () => {
         // Credential getter.
         let vc = doc.getCredential("#profile");
         expect(vc).not.toBeNull();
-        expect(vc.getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
+        expect(vc.getId().equals(DIDURL.from("#profile", doc.getSubject()))).toBeTruthy();
 
         vc = doc.getCredential(DIDURL.from("#email", doc.getSubject()));
         expect(vc).not.toBeNull();
@@ -1338,11 +1340,11 @@ describe('DIDDocument Tests', () => {
         // Credential getter.
         let vc = doc.getCredential("#profile");
         expect(vc).not.toBeNull();
-        expect(vc.getId()).toEqual(DIDURL.from("#profile", doc.getSubject()));
+        expect(vc.getId().equals(DIDURL.from("#profile", doc.getSubject()))).toBeTruthy();
 
         vc = doc.getCredential(DIDURL.from("#email", doc.getSubject()));
         expect(vc).not.toBeNull();
-        expect(vc.getId()).toEqual(DIDURL.from("#email", doc.getSubject()));
+        expect(vc.getId().equals(DIDURL.from("#email", doc.getSubject()))).toBeTruthy();
 
         // Credential not exist.
         vc = doc.getCredential("#notExistVc");
@@ -3974,11 +3976,11 @@ describe('DIDDocument Tests', () => {
 
         let target = await identity.newDid(TestConfig.storePass);
         let db = DIDDocumentBuilder.newFromDocument(target).edit();
-        await db.authorizeDid(new DIDURL("#recovery"), doc.getSubject(), null);
+        await db.authorizeDid(new DIDURL("#recovery", target.getSubject()), doc.getSubject(), null);
         target = await db.seal(TestConfig.storePass);
         expect(target).not.toBeNull();
         expect(target.getAuthorizationKeyCount()).toBe(1);
-        expect(target.getAuthorizationKeys()[0].getController()).toEqual(doc.getSubject());
+        expect(target.getAuthorizationKeys()[0].getController().equals(doc.getSubject())).toBeTruthy();
         await store.storeDid(target);
 
         await target.publish(TestConfig.storePass);
@@ -4085,4 +4087,30 @@ describe('DIDDocument Tests', () => {
         doc = await doc.getSubject().resolve();
         expect(doc.isDeactivated()).toBeFalsy();
     });
+
+    test("testResolveLocal", async () => {
+		let json = "{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKey\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"type\":\"ECDSAsecp256r1\",\"controller\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"publicKeyBase58\":\"21YM84C9hbap4GfFSB3QbjauUfhAN4ETKg2mn4bSqx4Kp\"}],\"authentication\":[\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\"],\"verifiableCredential\":[{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#name\",\"type\":[\"BasicProfileCredential\",\"SelfProclaimedCredential\"],\"issuer\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"issuanceDate\":\"2020-07-01T00:46:40Z\",\"expirationDate\":\"2025-06-30T00:46:40Z\",\"credentialSubject\":{\"id\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab\",\"name\":\"KP Test\"},\"proof\":{\"type\":\"ECDSAsecp256r1\",\"verificationMethod\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signature\":\"jQ1OGwpkYqjxooyaPseqyr_1MncOZDrMS_SvwYzqkCHVrRfjv_b7qfGCjxy7Gbx-LS3bvxZKeMxU1B-k3Ysb3A\"}}],\"expires\":\"2025-07-01T00:46:40Z\",\"proof\":{\"type\":\"ECDSAsecp256r1\",\"created\":\"2020-07-01T00:47:20Z\",\"creator\":\"did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab#primary\",\"signatureValue\":\"TOpNt-pWeQDJFaS5EkpMOuCqnZKhPCizf7LYQQDBrNLVIZ_7AR73m-KJk7Aja0wmZWXd7S4n7SC2W4ZQayJlMA\"}}";
+		let did = new DID("did:elastos:idFKwBpj3Buq3XbLAFqTy8LMAW8K7kp3Ab");
+
+		let doc = await did.resolve();
+		expect(doc).toBeNull();
+
+        let parserDoc = await DIDDocument.parseAsync(json);
+		DIDBackend.getInstance().setResolveHandle(new class implements LocalResolveHandle {
+            public resolve(d: DID): DIDDocument {
+                if (d.equals(did))
+                    return parserDoc;
+
+                return null;
+            }
+        });
+
+		doc = await did.resolve();
+        expect(doc).not.toBeNull();
+        expect(doc.getSubject().equals(did)).toBeTruthy();
+
+		DIDBackend.getInstance().setResolveHandle(null);
+		doc = await did.resolve();
+        expect(doc).toBeNull();
+	});
 });
