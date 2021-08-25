@@ -73,7 +73,7 @@ export class TestData {
 
     public static generateKeypair(): HDKey {
         if (this.rootKey == null) {
-            let mnemonic =  new Mnemonic().generate();
+            let mnemonic =  Mnemonic.getInstance().generate();
             this.rootKey = HDKey.newWithMnemonic(mnemonic, "");
             this.index = 0;
         }
@@ -93,7 +93,7 @@ export class TestData {
 
     public async getRootIdentity(): Promise<RootIdentity> {
         if (this.identity == null) {
-            this.mnemonic = new Mnemonic().generate();
+            this.mnemonic = Mnemonic.getInstance().generate();
             this.identity = RootIdentity.createFromMnemonic(this.mnemonic, TestConfig.passphrase,
                     await this.getStore(), TestConfig.storePass, true);
         }
@@ -215,6 +215,13 @@ export class CompatibleData {
         fileName += ".json";
 
         return this.fileContent(this.dataPath + "/" + fileName);
+    }
+
+    private getTransferTicketFile(name : string) : string {
+        if (this.version == 1)
+            return null;
+
+        return this.fileContent(this.dataPath + "/" + name + ".tt.json");
     }
 
     public async getDocument(did: string, type: string = null): Promise<DIDDocument> {
@@ -340,6 +347,21 @@ export class CompatibleData {
         return file;
     }
 
+    public async getTransferTicket(did : string) : Promise<TransferTicket> {
+        if (this.version == 1)
+            throw new Exceptions.UnsupportedOperationException("Not exists");
+
+        let key = "res:tt:" + did;
+        if (this.data[key] !== null &&
+            this.data[key] !== undefined)
+                return this.data[key] as TransferTicket;
+
+        // load the ticket
+        let tt = TransferTicket.parse(this.getTransferTicketFile(did));
+
+        this.data[key] = tt;
+        return tt;
+    }
 
     public getStoreDir(): string {
         return this.storePath;
