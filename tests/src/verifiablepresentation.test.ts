@@ -152,7 +152,7 @@ describe('VerifiablePresentation Tests', () => {
         let entryParts = entry.split(',');
         let did = entryParts[0];
         let presentation = entryParts[1];
-        test('testParseAndSerializeNonempty', async () => {
+        test('testParseAndSerialize', async () => {
             let version = 2;
             let cd = testData.getCompatibleData(version);
             // For integrity check
