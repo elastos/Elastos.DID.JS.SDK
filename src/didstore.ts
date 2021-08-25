@@ -1177,15 +1177,13 @@ export class DIDStore {
             let dids = await this.listDids();
             for (let did of dids) {
                 let data = await this.exportDid(did, password, storepass);
-                zip.file(did.getMethodSpecificId(), data);
+                zip.file("did-" + did.getMethodSpecificId(), data);
             }
 
-            let internalpath = "rootidentity-";
             let identities = await this.listRootIdentities();
             for (let identity of identities) {
-                internalpath = internalpath.concat(identity.getId());
                 let data = await this.exportRootIdentity(identity.getId(), password, storepass);
-                zip.file(internalpath, data);
+                zip.file("rootIdentity-" + identity.getId(), data);
             }
 
             let file = new File(zipFile);
@@ -1217,10 +1215,12 @@ export class DIDStore {
                 let zip = await JSZip.loadAsync(data);
                 zip.forEach((relativePath, zipEntry) => {
                     let promise = zip.file(relativePath).async("string").then(async (content) => {
-                        if (relativePath.startsWith("rootidentity-"))
+                        if (relativePath.startsWith("rootIdentity-"))
                             await this.importRootIdentity(content, password, storepass);
-                        else
+                        else if (relativePath.startsWith("did-"))
                             await this.importDid(content, password, storepass);
+                        else
+                            console.log("Skip unknow export entry: " + relativePath);
                     });
 
                     promises.push(promise);
