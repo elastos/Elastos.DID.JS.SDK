@@ -1379,28 +1379,28 @@ export namespace DIDStore {
 
         private calculateFingerprint(exportpass: string): string {
             let hash = createHash('sha256');
-            hash.update(exportpass);
-            hash.update(this.type);
-            hash.update(this.id.toString());
-            hash.update(this.document.content.toString(true));
+            hash.update(Buffer.from(exportpass));
+            hash.update(Buffer.from(this.type));
+            hash.update(Buffer.from(this.id.toString()));
+            hash.update(Buffer.from(this.document.content.toString(true)));
             if (this.document.metadata)
-                hash.update(this.document.metadata.toString(true));
+                hash.update(Buffer.from(this.document.metadata.toString(true)));
             if (this.credentials) {
                 for (let vc of this.credentials) {
-                    hash.update(vc.toString());
+                    hash.update(Buffer.from(vc.toString()));
                     if (vc.metadata)
-                        hash.update(vc.metadata.toString());
+                        hash.update(Buffer.from(vc.metadata.toString()));
                 }
             }
 
             for (let sk of this.privatekeys) {
-                hash.update(sk.id.toString());
-                hash.update(sk.key);
+                hash.update(Buffer.from(sk.id.toString()));
+                hash.update(Buffer.from(sk.key));
             }
 
-            hash.update(this.dateToString(this.created));
+            hash.update(Buffer.from(this.dateToString(this.created)));
             let digest = hash.digest();
-            return BASE64.fromHex(digest);
+            return BASE64.toUrlFormat(digest.toString("base64"));
         }
 
         public seal(exportpass: string): DIDExport {
@@ -1443,19 +1443,19 @@ export namespace DIDStore {
                 throw new MalformedExportDataException("Invalid export data, missing document.");
             this.document = DIDExport.Document.parse(json.document as JSONObject);
 
-            if (json.credentials) {
-                if (!Array.isArray(json.credentials))
+            if (json.credential) {
+                if (!Array.isArray(json.credential))
                     throw new MalformedExportDataException("Invalid export data, invalid credentials.");
 
-                this.credentials = Array.from(json.credentials,
+                this.credentials = Array.from(json.credential,
                         (o) => DIDExport.Credential.parse(o as JSONObject));
             }
 
-            if (json.privatekeys) {
-                if (!Array.isArray(json.privatekeys))
+            if (json.privateKey) {
+                if (!Array.isArray(json.privateKey))
                     throw new MalformedExportDataException("Invalid export data, invalid privatekeys.");
 
-                this.privatekeys = Array.from(json.privatekeys,
+                this.privatekeys = Array.from(json.privateKey,
                         (o) => DIDExport.PrivateKey.parse(o as JSONObject));
             }
 
@@ -1673,18 +1673,18 @@ export namespace DIDStore {
 
         private calculateFingerprint(exportpass: string): string {
             let hash = createHash("sha256");
-            hash.update(exportpass);
-            hash.update(this.type);
+            hash.update(Buffer.from(exportpass));
+            hash.update(Buffer.from(this.type));
             if (this.mnemonic)
-                hash.update(this.mnemonic);
-            hash.update(this.privatekey);
-            hash.update(this.publickey);
-            hash.update(this.index.toString());
-            hash.update(this.default.toString());
-            hash.update(this.created.toUTCString());
+                hash.update(Buffer.from(this.mnemonic));
+            hash.update(Buffer.from(this.privatekey));
+            hash.update(Buffer.from(this.publickey));
+            hash.update(Buffer.from(this.index.toString()));
+            hash.update(Buffer.from(this.default.toString()));
+            hash.update(Buffer.from(this.dateToString(this.created)));
 
             let digest = hash.digest();
-            return BASE64.fromHex(digest);
+            return BASE64.toUrlFormat(digest.toString("base64"));
         }
 
         public seal(exportpass: string): RootIdentityExport {
@@ -1725,7 +1725,6 @@ export namespace DIDStore {
             this.default = this.getBoolean("default", json.default, {mandatory: true, nullable: false, defaultValue: false});
             this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
             this.fingerprint = this.getString("fingerprint", json.fingerprint, {mandatory: true, nullable: false});
-
         }
 
         public static parse(content: string | JSONObject, context: DID = null): RootIdentityExport {
