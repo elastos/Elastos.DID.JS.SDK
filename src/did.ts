@@ -135,33 +135,33 @@ export class DID {
         }
     }(this);
 
-    public constructor(methodOrDID : string = null, methodSpecificId: string | null = null) {
+    public constructor(methodOrDID : string, methodSpecificId: string | null = null, start ?: number, limit ?: number) {
         this.metadata = null;
-        if (!methodOrDID) {
-            this.method = null;
-            this.methodSpecificId = null;
-        } else {
-            if (methodSpecificId) {
-                let method: string = methodOrDID;
-                checkEmpty(method, "Invalid method");
-                checkEmpty(methodSpecificId, "Invalid methodSpecificId");
 
-                this.method = method;
-                this.methodSpecificId = methodSpecificId;
-            } else {
-                checkEmpty(methodOrDID, "Invalid DID string");
-                this.parser.parse(methodOrDID);
-            }
+        if (methodSpecificId) {
+            let method: string = methodOrDID;
+            checkEmpty(method, "Invalid method");
+            checkEmpty(methodSpecificId, "Invalid methodSpecificId");
+
+            this.method = method;
+            this.methodSpecificId = methodSpecificId;
+        } else {
+            if (!start)
+            start = 0;
+
+            if (!limit)
+            limit = methodOrDID.length;
+
+            checkEmpty(methodOrDID, "Invalid DID string");
+            this.parser.parse(methodOrDID, start, limit);
         }
     }
 
     public static createFrom(methodOrDID: string, start : number, limit : number) : DID {
-		checkArgument(methodOrDID != null && methodOrDID != "", "Invalid DID string");
-		checkArgument(start < limit, "Invalid offsets");
+        checkArgument(methodOrDID != null && methodOrDID != "", "Invalid DID string");
+        checkArgument(start < limit, "Invalid offsets");
 
-        let did = new DID();
-        did.parser.parse(methodOrDID, start, limit);
-        return did;
+        return new DID(methodOrDID, null, start, limit);
     }
 
     //equal to java 'valueof'
