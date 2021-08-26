@@ -32,7 +32,7 @@ import type { Comparable } from "./comparable";
 export class DIDDocumentProof extends DIDEntity<DIDDocumentProof> implements Comparable<DIDDocumentProof> {
     private type: string;
     private created: Date;
-    public creator: DIDURL;
+    private creator: DIDURL;
     private signature: string;
 
     /**
@@ -125,12 +125,16 @@ export class DIDDocumentProof extends DIDEntity<DIDDocumentProof> implements Com
     }
 
     protected fromJSON(json: JSONObject, context: DID = null): void {
+        // TODO: need improve
+        let defaultKey = this.getDidUrl("INTERNAL", json.__defaultPublicKey__,
+                {mandatory: false, nullable: true, defaultValue: null});
+
         this.type = this.getString("proof.type", json.type,
                 {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
         this.created = this.getDate("proof.created", json.created,
                 {mandatory: false});
         this.creator = this.getDidUrl("proof.creator", json.creator,
-                {mandatory: true, nullable: false, context: context});
+                {mandatory: false, nullable: false, context: context, defaultValue: defaultKey});
         this.signature = this.getString("proof.signatureValue", json.signatureValue,
                 {mandatory: true, nullable: false});
     }

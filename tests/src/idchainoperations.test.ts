@@ -808,7 +808,7 @@ describe('IDChainOperations Tests', () => {
             let vc  = await cb.id("#selfCredential")
                     .type("BasicProfileCredential")
                     .properties(props)
-                    .seal(TestConfig.storePass); 
+                    .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
             expect(vc.getSubject().getProperty("name")).toEqual("John")
 
@@ -1103,17 +1103,16 @@ describe('IDChainOperations Tests', () => {
             let dids: DID[] = Array.from(await store.listDids());
             dids.sort((a,b) => a.compareTo(b));
             for (let did of dids) {
-                console.log("-------- " + did);
                 expect(store.deleteDid(did)).toBeTruthy();
             }
-   
+
             let empty: DID[] = Array.from(await store.listDids());
             expect(empty.length).toBe(0);
-   
+
             await store.synchronize();
             let syncedDids: DID[] =  Array.from(await store.listDids());
             syncedDids.sort((a,b) => a.compareTo(b));
-   
+
             for (let i = 0; i < dids.length; i++)
                 expect(dids[i].equals(syncedDids[i])).toBeTruthy();
         });
