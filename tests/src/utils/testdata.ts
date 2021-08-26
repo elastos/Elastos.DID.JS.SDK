@@ -293,7 +293,7 @@ export class CompatibleData {
         if (this.data[key] !== null && this.data[key] !== undefined)
             return this.data[key];
 
-        let credential = await VerifiableCredential.parse(this.getCredentialFile(did, vc, type));
+        let credential = VerifiableCredential.parse(this.getCredentialFile(did, vc, type));
 
         await this.testData.store.storeCredential(credential);
 
