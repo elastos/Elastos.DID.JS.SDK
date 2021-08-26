@@ -1387,14 +1387,14 @@ export namespace DIDStore {
                 hash.update(Buffer.from(this.document.metadata.toString(true)));
             if (this.credentials) {
                 for (let vc of this.credentials) {
-                    hash.update(Buffer.from(vc.toString()));
+                    hash.update(Buffer.from(vc.toString(true)));
                     if (vc.metadata)
-                        hash.update(Buffer.from(vc.metadata.toString()));
+                        hash.update(Buffer.from(vc.metadata.toString(true)));
                 }
             }
 
             for (let sk of this.privatekeys) {
-                hash.update(Buffer.from(sk.id.toString()));
+                hash.update(Buffer.from(sk.id.toString(this.id)));
                 hash.update(Buffer.from(sk.key));
             }
 
@@ -1417,15 +1417,15 @@ export namespace DIDStore {
                         "Invalid export data, fingerprint mismatch.");
         }
 
-       public toJSON(key: string = null): JSONObject {
+        public toJSON(key: string = null): JSONObject {
             let json: JSONObject = {};
             json.type = this.type;
             json.id = this.id.toString(),
             json.document = this.document.toJSON();
             if (this.credentials && this.credentials.length > 0)
-                json.credentials = Array.from(this.credentials, (vc) => vc.toJSON());
+                json.credential = Array.from(this.credentials, (vc) => vc.toJSON());
             if (this.privatekeys && this.privatekeys.length > 0)
-                json.privatekeys = Array.from(this.privatekeys, (sk) => sk.toJSON());
+                json.privateKey = Array.from(this.privatekeys, (sk) => sk.toJSON());
             json.created = this.dateToString(this.created);
             json.fingerprint = this.fingerprint;
 
@@ -1704,8 +1704,8 @@ export namespace DIDStore {
             return {
                 type: this.type,
                 mnemonic: this.mnemonic,
-                privatekey: this.privatekey,
-                publickey: this.publickey,
+                privateKey: this.privatekey,
+                publicKey: this.publickey,
                 index: this.index,
                 default: this.default,
                 created: this.dateToString(this.created),
@@ -1719,8 +1719,8 @@ export namespace DIDStore {
                 throw new MalformedExportDataException("Invalid export data, unknown type.");
 
             this.mnemonic = this.getString("mnemonic", json.mnemonic, {mandatory: true, nullable: false});
-            this.privatekey = this.getString("privatekey", json.privatekey, {mandatory: true, nullable: false});
-            this.publickey = this.getString("publickey", json.publickey, {mandatory: true, nullable: false});
+            this.privatekey = this.getString("privateKey", json.privateKey, {mandatory: true, nullable: false});
+            this.publickey = this.getString("publicKey", json.publicKey, {mandatory: true, nullable: false});
             this.index = this.getNumber("index", json.index, {mandatory: true, nullable: false, defaultValue: 0});
             this.default = this.getBoolean("default", json.default, {mandatory: true, nullable: false, defaultValue: false});
             this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
