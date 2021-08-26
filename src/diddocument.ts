@@ -1073,6 +1073,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this.proofs = new ComparableMap<DID, DIDDocumentProof>();
         if (!Array.isArray(json.proof)) {
             let po = json.proof as JSONObject;
+            // TODO: need improve
+            if (!this.isCustomizedDid())
+                po.__defaultPublicKey__ = this.getDefaultPublicKeyId().toString();
             let proof = DIDDocumentProof.deserialize(po, DIDDocumentProof, context);
             if (proof.getCreator().getDid() == null)
                 throw new MalformedDocumentException("Invalid proof creater: " + proof.getCreator());
@@ -1082,7 +1085,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             for (let v of json.proof) {
                 let po = v as JSONObject;
                 let proof = DIDDocumentProof.deserialize(po, DIDDocumentProof, context);
-
                 if (proof.getCreator().getDid() == null)
                     throw new MalformedDocumentException("Invalid proof creater: " + proof.getCreator());
 
