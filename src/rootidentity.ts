@@ -24,7 +24,7 @@ import crypto from "crypto"
 import { AbstractMetadata } from "./internals";
 import { HDKey } from "./internals";
 import { DID, DIDURL } from "./internals";
-import type { DIDDocument } from "./internals";
+import { DIDDocument } from "./internals";
 import type { DIDStore } from "./internals";
 import { DIDEntity } from "./internals";
 import { JSONObject } from "./json";
@@ -41,13 +41,9 @@ import {
 } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { Mnemonic } from "./internals";
-import {
-    checkArgument,
-    promisify
-} from "./internals";
+import { checkArgument } from "./internals";
 import { DefaultConflictHandle } from "./internals";
 import type { ConflictHandle } from "./internals";
-import { DIDDocumentBuilder } from "./internals";
 
 const log = new Logger("RootIdentity");
 
@@ -346,7 +342,7 @@ export class RootIdentity {
             let id = DIDURL.from("#primary", did);
             this.getStore().storePrivateKey(id, key.serialize(), storepass);
 
-            let db = DIDDocumentBuilder.newFromDID(did, this.getStore());
+            let db = DIDDocument.Builder.newFromDID(did, this.getStore());
             db.addAuthenticationKey(id, key.getPublicKeyBase58());
             doc = await db.seal(storepass);
             await this.getStore().storeDid(doc);
