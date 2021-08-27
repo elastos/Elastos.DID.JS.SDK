@@ -1082,6 +1082,9 @@ export class DIDStore {
             if (this.storage.containsPrivateKeys(did)) {
                 let pks = doc.getPublicKeys();
                 for (let pk of pks) {
+                    if (!pk.getController().equals(did))
+ 					    continue;
+
                     let id = pk.getId();
                     let key = this.storage.loadPrivateKey(id);
                     if (key != null) {
@@ -1387,14 +1390,14 @@ export namespace DIDStore {
                 hash.update(Buffer.from(this.document.metadata.toString(true)));
             if (this.credentials) {
                 for (let vc of this.credentials) {
-                    hash.update(Buffer.from(vc.toString(true)));
+                    hash.update(Buffer.from(vc.content.toString(true)));
                     if (vc.metadata)
                         hash.update(Buffer.from(vc.metadata.toString(true)));
                 }
             }
 
             for (let sk of this.privatekeys) {
-                hash.update(Buffer.from(sk.id.toString(this.id)));
+                hash.update(Buffer.from(sk.id.toString()));
                 hash.update(Buffer.from(sk.key));
             }
 
@@ -1414,7 +1417,7 @@ export namespace DIDStore {
         public verify(password: string): void {
             if (this.fingerprint !== this.calculateFingerprint(password))
                 throw new MalformedExportDataException(
-                        "Invalid export data, fingerprint mismatch.");
+                        "Invalid export data, fingerprint mismatch. " + this.id.toString());
         }
 
         public toJSON(key: string = null): JSONObject {
@@ -1441,6 +1444,7 @@ export namespace DIDStore {
 
             if (!json.document)
                 throw new MalformedExportDataException("Invalid export data, missing document.");
+
             this.document = DIDExport.Document.parse(json.document as JSONObject);
 
             if (json.credential) {
