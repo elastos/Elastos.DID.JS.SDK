@@ -23,11 +23,9 @@
 import { Constants } from "./constants";
 import {
     DIDDocument,
-    DIDDocumentPublicKey,
     DIDURL,
     DIDStore,
     DID,
-    DIDDocumentBuilder,
     JSONObject,
     HDKey,
     Base58,
@@ -73,7 +71,7 @@ async function testGetPublicKey(version: number, testData: TestData) {
     }
 
     // PublicKey getter.
-    let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");
+    let pk: DIDDocument.PublicKey = doc.getPublicKey("#primary");
     expect(pk).not.toBeNull();
     expect(DIDURL.from("#primary", doc.getSubject()).equals(pk.getId())).toBeTruthy();
 
@@ -150,7 +148,7 @@ describe('DIDDocument Tests', () => {
 
         let ids: DIDURL[] = [];
         for (let i = 0; i < pks.length; i++) {
-            let pk: DIDDocumentPublicKey = pks[i];
+            let pk: DIDDocument.PublicKey = pks[i];
             ids.push(pk.getId());
         }
         ids.sort((e1, e2) => {
@@ -174,7 +172,7 @@ describe('DIDDocument Tests', () => {
             expect(refs[i].equals(refs[i])).toBeTruthy();
 
         // PublicKey getter.
-        let pk: DIDDocumentPublicKey = doc.getPublicKey("#primary");
+        let pk: DIDDocument.PublicKey = doc.getPublicKey("#primary");
         expect(pk).toBeNull();
 
         let id: DIDURL = DIDURL.from("#primary", user1.getSubject());
@@ -328,7 +326,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull()
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add 2 public keys
         let id = DIDURL.from("#test1", db.getSubject());
@@ -371,7 +369,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
         // Add 2 public keys
         let id = DIDURL.from("#test1", db.getSubject());
@@ -409,7 +407,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // recovery used by authorization, should failed.
         let id = DIDURL.from("#recovery", doc.getSubject());
@@ -457,7 +455,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user2);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user2);
 
         // Can not remove the controller's key
         let key2 = DIDURL.from("#key2", user1.getSubject());
@@ -781,7 +779,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add 2 public keys for test.
         let id = DIDURL.from("#test1", db.getSubject());
@@ -846,7 +844,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
         // Add 2 public keys for test.
         let id = DIDURL.from("#test1", db.getSubject());
@@ -914,7 +912,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add 2 public keys for test
         let key = TestData.generateKeypair();
@@ -975,7 +973,7 @@ describe('DIDDocument Tests', () => {
         expect(doc.getAuthenticationKeyCount()).toBe(7);
         expect(doc.getAuthorizationKeyCount()).toBe(0);
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
         // Remote keys
         db.removeAuthenticationKey(DIDURL.from("#key2", doc.getSubject()))
@@ -1088,7 +1086,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add 2 public keys for test.
         let id = DIDURL.from("#test1", db.getSubject());
@@ -1164,7 +1162,7 @@ describe('DIDDocument Tests', () => {
         expect(doc.isValid()).toBeTruthy();
 
         let did = doc.getSubject();
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
         // Add 2 public keys for test.
         let id = DIDURL.from("#test1", db.getSubject());
@@ -1218,7 +1216,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add 2 keys for test.
         let id = DIDURL.from("#test1", db.getSubject());
@@ -1377,7 +1375,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add credentials.
         let vc = await cd.getCredential("user1", "passport");
@@ -1422,7 +1420,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy()
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
         // Add credentials.
         let vc = await cd.getCredential("foobar", "license");
@@ -1465,7 +1463,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add credentials.
         let subject = {
@@ -1517,7 +1515,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user2);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user2);
 
         // Add credentials.
         let subject = {
@@ -1565,7 +1563,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add test credentials.
         let vc = await cd.getCredential("user1", "passport");
@@ -1613,7 +1611,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
         // Remove credentials
         db.removeCredential("#profile");
@@ -1780,7 +1778,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add services
         db.addService("#test-svc-1", "Service.Testing",
@@ -1840,7 +1838,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // Add services
         db.addService("#test-svc-1", "Service.Testing",
@@ -1893,7 +1891,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user3);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user3);
 
         // Add services
         db.addService("#test-svc-1", "Service.Testing",
@@ -1933,7 +1931,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user3);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user3);
 
         let map: JSONObject = {
             "abc": "helloworld",
@@ -2007,7 +2005,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
         // remove services
         db.removeService("#openid");
@@ -2044,7 +2042,7 @@ describe('DIDDocument Tests', () => {
         expect(doc).not.toBeNull();
         expect(doc.isValid()).toBeTruthy();
 
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(user1);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
         // remove services
         db.removeService("#vault");
@@ -2376,7 +2374,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString());
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -2392,7 +2390,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString())
 
         // Update again
-        db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        db = DIDDocument.Builder.newFromDocument(doc).edit();
         key = TestData.generateKeypair();
         db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -2450,7 +2448,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.isValid()).toBeTruthy();
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -2466,7 +2464,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString());
 
         // Update again
-        db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        db = DIDDocument.Builder.newFromDocument(doc).edit();
         key = TestData.generateKeypair();
         db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -2562,7 +2560,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.isValid()).toBeTruthy();
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -2579,7 +2577,7 @@ describe('DIDDocument Tests', () => {
         expect(doc.getAuthenticationKeyCount()).toBe(4)
 
         // Update again
-        db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl3);
+        db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl3);
         key = TestData.generateKeypair();
         db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -2714,7 +2712,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.isValid()).toBeTruthy();
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -2959,7 +2957,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.isValid()).toBeTruthy();
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3024,7 +3022,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString());
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3042,7 +3040,7 @@ describe('DIDDocument Tests', () => {
         doc.getMetadata().setPreviousSignature(null);
 
         // Update again
-        db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        db = DIDDocument.Builder.newFromDocument(doc).edit();
         key = TestData.generateKeypair();
         db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3072,7 +3070,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString())
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3090,7 +3088,7 @@ describe('DIDDocument Tests', () => {
         doc.getMetadata().setSignature(null);
 
         // Update again
-        db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        db = DIDDocument.Builder.newFromDocument(doc).edit();
         key = TestData.generateKeypair();
         db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3122,7 +3120,7 @@ describe('DIDDocument Tests', () => {
         doc.getMetadata().setSignature(null);
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3154,7 +3152,7 @@ describe('DIDDocument Tests', () => {
         doc.getMetadata().setSignature(null);
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3184,7 +3182,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString());
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3202,7 +3200,7 @@ describe('DIDDocument Tests', () => {
         doc.getMetadata().setPreviousSignature("1234567890");
 
         // Update
-        db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        db = DIDDocument.Builder.newFromDocument(doc).edit();
         key = TestData.generateKeypair();
         db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3232,7 +3230,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString())
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3250,7 +3248,7 @@ describe('DIDDocument Tests', () => {
         doc.getMetadata().setSignature("1234567890");
 
         // Update
-        db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        db = DIDDocument.Builder.newFromDocument(doc).edit();
         key = TestData.generateKeypair();
         db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3280,7 +3278,7 @@ describe('DIDDocument Tests', () => {
 
         doc.getMetadata().setPreviousSignature("1234567890");
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3312,7 +3310,7 @@ describe('DIDDocument Tests', () => {
         doc.getMetadata().setSignature("1234567890");
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3361,7 +3359,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString());
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3466,7 +3464,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.isValid()).toBeTruthy();
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3578,7 +3576,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.isValid()).toBeTruthy();
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3761,7 +3759,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.isValid()).toBeTruthy();
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3939,7 +3937,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.isValid()).toBeTruthy();
 
         // Update
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit(ctrl2);
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
         let key = TestData.generateKeypair();
         db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
         doc = await db.seal(TestConfig.storePass);
@@ -3975,7 +3973,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString());
 
         let target = await identity.newDid(TestConfig.storePass);
-        let db = DIDDocumentBuilder.newFromDocument(target).edit();
+        let db = DIDDocument.Builder.newFromDocument(target).edit();
         await db.authorizeDid(new DIDURL("#recovery", target.getSubject()), doc.getSubject(), null);
         target = await db.seal(TestConfig.storePass);
         expect(target).not.toBeNull();
@@ -4001,7 +3999,7 @@ describe('DIDDocument Tests', () => {
     test("testDeactivateWithAuthorization2", async () => {
         let identity = await testData.getRootIdentity();
         let doc = await identity.newDid(TestConfig.storePass);
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         let id = DIDURL.from("#key-2", doc.getSubject());
 
@@ -4020,7 +4018,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString());
 
         let target = await identity.newDid(TestConfig.storePass);
-        db = DIDDocumentBuilder.newFromDocument(target).edit();
+        db = DIDDocument.Builder.newFromDocument(target).edit();
         db.addAuthorizationKey("#recovery", doc.getSubject().toString(), key.getPublicKeyBase58());
         target = await db.seal(TestConfig.storePass);
         expect(target).not.toBeNull();
@@ -4046,7 +4044,7 @@ describe('DIDDocument Tests', () => {
     test("testDeactivateWithAuthorization3", async () => {
         let identity = await testData.getRootIdentity();
         let doc = await identity.newDid(TestConfig.storePass);
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
         let id = DIDURL.from("#key-2", doc.getSubject());
         db.addAuthenticationKey(id, key.getPublicKeyBase58());
@@ -4064,7 +4062,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved.toString()).toEqual(doc.toString());
 
         let target = await identity.newDid(TestConfig.storePass);
-        db = DIDDocumentBuilder.newFromDocument(target).edit();
+        db = DIDDocument.Builder.newFromDocument(target).edit();
         db.addAuthorizationKey("#recovery", doc.getSubject().toString(),
             key.getPublicKeyBase58());
         target = await db.seal(TestConfig.storePass);

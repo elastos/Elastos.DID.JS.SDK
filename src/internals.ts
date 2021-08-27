@@ -50,10 +50,6 @@ export * from "./jwt/jwtparserbuilder";
 
 // DID objects that could be embedded inside the DIDDocument.
 // Should be before DIDDocument
-export * from "./diddocumentmultisignature";
-export * from "./diddocumentpublickey"; // Should be before diddocumentpublickeyreference
-export * from "./diddocumentservice";
-export * from "./diddocumentproof";
 export * from "./credentialmetadata";
 export * from "./verifiablecredential";
 
@@ -106,7 +102,6 @@ export * from "./backend/credentialbiography";
 export * from "./didbackend";
 export * from "./defaultdidadapter";
 export * from "./backend/simulatedidchainadapter";
-export * from "./diddocumentbuilder";
 export * from "./didadapter";
 export * from "./utils";
 export * from "./lrucache";

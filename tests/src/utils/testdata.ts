@@ -27,7 +27,7 @@ import {
     VerifiableCredential, VerifiablePresentation,
     TransferTicket, Issuer, DIDURL, DID, Exceptions,
     File, HDKey, JSONObject, JSONValue, runningInBrowser,
-    DIDDocumentBuilder, DIDBackend
+    DIDBackend
 } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./testconfig";
 import { importBundledBrowserData } from "./browserdataimport";
@@ -443,7 +443,7 @@ export class InstantData {
                     .properties(props)
                     .seal(TestConfig.storePass);
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
 
             let key = TestData.generateKeypair();
@@ -481,7 +481,7 @@ export class InstantData {
             doc.getMetadata().setAlias("User1");
 
             // Test document with two embedded credentials
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
             let temp = TestData.generateKeypair();
             db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
@@ -720,7 +720,7 @@ export class InstantData {
             let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
             doc.getMetadata().setAlias("User2");
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
             let props = {
                 name: "John",
@@ -791,7 +791,7 @@ export class InstantData {
                     .properties(props)
                     .seal(TestConfig.storePass);
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
 
             let key = TestData.generateKeypair();
@@ -830,7 +830,7 @@ export class InstantData {
             let signKey = this.idUser1.getDefaultPublicKeyId();
 
             // Add public keys embedded credentials
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit(this.idUser1);
+            let db = DIDDocument.Builder.newFromDocument(doc).edit(this.idUser1);
 
             let temp = TestData.generateKeypair();
             db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
