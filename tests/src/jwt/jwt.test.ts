@@ -21,7 +21,6 @@
  */
 
 import { DIDDocument,
-        DIDDocumentBuilder,
         DIDURL,
         Logger,
         BASE64,
@@ -67,7 +66,7 @@ describe('JWT Tests', () => {
         doc = await identity.newDid(TestConfig.storePass);
 
         let key = TestData.generateKeypair();
-        let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let id = new DIDURL("#key2", doc.getSubject());
         db.addAuthenticationKey(id, key.getPublicKeyBase58());
         let store = await testData.getStore();

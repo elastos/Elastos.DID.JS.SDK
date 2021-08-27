@@ -21,7 +21,7 @@
  */
 
 import dayjs from "dayjs";
-import { DID, DIDURL } from "./internals";
+import { Base58, Collections, DID, DIDObject, DIDURL, Issuer } from "./internals";
 import { JWTBuilder, JWTParserBuilder } from "./internals";
 import { Constants } from "./constants";
 import { ByteBuffer } from "./internals";
@@ -30,11 +30,6 @@ import { HDKey } from "./internals";
 import type { KeyProvider } from "./crypto/keyprovider";
 import { SHA256 } from "./internals";
 import { DIDBackend } from "./internals";
-import { DIDDocumentBuilder } from "./internals";
-import { DIDDocumentMultiSignature } from "./internals";
-import { DIDDocumentProof } from "./internals";
-import { DIDDocumentPublicKey } from "./internals";
-import { DIDDocumentService } from "./internals";
 import { DIDEntity } from "./internals";
 import { DIDMetadata } from "./internals";
 import { VerificationEventListener } from "./internals";
@@ -56,19 +51,25 @@ import {
     NotCustomizedDIDException,
     NotPrimitiveDIDException,
     UnknownInternalException,
-    DIDControllersChangedException
+    DIDControllersChangedException,
+    IllegalArgumentException,
+    AlreadySealedException,
+    CanNotRemoveEffectiveController,
+    DIDObjectNotExistException,
+    IllegalUsage,
+    DIDObjectAlreadyExistException,
+    DIDObjectHasReference
 } from "./exceptions/exceptions";
 import { Logger } from "./logger";
 import { TransferTicket } from "./internals";
 import { base64Decode, checkArgument } from "./internals";
 import { VerifiableCredential } from "./internals";
 import { ComparableMap } from "./comparablemap";
-import type { JSONObject } from "./json";
-import { arrayish2Buffer } from "browserfs/dist/node/core/util";
+import { JSONObject, sortJSONObject } from "./json";
 import keyutil from "js-crypto-key-utils";
 import { createPrivateKey, createPublicKey} from "crypto";
 import { KeyLike } from 'jose/types'
-
+import { Comparable } from "./comparable";
 
 /**
  * The DIDDocument represents the DID information.
@@ -98,16 +99,16 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     private subject: DID;
     public controllers?: DID[];
-    public multisig?: DIDDocumentMultiSignature;
-    public publicKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
-    public authenticationKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
-    public authorizationKeys?: ComparableMap<DIDURL, DIDDocumentPublicKey>;
+    public multisig?: DIDDocument.MultiSignature;
+    public publicKeys?: ComparableMap<DIDURL, DIDDocument.PublicKey>;
+    public authenticationKeys?: ComparableMap<DIDURL, DIDDocument.PublicKey>;
+    public authorizationKeys?: ComparableMap<DIDURL, DIDDocument.PublicKey>;
     public credentials?: ComparableMap<DIDURL, VerifiableCredential>;
-    public services?: ComparableMap<DIDURL, DIDDocumentService>;
+    public services?: ComparableMap<DIDURL, DIDDocument.Service>;
     public expires?: Date;
-    public proofs?: ComparableMap<DID, DIDDocumentProof>;
+    public proofs?: ComparableMap<DID, DIDDocument.Proof>;
 
-    public defaultPublicKey?: DIDDocumentPublicKey;
+    public defaultPublicKey?: DIDDocument.PublicKey;
     public controllerDocs?: ComparableMap<DID, DIDDocument>;
     public effectiveController?: DID;
 
@@ -271,7 +272,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return this.multisig != null;
     }
 
-    public getMultiSignature(): DIDDocumentMultiSignature {
+    public getMultiSignature(): DIDDocument.MultiSignature {
         return this.multisig;
     }
 
@@ -296,8 +297,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the PublicKey array
      */
-    public getPublicKeys(): DIDDocumentPublicKey[] {
-        let pks: DIDDocumentPublicKey[] = Array.from(this.publicKeys.values());
+    public getPublicKeys(): DIDDocument.PublicKey[] {
+        let pks: DIDDocument.PublicKey[] = Array.from(this.publicKeys.values());
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
@@ -314,12 +315,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param type the type string
      * @return the matched PublicKey array
      */
-    public selectPublicKeys(id: DIDURL | string, type: string): DIDDocumentPublicKey[] {
+    public selectPublicKeys(id: DIDURL | string, type: string): DIDDocument.PublicKey[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let pks: DIDDocumentPublicKey[] = [];
+        let pks: DIDDocument.PublicKey[] = [];
         for (let pk of this.publicKeys.values()) {
             if (id != null && !pk.getId().equals(id))
                 continue;
@@ -344,7 +345,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param id the key id
      * @return the PublicKey object
      */
-    public getPublicKey(id: DIDURL | string): DIDDocumentPublicKey {
+    public getPublicKey(id: DIDURL | string): DIDDocument.PublicKey {
         checkArgument(id != null, "Invalid publicKey id");
 
         id = this.canonicalId(id);
@@ -402,7 +403,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the default key
      */
-    public getDefaultPublicKey(): DIDDocumentPublicKey {
+    public getDefaultPublicKey(): DIDDocument.PublicKey {
         if (this.defaultPublicKey != null)
             return this.defaultPublicKey;
 
@@ -498,8 +499,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the matched authentication key array
      */
-    public getAuthenticationKeys(): DIDDocumentPublicKey[] {
-        let pks: DIDDocumentPublicKey[] = Array.from(this.authenticationKeys.values());
+    public getAuthenticationKeys(): DIDDocument.PublicKey[] {
+        let pks: DIDDocument.PublicKey[] = Array.from(this.authenticationKeys.values());
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values())
@@ -516,12 +517,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param type the type of key
      * @return the matched authentication key array
      */
-    public selectAuthenticationKeys(id: DIDURL | string, type: string): DIDDocumentPublicKey[] {
+    public selectAuthenticationKeys(id: DIDURL | string, type: string): DIDDocument.PublicKey[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let pks: DIDDocumentPublicKey[] = [];
+        let pks: DIDDocument.PublicKey[] = [];
         for (let pk of this.authenticationKeys.values()) {
             if (id != null && !pk.getId().equals(id))
                 continue;
@@ -546,7 +547,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param id the key id
      * @return the matched authentication key object
      */
-    public getAuthenticationKey(idOrString: DIDURL | string): DIDDocumentPublicKey {
+    public getAuthenticationKey(idOrString: DIDURL | string): DIDDocument.PublicKey {
         checkArgument(idOrString != null, "Invalid publicKey id");
 
         idOrString = this.canonicalId(idOrString);
@@ -588,7 +589,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the  array
      */
-    public getAuthorizationKeys(): DIDDocumentPublicKey[] {
+    public getAuthorizationKeys(): DIDDocument.PublicKey[] {
         return Array.from(this.authorizationKeys.values());
     }
 
@@ -599,12 +600,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param type the type of key
      * @return the matched authorization key array
      */
-    public selectAuthorizationKeys(idOrString: DIDURL | string, type: string): DIDDocumentPublicKey[] {
+    public selectAuthorizationKeys(idOrString: DIDURL | string, type: string): DIDDocument.PublicKey[] {
         checkArgument(idOrString != null || type != null, "Invalid select args");
 
         idOrString = this.canonicalId(idOrString);
 
-        let pks: DIDDocumentPublicKey[] = [];
+        let pks: DIDDocument.PublicKey[] = [];
         for (let pk of this.authorizationKeys.values()) {
             if (idOrString != null && !pk.getId().equals(idOrString))
                 continue;
@@ -624,7 +625,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param idOrString the key id
      * @return the authorization key object
      */
-    public getAuthorizationKey(idOrString: DIDURL | string): DIDDocumentPublicKey {
+    public getAuthorizationKey(idOrString: DIDURL | string): DIDDocument.PublicKey {
         checkArgument(idOrString != null, "Invalid publicKey id");
 
         return this.authorizationKeys.get(this.canonicalId(idOrString));
@@ -711,7 +712,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the Service array
      */
-    public getServices(): DIDDocumentService[] {
+    public getServices(): DIDDocument.Service[] {
         return Array.from(this.services.values());
     }
 
@@ -722,12 +723,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param type the type of service
      * @return the matched Service array
      */
-    public selectServices(id: DIDURL | string, type: string): DIDDocumentService[] {
+    public selectServices(id: DIDURL | string, type: string): DIDDocument.Service[] {
         checkArgument(id != null || type != null, "Invalid select args");
 
         id = this.canonicalId(id);
 
-        let svcs: DIDDocumentService[] = [];
+        let svcs: DIDDocument.Service[] = [];
         for (let svc of this.services.values()) {
             if (id != null && !svc.getId().equals(id))
                 continue;
@@ -747,7 +748,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param id the service id
      * @return the matched Service object
      */
-    public getService(id: DIDURL | string): DIDDocumentService {
+    public getService(id: DIDURL | string): DIDDocument.Service {
         checkArgument(id != null, "Invalid service id");
         return this.services.get(this.canonicalId(id));
     }
@@ -784,7 +785,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return the Proof object
      */
-    public getProof(): DIDDocumentProof {
+    public getProof(): DIDDocument.Proof {
         return this.getProofs()[0];
     }
 
@@ -793,7 +794,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *
      * @return list of the Proof objects
      */
-    public getProofs(): DIDDocumentProof[] {
+    public getProofs(): DIDDocument.Proof[] {
         return this.proofs.valuesAsSortedArray();
     }
 
@@ -886,7 +887,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this.controllers = this.getDids("controller", json.controller, {mandatory: false, nullable: false, defaultValue: []});
         let ms = this.getString("multisig", json.multisig, {mandatory: false, nullable: false});
         if (ms)
-            this.multisig = DIDDocumentMultiSignature.fromString(ms);
+            this.multisig = DIDDocument.MultiSignature.fromString(ms);
 
         this.controllerDocs = new ComparableMap<DID, DIDDocument>();
 
@@ -901,17 +902,17 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 throw new MalformedDocumentException("Invalid multisig property");
         }
 
-        this.publicKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
+        this.publicKeys = new ComparableMap<DIDURL, DIDDocument.PublicKey>();
         if (json.publicKey) {
             if (!Array.isArray(json.publicKey))
                 throw new MalformedDocumentException("Invalid property: publicKey, type error.");
 
             for (let o of json.publicKey) {
-                let pk: DIDDocumentPublicKey;
+                let pk: DIDDocument.PublicKey;
                 let obj = o as JSONObject;
 
                 try {
-                    pk = DIDDocumentPublicKey.deserialize(obj , DIDDocumentPublicKey, context);
+                    pk = DIDDocument.PublicKey.deserialize(obj , DIDDocument.PublicKey, context);
                 } catch (e) {
                     throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                 }
@@ -923,13 +924,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
         }
 
-        this.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
+        this.authenticationKeys = new ComparableMap<DIDURL, DIDDocument.PublicKey>();
         if (json.authentication) {
             if (!Array.isArray(json.authentication))
                 throw new MalformedDocumentException("Invalid property: authentication, type error.");
 
             for (let obj of json.authentication ) {
-                let pk: DIDDocumentPublicKey;
+                let pk: DIDDocument.PublicKey;
 
                 if (typeof obj === 'string') {
                     let id = new DIDURL(obj as string, context);
@@ -941,7 +942,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     obj = obj as JSONObject;
 
                     try {
-                        pk = DIDDocumentPublicKey.deserialize(obj , DIDDocumentPublicKey, context);
+                        pk = DIDDocument.PublicKey.deserialize(obj , DIDDocument.PublicKey, context);
                     } catch (e) {
                         throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                     }
@@ -959,13 +960,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
         }
 
-        this.authorizationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>();
+        this.authorizationKeys = new ComparableMap<DIDURL, DIDDocument.PublicKey>();
         if (json.authorization) {
             if (!Array.isArray(json.authorization))
                 throw new MalformedDocumentException("Invalid property: authorization, type error.");
 
             for (let obj of json.authorization ) {
-                let pk: DIDDocumentPublicKey;
+                let pk: DIDDocument.PublicKey;
 
                 if (typeof obj === 'string') {
                     let id = new DIDURL(obj as string, context);
@@ -977,7 +978,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     obj = obj as JSONObject;
 
                     try {
-                        pk = DIDDocumentPublicKey.deserialize(obj , DIDDocumentPublicKey, context);
+                        pk = DIDDocument.PublicKey.deserialize(obj , DIDDocument.PublicKey, context);
                     } catch (e) {
                         throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                     }
@@ -1043,17 +1044,17 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
         }
 
-        this.services = new ComparableMap<DIDURL, DIDDocumentService>();
+        this.services = new ComparableMap<DIDURL, DIDDocument.Service>();
         if (json.service) {
             if (!Array.isArray(json.service))
                 throw new MalformedDocumentException("Invalid property: service, type error.");
 
             for (let obj of json.service ) {
-                let svc: DIDDocumentService;
+                let svc: DIDDocument.Service;
                 let svcJson = obj as JSONObject;
 
                 try {
-                    svc = DIDDocumentService.deserialize(svcJson , DIDDocumentService, context);
+                    svc = DIDDocument.Service.deserialize(svcJson , DIDDocument.Service, context);
                 } catch (e) {
                     throw new MalformedDocumentException("Invalid service: " + svcJson.id, e);
                 }
@@ -1070,13 +1071,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (!json.proof)
             throw new MalformedDocumentException("Missing property: proof");
 
-        this.proofs = new ComparableMap<DID, DIDDocumentProof>();
+        this.proofs = new ComparableMap<DID, DIDDocument.Proof>();
         if (!Array.isArray(json.proof)) {
             let po = json.proof as JSONObject;
-            // TODO: need improve
-            if (!this.isCustomizedDid())
-                po.__defaultPublicKey__ = this.getDefaultPublicKeyId().toString();
-            let proof = DIDDocumentProof.deserialize(po, DIDDocumentProof, context);
+            if (!this.isCustomizedDid() && !po.creator)
+                po.creator = this.getDefaultPublicKeyId().toString();
+            let proof = DIDDocument.Proof.deserialize(po, DIDDocument.Proof, context);
             if (proof.getCreator().getDid() == null)
                 throw new MalformedDocumentException("Invalid proof creater: " + proof.getCreator());
 
@@ -1084,7 +1084,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         } else {
             for (let v of json.proof) {
                 let po = v as JSONObject;
-                let proof = DIDDocumentProof.deserialize(po, DIDDocumentProof, context);
+                let proof = DIDDocument.Proof.deserialize(po, DIDDocument.Proof, context);
                 if (proof.getCreator().getDid() == null)
                     throw new MalformedDocumentException("Invalid proof creater: " + proof.getCreator());
 
@@ -1336,16 +1336,16 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         doc.controllers = Array.from(this.controllers);
         doc.controllerDocs = new ComparableMap<DID, DIDDocument>(this.controllerDocs);
         if (this.multisig != null)
-            doc.multisig = DIDDocumentMultiSignature.newFromMultiSignature(this.multisig);
+            doc.multisig = DIDDocument.MultiSignature.newFromMultiSignature(this.multisig);
         doc.effectiveController = this.effectiveController;
-        doc.publicKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.publicKeys);
-        doc.authenticationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.authenticationKeys);
-        doc.authorizationKeys = new ComparableMap<DIDURL, DIDDocumentPublicKey>(this.authorizationKeys);
+        doc.publicKeys = new ComparableMap<DIDURL, DIDDocument.PublicKey>(this.publicKeys);
+        doc.authenticationKeys = new ComparableMap<DIDURL, DIDDocument.PublicKey>(this.authenticationKeys);
+        doc.authorizationKeys = new ComparableMap<DIDURL, DIDDocument.PublicKey>(this.authorizationKeys);
         doc.defaultPublicKey = this.defaultPublicKey;
         doc.credentials = new ComparableMap<DIDURL, VerifiableCredential>(this.credentials);
-        doc.services = new ComparableMap<DIDURL, DIDDocumentService>(this.services);
+        doc.services = new ComparableMap<DIDURL, DIDDocument.Service>(this.services);
         doc.expires = this.expires;
-        doc.proofs = new ComparableMap<DID, DIDDocumentProof>(this.proofs);
+        doc.proofs = new ComparableMap<DID, DIDDocument.Proof>(this.proofs);
 
         let metadata: DIDMetadata = this.getMetadata().clone();
         doc.setMetadata(metadata);
@@ -1434,7 +1434,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (doc.proofs.has(this.getSubject()))
             throw new AlreadySignedException(this.getSubject().toString());
 
-        let builder = DIDDocumentBuilder.newFromDocument(doc).edit(this);
+        let builder = DIDDocument.Builder.newFromDocument(doc).edit(this);
         try {
             return await builder.seal(storepass);
         } catch (ignore) {
@@ -1607,7 +1607,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         DIDDocument.log.info("Creating new DID {} with controller {}...", did, this.getSubject());
 
-        let docBuilder = DIDDocumentBuilder.newFromDID(did, this.getStore(), this);
+        let docBuilder = DIDDocument.Builder.newFromDID(did, this.getStore(), this);
         for (let ctrl of controllers) {
             await docBuilder.addController(ctrl);
         }
@@ -1741,9 +1741,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
             if (this.isCustomizedDid()) {
                 let curMultisig = this.getMultiSignature() == null ?
-                        DIDDocumentMultiSignature.ONE_OF_ONE : this.getMultiSignature();
+                        DIDDocument.MultiSignature.ONE_OF_ONE : this.getMultiSignature();
                 let orgMultisig = resolvedDoc.getMultiSignature() == null ?
-                        DIDDocumentMultiSignature.ONE_OF_ONE : resolvedDoc.getMultiSignature();
+                        DIDDocument.MultiSignature.ONE_OF_ONE : resolvedDoc.getMultiSignature();
 
                 if (!curMultisig.equals(orgMultisig))
                     throw new DIDControllersChangedException();
@@ -1950,7 +1950,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (targetDoc.getAuthorizationKeyCount() == 0)
                 throw new InvalidKeyException("No authorization key from: " + target);
 
-            let candidatePks: DIDDocumentPublicKey[] = null;
+            let candidatePks: DIDDocument.PublicKey[] = null;
             if (signKey == null) {
                 candidatePks = this.getAuthenticationKeys();
             } else {
@@ -2038,6 +2038,1289 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 throw e;
             else
                 throw new MalformedDocumentException(e);
+        }
+    }
+}
+
+export namespace DIDDocument {
+    /**
+     * Publickey is used for digital signatures, encryption and
+     * other cryptographic operations, which are the basis for purposes such as
+     * authentication or establishing secure communication with service endpoints.
+     */
+    export class PublicKey extends DIDEntity<PublicKey>
+            implements DIDObject<string>, Comparable<PublicKey> {
+        public id: DIDURL;
+        public type: string;
+        public controller: DID;
+        public publicKeyBase58: string;
+        //private authenticationKey: boolean;
+        //private authorizationKey: boolean;
+
+        /**
+        * Constructs Publickey with the given value.
+        *
+        * @param id the Id for PublicKey
+        * @param type the type string of PublicKey, default type is "ECDSAsecp256r1"
+        * @param controller the DID who holds private key
+        * @param publicKeyBase58 the string from encoded base58 of public key
+        */
+        constructor(id: DIDURL = null, controller: DID = null, publicKeyBase58: string = null,
+            type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            super();
+            this.id = id;
+            this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+            this.controller = controller;
+            this.publicKeyBase58 = publicKeyBase58;
+        }
+
+        /**
+        * Get the PublicKey id.
+        *
+        * @return the identifier
+        */
+        public getId(): DIDURL {
+            return this.id;
+        }
+
+        /**
+        * Get the PublicKey type.
+        *
+        * @return the type string
+        */
+        public getType(): string {
+            return this.type;
+        }
+
+        /**
+        * Get the controller of Publickey.
+        *
+        * @return the controller
+        */
+        public getController(): DID {
+            return this.controller;
+        }
+
+        /**
+        * Get public key base58 string.
+        *
+        * @return the key base58 string
+        */
+        public getPublicKeyBase58(): string {
+            return this.publicKeyBase58;
+        }
+
+        /**
+        * Get public key bytes.
+        *
+        * @return the key bytes
+        */
+        public getPublicKeyBytes(): Buffer {
+            return Base58.decode(this.publicKeyBase58);
+        }
+
+        public equals(ref: PublicKey): boolean {
+        if (this == ref)
+            return true;
+
+        return (this.getId().equals(ref.getId()) &&
+            this.getType() === ref.getType() &&
+            this.getController().equals(ref.getController()) &&
+            this.getPublicKeyBase58() === ref.getPublicKeyBase58())
+        }
+
+        public compareTo(key: PublicKey): number {
+            let rc: number = this.id.compareTo(key.id);
+
+            if (rc != 0)
+                return rc;
+            else
+                rc = this.publicKeyBase58.localeCompare(key.publicKeyBase58);
+
+            if (rc != 0)
+                return rc;
+            else
+                rc = this.type.localeCompare(key.type);
+
+            if (rc != 0)
+                return rc;
+            else
+                return this.controller.compareTo(key.controller);
+        }
+
+        public toJSON(key: string = null): JSONObject {
+            let context: DID = key ? new DID(key) : null;
+
+            let json: JSONObject = {};
+            json.id = this.id.toString(context);
+            if (!context || this.type !== Constants.DEFAULT_PUBLICKEY_TYPE)
+                json.type = this.type;
+            if (!context || !this.controller.equals(context))
+                json.controller = this.controller.toString();
+            json.publicKeyBase58 = this.publicKeyBase58;
+
+            return json;
+        }
+
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.id = this.getDidUrl("publicKey.id", json.id,
+                    {mandatory: true, nullable: false, context: context});
+            this.type = this.getString("publicKey.type", json.type,
+                    {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+            this.controller = this.getDid("publicKey.controller", json.controller,
+                    {mandatory: false, nullable: false, defaultValue: context});
+            this.publicKeyBase58 = this.getString("publicKey.publicKeyBase58", json.publicKeyBase58,
+                    {mandatory: true, nullable: false});
+        }
+    }
+
+        /**
+     * A Service may represent any type of service the subject
+     * wishes to advertise, including decentralized identity management services
+     * for further discovery, authentication, authorization, or interaction.
+     */
+    export class Service extends DIDEntity<Service> implements DIDObject<string>, Comparable<Service> {
+        public id: DIDURL;
+        public type: string;
+        public serviceEndpoint: string;
+        private properties: JSONObject;
+
+        /**
+         * Constructs Service with the given value.
+         *
+         * @param id the id for Service
+         * @param type the type of Service
+         * @param endpoint the address of service point
+         */
+        constructor(id: DIDURL = null, type: string = null,
+                serviceEndpoint: string = null, properties?: JSONObject) {
+            super();
+            this.id = id;
+            this.type = type;
+            this.serviceEndpoint = serviceEndpoint;
+            this.properties = properties ? sortJSONObject(properties) : {};
+
+            if (Object.keys(this.properties).length > 0) {
+                delete this.properties["id"];
+                delete this.properties["type"];
+                delete this.properties["serviceEndpoint"];
+            }
+        }
+
+        /**
+         * Get the service id.
+         *
+         * @return the identifier
+         */
+        public getId(): DIDURL {
+            return this.id;
+        }
+
+        /**
+         * Get the service type.
+         *
+         * @return the type string
+         */
+        public getType(): string {
+            return this.type;
+        }
+
+        /**
+         * Get service point string.
+         *
+         * @return the service point string
+         */
+        public getServiceEndpoint(): string {
+            return this.serviceEndpoint;
+        }
+
+        public getProperties(): JSONObject {
+            return Object.keys(this.properties).length > 0 ? this.properties : null;
+        }
+
+        public equals(ref: Service): boolean {
+            if (this == ref)
+                return true;
+
+            return (this.getId().equals(ref.getId()) &&
+                this.getType() === ref.getType() &&
+                this.getServiceEndpoint() === ref.getServiceEndpoint())
+        }
+
+        public compareTo(svc: Service): number {
+            let rc: number = this.id.compareTo(svc.id);
+
+            if (rc != 0)
+                return rc;
+            else
+                rc = this.type.localeCompare(svc.type);
+
+            if (rc != 0)
+                return rc;
+            else
+                return this.serviceEndpoint.localeCompare(svc.serviceEndpoint);
+        }
+
+        public toJSON(key: string = null): JSONObject {
+            let context: DID = key ? new DID(key) : null;
+
+            let json: JSONObject = {};
+            json.id = this.id.toString(context);
+            json.type = this.type;
+            json.serviceEndpoint = this.serviceEndpoint;
+
+            return {...json, ...this.properties};
+        }
+
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.id = this.getDidUrl("service.id", json.id,
+                    {mandatory: true, nullable: false, context: context});
+            this.type = this.getString("service.type", json.type,
+                    {mandatory: true, nullable: false});
+            this.serviceEndpoint = this.getString("service.serviceEndpoint", json.serviceEndpoint,
+                    {mandatory: true, nullable: false});
+
+            if (Object.keys(json).length > 3) {
+                this.properties = sortJSONObject(json);
+                delete this.properties["id"];
+                delete this.properties["type"];
+                delete this.properties["serviceEndpoint"];
+            }
+        }
+    }
+
+    /**
+     * The Proof represents the proof content of DID Document.
+     */
+    export class Proof extends DIDEntity<Proof> implements Comparable<Proof> {
+        private type: string;
+        private created: Date;
+        private creator: DIDURL;
+        private signature: string;
+
+        /**
+         * Constructs the proof of DIDDocument with the given value.
+         *
+         * @param type the type of Proof
+         * @param created the time to create DIDDocument
+         * @param creator the key to sign
+         * @param signature the signature string
+         */
+        constructor(creator: DIDURL = null, signature: string = null,
+                created: Date = new Date(), type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            super();
+            this.type = type ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+
+            if (created === undefined)
+                this.created = new Date();
+            else if (created !== null)
+                this.created = new Date(created);
+            else
+                this.created = null;
+
+            if (this.created)
+                this.created.setMilliseconds(0);
+
+            this.creator = creator;
+            this.signature = signature;
+        }
+
+        equals(obj: Proof): boolean {
+            return this.compareTo(obj) == 0;
+        }
+
+        /**
+         * Get Proof type.
+         *
+         * @return the type string
+         */
+        public getType(): string {
+            return this.type;
+        }
+
+        /**
+         * Get the time to create DIDDocument.
+         *
+         * @return the time
+         */
+        public getCreated(): Date {
+            return this.created;
+        }
+
+        /**
+         * Get the key id to sign.
+         *
+         * @return the key id
+         */
+        public getCreator(): DIDURL {
+            return this.creator;
+        }
+
+        /**
+         * Get signature string.
+         *
+         * @return the signature string
+         */
+        public getSignature(): string {
+            return this.signature;
+        }
+
+        public compareTo(proof: Proof): number {
+            let rc: number = this.created.getTime() - proof.created.getTime();
+            if (rc == 0)
+                rc = this.creator.compareTo(proof.creator);
+            return rc;
+        }
+
+        public toJSON(key: string = null): JSONObject {
+            let context: DID = key ? new DID(key) : null;
+
+            let json: JSONObject = {};
+            if (!context || this.type !== Constants.DEFAULT_PUBLICKEY_TYPE)
+                json.type = this.type;
+            if (this.created)
+                json.created = this.dateToString(this.created);
+
+            json.creator = this.creator.toString(context);
+            json.signatureValue = this.signature;
+
+            return json;
+        }
+
+        protected fromJSON(json: JSONObject, context: DID = null): void {
+            this.type = this.getString("proof.type", json.type,
+                    {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+            this.created = this.getDate("proof.created", json.created,
+                    {mandatory: false});
+            this.creator = this.getDidUrl("proof.creator", json.creator,
+                    {mandatory: true, nullable: false, context: context});
+            this.signature = this.getString("proof.signatureValue", json.signatureValue,
+                    {mandatory: true, nullable: false});
+        }
+    }
+
+    export class MultiSignature {
+        public static ONE_OF_ONE = new MultiSignature(1, 1);
+        private mv: number;
+        private nv: number;
+
+        public constructor(m: number, n: number) {
+            this.apply(m, n);
+        }
+
+        public static fromString(mOfN: string): MultiSignature {
+            if (!mOfN || mOfN == null)
+                throw new IllegalArgumentException("Invalid multisig spec");
+
+            let mn: string[] = mOfN.split(":");
+            if (mn == null || mn.length != 2)
+                throw new IllegalArgumentException("Invalid multisig spec");
+
+            return new MultiSignature(Number.parseInt(mn[0]), Number.parseInt(mn[1]));
+        }
+
+        public static newFromMultiSignature(ms: MultiSignature): MultiSignature {
+            return new MultiSignature(ms.m(), ms.n());
+        }
+
+        protected apply(m: number, n: number) {
+            checkArgument(n > 0, "Invalid multisig spec: n should > 0");
+            checkArgument(m > 0 && m <= n, "Invalid multisig spec: m should > 0 and <= n");
+
+            this.mv = m;
+            this.nv = n;
+        }
+
+        public m(): number {
+            return this.mv;
+        }
+
+        public n(): number {
+            return this.nv;
+        }
+
+        public equals(multisig: MultiSignature): boolean {
+            if (this == multisig)
+                return true;
+
+            return this.mv == multisig.mv && this.nv == multisig.nv;
+        }
+
+        public toString(): string {
+            return this.mv.toString() + ":" + this.nv.toString();
+        }
+    }
+
+    /**
+    * Builder object to create or modify the DIDDocument.
+    */
+    export class Builder {
+        private static log = new Logger("DIDDocumentBuilder");
+
+        private sourceDocument?: DIDDocument; // Document used to create this builder.
+        private document: DIDDocument;
+        private controllerDoc: DIDDocument;
+
+        private constructor() { }
+
+        /**
+         * Constructs DID Document Builder with given customizedDid and DIDStore.
+         *
+         * @param did the specified DID
+         * @param store the DIDStore object
+         */
+        public static newFromDID(did: DID, store: DIDStore, controller?: DIDDocument) {
+            let builder = new Builder();
+            builder.document = new DIDDocument(did);
+            builder.sourceDocument = builder.document;
+
+            if (controller !== undefined) {
+                builder.document.controllers = [];
+                builder.document.controllerDocs = new ComparableMap();
+
+                builder.document.controllers.push(controller.getSubject());
+                builder.document.controllerDocs.set(controller.getSubject(), controller);
+                builder.document.effectiveController = controller.getSubject();
+
+                builder.document.setMetadata(new DIDMetadata(did, store));
+
+                builder.controllerDoc = controller;
+            }
+            else {
+                let metadata: DIDMetadata = new DIDMetadata(did, store);
+                builder.document.setMetadata(metadata);
+            }
+            return builder;
+        }
+
+        /**
+         * Constructs DID Document Builder with given DID Document.
+         *
+         * @param doc the DID Document object
+         */
+        public static newFromDocument(doc: DIDDocument, controller?: DIDDocument): Builder {
+            let builder = new Builder();
+            builder.sourceDocument = doc;
+            builder.document = doc.copy();
+            if (controller !== undefined) {
+                builder.document.effectiveController = controller.getSubject();
+                builder.controllerDoc = controller;
+            }
+            return builder;
+        }
+
+        public edit(controller?: DIDDocument): Builder {
+            if (controller !== undefined) {
+                this.document.checkIsCustomized();
+
+                if (!this.document.getMetadata().attachedStore() && !controller.getMetadata().attachedStore())
+                    throw new NotAttachedWithStoreException();
+
+                if (!controller.getMetadata().attachedStore())
+                    controller.getMetadata().attachStore(this.document.getMetadata().getStore());
+
+                if (!this.sourceDocument.hasController(controller.getSubject()))
+                    throw new NotControllerException(controller.getSubject().toString());
+
+                this.document.effectiveController = controller.getSubject();
+                this.controllerDoc = controller;
+                return this;
+            }
+            else {
+                if (!this.document.isCustomizedDid()) {
+                    this.document.checkAttachedStore();
+
+                    return this;
+                } else {
+                    if (this.sourceDocument.getEffectiveController() == null)
+                        throw new NoEffectiveControllerException("Unable to edit a customized DIDDocument without effective controller");
+
+                    return this.edit(this.sourceDocument.getEffectiveControllerDocument());
+                }
+            }
+        }
+
+        private canonicalId(id: DIDURL | string): DIDURL {
+            if (typeof id === "string") {
+                return DIDURL.from(id, this.getSubject());
+            } else {
+                if (id == null || id.getDid() != null)
+                    return id;
+
+                return DIDURL.from(id, this.getSubject());
+            }
+        }
+
+        private invalidateProof() {
+            if (this.document.proofs != null && this.document.proofs.size != 0)
+                this.document.proofs.clear();
+        }
+
+        private checkNotSealed() {
+            if (this.document == null)
+                throw new AlreadySealedException();
+        }
+
+        private checkIsCustomized() {
+            if (!this.document.isCustomizedDid())
+                throw new NotCustomizedDIDException(this.document.getSubject().toString());
+        }
+
+        /**
+         * Get document subject from did document builder.
+         *
+         * @return the owner of did document builder
+         */
+        public getSubject(): DID {
+            this.checkNotSealed();
+            return this.document.getSubject();
+        }
+
+        /**
+         * Add a new controller to the customized DID document.
+         *
+         * @param controller the new controller's DID
+         * @return the Builder object
+         * @throws DIDResolveException if failed resolve the new controller's DID
+         */
+        public async addController(controller: DID | string): Promise<Builder> {
+            checkArgument(controller != null, "Invalid controller");
+
+            if (typeof controller === "string")
+                controller = DID.from(controller);
+
+            this.checkNotSealed();
+            this.checkIsCustomized();
+            checkArgument(!this.document.controllers.includes(controller), "Controller already exists");
+            let controllerDoc = await controller.resolve(true);
+            if (controllerDoc == null)
+                throw new DIDNotFoundException("DID not found: "+controller.toString());
+
+            if (controllerDoc.isDeactivated())
+                throw new DIDDeactivatedException(controller.toString());
+
+            if (controllerDoc.isExpired())
+                throw new DIDExpiredException(controller.toString());
+
+            if (!controllerDoc.isGenuine())
+                throw new DIDNotGenuineException(controller.toString());
+
+            if (controllerDoc.isCustomizedDid())
+                throw new NotPrimitiveDIDException(controller.toString());
+
+            this.document.controllers.push(controller);
+            this.document.controllerDocs.set(controller, controllerDoc);
+
+            this.document.multisig = null; // invalidate multisig
+            this.invalidateProof();
+            return this;
+        }
+
+        /**
+         * Remove controller from the customized DID document.
+         *
+         * @param controller the controller's DID to be remove
+         * @return the Builder object
+         */
+        public removeController(controller: DID | string): Builder {
+            checkArgument(controller != null, "Invalid controller");
+
+            if (typeof controller === "string")
+                controller = DID.from(controller);
+
+            this.checkNotSealed();
+            this.checkIsCustomized();
+            // checkArgument(document.controllers.contains(controller), "Controller not exists");
+
+            if (controller.equals(this.controllerDoc.getSubject()))
+                throw new CanNotRemoveEffectiveController(controller.toString());
+
+            if (this.document.controllers.includes(controller)) {
+                this.document.controllers.splice(this.document.controllers.indexOf(controller), 1);
+                this.document.controllerDocs.delete(controller);
+                this.invalidateProof();
+            }
+
+            return this;
+        }
+
+        /**
+         * Set multiple signature for multi-controllers DID document.
+         *
+         * @param m the required signature count
+         * @return the Builder object
+         */
+        public setMultiSignature(m: number): Builder {
+            this.checkNotSealed();
+            this.checkIsCustomized();
+            checkArgument(m >= 1, "Invalid signature count");
+
+            let n = this.document.controllers.length;
+            checkArgument(m <= n, "Signature count exceeds the upper limit");
+
+            let multisig: MultiSignature = null;
+            if (n > 1)
+                multisig = new MultiSignature(m, n);
+
+            if (this.document.multisig == null && multisig == null)
+                return this;
+
+            if (this.document.multisig != null && multisig != null &&
+                this.document.multisig.equals(multisig))
+                return this;
+
+            this.document.multisig = new MultiSignature(m, n);
+
+            this.invalidateProof();
+            return this;
+        }
+
+        public addPublicKey(key: PublicKey) {
+            if (this.document.publicKeys == null) {
+                this.document.publicKeys = new ComparableMap<DIDURL, PublicKey>();
+                this.document.authenticationKeys = new ComparableMap<DIDURL, PublicKey>();
+                this.document.authorizationKeys = new ComparableMap<DIDURL, PublicKey>();
+            } else {
+                // Check the existence, both id and keyBase58
+                for (let pk of this.document.publicKeys.values()) {
+                    if (pk.getId().equals(key.getId()))
+                        throw new DIDObjectAlreadyExistException("PublicKey id '"
+                            + key.getId() + "' already exist.");
+
+                    if (pk.getPublicKeyBase58() === key.getPublicKeyBase58())
+                        throw new DIDObjectAlreadyExistException("PublicKey '"
+                            + key.getPublicKeyBase58() + "' already exist.");
+                }
+            }
+
+            this.document.publicKeys.set(key.getId(), key);
+            if (this.document.defaultPublicKey == null) {
+                let address = HDKey.toAddress(key.getPublicKeyBytes());
+                if (address === this.getSubject().getMethodSpecificId()) {
+                    this.document.defaultPublicKey = key;
+                    this.document.authenticationKeys.set(key.getId(), key);
+                }
+            }
+
+            this.invalidateProof();
+        }
+
+        /**
+         * Add PublicKey to did document builder.
+         *
+         * @param id the key id
+         * @param controller the owner of public key
+         * @param pk the public key base58 string
+         * @return the DID Document Builder object
+         */
+        // Java: addPublicKey()
+        public createAndAddPublicKey(id: DIDURL | string, pk: string, controller?: DID | string, type = "ECDSAsecp256r1"): Builder {
+            this.checkNotSealed();
+
+            if (typeof id === "string")
+                id = this.canonicalId(id);
+
+            if (controller === undefined)
+                controller = null as DID;
+            else if (typeof controller === "string")
+                controller = DID.from(controller);
+
+            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())), "Invalid publicKey id");
+            checkArgument(pk && pk != null, "Invalid publicKey");
+
+            if (controller == null)
+                controller = this.getSubject();
+
+            this.addPublicKey(new PublicKey(this.canonicalId(id), controller, pk, type));
+            return this;
+        }
+
+        /**
+         * Remove PublicKey with the specified key id.
+         *
+         * @param id the key id
+         * @param force the owner of public key
+         * @return the DID Document Builder object
+         */
+        public removePublicKey(id: DIDURL | string, force = false): Builder {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
+                throw new DIDObjectNotExistException(id.toString());
+
+            id = this.canonicalId(id);
+            let pk = this.document.publicKeys.get(id);
+            if (pk == null)
+                throw new DIDObjectNotExistException(id.toString());
+
+            // Can not remove default public key
+            if (this.document.defaultPublicKey != null && this.document.defaultPublicKey.getId().equals(id))
+                throw new DIDObjectHasReference(id.toString() + "is default key");
+
+            if (!force) {
+                if (this.document.authenticationKeys.has(pk.getId()) ||
+                        this.document.authorizationKeys.has(pk.getId()))
+                    throw new DIDObjectHasReference(id.toString());
+            }
+
+            if (this.document.publicKeys.delete(id)) {
+                this.document.authenticationKeys.delete(id);
+                this.document.authorizationKeys.delete(id);
+                try {
+                    // TODO: should delete the loosed private key when store the document
+                    if (this.document.getMetadata().attachedStore())
+                        this.document.getMetadata().getStore().deletePrivateKey(id);
+                } catch (ignore) {
+                    // DIDStoreException
+                    Builder.log.error("INTERNAL - Remove private key", ignore);
+                }
+
+                this.invalidateProof();
+            }
+
+            return this;
+        }
+
+        // Java: addAuthenticationKey()
+        public addExistingAuthenticationKey(id: DIDURL | string): Builder {
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
+                throw new DIDObjectNotExistException(id.toString());
+
+            id = this.canonicalId(id);
+            let key: PublicKey = this.document.publicKeys.get(id);
+            if (key == null)
+                throw new DIDObjectNotExistException(id.toString());
+
+            // Check the controller is current DID subject
+            if (!key.getController().equals(this.getSubject()))
+                throw new IllegalUsage(id.toString());
+
+            if (!this.document.authenticationKeys.has(id)) {
+                this.document.authenticationKeys.set(id, key);
+                this.invalidateProof();
+            }
+
+            return this;
+        }
+
+        /**
+         * Add the exist Public Key matched the key id to be Authentication key.
+         *
+         * @param id the key id
+         * @return the DID Document Builder object
+         */
+        public addAuthenticationKey(id: DIDURL | string, pk: string): Builder {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (typeof id === "string")
+                id = this.canonicalId(id);
+
+            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+            checkArgument(pk && pk != null, "Invalid publicKey");
+
+            let key: PublicKey = new PublicKey(this.canonicalId(id), this.getSubject(), pk);
+            this.addPublicKey(key);
+            this.document.authenticationKeys.set(id, key);
+
+            return this;
+        }
+
+        /**
+         * Remove Authentication Key matched the given id.
+         *
+         * @param id the key id
+         * @return the DID Document Builder
+         */
+        public removeAuthenticationKey(id: DIDURL | string): Builder {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
+                throw new DIDObjectNotExistException(id.toString());
+
+            id = this.canonicalId(id);
+            let key = this.document.publicKeys.get(id);
+            if (key == null || !this.document.authenticationKeys.has(key.getId()))
+                throw new DIDObjectNotExistException(id.toString());
+
+            // Can not remove default public key
+            if (this.document.defaultPublicKey != null && this.document.defaultPublicKey.getId().equals(id))
+                throw new DIDObjectHasReference(
+                    "Cannot remove the default PublicKey from authentication.");
+
+            if (this.document.authenticationKeys.has(id)) {
+                this.document.authenticationKeys.delete(id);
+                this.invalidateProof();
+            } else {
+                throw new DIDObjectNotExistException(id.toString());
+            }
+
+            return this;
+        }
+
+        /**
+         * Add the exist Public Key matched the key id to be Authorization key.
+         *
+         * @param id the key id
+         * @return the DID Document Builder
+         */
+        // Java: addAuthorizationKey
+        public addExistingAuthorizationKey(id: DIDURL | string): Builder {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (this.document.isCustomizedDid())
+                throw new NotPrimitiveDIDException(this.getSubject().toString());
+
+            if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
+                throw new DIDObjectNotExistException(id.toString());
+
+            id = this.canonicalId(id);
+            let key: PublicKey = this.document.publicKeys.get(id);
+            if (key == null)
+                throw new DIDObjectNotExistException(id.toString());
+
+            // Can not authorize to self
+            if (key.getController().equals(this.getSubject()))
+                throw new IllegalUsage(id.toString());
+
+            if (!this.document.authorizationKeys.has(id)) {
+                this.document.authorizationKeys.set(id, key);
+                this.invalidateProof();
+            }
+
+            return this;
+        }
+
+        /**
+         * Add the PublicKey named key id to be Authorization Key.
+         * It is failed if the key id exist but the public key base58 string is not same as the given pk string.
+         *
+         * @param id the key id
+         * @param controller the owner of public key
+         * @param pk the public key base58 string
+         * @return the DID Document Builder
+         */
+        public addAuthorizationKey(id: DIDURL | string, controller: DID | string, pk: string): Builder {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (typeof id === "string")
+                id = this.canonicalId(id);
+
+            if (typeof controller === "string")
+                controller = DID.from(controller);
+
+            checkArgument(id.getDid() == null || id.getDid().equals(this.getSubject()),
+                "Invalid publicKey id");
+            checkArgument(pk && pk != null, "Invalid publicKey");
+
+            if (this.document.isCustomizedDid())
+                throw new NotPrimitiveDIDException(this.getSubject().toString());
+
+            // Can not authorize to self
+            if (controller.equals(this.getSubject()))
+                throw new IllegalUsage("Key's controller is self.");
+
+            let key: PublicKey = new PublicKey(this.canonicalId(id), controller, pk);
+            this.addPublicKey(key);
+            this.document.authorizationKeys.set(id, key);
+
+            return this;
+        }
+
+        /**
+         * Add the specified key to be an Authorization key.
+         * This specified key is the key of specified controller.
+         * Authentication is the mechanism by which the controller(s) of a DID can
+         * cryptographically prove that they are associated with that DID.
+         * A DID Document must include authentication key.
+         *
+         * @param id the key id
+         * @param controller the owner of 'key'
+         * @param key the key of controller to be an Authorization key.
+         * @return the DID Document Builder
+         * @throws DIDResolveException resolve controller failed.
+         * @throws InvalidKeyException the key is not an authentication key.
+         */
+        public async authorizeDid(id: DIDURL, controller: DID, key: DIDURL): Promise<Builder> {
+            this.checkNotSealed();
+            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+            checkArgument(controller != null && !controller.equals(this.getSubject()), "Invalid controller");
+
+            if (this.document.isCustomizedDid())
+                throw new NotPrimitiveDIDException(this.getSubject().toString());
+
+            let controllerDoc = await controller.resolve();
+            if (controllerDoc == null)
+                throw new DIDNotFoundException("DID not found: "+id.toString());
+
+            if (controllerDoc.isDeactivated())
+                throw new DIDDeactivatedException(controller.toString());
+
+            if (controllerDoc.isExpired())
+                throw new DIDExpiredException(controller.toString());
+
+            if (!controllerDoc.isGenuine())
+                throw new DIDNotGenuineException(controller.toString());
+
+            if (controllerDoc.isCustomizedDid())
+                throw new NotPrimitiveDIDException(controller.toString());
+
+            if (key == null)
+                key = controllerDoc.getDefaultPublicKeyId();
+
+            // Check the key should be a authentication key.
+            let targetPk = controllerDoc.getAuthenticationKey(key);
+            if (targetPk == null)
+                throw new DIDObjectNotExistException(key.toString());
+
+            let pk = new PublicKey(this.canonicalId(id),
+                controller, targetPk.getPublicKeyBase58(), targetPk.getType());
+            this.addPublicKey(pk);
+            this.document.authorizationKeys.set(id, pk);
+
+            return this;
+        }
+
+        /**
+         * Remove the Authorization Key matched the given id.
+         *
+         * @param id the key id
+         * @return the DID Document Builder
+         */
+        public removeAuthorizationKey(inputId: DIDURL | string): Builder {
+            this.checkNotSealed();
+            checkArgument(inputId != null, "Invalid publicKey id");
+
+            let id = typeof inputId === "string" ? this.canonicalId(inputId) : inputId;
+
+            if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
+                throw new DIDObjectNotExistException(id.toString());
+
+            id = this.canonicalId(id);
+            let key: PublicKey = this.document.publicKeys.get(id);
+            if (key == null)
+                throw new DIDObjectNotExistException(id.toString());
+
+            if (this.document.authorizationKeys.has(id)) {
+                this.document.authorizationKeys.delete(id);
+                this.invalidateProof();
+            } else {
+                throw new DIDObjectNotExistException(id.toString());
+            }
+
+            return this;
+        }
+
+        /**
+         * Add Credentail to DID Document Builder.
+         *
+         * @param vc the Verifiable Credential object
+         * @return the DID Document Builder
+         */
+        public addCredential(vc: VerifiableCredential): Builder {
+            this.checkNotSealed();
+            checkArgument(vc != null, "Invalid credential");
+
+            // Check the credential belongs to current DID.
+            if (!vc.getSubject().getId().equals(this.getSubject()))
+                throw new IllegalUsage(vc.getSubject().getId().toString());
+
+            if (this.document.credentials == null) {
+                this.document.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
+            } else {
+                if (this.document.credentials.has(vc.getId()))
+                    throw new DIDObjectAlreadyExistException(vc.getId().toString());
+            }
+
+            this.document.credentials.set(vc.getId(), vc);
+            this.invalidateProof();
+
+            return this;
+        }
+
+        /**
+         * Add Credential with the given values.
+         *
+         * @param id the Credential id
+         * @param types the Credential types set
+         * @param subject the Credential subject(key/value)
+         * @param expirationDate the Credential expires time
+         * @param storepass the password for DIDStore
+         * @return the DID Document Builder
+         * @throws DIDStoreException there is no DID store to attach.
+         * @throws InvalidKeyException there is no authentication key.
+         */
+        // Java: addCredential()
+        public async createAndAddCredential(storepass: string, id: DIDURL | string, subject: JSONObject | string = null, types: string[] = null, expirationDate: Date = null): Promise<Builder> {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (typeof id === "string")
+                id = this.canonicalId(id);
+
+            checkArgument(id != null, "Invalid publicKey id");
+            checkArgument((id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+            checkArgument(storepass && storepass != null, "Invalid storepass");
+
+            let issuer = new Issuer(this.document);
+            let cb = issuer.issueFor(this.document.getSubject());
+            if (types == null)
+                types = ["SelfProclaimedCredential"];
+
+            if (expirationDate == null)
+                expirationDate = this.document.getExpires();
+
+            try {
+                let vc = await cb.id(this.canonicalId(id))
+                    .type(...types)
+                    .properties(subject)
+                    .expirationDate(expirationDate)
+                    .seal(storepass);
+
+                this.addCredential(vc);
+            } catch (ignore) {
+                // MalformedCredentialException
+                throw new UnknownInternalException(ignore);
+            }
+
+            return this;
+        }
+
+        /**
+         * Remove Credential with the specified id.
+         *
+         * @param id the Credential id
+         * @return the DID Document Builder
+         */
+        public removeCredential(id: DIDURL | string): Builder {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid credential id");
+
+            if (this.document.credentials == null || this.document.credentials.size == 0)
+                throw new DIDObjectNotExistException(id.toString());
+
+            if (this.document.credentials.delete(this.canonicalId(id)))
+                this.invalidateProof();
+            else
+                throw new DIDObjectNotExistException(id.toString());
+
+            return this;
+        }
+
+        /**
+         * Add Service.
+         *
+         * @param id the specified Service id
+         * @param type the Service type
+         * @param endpoint the service point's adderss
+         * @return the DID Document Builder
+         */
+        public addService(id: DIDURL | string, type: string, endpoint: string, properties?: JSONObject): Builder {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid publicKey id");
+
+            if (typeof id === "string")
+                id = this.canonicalId(id);
+
+            checkArgument(id != null && (id.getDid() == null || id.getDid().equals(this.getSubject())),
+                "Invalid publicKey id");
+            checkArgument(type && type != null, "Invalid type");
+            checkArgument(endpoint && endpoint != null, "Invalid endpoint");
+
+            let svc = new DIDDocument.Service(this.canonicalId(id), type, endpoint, properties);
+            if (this.document.services == null)
+                this.document.services = new ComparableMap<DIDURL, Service>();
+            else {
+                if (this.document.services.has(svc.getId()))
+                    throw new DIDObjectAlreadyExistException("Service '"
+                        + svc.getId() + "' already exist.");
+            }
+
+            this.document.services.set(svc.getId(), svc);
+            this.invalidateProof();
+
+            return this;
+        }
+
+        /**
+         * Remove the Service with the specified id.
+         *
+         * @param id the Service id
+         * @return the DID Document Builder
+         */
+        public removeService(id: DIDURL| string): Builder {
+            this.checkNotSealed();
+            checkArgument(id != null, "Invalid credential id");
+
+            if (typeof id === "string")
+            id = this.canonicalId(id);
+
+            if (this.document.services == null || this.document.services.size == 0)
+                throw new DIDObjectNotExistException(id.toString());
+
+            if (this.document.services.delete(this.canonicalId(id)))
+                this.invalidateProof();
+            else
+                throw new DIDObjectNotExistException(id.toString());
+
+            return this;
+        }
+
+        private getMaxExpires(): Date {
+            return dayjs().add(Constants.MAX_VALID_YEARS, 'years').toDate();
+        }
+
+        /**
+         * Set the current time to be expires time for DID Document Builder.
+         *
+         * @return the DID Document Builder
+         */
+        public setDefaultExpires(): Builder {
+            this.checkNotSealed();
+
+            this.document.expires = this.getMaxExpires();
+            if (this.document.expires)
+                this.document.expires.setMilliseconds(0);
+            this.invalidateProof();
+
+            return this;
+        }
+
+        /**
+         * Set the specified time to be expires time for DID Document Builder.
+         *
+         * @param expires the specified time
+         * @return the DID Document Builder
+         */
+        public setExpires(expires: Date): Builder {
+            this.checkNotSealed();
+            checkArgument(expires != null, "Invalid expires");
+
+            expires.setMilliseconds(0);
+            if (dayjs(expires).isAfter(this.getMaxExpires()))
+                throw new IllegalArgumentException("Invalid expires, out of range.");
+
+            this.document.expires = expires;
+            this.invalidateProof();
+
+            return this;
+        }
+
+        /**
+         * Remove the proof that created by the specific controller.
+         *
+         * @param controller the controller's DID
+         * @return the DID Document Builder
+         */
+        public removeProof(controller: DID): Builder {
+            this.checkNotSealed();
+            checkArgument(controller != null, "Invalid controller");
+
+            if (this.document.proofs == null || this.document.proofs.size == 0)
+                return this;
+
+            if (this.document.proofs.delete(controller) == null)
+                throw new DIDObjectNotExistException("No proof signed by: " + controller);
+
+            return this;
+        }
+
+        private sanitize() {
+            if (this.document.isCustomizedDid()) {
+                if (this.document.controllers == null || this.document.controllers.length == 0)
+                    throw new MalformedDocumentException("Missing controllers");
+
+                if (this.document.controllers.length > 1) {
+                    if (this.document.multisig == null)
+                        throw new MalformedDocumentException("Missing multisig");
+
+                    if (this.document.multisig.n() != this.document.controllers.length)
+                        throw new MalformedDocumentException("Invalid multisig, not matched with controllers");
+                } else {
+                    if (this.document.multisig != null)
+                        throw new MalformedDocumentException("Invalid multisig");
+                }
+            }
+
+            let sigs = this.document.multisig == null ? 1 : this.document.multisig.m();
+            if (this.document.proofs != null && this.document.proofs.size == sigs)
+                throw new AlreadySealedException(this.getSubject().toString());
+
+            if (this.document.controllers == null || this.document.controllers.length == 0) {
+                this.document.controllers = [];
+                this.document.controllerDocs = new ComparableMap();
+            } else {
+                Collections.sort(this.document.controllers);
+            }
+
+            if (this.document.publicKeys == null || this.document.publicKeys.size == 0) {
+                this.document.publicKeys = new ComparableMap();
+                this.document.authenticationKeys = new ComparableMap();
+                this.document.authorizationKeys = new ComparableMap();
+            }
+
+            if (this.document.credentials == null) {
+                this.document.credentials = new ComparableMap();
+            }
+
+            if (this.document.services == null) {
+                this.document.services = new ComparableMap();
+            }
+
+            if (this.document.proofs == null || this.document.proofs.size == 0) {
+                if (this.document.getExpires() == null)
+                    this.setDefaultExpires();
+            }
+
+            if (this.document.proofs == null)
+                this.document.proofs = new ComparableMap<DID, Proof>();
+        }
+
+        /**
+         * Seal the document object, attach the generated proof to the
+         * document.
+         *
+         * @param storepass the password for DIDStore
+         * @return the DIDDocument object
+         * @throws InvalidKeyException if no valid sign key to seal the document
+         * @throws MalformedDocumentException if the DIDDocument is malformed
+         * @throws DIDStoreException if an error occurs when access DID store
+         */
+        public async seal(storepass: string): Promise<DIDDocument> {
+            this.checkNotSealed();
+            checkArgument(storepass && storepass != null, "Invalid storepass");
+
+            this.sanitize();
+
+            let signerDoc = this.document.isCustomizedDid() ? this.controllerDoc : this.document;
+            let signKey = signerDoc.getDefaultPublicKeyId();
+
+            if (this.document.proofs.has(signerDoc.getSubject()))
+                throw new AlreadySignedException(signerDoc.getSubject().toString());
+
+            let proofs = this.document.proofs;
+            this.document.proofs = null;
+            let json = this.document.serialize(true);
+            this.document.proofs = proofs;
+
+            let sig = await this.document.signWithId(signKey, storepass, Buffer.from(json));
+            let proof = new Proof(signKey, sig);
+            this.document.proofs.set(proof.getCreator().getDid(), proof);
+
+            // Invalidate builder
+            let doc: DIDDocument = this.document;
+            this.document = null;
+
+            return doc;
         }
     }
 }

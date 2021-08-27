@@ -22,7 +22,6 @@
 
 import { TestData } from "./utils/testdata";
 import {
-    DIDDocumentBuilder,
     DIDBiographyStatus,
     Logger,
     DIDStore,
@@ -151,7 +150,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             // Update
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             let key = TestData.generateKeypair();
             db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
             doc = await db.seal(TestConfig.storePass);
@@ -211,7 +210,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             // Update again
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             let key = TestData.generateKeypair();
             db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
             doc = await db.seal(TestConfig.storePass);
@@ -276,7 +275,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             // Update
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             let key = TestData.generateKeypair();
             db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
             doc = await db.seal(TestConfig.storePass);
@@ -335,7 +334,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             // Update again
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             let key = TestData.generateKeypair();
             db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
             doc = await db.seal(TestConfig.storePass);
@@ -409,7 +408,7 @@ describe('IDChainOperations Tests', () => {
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -463,7 +462,7 @@ describe('IDChainOperations Tests', () => {
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -540,7 +539,7 @@ describe('IDChainOperations Tests', () => {
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -613,7 +612,7 @@ describe('IDChainOperations Tests', () => {
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -668,7 +667,7 @@ describe('IDChainOperations Tests', () => {
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -726,7 +725,7 @@ describe('IDChainOperations Tests', () => {
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -940,7 +939,7 @@ describe('IDChainOperations Tests', () => {
             // Modify a DID document
             let modifiedDid = dids[0];
             let doc = await cleanStore.loadDid(modifiedDid);
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addService("#test1", "TestType", "http://test.com/");
             doc = await db.seal(TestConfig.storePass);
             await cleanStore.storeDid(doc);
@@ -1000,7 +999,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await cleanStore.loadDid(modifiedDid);
             let originalSignature = doc.getSignature();
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addService("#Stest1", "TestType", "http://test.com/");
             doc = await db.seal(TestConfig.storePass);
             await cleanStore.storeDid(doc);
@@ -1061,7 +1060,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await cleanStore.loadDid(modifiedDid);
             let originalSignature = doc.getSignature();
 
-            let db = DIDDocumentBuilder.newFromDocument(doc).edit();
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addService("#test1", "TestType", "http://test.com/");
             doc = await db.seal(TestConfig.storePass);
             await cleanStore.storeDid(doc);
