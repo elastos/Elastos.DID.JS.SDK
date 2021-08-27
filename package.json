@@ -20,7 +20,7 @@
   "typings": "typings/",
   "dependencies": {
     "assert": "^2.0.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bip32": "^2.0.6",
     "bn.js": "^5.2.0",
     "browserfs": "^1.4.3",
