@@ -837,7 +837,9 @@ describe("DIDStore Tests", ()=>{
         for (let id of vcIds) {
             let vc = await store2.loadCredential(id);
             expect(vc).not.toBeNull();
-            delete names[vc.getId().getFragment()];
+            names = names.filter(function(item) {
+                return item != vc.getId().getFragment();
+            });
         }
         expect(names.length).toBe(0);
 
@@ -923,7 +925,9 @@ describe("DIDStore Tests", ()=>{
         for (let id of vcIds) {
             let vc = await store2.loadCredential(id);
             expect(vc).not.toBeNull();
-            delete names[vc.getId().getFragment()];
+            names = names.filter(function(item) {
+                return item != vc.getId().getFragment();
+            });
         }
         expect(names.length).toBe(0);
 
