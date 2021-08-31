@@ -1710,8 +1710,8 @@ export namespace DIDStore {
                 mnemonic: this.mnemonic,
                 privateKey: this.privatekey,
                 publicKey: this.publickey,
-                index: this.index,
-                default: this.default,
+                index: this.index.toString(),
+                default: this.default.toString(),
                 created: this.dateToString(this.created),
                 fingerprint: this.fingerprint
             }
@@ -1725,8 +1725,10 @@ export namespace DIDStore {
             this.mnemonic = this.getString("mnemonic", json.mnemonic, {mandatory: true, nullable: false});
             this.privatekey = this.getString("privateKey", json.privateKey, {mandatory: true, nullable: false});
             this.publickey = this.getString("publicKey", json.publicKey, {mandatory: true, nullable: false});
-            this.index = this.getNumber("index", json.index, {mandatory: true, nullable: false, defaultValue: 0});
-            this.default = this.getBoolean("default", json.default, {mandatory: true, nullable: false, defaultValue: false});
+            let index = this.getString("index", json.index, {mandatory: true, nullable: false});
+            this.index = index != null ? new Number(index).valueOf() : 0;
+            let d = this.getString("default", json.default, {mandatory: true, nullable: false});
+            this.default = (d && d === "true") ? true : false;
             this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
             this.fingerprint = this.getString("fingerprint", json.fingerprint, {mandatory: true, nullable: false});
         }
