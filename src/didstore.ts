@@ -1726,7 +1726,7 @@ export namespace DIDStore {
             this.privatekey = this.getString("privateKey", json.privateKey, {mandatory: true, nullable: false});
             this.publickey = this.getString("publicKey", json.publicKey, {mandatory: true, nullable: false});
             let index = this.getString("index", json.index, {mandatory: true, nullable: false});
-            this.index = index != null ? new Number(index).valueOf() : 0;
+            this.index = index != null ? Number.parseInt(index) : 0;
             let d = this.getString("default", json.default, {mandatory: true, nullable: false});
             this.default = (d && d === "true") ? true : false;
             this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
