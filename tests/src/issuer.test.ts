@@ -21,10 +21,10 @@
  */
 
 import {
-    DIDDocument, 
-    DIDStore, 
-    DIDURL, 
-    Issuer 
+    DIDDocument,
+    DIDStore,
+    DIDURL,
+    Issuer
 } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
@@ -309,6 +309,37 @@ describe("Issuer Tests", ()=>{
         expect(vc.getSubject().getProperty("alternateName")).toEqual("Jason Holtslander");
         expect(vc.getSubject().getProperty("numberValue")).toEqual(1234);
         // JAVA: expect(vc.getSubject().getProperty(9.5)).toEqual("doubleValue")
+
+        expect(vc.getSubject().getProperties()).not.toBeNull();
+
+        await expect(await vc.isExpired()).toBeFalsy();
+        await expect(await vc.isGenuine()).toBeTruthy();
+        await expect(await vc.isValid()).toBeTruthy();
+    })
+
+    test('Issue Credential Test', async () => {
+        let issuer = new Issuer(issuerDoc);
+
+        let cb = issuer.issueFor(issuerDoc.getSubject());
+        let vc = await cb.id("#myCredential")
+            .type("BasicProfileCredential", "SelfProclaimedCredential")
+            .property("nation", "Singapore")
+            .property("language", "English")
+            .seal(TestConfig.storePass);
+
+        let vcId = new DIDURL("#myCredential", issuerDoc.getSubject());
+
+        expect(vcId.equals(vc.getId())).toBeTruthy();
+
+        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
+        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy();
+
+        expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
+        expect(issuerDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+
+        expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
+        expect(vc.getSubject().getProperty("language")).toEqual("English");
 
         expect(vc.getSubject().getProperties()).not.toBeNull();
 
