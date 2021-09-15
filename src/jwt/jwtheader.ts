@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JWSHeaderParameters } from "jose/webcrypto/types";
+import { JWSHeaderParameters } from "jose/types";
 
 export class JWTHeader {
     public static JWT_TYPE = "JWT";
