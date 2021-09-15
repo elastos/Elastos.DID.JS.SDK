@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-import type { DIDAdapter } from "./internals";
-import { IllegalArgumentException, NetworkException, ResolveException, UnsupportedOperationException } from "./exceptions/exceptions";
+import { Collections, DIDAdapter } from "./internals";
+import { IllegalArgumentException, IOException, NetworkException, ResolveException, UnsupportedOperationException } from "./exceptions/exceptions";
 import type { JSONObject } from "./json";
 import { Logger } from "./logger";
 import { checkArgument } from "./internals";
@@ -29,12 +29,20 @@ import { request as httpsRequest } from "https";
 import { request as httpRequest } from "http";
 import { runningInBrowser } from "./utils";
 import axios from "axios";
+import { Comparable } from "./comparable";
 
 const log = new Logger("DefaultDIDAdapter");
 
 export class DefaultDIDAdapter implements DIDAdapter {
-    private static MAINNET_RESOLVER = "https://api.elastos.io/eid";
-    private static TESTNET_RESOLVER = "https://api-testnet.elastos.io/eid";
+	private static MAINNET_RESOLVERS : string[] = [
+        "https://api.elastos.io/eid",
+        "https://api.trinity-tech.cn/eid"
+    ];
+
+    private static TESTNET_RESOLVERS : string[] = [
+        "https://api-testnet.elastos.io/eid",
+        "https://api-testnet.trinity-tech.cn/eid",
+    ];
 
     protected resolver: URL;
 
@@ -46,23 +54,78 @@ export class DefaultDIDAdapter implements DIDAdapter {
      */
     public constructor(resolver: "mainnet" | "testnet" | string) {
         checkArgument(resolver && resolver != null, "Invalid resolver URL");
+        let endpoints : string[] = null;
 
         switch (resolver.toLowerCase()) {
         case "mainnet":
-            resolver = DefaultDIDAdapter.MAINNET_RESOLVER;
+            resolver = DefaultDIDAdapter.MAINNET_RESOLVERS[0];
+            endpoints = DefaultDIDAdapter.MAINNET_RESOLVERS;
             break;
 
         case "testnet":
-            resolver = DefaultDIDAdapter.TESTNET_RESOLVER;
+            resolver = DefaultDIDAdapter.TESTNET_RESOLVERS[0];
+            endpoints = DefaultDIDAdapter.TESTNET_RESOLVERS;
             break;
         }
 
         try {
             this.resolver = new URL(resolver);
         } catch (e) {
-            // MalformedURLException
             throw new IllegalArgumentException("Invalid resolver URL", e);
         }
+
+        if (endpoints)
+            this.checkNetwork(endpoints);
+    }
+
+    private async checkEndpoint(endpoint : URL) : Promise<DefaultDIDAdapter.CheckResult> {
+        let json: JSONObject = {};
+
+		let id = Date.now();
+        json.id = id;
+        json.jsonrpc = "2.0";
+        json.method = "eth_blockNumber";
+
+        let body = JSON.stringify(json);
+        let start = Date.now();
+
+        let response : JSONObject;
+        try {
+		    response = await this.performRequest(endpoint, body);
+
+		    let latency = Date.now() - start;
+            if (response.id as number != id)
+                throw new IOException("Invalid JSON RPC id.");
+
+		    let n = response.result as string;
+            if (n.startsWith("0x"))
+                n = n.substring(2);
+
+            let blockNumber = parseInt(n, 16);
+		    return new DefaultDIDAdapter.CheckResult(endpoint, latency, blockNumber);
+		} catch (e) {
+			log.info("Checking the resolver {}...error", endpoint);
+			return DefaultDIDAdapter.CheckResult.from(endpoint);
+		}
+    }
+
+    private async checkNetwork(endpoints : string[]) : Promise<void> {
+        let results : DefaultDIDAdapter.CheckResult[] = [];
+
+		for (let endpoint of endpoints) {
+			try {
+				let result = await this.checkEndpoint(new URL(endpoint));
+                results.push(result);
+			} catch (ignore) {
+			}
+		}
+
+        if (results.length > 0)
+		    Collections.sort(results);
+
+        let best = results[0];
+        if (best.available())
+            this.resolver = best.endpoint;
     }
 
     // NOTE: synchronous HTTP calls are deprecated and wrong practice. Though, as JAVA SDK currently
@@ -174,4 +237,54 @@ export class DefaultDIDAdapter implements DIDAdapter {
     public createIdTransaction(payload: string, memo: string) {
         throw new UnsupportedOperationException("Not implemented");
     }
+}
+
+export namespace DefaultDIDAdapter {
+    export class CheckResult implements Comparable<CheckResult> {
+		private static MAX_DIFF : number = 10;
+
+		public endpoint : URL;
+		public latency : number;
+		public lastBlock : number;
+
+		public constructor(endpoint : URL, latency : number, lastBlock : number) {
+			this.endpoint = endpoint;
+			this.latency = latency;
+			this.lastBlock = lastBlock;
+		}
+
+		public static from(endpoint : URL) : CheckResult{
+			return new CheckResult(endpoint, -1, -1);
+		}
+
+        public equals(o : CheckResult) : boolean {
+            return this.compareTo(o) == 0 ? true : false;
+        }
+
+		public compareTo(o : CheckResult) : number {
+			if (o == null)
+				return -1;
+
+			if (o.latency < 0 && this.latency < 0)
+				return 0;
+
+			if (o.latency < 0 || this.latency < 0)
+				return this.latency < 0 ? 1 : -1;
+
+			let diff = o.lastBlock.valueOf() - this.lastBlock.valueOf();
+
+            if (Math.abs(diff) - CheckResult.MAX_DIFF > 0)
+				return diff > 0 ? 1 : -1;
+
+			if (this.latency == o.latency) {
+				return diff > 0 ? 1 : -1;
+			} else {
+				return this.latency - o.latency;
+			}
+		}
+
+		public available() : boolean {
+			return this.latency >= 0;
+		}
+	}
 }
