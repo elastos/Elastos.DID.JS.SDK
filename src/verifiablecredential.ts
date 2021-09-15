@@ -1031,6 +1031,9 @@ export namespace VerifiableCredential {
             this.checkNotSealed();
             checkArgument(name != null && name !== "" && name !== "id", "Invalid name");
 
+            if (!this.subjectProperties)
+                this.subjectProperties = {};
+
             this.subjectProperties[name] = value;
             return this;
         }
