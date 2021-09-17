@@ -190,35 +190,6 @@ export class DefaultDIDAdapter implements DIDAdapter {
                 if (body)
                     req.write(body);
                 req.end();
-
-                /* var request = new XMLHttpRequest();
-                request.open('POST', url.toString());
-                request.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
-                request.setRequestHeader("Content-Type", "application/json");
-                request.setRequestHeader("Accept", "application/json");
-                request.setRequestHeader("Access-Control-Allow-Origin", "*");
-                request.onreadystatechange = function() {
-                    // In case of error, onerror is called but the state also becomes "DONE" with status 0
-                    if (this.readyState === XMLHttpRequest.DONE && request.status > 0) {
-                        if (request.status < 200 || request.status > 299) {
-                            log.error("HTTP request error, status: "+request.status+", message: "+request.statusText);
-                            reject(new ResolveException("HTTP error with status: " + request.status));
-                        }
-
-                        // Try to parse as json or throw an exception
-                        try {
-                            let responseJSON = JSON.parse(request.responseText);
-                            resolve(responseJSON);
-                        }
-                        catch (e) {
-                            reject(new ResolveException("Unable to parse resolver response as a JSON object", e));
-                        }
-                    }
-                }
-                request.onerror = function(r, e) {
-                    reject(new ResolveException("Http error in performRequest(): ", e));
-                }
-                request.send(body); */
             }
         });
     }

@@ -49,36 +49,10 @@ const PUBLISH_CONTRACT_ABI: any = [
 
 export class Web3Adapter extends DefaultDIDAdapter {
     private static MAX_WAIT_BLOCKS = 5;
-    //private static final BigInteger WAIT_FOR_CONFIRMS = BigInteger.valueOf(3);
-
     private lastTxHash: string;
 
     public constructor(rpcEndpoint: string, private contractAddress: string, walletFile: string, walletPassword: string) {
         super(rpcEndpoint);
-        this.initWeb3(rpcEndpoint, walletFile, walletPassword);
-    }
-
-    private initWeb3(rpcEndpoint: string, walletFile: string, walletPassword: string) {
-        /* this.web3j = Web3j.build(new HttpService(rpcEndpoint));
-        try {
-            account = WalletUtils.loadCredentials(walletPassword, walletFile);
-            BigDecimal balance = BigDecimal.ZERO;
-            try {
-                EthGetBalance ethGetBalance = web3j.ethGetBalance(account.getAddress(),
-                         DefaultBlockParameterName.LATEST).sendAsync().get();
-                BigInteger wei = ethGetBalance.getBalance();
-                balance = Convert.fromWei(new BigDecimal(wei), Convert.Unit.ETHER);
-            } catch (InterruptedException | ExecutionException e) {
-                log.info("Get wallet balance error", e);
-            }
-
-            console.log("================================================");
-            console.log("Wallet address: %s\n", account.getAddress());
-            console.log("Wallet balance: %s\n", balance.toString());
-            console.log("================================================");
-        } catch (e) { // IOException | CipherException
-            throw new RuntimeException("Can not load wallet: " + e.getMessage(), e);
-        } */
     }
 
     public async createIdTransaction(payload: string, memo: string) {
@@ -87,27 +61,27 @@ export class Web3Adapter extends DefaultDIDAdapter {
 
         // PRIVNET WALLET WITH FUNDS TO PUBLISH - TODO: MAKE THIS BE A ENV DATA, NOT PUSHED.
         let acc = web3.eth.accounts.decrypt({
-            "address":"53781e106a2e3378083bdcede1874e5c2a7225f8",
-            "crypto":{
-                "cipher":"aes-128-ctr",
-                "ciphertext":"bc53c1fcd6e31a6392ddc1777157ae961e636c202ed60fb5dda77244c5c4b6ff",
-                "cipherparams":{
-                    "iv":"c5d1a7d86d0685aa4542d58c27ae7eb4"
+            "version": 3,
+            "id": "ffcd8c94-80ef-4410-b743-d2f72ecdc80e",
+            "address": "2291bb3d2b5d55217262bf1552ab9b95bfe5b72d",
+            "crypto": {
+                "ciphertext": "38d49204366be1e7f51464c20f33e51d8138b72411cf055bbd1bd3d9e03624a2",
+                "cipherparams": {
+                    "iv": "a5108e26cacaf50842f9b8ebf7047bdf"
                 },
-                "kdf":"scrypt",
-                "kdfparams":{
-                    "dklen":32,
-                    "n":262144,
-                    "p":1,
-                    "r":8,
-                    "salt":"409429444dabb5664ba1314c93f0e1d7a1e994a307e7b43d3f6cc95850fbfa9f"
+                "cipher": "aes-128-ctr",
+                "kdf": "scrypt",
+                "kdfparams": {
+                    "dklen": 32,
+                    "salt": "75a558ca5f7eda86237b11c514f96e348bdb94b554b15c55e5cd1dc6c79a577d",
+                    "n": 262144,
+                    "r": 8,
+                    "p": 1
                 },
-                "mac":"4c37821c90d35118182c2d4a51356186482662bb945f0fcd33d3836749fe59c0"
-            },
-            "id":"39e7770e-4bc6-42f3-aa6a-c0ae7756b607",
-            "version":3
+                "mac": "75e5b2371464435015f1d153bce23097774bdef78c67694a89b25434c2fa0ba2"
+            }
         },
-        "123");
+        "password");
         let cdata = contract.methods.publishDidTransaction(payload).encodeABI();
         let tx = {
             data: cdata,
@@ -124,46 +98,10 @@ export class Web3Adapter extends DefaultDIDAdapter {
         });
 
         let txHash = receipt.transactionHash;
-
-        /* int waitBlocks = MAX_WAIT_BLOCKS;
-        while (true) {
-            EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).sendAsync().get();
-            if (receipt.hasError())
-                throw new DIDTransactionException("Error transaction response: " +
-                        receipt.getError().getMessage());
-
-            if (!receipt.getTransactionReceipt().isPresent()) {
-                if (waitBlocks-- == 0)
-                    throw new DIDTransactionException("Create transaction timeout.");
-
-                Thread.sleep(5000);
-            } else {
-                break;
-            }
-        } */
-
         this.lastTxHash = txHash;
     }
 
     public awaitStandardPublishingDelay(): Promise<void> {
         return new Promise(resolve => {setTimeout(resolve, 10000)});
     }
-
-    /*public boolean isAvailable() {
-        if (lastTxHash == null)
-            return true;
-
-        try {
-            EthTransaction tx = web3j.ethGetTransactionByHash(lastTxHash).sendAsync().get();
-            if (!tx.getTransaction().isPresent())
-                return true;
-
-            BigInteger lastBlock = web3j.ethBlockNumber().sendAsync().get().getBlockNumber();
-            BigInteger txBlock = tx.getResult().getBlockNumber();
-            BigInteger confirms = lastBlock.subtract(txBlock);
-            return confirms.compareTo(WAIT_FOR_CONFIRMS) >= 0;
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Error get confirmations: " + e.getMessage(), e);
-        }
-    } */
 }

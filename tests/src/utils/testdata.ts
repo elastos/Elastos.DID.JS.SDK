@@ -47,14 +47,14 @@ export class TestData {
     private v2: CompatibleData;
     private instantData: InstantData;
 
-    public constructor() {
+    public constructor(dummy ?: boolean) {
         try {
             TestConfig.initialize();
             if (File.exists(TestConfig.storeRoot))
                 (new File(TestConfig.storeRoot)).delete();
             importBundledBrowserData();
 
-            DIDTestExtension.setup();
+            DIDTestExtension.setup(dummy);
         }
         catch(e) {
             // Catch errors here because Jest will silence them. So we print them to get more clues.
