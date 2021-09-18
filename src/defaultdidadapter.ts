@@ -111,14 +111,19 @@ export class DefaultDIDAdapter implements DIDAdapter {
 
     private async checkNetwork(endpoints : string[]) : Promise<void> {
         let results : DefaultDIDAdapter.CheckResult[] = [];
+        let ps: Promise<void>[] = [];
 
 		for (let endpoint of endpoints) {
-			try {
-				let result = await this.checkEndpoint(new URL(endpoint));
+            let p = this.checkEndpoint(new URL(endpoint)).then((result) => {
                 results.push(result);
-			} catch (ignore) {
-			}
+            });
+            ps.push(p);
 		}
+
+        try {
+            await Promise.all(ps);
+        } catch (ignore) {
+        }
 
         if (results.length > 0)
 		    Collections.sort(results);
