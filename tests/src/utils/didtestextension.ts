@@ -26,26 +26,18 @@ import { Web3Adapter } from "../backend/web3adapter";
 import { TestConfig } from "./testconfig";
 
 export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource */ {
-    private static adapter: DIDAdapter;
+    private static adapter: DIDAdapter = null;
 
-    public static setup(/* name: string */) {
+    public static setup(dummy ?: boolean) {
         // Force load TestConfig first!!!
         let rpcEndpoint = TestConfig.rpcEndpoint;
-
-        // if (name.equals("IDChainOperationsTest")) {
-            // When run the IDChainOperationsTest only
-
-            //DIDTestExtension.adapter = new Web3Adapter(
-            //  rpcEndpoint, TestConfig.contractAddress,
-            //  TestConfig.walletPath, TestConfig.walletPassword);
-
+        if (dummy == false) {
+            DIDTestExtension.adapter = new Web3Adapter(
+              rpcEndpoint, TestConfig.contractAddress, null, null);
+        } else {
             DIDTestExtension.adapter = new SimulatedIDChainAdapter(
                 "http://127.0.0.1:9123");
-        // }
-
-        // if (DIDTestExtension.adapter == null) {
-        //     DIDTestExtension.adapter = DIDTestExtension.simChain.getAdapter();
-        // }
+        }
 
         DIDBackend.initialize(DIDTestExtension.adapter);
     }
@@ -71,24 +63,6 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
             })
         }
     }
-
-    /* public void close() throws Throwable {
-        if (simChain != null)
-            simChain.stop();
-
-        simChain = null;
-        adapter = null;
-    } */
-
-    /* public static beforeAll(contextName: string) {
-        String key = this.getClass().getName();
-        Object value = context.getRoot().getStore(GLOBAL).get(key);
-        //if (value == null) {
-            // First test container invocation.
-            DIDTestExtension.setup(contextName);
-            //context.getRoot().getStore(GLOBAL).put(key, this);
-        //}
-    } */
 
     public static async resetData() {
         if (DIDTestExtension.adapter instanceof SimulatedIDChainAdapter)

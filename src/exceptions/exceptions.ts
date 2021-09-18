@@ -90,3 +90,4 @@ export class DIDControllersChangedException extends ParentException {}
 export class MalformedMetadataException extends ParentException {}
 export class JWTException extends ParentException {}
 export class MalformedDIDException extends ParentException {}
+export class IOException extends ParentException {}

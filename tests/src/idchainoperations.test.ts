@@ -50,7 +50,7 @@ let identity: RootIdentity;
 // tests depend on each other.
 describe('IDChainOperations Tests', () => {
     beforeAll(async ()=> {
-        testData = new TestData();
+        testData = new TestData(false);
         await testData.cleanup();
         await testData.getRootIdentity();
         dids = [];

@@ -1,8 +1,8 @@
 {
     "_comment_network": "network could be MainNet, TestNet, SimNet",
     "idchain": {
-        "rpcEndpoint": "http://52.80.107.251:1111",
-        "contractAddress": "0x8b2324fd40a74843711C9B48BC968A5FAEdd4Ef0"
+        "rpcEndpoint": "testnet",
+        "contractAddress": "0xF654c3cBBB60D7F4ac7cDA325d51E62f47ACD436"
     },
     "wallet": {
         "path": "/PATH/TO/Wallet",
