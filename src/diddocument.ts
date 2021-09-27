@@ -27,7 +27,7 @@
 import { Buffer } from "buffer";
 import { createPrivateKey, createPublicKey } from "crypto";
 import dayjs from "dayjs";
-import { KeyLike } from 'jose';
+import { KeyLike } from 'jose/types';
 import keyutil from "js-crypto-key-utils";
 import { Comparable } from "./comparable";
 import { ComparableMap } from "./comparablemap";
