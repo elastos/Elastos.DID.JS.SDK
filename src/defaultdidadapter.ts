@@ -20,26 +20,25 @@
  * SOFTWARE.
  */
 
-import { Collections, DIDAdapter } from "./internals";
-import { IllegalArgumentException, IOException, NetworkException, ResolveException, UnsupportedOperationException } from "./exceptions/exceptions";
-import type { JSONObject } from "./json";
-import { Logger } from "./logger";
-import { checkArgument } from "./internals";
-import { request as httpsRequest } from "https";
-import { request as httpRequest } from "http";
-import { runningInBrowser } from "./utils";
 import axios from "axios";
 import { Comparable } from "./comparable";
+import { IllegalArgumentException, IOException, NetworkException, ResolveException, UnsupportedOperationException } from "./exceptions/exceptions";
+import { request as httpRequest } from "./http";
+import { request as httpsRequest } from "./https";
+import { checkArgument, Collections, DIDAdapter } from "./internals";
+import type { JSONObject } from "./json";
+import { Logger } from "./logger";
+import { runningInBrowser } from "./utils";
 
 const log = new Logger("DefaultDIDAdapter");
 
 export class DefaultDIDAdapter implements DIDAdapter {
-	private static MAINNET_RESOLVERS : string[] = [
+    private static MAINNET_RESOLVERS: string[] = [
         "https://api.elastos.io/eid",
         "https://api.trinity-tech.cn/eid"
     ];
 
-    private static TESTNET_RESOLVERS : string[] = [
+    private static TESTNET_RESOLVERS: string[] = [
         "https://api-testnet.elastos.io/eid",
         "https://api-testnet.trinity-tech.cn/eid",
     ];
@@ -54,18 +53,18 @@ export class DefaultDIDAdapter implements DIDAdapter {
      */
     public constructor(resolver: "mainnet" | "testnet" | string) {
         checkArgument(resolver && resolver != null, "Invalid resolver URL");
-        let endpoints : string[] = null;
+        let endpoints: string[] = null;
 
         switch (resolver.toLowerCase()) {
-        case "mainnet":
-            resolver = DefaultDIDAdapter.MAINNET_RESOLVERS[0];
-            endpoints = DefaultDIDAdapter.MAINNET_RESOLVERS;
-            break;
+            case "mainnet":
+                resolver = DefaultDIDAdapter.MAINNET_RESOLVERS[0];
+                endpoints = DefaultDIDAdapter.MAINNET_RESOLVERS;
+                break;
 
-        case "testnet":
-            resolver = DefaultDIDAdapter.TESTNET_RESOLVERS[0];
-            endpoints = DefaultDIDAdapter.TESTNET_RESOLVERS;
-            break;
+            case "testnet":
+                resolver = DefaultDIDAdapter.TESTNET_RESOLVERS[0];
+                endpoints = DefaultDIDAdapter.TESTNET_RESOLVERS;
+                break;
         }
 
         try {
@@ -78,10 +77,10 @@ export class DefaultDIDAdapter implements DIDAdapter {
             this.checkNetwork(endpoints);
     }
 
-    private async checkEndpoint(endpoint : URL) : Promise<DefaultDIDAdapter.CheckResult> {
+    private async checkEndpoint(endpoint: URL): Promise<DefaultDIDAdapter.CheckResult> {
         let json: JSONObject = {};
 
-		let id = Date.now();
+        let id = Date.now();
         json.id = id;
         json.jsonrpc = "2.0";
         json.method = "eth_blockNumber";
@@ -89,36 +88,36 @@ export class DefaultDIDAdapter implements DIDAdapter {
         let body = JSON.stringify(json);
         let start = Date.now();
 
-        let response : JSONObject;
+        let response: JSONObject;
         try {
-		    response = await this.performRequest(endpoint, body);
+            response = await this.performRequest(endpoint, body);
 
-		    let latency = Date.now() - start;
+            let latency = Date.now() - start;
             if (response.id as number != id)
                 throw new IOException("Invalid JSON RPC id.");
 
-		    let n = response.result as string;
+            let n = response.result as string;
             if (n.startsWith("0x"))
                 n = n.substring(2);
 
             let blockNumber = parseInt(n, 16);
-		    return new DefaultDIDAdapter.CheckResult(endpoint, latency, blockNumber);
-		} catch (e) {
-			log.info("Checking the resolver {}...error", endpoint);
-			return DefaultDIDAdapter.CheckResult.from(endpoint);
-		}
+            return new DefaultDIDAdapter.CheckResult(endpoint, latency, blockNumber);
+        } catch (e) {
+            log.info("Checking the resolver {}...error", endpoint);
+            return DefaultDIDAdapter.CheckResult.from(endpoint);
+        }
     }
 
-    private async checkNetwork(endpoints : string[]) : Promise<void> {
-        let results : DefaultDIDAdapter.CheckResult[] = [];
+    private async checkNetwork(endpoints: string[]): Promise<void> {
+        let results: DefaultDIDAdapter.CheckResult[] = [];
         let ps: Promise<void>[] = [];
 
-		for (let endpoint of endpoints) {
+        for (let endpoint of endpoints) {
             let p = this.checkEndpoint(new URL(endpoint)).then((result) => {
                 results.push(result);
             });
             ps.push(p);
-		}
+        }
 
         try {
             await Promise.all(ps);
@@ -126,7 +125,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
         }
 
         if (results.length > 0)
-		    Collections.sort(results);
+            Collections.sort(results);
 
         let best = results[0];
         if (best.available())
@@ -148,14 +147,14 @@ export class DefaultDIDAdapter implements DIDAdapter {
                         "Accept": "application/json"
                     },
                     data: body
-                  }).then((response) => {
-                      if (response.status >= 200 && response.status < 400) {
-                          resolve(response.data);
-                      }
-                      else {
-                          reject(new ResolveException("HTTP error: " + response.statusText));
-                      }
-                  })
+                }).then((response) => {
+                    if (response.status >= 200 && response.status < 400) {
+                        resolve(response.data);
+                    }
+                    else {
+                        reject(new ResolveException("HTTP error: " + response.statusText));
+                    }
+                })
             }
             else {
                 // NODEJS
@@ -174,7 +173,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     }
-                }, (res)=>{
+                }, (res) => {
                     let wholeData = "";
                     res.on('data', d => {
                         // Concatenate data that can reach us in several pieces.
@@ -217,50 +216,50 @@ export class DefaultDIDAdapter implements DIDAdapter {
 
 export namespace DefaultDIDAdapter {
     export class CheckResult implements Comparable<CheckResult> {
-		private static MAX_DIFF : number = 10;
+        private static MAX_DIFF = 10;
 
-		public endpoint : URL;
-		public latency : number;
-		public lastBlock : number;
+        public endpoint: URL;
+        public latency: number;
+        public lastBlock: number;
 
-		public constructor(endpoint : URL, latency : number, lastBlock : number) {
-			this.endpoint = endpoint;
-			this.latency = latency;
-			this.lastBlock = lastBlock;
-		}
+        public constructor(endpoint: URL, latency: number, lastBlock: number) {
+            this.endpoint = endpoint;
+            this.latency = latency;
+            this.lastBlock = lastBlock;
+        }
 
-		public static from(endpoint : URL) : CheckResult{
-			return new CheckResult(endpoint, -1, -1);
-		}
+        public static from(endpoint: URL): CheckResult {
+            return new CheckResult(endpoint, -1, -1);
+        }
 
-        public equals(o : CheckResult) : boolean {
+        public equals(o: CheckResult): boolean {
             return this.compareTo(o) == 0 ? true : false;
         }
 
-		public compareTo(o : CheckResult) : number {
-			if (o == null)
-				return -1;
+        public compareTo(o: CheckResult): number {
+            if (o == null)
+                return -1;
 
-			if (o.latency < 0 && this.latency < 0)
-				return 0;
+            if (o.latency < 0 && this.latency < 0)
+                return 0;
 
-			if (o.latency < 0 || this.latency < 0)
-				return this.latency < 0 ? 1 : -1;
+            if (o.latency < 0 || this.latency < 0)
+                return this.latency < 0 ? 1 : -1;
 
-			let diff = o.lastBlock.valueOf() - this.lastBlock.valueOf();
+            let diff = o.lastBlock.valueOf() - this.lastBlock.valueOf();
 
             if (Math.abs(diff) - CheckResult.MAX_DIFF > 0)
-				return diff > 0 ? 1 : -1;
+                return diff > 0 ? 1 : -1;
 
-			if (this.latency == o.latency) {
-				return diff > 0 ? 1 : -1;
-			} else {
-				return this.latency - o.latency;
-			}
-		}
+            if (this.latency == o.latency) {
+                return diff > 0 ? 1 : -1;
+            } else {
+                return this.latency - o.latency;
+            }
+        }
 
-		public available() : boolean {
-			return this.latency >= 0;
-		}
-	}
+        public available(): boolean {
+            return this.latency >= 0;
+        }
+    }
 }

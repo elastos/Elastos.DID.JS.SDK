@@ -1,6 +1,6 @@
 {
   "name": "@elastosfoundation/did-js-sdk",
-  "version": "2.0.12",
+  "version": "2.1.2",
   "description": "Elastos DID Typescript SDK",
   "scripts": {
     "prepublishOnly": "npm run clean && npm run build",
@@ -100,7 +100,6 @@
     "typescript": "^4.2.4",
     "jszip": "^3.6.0",
     "js-crypto-key-utils": "^1.0.2"
-
   },
   "engines": {
     "node": ">=14.0.0"

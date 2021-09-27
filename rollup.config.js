@@ -30,13 +30,13 @@ import { writeFileSync } from "fs";
 // than this hack currently.
 // NOTE: as the node_modules/bip39 folder is modified, re-adding a languages requires reinstalling
 // the bip39 library.
-writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/chinese_traditional.json", "[]");
-writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/czech.json", "[]");
-writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/italian.json", "[]");
-writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/japanese.json", "[]");
-writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/korean.json", "[]");
-writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/portuguese.json", "[]");
-writeFileSync(__dirname+"/node_modules/bip39/src/wordlists/spanish.json", "[]");
+writeFileSync(__dirname + "/node_modules/bip39/src/wordlists/chinese_traditional.json", "[]");
+writeFileSync(__dirname + "/node_modules/bip39/src/wordlists/czech.json", "[]");
+writeFileSync(__dirname + "/node_modules/bip39/src/wordlists/italian.json", "[]");
+writeFileSync(__dirname + "/node_modules/bip39/src/wordlists/japanese.json", "[]");
+writeFileSync(__dirname + "/node_modules/bip39/src/wordlists/korean.json", "[]");
+writeFileSync(__dirname + "/node_modules/bip39/src/wordlists/portuguese.json", "[]");
+writeFileSync(__dirname + "/node_modules/bip39/src/wordlists/spanish.json", "[]");
 
 const commitHash = (function () {
     try {
@@ -202,7 +202,9 @@ export default command => {
             // Ex: fs.browser.ts -> fs.ts
             replaceFiles({
                 fileReplacements: [
-                    { replace: "fs.ts", with: "fs.browser.ts" }
+                    { replace: "fs.ts", with: "fs.browser.ts" },
+                    { replace: "http.ts", with: "http.browser.ts" },
+                    { replace: "https.ts", with: "https.browser.ts" }
                 ]
             }),
             // Dirty circular dependency removal atttempt
@@ -308,5 +310,5 @@ export default command => {
         ]
     };
 
-    return [ commonJSBuild, esmBuild, browserBuilds];
+    return [commonJSBuild, esmBuild, browserBuilds];
 };
