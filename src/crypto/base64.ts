@@ -20,26 +20,30 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
+
 export class BASE64 {
 
-    public static fromString(value: string): string{
+    public static fromString(value: string): string {
         let base64string = Buffer.from(value, "utf-8").toString("base64");
-        return  this.convertToURI(base64string)
+        return this.convertToURI(base64string)
     }
-    public static fromHex(hexString: string): string{
-       return this.encode(hexString)
+    public static fromHex(hexString: string): string {
+        return this.encode(hexString)
     }
-    public static fromUrlFormat(b64uString: string): string{
+    public static fromUrlFormat(b64uString: string): string {
         return this.convertFromURI(b64uString)
     }
-    public static toUrlFormat(b64String: string): string{
+    public static toUrlFormat(b64String: string): string {
         return this.convertToURI(b64String)
     }
 
-    public static toHex(b64String: string): string{
+    public static toHex(b64String: string): string {
         return this.decode(b64String)
     }
-    public static toString(b64String: string): string{
+    public static toString(b64String: string): string {
         let b64str = b64String
         if (!b64str.endsWith("=")) b64str = this.convertFromURI(b64str)
         return Buffer.from(b64str, "base64").toString("utf-8")
@@ -55,16 +59,16 @@ export class BASE64 {
         return Buffer.from(b64str, "base64").toString("hex");
     }
 
-    public static encode(hexToBase64: string): string{
+    public static encode(hexToBase64: string): string {
         let b64str = Buffer.from(hexToBase64, "hex").toString("base64");
-        return  this.convertToURI(b64str)
+        return this.convertToURI(b64str)
     }
 
-    private static convertToURI(b64str: string) : string{
+    private static convertToURI(b64str: string): string {
         return b64str.replace(/[+/]/g, (item) => item == '+' ? '-' : '_').replace(/=+$/m, '');
     }
 
-    private static convertFromURI(b64ustr: string) : string{
+    private static convertFromURI(b64ustr: string): string {
         return b64ustr.replace(/[-_]/g, (item) => item == '-' ? '+' : '/') + '='
     }
 }

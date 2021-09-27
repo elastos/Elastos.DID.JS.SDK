@@ -1,3 +1,5 @@
+/* eslint-disable import/export */
+
 /*
  * Copyright (c) 2021 Elastos Foundation
  *

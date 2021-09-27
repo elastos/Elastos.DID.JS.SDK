@@ -20,8 +20,12 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
+import { ec as EC } from "elliptic";
 import { SHA256 } from "./sha256";
-import {ec as EC} from "elliptic"
+
 
 export class EcdsaSigner {
 
@@ -50,7 +54,7 @@ export class EcdsaSigner {
         return this.verify(publicKey, sig, SHA256.encodeToBuffer(...data));
     }
 
-    public static sha256Digest(...inputs: Buffer[]): Buffer{
+    public static sha256Digest(...inputs: Buffer[]): Buffer {
         return SHA256.encodeToBuffer(...inputs)
     }
 

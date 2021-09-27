@@ -20,18 +20,19 @@
  * SOFTWARE.
  */
 
-import { BASE64 } from "../internals";
-import { DID } from "../internals";
-import { DIDDocument } from "../internals";
-import type { DIDURL } from "../internals";
-import { DIDEntity } from "../internals";
-import { JSONObject } from "../json";
-import { InvalidKeyException,
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
+import {
+    InvalidKeyException,
     MalformedIDChainRequestException,
     UnknownInternalException
 } from "../exceptions/exceptions";
-import type { TransferTicket } from "../internals";
+import type { DIDURL, TransferTicket } from "../internals";
+import { BASE64, DID, DIDDocument, DIDEntity } from "../internals";
+import { JSONObject } from "../json";
 import { IDChainRequest } from "./idchaindrequest";
+
 
 /**
  * The DID request class.
@@ -247,7 +248,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
             throw new MalformedIDChainRequestException("Unsupported specification");
 
         let operation = header.getOperation();
-        if (operation.equals(IDChainRequest.Operation.CREATE)) {}
+        if (operation.equals(IDChainRequest.Operation.CREATE)) { }
         else if (operation.equals(IDChainRequest.Operation.UPDATE)) {
             if (header.getPreviousTxid() == null || header.getPreviousTxid() === "")
                 throw new MalformedIDChainRequestException("Missing previousTxid");

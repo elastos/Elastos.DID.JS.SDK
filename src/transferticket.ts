@@ -1,3 +1,5 @@
+/* eslint-disable import/export */
+
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -20,23 +22,22 @@
  * SOFTWARE.
  */
 
-import { Constants } from "./constants";
-import { DID, DIDURL, DIDEntity } from "./internals";
-import type { DIDDocument } from "./internals";
-import { checkArgument } from "./internals";
-import { EcdsaSigner } from "./internals";
-import { JSONObject } from "./json";
-import { ComparableMap } from "./comparablemap";
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
 import type { Comparable } from "./comparable";
-import { VerificationEventListener } from "./verificationEventListener";
+import { ComparableMap } from "./comparablemap";
+import { Constants } from "./constants";
 import {
-    NotCustomizedDIDException,
-    UnknownInternalException,
-    NotControllerException,
-    NoEffectiveControllerException,
     AlreadySignedException,
-    MalformedTransferTicketException
+    MalformedTransferTicketException, NoEffectiveControllerException, NotControllerException, NotCustomizedDIDException,
+    UnknownInternalException
 } from "./exceptions/exceptions";
+import type { DIDDocument } from "./internals";
+import { checkArgument, DID, DIDEntity, DIDURL, EcdsaSigner } from "./internals";
+import { JSONObject } from "./json";
+import { VerificationEventListener } from "./verificationEventListener";
+
 
 /**
  * Transfer ticket class.
@@ -151,7 +152,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
      *
      * @return true is the ticket is genuine else false
      */
-    public async isGenuine(listener : VerificationEventListener = null): Promise<boolean> {
+    public async isGenuine(listener: VerificationEventListener = null): Promise<boolean> {
         let doc = await this.getDocument();
         if (doc == null) {
             if (listener != null) {
@@ -173,10 +174,10 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
         // Proofs count should match with multisig
         if ((doc.getControllerCount() > 1 && this.proofs.size != doc.getMultiSignature().m()) ||
-                (doc.getControllerCount() <= 1 && this.proofs.size != 1)) {
+            (doc.getControllerCount() <= 1 && this.proofs.size != 1)) {
             if (listener != null) {
                 listener.failed(this, "Ticket {}: proof size not matched with multisig, {} expected, actual is {}",
-                        this.getSubject(), doc.getMultiSignature().m(), doc.proofs.size);
+                    this.getSubject(), doc.getMultiSignature().m(), doc.proofs.size);
                 listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
             }
             return false;
@@ -190,7 +191,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: key type '{}' for proof is not supported",
-                            this.getSubject(), proof.getType());
+                        this.getSubject(), proof.getType());
                     listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
                 }
                 return false;
@@ -209,7 +210,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             if (!controllerDoc.isValid(listener)) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: controller '{}' is invalid, failed to verify the proof",
-                            this.getSubject(), proof.getVerificationMethod().getDid());
+                        this.getSubject(), proof.getVerificationMethod().getDid());
                     listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
                 }
                 return false;
@@ -218,7 +219,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             if (!proof.getVerificationMethod().equals(controllerDoc.getDefaultPublicKeyId())) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: key '{}' for proof is not default key of '{}'",
-                            this.getSubject(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
+                        this.getSubject(), proof.getVerificationMethod(), proof.getVerificationMethod().getDid());
                     listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
                 }
                 return false;
@@ -227,7 +228,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             if (!doc.verifyDigest(proof.getVerificationMethod(), proof.getSignature(), digest)) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: proof '{}' is invalid, signature mismatch",
-                            this.getSubject(), proof.getVerificationMethod());
+                        this.getSubject(), proof.getVerificationMethod());
                     listener.failed(this, "Ticket {}: is not genuine", this.getSubject());
                 }
                 return false;
@@ -245,7 +246,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
      *
      * @return true is the ticket is valid else false
      */
-    public async isValid(listener : VerificationEventListener = null): Promise<boolean> {
+    public async isValid(listener: VerificationEventListener = null): Promise<boolean> {
         let doc = await this.getDocument();
         if (doc == null) {
             if (listener != null) {
@@ -294,7 +295,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
         if (this.proofs == null || this.proofs.size == 0)
             return false;
 
-        let  multisig = (await this.getDocument()).getMultiSignature();
+        let multisig = (await this.getDocument()).getMultiSignature();
         return this.proofs.size == (multisig == null ? 1 : multisig.m());
     }
 
@@ -315,9 +316,9 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
     }
 
     protected fromJSON(json: JSONObject, context: DID = null): void {
-        this.id = this.getDid("id", json.id, {mandatory: true, nullable: false});
-        this.to = this.getDid("to", json.to, {mandatory: true, nullable: false});
-        this.txid = this.getString("txid", json.txid, {mandatory: true, nullable: false});
+        this.id = this.getDid("id", json.id, { mandatory: true, nullable: false });
+        this.to = this.getDid("to", json.to, { mandatory: true, nullable: false });
+        this.txid = this.getString("txid", json.txid, { mandatory: true, nullable: false });
 
         if (!json.proof)
             throw new MalformedTransferTicketException("Missing property: proof");
@@ -425,7 +426,7 @@ export namespace TransferTicket {
          * @param signature the signature encoded in base64 URL safe format
          */
         public constructor(method: DIDURL = null, signature: string = null,
-                created: Date = new Date(), type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            created: Date = new Date(), type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
             super();
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
             this.created = created == null ? new Date() : created;
@@ -499,13 +500,13 @@ export namespace TransferTicket {
 
         protected fromJSON(json: JSONObject, context: DID = null): void {
             this.type = this.getString("proof.type", json.type,
-                    {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+                { mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE });
             this.created = this.getDate("proof.created", json.created,
-                    {mandatory: false});
+                { mandatory: false });
             this.verificationMethod = this.getDidUrl("proof.verificationMethod", json.verificationMethod,
-                    {mandatory: true, nullable: false, context: context});
+                { mandatory: true, nullable: false, context: context });
             this.signature = this.getString("proof.signature", json.signature,
-                    {mandatory: true, nullable: false});
+                { mandatory: true, nullable: false });
         }
     }
 }

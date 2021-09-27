@@ -20,11 +20,15 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
 import BN from 'bn.js';
+import { Buffer } from "buffer";
 //import { createHash } from 'crypto';
 import { createHash } from 'crypto-browserify';
 import * as elliptic from 'elliptic';
 import * as messages from './messages.json';
+
 
 const ec = new elliptic.ec('p256');
 const ecparams = ec.curve;
@@ -48,8 +52,8 @@ export function privateKeyExport(privateKey: Buffer, compressed: boolean) {
 export function privateKeyNegate(privateKey: Buffer) {
     const bn = new BN(privateKey);
     return bn.isZero()
-            ? Buffer.alloc(32)
-            : ecparams.n
+        ? Buffer.alloc(32)
+        : ecparams.n
             .sub(bn)
             .umod(ecparams.n)
             .toArrayLike(Buffer, 'be', 32);
@@ -110,9 +114,9 @@ export function publicKeyTweakAdd(publicKey: Buffer, tweak: Buffer | BN, compres
 
     return Buffer.from(
         ecparams.g
-        .mul(tweak)
-        .add(pair.getPublic())
-        .encode(true, compressed)
+            .mul(tweak)
+            .add(pair.getPublic())
+            .encode(true, compressed)
     );
 }
 
@@ -125,9 +129,9 @@ export function publicKeyTweakMul(publicKey: Buffer, tweak: Buffer | BN, compres
 
     return Buffer.from(
         pair
-        .getPublic()
-        .mul(tweak)
-        .encode(true, compressed)
+            .getPublic()
+            .mul(tweak)
+            .encode(true, compressed)
     );
 }
 
@@ -153,9 +157,9 @@ export function signatureNormalize(signature: Buffer) {
     const result = Buffer.from(signature);
     if (s.cmp(ec.nh) === 1)
         ecparams.n
-        .sub(s)
-        .toArrayLike(Buffer, 'be', 32)
-        .copy(result, 32);
+            .sub(s)
+            .toArrayLike(Buffer, 'be', 32)
+            .copy(result, 32);
 
     return result;
 }
@@ -182,11 +186,11 @@ export function signatureImport(sigObj: any) {
 export function sign(message: Buffer, privateKey: Buffer, noncefn?: any, data?: any) {
     if (typeof noncefn === 'function') {
         const getNonce = noncefn;
-        noncefn = function(counter: any) {
-        const nonce = getNonce(message, privateKey, null, data, counter);
-        if (!Buffer.isBuffer(nonce) || nonce.length !== 32) throw new Error(messages.ECDSA_SIGN_FAIL);
+        noncefn = function (counter: any) {
+            const nonce = getNonce(message, privateKey, null, data, counter);
+            if (!Buffer.isBuffer(nonce) || nonce.length !== 32) throw new Error(messages.ECDSA_SIGN_FAIL);
 
-        return new BN(nonce);
+            return new BN(nonce);
         };
     }
 
@@ -251,8 +255,8 @@ export function ecdhUnsafe(publicKey: Buffer, privateKey: Buffer, compressed: bo
 
     return Buffer.from(
         pair
-        .getPublic()
-        .mul(scalar)
-        .encode(true, compressed)
+            .getPublic()
+            .mul(scalar)
+            .encode(true, compressed)
     );
 }

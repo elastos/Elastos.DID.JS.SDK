@@ -1,3 +1,5 @@
+/* eslint-disable import/export */
+
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -20,22 +22,12 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
 import dayjs, { Dayjs } from "dayjs";
 import { Constants } from "./constants";
-import { DID, DIDURL } from "./internals";
-import { CredentialMetadata, CredentialBiography, CredentialBiographyStatus } from "./internals";
-import { IDChainRequest, DIDBackend } from "./internals";
-import { Collections } from "./internals";
-import { DIDEntity } from "./internals";
-import type { DIDObject } from "./internals";
-import type { DIDDocument, Issuer } from "./internals";
-import type { DIDStore } from "./internals";
 import type { DIDTransactionAdapter } from "./didtransactionadapter";
-import type { JSONObject, JSONValue } from "./json";
-import { sortJSONObject } from "./json";
-import { checkArgument } from "./internals";
-import { VerificationEventListener } from "./verificationEventListener";
-import { Logger } from "./logger";
 import {
     AlreadySealedException,
     CredentialAlreadyExistException,
@@ -48,6 +40,13 @@ import {
     MalformedCredentialException,
     NotAttachedWithStoreException
 } from "./exceptions/exceptions";
+import type { DIDDocument, DIDObject, DIDStore, Issuer } from "./internals";
+import { checkArgument, CredentialBiography, CredentialBiographyStatus, CredentialMetadata, DID, DIDBackend, DIDEntity, DIDURL, IDChainRequest } from "./internals";
+import type { JSONObject, JSONValue } from "./json";
+import { sortJSONObject } from "./json";
+import { Logger } from "./logger";
+import { VerificationEventListener } from "./verificationEventListener";
+
 
 const log = new Logger("VerifiableCredential");
 
@@ -274,11 +273,11 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      * @return whether the Credential object is genuine
      * @throws DIDResolveException if error occurs when resolve the DID documents
      */
-    public async isGenuine(listener : VerificationEventListener = null): Promise<boolean> {
+    public async isGenuine(listener: VerificationEventListener = null): Promise<boolean> {
         if (!this.getId().getDid().equals(this.getSubject().getId())) {
             if (listener != null) {
                 listener.failed(this, "VC {}: invalid id '{}', should under the scope of '{}'",
-                        this.getId(), this.getId(), this.getSubject().getId());
+                    this.getId(), this.getId(), this.getSubject().getId());
                 listener.failed(this, "VC {}: is not genuine", this.getId());
             }
             return false;
@@ -288,7 +287,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (issuerDoc == null) {
             if (listener != null) {
                 listener.failed(this, "VC {}: Can not resolve the document for issuer '{}'",
-                        this.getId(), this.getIssuer());
+                    this.getId(), this.getIssuer());
                 listener.failed(this, "VC {}: is not genuine", this.getId());
             }
             return false;
@@ -297,7 +296,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (!issuerDoc.isGenuine(listener)) {
             if (listener != null) {
                 listener.failed(this, "VC {}: issuer '{}' is not genuine",
-                        this.getId(), this.getIssuer());
+                    this.getId(), this.getIssuer());
                 listener.failed(this, "VC {}: is not genuine", this.getId());
             }
             return false;
@@ -307,7 +306,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (!issuerDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
             if (listener != null) {
                 listener.failed(this, "VC {}: key '{}' for proof is not an authencation key of '{}'",
-                        this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+                    this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
                 listener.failed(this, "VC {}: is not genuine", this.getId());
             }
             return false;
@@ -317,7 +316,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
                 listener.failed(this, "VC {}: key type '{}' for proof is not supported",
-                        this.getId(), this.proof.getType());
+                    this.getId(), this.proof.getType());
                 listener.failed(this, "VC {}: is not genuine", this.getId());
             }
             return false; // TODO: should throw an exception?
@@ -369,7 +368,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      * @return whether the Credential object is valid
      * @throws DIDResolveException if error occurs when resolve the DID documents
      */
-    public async isValid(listener : VerificationEventListener = null): Promise<boolean> {
+    public async isValid(listener: VerificationEventListener = null): Promise<boolean> {
         if (this.expirationDate != null) {
             if (dayjs().isAfter(dayjs(this.expirationDate))) {
                 if (listener != null) {
@@ -384,7 +383,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (issuerDoc == null) {
             if (listener != null) {
                 listener.failed(this, "VC {}: can not resolve the document for issuer '{}'",
-                        this.getId(), this.getIssuer());
+                    this.getId(), this.getIssuer());
                 listener.failed(this, "VC {}: is invalid", this.getId());
             }
             return false;
@@ -393,7 +392,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (!issuerDoc.isValid(listener)) {
             if (listener != null) {
                 listener.failed(this, "VC {}: issuer '{}' is invalid",
-                        this.getId(), this.getIssuer());
+                    this.getId(), this.getIssuer());
                 listener.failed(this, "VC {}: is invalid", this.getId());
             }
             return false;
@@ -403,7 +402,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (!issuerDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
             if (listener != null) {
                 listener.failed(this, "VC {}: key '{}' for proof is not an authencation key of '{}'",
-                        this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+                    this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
                 listener.failed(this, "VC {}: is invalid", this.getSubject());
             }
             return false;
@@ -413,7 +412,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
                 listener.failed(this, "VC {}: key type '{}' for proof is not supported",
-                        this.getId(), this.proof.getType());
+                    this.getId(), this.proof.getType());
                 listener.failed(this, "VC {}: is invalid", this.getId());
             }
             return false; // TODO: should throw an exception.
@@ -534,7 +533,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         if (signer == null) {
             let signerDid: DID = (signKey != null && signKey.getDid() != null) ?
-                    signKey.getDid() : this.getSubject().getId();
+                signKey.getDid() : this.getSubject().getId();
 
             signer = await this.getStore().loadDid(signerDid);
             if (signer == null) {
@@ -548,9 +547,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         }
 
         if (!signer.getSubject().equals(this.getSubject().getId()) &&
-                !signer.getSubject().equals(this.getIssuer()) &&
-                !owner.hasController(signer.getSubject()) &&
-                !issuer.hasController(signer.getSubject())) {
+            !signer.getSubject().equals(this.getIssuer()) &&
+            !owner.hasController(signer.getSubject()) &&
+            !issuer.hasController(signer.getSubject())) {
             log.error("Publish failed because the invalid signer or signkey.");
             throw new InvalidKeyException("Not owner or issuer: " + signer.getSubject());
         }
@@ -611,7 +610,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      * @return the VerifiableCredential object
      * @throws DIDResolveException throw this exception if resolving did failed.
      */
-    public static async resolve(id: DIDURL | string, issuer: DID | string  = null, force = false): Promise<VerifiableCredential> {
+    public static async resolve(id: DIDURL | string, issuer: DID | string = null, force = false): Promise<VerifiableCredential> {
         if (id == null)
             throw new IllegalArgumentException();
 
@@ -665,15 +664,15 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         let subject = json.credentialSubject as JSONObject;
         let holder = this.getDid("credentialSubject.id", subject.id,
-                {mandatory: false, nullable: false, defaultValue: context});
+            { mandatory: false, nullable: false, defaultValue: context });
         if (!holder)
             throw new MalformedCredentialException("Missing property: subject.id");
 
-        this.id = this.getDidUrl("id", json.id, {mandatory: true, nullable: false, context: holder});
-        this.type = this.getStrings("type", json.type, {mandatory: true, nullable: false});
-        this.issuer = this.getDid("issuer", json.issuer, {mandatory: false, nullable: false, defaultValue: holder});
-        this.issuanceDate = this.getDate("issuanceDate", json.issuanceDate, {mandatory: true, nullable: false});
-        this.expirationDate = this.getDate("expirationDate", json.expirationDate, {mandatory: true, nullable: true});
+        this.id = this.getDidUrl("id", json.id, { mandatory: true, nullable: false, context: holder });
+        this.type = this.getStrings("type", json.type, { mandatory: true, nullable: false });
+        this.issuer = this.getDid("issuer", json.issuer, { mandatory: false, nullable: false, defaultValue: holder });
+        this.issuanceDate = this.getDate("issuanceDate", json.issuanceDate, { mandatory: true, nullable: false });
+        this.expirationDate = this.getDate("expirationDate", json.expirationDate, { mandatory: true, nullable: true });
         this.subject = VerifiableCredential.Subject.deserialize(subject, VerifiableCredential.Subject, holder);
 
         if (!json.proof)
@@ -782,13 +781,13 @@ export namespace VerifiableCredential {
             //if (!context || !this.id.equals(context))
             json.id = this.id.toString();
 
-            json = {...json, ...this.properties};
+            json = { ...json, ...this.properties };
             return json;
         }
 
         protected fromJSON(json: JSONObject, context: DID = null): void {
             this.id = this.getDid("subject.id", json.id,
-                    {mandatory: false, defaultValue: context});
+                { mandatory: false, defaultValue: context });
             let props = JSON.parse(JSON.stringify(json));
             delete props.id; // or props['id']?
             this.properties = sortJSONObject(props);
@@ -877,13 +876,13 @@ export namespace VerifiableCredential {
 
         protected fromJSON(json: JSONObject, context: DID = null): void {
             this.type = this.getString("proof.type", json.type,
-                    {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+                { mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE });
             this.created = this.getDate("proof.created", json.created,
-                    {mandatory: false});
+                { mandatory: false });
             this.verificationMethod = this.getDidUrl("proof.verificationMethod", json.verificationMethod,
-                    {mandatory: true, nullable: false, context: context});
+                { mandatory: true, nullable: false, context: context });
             this.signature = this.getString("proof.signature", json.signature,
-                    {mandatory: true, nullable: false});
+                { mandatory: true, nullable: false });
         }
     }
 
@@ -1006,8 +1005,8 @@ export namespace VerifiableCredential {
             this.checkNotSealed();
 
             let props = typeof newProperties === "string" ?
-                        JSON.parse(newProperties) :
-                        JSON.parse(JSON.stringify(newProperties));
+                JSON.parse(newProperties) :
+                JSON.parse(JSON.stringify(newProperties));
 
             delete props.id;
 

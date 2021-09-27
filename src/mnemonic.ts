@@ -20,9 +20,12 @@
  * SOFTWARE.
  */
 
-import { mnemonicToSeedSync, generateMnemonic, wordlists, validateMnemonic, entropyToMnemonic } from "bip39";
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { entropyToMnemonic, generateMnemonic, mnemonicToSeedSync, validateMnemonic, wordlists } from "bip39";
 import { MnemonicException } from "./exceptions/exceptions";
 import { checkArgument } from "./internals";
+
 
 /**
  * The class represents the mnemonic content.
@@ -80,7 +83,7 @@ export class Mnemonic {
 
     private static TWELVE_WORDS_ENTROPY = 128;
 
-    private static WORDLISTS:{[index: string]: string[]} = {
+    private static WORDLISTS: { [index: string]: string[] } = {
         "english": wordlists.english,
         "czech": wordlists.czech,
         "chinese_simplified": wordlists.chinese_simplified,
@@ -99,7 +102,7 @@ export class Mnemonic {
 
     private constructor(private language: string = Mnemonic.ENGLISH) {
         if (!(language in Mnemonic.WORDLISTS))
-            throw new MnemonicException("Unsupported language for mnemonic "+language);
+            throw new MnemonicException("Unsupported language for mnemonic " + language);
     }
 
     /**

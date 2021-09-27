@@ -1,3 +1,5 @@
+/* eslint-disable import/export */
+
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -20,30 +22,21 @@
  * SOFTWARE.
  */
 
-import crypto from "crypto"
-import { AbstractMetadata } from "./internals";
-import { HDKey } from "./internals";
-import { DID, DIDURL } from "./internals";
-import { DIDDocument } from "./internals";
-import type { DIDStore } from "./internals";
-import { DIDEntity } from "./internals";
-import { JSONObject } from "./json";
-
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import crypto from "crypto";
 import {
     DIDAlreadyExistException,
-    DIDDeactivatedException,
-    DIDStoreException,
-    IllegalArgumentException,
-    RootIdentityAlreadyExistException,
-    UnknownInternalException,
-    MalformedMetadataException,
-    DIDResolveException
+    DIDDeactivatedException, DIDResolveException, DIDStoreException,
+    IllegalArgumentException, MalformedMetadataException, RootIdentityAlreadyExistException,
+    UnknownInternalException
 } from "./exceptions/exceptions";
+import type { ConflictHandle, DIDStore } from "./internals";
+import { AbstractMetadata, checkArgument, DefaultConflictHandle, DID, DIDDocument, DIDEntity, DIDURL, HDKey, Mnemonic } from "./internals";
+import { JSONObject } from "./json";
 import { Logger } from "./logger";
-import { Mnemonic } from "./internals";
-import { checkArgument } from "./internals";
-import { DefaultConflictHandle } from "./internals";
-import type { ConflictHandle } from "./internals";
+
+
 
 const log = new Logger("RootIdentity");
 
@@ -57,7 +50,7 @@ export class RootIdentity {
     private id: string;
     private metadata: RootIdentity.Metadata;
 
-    private constructor() {}
+    private constructor() { }
 
     private static newFromMnemonic(mnemonic: string, passphrase: string): RootIdentity {
         let rootIdentity = new RootIdentity();
@@ -139,7 +132,7 @@ export class RootIdentity {
      */
     public static createFromPrivateKey(extentedPrivateKey: string, store: DIDStore, storepass: string, overwrite = false): RootIdentity {
         checkArgument(extentedPrivateKey != null && extentedPrivateKey !== "",
-                "Invalid extended private key");
+            "Invalid extended private key");
         checkArgument(store != null, "Invalid DID store");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
@@ -213,7 +206,7 @@ export class RootIdentity {
     }
 
     public setDefaultDidByIndex(index: number) {
-        checkArgument(index >=0, "Invalid index");
+        checkArgument(index >= 0, "Invalid index");
 
         this.metadata.setDefaultDid(this.getDid(index));
     }
@@ -271,7 +264,7 @@ export class RootIdentity {
             return null;
 
         let key = store.derive(identity, HDKey.DERIVE_PATH_PREFIX +
-                doc.getMetadata().getIndex(), storepass);
+            doc.getMetadata().getIndex(), storepass);
 
         let pk = doc.getPublicKey(id);
         if (pk == null) {
@@ -330,7 +323,7 @@ export class RootIdentity {
                 if (!overwrite)
                     throw new DIDAlreadyExistException("DID already published.");
             }
-        } catch(e) {
+        } catch (e) {
             if (e instanceof DIDResolveException && !overwrite)
                 throw e;
         }
@@ -400,9 +393,9 @@ export class RootIdentity {
             localDoc.getMetadata().detachStore();
 
             if (localDoc.getSignature() === resolvedDoc.getSignature() ||
-                    (localDoc.getMetadata().getSignature() != null &&
+                (localDoc.getMetadata().getSignature() != null &&
                     localDoc.getProof().getSignature() ===
-                            localDoc.getMetadata().getSignature())) {
+                    localDoc.getMetadata().getSignature())) {
                 finalDoc.getMetadata().merge(localDoc.getMetadata());
             } else {
                 log.debug("{} on-chain copy conflict with local copy.", did.toString());

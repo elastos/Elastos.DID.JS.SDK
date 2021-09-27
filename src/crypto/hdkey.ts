@@ -20,10 +20,14 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
+import { HDKey as DeterministicKey } from "../hdkey-secp256r1";
 import { Mnemonic } from "../internals";
-import { HDKey as DeterministicKey} from "../hdkey-secp256r1";
-import { Base58 } from './base58'
+import { Base58 } from './base58';
 import { SHA256 } from "./sha256";
+
 
 export class HDKey {
     public static PUBLICKEY_BYTES = 33;
@@ -93,7 +97,7 @@ export class HDKey {
     }
 
     public serializePublicKey(): Buffer {
-        return Base58.decode(this.serializePublicKeyBase58()) ;
+        return Base58.decode(this.serializePublicKeyBase58());
     }
 
     public serializePublicKeyBase58(): string {
@@ -113,7 +117,7 @@ export class HDKey {
         return new HDKey(DeterministicKey.fromExtendedKey(keyData));
     }
 
-    private static transformBip32HeaderToBuffer(bip32HeaderValue: number) : Buffer{
+    private static transformBip32HeaderToBuffer(bip32HeaderValue: number): Buffer {
         let buffer = Buffer.alloc(4);
         buffer[0] = ((bip32HeaderValue >> 24) & 0xFF);
         buffer[1] = ((bip32HeaderValue >> 16) & 0xFF);
@@ -131,14 +135,14 @@ export class HDKey {
         pk.copy(extendedPrivateKeyBytes, 46, 0, 32);
 
         let buftoHash = Buffer.alloc(78);
-        extendedPrivateKeyBytes.copy(buftoHash, 0 , 0 , 78);
+        extendedPrivateKeyBytes.copy(buftoHash, 0, 0, 78);
         let hash = SHA256.hashTwice(buftoHash);
         hash.copy(extendedPrivateKeyBytes, 78, 0, 4);
 
         return extendedPrivateKeyBytes;
     }
 
-    public static paddingToExtendedPublicKey(pk: Buffer): Buffer{
+    public static paddingToExtendedPublicKey(pk: Buffer): Buffer {
         let extendedPublicKeyBytes = Buffer.alloc(HDKey.EXTENDED_PUBLICKEY_BYTES);
         let bip32Header = HDKey.transformBip32HeaderToBuffer(this.bip32HeaderP2PKHpub);
         bip32Header.copy(extendedPublicKeyBytes);
@@ -146,7 +150,7 @@ export class HDKey {
         pk.copy(extendedPublicKeyBytes, 45, 0, 33);
 
         let buftoHash = Buffer.alloc(78);
-        extendedPublicKeyBytes.copy(buftoHash, 0 , 0 , 78);
+        extendedPublicKeyBytes.copy(buftoHash, 0, 0, 78);
         let hash = SHA256.hashTwice(buftoHash);
         hash.copy(extendedPublicKeyBytes, 78, 0, 4);
 
@@ -165,7 +169,7 @@ export class HDKey {
     private static getRedeemScript(pk: Buffer): Buffer {
         let script = Buffer.alloc(35);
         script[0] = 33;
-        pk.copy(script,1);
+        pk.copy(script, 1);
         script[34] = HDKey.PADDING_STANDARD;
         return script;
     }
@@ -173,12 +177,12 @@ export class HDKey {
     private static getBinAddressFromBuffer(pk: Buffer): Buffer {
         let script = this.getRedeemScript(pk);
 
-        let hash =  SHA256.sha256ripemd160(script);
+        let hash = SHA256.sha256ripemd160(script);
         let programHash = Buffer.alloc(hash.length + 1);
         programHash[0] = HDKey.PADDING_IDENTITY;
-        hash.copy(programHash,1);
+        hash.copy(programHash, 1);
 
-        hash =  SHA256.hashTwice(programHash);
+        hash = SHA256.hashTwice(programHash);
         let binAddress = Buffer.alloc(programHash.length + 4);
         programHash.copy(binAddress, 0);
         hash.copy(binAddress, programHash.length, 0, 4);
@@ -210,10 +214,10 @@ export class HDKey {
             return false;
 
         // Hash twice
-        let hash = SHA256.hashTwice(Buffer.from(binAddress.toString("hex").substr(0,21)));
+        let hash = SHA256.hashTwice(Buffer.from(binAddress.toString("hex").substr(0, 21)));
 
         return (hash[0] == binAddress[21] && hash[1] == binAddress[22]
-                && hash[2] == binAddress[23] && hash[3] == binAddress[24]);
+            && hash[2] == binAddress[23] && hash[3] == binAddress[24]);
     }
 
     public wipe() {

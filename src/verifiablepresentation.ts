@@ -1,3 +1,5 @@
+/* eslint-disable import/export */
+
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -20,17 +22,11 @@
  * SOFTWARE.
  */
 
-import { Constants } from "./constants";
-import { DID, DIDURL } from "./internals";
-import type { DIDDocument } from "./internals";
-import { DIDEntity } from "./internals";
-import type { DIDStore } from "./internals";
-import { checkArgument } from "./internals";
-import { VerifiableCredential } from "./internals";
-import { Collections } from "./internals";
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
 import { ComparableMap } from "./comparablemap";
-import { JSONObject } from "./json";
-import { VerificationEventListener } from "./verificationEventListener";
+import { Constants } from "./constants";
 import {
     AlreadySealedException,
     DIDNotFoundException,
@@ -38,6 +34,11 @@ import {
     IllegalUsage, InvalidKeyException,
     MalformedPresentationException
 } from "./exceptions/exceptions";
+import type { DIDDocument, DIDStore } from "./internals";
+import { checkArgument, Collections, DID, DIDEntity, DIDURL, VerifiableCredential } from "./internals";
+import { JSONObject } from "./json";
+import { VerificationEventListener } from "./verificationEventListener";
+
 
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
@@ -46,6 +47,7 @@ import {
  * This also helps prevent a verifier from reusing a verifiable presentation as
  * their own.
  */
+// eslint-disable-next-line no-duplicate-imports
 export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
     /**
      * Default presentation type
@@ -73,7 +75,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
      *
      * @param vp the source VerifiablePresentation object.
      */
-     static newFromPresentation(vp: VerifiablePresentation, withProof: boolean): VerifiablePresentation {
+    static newFromPresentation(vp: VerifiablePresentation, withProof: boolean): VerifiablePresentation {
         let presentation = new VerifiablePresentation();
         presentation.id = vp.id;
         presentation.type = vp.type;
@@ -175,7 +177,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
      * @return whether the Credential object is genuine
      * @throws DIDResolveException if error occurs when resolve the DID documents
      */
-    public async isGenuine(listener : VerificationEventListener = null): Promise<boolean> {
+    public async isGenuine(listener: VerificationEventListener = null): Promise<boolean> {
         let holderDoc = await this.getHolder().resolve();
         if (holderDoc == null) {
             if (listener != null) {
@@ -198,7 +200,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
                 listener.failed(this, "VP {}: key type '{}' for proof is not supported",
-                        this.getId(), this.proof.getType());
+                    this.getId(), this.proof.getType());
                 listener.failed(this, "VP {}: is not genuine", this.getId());
             }
             return false;
@@ -208,7 +210,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
             if (listener != null) {
                 listener.failed(this, "VP {}: Key '{}' for proof is not an authencation key of '{}'",
-                        this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+                    this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
                 listener.failed(this, "VP {}: is not genuine", this.getId());
             }
             return false;
@@ -219,7 +221,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             if (!vc.getSubject().getId().equals(this.getHolder())) {
                 if (listener != null) {
                     listener.failed(this, "VP {}: credential '{}' not owned by the holder '{}'",
-                            this.getId(), vc.getId(), this.getHolder());
+                        this.getId(), vc.getId(), this.getHolder());
                     listener.failed(this, "VP {}: is not genuine", this.getId());
                 }
                 return false;
@@ -228,7 +230,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             if (!await vc.isGenuine(listener)) {
                 if (listener != null) {
                     listener.failed(this, "VP {}: credential '{}' is not genuine",
-                            this.getId(), vc.getId());
+                        this.getId(), vc.getId());
                     listener.failed(this, "VP {}: is not genuine", this.getId());
                 }
                 return false;
@@ -238,7 +240,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         let vp = VerifiablePresentation.newFromPresentation(this, false);
         let json = vp.serialize(true);
 
-        let result =  holderDoc.verify(this.proof.getVerificationMethod(),
+        let result = holderDoc.verify(this.proof.getVerificationMethod(),
             this.proof.getSignature(), Buffer.from(json),
             Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
         if (listener != null) {
@@ -258,8 +260,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
      * @return whether the Credential object is valid
      * @throws DIDResolveException if error occurs when resolve the DID documents
      */
-    public async isValid(listener : VerificationEventListener = null): Promise<boolean> {
-        let  holderDoc = await this.getHolder().resolve();
+    public async isValid(listener: VerificationEventListener = null): Promise<boolean> {
+        let holderDoc = await this.getHolder().resolve();
         if (holderDoc == null) {
             if (listener != null) {
                 listener.failed(this, "VP {}: can not resolve the holder's document", this.getId());
@@ -281,7 +283,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
             if (listener != null) {
                 listener.failed(this, "VP {}: Key type '{}' for proof is not supported",
-                        this.getId(), this.proof.getType());
+                    this.getId(), this.proof.getType());
                 listener.failed(this, "VP {}: is invalid", this.getId());
             }
             return false;
@@ -291,7 +293,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         if (!holderDoc.isAuthenticationKey(this.proof.getVerificationMethod())) {
             if (listener != null) {
                 listener.failed(this, "VP {}: Key '{}' for proof is not an authencation key of '{}'",
-                        this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+                    this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
                 listener.failed(this, "VP {}: is invalid", this.getId());
             }
             return false;
@@ -302,7 +304,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             if (!vc.getSubject().getId().equals(this.getHolder())) {
                 if (listener != null) {
                     listener.failed(this, "VP {}: credential '{}' not owned by the holder '{}'",
-                            this.getId(), vc.getId(), this.getHolder());
+                        this.getId(), vc.getId(), this.getHolder());
                     listener.failed(this, "VP {}: is not genuine", this.getId());
                 }
                 return false;
@@ -311,7 +313,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             if (!await vc.isValid(listener)) {
                 if (listener != null) {
                     listener.failed(this, "VP {}: credential '{}' is invalid",
-                    this.getId(), vc.getId());
+                        this.getId(), vc.getId());
                     listener.failed(this, "VP {}: is invalid", this.getId());
                 }
                 return false;
@@ -355,11 +357,11 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
     }
 
     protected fromJSON(json: JSONObject, context: DID = null): void {
-        this.holder = this.getDid("holder", json.holder, {mandatory: false, nullable: false, defaultValue: null});
-        this.id = this.getDidUrl("id", json.id, {mandatory: false, nullable: false, context: this.holder, defaultValue: null});
+        this.holder = this.getDid("holder", json.holder, { mandatory: false, nullable: false, defaultValue: null });
+        this.id = this.getDidUrl("id", json.id, { mandatory: false, nullable: false, context: this.holder, defaultValue: null });
         this.type = this.getStrings("type", json.type,
-                    {mandatory: true, nullable: false, defaultValue: [VerifiablePresentation.DEFAULT_PRESENTATION_TYPE]});
-        this.created = this.getDate("created", json.created, {mandatory: true, nullable: false});
+            { mandatory: true, nullable: false, defaultValue: [VerifiablePresentation.DEFAULT_PRESENTATION_TYPE] });
+        this.created = this.getDate("created", json.created, { mandatory: true, nullable: false });
 
         this.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
 
@@ -367,12 +369,12 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             if (!Array.isArray(json.verifiableCredential))
                 throw new MalformedPresentationException("Invalid property: verifiableCredential, type error.");
 
-            for (let obj of json.verifiableCredential ) {
+            for (let obj of json.verifiableCredential) {
                 let vc: VerifiableCredential;
                 let vcJson = obj as JSONObject;
 
                 try {
-                    vc = VerifiableCredential.deserialize(vcJson , VerifiableCredential, this.holder);
+                    vc = VerifiableCredential.deserialize(vcJson, VerifiableCredential, this.holder);
                 } catch (e) {
                     // MalformedCredentialException
                     throw new MalformedPresentationException("credential invalid: " + vcJson.id, e);
@@ -453,7 +455,7 @@ export namespace VerifiablePresentation {
     /**
      * Presentation Builder object to create presentation.
      */
-     export class Builder {
+    export class Builder {
         private holder: DIDDocument;
         private signKey: DIDURL;
         private _realm: string;
@@ -568,7 +570,7 @@ export namespace VerifiablePresentation {
          * @throws MalformedPresentationException if the presentation is invalid
          * @throws DIDStoreException if an error occurs when access DID store
          */
-        public async seal(storepass: string): Promise<VerifiablePresentation>  {
+        public async seal(storepass: string): Promise<VerifiablePresentation> {
             this.checkNotSealed();
             checkArgument(storepass && storepass != null, "Invalid storepass");
 
@@ -585,7 +587,7 @@ export namespace VerifiablePresentation {
 
             let json = this.presentation.serialize(true);
             let sig = await this.holder.signWithId(this.signKey, storepass, Buffer.from(json),
-                    Buffer.from(this._realm), Buffer.from(this._nonce));
+                Buffer.from(this._realm), Buffer.from(this._nonce));
             let proof = new Proof(this.signKey, this._realm, this._nonce, sig);
             this.presentation.proof = proof;
 
@@ -619,7 +621,7 @@ export namespace VerifiablePresentation {
          * @param signature the signature string
          */
         constructor(method: DIDURL = null, realm: string = null, nonce: string = null,
-                signature: string = null, type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            signature: string = null, type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
             super();
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
             this.verificationMethod = method;

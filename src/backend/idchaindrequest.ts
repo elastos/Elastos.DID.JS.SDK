@@ -20,16 +20,15 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
 import { Constants } from "../constants";
-import { BASE64 } from "../internals";
-import type { DID } from "../internals";
-import type { DIDDocument } from "../internals";
-import { DIDEntity } from "../internals";
-import { DIDURL } from "../internals";
 import { IllegalArgumentException, MalformedIDChainRequestException } from "../exceptions/exceptions";
+import type { DID, DIDDocument } from "../internals";
+import { BASE64, checkArgument, DIDEntity, DIDURL, TransferTicket } from "../internals";
 import type { JSONObject } from "../json";
-import { TransferTicket } from "../internals";
-import { checkArgument } from "../internals";
+
 
 /**
  * The class records the information of IDChain Request.
@@ -171,7 +170,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
 
         if (!json.payload)
             throw new MalformedIDChainRequestException("Missing payload");
-        this.payload = this.getString("payload", json.payload, {mandatory: true, nullable: false});
+        this.payload = this.getString("payload", json.payload, { mandatory: true, nullable: false });
 
         if (!json.proof)
             throw new MalformedIDChainRequestException("Missing proof");
@@ -187,8 +186,8 @@ export namespace IDChainRequest {
     /**
      * The IDChain Request Operation
      */
-     export class Operation {
-        constructor(private name: string, private specification: string) {}
+    export class Operation {
+        constructor(private name: string, private specification: string) { }
 
         public getSpecification(): string {
             return this.specification;
@@ -211,27 +210,27 @@ export namespace IDChainRequest {
         /**
          * Create a new DID
          */
-            export const CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
-             /**
-              * Update an exist DID
-              */
-            export const UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
-             /**
-              * Transfer the DID' ownership
-              */
-            export const TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
-             /**
-              * Deactivate a DID
-              */
-            export const DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
-             /**
-              * Declare a credential
-              */
-            export const DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
-             /**
-              * Revoke a credential
-              */
-            export const REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
+        export const CREATE = new Operation("create", IDChainRequest.DID_SPECIFICATION)
+        /**
+         * Update an exist DID
+         */
+        export const UPDATE = new Operation("update", IDChainRequest.DID_SPECIFICATION);
+        /**
+         * Transfer the DID' ownership
+         */
+        export const TRANSFER = new Operation("transfer", IDChainRequest.DID_SPECIFICATION);
+        /**
+         * Deactivate a DID
+         */
+        export const DEACTIVATE = new Operation("deactivate", IDChainRequest.DID_SPECIFICATION);
+        /**
+         * Declare a credential
+         */
+        export const DECLARE = new Operation("declare", IDChainRequest.CREDENTIAL_SPECIFICATION);
+        /**
+         * Revoke a credential
+         */
+        export const REVOKE = new Operation("revoke", IDChainRequest.CREDENTIAL_SPECIFICATION);
     }
 
     export class Header extends DIDEntity<Header> {
@@ -318,12 +317,12 @@ export namespace IDChainRequest {
         }
 
         protected fromJSON(json: JSONObject, context = null): void {
-            this.specification = this.getString("specification", json.specification, {mandatory: true, nullable: false});
-            let op = this.getString("operation", json.operation, {mandatory: true, nullable: false});
+            this.specification = this.getString("specification", json.specification, { mandatory: true, nullable: false });
+            let op = this.getString("operation", json.operation, { mandatory: true, nullable: false });
             this.operation = Operation.fromString(op);
 
-            this.previousTxid = this.getString("previousTxid", json.previousTxid, {mandatory: false, nullable: false, defaultValue: null});
-            this.ticket = this.getString("ticket", json.ticket, {mandatory: false, nullable: false, defaultValue: null});
+            this.previousTxid = this.getString("previousTxid", json.previousTxid, { mandatory: false, nullable: false, defaultValue: null });
+            this.ticket = this.getString("ticket", json.ticket, { mandatory: false, nullable: false, defaultValue: null });
         }
 
         public static parse(content: string | JSONObject, context = null): Header {
@@ -345,7 +344,7 @@ export namespace IDChainRequest {
         private signature: string;
 
         public constructor(verificationMethod: DIDURL = null, signature: string = null,
-                type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
             super();
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
             this.verificationMethod = verificationMethod;
@@ -379,9 +378,9 @@ export namespace IDChainRequest {
         }
 
         protected fromJSON(json: JSONObject, context = null): void {
-            this.type = this.getString("type", json.type, {mandatory: true, nullable: false});
-            this.verificationMethod = this.getDidUrl("verificationMethod", json.verificationMethod, {mandatory: true, nullable: false});
-            this.signature = this.getString("signature", json.signature, {mandatory: true, nullable: false});
+            this.type = this.getString("type", json.type, { mandatory: true, nullable: false });
+            this.verificationMethod = this.getDidUrl("verificationMethod", json.verificationMethod, { mandatory: true, nullable: false });
+            this.signature = this.getString("signature", json.signature, { mandatory: true, nullable: false });
         }
 
         public static parse(content: string | JSONObject, context = null): Proof {

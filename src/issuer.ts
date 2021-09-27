@@ -20,13 +20,12 @@
  * SOFTWARE.
  */
 
-import { checkArgument } from "./internals";
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
 import { InvalidKeyException } from "./exceptions/exceptions";
-import { DIDURL } from "./internals";
-import type { DIDDocument } from "./internals";
-import { DID } from "./internals";
-import type { DIDStore } from "./internals";
-import { VerifiableCredential } from "./internals";
+import type { DIDDocument, DIDStore } from "./internals";
+import { checkArgument, DID, DIDURL, VerifiableCredential } from "./internals";
+
 
 /**
  * A issuer is the DID to issue Credential. Issuer includes issuer's did and
@@ -98,7 +97,7 @@ export class Issuer {
      *
      * @return the DID object
      */
-    public getDid(): DID  {
+    public getDid(): DID {
         return this.self.getSubject();
     }
 

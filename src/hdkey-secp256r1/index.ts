@@ -20,11 +20,15 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
 import * as assert from 'assert';
-import * as bs58check from 'bs58'
+import * as bs58check from 'bs58';
+import { Buffer } from "buffer";
 // import * as crypto from 'crypto';
 import * as crypto from 'crypto-browserify';
 import * as secp256r1 from './secp256r1';
+
 
 const MASTER_SECRET = Buffer.from('Bitcoin seed', 'utf8');
 const LEN = 78;

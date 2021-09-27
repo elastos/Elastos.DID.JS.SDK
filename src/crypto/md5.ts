@@ -20,7 +20,10 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
 import crypto from "crypto";
+
 
 export function md5(data: Buffer): string {
     return crypto

@@ -1,10 +1,23 @@
 {
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "tests", "data", "dist", "dist.esm"],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests",
+    "data",
+    "dist",
+    "dist.esm"
+  ],
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "lib": ["es2017", "es7", "es6", "dom"],
+    "lib": [
+      "es2017",
+      "es7",
+      "es6",
+      "dom"
+    ],
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -20,7 +33,11 @@
     "preserveConstEnums": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
-    "rootDirs": ["src/"],
-    "typeRoots": ["node_modules/@types"]
+    "rootDirs": [
+      "src/"
+    ],
+    "typeRoots": [
+      "node_modules/@types"
+    ]
   }
 }

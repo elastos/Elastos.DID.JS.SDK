@@ -20,30 +20,34 @@
  * SOFTWARE.
  */
 
-import crypto from "crypto"
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
+import crypto from "crypto";
 import { BASE64 } from "./base64";
 
-export class Aes256cbc {
-    private static generateKeyAndIv(passwd: string): {key: Buffer, iv: Buffer} {
 
-        let bufferPassword : Buffer = Buffer.from(passwd, "utf-8")
+export class Aes256cbc {
+    private static generateKeyAndIv(passwd: string): { key: Buffer, iv: Buffer } {
+
+        let bufferPassword: Buffer = Buffer.from(passwd, "utf-8")
 
         let first16KeyBytesInHex = crypto
-        .createHash('md5')
-        .update(bufferPassword)
-        .digest();
+            .createHash('md5')
+            .update(bufferPassword)
+            .digest();
 
         let last16KeyBytesInHex = crypto
-        .createHash('md5')
-        .update(first16KeyBytesInHex)
-        .update(bufferPassword)
-        .digest()
+            .createHash('md5')
+            .update(first16KeyBytesInHex)
+            .update(bufferPassword)
+            .digest()
 
         let iv = crypto
-        .createHash('md5')
-        .update(last16KeyBytesInHex)
-        .update(bufferPassword)
-        .digest();
+            .createHash('md5')
+            .update(last16KeyBytesInHex)
+            .update(bufferPassword)
+            .digest();
 
         return {
             key: Buffer.concat([first16KeyBytesInHex, last16KeyBytesInHex]),

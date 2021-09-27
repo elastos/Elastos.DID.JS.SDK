@@ -1,3 +1,5 @@
+/* eslint-disable import/export */
+
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -20,56 +22,38 @@
  * SOFTWARE.
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
+import { createPrivateKey, createPublicKey } from "crypto";
 import dayjs from "dayjs";
-import { Base58, Collections, DID, DIDObject, DIDURL, Issuer } from "./internals";
-import { JWTBuilder, JWTParserBuilder } from "./internals";
+import { KeyLike } from 'jose';
+import keyutil from "js-crypto-key-utils";
+import { Comparable } from "./comparable";
+import { ComparableMap } from "./comparablemap";
 import { Constants } from "./constants";
-import { ByteBuffer } from "./internals";
-import { EcdsaSigner } from "./internals";
-import { HDKey } from "./internals";
 import type { KeyProvider } from "./crypto/keyprovider";
-import { SHA256 } from "./internals";
-import { DIDBackend } from "./internals";
-import { DIDEntity } from "./internals";
-import { DIDMetadata } from "./internals";
-import { VerificationEventListener } from "./internals";
-import type { DIDStore } from "./internals";
 import type { DIDTransactionAdapter } from "./didtransactionadapter";
 import {
-    AlreadySignedException,
-    DIDAlreadyExistException,
-    DIDDeactivatedException,
+    AlreadySealedException, AlreadySignedException, CanNotRemoveEffectiveController, DIDAlreadyExistException, DIDControllersChangedException, DIDDeactivatedException,
     DIDExpiredException,
     DIDNotFoundException,
     DIDNotGenuineException,
-    DIDNotUpToDateException,
-    InvalidKeyException,
+    DIDNotUpToDateException, DIDObjectAlreadyExistException,
+    DIDObjectHasReference, DIDObjectNotExistException, IllegalArgumentException, IllegalUsage, InvalidKeyException,
     MalformedDocumentException,
     NoEffectiveControllerException,
     NotAttachedWithStoreException,
     NotControllerException,
     NotCustomizedDIDException,
     NotPrimitiveDIDException,
-    UnknownInternalException,
-    DIDControllersChangedException,
-    IllegalArgumentException,
-    AlreadySealedException,
-    CanNotRemoveEffectiveController,
-    DIDObjectNotExistException,
-    IllegalUsage,
-    DIDObjectAlreadyExistException,
-    DIDObjectHasReference
+    UnknownInternalException
 } from "./exceptions/exceptions";
-import { Logger } from "./logger";
-import { TransferTicket } from "./internals";
-import { base64Decode, checkArgument } from "./internals";
-import { VerifiableCredential } from "./internals";
-import { ComparableMap } from "./comparablemap";
+import type { DIDStore } from "./internals";
+import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
-import keyutil from "js-crypto-key-utils";
-import { createPrivateKey, createPublicKey} from "crypto";
-import { KeyLike } from 'jose/types'
-import { Comparable } from "./comparable";
+import { Logger } from "./logger";
+
 
 /**
  * The DIDDocument represents the DID information.
@@ -638,7 +622,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the returned value is true if the matched key is an authorization key;
      *         the returned value is false if the matched key is not an authorization key.
      */
-     public isAuthorizationKey(id: DIDURL | string): boolean {
+    public isAuthorizationKey(id: DIDURL | string): boolean {
         return this.getAuthorizationKey(id) != null;
     }
 
@@ -815,7 +799,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         if (this.controllers.length > 0)
             json.controller = this.controllers.length == 1 ? this.controllers[0].toString() :
-                    Array.from(this.controllers, (c) => c.toString());
+                Array.from(this.controllers, (c) => c.toString());
 
         if (this.multisig)
             json.multisig = this.multisig.toString();
@@ -825,11 +809,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         if (this.authenticationKeys.size > 0)
             json.authentication = Array.from(this.authenticationKeys.valuesAsSortedArray(),
-                    (pk) => pk.getId().toString(context));
+                (pk) => pk.getId().toString(context));
 
         if (this.authorizationKeys.size > 0)
             json.authorization = Array.from(this.authorizationKeys.valuesAsSortedArray(),
-                    (pk) => pk.getId().toString(context));
+                (pk) => pk.getId().toString(context));
 
         if (this.credentials.size > 0)
             json.verifiableCredential = Array.from(this.credentials.valuesAsSortedArray(), (vc) => vc.toJSON(key));
@@ -877,15 +861,15 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         try {
             await Promise.all(ps);
         } catch (e) {
-            throw new  MalformedDocumentException("Can not resolve the controller's DID: " + e, e);
+            throw new MalformedDocumentException("Can not resolve the controller's DID: " + e, e);
         }
     }
 
     private fromJSONOnly(json: JSONObject, context: DID = null): void {
-        this.subject = this.getDid("id", json.id, {mandatory: false, nullable: false, defaultValue: null});
+        this.subject = this.getDid("id", json.id, { mandatory: false, nullable: false, defaultValue: null });
         context = this.subject; // set the JSON parser context
-        this.controllers = this.getDids("controller", json.controller, {mandatory: false, nullable: false, defaultValue: []});
-        let ms = this.getString("multisig", json.multisig, {mandatory: false, nullable: false});
+        this.controllers = this.getDids("controller", json.controller, { mandatory: false, nullable: false, defaultValue: [] });
+        let ms = this.getString("multisig", json.multisig, { mandatory: false, nullable: false });
         if (ms)
             this.multisig = DIDDocument.MultiSignature.fromString(ms);
 
@@ -912,7 +896,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 let obj = o as JSONObject;
 
                 try {
-                    pk = DIDDocument.PublicKey.deserialize(obj , DIDDocument.PublicKey, context);
+                    pk = DIDDocument.PublicKey.deserialize(obj, DIDDocument.PublicKey, context);
                 } catch (e) {
                     throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                 }
@@ -929,7 +913,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (!Array.isArray(json.authentication))
                 throw new MalformedDocumentException("Invalid property: authentication, type error.");
 
-            for (let obj of json.authentication ) {
+            for (let obj of json.authentication) {
                 let pk: DIDDocument.PublicKey;
 
                 if (typeof obj === 'string') {
@@ -942,7 +926,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     obj = obj as JSONObject;
 
                     try {
-                        pk = DIDDocument.PublicKey.deserialize(obj , DIDDocument.PublicKey, context);
+                        pk = DIDDocument.PublicKey.deserialize(obj, DIDDocument.PublicKey, context);
                     } catch (e) {
                         throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                     }
@@ -965,7 +949,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (!Array.isArray(json.authorization))
                 throw new MalformedDocumentException("Invalid property: authorization, type error.");
 
-            for (let obj of json.authorization ) {
+            for (let obj of json.authorization) {
                 let pk: DIDDocument.PublicKey;
 
                 if (typeof obj === 'string') {
@@ -978,7 +962,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     obj = obj as JSONObject;
 
                     try {
-                        pk = DIDDocument.PublicKey.deserialize(obj , DIDDocument.PublicKey, context);
+                        pk = DIDDocument.PublicKey.deserialize(obj, DIDDocument.PublicKey, context);
                     } catch (e) {
                         throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
                     }
@@ -1027,7 +1011,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (!Array.isArray(json.verifiableCredential))
                 throw new MalformedDocumentException("Invalid property: verifiableCredential, type error.");
 
-            for (let obj of json.verifiableCredential ) {
+            for (let obj of json.verifiableCredential) {
                 let vc: VerifiableCredential;
                 let vcJson = obj as JSONObject;
 
@@ -1049,12 +1033,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (!Array.isArray(json.service))
                 throw new MalformedDocumentException("Invalid property: service, type error.");
 
-            for (let obj of json.service ) {
+            for (let obj of json.service) {
                 let svc: DIDDocument.Service;
                 let svcJson = obj as JSONObject;
 
                 try {
-                    svc = DIDDocument.Service.deserialize(svcJson , DIDDocument.Service, context);
+                    svc = DIDDocument.Service.deserialize(svcJson, DIDDocument.Service, context);
                 } catch (e) {
                     throw new MalformedDocumentException("Invalid service: " + svcJson.id, e);
                 }
@@ -1066,7 +1050,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
         }
 
-        this.expires = this.getDate("expires", json.expires, {mandatory: true, nullable: false});
+        this.expires = this.getDate("expires", json.expires, { mandatory: true, nullable: false });
 
         if (!json.proof)
             throw new MalformedDocumentException("Missing property: proof");
@@ -1139,13 +1123,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the returned value is true if the did document is genuine;
      *         the returned value is false if the did document is not genuine.
      */
-    public isGenuine(listener : VerificationEventListener = null): boolean {
+    public isGenuine(listener: VerificationEventListener = null): boolean {
         // Proofs count should match with multisig
         let expectedProofs = this.multisig == null ? 1 : this.multisig.m();
         if (this.proofs.size != expectedProofs) {
             if (listener != null) {
                 listener.failed(this, "{}: proof size not matched with multisig, {} expected, actual is {}",
-                        this.getSubject(), this.multisig.m(), this.proofs.size);
+                    this.getSubject(), this.multisig.m(), this.proofs.size);
                 listener.failed(this, "{}: is not genuine", this.getSubject());
             }
             return false;
@@ -1163,7 +1147,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
                 if (listener != null) {
                     listener.failed(this, "{}: key type '{}' for proof is not supported",
-                            this.getSubject(), proof.getType());
+                        this.getSubject(), proof.getType());
                     listener.failed(this, "{}: is not genuine", this.getSubject());
                 }
 
@@ -1173,13 +1157,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (!proof.getCreator().equals(this.getDefaultPublicKeyId())) {
                 if (listener != null) {
                     listener.failed(this, "{}: key '{}' for proof is not default key",
-                            this.getSubject(), proof.getCreator());
+                        this.getSubject(), proof.getCreator());
                     listener.failed(this, "{}: is not genuine", this.getSubject());
                 }
                 return false;
             }
 
-            let result =  this.verifyDigest(proof.getCreator(), proof.getSignature(), digest);
+            let result = this.verifyDigest(proof.getCreator(), proof.getSignature(), digest);
             if (listener != null) {
                 if (result) {
                     listener.succeeded(this, "{}: is genuine", this.getSubject());
@@ -1196,7 +1180,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 if (proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE) {
                     if (listener != null) {
                         listener.failed(this, "{}: key type '{}' for proof is not supported",
-                                this.getSubject(), proof.getType());
+                            this.getSubject(), proof.getType());
                         listener.failed(this, "{}: is not genuine", this.getSubject());
                     }
 
@@ -1207,7 +1191,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 if (controllerDoc == null) {
                     if (listener != null) {
                         listener.failed(this, "{}: can not resolve the document for controller '{}' to verify the proof",
-                                this.getSubject(), proof.getCreator().getDid());
+                            this.getSubject(), proof.getCreator().getDid());
                         listener.failed(this, "{}: is not genuine", this.getSubject());
                     }
                     return false;
@@ -1216,7 +1200,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 if (!controllerDoc.isGenuine(listener)) {
                     if (listener != null) {
                         listener.failed(this, "{}: controller '{}' is not genuine, failed to verify the proof",
-                                this.getSubject(), proof.getCreator().getDid());
+                            this.getSubject(), proof.getCreator().getDid());
                         listener.failed(this, "{}: is not genuine", this.getSubject());
                     }
 
@@ -1226,7 +1210,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 if (!proof.getCreator().equals(controllerDoc.getDefaultPublicKeyId())) {
                     if (listener != null) {
                         listener.failed(this, "{}: key '{}' for proof is not default key of '{}'",
-                                this.getSubject(), proof.getCreator(), proof.getCreator().getDid());
+                            this.getSubject(), proof.getCreator(), proof.getCreator().getDid());
                         listener.failed(this, "{}: is not genuine", this.getSubject());
                     }
                     return false;
@@ -1235,7 +1219,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 if (!controllerDoc.verifyDigest(proof.getCreator(), proof.getSignature(), digest)) {
                     if (listener != null) {
                         listener.failed(this, "{}: proof '{}' is invalid, signature mismatch",
-                                this.getSubject(), proof.getCreator());
+                            this.getSubject(), proof.getCreator());
                         listener.failed(this, "{}: is not genuine", this.getSubject());
                     }
                     return false;
@@ -1279,7 +1263,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the returned value is true if the did document is valid;
      *         the returned value is false if the did document is not valid.
      */
-    public isValid(listener : VerificationEventListener = null): boolean {
+    public isValid(listener: VerificationEventListener = null): boolean {
         if (this.isDeactivated()) {
             if (listener != null) {
                 listener.failed(this, "{}: is deactivated", this.getSubject());
@@ -1307,7 +1291,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 if (doc.isDeactivated()) {
                     if (listener != null) {
                         listener.failed(this, "{}: controller '{}' is deactivated",
-                                this.getSubject(), doc.getSubject());
+                            this.getSubject(), doc.getSubject());
                         listener.failed(this, "{}: is invalid", this.getSubject());
                     }
                     return false;
@@ -1316,7 +1300,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 if (!doc.isGenuine(listener)) {
                     if (listener != null) {
                         listener.failed(this, "{}: controller '{}' is not genuine",
-                                this.getSubject(), doc.getSubject());
+                            this.getSubject(), doc.getSubject());
                         listener.failed(this, "{}: is invalid", this.getSubject());
                     }
                     return false;
@@ -1519,12 +1503,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return EcdsaSigner.verify(binkey, sig, digest);
     }
 
-    public getKeyProvider() : KeyProvider {
+    public getKeyProvider(): KeyProvider {
         let doc = this;
         return new class implements KeyProvider {
 
-            public async getPublicKey(keyid : string = null) : Promise<KeyLike> {
-                let key : DIDURL;
+            public async getPublicKey(keyid: string = null): Promise<KeyLike> {
+                let key: DIDURL;
 
                 if (keyid == null)
                     key = doc.getDefaultPublicKeyId();
@@ -1536,13 +1520,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
                 let pk = doc.getPublicKey(key).getPublicKeyBytes();
                 const keyObj = new keyutil.Key('oct', pk, { namedCurve: "P-256" });
-                let pemObj =  await keyObj.export('pem');
+                let pemObj = await keyObj.export('pem');
                 let pemStr = pemObj.toString();
                 return createPublicKey(pemStr);
             }
 
-            public async getPrivateKey(keyid : string = null, password : string) : Promise<KeyLike> {
-                let key : DIDURL;
+            public async getPrivateKey(keyid: string = null, password: string): Promise<KeyLike> {
+                let key: DIDURL;
 
                 if (keyid == null)
                     key = doc.getDefaultPublicKeyId();
@@ -1567,7 +1551,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return builder.setIssuer(this.getSubject().toString());
     }
 
-    public jwtParserBuilder() : JWTParserBuilder {
+    public jwtParserBuilder(): JWTParserBuilder {
         let builder = JWTParserBuilder.newWithKeyProvider(this.getKeyProvider());
         builder.requireIssuer(this.getSubject().toString());
         return builder;
@@ -1585,11 +1569,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let did = DID.from(inputDID);
         let controllers = [];
 
-        if (inputControllers && inputControllers.length ) {
+        if (inputControllers && inputControllers.length) {
             inputControllers.forEach((ctrl) => {
                 let controller: DID = DID.from(ctrl);
                 if (!controller.equals(this.getSubject()) && !controllers.includes(ctrl))
-                    controllers.push (controller);
+                    controllers.push(controller);
 
             });
         }
@@ -1633,7 +1617,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             this.checkIsPrimitive();
             this.checkAttachedStore();
             if (!source)
-                throw new DIDNotFoundException("DID not found: "+from.toString());
+                throw new DIDNotFoundException("DID not found: " + from.toString());
             if (source.isDeactivated())
                 throw new DIDDeactivatedException(from.toString());
 
@@ -1649,7 +1633,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             this.checkHasEffectiveController();
         }
 
-        let ticket:TransferTicket = await TransferTicket.newForDIDDocument(source, to);
+        let ticket: TransferTicket = await TransferTicket.newForDIDDocument(source, to);
         await ticket.seal(this, storepass);
 
         return ticket;
@@ -1710,7 +1694,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (signKey == null && this.getDefaultPublicKeyId() == null)
             throw new NoEffectiveControllerException(this.getSubject().toString());
 
-            DIDDocument.log.info("Publishing DID {}, force={}...", this.getSubject(), force);
+        DIDDocument.log.info("Publishing DID {}, force={}...", this.getSubject(), force);
 
         if (!this.isGenuine()) {
             DIDDocument.log.error("Publish failed because document is not genuine.");
@@ -1741,9 +1725,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
             if (this.isCustomizedDid()) {
                 let curMultisig = this.getMultiSignature() == null ?
-                        DIDDocument.MultiSignature.ONE_OF_ONE : this.getMultiSignature();
+                    DIDDocument.MultiSignature.ONE_OF_ONE : this.getMultiSignature();
                 let orgMultisig = resolvedDoc.getMultiSignature() == null ?
-                        DIDDocument.MultiSignature.ONE_OF_ONE : resolvedDoc.getMultiSignature();
+                    DIDDocument.MultiSignature.ONE_OF_ONE : resolvedDoc.getMultiSignature();
 
                 if (!curMultisig.equals(orgMultisig))
                     throw new DIDControllersChangedException();
@@ -1810,8 +1794,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this.getMetadata().setSignature(this.getProof().getSignature());
     }
 
-    	// TODO: to be remove in the future
-	public async publishUntrusted(signKey : DIDURL, storepass : string, adapter: DIDTransactionAdapter = null) : Promise<void> {
+    // TODO: to be remove in the future
+    public async publishUntrusted(signKey: DIDURL, storepass: string, adapter: DIDTransactionAdapter = null): Promise<void> {
         checkArgument(storepass != null && storepass != "", "Invalid storepass");
         this.checkIsPrimitive();
         this.checkAttachedStore();
@@ -1866,10 +1850,10 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             await DIDBackend.getInstance().updateDid(this, lastTxid, signKey, storepass, adapter);
         }
 
-        if (resolvedSignature != null )
+        if (resolvedSignature != null)
             this.getMetadata().setPreviousSignature(resolvedSignature);
         this.getMetadata().setSignature(this.getProof().getSignature());
-}
+    }
 
 
     /**
@@ -1891,7 +1875,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         // Document should use the IDChain's copy
         let doc = await this.getSubject().resolve(true);
         if (doc == null)
-            throw new DIDNotFoundException("DID not found: "+this.getSubject().toString());
+            throw new DIDNotFoundException("DID not found: " + this.getSubject().toString());
         else if (doc.isDeactivated())
             throw new DIDDeactivatedException(this.getSubject().toString());
         else
@@ -1903,14 +1887,14 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             signKey = doc.getDefaultPublicKeyId();
         } else {
             if (!doc.isCustomizedDid()) {
-                if(!signKey.equals(doc.getDefaultPublicKeyId()) &&
-                        doc.getAuthenticationKey(signKey) == null)
+                if (!signKey.equals(doc.getDefaultPublicKeyId()) &&
+                    doc.getAuthenticationKey(signKey) == null)
                     throw new InvalidKeyException(signKey.toString());
             } else {
                 let controllerdoc = this.getControllerDocument(signKey.getDid());
                 if (controllerdoc == null || !signKey.equals(controllerdoc.getDefaultPublicKeyId()))
                     throw new InvalidKeyException(signKey.toString());
-                }
+            }
         }
 
         await DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
@@ -1930,7 +1914,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @throws DIDBackendException deactivate did failed because of did backend error.
      */
     // NOTE: Was deactivate() in java
-    public async deactivateTargetDID(target: DID, signKey : DIDURL = null, storepass: string, adapter: DIDTransactionAdapter = null) {
+    public async deactivateTargetDID(target: DID, signKey: DIDURL = null, storepass: string, adapter: DIDTransactionAdapter = null) {
         checkArgument(target != null, "Invalid target DID");
         checkArgument(storepass && storepass != null, "Invalid storepass");
         this.checkAttachedStore();
@@ -1940,7 +1924,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         let targetDoc = await target.resolve(true);
         if (targetDoc == null)
-            throw new DIDNotFoundException("DID not found: "+target.toString());
+            throw new DIDNotFoundException("DID not found: " + target.toString());
         else if (targetDoc.isDeactivated())
             throw new DIDDeactivatedException(target.toString());
 
@@ -2049,7 +2033,7 @@ export namespace DIDDocument {
      * authentication or establishing secure communication with service endpoints.
      */
     export class PublicKey extends DIDEntity<PublicKey>
-            implements DIDObject<string>, Comparable<PublicKey> {
+        implements DIDObject<string>, Comparable<PublicKey> {
         public id: DIDURL;
         public type: string;
         public controller: DID;
@@ -2120,13 +2104,13 @@ export namespace DIDDocument {
         }
 
         public equals(ref: PublicKey): boolean {
-        if (this == ref)
-            return true;
+            if (this == ref)
+                return true;
 
-        return (this.getId().equals(ref.getId()) &&
-            this.getType() === ref.getType() &&
-            this.getController().equals(ref.getController()) &&
-            this.getPublicKeyBase58() === ref.getPublicKeyBase58())
+            return (this.getId().equals(ref.getId()) &&
+                this.getType() === ref.getType() &&
+                this.getController().equals(ref.getController()) &&
+                this.getPublicKeyBase58() === ref.getPublicKeyBase58())
         }
 
         public compareTo(key: PublicKey): number {
@@ -2164,21 +2148,21 @@ export namespace DIDDocument {
 
         protected fromJSON(json: JSONObject, context: DID = null): void {
             this.id = this.getDidUrl("publicKey.id", json.id,
-                    {mandatory: true, nullable: false, context: context});
+                { mandatory: true, nullable: false, context: context });
             this.type = this.getString("publicKey.type", json.type,
-                    {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+                { mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE });
             this.controller = this.getDid("publicKey.controller", json.controller,
-                    {mandatory: false, nullable: false, defaultValue: context});
+                { mandatory: false, nullable: false, defaultValue: context });
             this.publicKeyBase58 = this.getString("publicKey.publicKeyBase58", json.publicKeyBase58,
-                    {mandatory: true, nullable: false});
+                { mandatory: true, nullable: false });
         }
     }
 
-        /**
-     * A Service may represent any type of service the subject
-     * wishes to advertise, including decentralized identity management services
-     * for further discovery, authentication, authorization, or interaction.
-     */
+    /**
+ * A Service may represent any type of service the subject
+ * wishes to advertise, including decentralized identity management services
+ * for further discovery, authentication, authorization, or interaction.
+ */
     export class Service extends DIDEntity<Service> implements DIDObject<string>, Comparable<Service> {
         public id: DIDURL;
         public type: string;
@@ -2193,7 +2177,7 @@ export namespace DIDDocument {
          * @param endpoint the address of service point
          */
         constructor(id: DIDURL = null, type: string = null,
-                serviceEndpoint: string = null, properties?: JSONObject) {
+            serviceEndpoint: string = null, properties?: JSONObject) {
             super();
             this.id = id;
             this.type = type;
@@ -2269,16 +2253,16 @@ export namespace DIDDocument {
             json.type = this.type;
             json.serviceEndpoint = this.serviceEndpoint;
 
-            return {...json, ...this.properties};
+            return { ...json, ...this.properties };
         }
 
         protected fromJSON(json: JSONObject, context: DID = null): void {
             this.id = this.getDidUrl("service.id", json.id,
-                    {mandatory: true, nullable: false, context: context});
+                { mandatory: true, nullable: false, context: context });
             this.type = this.getString("service.type", json.type,
-                    {mandatory: true, nullable: false});
+                { mandatory: true, nullable: false });
             this.serviceEndpoint = this.getString("service.serviceEndpoint", json.serviceEndpoint,
-                    {mandatory: true, nullable: false});
+                { mandatory: true, nullable: false });
 
             if (Object.keys(json).length > 3) {
                 this.properties = sortJSONObject(json);
@@ -2307,7 +2291,7 @@ export namespace DIDDocument {
          * @param signature the signature string
          */
         constructor(creator: DIDURL = null, signature: string = null,
-                created: Date = new Date(), type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
+            created: Date = new Date(), type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
             super();
             this.type = type ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
 
@@ -2389,13 +2373,13 @@ export namespace DIDDocument {
 
         protected fromJSON(json: JSONObject, context: DID = null): void {
             this.type = this.getString("proof.type", json.type,
-                    {mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE});
+                { mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE });
             this.created = this.getDate("proof.created", json.created,
-                    {mandatory: false});
+                { mandatory: false });
             this.creator = this.getDidUrl("proof.creator", json.creator,
-                    {mandatory: true, nullable: false, context: context});
+                { mandatory: true, nullable: false, context: context });
             this.signature = this.getString("proof.signatureValue", json.signatureValue,
-                    {mandatory: true, nullable: false});
+                { mandatory: true, nullable: false });
         }
     }
 
@@ -2594,7 +2578,7 @@ export namespace DIDDocument {
             checkArgument(!this.document.controllers.includes(controller), "Controller already exists");
             let controllerDoc = await controller.resolve(true);
             if (controllerDoc == null)
-                throw new DIDNotFoundException("DID not found: "+controller.toString());
+                throw new DIDNotFoundException("DID not found: " + controller.toString());
 
             if (controllerDoc.isDeactivated())
                 throw new DIDDeactivatedException(controller.toString());
@@ -2760,7 +2744,7 @@ export namespace DIDDocument {
 
             if (!force) {
                 if (this.document.authenticationKeys.has(pk.getId()) ||
-                        this.document.authorizationKeys.has(pk.getId()))
+                    this.document.authorizationKeys.has(pk.getId()))
                     throw new DIDObjectHasReference(id.toString());
             }
 
@@ -2959,7 +2943,7 @@ export namespace DIDDocument {
 
             let controllerDoc = await controller.resolve();
             if (controllerDoc == null)
-                throw new DIDNotFoundException("DID not found: "+id.toString());
+                throw new DIDNotFoundException("DID not found: " + id.toString());
 
             if (controllerDoc.isDeactivated())
                 throw new DIDDeactivatedException(controller.toString());
@@ -3157,12 +3141,12 @@ export namespace DIDDocument {
          * @param id the Service id
          * @return the DID Document Builder
          */
-        public removeService(id: DIDURL| string): Builder {
+        public removeService(id: DIDURL | string): Builder {
             this.checkNotSealed();
             checkArgument(id != null, "Invalid credential id");
 
             if (typeof id === "string")
-            id = this.canonicalId(id);
+                id = this.canonicalId(id);
 
             if (this.document.services == null || this.document.services.size == 0)
                 throw new DIDObjectNotExistException(id.toString());

@@ -20,19 +20,10 @@
  * SOFTWARE.
  */
 
-import { CredentialMetadata } from "./internals";
-import { DID } from "./internals";
-import { DIDDocument } from "./internals";
-import { DIDMetadata } from "./internals";
+import { DIDStorageException, WrongPasswordException } from "./exceptions/exceptions";
 import type { DIDStorage, ReEncryptor } from "./internals";
-import { DIDURL } from "./internals";
-import { DIDStorageException } from "./exceptions/exceptions";
+import { CredentialMetadata, DID, DIDDocument, DIDMetadata, DIDStoreMetadata, DIDURL, File, RootIdentity, VerifiableCredential } from "./internals";
 import { Logger } from "./logger";
-import { RootIdentity } from "./internals";
-import { VerifiableCredential } from "./internals";
-import { DIDStoreMetadata } from "./internals";
-import { File } from "./internals";
-import { Exceptions } from ".";
 
 // Root prefix to distinguish this file's storage from other data in local storage.
 const FILESYSTEM_LOCAL_STORAGE_PREFIX = "DID_FS_STORAGE";
@@ -137,7 +128,7 @@ export class FileSystemStorage implements DIDStorage {
         } catch (e) {
             // IOException
             log.error("Initialize DID store error", e);
-            throw new DIDStorageException("Initialize DIDStore \""+ this.storeRoot.getAbsolutePath() + "\" error.", e);
+            throw new DIDStorageException("Initialize DIDStore \"" + this.storeRoot.getAbsolutePath() + "\" error.", e);
         }
     }
 
@@ -147,7 +138,7 @@ export class FileSystemStorage implements DIDStorage {
         if (this.storeRoot.isFile()) {
             log.error("Path {} not a directory", this.storeRoot.getAbsolutePath());
             throw new DIDStorageException("Invalid DIDStore \""
-                    + this.storeRoot.getAbsolutePath() + "\".");
+                + this.storeRoot.getAbsolutePath() + "\".");
         }
 
         this.postOperations();
@@ -162,14 +153,14 @@ export class FileSystemStorage implements DIDStorage {
             } else {
                 log.error("Path {} cannot be initialized as DID Store because it's not empty", this.storeRoot.getAbsolutePath());
                 throw new DIDStorageException("Path cannot be initialized as DID Store because it's not empty \""
-                        + this.storeRoot.getAbsolutePath() + "\".");
+                    + this.storeRoot.getAbsolutePath() + "\".");
             }
         }
 
         if (!file.isDirectory()) {
             log.error("Path {} is not a DID store, missing data directory", this.storeRoot.getAbsolutePath());
             throw new DIDStorageException("Invalid DIDStore \""
-                    + this.storeRoot.getAbsolutePath() + "\".");
+                + this.storeRoot.getAbsolutePath() + "\".");
         }
 
         let metadataFile = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
@@ -307,7 +298,7 @@ export class FileSystemStorage implements DIDStorage {
     }
 
     public storeRootIdentity(id: string, mnemonic: string, privateKey: string,
-            publicKey: string, index: number) {
+        publicKey: string, index: number) {
         try {
             let file: File;
 
@@ -354,7 +345,7 @@ export class FileSystemStorage implements DIDStorage {
     public updateRootIdentityIndex(id: string, index: number) {
         try {
             let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
-            file.writeText(""+index);
+            file.writeText("" + index);
         } catch (e) {
             // IOException
             throw new DIDStorageException("Update index for indentiy error: " + id, e);
@@ -525,17 +516,17 @@ export class FileSystemStorage implements DIDStorage {
 
     private getCredentialFile(id: DIDURL, create: boolean): File {
         return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
-                FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.CREDENTIAL_FILE);
+            FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.CREDENTIAL_FILE);
     }
 
     private getCredentialMetadataFile(id: DIDURL, create: boolean): File {
         return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
-                FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.METADATA);
+            FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.METADATA);
     }
 
     private getCredentialDir(id: DIDURL): File {
         return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
-                FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id));
+            FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id));
     }
 
     private getCredentialsDir(did: DID): File {
@@ -641,7 +632,7 @@ export class FileSystemStorage implements DIDStorage {
 
     private getPrivateKeyFile(id: DIDURL, create: boolean): File {
         return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
-                FileSystemStorage.PRIVATEKEYS_DIR, FileSystemStorage.toPath(id));
+            FileSystemStorage.PRIVATEKEYS_DIR, FileSystemStorage.toPath(id));
     }
 
     private getPrivateKeysDir(did: DID): File {
@@ -719,18 +710,18 @@ export class FileSystemStorage implements DIDStorage {
 
     private needReencrypt(file: File): boolean {
         let patterns: string[] = [
-                // Root identity's private key
-                "(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
-                FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.SEPARATOR + "(.+)\\" +
-                File.SEPARATOR + FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE,
-                // Root identity's mnemonic
-                "(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
-                FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.SEPARATOR + "(.+)\\" +
-                File.SEPARATOR + FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE,
-                // DID's private keys
-                "(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
-                FileSystemStorage.DID_DIR + "\\" + File.SEPARATOR + "(.+)\\" + File.SEPARATOR +
-                FileSystemStorage.PRIVATEKEYS_DIR + "\\" + File.SEPARATOR + "(.+)"
+            // Root identity's private key
+            "(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
+            FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.SEPARATOR + "(.+)\\" +
+            File.SEPARATOR + FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE,
+            // Root identity's mnemonic
+            "(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
+            FileSystemStorage.ROOT_IDENTITIES_DIR + "\\" + File.SEPARATOR + "(.+)\\" +
+            File.SEPARATOR + FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE,
+            // DID's private keys
+            "(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
+            FileSystemStorage.DID_DIR + "\\" + File.SEPARATOR + "(.+)\\" + File.SEPARATOR +
+            FileSystemStorage.PRIVATEKEYS_DIR + "\\" + File.SEPARATOR + "(.+)"
         ];
 
         let path = file.getAbsolutePath();
@@ -799,7 +790,7 @@ export class FileSystemStorage implements DIDStorage {
             let stageFile = this.getFile(true, "postChangePassword");
             stageFile.createFile();
         } catch (e) {
-            if (e instanceof Exceptions.WrongPasswordException)
+            if (e instanceof WrongPasswordException)
                 throw e;
             // DIDStoreException | IOException
             throw new DIDStorageException("Change store password failed.");

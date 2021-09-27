@@ -250,7 +250,7 @@ export default command => {
             }),
             alias({
                 "entries": [
-                    { "find": "buffer", "replacement": "buffer-es6" },
+                    { "find": "buffer", "replacement": "buffer" },
                     { "find": "process", "replacement": "process-es6" },
                     //{ "find": "fs", "replacement": "browserfs/dist/shims/fs" },
                     { "find": "path", "replacement": "path-browserify" },
@@ -268,7 +268,7 @@ export default command => {
                 mainFields: ['browser', 'module', 'jsnext:main', 'main'],
                 browser: true,
                 preferBuiltins: true,
-                dedupe: ['bn.js', 'browserfs', 'buffer-es6', 'process-es6', 'crypto-browserify', 'assert', 'events', 'browserify-sign']
+                dedupe: ['bn.js', 'browserfs', 'buffer', 'buffer-es6', 'process-es6', 'crypto-browserify', 'assert', 'events', 'browserify-sign']
             }),
             // Polyfills needed to replace readable-stream with stream (circular dep)
             commonjs({
@@ -278,7 +278,7 @@ export default command => {
                 transformMixedEsModules: true, // TMP trying to solve commonjs "circular dependency" errors at runtime
                 dynamicRequireTargets: [],
             }),
-            globals(), // Defines process, Buffer, etc
+            globals({}), // Defines process, Buffer, etc
             typescript({
                 exclude: "*.node.ts"
             }),

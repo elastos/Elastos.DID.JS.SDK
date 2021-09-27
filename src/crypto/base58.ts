@@ -20,7 +20,10 @@
  * SOFTWARE.
  */
 
-import * as bs58check from 'bs58'
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import * as bs58check from 'bs58';
+
 
 export class Base58 {
     public static decode(base58: string): Buffer {

@@ -20,9 +20,12 @@
  * SOFTWARE.
  */
 
-import { BASE64 } from "./internals";
-import { SHA256 } from "./internals";
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
 import { IllegalArgumentException } from "./exceptions/exceptions";
+import { BASE64, SHA256 } from "./internals";
+
 
 export function checkArgument(condition: boolean, errorMessage: string): void {
     if (!condition)
@@ -76,16 +79,16 @@ export function sha256(input: string): string {
 /**
  * Convenient method to return a Promise that returns a type and handles exceptions with rejections.
  */
-export function promisify<T>(exec: (reject?: (e)=>void)=>T): Promise<T> {
-    return new Promise((resolve, reject)=>{
+export function promisify<T>(exec: (reject?: (e) => void) => T): Promise<T> {
+    return new Promise((resolve, reject) => {
         try {
-            let result: T = exec((e)=>{
+            let result: T = exec((e) => {
                 reject(e);
             });
             resolve(result);
         }
         catch (e) {
-            reject (e);
+            reject(e);
         }
     })
 }

@@ -20,15 +20,19 @@
  * SOFTWARE.
  */
 
-import createHash  from 'create-hash';
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
+import { Buffer } from "buffer";
+import createHash from 'create-hash';
+
 export class SHA256 {
 
-    public static hashTwice(buffer: Buffer): Buffer{
+    public static hashTwice(buffer: Buffer): Buffer {
         let firstHash = createHash('sha256').update(buffer).digest();
         return createHash('sha256').update(firstHash).digest()
     }
 
-    public static sha256ripemd160(buffer: Buffer): Buffer{
+    public static sha256ripemd160(buffer: Buffer): Buffer {
         let firstHash = createHash('sha256').update(buffer).digest();
         return createHash('ripemd160').update(firstHash).digest()
     }

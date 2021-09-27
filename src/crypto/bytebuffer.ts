@@ -21,13 +21,16 @@
  * @return {Uint8Array} Byte sequence encoded by UTF-8
  */
 
+// NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
+// Buf haven't found a way to make this work for typescript files at the rollup build level.
 import { OutOfBoundException } from "../exceptions/exceptions";
+
 
 export class ByteBuffer {
     private buffer: Uint8Array;
     private position: number;
 
-    public constructor (byteArray: Uint8Array) {
+    public constructor(byteArray: Uint8Array) {
         this.buffer = byteArray;
         this.position = 0;
     }
