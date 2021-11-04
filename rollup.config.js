@@ -267,7 +267,7 @@ export default command => {
             resolve({
                 mainFields: ['browser', 'module', 'jsnext:main', 'main'],
                 browser: true,
-                preferBuiltins: true,
+                preferBuiltins: false,
                 dedupe: ['bn.js', 'browserfs', 'buffer', 'buffer-es6', 'process-es6', 'crypto-browserify', 'assert', 'events', 'browserify-sign']
             }),
             // Polyfills needed to replace readable-stream with stream (circular dep)

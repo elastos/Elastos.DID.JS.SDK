@@ -11,6 +11,12 @@
     "tsc:build": "rollup -c",
     "tsc:w": "tsc -w"
   },
+  "exports": {
+    "browser": {
+      "import": "./dist/es/did.browser.js",
+      "require": "./dist/did.browser.js"
+    }
+  },
   "main": "./dist/did.js",
   "module": "./dist/es/did.js",
   "browser": {
