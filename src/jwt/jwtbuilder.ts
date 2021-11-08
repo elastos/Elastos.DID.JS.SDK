@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { SignJWT } from "jose/jwt/sign";
+import { SignJWT } from "jose";
 import { DID, checkArgument, BASE64 } from "../internals";
 import { JWTHeader, Claims } from "../internals";
 import { KeyProvider } from "../internals";

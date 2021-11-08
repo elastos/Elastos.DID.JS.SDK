@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JWTVerifyOptions } from "jose/jwt/verify";
+import { JWTVerifyOptions } from "jose";
 import { KeyProvider } from "../crypto/keyprovider";
 import { JWTParser } from "../internals";
 
