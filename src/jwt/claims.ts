@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JWTPayload } from "jose/jwt/sign";
+import { JWTPayload } from "jose";
 import { JSONObject, JSONValue, sortJSONObject } from "../json";
 
 export class Claims {

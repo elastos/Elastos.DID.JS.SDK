@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { KeyLike } from 'jose/types'
+import { KeyLike } from "jose";
 
 export interface KeyProvider {
     getPublicKey(keyid : string) : Promise<KeyLike>;

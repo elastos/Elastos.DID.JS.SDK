@@ -25,9 +25,8 @@
 // NOTE: Ideally the nodejs build should use the native buffer, browser should use the polyfill.
 // Buf haven't found a way to make this work for typescript files at the rollup build level.
 import { Buffer } from "buffer";
-import { createPrivateKey, createPublicKey } from "crypto";
 import dayjs from "dayjs";
-import { KeyLike } from 'jose/types';
+import { KeyLike } from "jose";
 import keyutil from "js-crypto-key-utils";
 import { Comparable } from "./comparable";
 import { ComparableMap } from "./comparablemap";
@@ -49,7 +48,7 @@ import {
     NotPrimitiveDIDException,
     UnknownInternalException
 } from "./exceptions/exceptions";
-import type { DIDStore } from "./internals";
+import { DIDStore, runningInBrowser } from "./internals";
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
@@ -1522,7 +1521,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 const keyObj = new keyutil.Key('oct', pk, { namedCurve: "P-256" });
                 let pemObj = await keyObj.export('pem');
                 let pemStr = pemObj.toString();
-                return createPublicKey(pemStr);
+                return await importSPKI(pemStr, "ES256");
             }
 
             public async getPrivateKey(keyid: string = null, password: string): Promise<KeyLike> {
@@ -1541,7 +1540,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 const keyObj = new keyutil.Key('oct', hk.getPrivateKeyBytes(), { namedCurve: "P-256" });
                 let pemObj = await keyObj.export('pem');
                 let pemStr = pemObj.toString();
-                return createPrivateKey(pemStr);
+                return await importPKCS8(pemStr, "ES256");
             }
         }();
     }
@@ -3308,3 +3307,11 @@ export namespace DIDDocument {
         }
     }
 }
+function importSPKI(pemStr: string, arg1: string): KeyLike | PromiseLike<KeyLike> {
+    throw new Error("Function not implemented.");
+}
+
+function importPKCS8(pemStr: string, arg1: string): KeyLike | PromiseLike<KeyLike> {
+    throw new Error("Function not implemented.");
+}
+

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JWSHeaderParameters, JWTPayload } from "jose/types";
+import { JWSHeaderParameters, JWTPayload } from "jose";
 import { JWTHeader, Claims } from "../internals";
 
 export class JWT {

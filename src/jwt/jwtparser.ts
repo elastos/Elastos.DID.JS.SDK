@@ -20,12 +20,10 @@
  * SOFTWARE.
  */
 
-import { jwtVerify, JWTVerifyOptions } from "jose/jwt/verify";
 import { BASE64, DID, JWT } from "../internals"
 import { KeyProvider } from "../crypto/keyprovider";
-import { decodeProtectedHeader } from "jose/util/decode_protected_header";
-import { UnsecuredJWT } from "jose/jwt/unsecured";
 import { DIDResolveException, JWTException } from "../exceptions/exceptions";
+import { decodeProtectedHeader, jwtVerify, JWTVerifyOptions, UnsecuredJWT } from "jose";
 
 export class JWTParser {
     private keyprovider : KeyProvider;
