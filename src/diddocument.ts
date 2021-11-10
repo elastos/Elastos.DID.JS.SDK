@@ -26,7 +26,7 @@
 // Buf haven't found a way to make this work for typescript files at the rollup build level.
 import { Buffer } from "buffer";
 import dayjs from "dayjs";
-import { KeyLike } from "jose";
+import { importPKCS8, importSPKI, KeyLike } from "jose";
 import keyutil from "js-crypto-key-utils";
 import { Comparable } from "./comparable";
 import { ComparableMap } from "./comparablemap";
@@ -48,7 +48,7 @@ import {
     NotPrimitiveDIDException,
     UnknownInternalException
 } from "./exceptions/exceptions";
-import { DIDStore, runningInBrowser } from "./internals";
+import { DIDStore } from "./internals";
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
@@ -3306,12 +3306,5 @@ export namespace DIDDocument {
             return doc;
         }
     }
-}
-function importSPKI(pemStr: string, arg1: string): KeyLike | PromiseLike<KeyLike> {
-    throw new Error("Function not implemented.");
-}
-
-function importPKCS8(pemStr: string, arg1: string): KeyLike | PromiseLike<KeyLike> {
-    throw new Error("Function not implemented.");
 }
 
