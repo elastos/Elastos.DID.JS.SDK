@@ -514,6 +514,18 @@ export class FileSystemStorage implements DIDStorage {
         return dids;
     }
 
+    public containsDids(): boolean {
+        let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
+        if (!dir.exists())
+            return false;
+
+        let children = dir.listFiles().filter((file) => {
+            return file.isDirectory();
+        });
+
+        return children == null ? false : children.length > 0;
+    }
+
     private getCredentialFile(id: DIDURL, create: boolean): File {
         return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
             FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.CREDENTIAL_FILE);
