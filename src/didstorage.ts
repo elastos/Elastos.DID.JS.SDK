@@ -157,6 +157,14 @@ export interface DIDStorage {
     listDids(): DID[];
 
     /**
+     * Check whether this storage contains the dids.
+     *
+     * @return true if contains did object, false otherwise
+     * @throws DIDStorageException DIDStorage error.
+     */
+    containsDids(): boolean;
+
+    /**
      * Save the credential's metadata to this storage.
      *
      * @param id the id of the credential

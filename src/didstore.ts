@@ -476,6 +476,17 @@ export class DIDStore {
     }
 
     /**
+     * Judge whether containing the DID or not.
+     *
+     * @return the returned value is true if there is DID in the DIDStore;
+     *         the returned value is false if there is no DID in the DIDStore.
+     * @throws DIDStoreException DIDStore error.
+     */
+    public containsDids(): boolean {
+        return this.storage.containsDids();
+    }
+
+    /**
      * Store DID Metadata.
      *
      * @param did the owner of Metadata
