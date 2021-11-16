@@ -1556,7 +1556,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return builder;
     }
 
-    public newCustomized(inputDID: DID | string, multisig: number, storepass: string, force?: boolean): Promise<DIDDocument> {
+    public newCustomized(inputDID: DID | string, storepass: string, force?: boolean): Promise<DIDDocument> {
         return this.newCustomizedDidWithController(inputDID, [], 1, storepass, force);
     }
 
