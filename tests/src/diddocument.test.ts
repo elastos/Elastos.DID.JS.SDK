@@ -2259,7 +2259,7 @@ describe('DIDDocument Tests', () => {
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
-        let doc = await controller.newCustomized(did, 1, TestConfig.storePass, false);
+        let doc = await controller.newCustomized(did, TestConfig.storePass, false);
         expect(doc.isValid()).toBeTruthy();
 
         expect(doc.getSubject()).toEqual(did);
@@ -2428,7 +2428,7 @@ describe('DIDDocument Tests', () => {
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
 
-        let doc = await controller.newCustomized(did, 1, TestConfig.storePass);
+        let doc = await controller.newCustomized(did, TestConfig.storePass);
         expect(doc.isValid()).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
@@ -2615,7 +2615,7 @@ describe('DIDDocument Tests', () => {
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
-        let doc = await controller.newCustomized(did, 1, TestConfig.storePass);
+        let doc = await controller.newCustomized(did, TestConfig.storePass);
         expect(doc.isValid()).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
@@ -2655,7 +2655,7 @@ describe('DIDDocument Tests', () => {
         await expect(async() => {await ticket.isValid(); }).toBeTruthy();
 
         // create new document for customized DID
-        doc = await newController.newCustomized(did, 1, TestConfig.storePass, true);
+        doc = await newController.newCustomized(did, TestConfig.storePass, true);
         expect(doc.isValid()).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
@@ -2693,7 +2693,7 @@ describe('DIDDocument Tests', () => {
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
-        let doc = await controller.newCustomized(did, 1, TestConfig.storePass);
+        let doc = await controller.newCustomized(did, TestConfig.storePass);
         expect(doc.isValid()).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
@@ -2749,7 +2749,7 @@ describe('DIDDocument Tests', () => {
         expect(ticket.isValid()).toBeTruthy();
 
         // create new document for customized DID
-        doc = await newController.newCustomized(did, 1, TestConfig.storePass, true);
+        doc = await newController.newCustomized(did, TestConfig.storePass, true);
         expect(doc.isValid()).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(newController.getSubject())).toBeTruthy();
@@ -3400,7 +3400,7 @@ describe('DIDDocument Tests', () => {
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
-        let doc = await controller.newCustomized(did, 1, TestConfig.storePass);
+        let doc = await controller.newCustomized(did, TestConfig.storePass);
         expect(doc.isValid()).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
@@ -3445,7 +3445,7 @@ describe('DIDDocument Tests', () => {
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
-        let doc = await controller.newCustomized(did, 1, TestConfig.storePass);
+        let doc = await controller.newCustomized(did, TestConfig.storePass);
         expect(doc.isValid()).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
@@ -3507,7 +3507,7 @@ describe('DIDDocument Tests', () => {
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
-        let doc = await controller.newCustomized(did, 1, TestConfig.storePass);
+        let doc = await controller.newCustomized(did, TestConfig.storePass);
         expect(doc.isValid()).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
@@ -3555,7 +3555,7 @@ describe('DIDDocument Tests', () => {
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
-        let doc = await controller.newCustomized(did, 1, TestConfig.storePass);
+        let doc = await controller.newCustomized(did, TestConfig.storePass);
         expect(doc.isValid()).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();

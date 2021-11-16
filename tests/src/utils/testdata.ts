@@ -775,7 +775,7 @@ export class InstantData {
             await this.getIssuerDocument();
 
             let did = new DID("did:elastos:example");
-            let doc = await this.idIssuer.newCustomized(did, 1, TestConfig.storePass);
+            let doc = await this.idIssuer.newCustomized(did, TestConfig.storePass);
 
             let selfIssuer = new Issuer(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
