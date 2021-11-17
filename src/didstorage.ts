@@ -84,6 +84,8 @@ export interface DIDStorage {
      */
     loadRootIdentity(id: string): RootIdentity;
 
+    containsRootIdentity(id: string): boolean;
+
     updateRootIdentityIndex(id: string, index: number);
 
     loadRootIdentityPrivateKey(id: string): string;
@@ -157,6 +159,14 @@ export interface DIDStorage {
     listDids(): DID[];
 
     /**
+     * Check whether this storage contains the specificed did.
+     *
+     * @return true if contains the specificed did, false otherwise
+     * @throws DIDStorageException DIDStorage error.
+     */
+    containsDid(did: DID): boolean;
+
+    /**
      * Check whether this storage contains the dids.
      *
      * @return true if contains did object, false otherwise
@@ -200,6 +210,15 @@ export interface DIDStorage {
     loadCredential(id: DIDURL): VerifiableCredential;
 
     /**
+     * Check whether this storage contains the specified credential.
+     *
+     * @param id the id of the target credential
+     * @return true if contains credential object, false otherwise
+     * @throws DIDStorageException if an error occurred when accessing the DID storage
+     */
+    containsCredential(id: DIDURL): boolean;
+
+    /**
      * Check whether this storage contains the credentials that owned by the
      * given DID.
      *
@@ -228,6 +247,7 @@ export interface DIDStorage {
      */
     listCredentials(did: DID): DIDURL[];
 
+    containsPrivateKey(id: DIDURL): boolean;
     /**
      * Save the encrypted private key to this storage.
      *

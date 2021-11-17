@@ -4005,6 +4005,8 @@ describe('DIDDocument Tests', () => {
 
         db.addAuthenticationKey(id, key.getPublicKeyBase58());
         store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+        expect(store.containsPrivateKey(id)).toBeTruthy();
+
         doc = await db.seal(TestConfig.storePass);
         expect(doc.isValid()).toBeTruthy();
         expect(doc.getAuthenticationKeyCount()).toBe(2);

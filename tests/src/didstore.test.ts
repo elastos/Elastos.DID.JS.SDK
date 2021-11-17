@@ -66,7 +66,6 @@ describe("DIDStore Tests", ()=>{
         expect(identity).toBeNull();
     });
 
-
     test("testBulkCreate", async ()=>{
         let file = getFile(".metadata");
         expect(file.exists()).toBeTruthy();
@@ -130,6 +129,7 @@ describe("DIDStore Tests", ()=>{
 
         let dids = await store.listDids();
         expect(dids.length).toBe(TestConfig.DID_INDEX_LOOPS);
+        expect(store.containsDids()).toBeTruthy();
     });
 
     test("testDeleteDID", async ()=>{
@@ -286,9 +286,10 @@ describe("DIDStore Tests", ()=>{
         expect(vc).toBeNull();
 
         id = DIDURL.from("#twitter", user.getSubject());
-        expect(await store.containsCredential(id)).toBeTruthy();
-        expect(await store.containsCredential(id.toString())).toBeTruthy();
-        expect(await store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
+        expect(store.containsCredential(id)).toBeTruthy();
+        expect(store.containsCredential(id.toString())).toBeTruthy();
+        expect(store.containsCredentials(user.getSubject())).toBeTruthy();
+        expect(store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
     });
 
     test("testListCredentials", async ()=>{
@@ -372,11 +373,11 @@ describe("DIDStore Tests", ()=>{
                 "credentials", "#passport");
         expect(file.exists()).toBeFalsy();
 
-        expect(await store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
-        expect(await store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
+        expect(store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
+        expect(store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
 
-        expect(await store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
-        expect(await store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
+        expect(store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
+        expect(store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
     });
 
     test("testSynchronizeStore", async ()=> {

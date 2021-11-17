@@ -54,6 +54,7 @@ describe("RootIdentity Tests", ()=>{
         expect(store2.containsRootIdentities()).toBeTruthy();
         let identity2 = await store2.loadRootIdentity();
         expect(identity2).not.toBeNull();
+        expect(store2.containsRootIdentity(identity2.getId())).toBeTruthy();
 
         expect(identity.getPreDerivedPublicKey().serializePublicKeyBase58()).toEqual(
                 identity2.getPreDerivedPublicKey().serializePublicKeyBase58());

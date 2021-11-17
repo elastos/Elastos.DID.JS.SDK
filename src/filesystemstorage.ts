@@ -342,6 +342,11 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
+    public containsRootIdentity(id: string): boolean {
+        let dir = this.getRootIdentityDir(id);
+        return dir.exists();
+    }
+
     public updateRootIdentityIndex(id: string, index: number) {
         try {
             let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
@@ -514,6 +519,11 @@ export class FileSystemStorage implements DIDStorage {
         return dids;
     }
 
+    public containsDid(did: DID): boolean {
+        let dir = this.getDidDir(did);
+        return dir.exists();
+    }
+
     public containsDids(): boolean {
         let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
         if (!dir.exists())
@@ -595,6 +605,11 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
+    public containsCredential(id: DIDURL): boolean {
+        let dir = this.getCredentialDir(id);
+        return dir.exists();
+    }
+
     public containsCredentials(did: DID): boolean {
         let dir = this.getCredentialsDir(did);
         if (!dir.exists())
@@ -649,6 +664,11 @@ export class FileSystemStorage implements DIDStorage {
 
     private getPrivateKeysDir(did: DID): File {
         return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.PRIVATEKEYS_DIR);
+    }
+
+    public containsPrivateKey(id: DIDURL): boolean {
+        let file = this.getPrivateKeyFile(id, false);
+        return file.exists();
     }
 
     public storePrivateKey(id: DIDURL, privateKey: string) {
