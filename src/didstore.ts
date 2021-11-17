@@ -279,7 +279,8 @@ export class DIDStore {
      * @throws DIDStoreException Unsupport the specified store type.
      */
     public containsRootIdentity(id: string): boolean {
-        return this.storage.loadRootIdentity(id) != null;
+        checkArgument(id != null && id !== "", "Invalid id");
+        return this.storage.containsRootIdentity(id);
     }
 
     /**
@@ -466,13 +467,16 @@ export class DIDStore {
      *         the returned value is false if the specified DID is not in the DIDStore.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsDid(did: DID | string): boolean {
-        checkArgument(did != null, "Invalid did");
+    public containsDid(didOrString: DID | string): boolean {
+        checkArgument(didOrString != null, "Invalid did");
 
-        if (did instanceof DID)
-            return this.loadDid(did) != null;
+        let did: DID;
+        if (didOrString instanceof DID)
+            did = didOrString;
         else
-            return this.loadDid(DID.from(did)) != null;
+            did = DID.from(didOrString);
+
+        return this.storage.containsDid(did);
     }
 
     /**
@@ -664,9 +668,11 @@ export class DIDStore {
      *         the returned value is false if there is credentials owned the specific DID.
      * @throws DIDStoreException DIDStore error.
      */
-    public async containsCredential(id: DIDURL | string): Promise<boolean> {
-        checkArgument(id != null, "Invalid credential id");
-        return (await this.loadCredential(id)) != null;
+    public containsCredential(idOrString: DIDURL | string): boolean {
+        checkArgument(idOrString != null, "Invalid credential id");
+
+        let id = DIDURL.from(idOrString);
+        return this.storage.containsCredential(id);
     }
 
     /**
@@ -886,18 +892,11 @@ export class DIDStore {
      *         the returned value is false if there is no private keys owned the specified key.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsPrivateKey(id: DIDURL | string): boolean {
-        checkArgument(id != null, "Invalid private key id");
+    public containsPrivateKey(idOrString: DIDURL | string): boolean {
+        checkArgument(idOrString != null, "Invalid private key id");
 
-        let keyId = id instanceof DIDURL ? id : DIDURL.from(id);
-        let value = this.cache.get(DIDStore.Key.forDidPrivateKey(keyId), () => {
-            let key = this.storage.loadPrivateKey(keyId);
-            return {
-                value: key != null ? key : DIDStore.NULL
-            };
-        });
-
-        return value === DIDStore.NULL ? false : true;
+        let id = DIDURL.from(idOrString);
+        return this.storage.containsPrivateKey(id);
     }
 
     /**
@@ -908,13 +907,16 @@ export class DIDStore {
      *         the returned value is false if there is no private keys owned the specified DID.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsPrivateKeys(did: DID | string): boolean {
-        checkArgument(did != null, "Invalid did");
+    public containsPrivateKeys(didOrString: DID | string): boolean {
+        checkArgument(didOrString != null, "Invalid did");
 
-        if (did instanceof DID)
-            return this.storage.containsPrivateKeys(did);
+        let did : DID;
+        if (didOrString instanceof DID)
+            did = didOrString;
         else
-            return this.storage.containsPrivateKeys(DID.from(did));
+            did = DID.from(didOrString);
+
+        return this.storage.containsPrivateKeys(did);
     }
 
     /**

@@ -12,6 +12,7 @@
     "tsc:w": "tsc -w"
   },
   "exports": {
+    "node" : "./dist/did.js",
     "browser": {
       "import": "./dist/es/did.browser.js"
     }
