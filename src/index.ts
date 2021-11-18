@@ -22,7 +22,7 @@
 
 'use strict';
 
-import { DIDBackend } from "./internals";
+import { DIDBackend, Features } from "./internals";
 import { DID } from "./internals";
 import { VerificationEventListener } from "./internals";
 import { DIDDocument } from "./internals";
@@ -91,7 +91,7 @@ export type {
 
 export {
     //initialize,
-
+    Features,
     DID,
     DIDDocument,
     DIDStore,
