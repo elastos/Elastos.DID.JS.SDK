@@ -42,6 +42,11 @@ export function checkNotNull(value: any, errorMessage: string): void {
     }
 }
 
+export function checkState(state: boolean, errorMessage: string): void {
+    if (!state)
+        throw new Error(errorMessage);
+}
+
 export function isEmpty(value: string): boolean {
     return !value || value == null;
 }

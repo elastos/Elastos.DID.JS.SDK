@@ -238,6 +238,38 @@ export abstract class DIDEntity<T> {
 
         throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
     }
+    protected getContext(name: string, value: any, option: ValueOptions = {} as ValueOptions): string[] | null {
+        if (typeof value === 'undefined') {
+            if (option.mandatory)
+                throw new DIDSyntaxException("Missing property: " + name);
+
+            return option.defaultValue ? option.defaultValue as string[] : null;
+        }
+
+        if (value === null) {
+            if (!option.defaultValue && !option.nullable)
+                throw new DIDSyntaxException("Invalid property: " + name + ", can not be null");
+
+            return option.defaultValue ? option.defaultValue as string[] : null;
+        }
+
+        if (typeof value === 'string')
+            return [ value ];
+
+
+        if (Array.isArray(value)) {
+            let context = Array.from(value, (s) => {
+                if(typeof s !== 'string')
+                    new DIDSyntaxException("Invalid property value: " + name + ", type error");
+
+                return s;
+            });
+
+            return context;
+        }
+
+        throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
+    }
 
     protected getDids(name: string, value: any, option: ValueOptions = {} as ValueOptions): DID[] | null {
         if (typeof value === 'undefined') {

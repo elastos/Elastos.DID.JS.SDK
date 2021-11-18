@@ -41,7 +41,7 @@ import {
     NotAttachedWithStoreException
 } from "./exceptions/exceptions";
 import type { DIDDocument, DIDObject, DIDStore, Issuer } from "./internals";
-import { checkArgument, CredentialBiography, CredentialBiographyStatus, CredentialMetadata, DID, DIDBackend, DIDEntity, DIDURL, IDChainRequest } from "./internals";
+import { checkArgument, checkEmpty, Collections, Features, CredentialBiography, CredentialBiographyStatus, CredentialMetadata, DID, DIDBackend, DIDEntity, DIDURL, IDChainRequest } from "./internals";
 import type { JSONObject, JSONValue } from "./json";
 import { sortJSONObject } from "./json";
 import { Logger } from "./logger";
@@ -57,6 +57,11 @@ const log = new Logger("VerifiableCredential");
  * describe properties of the credential.
  */
 export class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject<string> {
+    public static W3C_CREDENTIAL_CONTEXT = "https://www.w3.org/2018/credentials/v1";
+    public static ELASTOS_CREDENTIAL_CONTEXT = "https://elastos.org/credentials/v1";
+    public static DEFAULT_CREDENTIAL_TYPE = "VerifiableCredential";
+
+    public context?: string[];
     public id: DIDURL;
     public type: string[];
     public issuer: DID;
@@ -78,6 +83,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      */
     static newWithVerifiableCredential(vc: VerifiableCredential, withProof: boolean) {
         let newVc = new VerifiableCredential();
+        newVc.context = vc.context;
         newVc.id = vc.id;
         newVc.type = vc.type;
         newVc.issuer = vc.issuer;
@@ -642,6 +648,10 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         let context: DID = key ? new DID(key) : null;
 
         let json: JSONObject = {};
+        if (this.context.length > 0)
+            json.context = this.context.length == 1 ? this.context[0] :
+                Array.from(this.context);
+
         json.id = this.id.toString(context);
         json.type = this.type;
         if (!context || !this.issuer.equals(context))
@@ -668,6 +678,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (!holder)
             throw new MalformedCredentialException("Missing property: subject.id");
 
+        this.context = this.getContext("@context", json.context, {mandatory: false, nullable: false, defaultValue: [] });
         this.id = this.getDidUrl("id", json.id, { mandatory: true, nullable: false, context: holder });
         this.type = this.getStrings("type", json.type, { mandatory: true, nullable: false });
         this.issuer = this.getDid("issuer", json.issuer, { mandatory: false, nullable: false, defaultValue: holder });
@@ -910,6 +921,7 @@ export namespace VerifiableCredential {
 
             this.credential = new VerifiableCredential();
             this.credential.issuer = issuer.getDid();
+            this.setDefaultType();
         }
 
         private checkNotSealed() {
@@ -940,19 +952,108 @@ export namespace VerifiableCredential {
             return this;
         }
 
-        /**
-         * Set Credential types.
-         *
-         * @param types the set of types
-         * @return the Builder object
-         */
-        public type(...types: string[]): Builder {
-            this.checkNotSealed();
-            checkArgument(types != null && types.length > 0, "Invalid types");
+        public setDefaultType(): void{
+			this.checkNotSealed();
 
-            this.credential.type = Array.from(types);
-            return this;
-        }
+			if (Features.isEnabledJsonLdContext()) {
+				if (this.credential.context == null)
+					this.credential.context = [];
+
+				if (!this.credential.context.includes(VerifiableCredential.W3C_CREDENTIAL_CONTEXT))
+					this.credential.context.push(VerifiableCredential.W3C_CREDENTIAL_CONTEXT);
+
+				if (!this.credential.context.includes(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT))
+					this.credential.context.push(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT);
+			}
+
+			if (this.credential.type == null)
+				this.credential.type = [];
+
+			if (!this.credential.type.includes(VerifiableCredential.DEFAULT_CREDENTIAL_TYPE))
+				this.credential.type.push(VerifiableCredential.DEFAULT_CREDENTIAL_TYPE);
+		}
+
+		/**
+		 * Add a new credential type.
+		 *
+		 * @param type the type name
+		 * @param context the JSON-LD context for type, or null if not
+		 * 		  enabled the JSON-LD feature
+		 * @return the Builder instance for method chaining
+		 */
+        public typeWithContext(type: string, context: string): Builder {
+            this.checkNotSealed();
+			checkEmpty(type , "Invalid type: " + type);
+
+			if (Features.isEnabledJsonLdContext()) {
+				checkEmpty(context, "Invalid context: " + context);
+
+				if (this.credential.context == null)
+					this.credential.context = [];
+
+				if (!this.credential.context.includes(context))
+					this.credential.context.push(context);
+			}
+
+			if (this.credential.type == null)
+            this.credential.type = [];
+
+			if (!this.credential.type.includes(type))
+            this.credential.type.push(type);
+
+			return this;
+		}
+
+        /**
+		 * Add a new credential type.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param type the type name
+		 * @return the Builder instance for method chaining
+		 */
+         public type(type: string): Builder {
+			this.checkNotSealed();
+			checkEmpty(type, "Invalid type: " + type);
+
+			if (type.indexOf('#') < 0)
+				return this.typeWithContext(type, null);
+			else {
+				let context_type = type.split("#", 2);
+				return this.typeWithContext(context_type[1], context_type[0]);
+			}
+		}
+
+        /**
+		 * Add new credential type.
+		 *
+		 * If enabled the JSON-LD feature, the type should be a full type URI:
+		 *   [scheme:]scheme-specific-part#fragment,
+		 * [scheme:]scheme-specific-part should be the context URL,
+		 * the fragment should be the type name.
+		 *
+		 * Otherwise, the context URL part and # symbol could be omitted or
+		 * ignored.
+		 *
+		 * @param types the type names
+		 * @return the Builder instance for method chaining
+		 */
+		public types(... types: string[]): Builder {
+			if (types == null || types.length == 0)
+				return this;
+
+			this.checkNotSealed();
+			for (let t of types)
+				this.type(t);
+
+			return this;
+		}
 
         private getMaxExpires(): Date {
             let maxExpires: Dayjs;
@@ -1044,7 +1145,7 @@ export namespace VerifiableCredential {
             if (this.credential.type == null || this.credential.type.length == 0)
                 throw new MalformedCredentialException("Missing credential type");
 
-            this.credential.type.sort();
+            Collections.sort(this.credential.type);
 
             this.credential.issuanceDate = new Date();
             if (this.credential.issuanceDate)

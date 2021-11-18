@@ -39,6 +39,7 @@ export * from "./did"; // Should be before didurl because didurl's constructor h
 export * from "./didurl";
 
 export * from "./didobject";
+export * from "./features";
 
 //JWT
 export * from "./jwt/jwtheader";

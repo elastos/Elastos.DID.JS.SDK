@@ -48,7 +48,7 @@ import {
     NotPrimitiveDIDException,
     UnknownInternalException
 } from "./exceptions/exceptions";
-import { DIDStore } from "./internals";
+import { checkState, DIDStore, Features } from "./internals";
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
@@ -79,7 +79,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     private static EXPIRES = "expires";
     private static PROOF = "proof";
     */
+    public static W3C_DID_CONTEXT = "https://www.w3.org/ns/did/v1";
+    public static ELASTOS_DID_CONTEXT = "https://elastos.org/did/v1";
+    public static W3ID_SECURITY_CONTEXT = "https://w3id.org/security/v1";
 
+    public context?: string[];
     private subject: DID;
     public controllers?: DID[];
     public multisig?: DIDDocument.MultiSignature;
@@ -794,6 +798,10 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let context: DID = key ? new DID(key) : null;
 
         let json: JSONObject = {};
+        if (this.context.length > 0)
+            json.context = this.context.length == 1 ? this.context[0] :
+                Array.from(this.context);
+
         json.id = this.subject.toString();
 
         if (this.controllers.length > 0)
@@ -865,6 +873,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 
     private fromJSONOnly(json: JSONObject, context: DID = null): void {
+        this.context = this.getContext("@context", json.context, {mandatory: false, nullable: false, defaultValue: [] });
         this.subject = this.getDid("id", json.id, { mandatory: false, nullable: false, defaultValue: null });
         context = this.subject; // set the JSON parser context
         this.controllers = this.getDids("controller", json.controller, { mandatory: false, nullable: false, defaultValue: [] });
@@ -1316,6 +1325,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     public copy(): DIDDocument {
         let doc = new DIDDocument(this.subject);
 
+        doc.context = this.context == null ? null : Array.from(this.context);
         doc.controllers = Array.from(this.controllers);
         doc.controllerDocs = new ComparableMap<DID, DIDDocument>(this.controllerDocs);
         if (this.multisig != null)
@@ -1339,6 +1349,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     public clone(): DIDDocument {
         let doc = new DIDDocument(this.subject);
 
+        doc.context = this.context;
         doc.controllers = this.controllers;
         doc.controllerDocs = this.controllerDocs;
         doc.effectiveController = this.effectiveController;
@@ -2455,6 +2466,9 @@ export namespace DIDDocument {
         public static newFromDID(did: DID, store: DIDStore, controller?: DIDDocument) {
             let builder = new Builder();
             builder.document = new DIDDocument(did);
+			if (Features.isEnabledJsonLdContext())
+                builder.addDefaultContexts();
+
             builder.sourceDocument = builder.document;
 
             if (controller !== undefined) {
@@ -2548,6 +2562,47 @@ export namespace DIDDocument {
             if (!this.document.isCustomizedDid())
                 throw new NotCustomizedDIDException(this.document.getSubject().toString());
         }
+
+		/**
+		 * Add the default DID contexts(include W3C and Elastos DID contexts).
+		 *
+		 * @return the Builder instance for method chaining
+		 */
+        public addDefaultContexts(): Builder {
+			checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+
+			if (this.document.context == null)
+				this.document.context = [];
+
+			if (!this.document.context.includes(DIDDocument.W3C_DID_CONTEXT))
+                this.document.context.push(DIDDocument.W3C_DID_CONTEXT);
+
+			if (!this.document.context.includes(DIDDocument.ELASTOS_DID_CONTEXT))
+                this.document.context.push(DIDDocument.ELASTOS_DID_CONTEXT);
+
+			if (!this.document.context.includes(DIDDocument.W3ID_SECURITY_CONTEXT))
+                this.document.context.push(DIDDocument.W3ID_SECURITY_CONTEXT);
+
+			return this;
+		}
+
+        		/**
+		 * Add a new context to the document.
+		 *
+		 * @param uri URI for the new context
+		 * @return the Builder instance for method chaining
+		 */
+		public addContext(uri: string): Builder {
+			checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+
+			if (this.document.context == null)
+				this.document.context = [];
+
+			if (!this.document.context.includes(uri))
+				this.document.context.push(uri);
+
+			return this;
+		}
 
         /**
          * Get document subject from did document builder.
@@ -3056,15 +3111,13 @@ export namespace DIDDocument {
 
             let issuer = new Issuer(this.document);
             let cb = issuer.issueFor(this.document.getSubject());
-            if (types == null)
-                types = ["SelfProclaimedCredential"];
 
             if (expirationDate == null)
                 expirationDate = this.document.getExpires();
 
             try {
                 let vc = await cb.id(this.canonicalId(id))
-                    .type(...types)
+                    .types(...types)
                     .properties(subject)
                     .expirationDate(expirationDate)
                     .seal(storepass);
