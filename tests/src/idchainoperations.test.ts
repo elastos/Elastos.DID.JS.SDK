@@ -396,15 +396,16 @@ describe('IDChainOperations Tests', () => {
             let props= {
                 name: "John",
                 gender: "Male",
-                nation: "Singapore",
-                language: "English",
+                nationality: "Singapore",
                 email: "john@example.com",
                 twitter: "@john"
             };
 
             let vc = await cb.id("#profile")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
-                    .properties(props)
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
 
@@ -452,12 +453,12 @@ describe('IDChainOperations Tests', () => {
             let cb = selfIssuer.issueFor(did);
 
             let props = {
-                nation: "Singapore",
+                nationality: "Singapore",
                 passport: "S653258Z07"
             };
 
             let vc = await cb.id("#passport")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
@@ -534,7 +535,7 @@ describe('IDChainOperations Tests', () => {
             };
 
             let vc = await cb.id("#test")
-                    .type("TestCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
@@ -600,14 +601,16 @@ describe('IDChainOperations Tests', () => {
             let props = {
                 name: "John",
                 gender: "Male",
-                nation: "Singapore",
-                language: "English",
+                nationality: "Singapore",
                 email: "john@example.com",
                 twitter: "@john"
             };
 
             let vc = await cb.id("#profile")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
@@ -657,12 +660,12 @@ describe('IDChainOperations Tests', () => {
             let cb = selfIssuer.issueFor(did);
 
             let props = {
-                nation: "Singapore",
+                nationality: "Singapore",
                 passport: "S653258Z07"
             };
 
             let vc = await cb.id("#passport")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
@@ -720,7 +723,7 @@ describe('IDChainOperations Tests', () => {
             };
 
             let vc = await cb.id("#test")
-                    .type("TestCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
@@ -805,7 +808,7 @@ describe('IDChainOperations Tests', () => {
 
             let cb = issuer.issueFor(did);
             let vc  = await cb.id("#selfCredential")
-                    .type("BasicProfileCredential")
+                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();

@@ -506,9 +506,8 @@ describe("DIDStore Tests", ()=>{
         }).toThrowError(Exceptions.WrongPasswordException);
     });
 
-    //[1,2].forEach((version)=>{
+    ["1", "2", "2.2"].forEach((version) => {
         test("testCompatibility", async ()=>{
-            let version = 2;
             let data = Buffer.from("Hello World");
 
             let cd = testData.getCompatibleData(version);
@@ -517,7 +516,7 @@ describe("DIDStore Tests", ()=>{
             let store = await DIDStore.open(cd.getStoreDir());
 
             let dids = await store.listDids();
-            expect(dids.length).toBe(version == 2 ? 10 : 4);
+            expect(dids.length).toBe(parseFloat(version) >= 2.0 ? 10 : 4);
 
             for (let did of dids) {
                 let alias = (await did.getMetadata()).getAlias();
@@ -530,7 +529,7 @@ describe("DIDStore Tests", ()=>{
                         expect(store.loadCredential(id)).not.toBeNull();
                 } else if (alias === "User1") {
                     let vcs = await store.listCredentials(did);
-                    expect(vcs.length).toBe(version == 2 ? 5 : 4);
+                    expect(vcs.length).toBe(parseFloat(version) >= 2.0 ? 5 : 4);
 
                     for (let id of vcs)
                         expect(store.loadCredential(id)).not.toBeNull();
@@ -552,41 +551,44 @@ describe("DIDStore Tests", ()=>{
                 }
             }
         });
-    //});
-
-    test("testNewDIDWithWrongPass", async ()=>{
-        let store = await DIDStore.open(testData.getCompatibleData(2).getStoreDir());
-        let identity = await store.loadRootIdentity();
-
-        await expect(async ()=>{
-            await identity.newDid("wrongpass");
-        }).rejects.toThrowError(Exceptions.WrongPasswordException);
     });
 
-    test("testNewDIDandGetDID", async ()=>{
-        let store = await DIDStore.open(testData.getCompatibleData(2).getStoreDir());
-        let identity = await store.loadRootIdentity();
+    ["1", "2", "2.2"].forEach((version) => {
+        test("testNewDIDWithWrongPass", async ()=>{
+            let store = await DIDStore.open(testData.getCompatibleData(version).getStoreDir());
+            let identity = await store.loadRootIdentity();
 
-        let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc).not.toBeNull();
+            await expect(async ()=>{
+                await identity.newDid("wrongpass");
+            }).rejects.toThrowError(Exceptions.WrongPasswordException);
+        });
+    });
 
-        store.deleteDid(doc.getSubject());
+    ["1", "2", "2.2"].forEach((version) => {
+        test("testNewDIDandGetDID", async ()=>{
+            let store = await DIDStore.open(testData.getCompatibleData(version).getStoreDir());
+            let identity = await store.loadRootIdentity();
 
-        let did = identity.getDid(1000);
+            let doc = await identity.newDid(TestConfig.storePass);
+            expect(doc).not.toBeNull();
 
-        doc = await identity.newDid(TestConfig.storePass, 1000);
-        expect(doc).not.toBeNull();
-        expect(doc.getSubject().equals(did)).toBeTruthy();
+            store.deleteDid(doc.getSubject());
 
-        store.deleteDid(doc.getSubject());
+            let did = identity.getDid(1000);
+
+            doc = await identity.newDid(TestConfig.storePass, 1000);
+            expect(doc).not.toBeNull();
+            expect(doc.getSubject().equals(did)).toBeTruthy();
+
+            store.deleteDid(doc.getSubject());
+        });
     });
 
     async function createDataForPerformanceTest(store: DIDStore) {
         let props = {
             "name": "John",
             "gender": "Male",
-            "nation": "Singapore",
-            "language": "English",
+            "nationality": "Singapore",
             "email": "ohn@example.com",
             "twitter": "@john"
         };
@@ -600,7 +602,10 @@ describe("DIDStore Tests", ()=>{
             let issuer = new Issuer(doc);
             let cb = issuer.issueFor(doc.getSubject());
             let vc = await cb.id("#cred-1")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 

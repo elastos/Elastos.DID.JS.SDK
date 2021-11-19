@@ -84,8 +84,7 @@ describe("Issuer Tests", ()=>{
         let props = {
             name: "John",
             gender: "Male",
-            nation: "Singapore",
-            language: "English",
+            nationality: "Singapore",
             email: "john@example.com",
             twitter: "@john"
         };
@@ -94,25 +93,28 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#testCredential")
-                   .type("BasicProfileCredential", "InternetAccountCredential")
-                   .properties(props)
-                   .seal(TestConfig.storePass);
+                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
+                .properties(props)
+                .seal(TestConfig.storePass);
 
         let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
         expect(vcId.equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy();
+		expect(vc.getType().includes("ProfileCredential")).toBeTruthy();;
+        expect(vc.getType().includes("EmailCredential")).toBeTruthy();;
+        expect(vc.getType().includes("SocialCredential")).toBeTruthy();;
+        expect(vc.getType().includes("VerifiableCredential")).toBeTruthy();;
+        expect(vc.getType().includes("SelfProclaimedCredential")).toBeFalsy();
 
         expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
         expect(testDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
         expect(vc.getSubject().getProperty("name")).toEqual("John");
         expect(vc.getSubject().getProperty("gender")).toEqual("Male");
-        expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
-        expect(vc.getSubject().getProperty("language")).toEqual("English");
+        expect(vc.getSubject().getProperty("nationality")).toEqual("Singapore");
         expect(vc.getSubject().getProperty("email")).toEqual("john@example.com");
         expect(vc.getSubject().getProperty("twitter")).toEqual("@john");
 
@@ -124,8 +126,7 @@ describe("Issuer Tests", ()=>{
     test('Issue Self Proclaimed Credential Test', async () => {
         let props = {
             name: "Testing Issuer",
-            nation: "Singapore",
-            language: "English",
+            nationality: "Singapore",
             email: "issuer@example.com"
         };
 
@@ -133,24 +134,25 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#myCredential")
-                   .type("BasicProfileCredential", "SelfProclaimedCredential")
-                   .properties(props)
-                   .seal(TestConfig.storePass);
+                .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .properties(props)
+                .seal(TestConfig.storePass);
 
         let vcId = new DIDURL("#myCredential", testDoc.getSubject());
 
         expect(vcId.equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy();
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
+        expect(vc.getType().includes("ProfileCredential")).toBeTruthy();
+        expect(vc.getType().includes("SelfProclaimedCredential")).toBeTruthy();
+        expect(vc.getType().includes("EmailCredential")).toBeTruthy();
 
         expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
         expect(testDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
         expect(vc.getSubject().getProperty("name")).toEqual("Testing Issuer");
-        expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
-        expect(vc.getSubject().getProperty("language")).toEqual("English");
+        expect(vc.getSubject().getProperty("nationality")).toEqual("Singapore");
         expect(vc.getSubject().getProperty("email")).toEqual("issuer@example.com");
 
         await expect(await vc.isExpired()).toBeFalsy();
@@ -164,8 +166,7 @@ describe("Issuer Tests", ()=>{
         let props = {
             name: "John",
             gender: "Male",
-            nation: "Singapore",
-            language: "English",
+            nationality: "Singapore",
             email: "john@example.com",
             twitter: "@john"
         };
@@ -174,25 +175,26 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#testCredential")
-                   .type("BasicProfileCredential", "InternetAccountCredential")
-                   .properties(props)
-                   .seal(TestConfig.storePass);
+                .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
+                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .properties(props)
+                .seal(TestConfig.storePass);
 
         let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
         expect(vcId.equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy();
+        expect(vc.getType().includes("ProfileCredential")).toBeTruthy();
+        expect(vc.getType().includes("SocialCredential")).toBeTruthy();
+        expect(vc.getType().includes("SelfProclaimedCredential")).toBeFalsy();
 
         expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
         expect(testDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
         expect(vc.getSubject().getProperty("name")).toEqual("John");
         expect(vc.getSubject().getProperty("gender")).toEqual("Male");
-        expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
-        expect(vc.getSubject().getProperty("language")).toEqual("English");
+        expect(vc.getSubject().getProperty("nationality")).toEqual("Singapore");
         expect(vc.getSubject().getProperty("email")).toEqual("john@example.com");
         expect(vc.getSubject().getProperty("twitter")).toEqual("@john");
 
@@ -207,8 +209,7 @@ describe("Issuer Tests", ()=>{
         let props = {
             name: "John",
             gender: "Male",
-            nation: "Singapore",
-            language: "English",
+            nationality: "Singapore",
             email: "john@example.com",
             twitter: "@john"
         };
@@ -217,17 +218,19 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc = await cb.id("#testCredential")
-            .type("BasicProfileCredential", "InternetAccountCredential")
-            .properties(props)
-            .seal(TestConfig.storePass);
+                .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
+                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .properties(props)
+                .seal(TestConfig.storePass);
 
         let vcId = new DIDURL("#testCredential", testDoc.getSubject());
 
         expect(vcId.equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeFalsy();
+        expect(vc.getType().includes("ProfileCredential")).toBeTruthy();
+        expect(vc.getType().includes("EmailCredential")).toBeTruthy();
+        expect(vc.getType().includes("SelfProclaimedCredential")).toBeFalsy();
 
         expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
         expect(testDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
@@ -235,7 +238,6 @@ describe("Issuer Tests", ()=>{
         expect(vc.getSubject().getProperty("name")).toEqual("John");
         expect(vc.getSubject().getProperty("gender")).toEqual("Male");
         expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
-        expect(vc.getSubject().getProperty("language")).toEqual("English");
         expect(vc.getSubject().getProperty("email")).toEqual("john@example.com");
         expect(vc.getSubject().getProperty("twitter")).toEqual("@john");
 
@@ -249,8 +251,7 @@ describe("Issuer Tests", ()=>{
 
         let props = {
             name: "Testing Issuer",
-            nation: "Singapore",
-            language: "English",
+            nationality: "Singapore",
             email: "issuer@example.com"
         };
 
@@ -258,24 +259,25 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")
-            .type("BasicProfileCredential", "SelfProclaimedCredential")
-            .properties(props)
-            .seal(TestConfig.storePass);
+                .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .properties(props)
+                .seal(TestConfig.storePass);
 
         let vcId = new DIDURL("#myCredential", issuerDoc.getSubject());
 
         expect(vcId.equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy();
+        expect(vc.getType().includes("ProfileCredential")).toBeTruthy();
+        expect(vc.getType().includes("SelfProclaimedCredential")).toBeTruthy();
+        expect(vc.getType().includes("InternetAccountCredential")).toBeFalsy();
 
         expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
         expect(issuerDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
         expect(vc.getSubject().getProperty("name")).toEqual("Testing Issuer");
-        expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
-        expect(vc.getSubject().getProperty("language")).toEqual("English");
+        expect(vc.getSubject().getProperty("nationality")).toEqual("Singapore");
         expect(vc.getSubject().getProperty("email")).toEqual("issuer@example.com");
 
         await expect(await vc.isExpired()).toBeFalsy();
@@ -290,17 +292,18 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")
-            .type("BasicProfileCredential", "SelfProclaimedCredential")
-            .properties(props)
-            .seal(TestConfig.storePass);
+                .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .properties(props)
+                .seal(TestConfig.storePass);
 
         let vcId = new DIDURL("#myCredential", issuerDoc.getSubject());
 
         expect(vcId.equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy();
+        expect(vc.getType().includes("ProfileCredential")).toBeTruthy();
+        expect(vc.getType().includes("SelfProclaimedCredential")).toBeTruthy();
+        expect(vc.getType().includes("InternetAccountCredential")).toBeFalsy();
 
         expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
         expect(issuerDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
@@ -322,25 +325,23 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")
-            .type("BasicProfileCredential", "SelfProclaimedCredential")
-            .property("nation", "Singapore")
-            .property("language", "English")
-            .seal(TestConfig.storePass);
+                .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .property("nationality", "Singapore")
+                .seal(TestConfig.storePass);
 
         let vcId = new DIDURL("#myCredential", issuerDoc.getSubject());
 
         expect(vcId.equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeFalsy();
+        expect(vc.getType().includes("ProfileCredential")).toBeTruthy();
+        expect(vc.getType().includes("SelfProclaimedCredential")).toBeTruthy();
+        expect(vc.getType().includes("InternetAccountCredential")).toBeFalsy();
 
         expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
         expect(issuerDoc.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-        expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
-        expect(vc.getSubject().getProperty("language")).toEqual("English");
-
+        expect(vc.getSubject().getProperty("nationality")).toEqual("Singapore");
         expect(vc.getSubject().getProperties()).not.toBeNull();
 
         await expect(await vc.isExpired()).toBeFalsy();

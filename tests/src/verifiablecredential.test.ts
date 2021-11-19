@@ -28,7 +28,8 @@ import {
     VerifiableCredential,
     IDChainRequest,
     Exceptions,
-    VerificationEventListener
+    VerificationEventListener,
+    Features
 } from "@elastosfoundation/did-js-sdk";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
@@ -52,186 +53,227 @@ describe('let Tests', () => {
     afterEach(async () => {
     });
 
-    test('testKycCredential', async () => {
-        let cd = testData.getCompatibleData(2);
+    ["1", "2", "2.2"].forEach((version) => {
+        test('testKycCredential', async () => {
+            let cd = testData.getCompatibleData(version);
 
-        let issuer = await cd.getDocument("issuer");
-        let user = await cd.getDocument("user1");
+            let issuer = await cd.getDocument("issuer");
+            let user = await cd.getDocument("user1");
 
-        let vc = await cd.getCredential("user1", "twitter");
+            let vc = await cd.getCredential("user1", "twitter");
 
-        expect(new DIDURL("#twitter", user.getSubject()).equals(vc.getId()));
+            expect(new DIDURL("#twitter", user.getSubject()).equals(vc.getId()));
 
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("TwitterCredential") >= 0).toBeTruthy();
+            if (parseFloat(version) < 2.0) {
+                expect(vc.getType().includes("InternetAccountCredential")).toBeTruthy();
+                expect(vc.getType().includes("TwitterCredential")).toBeTruthy();
+            } else {
+                expect(vc.getType().includes("VerifiableCredential")).toBeTruthy();
+                expect(vc.getType().includes("SocialCredential")).toBeTruthy();
+            }
 
-        expect(issuer.getSubject().equals(vc.getIssuer())).toBeTruthy();
-        expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+            expect(issuer.getSubject().equals(vc.getIssuer())).toBeTruthy();
+            expect(user.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-        expect("@john").toEqual(vc.getSubject().getProperty("twitter"));
+            expect("@john").toEqual(vc.getSubject().getProperty("twitter"));
 
-        expect(vc.getIssuanceDate()).not.toBeNull();
-        await expect(await vc.getExpirationDate()).not.toBeNull();
+            expect(vc.getIssuanceDate()).not.toBeNull();
+            await expect(await vc.getExpirationDate()).not.toBeNull();
 
-        expect(vc.isSelfProclaimed()).toBeFalsy();
-        await expect(await vc.isExpired()).toBeFalsy();
-        await expect(await vc.isGenuine()).toBeTruthy();
-        await expect(await vc.isValid()).toBeTruthy();
+            expect(vc.isSelfProclaimed()).toBeFalsy();
+            await expect(await vc.isExpired()).toBeFalsy();
+            await expect(await vc.isGenuine()).toBeTruthy();
+            await expect(await vc.isValid()).toBeTruthy();
+        });
     });
 
-    test('testSelfProclaimedCredential', async () => {
-        let cd = testData.getCompatibleData(2);
+    ["1", "2", "2.2"].forEach((version) => {
+        test('testSelfProclaimedCredential', async () => {
+            let cd = testData.getCompatibleData(version);
 
-        let user = await cd.getDocument("user1");
-        let vc = await cd.getCredential("user1", "passport");
+            let user = await cd.getDocument("user1");
+            let vc = await cd.getCredential("user1", "passport");
 
-        expect(new DIDURL("#passport", user.getSubject()).equals(vc.getId()));
+            expect(new DIDURL("#passport", user.getSubject()).equals(vc.getId()));
 
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
+            if (parseFloat(version) < 2.0) {
+                expect(vc.getType().includes("BasicProfileCredential")).toBeTruthy();
+                expect(vc.getType().includes("SelfProclaimedCredential")).toBeTruthy();
+            } else {
+                expect(vc.getType().includes("VerifiableCredential")).toBeTruthy();
+                expect(vc.getType().includes("SelfProclaimedCredential")).toBeTruthy();
+            }
 
-        expect(user.getSubject().equals(vc.getIssuer()));
-        expect(user.getSubject().equals(vc.getSubject().getId()));
+            expect(user.getSubject().equals(vc.getIssuer()));
+            expect(user.getSubject().equals(vc.getSubject().getId()));
 
-        expect("Singapore").toEqual(vc.getSubject().getProperty("nation"));
-        expect("S653258Z07").toEqual(vc.getSubject().getProperty("passport"));
+            if (parseFloat(version) < 2.0) {
+                expect("Singapore").toEqual(vc.getSubject().getProperty("nation"));
+                expect("S653258Z07").toEqual(vc.getSubject().getProperty("passport"));
+            } else {
+                expect("Singapore").toEqual(vc.getSubject().getProperty("nationality"));
+                expect("S653258Z07").toEqual(vc.getSubject().getProperty("passport"));
+            }
 
-        expect(vc.getIssuanceDate()).not.toBeNull();
-        expect(await vc.getExpirationDate()).not.toBeNull();
+            expect(vc.getIssuanceDate()).not.toBeNull();
+            expect(await vc.getExpirationDate()).not.toBeNull();
 
-        expect(vc.isSelfProclaimed()).toBeTruthy();
-        expect(await vc.isExpired()).toBeFalsy();
-        expect(await vc.isGenuine()).toBeTruthy();
-        expect(await vc.isValid()).toBeTruthy();
+            expect(vc.isSelfProclaimed()).toBeTruthy();
+            expect(await vc.isExpired()).toBeFalsy();
+            expect(await vc.isGenuine()).toBeTruthy();
+            expect(await vc.isValid()).toBeTruthy();
+        });
     });
 
-    test('testJsonCredential', async () => {
-        let cd = testData.getCompatibleData(2);
+    ["1", "2", "2.2"].forEach((version) => {
+        test('testJsonCredential', async () => {
+            let cd = testData.getCompatibleData(version);
 
-        let issuer = await cd.getDocument("issuer");
-        let user = await cd.getDocument("user1");
-        let vc = await cd.getCredential("user1", "json");
+            let issuer = await cd.getDocument("issuer");
+            let user = await cd.getDocument("user1");
+            let vc = await cd.getCredential("user1", "json");
 
-        expect(new DIDURL("#json", user.getSubject()).equals(vc.getId()));
+            expect(new DIDURL("#json", user.getSubject()).equals(vc.getId()));
 
-        expect(vc.getType().indexOf("JsonCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("TestCredential") >= 0).toBeTruthy();
+            if (parseFloat(version) < 2.0) {
+                expect(vc.getType().includes("JsonCredential")).toBeTruthy();
+                expect(vc.getType().includes("TestCredential")).toBeTruthy();
+            } else {
+                expect(vc.getType().includes("VerifiableCredential")).toBeTruthy();
+                expect(vc.getType().includes("NonExistsType")).toBeFalsy();
+            }
 
-        expect(user.getSubject().equals(vc.getIssuer()));
-        expect(user.getSubject().equals(vc.getSubject().getId()));
+            expect(user.getSubject().equals(vc.getIssuer()));
+            expect(user.getSubject().equals(vc.getSubject().getId()));
 
-        expect("Technologist").toEqual(vc.getSubject().getProperty("Description"));
-        expect(true).toEqual(vc.getSubject().getProperty("booleanValue"));
-        expect(1234).toEqual(vc.getSubject().getProperty("numberValue"));
+            expect("Technologist").toEqual(vc.getSubject().getProperty("Description"));
+            expect(true).toEqual(vc.getSubject().getProperty("booleanValue"));
+            expect(1234).toEqual(vc.getSubject().getProperty("numberValue"));
 
-        expect(vc.getIssuanceDate()).not.toBeNull();
-        await expect(await vc.getExpirationDate()).not.toBeNull();
+            expect(vc.getIssuanceDate()).not.toBeNull();
+            await expect(await vc.getExpirationDate()).not.toBeNull();
 
-        expect(vc.isSelfProclaimed()).toBeFalsy();
-        await expect(await vc.isExpired()).toBeFalsy();
-        await expect(await vc.isGenuine()).toBeTruthy();
-        await expect(await vc.isValid()).toBeTruthy();
+            expect(vc.isSelfProclaimed()).toBeFalsy();
+            await expect(await vc.isExpired()).toBeFalsy();
+            await expect(await vc.isGenuine()).toBeTruthy();
+            await expect(await vc.isValid()).toBeTruthy();
+        });
     });
 
-    test('testKycCredentialToCid', async () => {
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
+    ["2", "2.2"].forEach((version) => {
+        test('testKycCredentialToCid', async () => {
+            let cd = testData.getCompatibleData(version);
+            await cd.loadAll();
 
-        let issuer = await cd.getDocument("issuer");
-        let foo = await cd.getDocument("foo");
+            let issuer = await cd.getDocument("issuer");
+            let foo = await cd.getDocument("foo");
 
-        let vc = await cd.getCredential("foo", "email");
+            let vc = await cd.getCredential("foo", "email");
 
-        expect(new DIDURL("#email", foo.getSubject()).equals(vc.getId())).toBeTruthy();
+            expect(new DIDURL("#email", foo.getSubject()).equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("InternetAccountCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeFalsy();
+            expect(vc.getType().includes("EmailCredential")).toBeTruthy();
+            expect(vc.getType().includes("ProfileCredential")).toBeFalsy();
 
-        expect(issuer.getSubject().equals(vc.getIssuer())).toBeTruthy();
-        expect(foo.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+            expect(issuer.getSubject().equals(vc.getIssuer())).toBeTruthy();
+            expect(foo.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-        expect("foo@example.com").toEqual(vc.getSubject().getProperty("email"));
+            expect("foo@example.com").toEqual(vc.getSubject().getProperty("email"));
 
-        expect(vc.getIssuanceDate()).not.toBeNull();
-        await expect(await vc.getExpirationDate()).not.toBeNull();
+            expect(vc.getIssuanceDate()).not.toBeNull();
+            await expect(await vc.getExpirationDate()).not.toBeNull();
 
-        expect(vc.isSelfProclaimed()).toBeFalsy();
-        await expect(await vc.isExpired()).toBeFalsy();
-        await expect(await vc.isGenuine()).toBeTruthy();
-        await expect(await vc.isValid()).toBeTruthy();
+            expect(vc.isSelfProclaimed()).toBeFalsy();
+            await expect(await vc.isExpired()).toBeFalsy();
+            await expect(await vc.isGenuine()).toBeTruthy();
+            await expect(await vc.isValid()).toBeTruthy();
+        });
     });
 
-    test('testKycCredentialFromCid', async () => {
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
+    ["2", "2.2"].forEach((version) => {
+        test('testKycCredentialFromCid', async () => {
+            let cd = testData.getCompatibleData(version);
+            await cd.loadAll();
 
-        let exampleCorp = await cd.getDocument("examplecorp");
-        let foobar = await cd.getDocument("foobar");
+            let exampleCorp = await cd.getDocument("examplecorp");
+            let foobar = await cd.getDocument("foobar");
 
-        let vc = await cd.getCredential("foobar", "license");
+            let vc = await cd.getCredential("foobar", "license");
 
-        expect(new DIDURL("#license", foobar.getSubject()).equals(vc.getId())).toBeTruthy();
+            expect(new DIDURL("#license", foobar.getSubject()).equals(vc.getId())).toBeTruthy();
 
-        expect(vc.getType().indexOf("LicenseCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("ProfileCredential") >= 0).toBeFalsy();
+            expect(vc.getType().includes("LicenseCredential")).toBeTruthy();
+            expect(vc.getType().includes("ProfileCredential")).toBeFalsy();
 
-        expect(exampleCorp.getSubject().equals(vc.getIssuer())).toBeTruthy();
-        expect(foobar.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
+            expect(exampleCorp.getSubject().equals(vc.getIssuer())).toBeTruthy();
+            expect(foobar.getSubject().equals(vc.getSubject().getId())).toBeTruthy();
 
-        expect(vc.getSubject().getProperty("license-id")).toEqual("20201021C889");
-        expect(vc.getSubject().getProperty("scope")).toEqual("Consulting");
+            expect(vc.getSubject().getProperty("license-id")).toEqual("20201021C889");
+            expect(vc.getSubject().getProperty("scope")).toEqual("Consulting");
 
-        expect(vc.getIssuanceDate()).not.toBeNull();
-        await expect(await vc.getExpirationDate()).not.toBeNull();
+            expect(vc.getIssuanceDate()).not.toBeNull();
+            await expect(await vc.getExpirationDate()).not.toBeNull();
 
-        expect(vc.isSelfProclaimed()).toBeFalsy();
-        await expect(await vc.isExpired()).toBeFalsy();
-        await expect(await vc.isGenuine()).toBeTruthy();
-        await expect(await vc.isValid()).toBeTruthy();
+            expect(vc.isSelfProclaimed()).toBeFalsy();
+            await expect(await vc.isExpired()).toBeFalsy();
+            await expect(await vc.isGenuine()).toBeTruthy();
+            await expect(await vc.isValid()).toBeTruthy();
+        });
     });
 
-    test('testSelfProclaimedCredentialFromCid', async () => {
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
+    ["2", "2.2"].forEach((version) => {
+        test('testSelfProclaimedCredentialFromCid', async () => {
+            let cd = testData.getCompatibleData(version);
+            await cd.loadAll();
 
-        let foobar = await cd.getDocument("foobar");
+            let foobar = await cd.getDocument("foobar");
 
-        let vc = await cd.getCredential("foobar", "services");
+            let vc = await cd.getCredential("foobar", "services");
 
-        expect(new DIDURL("#services", foobar.getSubject()).equals(vc.getId()));
+            expect(new DIDURL("#services", foobar.getSubject()).equals(vc.getId()));
 
-        expect(vc.getType().indexOf("SelfProclaimedCredential") >= 0).toBeTruthy();
-        expect(vc.getType().indexOf("BasicProfileCredential") >= 0).toBeTruthy();
+            expect(vc.getType().includes("SelfProclaimedCredential")).toBeTruthy();
+            expect(vc.getType().includes("VerifiableCredential")).toBeTruthy();
 
-        expect(foobar.getSubject().equals(vc.getIssuer()));
-        expect(foobar.getSubject().equals(vc.getSubject().getId()));
+            expect(foobar.getSubject().equals(vc.getIssuer()));
+            expect(foobar.getSubject().equals(vc.getSubject().getId()));
 
-        expect(vc.getSubject().getProperty("Outsourceing")).toEqual("https://foobar.com/outsourcing");
-        expect(vc.getSubject().getProperty("consultation")).toEqual("https://foobar.com/consultation");
+            expect(vc.getSubject().getProperty("Outsourceing")).toEqual("https://foobar.com/outsourcing");
+            expect(vc.getSubject().getProperty("consultation")).toEqual("https://foobar.com/consultation");
 
-        expect(vc.getIssuanceDate()).not.toBeNull();
-        await expect(await vc.getExpirationDate()).not.toBeNull();
+            expect(vc.getIssuanceDate()).not.toBeNull();
+            await expect(await vc.getExpirationDate()).not.toBeNull();
 
-        expect(vc.isSelfProclaimed()).toBeTruthy();
-        await expect(await vc.isExpired()).toBeFalsy();
-        await expect(await vc.isGenuine()).toBeTruthy();
-        await expect(await vc.isValid()).toBeTruthy();
+            expect(vc.isSelfProclaimed()).toBeTruthy();
+            await expect(await vc.isExpired()).toBeFalsy();
+            await expect(await vc.isGenuine()).toBeTruthy();
+            await expect(await vc.isValid()).toBeTruthy();
+        });
     });
 
     test('testParseAndSerialize', async () => {
         let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version: "1", did:"user1", vc:"twitter"},
+            {version: "1", did:"user1", vc:"passport"},
+            {version: "1", did:"user1", vc:"json"},
+            {version: "2", did:"user1", vc:"twitter"},
+            {version: "2", did:"user1", vc:"passport"},
+            {version: "2", did:"user1", vc:"json"},
+            {version: "2", did:"foobar", vc:"license"},
+            {version: "2", did:"foobar", vc:"services"},
+            {version: "2", did:"foo", vc:"email"},
+            {version: "2.2", did:"user1", vc:"twitter"},
+            {version: "2.2", did:"user1", vc:"passport"},
+            {version: "2.2", did:"user1", vc:"json"},
+            {version: "2.2", did:"foobar", vc:"license"},
+            {version: "2.2", did:"foobar", vc:"services"},
+            {version: "2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            await cd.loadAll();
+
             let normalizedJson = cd.getCredentialJson(csv.did, csv.vc, "normalized");
             let normalized = VerifiableCredential.parse(normalizedJson);
 
@@ -255,21 +297,29 @@ describe('let Tests', () => {
     });
 
     test('testGenuineAndValidWithListener', async () => {
+        let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
         let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version: "1", did:"user1", vc:"twitter"},
+            {version: "1", did:"user1", vc:"passport"},
+            {version: "1", did:"user1", vc:"json"},
+            {version: "2", did:"user1", vc:"twitter"},
+            {version: "2", did:"user1", vc:"passport"},
+            {version: "2", did:"user1", vc:"json"},
+            {version: "2", did:"foobar", vc:"license"},
+            {version: "2", did:"foobar", vc:"services"},
+            {version: "2", did:"foo", vc:"email"},
+            {version: "2.2", did:"user1", vc:"twitter"},
+            {version: "2.2", did:"user1", vc:"passport"},
+            {version: "2.2", did:"user1", vc:"json"},
+            {version: "2.2", did:"foobar", vc:"license"},
+            {version: "2.2", did:"foobar", vc:"services"},
+            {version: "2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
-
-        let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            await cd.loadAll();
+
             let credential = await cd.getCredential(csv.did, csv.vc);
 
             await expect(await credential.isExpired()).toBeFalsy();
@@ -285,18 +335,27 @@ describe('let Tests', () => {
 
     test('testDeclareCredential', async () => {
         let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version: "1", did:"user1", vc:"twitter"},
+            {version: "1", did:"user1", vc:"passport"},
+            {version: "1", did:"user1", vc:"json"},
+            {version: "2", did:"user1", vc:"twitter"},
+            {version: "2", did:"user1", vc:"passport"},
+            {version: "2", did:"user1", vc:"json"},
+            {version: "2", did:"foobar", vc:"license"},
+            {version: "2", did:"foobar", vc:"services"},
+            {version: "2", did:"foo", vc:"email"},
+            {version: "2.2", did:"user1", vc:"twitter"},
+            {version: "2.2", did:"user1", vc:"passport"},
+            {version: "2.2", did:"user1", vc:"json"},
+            {version: "2.2", did:"foobar", vc:"license"},
+            {version: "2.2", did:"foobar", vc:"services"},
+            {version: "2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            await cd.loadAll();
+
             let credential = await cd.getCredential(csv.did, csv.vc);
             // Sign key for customized DID
             let doc = await credential.getSubject().getId().resolve();
@@ -326,66 +385,78 @@ describe('let Tests', () => {
         }
     });
 
-    test('testDeclareCredentials', async () => {
-        let sd = testData.getInstantData();
+    [false, true].forEach((contextEnabled) => {
+        test('testDeclareCredentials', async () => {
+            Features.enableJsonLdContext(contextEnabled);
 
-        let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"user1", vc:"jobposition"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
-        ];
+            let sd = testData.getInstantData();
 
-        for (let csv of csvSource) {
-            let credential = await sd.getCredential(csv.did, csv.vc);
-            // Sign key for customized DID
-            let doc = await credential.getSubject().getId().resolve();
-            expect(doc).not.toBeNull();
+            let csvSource = [
+                {did:"user1", vc:"twitter"},
+                {did:"user1", vc:"passport"},
+                {did:"user1", vc:"json"},
+                {did:"user1", vc:"jobposition"},
+                {did:"foobar", vc:"license"},
+                {did:"foobar", vc:"services"},
+                {did:"foo", vc:"email"}
+            ];
 
-            let signKey = null;
-            if (doc.getControllerCount() > 1) {
-                let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
+            for (let csv of csvSource) {
+                let credential = await sd.getCredential(csv.did, csv.vc);
+                // Sign key for customized DID
+                let doc = await credential.getSubject().getId().resolve();
+                expect(doc).not.toBeNull();
+
+                let signKey = null;
+                if (doc.getControllerCount() > 1) {
+                    let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+                    signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
+                }
+
+                await credential.declare(signKey, TestConfig.storePass);
+
+                let id = credential.getId();
+                let resolved = await VerifiableCredential.resolve(id);
+                expect(resolved).not.toBeNull();
+                expect(credential.toString()).toEqual(resolved.toString());
+
+                let metadata = resolved.getMetadata();
+                expect(metadata).not.toBeNull();
+                expect(metadata.getPublished()).not.toBeNull();
+                expect(metadata.getTransactionId()).not.toBeNull();
+                expect(await resolved.isRevoked()).toBeFalsy();
+
+                let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
+                expect(bio).not.toBeNull();
+                expect(bio.getAllTransactions().length).toBe(1);
+                expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
             }
-
-            await credential.declare(signKey, TestConfig.storePass);
-
-            let id = credential.getId();
-            let resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            let metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeFalsy();
-
-            let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toBe(1);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
-        }
+        });
     });
 
     test('testRevokeCredential', async () => {
-
         let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version: "1", did:"user1", vc:"twitter"},
+            {version: "1", did:"user1", vc:"passport"},
+            {version: "1", did:"user1", vc:"json"},
+            {version: "2", did:"user1", vc:"twitter"},
+            {version: "2", did:"user1", vc:"passport"},
+            {version: "2", did:"user1", vc:"json"},
+            {version: "2", did:"foobar", vc:"license"},
+            {version: "2", did:"foobar", vc:"services"},
+            {version: "2", did:"foo", vc:"email"},
+            {version: "2.2", did:"user1", vc:"twitter"},
+            {version: "2.2", did:"user1", vc:"passport"},
+            {version: "2.2", did:"user1", vc:"json"},
+            {version: "2.2", did:"foobar", vc:"license"},
+            {version: "2.2", did:"foobar", vc:"services"},
+            {version: "2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            await cd.loadAll();
+
             let credential = await cd.getCredential(csv.did, csv.vc);
             expect(await credential.wasDeclared()).toBeFalsy();
 
@@ -431,17 +502,18 @@ describe('let Tests', () => {
     });
 
     test('testRevokeCredentialWithDifferentKey', async () => {
-
         let csvSource = [
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version:"2", did:"foobar", vc:"license"},
+            {version:"2", did:"foobar", vc:"services"},
+            {version:"2", did:"foo", vc:"email"},
+            {version:"2.2", did:"foobar", vc:"license"},
+            {version:"2.2", did:"foobar", vc:"services"},
+            {version:"2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            await cd.loadAll();
 
             let credential = await cd.getCredential(csv.did, csv.vc);
             expect(await credential.wasDeclared()).toBeFalsy();
@@ -498,20 +570,28 @@ describe('let Tests', () => {
     });
 
     test('testDeclareAfterRevoke', async () => {
-
         let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version: "1", did:"user1", vc:"twitter"},
+            {version: "1", did:"user1", vc:"passport"},
+            {version: "1", did:"user1", vc:"json"},
+            {version: "2", did:"user1", vc:"twitter"},
+            {version: "2", did:"user1", vc:"passport"},
+            {version: "2", did:"user1", vc:"json"},
+            {version: "2", did:"foobar", vc:"license"},
+            {version: "2", did:"foobar", vc:"services"},
+            {version: "2", did:"foo", vc:"email"},
+            {version: "2.2", did:"user1", vc:"twitter"},
+            {version: "2.2", did:"user1", vc:"passport"},
+            {version: "2.2", did:"user1", vc:"json"},
+            {version: "2.2", did:"foobar", vc:"license"},
+            {version: "2.2", did:"foobar", vc:"services"},
+            {version: "2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            await cd.loadAll();
+
             let credential = await cd.getCredential(csv.did, csv.vc);
             expect(await credential.wasDeclared()).toBeFalsy();
             expect(await credential.isRevoked()).toBeFalsy();
@@ -542,17 +622,19 @@ describe('let Tests', () => {
     });
 
     test('testDeclareAfterRevokeWithDifferentKey', async () => {
-
         let csvSource = [
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version:"2", did:"foobar", vc:"license"},
+            {version:"2", did:"foobar", vc:"services"},
+            {version:"2", did:"foo", vc:"email"},
+            {version:"2.2", did:"foobar", vc:"license"},
+            {version:"2.2", did:"foobar", vc:"services"},
+            {version:"2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            await cd.loadAll();
+
             let credential = await cd.getCredential(csv.did, csv.vc);
             expect(await credential.wasDeclared()).toBeFalsy();
             expect(await credential.isRevoked()).toBeFalsy();
@@ -589,20 +671,28 @@ describe('let Tests', () => {
     });
 
     test('testDeclareAfterRevokeByIssuer', async () => {
-
         let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version: "1", did:"user1", vc:"twitter"},
+            {version: "1", did:"user1", vc:"passport"},
+            {version: "1", did:"user1", vc:"json"},
+            {version: "2", did:"user1", vc:"twitter"},
+            {version: "2", did:"user1", vc:"passport"},
+            {version: "2", did:"user1", vc:"json"},
+            {version: "2", did:"foobar", vc:"license"},
+            {version: "2", did:"foobar", vc:"services"},
+            {version: "2", did:"foo", vc:"email"},
+            {version: "2.2", did:"user1", vc:"twitter"},
+            {version: "2.2", did:"user1", vc:"passport"},
+            {version: "2.2", did:"user1", vc:"json"},
+            {version: "2.2", did:"foobar", vc:"license"},
+            {version: "2.2", did:"foobar", vc:"services"},
+            {version: "2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            await cd.loadAll();
+
             let credential = await cd.getCredential(csv.did, csv.vc);
             expect(await credential.wasDeclared()).toBeFalsy();
             expect(await credential.isRevoked()).toBeFalsy();
@@ -639,21 +729,29 @@ describe('let Tests', () => {
     });
 
     test('testDeclareAfterInvalidRevoke', async () => {
-
         let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
+            {version: "1", did:"user1", vc:"twitter"},
+            {version: "1", did:"user1", vc:"passport"},
+            {version: "1", did:"user1", vc:"json"},
+            {version: "2", did:"user1", vc:"twitter"},
+            {version: "2", did:"user1", vc:"passport"},
+            {version: "2", did:"user1", vc:"json"},
+            {version: "2", did:"foobar", vc:"license"},
+            {version: "2", did:"foobar", vc:"services"},
+            {version: "2", did:"foo", vc:"email"},
+            {version: "2.2", did:"user1", vc:"twitter"},
+            {version: "2.2", did:"user1", vc:"passport"},
+            {version: "2.2", did:"user1", vc:"json"},
+            {version: "2.2", did:"foobar", vc:"license"},
+            {version: "2.2", did:"foobar", vc:"services"},
+            {version: "2.2", did:"foo", vc:"email"}
         ];
 
-        let cd = testData.getCompatibleData(2);
-        let sd = testData.getInstantData();
-        await cd.loadAll();
-
         for (let csv of csvSource) {
+            let cd = testData.getCompatibleData(csv.version);
+            let sd = testData.getInstantData();
+            await cd.loadAll();
+
             let credential = await cd.getCredential(csv.did, csv.vc);
             let id = credential.getId();
             expect(await credential.wasDeclared()).toBeFalsy();
@@ -710,167 +808,169 @@ describe('let Tests', () => {
         }
     });
 
-    test('testListCredentials', async () => {
+    [false, true].forEach((contextEnabled) => {
+        test('testListCredentials', async () => {
+            Features.enableJsonLdContext(contextEnabled);
+            let sd = testData.getInstantData();
 
-        let sd = testData.getInstantData();
+            let csvSource = [
+                {did:"user1", vc:"twitter"},
+                {did:"user1", vc:"passport"},
+                {did:"user1", vc:"json"},
+                {did:"user1", vc:"jobposition"},
+                {did:"foobar", vc:"license"},
+                {did:"foobar", vc:"services"},
+                {did:"foo", vc:"email"}
+            ];
 
-        let csvSource = [
-            {did:"user1", vc:"twitter"},
-            {did:"user1", vc:"passport"},
-            {did:"user1", vc:"json"},
-            {did:"user1", vc:"jobposition"},
-            {did:"foobar", vc:"license"},
-            {did:"foobar", vc:"services"},
-            {did:"foo", vc:"email"}
-        ];
+            for (let csv of csvSource) {
+                let credential = await sd.getCredential(csv.did, csv.vc);
 
-        for (let csv of csvSource) {
-            let credential = await sd.getCredential(csv.did, csv.vc);
+                // Sign key for customized DID
+                let doc = await credential.getSubject().getId().resolve();
+                expect(doc).not.toBeNull();
 
-            // Sign key for customized DID
-            let doc = await credential.getSubject().getId().resolve();
-            expect(doc).not.toBeNull();
+                let signKey = null;
+                if (doc.getControllerCount() > 1) {
+                    let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+                    signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
+                }
 
-            let signKey = null;
-            if (doc.getControllerCount() > 1) {
-                let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
+                await credential.declare(signKey, TestConfig.storePass);
+
+                let id = credential.getId();
+                let resolved = await VerifiableCredential.resolve(id);
+                expect(resolved).not.toBeNull();
+
+                expect(credential.toString()).toEqual(resolved.toString());
+
+                let metadata = resolved.getMetadata();
+                expect(metadata).not.toBeNull();
+                expect(metadata.getPublished()).not.toBeNull();
+                expect(metadata.getTransactionId()).not.toBeNull();
+                expect(await resolved.isRevoked()).toBeFalsy();
+
+                let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
+                expect(bio).not.toBeNull();
+                expect(bio.getAllTransactions().length).toBe(1);
+                expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
             }
 
-            await credential.declare(signKey, TestConfig.storePass);
+            let doc = await sd.getUser1Document();
+            let did = doc.getSubject();
+            let ids = await VerifiableCredential.list(did);
+            expect(ids).not.toBeNull();
+            expect(ids.length).toBe(4);
 
-            let id = credential.getId();
-            let resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
+            for (let id of ids) {
 
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            let metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeFalsy();
-
-            let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toBe(1);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
-        }
-
-        let doc = await sd.getUser1Document();
-        let did = doc.getSubject();
-        let ids = await VerifiableCredential.list(did);
-        expect(ids).not.toBeNull();
-        expect(ids.length).toBe(4);
-
-        for (let id of ids) {
-
-            let vc = await VerifiableCredential.resolve(id);
-            expect(vc).not.toBeNull();
-            expect(vc.getId().equals(id)).toBeTruthy();
-            expect(await vc.wasDeclared()).toBeTruthy();
-            expect(await vc.isRevoked()).toBeFalsy();
-        }
-
-        doc = await sd.getFooBarDocument();
-        did = doc.getSubject();
-        ids = await VerifiableCredential.list(did);
-        expect(ids).not.toBeNull();
-        expect(ids.length).toBe(2);
-        console.log("IDS")
-        console.log(ids)
-        for (let id of ids) {
-               console.log("ID")
-               console.log(id)
-            let vc = await VerifiableCredential.resolve(id);
-               console.log("vc.getId")
-               console.log(vc.getId())
-            expect(vc).not.toBeNull();
-            expect(vc.getId().equals(id)).toBeTruthy();
-            expect(await vc.wasDeclared()).toBeTruthy();
-            expect(await vc.isRevoked()).toBeFalsy();
-        }
-
-        doc = await sd.getFooDocument();
-        did = doc.getSubject();
-        ids = await VerifiableCredential.list(did);
-        expect(ids).not.toBeNull();
-        expect(ids.length).toBe(1);
-        for (let id of ids) {
-            let vc = await VerifiableCredential.resolve(id);
-            expect(vc).not.toBeNull();
-            expect(vc.getId().equals(id)).toBeTruthy();
-            expect(await vc.wasDeclared()).toBeTruthy();
-            expect(await vc.isRevoked()).toBeFalsy();
-        }
-
-        doc = await sd.getBarDocument();
-        did = doc.getSubject();
-        ids = await VerifiableCredential.list(did);
-        expect(ids).toBeNull();
-
-        for (let csv of csvSource) {
-            let credential = await sd.getCredential(csv.did, csv.vc);
-
-            // Sign key for customized DID
-            doc = await credential.getSubject().getId().resolve();
-            let signKey = null;
-            if (doc.getControllerCount() > 1) {
-                let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
+                let vc = await VerifiableCredential.resolve(id);
+                expect(vc).not.toBeNull();
+                expect(vc.getId().equals(id)).toBeTruthy();
+                expect(await vc.wasDeclared()).toBeTruthy();
+                expect(await vc.isRevoked()).toBeFalsy();
             }
 
-            await credential.revoke(signKey, null, TestConfig.storePass);
+            doc = await sd.getFooBarDocument();
+            did = doc.getSubject();
+            ids = await VerifiableCredential.list(did);
+            expect(ids).not.toBeNull();
+            expect(ids.length).toBe(2);
+            console.log("IDS")
+            console.log(ids)
+            for (let id of ids) {
+                console.log("ID")
+                console.log(id)
+                let vc = await VerifiableCredential.resolve(id);
+                console.log("vc.getId")
+                console.log(vc.getId())
+                expect(vc).not.toBeNull();
+                expect(vc.getId().equals(id)).toBeTruthy();
+                expect(await vc.wasDeclared()).toBeTruthy();
+                expect(await vc.isRevoked()).toBeFalsy();
+            }
 
-            let id = credential.getId();
-            let resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeTruthy();
-        }
+            doc = await sd.getFooDocument();
+            did = doc.getSubject();
+            ids = await VerifiableCredential.list(did);
+            expect(ids).not.toBeNull();
+            expect(ids.length).toBe(1);
+            for (let id of ids) {
+                let vc = await VerifiableCredential.resolve(id);
+                expect(vc).not.toBeNull();
+                expect(vc.getId().equals(id)).toBeTruthy();
+                expect(await vc.wasDeclared()).toBeTruthy();
+                expect(await vc.isRevoked()).toBeFalsy();
+            }
 
-        doc = await sd.getUser1Document();
-        did = doc.getSubject();
-        ids = await VerifiableCredential.list(did);
-        expect(ids).not.toBeNull();
-        expect(ids.length).toBe(4);
-        for (let id of ids) {
-            let vc = await VerifiableCredential.resolve(id);
-            expect(vc).not.toBeNull();
-            expect(vc.getId().equals(id)).toBeTruthy();
-            expect(await vc.wasDeclared()).toBeTruthy();
-            expect(await vc.isRevoked()).toBeTruthy();
-        }
+            doc = await sd.getBarDocument();
+            did = doc.getSubject();
+            ids = await VerifiableCredential.list(did);
+            expect(ids).toBeNull();
 
-        doc = await sd.getFooBarDocument();
-        did = doc.getSubject();
-        ids = await VerifiableCredential.list(did);
-        expect(ids).not.toBeNull();
-        expect(ids.length).toBe(2);
-        for (let id of ids) {
-            let vc = await VerifiableCredential.resolve(id);
-            expect(vc).not.toBeNull();
-            expect(vc.getId().equals(id)).toBeTruthy();
-            expect(await vc.wasDeclared()).toBeTruthy();
-            expect(await vc.isRevoked()).toBeTruthy();
-        }
+            for (let csv of csvSource) {
+                let credential = await sd.getCredential(csv.did, csv.vc);
 
-        doc = await sd.getFooDocument();
-        did = doc.getSubject();
-        ids = await VerifiableCredential.list(did);
-        expect(ids).not.toBeNull();
-        expect(ids.length).toBe(1);
-        for (let id of ids) {
-            let vc = await VerifiableCredential.resolve(id);
-            expect(vc).not.toBeNull();
-            expect(vc.getId().equals(id)).toBeTruthy();
-            expect(await vc.wasDeclared()).toBeTruthy();
-            expect(await vc.isRevoked()).toBeTruthy();
-        }
+                // Sign key for customized DID
+                doc = await credential.getSubject().getId().resolve();
+                let signKey = null;
+                if (doc.getControllerCount() > 1) {
+                    let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+                    signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
+                }
 
-        doc = await sd.getBarDocument();
-        did = doc.getSubject();
-        ids = await VerifiableCredential.list(did);
-        expect(ids).toBeNull();
+                await credential.revoke(signKey, null, TestConfig.storePass);
+
+                let id = credential.getId();
+                let resolved = await VerifiableCredential.resolve(id);
+                expect(resolved).not.toBeNull();
+                expect(await resolved.isRevoked()).toBeTruthy();
+            }
+
+            doc = await sd.getUser1Document();
+            did = doc.getSubject();
+            ids = await VerifiableCredential.list(did);
+            expect(ids).not.toBeNull();
+            expect(ids.length).toBe(4);
+            for (let id of ids) {
+                let vc = await VerifiableCredential.resolve(id);
+                expect(vc).not.toBeNull();
+                expect(vc.getId().equals(id)).toBeTruthy();
+                expect(await vc.wasDeclared()).toBeTruthy();
+                expect(await vc.isRevoked()).toBeTruthy();
+            }
+
+            doc = await sd.getFooBarDocument();
+            did = doc.getSubject();
+            ids = await VerifiableCredential.list(did);
+            expect(ids).not.toBeNull();
+            expect(ids.length).toBe(2);
+            for (let id of ids) {
+                let vc = await VerifiableCredential.resolve(id);
+                expect(vc).not.toBeNull();
+                expect(vc.getId().equals(id)).toBeTruthy();
+                expect(await vc.wasDeclared()).toBeTruthy();
+                expect(await vc.isRevoked()).toBeTruthy();
+            }
+
+            doc = await sd.getFooDocument();
+            did = doc.getSubject();
+            ids = await VerifiableCredential.list(did);
+            expect(ids).not.toBeNull();
+            expect(ids.length).toBe(1);
+            for (let id of ids) {
+                let vc = await VerifiableCredential.resolve(id);
+                expect(vc).not.toBeNull();
+                expect(vc.getId().equals(id)).toBeTruthy();
+                expect(await vc.wasDeclared()).toBeTruthy();
+                expect(await vc.isRevoked()).toBeTruthy();
+            }
+
+            doc = await sd.getBarDocument();
+            did = doc.getSubject();
+            ids = await VerifiableCredential.list(did);
+            expect(ids).toBeNull();
+        });
     });
 
     test('testListPagination', async () => {
@@ -886,7 +986,7 @@ describe('let Tests', () => {
 
             let vc = await selfIssuer.issueFor(did)
                     .id("#test" + i)
-                    .type("SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
                     .properties({"index": i})
                     .seal(TestConfig.storePass);
 
