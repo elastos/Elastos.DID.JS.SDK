@@ -45,6 +45,7 @@ export class TestData {
 
     private v1: CompatibleData;
     private v2: CompatibleData;
+    private v2_2: CompatibleData;
     private instantData: InstantData;
 
     public constructor(dummy ?: boolean) {
@@ -105,17 +106,22 @@ export class TestData {
         return this.mnemonic;
     }
 
-    public getCompatibleData(version: number): CompatibleData {
+    public getCompatibleData(version: string): CompatibleData {
         switch (version) {
-        case 1:
+        case "1":
             if (this.v1 == null)
                 this.v1 = new CompatibleData(this, version);
             return this.v1;
 
-        case 2:
+        case "2":
             if (this.v2 == null)
                 this.v2 = new CompatibleData(this, version);
             return this.v2;
+
+        case "2.2":
+            if (this.v2_2 == null)
+                this.v2_2 = new CompatibleData(this, version);
+            return this.v2_2;
 
         default:
             throw new Exceptions.IllegalArgumentException("Unsupported version");
@@ -156,9 +162,9 @@ export class CompatibleData {
     private dataPath: string;
     private storePath: string;
     private data = {};
-    private version: number;
+    private version: string;
 
-    public constructor(private testData: TestData, version: number) {
+    public constructor(private testData: TestData, version: string) {
         this.data = {};
 
         if (!runningInBrowser()) {
@@ -179,7 +185,7 @@ export class CompatibleData {
     }
 
     public isLatestVersion(): boolean {
-        return this.version == 2;
+        return parseFloat(this.version) >= 2.0;
     }
 
     private fileContent(path: string): string {
@@ -222,7 +228,7 @@ export class CompatibleData {
     }
 
     private getTransferTicketFile(name : string) : string {
-        if (this.version == 1)
+        if (parseFloat(this.version) < 2.0)
             return null;
 
         return this.fileContent(this.dataPath + "/" + name + ".tt.json");
@@ -352,7 +358,7 @@ export class CompatibleData {
     }
 
     public async getTransferTicket(did : string) : Promise<TransferTicket> {
-        if (this.version == 1)
+        if (parseFloat(this.version) < 2.0)
             throw new Exceptions.UnsupportedOperationException("Not exists");
 
         let key = "res:tt:" + did;
@@ -377,7 +383,7 @@ export class CompatibleData {
         await this.getDocument("user2");
         await this.getDocument("user3");
 
-        if (this.version == 2) {
+        if (parseFloat(this.version) >= 2.0) {
             await this.getDocument("user4");
             await this.getDocument("examplecorp");
             await this.getDocument("foobar");
@@ -433,13 +439,12 @@ export class InstantData {
 
             let props = {
                 name: "Test Issuer",
-                nation: "Singapore",
-                language: "English",
+                nationality: "Singapore",
                 email: "issuer@example.com"
             }
 
             let vc = await cb.id("#profile")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .types("BasicProfileCredential", "SelfProclaimedCredential")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -537,14 +542,16 @@ export class InstantData {
             props = {
                 "name": "John",
                 "gender": "Male",
-                "nation": "Singapore",
-                "language": "English",
+                "nationality": "Singapore",
                 "email": "john@example.com",
                 "twitter": "@john"
             }
 
             let vcProfile = await cb.id("#profile")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
+                    .type("https://elastos.org/credentials/profile/v1#ProfileCredential")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -556,8 +563,7 @@ export class InstantData {
             };
 
             let vcEmail = await cb.id("#email")
-                    .type("BasicProfileCredential",
-                            "InternetAccountCredential", "EmailCredential")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -584,12 +590,12 @@ export class InstantData {
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
-                "nation": "Singapore",
+                "nationality": "Singapore",
                 "passpord": "S653258Z07"
             }
 
             let vcPassport = await cb.id(id)
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
                     .properties(props)
                     .seal(TestConfig.storePass);
             vcPassport.getMetadata().setAlias("Passport");
@@ -615,7 +621,7 @@ export class InstantData {
             }
 
             let vcTwitter = await cb.id(id)
-                    .type("InternetAccountCredential", "TwitterCredential")
+                    .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             vcTwitter.getMetadata().setAlias("Twitter");
@@ -640,7 +646,6 @@ export class InstantData {
             let jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
             let vcJson = await cb.id(id)
-                    .type("TestCredential", "JsonCredential")
                     .properties(jsonProps)
                     .seal(TestConfig.storePass);
             vcJson.getMetadata().setAlias("json");
@@ -668,7 +673,7 @@ export class InstantData {
             };
 
             let vc = await cb.id(id)
-                    .type("JobPositionCredential")
+                    .typeWithContext("JobPositionCredential", "https://example.com/credentials/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             await this.testData.store.storeCredential(vc);
@@ -725,13 +730,19 @@ export class InstantData {
             let props = {
                 name: "John",
                 gender: "Male",
-                nation: "Singapore",
-                language: "English",
+                nationality: "Singapore",
                 email: "john@example.com",
                 twitter: "@john"
             };
 
-            await db.createAndAddCredential(TestConfig.storePass, "#profile", props);
+            let types = [
+                "https://elastos.org/credentials/v1#SelfProclaimedCredential",
+                "https://elastos.org/credentials/profile/v1#ProfileCredential",
+                "https://elastos.org/credentials/email/v1#EmailCredential",
+                "https://elastos.org/credentials/social/v1#SocialCredential"
+            ];
+
+            await db.createAndAddCredential(TestConfig.storePass, "#profile", props, types);
 
             doc = await db.seal(TestConfig.storePass);
             await this.testData.store.storeDid(doc);
@@ -782,12 +793,14 @@ export class InstantData {
 
             let props = {
                 name: "Example LLC",
-                website: "https://example.com/",
+                url: "https://example.com/",
                 email: "contact@example.com"
             };
 
             let vc = await cb.id("#profile")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -881,12 +894,14 @@ export class InstantData {
 
             props = {
                 name: "Foo Bar Inc",
-                language: "Chinese",
+                nationality: "China",
                 email: "contact@foobar.com"
             };
 
             let vcProfile = await cb.id("#profile")
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -898,8 +913,7 @@ export class InstantData {
             };
 
             let vcEmail = await cb.id("#email")
-                    .type("BasicProfileCredential",
-                            "InternetAccountCredential", "EmailCredential")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -932,7 +946,7 @@ export class InstantData {
             };
 
             let vc = await cb.id(id)
-                    .type("BasicProfileCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             await this.testData.store.storeCredential(vc);
@@ -963,7 +977,7 @@ export class InstantData {
             };
 
             let vc = await cb.id(id)
-                    .type("LicenseCredential")
+                    .typeWithContext("LicenseCredential", "https://example.com/credentials/license/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             await this.testData.store.storeCredential(vc);
@@ -1065,7 +1079,7 @@ export class InstantData {
             };
 
             let vc = await cb.id(id)
-                    .type("InternetAccountCredential")
+                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             await this.testData.store.storeCredential(vc);

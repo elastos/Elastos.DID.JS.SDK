@@ -73,30 +73,31 @@ describe('TransferTicket Tests', () => {
             expect(parsedTicket.getProofs()[i].equals(ticket.getProofs()[i]));
     });
 
-    test('testMultiSignatureTicket', async () => {
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
+    ["2", "2.2"].forEach((version) => {
+        test('testMultiSignatureTicket', async () => {
+            let cd = testData.getCompatibleData(version);
+            await cd.loadAll();
 
-        let tt = await cd.getTransferTicket("foobar");
+            let tt = await cd.getTransferTicket("foobar");
 
-        expect(tt.getSubject().equals(new DID("did:elastos:foobar"))).toBeTruthy();
-        expect(tt.getTo().equals(new DID("did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d"))).toBeTruthy();
-        expect(tt.getTransactionId()).toEqual("4184a30d785a3579e944fd48e40e3cdf");
-        expect(tt.getProofs().length).toBe(2);
-        expect(tt.isGenuine()).toBeTruthy();
+            expect(tt.getSubject().equals(new DID("did:elastos:foobar"))).toBeTruthy();
+            expect(tt.getTo().equals(new DID("did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d"))).toBeTruthy();
+            expect(tt.getProofs().length).toBe(2);
+            expect(tt.isGenuine()).toBeTruthy();
+        });
     });
 
-    test('testTicket', async () => {
-        let cd = testData.getCompatibleData(2);
-        await cd.loadAll();
+    ["2", "2.2"].forEach((version) => {
+        test('testTicket', async () => {
+            let cd = testData.getCompatibleData(version);
+            await cd.loadAll();
 
-        let tt = await cd.getTransferTicket("baz");
+            let tt = await cd.getTransferTicket("baz");
 
-        expect(tt.getSubject().equals(new DID("did:elastos:baz"))).toBeTruthy();
-        expect(tt.getTo().equals(new DID("did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d"))).toBeTruthy();
-        expect(tt.getTransactionId()).toEqual("f54c02fd7dcdd2be48a6353998a04811");
-        expect(tt.getProofs().length).toBe(1);
-        expect(tt.isGenuine()).toBeTruthy();
+            expect(tt.getSubject().equals(new DID("did:elastos:baz"))).toBeTruthy();
+            expect(tt.getTo().equals(new DID("did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d"))).toBeTruthy();
+            expect(tt.getProofs().length).toBe(1);
+            expect(tt.isGenuine()).toBeTruthy();
+        });
     });
-
 });
