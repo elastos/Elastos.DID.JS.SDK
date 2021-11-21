@@ -406,6 +406,7 @@ describe('IDChainOperations Tests', () => {
                     .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
                     .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
                     .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
+                    .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
 

@@ -342,6 +342,11 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
     public toJSON(key: string = null): JSONObject {
         let json: JSONObject = {};
+
+        if (this.context != null && this.context.length > 0)
+            json["@context"] = this.context.length == 1 ? this.context[0] :
+                Array.from(this.context);
+
         if (this.id)
             json.id = this.id.toString();
         json.type = this.type.length == 1 ? this.type[0] : this.type;
@@ -359,6 +364,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
     }
 
     protected fromJSON(json: JSONObject, context: DID = null): void {
+        this.context = this.getContext("@context", json["@context"], {mandatory: false, nullable: false, defaultValue: [] });
         this.holder = this.getDid("holder", json.holder, { mandatory: false, nullable: false, defaultValue: null });
         this.id = this.getDidUrl("id", json.id, { mandatory: false, nullable: false, context: this.holder, defaultValue: null });
         this.type = this.getStrings("type", json.type,
@@ -579,7 +585,7 @@ export namespace VerifiablePresentation {
          * @param types the set of types
          * @return the Builder object
          */
-        public types(...types: string[]): Builder {
+        public types(types: string[]): Builder {
             this.checkNotSealed();
             checkArgument(types != null && types.length > 0, "Invalid types");
 

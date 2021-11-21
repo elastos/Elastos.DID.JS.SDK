@@ -648,8 +648,8 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         let context: DID = key ? new DID(key) : null;
 
         let json: JSONObject = {};
-        if (this.context.length > 0)
-            json.context = this.context.length == 1 ? this.context[0] :
+        if (this.context != null && this.context.length > 0)
+            json["@context"] = this.context.length == 1 ? this.context[0] :
                 Array.from(this.context);
 
         json.id = this.id.toString(context);
@@ -678,7 +678,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         if (!holder)
             throw new MalformedCredentialException("Missing property: subject.id");
 
-        this.context = this.getContext("@context", json.context, {mandatory: false, nullable: false, defaultValue: [] });
+        this.context = this.getContext("@context", json["@context"], {mandatory: false, nullable: false, defaultValue: [] });
         this.id = this.getDidUrl("id", json.id, { mandatory: true, nullable: false, context: holder });
         this.type = this.getStrings("type", json.type, { mandatory: true, nullable: false });
         this.issuer = this.getDid("issuer", json.issuer, { mandatory: false, nullable: false, defaultValue: holder });
@@ -921,6 +921,7 @@ export namespace VerifiableCredential {
 
             this.credential = new VerifiableCredential();
             this.credential.issuer = issuer.getDid();
+
             this.setDefaultType();
         }
 
@@ -996,10 +997,10 @@ export namespace VerifiableCredential {
 			}
 
 			if (this.credential.type == null)
-            this.credential.type = [];
+                this.credential.type = [];
 
 			if (!this.credential.type.includes(type))
-            this.credential.type.push(type);
+                this.credential.type.push(type);
 
 			return this;
 		}
@@ -1044,13 +1045,14 @@ export namespace VerifiableCredential {
 		 * @param types the type names
 		 * @return the Builder instance for method chaining
 		 */
-		public types(... types: string[]): Builder {
+		public types(...types: string[]): Builder {
 			if (types == null || types.length == 0)
 				return this;
 
 			this.checkNotSealed();
-			for (let t of types)
+			for (let t of types) {
 				this.type(t);
+            }
 
 			return this;
 		}
@@ -1139,6 +1141,9 @@ export namespace VerifiableCredential {
         }
 
         private sanitize() {
+            if (this.credential.context == null || this.credential.context.length == 0)
+                this.credential.context = [];
+
             if (this.credential.id == null)
                 throw new MalformedCredentialException("Missing credential id");
 

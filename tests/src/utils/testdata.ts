@@ -169,13 +169,13 @@ export class CompatibleData {
 
         if (!runningInBrowser()) {
             // NodeJS
-            this.dataPath = join(__dirname, "..", "data/v" + version.toString() + "/testdata");
-            this.storePath = join(__dirname, "..", "data/v" + version.toString() + "/teststore");
+            this.dataPath = join(__dirname, "..", "data/v" + version + "/testdata");
+            this.storePath = join(__dirname, "..", "data/v" + version + "/teststore");
         }
         else {
             // Browser
-            this.dataPath = "/testresources/data/v" + version.toString() + "/testdata";
-            this.storePath = "/testresources/data/v" + version.toString() + "/teststore";
+            this.dataPath = "/testresources/data/v" + version + "/testdata";
+            this.storePath = "/testresources/data/v" + version + "/teststore";
         }
         this.version = version;
     }
@@ -444,7 +444,8 @@ export class InstantData {
             }
 
             let vc = await cb.id("#profile")
-                    .types("BasicProfileCredential", "SelfProclaimedCredential")
+                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -655,7 +656,6 @@ export class InstantData {
 
         return this.vcUser1Json;
     }
-
 
     public async getUser1JobPositionCredential(): Promise<VerifiableCredential> {
         if (this.vcUser1JobPosition == null) {

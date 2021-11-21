@@ -118,6 +118,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      */
     public static clone(doc: DIDDocument, withProof: boolean) {
         let newInstance: DIDDocument = new DIDDocument(doc.subject);
+        newInstance.context = doc.context;
         newInstance.controllers = doc.controllers;
         newInstance.controllerDocs = doc.controllerDocs;
         newInstance.effectiveController = doc.effectiveController;
@@ -799,8 +800,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         let json: JSONObject = {};
         if (this.context.length > 0)
-            json.context = this.context.length == 1 ? this.context[0] :
-                Array.from(this.context);
+            json["@context"] = this.context.length == 1 ? this.context[0] :
+                    Array.from(this.context);
 
         json.id = this.subject.toString();
 
@@ -873,7 +874,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 
     private fromJSONOnly(json: JSONObject, context: DID = null): void {
-        this.context = this.getContext("@context", json.context, {mandatory: false, nullable: false, defaultValue: [] });
+        this.context = this.getContext("@context", json["@context"], {mandatory: false, nullable: false, defaultValue: [] });
         this.subject = this.getDid("id", json.id, { mandatory: false, nullable: false, defaultValue: null });
         context = this.subject; // set the JSON parser context
         this.controllers = this.getDids("controller", json.controller, { mandatory: false, nullable: false, defaultValue: [] });
@@ -3097,7 +3098,7 @@ export namespace DIDDocument {
          * @throws InvalidKeyException there is no authentication key.
          */
         // Java: addCredential()
-        public async createAndAddCredential(storepass: string, id: DIDURL | string, subject: JSONObject | string = null, types: string[] = null, expirationDate: Date = null): Promise<Builder> {
+        public async createAndAddCredential(storepass: string, id: DIDURL | string, subject: JSONObject | string = null, types: string[] = [], expirationDate: Date = null): Promise<Builder> {
             this.checkNotSealed();
             checkArgument(id != null, "Invalid publicKey id");
 
@@ -3286,6 +3287,9 @@ export namespace DIDDocument {
                         throw new MalformedDocumentException("Invalid multisig");
                 }
             }
+
+            if (this.document.context == null || this.document.context.length == 0)
+                this.document.context = [];
 
             let sigs = this.document.multisig == null ? 1 : this.document.multisig.m();
             if (this.document.proofs != null && this.document.proofs.size == sigs)

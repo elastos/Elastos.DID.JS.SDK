@@ -33,6 +33,7 @@ import {
 } from "@elastosfoundation/did-js-sdk";
 import { TestData } from "./utils/testdata";
 import { TestConfig } from "./utils/testconfig";
+import each from "jest-each";
 
 const log = new Logger("VerifiableCredentialTest");
 
@@ -290,9 +291,11 @@ describe('let Tests', () => {
             expect(normalizedJson).toEqual(compact.toString(true));
             expect(normalizedJson).toEqual(credential.toString(true));
 
-            expect(compactJson).toEqual(normalized.toString(false));
-            expect(compactJson).toEqual(compact.toString(false));
-            expect(compactJson).toEqual(credential.toString(false));
+            if (cd.isLatestVersion()) {
+                expect(compactJson).toEqual(normalized.toString(false));
+                expect(compactJson).toEqual(compact.toString(false));
+                expect(compactJson).toEqual(credential.toString(false));
+            }
         }
     });
 
@@ -333,56 +336,52 @@ describe('let Tests', () => {
         }
     });
 
-    test('testDeclareCredential', async () => {
-        let csvSource = [
-            {version: "1", did:"user1", vc:"twitter"},
-            {version: "1", did:"user1", vc:"passport"},
-            {version: "1", did:"user1", vc:"json"},
-            {version: "2", did:"user1", vc:"twitter"},
-            {version: "2", did:"user1", vc:"passport"},
-            {version: "2", did:"user1", vc:"json"},
-            {version: "2", did:"foobar", vc:"license"},
-            {version: "2", did:"foobar", vc:"services"},
-            {version: "2", did:"foo", vc:"email"},
-            {version: "2.2", did:"user1", vc:"twitter"},
-            {version: "2.2", did:"user1", vc:"passport"},
-            {version: "2.2", did:"user1", vc:"json"},
-            {version: "2.2", did:"foobar", vc:"license"},
-            {version: "2.2", did:"foobar", vc:"services"},
-            {version: "2.2", did:"foo", vc:"email"}
-        ];
+    each([
+        [ "1", "user1", "twitter" ],
+        [ "1", "user1", "passport" ],
+        [ "1", "user1", "json" ],
+        [ "2", "user1", "twitter" ],
+        [ "2", "user1", "passport" ],
+        [ "2", "user1", "json" ],
+        [ "2", "foobar", "license" ],
+        [ "2", "foobar", "services" ],
+        [ "2", "foo", "email" ],
+        [ "2.2", "user1", "twitter" ],
+        [ "2.2", "user1", "passport" ],
+        [ "2.2", "user1", "json" ],
+        [ "2.2", "foobar", "license" ],
+        [ "2.2", "foobar", "services" ],
+        [ "2.2", "foo", "email" ]
+    ]).test('testDeclareCredential', async (version, did, vc) => {
+        let cd = testData.getCompatibleData(version);
+        await cd.loadAll();
 
-        for (let csv of csvSource) {
-            let cd = testData.getCompatibleData(csv.version);
-            await cd.loadAll();
-
-            let credential = await cd.getCredential(csv.did, csv.vc);
-            // Sign key for customized DID
-            let doc = await credential.getSubject().getId().resolve();
-            let signKey = null;
-            if (doc.getControllerCount() > 1) {
-                let index = (randomInt(Number.MAX_VALUE)) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            await credential.declare(signKey, TestConfig.storePass);
-
-            let id = credential.getId();
-            let resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            let metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeFalsy();
-
-            let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toEqual(1);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
+        let credential = await cd.getCredential(did, vc);
+        // Sign key for customized DID
+        let doc = await credential.getSubject().getId().resolve();
+        let signKey = null;
+        if (doc.getControllerCount() > 1) {
+            let index = (randomInt(Number.MAX_VALUE)) % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
         }
+
+        await credential.declare(signKey, TestConfig.storePass);
+
+        let id = credential.getId();
+        let resolved = await VerifiableCredential.resolve(id);
+        expect(resolved).not.toBeNull();
+        expect(credential.toString()).toEqual(resolved.toString());
+
+        let metadata = resolved.getMetadata();
+        expect(metadata).not.toBeNull();
+        expect(metadata.getPublished()).not.toBeNull();
+        expect(metadata.getTransactionId()).not.toBeNull();
+        expect(await resolved.isRevoked()).toBeFalsy();
+
+        let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
+        expect(bio).not.toBeNull();
+        expect(bio.getAllTransactions().length).toEqual(1);
+        expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
     });
 
     [false, true].forEach((contextEnabled) => {
@@ -434,378 +433,354 @@ describe('let Tests', () => {
         });
     });
 
-    test('testRevokeCredential', async () => {
-        let csvSource = [
-            {version: "1", did:"user1", vc:"twitter"},
-            {version: "1", did:"user1", vc:"passport"},
-            {version: "1", did:"user1", vc:"json"},
-            {version: "2", did:"user1", vc:"twitter"},
-            {version: "2", did:"user1", vc:"passport"},
-            {version: "2", did:"user1", vc:"json"},
-            {version: "2", did:"foobar", vc:"license"},
-            {version: "2", did:"foobar", vc:"services"},
-            {version: "2", did:"foo", vc:"email"},
-            {version: "2.2", did:"user1", vc:"twitter"},
-            {version: "2.2", did:"user1", vc:"passport"},
-            {version: "2.2", did:"user1", vc:"json"},
-            {version: "2.2", did:"foobar", vc:"license"},
-            {version: "2.2", did:"foobar", vc:"services"},
-            {version: "2.2", did:"foo", vc:"email"}
-        ];
+    each([
+        [ "1", "user1", "twitter" ],
+        [ "1", "user1", "passport" ],
+        [ "1", "user1", "json" ],
+        [ "2", "user1", "twitter" ],
+        [ "2", "user1", "passport" ],
+        [ "2", "user1", "json" ],
+        [ "2", "foobar", "license" ],
+        [ "2", "foobar", "services" ],
+        [ "2", "foo", "email" ],
+        [ "2.2", "user1", "twitter" ],
+        [ "2.2", "user1", "passport" ],
+        [ "2.2", "user1", "json" ],
+        [ "2.2", "foobar", "license" ],
+        [ "2.2", "foobar", "services" ],
+        [ "2.2", "foo", "email" ]
+    ]).test('testRevokeCredential', async (version, did, vc) => {
+        let cd = testData.getCompatibleData(version);
+        await cd.loadAll();
 
-        for (let csv of csvSource) {
-            let cd = testData.getCompatibleData(csv.version);
-            await cd.loadAll();
+        let credential = await cd.getCredential(did, vc);
+        expect(await credential.wasDeclared()).toBeFalsy();
 
-            let credential = await cd.getCredential(csv.did, csv.vc);
-            expect(await credential.wasDeclared()).toBeFalsy();
-
-            // Sign key for customized DID
-            let doc = await credential.getSubject().getId().resolve();
-            let signKey = null;
-            if (doc.getControllerCount() > 1) {
-                let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            await credential.declare(signKey, TestConfig.storePass);
-
-            let id = credential.getId();
-            let resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            let metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeFalsy();
-
-            expect(await credential.wasDeclared()).toBeTruthy();
-
-            await credential.revoke(signKey, null, TestConfig.storePass);
-
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeTruthy();
-
-            let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toBe(2);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
-            expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
+        // Sign key for customized DID
+        let doc = await credential.getSubject().getId().resolve();
+        let signKey = null;
+        if (doc.getControllerCount() > 1) {
+            let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
         }
+
+        await credential.declare(signKey, TestConfig.storePass);
+
+        let id = credential.getId();
+        let resolved = await VerifiableCredential.resolve(id);
+        expect(resolved).not.toBeNull();
+        expect(credential.toString()).toEqual(resolved.toString());
+
+        let metadata = resolved.getMetadata();
+        expect(metadata).not.toBeNull();
+        expect(metadata.getPublished()).not.toBeNull();
+        expect(metadata.getTransactionId()).not.toBeNull();
+        expect(await resolved.isRevoked()).toBeFalsy();
+
+        expect(await credential.wasDeclared()).toBeTruthy();
+
+        await credential.revoke(signKey, null, TestConfig.storePass);
+
+        expect(credential.toString()).toEqual(resolved.toString());
+
+        metadata = resolved.getMetadata();
+        expect(metadata).not.toBeNull();
+        expect(metadata.getPublished()).not.toBeNull();
+        expect(metadata.getTransactionId()).not.toBeNull();
+        expect(await resolved.isRevoked()).toBeTruthy();
+
+        let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
+        expect(bio).not.toBeNull();
+        expect(bio.getAllTransactions().length).toBe(2);
+        expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+        expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
     });
 
-    test('testRevokeCredentialWithDifferentKey', async () => {
-        let csvSource = [
-            {version:"2", did:"foobar", vc:"license"},
-            {version:"2", did:"foobar", vc:"services"},
-            {version:"2", did:"foo", vc:"email"},
-            {version:"2.2", did:"foobar", vc:"license"},
-            {version:"2.2", did:"foobar", vc:"services"},
-            {version:"2.2", did:"foo", vc:"email"}
-        ];
+    each([
+        [ "2", "foobar", "license" ],
+        [ "2", "foobar", "services" ],
+        [ "2", "foo", "email" ],
+        [ "2.2", "foobar", "license" ],
+        [ "2.2", "foobar", "services" ],
+        [ "2.2", "foo", "email" ]
+    ]).test('testRevokeCredentialWithDifferentKey', async (version, did, vc) => {
+        let cd = testData.getCompatibleData(version);
+        await cd.loadAll();
 
-        for (let csv of csvSource) {
-            let cd = testData.getCompatibleData(csv.version);
-            await cd.loadAll();
+        let credential = await cd.getCredential(did, vc);
+        expect(await credential.wasDeclared()).toBeFalsy();
 
-            let credential = await cd.getCredential(csv.did, csv.vc);
-            expect(await credential.wasDeclared()).toBeFalsy();
-
-            // Sign key for customized DID
-            let doc = await credential.getSubject().getId().resolve();
-            let signKey = null;
-            let index = 0;
-            if (doc.getControllerCount() > 1) {
-                index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            await credential.declare(signKey, TestConfig.storePass);
-
-            let id = credential.getId();
-            let resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
-
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            let metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeFalsy();
-
-            expect(await credential.wasDeclared()).toBeTruthy();
-
-            if (doc.getControllerCount() > 1) {
-                index = ++index % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            await credential.revoke(signKey, null, TestConfig.storePass);
-
-            resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
-
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeTruthy();
-
-            let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toBe(2);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
-            expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
+        // Sign key for customized DID
+        let doc = await credential.getSubject().getId().resolve();
+        let signKey = null;
+        let index = 0;
+        if (doc.getControllerCount() > 1) {
+            index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
         }
+
+        await credential.declare(signKey, TestConfig.storePass);
+
+        let id = credential.getId();
+        let resolved = await VerifiableCredential.resolve(id);
+        expect(resolved).not.toBeNull();
+
+        expect(credential.toString()).toEqual(resolved.toString());
+
+        let metadata = resolved.getMetadata();
+        expect(metadata).not.toBeNull();
+        expect(metadata.getPublished()).not.toBeNull();
+        expect(metadata.getTransactionId()).not.toBeNull();
+        expect(await resolved.isRevoked()).toBeFalsy();
+
+        expect(await credential.wasDeclared()).toBeTruthy();
+
+        if (doc.getControllerCount() > 1) {
+            index = ++index % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
+        }
+
+        await credential.revoke(signKey, null, TestConfig.storePass);
+
+        resolved = await VerifiableCredential.resolve(id);
+        expect(resolved).not.toBeNull();
+
+        expect(credential.toString()).toEqual(resolved.toString());
+
+        metadata = resolved.getMetadata();
+        expect(metadata).not.toBeNull();
+        expect(metadata.getPublished()).not.toBeNull();
+        expect(metadata.getTransactionId()).not.toBeNull();
+        expect(await resolved.isRevoked()).toBeTruthy();
+
+        let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
+        expect(bio).not.toBeNull();
+        expect(bio.getAllTransactions().length).toBe(2);
+        expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+        expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
     });
 
-    test('testDeclareAfterRevoke', async () => {
-        let csvSource = [
-            {version: "1", did:"user1", vc:"twitter"},
-            {version: "1", did:"user1", vc:"passport"},
-            {version: "1", did:"user1", vc:"json"},
-            {version: "2", did:"user1", vc:"twitter"},
-            {version: "2", did:"user1", vc:"passport"},
-            {version: "2", did:"user1", vc:"json"},
-            {version: "2", did:"foobar", vc:"license"},
-            {version: "2", did:"foobar", vc:"services"},
-            {version: "2", did:"foo", vc:"email"},
-            {version: "2.2", did:"user1", vc:"twitter"},
-            {version: "2.2", did:"user1", vc:"passport"},
-            {version: "2.2", did:"user1", vc:"json"},
-            {version: "2.2", did:"foobar", vc:"license"},
-            {version: "2.2", did:"foobar", vc:"services"},
-            {version: "2.2", did:"foo", vc:"email"}
-        ];
+    each([
+        [ "1", "user1", "twitter" ],
+        [ "1", "user1", "passport" ],
+        [ "1", "user1", "json" ],
+        [ "2", "user1", "twitter" ],
+        [ "2", "user1", "passport" ],
+        [ "2", "user1", "json" ],
+        [ "2", "foobar", "license" ],
+        [ "2", "foobar", "services" ],
+        [ "2", "foo", "email" ],
+        [ "2.2", "user1", "twitter" ],
+        [ "2.2", "user1", "passport" ],
+        [ "2.2", "user1", "json" ],
+        [ "2.2", "foobar", "license" ],
+        [ "2.2", "foobar", "services" ],
+        [ "2.2", "foo", "email" ]
+    ]).test('testDeclareAfterRevoke', async (version, did, vc) => {
+        let cd = testData.getCompatibleData(version);
+        await cd.loadAll();
 
-        for (let csv of csvSource) {
-            let cd = testData.getCompatibleData(csv.version);
-            await cd.loadAll();
+        let credential = await cd.getCredential(did, vc);
+        expect(await credential.wasDeclared()).toBeFalsy();
+        expect(await credential.isRevoked()).toBeFalsy();
 
-            let credential = await cd.getCredential(csv.did, csv.vc);
-            expect(await credential.wasDeclared()).toBeFalsy();
-            expect(await credential.isRevoked()).toBeFalsy();
-
-            // Sign key for customized DID
-            let doc = await credential.getSubject().getId().resolve();
-            let signKey = null;
-            if (doc.getControllerCount() > 1) {
-                let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            await credential.revoke(signKey, null, TestConfig.storePass);
-
-            expect(await credential.wasDeclared()).toBeFalsy();
-            expect(await credential.isRevoked()).toBeTruthy();
-
-            let resolved = await VerifiableCredential.resolve(credential.getId());
-            expect(resolved).toBeNull();
-
-            expect(async() => await credential.declare(signKey, TestConfig.storePass)).rejects.toThrow(Exceptions.CredentialRevokedException);
-
-            let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toBe(1);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+        // Sign key for customized DID
+        let doc = await credential.getSubject().getId().resolve();
+        let signKey = null;
+        if (doc.getControllerCount() > 1) {
+            let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
         }
+
+        await credential.revoke(signKey, null, TestConfig.storePass);
+
+        expect(await credential.wasDeclared()).toBeFalsy();
+        expect(await credential.isRevoked()).toBeTruthy();
+
+        let resolved = await VerifiableCredential.resolve(credential.getId());
+        expect(resolved).toBeNull();
+
+        expect(async() => await credential.declare(signKey, TestConfig.storePass)).rejects.toThrow(Exceptions.CredentialRevokedException);
+
+        let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
+        expect(bio).not.toBeNull();
+        expect(bio.getAllTransactions().length).toBe(1);
+        expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
     });
 
-    test('testDeclareAfterRevokeWithDifferentKey', async () => {
-        let csvSource = [
-            {version:"2", did:"foobar", vc:"license"},
-            {version:"2", did:"foobar", vc:"services"},
-            {version:"2", did:"foo", vc:"email"},
-            {version:"2.2", did:"foobar", vc:"license"},
-            {version:"2.2", did:"foobar", vc:"services"},
-            {version:"2.2", did:"foo", vc:"email"}
-        ];
+    each([
+        [ "2", "foobar", "license" ],
+        [ "2", "foobar", "services" ],
+        [ "2", "foo", "email" ],
+        [ "2.2", "foobar", "license" ],
+        [ "2.2", "foobar", "services" ],
+        [ "2.2", "foo", "email" ]
+    ]).test('testDeclareAfterRevokeWithDifferentKey', async (version, did, vc) => {
+        let cd = testData.getCompatibleData(version);
+        await cd.loadAll();
 
-        for (let csv of csvSource) {
-            let cd = testData.getCompatibleData(csv.version);
-            await cd.loadAll();
+        let credential = await cd.getCredential(did, vc);
+        expect(await credential.wasDeclared()).toBeFalsy();
+        expect(await credential.isRevoked()).toBeFalsy();
 
-            let credential = await cd.getCredential(csv.did, csv.vc);
-            expect(await credential.wasDeclared()).toBeFalsy();
-            expect(await credential.isRevoked()).toBeFalsy();
-
-            // Sign key for customized DID
-            let doc = await credential.getSubject().getId().resolve();
-            let signKey = null;
-            let index = 0;
-            if (doc.getControllerCount() > 1) {
-                index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            await credential.revoke(signKey, null, TestConfig.storePass);
-
-            expect(await credential.wasDeclared()).toBeFalsy();
-            expect(await credential.isRevoked()).toBeTruthy();
-
-            let resolved = await VerifiableCredential.resolve(credential.getId());
-            expect(resolved).toBeNull();
-
-            if (doc.getControllerCount() > 1) {
-                index = ++index % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            expect(async() => await credential.declare(signKey, TestConfig.storePass)).rejects.toThrow(Exceptions.CredentialRevokedException);
-
-            let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toBe(1);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+        // Sign key for customized DID
+        let doc = await credential.getSubject().getId().resolve();
+        let signKey = null;
+        let index = 0;
+        if (doc.getControllerCount() > 1) {
+            index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
         }
+
+        await credential.revoke(signKey, null, TestConfig.storePass);
+
+        expect(await credential.wasDeclared()).toBeFalsy();
+        expect(await credential.isRevoked()).toBeTruthy();
+
+        let resolved = await VerifiableCredential.resolve(credential.getId());
+        expect(resolved).toBeNull();
+
+        if (doc.getControllerCount() > 1) {
+            index = ++index % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
+        }
+
+        expect(async() => await credential.declare(signKey, TestConfig.storePass)).rejects.toThrow(Exceptions.CredentialRevokedException);
+
+        let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
+        expect(bio).not.toBeNull();
+        expect(bio.getAllTransactions().length).toBe(1);
+        expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
     });
 
-    test('testDeclareAfterRevokeByIssuer', async () => {
-        let csvSource = [
-            {version: "1", did:"user1", vc:"twitter"},
-            {version: "1", did:"user1", vc:"passport"},
-            {version: "1", did:"user1", vc:"json"},
-            {version: "2", did:"user1", vc:"twitter"},
-            {version: "2", did:"user1", vc:"passport"},
-            {version: "2", did:"user1", vc:"json"},
-            {version: "2", did:"foobar", vc:"license"},
-            {version: "2", did:"foobar", vc:"services"},
-            {version: "2", did:"foo", vc:"email"},
-            {version: "2.2", did:"user1", vc:"twitter"},
-            {version: "2.2", did:"user1", vc:"passport"},
-            {version: "2.2", did:"user1", vc:"json"},
-            {version: "2.2", did:"foobar", vc:"license"},
-            {version: "2.2", did:"foobar", vc:"services"},
-            {version: "2.2", did:"foo", vc:"email"}
-        ];
+    each([
+        [ "1", "user1", "twitter" ],
+        [ "1", "user1", "passport" ],
+        [ "1", "user1", "json" ],
+        [ "2", "user1", "twitter" ],
+        [ "2", "user1", "passport" ],
+        [ "2", "user1", "json" ],
+        [ "2", "foobar", "license" ],
+        [ "2", "foobar", "services" ],
+        [ "2", "foo", "email" ],
+        [ "2.2", "user1", "twitter" ],
+        [ "2.2", "user1", "passport" ],
+        [ "2.2", "user1", "json" ],
+        [ "2.2", "foobar", "license" ],
+        [ "2.2", "foobar", "services" ],
+        [ "2.2", "foo", "email" ]
+    ]).test('testDeclareAfterRevokeByIssuer', async (version, did, vc) => {
+        let cd = testData.getCompatibleData(version);
+        await cd.loadAll();
 
-        for (let csv of csvSource) {
-            let cd = testData.getCompatibleData(csv.version);
-            await cd.loadAll();
+        let credential = await cd.getCredential(did, vc);
+        expect(await credential.wasDeclared()).toBeFalsy();
+        expect(await credential.isRevoked()).toBeFalsy();
 
-            let credential = await cd.getCredential(csv.did, csv.vc);
-            expect(await credential.wasDeclared()).toBeFalsy();
-            expect(await credential.isRevoked()).toBeFalsy();
+        // Sign key for issuer
+        let issuer = await credential.getIssuer().resolve();
+        let signKey = null;
+        if (issuer.getControllerCount() > 1) {
+            let index = randomInt(Number.MAX_VALUE) % issuer.getControllerCount();
+            signKey = (await issuer.getControllers()[index].resolve()).getDefaultPublicKeyId();
+        } else
+            signKey = issuer.getDefaultPublicKeyId();
 
-            // Sign key for issuer
-            let issuer = await credential.getIssuer().resolve();
-            let signKey = null;
-            if (issuer.getControllerCount() > 1) {
-                let index = randomInt(Number.MAX_VALUE) % issuer.getControllerCount();
-                signKey = (await issuer.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            } else
-                signKey = issuer.getDefaultPublicKeyId();
+        await credential.revoke(signKey, null, TestConfig.storePass);
+        expect(await credential.wasDeclared()).toBeFalsy();
+        expect(await credential.isRevoked()).toBeTruthy();
 
-            await credential.revoke(signKey, null, TestConfig.storePass);
-            expect(await credential.wasDeclared()).toBeFalsy();
-            expect(await credential.isRevoked()).toBeTruthy();
+        let resolved = await VerifiableCredential.resolve(credential.getId());
+        expect(resolved).toBeNull();
 
-            let resolved = await VerifiableCredential.resolve(credential.getId());
-            expect(resolved).toBeNull();
-
-            let doc = await credential.getSubject().getId().resolve();
-            if (doc.getControllerCount() > 1) {
-                let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            expect(async() => await credential.declare(signKey, TestConfig.storePass)).rejects.toThrow(Exceptions.CredentialRevokedException);
-
-            let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toBe(1);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+        let doc = await credential.getSubject().getId().resolve();
+        if (doc.getControllerCount() > 1) {
+            let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
         }
+
+        expect(async() => await credential.declare(signKey, TestConfig.storePass)).rejects.toThrow(Exceptions.CredentialRevokedException);
+
+        let bio = await VerifiableCredential.resolveBiography(credential.getId(), credential.getIssuer());
+        expect(bio).not.toBeNull();
+        expect(bio.getAllTransactions().length).toBe(1);
+        expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
     });
 
-    test('testDeclareAfterInvalidRevoke', async () => {
-        let csvSource = [
-            {version: "1", did:"user1", vc:"twitter"},
-            {version: "1", did:"user1", vc:"passport"},
-            {version: "1", did:"user1", vc:"json"},
-            {version: "2", did:"user1", vc:"twitter"},
-            {version: "2", did:"user1", vc:"passport"},
-            {version: "2", did:"user1", vc:"json"},
-            {version: "2", did:"foobar", vc:"license"},
-            {version: "2", did:"foobar", vc:"services"},
-            {version: "2", did:"foo", vc:"email"},
-            {version: "2.2", did:"user1", vc:"twitter"},
-            {version: "2.2", did:"user1", vc:"passport"},
-            {version: "2.2", did:"user1", vc:"json"},
-            {version: "2.2", did:"foobar", vc:"license"},
-            {version: "2.2", did:"foobar", vc:"services"},
-            {version: "2.2", did:"foo", vc:"email"}
-        ];
+    each([
+        [ "1", "user1", "twitter" ],
+        [ "1", "user1", "passport" ],
+        [ "1", "user1", "json" ],
+        [ "2", "user1", "twitter" ],
+        [ "2", "user1", "passport" ],
+        [ "2", "user1", "json" ],
+        [ "2", "foobar", "license" ],
+        [ "2", "foobar", "services" ],
+        [ "2", "foo", "email" ],
+        [ "2.2", "user1", "twitter" ],
+        [ "2.2", "user1", "passport" ],
+        [ "2.2", "user1", "json" ],
+        [ "2.2", "foobar", "license" ],
+        [ "2.2", "foobar", "services" ],
+        [ "2.2", "foo", "email" ]
+    ]).test('testDeclareAfterInvalidRevoke', async (version, did, vc) => {
+        let cd = testData.getCompatibleData(version);
+        let sd = testData.getInstantData();
+        await cd.loadAll();
 
-        for (let csv of csvSource) {
-            let cd = testData.getCompatibleData(csv.version);
-            let sd = testData.getInstantData();
-            await cd.loadAll();
+        let credential = await cd.getCredential(did, vc);
+        let id = credential.getId();
+        expect(await credential.wasDeclared()).toBeFalsy();
+        expect(await credential.isRevoked()).toBeFalsy();
 
-            let credential = await cd.getCredential(csv.did, csv.vc);
-            let id = credential.getId();
-            expect(await credential.wasDeclared()).toBeFalsy();
-            expect(await credential.isRevoked()).toBeFalsy();
+        let doc = await sd.getUser1Document();
+        await VerifiableCredential.revoke(id, doc, null, TestConfig.storePass);
+        expect(await credential.wasDeclared()).toBeFalsy();
+        expect(await credential.isRevoked()).toBeFalsy();
+        expect(await VerifiableCredential.resolve(id)).toBeNull();
+        expect(await VerifiableCredential.resolve(id, doc.getSubject())).toBeNull();
 
-            let doc = await sd.getUser1Document();
-            await VerifiableCredential.revoke(id, doc, null, TestConfig.storePass);
-            expect(await credential.wasDeclared()).toBeFalsy();
-            expect(await credential.isRevoked()).toBeFalsy();
-            expect(await VerifiableCredential.resolve(id)).toBeNull();
-            expect(await VerifiableCredential.resolve(id, doc.getSubject())).toBeNull();
+        doc = await credential.getSubject().getId().resolve();
+        expect(doc).not.toBeNull();
 
-            doc = await credential.getSubject().getId().resolve();
-            expect(doc).not.toBeNull();
-
-            let signKey = null;
-            if (doc.getControllerCount() > 1) {
-                let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
-                signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
-            }
-
-            await credential.declare(signKey, TestConfig.storePass);
-
-            let resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
-
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            let metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeFalsy();
-
-            expect(await credential.wasDeclared()).toBeTruthy();
-
-            await credential.revoke(signKey, null, TestConfig.storePass);
-
-            resolved = await VerifiableCredential.resolve(id);
-            expect(resolved).not.toBeNull();
-            expect(credential.toString()).toEqual(resolved.toString());
-
-            metadata = resolved.getMetadata();
-            expect(metadata).not.toBeNull();
-            expect(metadata.getPublished()).not.toBeNull();
-            expect(metadata.getTransactionId()).not.toBeNull();
-            expect(await resolved.isRevoked()).toBeTruthy();
-
-            let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
-            expect(bio).not.toBeNull();
-            expect(bio.getAllTransactions().length).toBe(2);
-            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
-            expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
+        let signKey = null;
+        if (doc.getControllerCount() > 1) {
+            let index = randomInt(Number.MAX_VALUE) % doc.getControllerCount();
+            signKey = (await doc.getControllers()[index].resolve()).getDefaultPublicKeyId();
         }
+
+        await credential.declare(signKey, TestConfig.storePass);
+
+        let resolved = await VerifiableCredential.resolve(id);
+        expect(resolved).not.toBeNull();
+
+        expect(credential.toString()).toEqual(resolved.toString());
+
+        let metadata = resolved.getMetadata();
+        expect(metadata).not.toBeNull();
+        expect(metadata.getPublished()).not.toBeNull();
+        expect(metadata.getTransactionId()).not.toBeNull();
+        expect(await resolved.isRevoked()).toBeFalsy();
+
+        expect(await credential.wasDeclared()).toBeTruthy();
+
+        await credential.revoke(signKey, null, TestConfig.storePass);
+
+        resolved = await VerifiableCredential.resolve(id);
+        expect(resolved).not.toBeNull();
+        expect(credential.toString()).toEqual(resolved.toString());
+
+        metadata = resolved.getMetadata();
+        expect(metadata).not.toBeNull();
+        expect(metadata.getPublished()).not.toBeNull();
+        expect(metadata.getTransactionId()).not.toBeNull();
+        expect(await resolved.isRevoked()).toBeTruthy();
+
+        let bio = await VerifiableCredential.resolveBiography(id, credential.getIssuer());
+        expect(bio).not.toBeNull();
+        expect(bio.getAllTransactions().length).toBe(2);
+        expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+        expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.DECLARE));
     });
 
     [false, true].forEach((contextEnabled) => {

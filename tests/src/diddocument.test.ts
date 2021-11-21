@@ -1748,9 +1748,13 @@ describe('DIDDocument Tests', () => {
 
             props = svcs[0].getProperties();
             expect(svcs.length).toBe(1);
-            expect(Object.keys(props).length).toBe(12);
-            expect(props["foobar"]).toEqual("lalala...")
-            expect(props["FOOBAR"]).toEqual("Lalala...")
+            if (parseFloat(version) < 2.0) {
+                expect(props).toBeNull();
+            } else {
+                expect(Object.keys(props).length).toBe(12);
+                expect(props["foobar"]).toEqual("lalala...");
+                expect(props["FOOBAR"]).toEqual("Lalala...");
+            }
 
             // Service not exist, should return a empty list.
             svcs = doc.selectServices("#notExistService",
