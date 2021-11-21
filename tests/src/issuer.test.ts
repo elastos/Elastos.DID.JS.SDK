@@ -91,9 +91,9 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#testCredential")
-                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
-                .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
+                .typeWithContext("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
                 .properties(props)
                 .seal(TestConfig.storePass);
 
@@ -132,9 +132,9 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#myCredential")
-                .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                 .properties(props)
                 .seal(TestConfig.storePass);
 
@@ -173,9 +173,9 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#testCredential")
-                .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
-                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .typeWithContext("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                 .properties(props)
                 .seal(TestConfig.storePass);
 
@@ -216,9 +216,9 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc = await cb.id("#testCredential")
-                .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
-                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .typeWithContext("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                 .properties(props)
                 .seal(TestConfig.storePass);
 
@@ -257,9 +257,9 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")
-                .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-                .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                 .properties(props)
                 .seal(TestConfig.storePass);
 
@@ -290,8 +290,8 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")
-                .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
                 .properties(props)
                 .seal(TestConfig.storePass);
 
@@ -323,8 +323,8 @@ describe("Issuer Tests", ()=>{
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")
-                .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-                .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
                 .property("nationality", "Singapore")
                 .seal(TestConfig.storePass);
 

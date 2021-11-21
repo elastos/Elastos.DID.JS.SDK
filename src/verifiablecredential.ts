@@ -58,7 +58,7 @@ const log = new Logger("VerifiableCredential");
  */
 export class VerifiableCredential extends DIDEntity<VerifiableCredential> implements DIDObject<string> {
     public static W3C_CREDENTIAL_CONTEXT = "https://www.w3.org/2018/credentials/v1";
-    public static ELASTOS_CREDENTIAL_CONTEXT = "https://elastos.org/credentials/v1";
+    public static ELASTOS_CREDENTIAL_CONTEXT = "https://ns.elastos.org/credentials/v1";
     public static DEFAULT_CREDENTIAL_TYPE = "VerifiableCredential";
 
     public context?: string[];

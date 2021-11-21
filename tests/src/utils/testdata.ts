@@ -444,8 +444,8 @@ export class InstantData {
             }
 
             let vc = await cb.id("#profile")
-                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -549,10 +549,10 @@ export class InstantData {
             }
 
             let vcProfile = await cb.id("#profile")
-                    .type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
-                    .type("https://elastos.org/credentials/profile/v1#ProfileCredential")
-                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
-                    .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
+                    .type("https://ns.elastos.org/credentials/v1#SelfProclaimedCredential")
+                    .type("https://ns.elastos.org/credentials/profile/v1#ProfileCredential")
+                    .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
+                    .typeWithContext("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -564,7 +564,7 @@ export class InstantData {
             };
 
             let vcEmail = await cb.id("#email")
-                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -596,7 +596,7 @@ export class InstantData {
             }
 
             let vcPassport = await cb.id(id)
-                    .type("https://elastos.org/credentials/v1#SelfProclaimedCredential")
+                    .type("https://ns.elastos.org/credentials/v1#SelfProclaimedCredential")
                     .properties(props)
                     .seal(TestConfig.storePass);
             vcPassport.getMetadata().setAlias("Passport");
@@ -622,7 +622,7 @@ export class InstantData {
             }
 
             let vcTwitter = await cb.id(id)
-                    .typeWithContext("SocialCredential", "https://elastos.org/credentials/social/v1")
+                    .typeWithContext("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             vcTwitter.getMetadata().setAlias("Twitter");
@@ -736,10 +736,10 @@ export class InstantData {
             };
 
             let types = [
-                "https://elastos.org/credentials/v1#SelfProclaimedCredential",
-                "https://elastos.org/credentials/profile/v1#ProfileCredential",
-                "https://elastos.org/credentials/email/v1#EmailCredential",
-                "https://elastos.org/credentials/social/v1#SocialCredential"
+                "https://ns.elastos.org/credentials/v1#SelfProclaimedCredential",
+                "https://ns.elastos.org/credentials/profile/v1#ProfileCredential",
+                "https://ns.elastos.org/credentials/email/v1#EmailCredential",
+                "https://ns.elastos.org/credentials/social/v1#SocialCredential"
             ];
 
             await db.createAndAddCredential(TestConfig.storePass, "#profile", props, types);
@@ -798,9 +798,9 @@ export class InstantData {
             };
 
             let vc = await cb.id("#profile")
-                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                    .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -899,9 +899,9 @@ export class InstantData {
             };
 
             let vcProfile = await cb.id("#profile")
-                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-                    .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                    .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                    .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -913,7 +913,7 @@ export class InstantData {
             };
 
             let vcEmail = await cb.id("#email")
-                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
 
@@ -946,7 +946,7 @@ export class InstantData {
             };
 
             let vc = await cb.id(id)
-                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             await this.testData.store.storeCredential(vc);
@@ -1079,7 +1079,7 @@ export class InstantData {
             };
 
             let vc = await cb.id(id)
-                    .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+                    .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
             await this.testData.store.storeCredential(vc);
