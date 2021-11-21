@@ -238,6 +238,7 @@ export abstract class DIDEntity<T> {
 
         throw new DIDSyntaxException("Invalid property value: " + name + ", type error");
     }
+
     protected getContext(name: string, value: any, option: ValueOptions = {} as ValueOptions): string[] | null {
         if (typeof value === 'undefined') {
             if (option.mandatory)
@@ -252,10 +253,6 @@ export abstract class DIDEntity<T> {
 
             return option.defaultValue ? option.defaultValue as string[] : null;
         }
-
-        if (typeof value === 'string')
-            return [ value ];
-
 
         if (Array.isArray(value)) {
             let context = Array.from(value, (s) => {

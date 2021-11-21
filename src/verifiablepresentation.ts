@@ -344,8 +344,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         let json: JSONObject = {};
 
         if (this.context != null && this.context.length > 0)
-            json["@context"] = this.context.length == 1 ? this.context[0] :
-                Array.from(this.context);
+            json["@context"] = Array.from(this.context);
 
         if (this.id)
             json.id = this.id.toString();
@@ -502,82 +501,82 @@ export namespace VerifiablePresentation {
         }
 
         private setDefaultType(): void {
-			this.checkNotSealed();
+            this.checkNotSealed();
 
-			if (Features.isEnabledJsonLdContext()) {
-				if (this.presentation.context == null)
+            if (Features.isEnabledJsonLdContext()) {
+                if (this.presentation.context == null)
                     this.presentation.context = [];
 
-				if (!this.presentation.context.includes(VerifiableCredential.W3C_CREDENTIAL_CONTEXT))
+                if (!this.presentation.context.includes(VerifiableCredential.W3C_CREDENTIAL_CONTEXT))
                     this.presentation.context.push(VerifiableCredential.W3C_CREDENTIAL_CONTEXT);
 
-				if (!this.presentation.context.includes(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT))
+                if (!this.presentation.context.includes(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT))
                     this.presentation.context.push(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT);
-			}
+            }
 
-			if (this.presentation.type == null)
+            if (this.presentation.type == null)
                 this.presentation.type = [];
 
-			if (!this.presentation.type.includes(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE))
+            if (!this.presentation.type.includes(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE))
                 this.presentation.type.push(VerifiablePresentation.DEFAULT_PRESENTATION_TYPE);
-		}
+        }
 
         /**
-		 * Add a new presentation type.
-		 *
-		 * @param type the type name
-		 * @param context the JSON-LD context for type, or null if not
-		 * 		  enabled the JSON-LD feature
-		 * @return the Builder instance for method chaining
-		 */
-		public typeWithContext(type : string, context : string): Builder {
-			this.checkNotSealed();
-			checkEmpty(type, "Invalid type: " + type);
+         * Add a new presentation type.
+         *
+         * @param type the type name
+         * @param context the JSON-LD context for type, or null if not
+         * 		  enabled the JSON-LD feature
+         * @return the Builder instance for method chaining
+         */
+        public typeWithContext(type : string, context : string): Builder {
+            this.checkNotSealed();
+            checkEmpty(type, "Invalid type: " + type);
 
-			if (Features.isEnabledJsonLdContext()) {
-				checkEmpty(context, "Invalid context: " + context);
+            if (Features.isEnabledJsonLdContext()) {
+                checkEmpty(context, "Invalid context: " + context);
 
-				if (this.presentation.context == null)
+                if (this.presentation.context == null)
                     this.presentation.context = [];
 
-				if (!this.presentation.context.includes(context))
+                if (!this.presentation.context.includes(context))
                     this.presentation.context.push(context);
-			}
+            }
 
-			if (this.presentation.type == null)
+            if (this.presentation.type == null)
                 this.presentation.type = [];
 
-			if (!this.presentation.type.includes(type))
+            if (!this.presentation.type.includes(type))
                 this.presentation.type.push(type);
 
-			return this;
-		}
+            return this;
+        }
 
-		/**
-		 * Add a new presentation type.
-		 *
-		 * If enabled the JSON-LD feature, the type should be a full type URI:
-		 *   [scheme:]scheme-specific-part#fragment,
-		 * [scheme:]scheme-specific-part should be the context URL,
-		 * the fragment should be the type name.
-		 *
-		 * Otherwise, the context URL part and # symbol could be omitted or
-		 * ignored.
-		 *
-		 * @param type the type name
-		 * @return the Builder instance for method chaining
-		 */
+        /**
+         * Add a new presentation type.
+         *
+         * If enabled the JSON-LD feature, the type should be a full type URI:
+         *   [scheme:]scheme-specific-part#fragment,
+         * [scheme:]scheme-specific-part should be the context URL,
+         * the fragment should be the type name.
+         *
+         * Otherwise, the context URL part and # symbol could be omitted or
+         * ignored.
+         *
+         * @param type the type name
+         * @return the Builder instance for method chaining
+         */
          public type(type: string): Builder {
-			this.checkNotSealed();
-			checkEmpty(type, "Invalid type: " + type);
+            this.checkNotSealed();
+            checkEmpty(type, "Invalid type: " + type);
 
-			if (type.indexOf('#') < 0)
-				return this.typeWithContext(type, null);
-			else {
-				let context_type = type.split("#", 2);
-				return this.typeWithContext(context_type[1], context_type[0]);
-			}
-		}
+            if (type.indexOf('#') < 0)
+                return this.typeWithContext(type, null);
+            else {
+                let context_type = type.split("#", 2);
+                return this.typeWithContext(context_type[1], context_type[0]);
+            }
+        }
 
         /**
          * Set Credential types.

@@ -649,8 +649,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         let json: JSONObject = {};
         if (this.context != null && this.context.length > 0)
-            json["@context"] = this.context.length == 1 ? this.context[0] :
-                Array.from(this.context);
+            json["@context"] = Array.from(this.context);
 
         json.id = this.id.toString(context);
         json.type = this.type;
@@ -954,108 +953,108 @@ export namespace VerifiableCredential {
         }
 
         public setDefaultType(): void{
-			this.checkNotSealed();
-
-			if (Features.isEnabledJsonLdContext()) {
-				if (this.credential.context == null)
-					this.credential.context = [];
-
-				if (!this.credential.context.includes(VerifiableCredential.W3C_CREDENTIAL_CONTEXT))
-					this.credential.context.push(VerifiableCredential.W3C_CREDENTIAL_CONTEXT);
-
-				if (!this.credential.context.includes(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT))
-					this.credential.context.push(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT);
-			}
-
-			if (this.credential.type == null)
-				this.credential.type = [];
-
-			if (!this.credential.type.includes(VerifiableCredential.DEFAULT_CREDENTIAL_TYPE))
-				this.credential.type.push(VerifiableCredential.DEFAULT_CREDENTIAL_TYPE);
-		}
-
-		/**
-		 * Add a new credential type.
-		 *
-		 * @param type the type name
-		 * @param context the JSON-LD context for type, or null if not
-		 * 		  enabled the JSON-LD feature
-		 * @return the Builder instance for method chaining
-		 */
-        public typeWithContext(type: string, context: string): Builder {
             this.checkNotSealed();
-			checkEmpty(type , "Invalid type: " + type);
 
-			if (Features.isEnabledJsonLdContext()) {
-				checkEmpty(context, "Invalid context: " + context);
+            if (Features.isEnabledJsonLdContext()) {
+                if (this.credential.context == null)
+                    this.credential.context = [];
 
-				if (this.credential.context == null)
-					this.credential.context = [];
+                if (!this.credential.context.includes(VerifiableCredential.W3C_CREDENTIAL_CONTEXT))
+                    this.credential.context.push(VerifiableCredential.W3C_CREDENTIAL_CONTEXT);
 
-				if (!this.credential.context.includes(context))
-					this.credential.context.push(context);
-			}
-
-			if (this.credential.type == null)
-                this.credential.type = [];
-
-			if (!this.credential.type.includes(type))
-                this.credential.type.push(type);
-
-			return this;
-		}
-
-        /**
-		 * Add a new credential type.
-		 *
-		 * If enabled the JSON-LD feature, the type should be a full type URI:
-		 *   [scheme:]scheme-specific-part#fragment,
-		 * [scheme:]scheme-specific-part should be the context URL,
-		 * the fragment should be the type name.
-		 *
-		 * Otherwise, the context URL part and # symbol could be omitted or
-		 * ignored.
-		 *
-		 * @param type the type name
-		 * @return the Builder instance for method chaining
-		 */
-         public type(type: string): Builder {
-			this.checkNotSealed();
-			checkEmpty(type, "Invalid type: " + type);
-
-			if (type.indexOf('#') < 0)
-				return this.typeWithContext(type, null);
-			else {
-				let context_type = type.split("#", 2);
-				return this.typeWithContext(context_type[1], context_type[0]);
-			}
-		}
-
-        /**
-		 * Add new credential type.
-		 *
-		 * If enabled the JSON-LD feature, the type should be a full type URI:
-		 *   [scheme:]scheme-specific-part#fragment,
-		 * [scheme:]scheme-specific-part should be the context URL,
-		 * the fragment should be the type name.
-		 *
-		 * Otherwise, the context URL part and # symbol could be omitted or
-		 * ignored.
-		 *
-		 * @param types the type names
-		 * @return the Builder instance for method chaining
-		 */
-		public types(...types: string[]): Builder {
-			if (types == null || types.length == 0)
-				return this;
-
-			this.checkNotSealed();
-			for (let t of types) {
-				this.type(t);
+                if (!this.credential.context.includes(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT))
+                    this.credential.context.push(VerifiableCredential.ELASTOS_CREDENTIAL_CONTEXT);
             }
 
-			return this;
-		}
+            if (this.credential.type == null)
+                this.credential.type = [];
+
+            if (!this.credential.type.includes(VerifiableCredential.DEFAULT_CREDENTIAL_TYPE))
+                this.credential.type.push(VerifiableCredential.DEFAULT_CREDENTIAL_TYPE);
+        }
+
+        /**
+         * Add a new credential type.
+         *
+         * @param type the type name
+         * @param context the JSON-LD context for type, or null if not
+         * 		  enabled the JSON-LD feature
+         * @return the Builder instance for method chaining
+         */
+        public typeWithContext(type: string, context: string): Builder {
+            this.checkNotSealed();
+            checkEmpty(type , "Invalid type: " + type);
+
+            if (Features.isEnabledJsonLdContext()) {
+                checkEmpty(context, "Invalid context: " + context);
+
+                if (this.credential.context == null)
+                    this.credential.context = [];
+
+                if (!this.credential.context.includes(context))
+                    this.credential.context.push(context);
+            }
+
+            if (this.credential.type == null)
+                this.credential.type = [];
+
+            if (!this.credential.type.includes(type))
+                this.credential.type.push(type);
+
+            return this;
+        }
+
+        /**
+         * Add a new credential type.
+         *
+         * If enabled the JSON-LD feature, the type should be a full type URI:
+         *   [scheme:]scheme-specific-part#fragment,
+         * [scheme:]scheme-specific-part should be the context URL,
+         * the fragment should be the type name.
+         *
+         * Otherwise, the context URL part and # symbol could be omitted or
+         * ignored.
+         *
+         * @param type the type name
+         * @return the Builder instance for method chaining
+         */
+         public type(type: string): Builder {
+            this.checkNotSealed();
+            checkEmpty(type, "Invalid type: " + type);
+
+            if (type.indexOf('#') < 0)
+                return this.typeWithContext(type, null);
+            else {
+                let context_type = type.split("#", 2);
+                return this.typeWithContext(context_type[1], context_type[0]);
+            }
+        }
+
+        /**
+         * Add new credential type.
+         *
+         * If enabled the JSON-LD feature, the type should be a full type URI:
+         *   [scheme:]scheme-specific-part#fragment,
+         * [scheme:]scheme-specific-part should be the context URL,
+         * the fragment should be the type name.
+         *
+         * Otherwise, the context URL part and # symbol could be omitted or
+         * ignored.
+         *
+         * @param types the type names
+         * @return the Builder instance for method chaining
+         */
+        public types(...types: string[]): Builder {
+            if (types == null || types.length == 0)
+                return this;
+
+            this.checkNotSealed();
+            for (let t of types) {
+                this.type(t);
+            }
+
+            return this;
+        }
 
         private getMaxExpires(): Date {
             let maxExpires: Dayjs;

@@ -800,8 +800,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         let json: JSONObject = {};
         if (this.context.length > 0)
-            json["@context"] = this.context.length == 1 ? this.context[0] :
-                    Array.from(this.context);
+            json["@context"] = Array.from(this.context);
 
         json.id = this.subject.toString();
 
@@ -2467,7 +2466,7 @@ export namespace DIDDocument {
         public static newFromDID(did: DID, store: DIDStore, controller?: DIDDocument) {
             let builder = new Builder();
             builder.document = new DIDDocument(did);
-			if (Features.isEnabledJsonLdContext())
+            if (Features.isEnabledJsonLdContext())
                 builder.addDefaultContexts();
 
             builder.sourceDocument = builder.document;
@@ -2564,46 +2563,46 @@ export namespace DIDDocument {
                 throw new NotCustomizedDIDException(this.document.getSubject().toString());
         }
 
-		/**
-		 * Add the default DID contexts(include W3C and Elastos DID contexts).
-		 *
-		 * @return the Builder instance for method chaining
-		 */
+        /**
+         * Add the default DID contexts(include W3C and Elastos DID contexts).
+         *
+         * @return the Builder instance for method chaining
+         */
         public addDefaultContexts(): Builder {
-			checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+            checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
 
-			if (this.document.context == null)
-				this.document.context = [];
+            if (this.document.context == null)
+                this.document.context = [];
 
-			if (!this.document.context.includes(DIDDocument.W3C_DID_CONTEXT))
+            if (!this.document.context.includes(DIDDocument.W3C_DID_CONTEXT))
                 this.document.context.push(DIDDocument.W3C_DID_CONTEXT);
 
-			if (!this.document.context.includes(DIDDocument.ELASTOS_DID_CONTEXT))
+            if (!this.document.context.includes(DIDDocument.ELASTOS_DID_CONTEXT))
                 this.document.context.push(DIDDocument.ELASTOS_DID_CONTEXT);
 
-			if (!this.document.context.includes(DIDDocument.W3ID_SECURITY_CONTEXT))
+            if (!this.document.context.includes(DIDDocument.W3ID_SECURITY_CONTEXT))
                 this.document.context.push(DIDDocument.W3ID_SECURITY_CONTEXT);
 
-			return this;
-		}
+            return this;
+        }
 
-        		/**
-		 * Add a new context to the document.
-		 *
-		 * @param uri URI for the new context
-		 * @return the Builder instance for method chaining
-		 */
-		public addContext(uri: string): Builder {
-			checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+                /**
+         * Add a new context to the document.
+         *
+         * @param uri URI for the new context
+         * @return the Builder instance for method chaining
+         */
+        public addContext(uri: string): Builder {
+            checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
 
-			if (this.document.context == null)
-				this.document.context = [];
+            if (this.document.context == null)
+                this.document.context = [];
 
-			if (!this.document.context.includes(uri))
-				this.document.context.push(uri);
+            if (!this.document.context.includes(uri))
+                this.document.context.push(uri);
 
-			return this;
-		}
+            return this;
+        }
 
         /**
          * Get document subject from did document builder.
