@@ -66,7 +66,6 @@ describe("Issuer Tests", ()=>{
     })
 
     test('New Issuer Test With Invalid Key', () => {
-
         let signKey = new DIDURL("#testKey", issuerDoc.getSubject());
         let doc = issuerDoc;
 
@@ -74,7 +73,6 @@ describe("Issuer Tests", ()=>{
     })
 
     test('New Issuer Test With Invalid Key 2', () => {
-
         let signKey = new DIDURL("#recovery", issuerDoc.getSubject());
         let doc = issuerDoc;
         expect(()=>{Issuer.newWithDocument(doc, signKey)}).toThrowError();
@@ -237,7 +235,7 @@ describe("Issuer Tests", ()=>{
 
         expect(vc.getSubject().getProperty("name")).toEqual("John");
         expect(vc.getSubject().getProperty("gender")).toEqual("Male");
-        expect(vc.getSubject().getProperty("nation")).toEqual("Singapore");
+        expect(vc.getSubject().getProperty("nationality")).toEqual("Singapore");
         expect(vc.getSubject().getProperty("email")).toEqual("john@example.com");
         expect(vc.getSubject().getProperty("twitter")).toEqual("@john");
 

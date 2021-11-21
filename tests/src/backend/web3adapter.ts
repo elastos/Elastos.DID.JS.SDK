@@ -88,7 +88,7 @@ export class Web3Adapter extends DefaultDIDAdapter {
             to: contract.options.address,
             from: acc.address,
             gas: 3000000,
-            gasPrice: "1000000000000"
+            gasPrice: "10000000000"
         };
 
         let stx = await acc.signTransaction(tx);

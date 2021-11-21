@@ -40,6 +40,7 @@ describe("DIDStore Tests", ()=>{
     })
 
     afterEach(async () => {
+        testData.cleanup();
     });
 
     // Java: @ExtendWith(DIDTestExtension.class)
@@ -506,7 +507,8 @@ describe("DIDStore Tests", ()=>{
         }).toThrowError(Exceptions.WrongPasswordException);
     });
 
-    ["1", "2", "2.2"].forEach((version) => {
+    //js can't need to check v1
+    ["2", "2.2"].forEach((version) => {
         test("testCompatibility", async ()=>{
             let data = Buffer.from("Hello World");
 
@@ -553,7 +555,8 @@ describe("DIDStore Tests", ()=>{
         });
     });
 
-    ["1", "2", "2.2"].forEach((version) => {
+    //js can't need to check v1
+    ["2", "2.2"].forEach((version) => {
         test("testNewDIDWithWrongPass", async ()=>{
             let store = await DIDStore.open(testData.getCompatibleData(version).getStoreDir());
             let identity = await store.loadRootIdentity();
@@ -564,7 +567,8 @@ describe("DIDStore Tests", ()=>{
         });
     });
 
-    ["1", "2", "2.2"].forEach((version) => {
+    //js can't need to check v1
+    ["2", "2.2"].forEach((version) => {
         test("testNewDIDandGetDID", async ()=>{
             let store = await DIDStore.open(testData.getCompatibleData(version).getStoreDir());
             let identity = await store.loadRootIdentity();
@@ -784,7 +788,7 @@ describe("DIDStore Tests", ()=>{
     test("testImportCompatible", async ()=>{
         await testData.getRootIdentity();
 
-        let cb = testData.getCompatibleData(2);
+        let cb = testData.getCompatibleData("2");
 
         let exportFile = new File(cb.getDataPath(), "store-export.zip");
 

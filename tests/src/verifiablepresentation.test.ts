@@ -29,6 +29,7 @@ import {
 } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
 import { TestData } from "./utils/testdata";
+import each from "jest-each";
 
 let testData: TestData;
 let store: DIDStore;
@@ -41,6 +42,7 @@ describe('VerifiablePresentation Tests', () => {
     });
 
     afterEach(async () => {
+        testData.cleanup();
     });
 
     ["1", "2", "2.2"].forEach((version) => {
@@ -109,82 +111,73 @@ describe('VerifiablePresentation Tests', () => {
         });
     });
 
-    test('testGenuineAndValidWithListener', async () => {
-        let csvSource = [
-            {version: "1", did:"user1", vp:"empty"},
-            {version: "1", did:"user1", vp:"nonempty"},
-            {version: "2", did:"user1", vp:"empty"},
-            {version: "2", did:"user1", vp:"nonempty"},
-            {version: "2", did:"user1", vp:"optionalattrs"},
-            {version: "2", did:"foobar", vp:"empty"},
-            {version: "2", did:"foobar", vp:"nonempty"},
-            {version: "2", did:"foobar", vp:"optionalattrs"},
-            {version: "2.2", did:"user1", vp:"empty"},
-            {version: "2.2", did:"user1", vp:"nonempty"},
-            {version: "2.2", did:"user1", vp:"optionalattrs"},
-            {version: "2.2", did:"foobar", vp:"empty"},
-            {version: "2.2", did:"foobar", vp:"nonempty"},
-            {version: "2.2", did:"foobar", vp:"optionalattrs"}
-        ];
-
+    each([
+        [ "1", "user1", "empty" ],
+        [ "1", "user1", "nonempty" ],
+        [ "2", "user1", "empty" ],
+        [ "2", "user1", "nonempty" ],
+        [ "2", "user1", "optionalattrs" ],
+        [ "2", "foobar", "empty" ],
+        [ "2", "foobar", "nonempty" ],
+        [ "2", "foobar", "optionalattrs" ],
+        [ "2.2", "user1", "empty" ],
+        [ "2.2", "user1", "nonempty" ],
+        [ "2.2", "user1", "optionalattrs" ],
+        [ "2.2", "foobar", "empty" ],
+        [ "2.2", "foobar", "nonempty" ],
+        [ "2.2", "foobar", "optionalattrs" ]
+    ]).test('testGenuineAndValidWithListener', async (version, did, presentation) => {
         let listener = VerificationEventListener.getDefault("  ", "- ", "* ");
-        for (let cvs of csvSource) {
-            let cd = testData.getCompatibleData(cvs.version);
-            await cd.loadAll();
+        let cd = testData.getCompatibleData(version);
+        await cd.loadAll();
 
-            let vp = await cd.getPresentation(cvs.did, cvs.vp);
-            expect(vp).not.toBeNull();
+        let vp = await cd.getPresentation(did, presentation);
+        expect(vp).not.toBeNull();
 
-            await expect(await vp.isGenuine(listener)).toBeTruthy();
-            expect(listener.toString().startsWith("  - "));
-            listener.reset();
+        await expect(await vp.isGenuine(listener)).toBeTruthy();
+        expect(listener.toString().startsWith("  - "));
+        listener.reset();
 
-            await expect(await vp.isValid(listener)).toBeTruthy();
-            expect(listener.toString().startsWith("  - "));
-            listener.reset();
-            }
-        });
+        await expect(await vp.isValid(listener)).toBeTruthy();
+        expect(listener.toString().startsWith("  - "));
+        listener.reset();
     });
 
-    test('testParseAndSerialize', async () => {
-        let csvSource = [
-            {version: "1", did:"user1", vp:"empty"},
-            {version: "1", did:"user1", vp:"nonempty"},
-            {version: "2", did:"user1", vp:"empty"},
-            {version: "2", did:"user1", vp:"nonempty"},
-            {version: "2", did:"user1", vp:"optionalattrs"},
-            {version: "2", did:"foobar", vp:"empty"},
-            {version: "2", did:"foobar", vp:"nonempty"},
-            {version: "2", did:"foobar", vp:"optionalattrs"},
-            {version: "2.2", did:"user1", vp:"empty"},
-            {version: "2.2", did:"user1", vp:"nonempty"},
-            {version: "2.2", did:"user1", vp:"optionalattrs"},
-            {version: "2.2", did:"foobar", vp:"empty"},
-            {version: "2.2", did:"foobar", vp:"nonempty"},
-            {version: "2.2", did:"foobar", vp:"optionalattrs"}
-        ];
+    each([
+        [ "1", "user1", "empty" ],
+        [ "1", "user1", "nonempty" ],
+        [ "2", "user1", "empty" ],
+        [ "2", "user1", "nonempty" ],
+        [ "2", "user1", "optionalattrs" ],
+        [ "2", "foobar", "empty" ],
+        [ "2", "foobar", "nonempty" ],
+        [ "2", "foobar", "optionalattrs" ],
+        [ "2.2", "user1", "empty" ],
+        [ "2.2", "user1", "nonempty" ],
+        [ "2.2", "user1", "optionalattrs" ],
+        [ "2.2", "foobar", "empty" ],
+        [ "2.2", "foobar", "nonempty" ],
+        [ "2.2", "foobar", "optionalattrs" ]
+    ]).test('testParseAndSerialize', async (version, did, presentation) => {
+        let cd = testData.getCompatibleData(version);
+        // For integrity check
+        await cd.loadAll();
 
-        for (let csv of csvSource) {
-            let cd = testData.getCompatibleData(csv.version);
-            // For integrity check
-            await cd.loadAll();
+        let vp = await cd.getPresentation(did, presentation);
 
-            let vp = await cd.getPresentation(csv.did, csv.vp);
+        expect(vp).not.toBeNull();
+        await expect(await vp.isGenuine()).toBeTruthy();
+        await expect(await vp.isValid()).toBeTruthy();
 
-            expect(vp).not.toBeNull();
-            await expect(await vp.isGenuine()).toBeTruthy();
-            await expect(await vp.isValid()).toBeTruthy();
+        let normalizedJson = cd.getPresentationJson(did, presentation, "normalized");
 
-            let normalizedJson = cd.getPresentationJson(csv.did, csv.vp, "normalized");
+        let normalized = VerifiablePresentation.parse(normalizedJson);
+        expect(normalized).not.toBeNull();
+        await expect(await normalized.isGenuine()).toBeTruthy();
+        await expect(await normalized.isValid()).toBeTruthy();
 
-            let normalized = VerifiablePresentation.parse(normalizedJson);
-            expect(normalized).not.toBeNull();
-            await expect(await normalized.isGenuine()).toBeTruthy();
-            await expect(await normalized.isValid()).toBeTruthy();
-
-            expect(normalizedJson).toEqual(normalized.toString(true));
-            expect(normalizedJson).toEqual(vp.toString(true));
-        }
+        expect(normalizedJson).toEqual(normalized.toString(true));
+        expect(normalizedJson).toEqual(vp.toString(true));
     });
 
     [false, true].forEach((contextEnabled) => {
@@ -345,3 +338,4 @@ describe('VerifiablePresentation Tests', () => {
             await expect(await vp.isValid()).toBeTruthy();
         });
     });
+});
