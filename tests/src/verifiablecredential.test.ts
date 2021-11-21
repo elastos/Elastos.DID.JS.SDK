@@ -961,7 +961,7 @@ describe('let Tests', () => {
 
             let vc = await selfIssuer.issueFor(did)
                     .id("#test" + i)
-                    .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
                     .properties({"index": i})
                     .seal(TestConfig.storePass);
 
