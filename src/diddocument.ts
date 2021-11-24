@@ -874,7 +874,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     private fromJSONOnly(json: JSONObject, context: DID = null): void {
         this.context = this.getContext("@context", json["@context"], {mandatory: false, nullable: false, defaultValue: [] });
-        this.subject = this.getDid("id", json.id, { mandatory: false, nullable: false, defaultValue: null });
+        this.subject = this.getDid("id", json.id, { mandatory: true, nullable: false, defaultValue: null });
         context = this.subject; // set the JSON parser context
         this.controllers = this.getDids("controller", json.controller, { mandatory: false, nullable: false, defaultValue: [] });
         let ms = this.getString("multisig", json.multisig, { mandatory: false, nullable: false });
