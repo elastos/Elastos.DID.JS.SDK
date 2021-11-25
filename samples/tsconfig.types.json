@@ -1,0 +1,29 @@
+{
+  "include": ["src/*"],
+  "exclude": ["node_modules", "dist"],
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "lib": ["es2017", "es7", "es6", "dom"],
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "emitDeclarationOnly": false,
+    "declarationMap": false,
+    "sourceMap": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "emitDecoratorMetadata": true,
+    "removeComments": true,
+    "isolatedModules": true,
+    "preserveConstEnums": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "rootDirs": ["src/"],
+    "typeRoots": ["node_modules/@types"]
+  }
+}

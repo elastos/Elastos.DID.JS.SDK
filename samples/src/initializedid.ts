@@ -64,8 +64,13 @@ export class InitializeDID {
 		// Check the DID store already contains owner's DID(with private key).
 		let dids = await this.store.selectDids(new class implements DIDStore.DIDFilter {
 			public select(d: DID): boolean {
-				let doc = store.loadDid(d);
-				return (store.containsPrivateKeys(d) && doc.getMetadata().getAlias() == "me");
+				let contains = store.containsPrivateKeys(d);
+				let equals: boolean;
+				store.loadDid(d).then(async (content) => {
+					equals = (content.getMetadata().getAlias() == "me") ? true : false;
+                });
+
+				return contains && equals;
 			}
 		});
 
