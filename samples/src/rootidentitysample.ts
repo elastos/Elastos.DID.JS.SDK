@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DID, DIDBackend, DIDStore, Logger, Mnemonic, RootIdentity } from "../../typings/internals";
+import { DID, DIDBackend, DIDStore, Logger, Mnemonic, RootIdentity, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
 import { AssistDIDAdapter } from "./assistadapter"
 
 const log = new Logger("RootIdentitySample");
@@ -103,8 +103,8 @@ export class RootIdentitySample {
 	}
 }
 
-let rootIdentitySample = async () => {
-	DIDBackend.initialize(new AssistDIDAdapter("testnet"));
+export async function initRootIdentity(argv) {
+	DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
 
 	let sample = new RootIdentitySample();
 
@@ -129,5 +129,3 @@ let rootIdentitySample = async () => {
 		log.error(e);
 	}
 }
-
-rootIdentitySample();

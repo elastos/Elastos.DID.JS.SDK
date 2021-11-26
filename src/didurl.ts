@@ -253,8 +253,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 
     // Deep-copy constructor
     public clone(readonly : boolean): DIDURL {
-        let newInstance = new DIDURL();
-        newInstance.did = this.did;
+        let newInstance = DIDURL.fromDID(this.did);
         newInstance.path = this.path;
         newInstance.query = (this.query.size == 0 && readonly)  ? new Map() :
                 new Map<string, string>(this.query);
@@ -265,7 +264,6 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
 
         return newInstance;
     }
-
 
     /**
      * Get owner of DIDURL.

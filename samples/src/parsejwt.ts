@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-import { DIDBackend, Logger, JWTParserBuilder, JWTBuilder, BASE64 } from "../../typings/internals";
-import { AssistDIDAdapter } from "./assistadapter"
+import { DIDBackend, Logger, JWTParserBuilder, JWTBuilder, BASE64, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
+//import { AssistDIDAdapter } from "./assistadapter"
 
 const log = new Logger("ParseJWT");
 export class ParseJWT {
@@ -42,17 +42,15 @@ export class ParseJWT {
 	}
 }
 
-let parseJWT = async () => {
+export async function parseJWT(argv) {
 		// Initializa the DID backend globally.
-		DIDBackend.initialize(new AssistDIDAdapter("testnet"));
+		DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
 
 		let token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTU5MDM1MjUsImV4cCI6MTU5NTk4OTkyNSwiaXNzIjoiZGlkOmVsYXN0b3M6aVlwUU13aGVEeHlTcWl2b2NTSmFvcHJjb0RUcVFzRFlBdSIsImNvbW1hbmQiOiJ2b3RlZm9ycHJvcG9zYWwiLCJkYXRhIjp7InByb3Bvc2FsSGFzaCI6ImY0MTRkMjUzODY0NDQ2NDNiYTE2NzZlYmZjZjU0ODJjNmZlYjNkMDI1OTlmNjE0NTJlYTYwMDg5OWQ4ZDdiZWUifX0.AsKlYyG3RyMBXBiDWkjZ4etbhCNjEp9MKIy8ySW2rBvCD9xFUiKUrjbsB4V0YI7eV47aqso4y8OdSXxc9yfoCw";
 		ParseJWT.printJwt(token);
 
 		let jp = new JWTParserBuilder().build();
-		let jwt = jp.parse(token);
+		let jwt = await jp.parse(token);
 
 		log.info(jwt.toString());
 }
-
-parseJWT();

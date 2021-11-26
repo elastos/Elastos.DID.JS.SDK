@@ -20,12 +20,13 @@
  * SOFTWARE.
  */
 
-import { Logger, DefaultDIDAdapter, JSONObject } from "@elastosfoundation/did-js-sdk";
-import { DIDTransactionException, IllegalArgumentException, ResolveException } from "@elastosfoundation/did-js-sdk/typings/exceptions/exceptions";
-import { DID, DIDEntity, DIDRequest } from "@elastosfoundation/did-js-sdk/typings/internals";
+import { DID, Logger, DefaultDIDAdapter, JSONObject } from "@elastosfoundation/did-js-sdk";
+import { Exceptions } from "@elastosfoundation/did-js-sdk";
 import { OutgoingHttpHeaders } from "http2";
 import { request as httpRequest } from "./http";
 import { request as httpsRequest } from "./https";
+import { DIDRequest } from "./didrequest";
+import { Entity } from "./entity";
 
 const log = new Logger("AssistDIDAdapter");
 export class AssistDIDAdapter extends DefaultDIDAdapter {
@@ -52,6 +53,48 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 			break;
 		}
 	}
+
+    private postHttp(url: URL, body?: string, header?: Object): Promise<JSONObject> {
+        return new Promise((resolve, reject) => {
+            // Use a different module if we call http or https
+            let requestMethod = (url.protocol.indexOf("https") === 0 ? httpsRequest : httpRequest);
+            let h: Object = Object.assign({}, header,
+                {
+                "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            });
+            let req = requestMethod({
+                protocol: url.protocol,
+                hostname: url.hostname,
+                port: url.port,
+                path: url.pathname,
+                method: 'POST',
+                headers: h as OutgoingHttpHeaders
+            }, (res) => {
+                let wholeData = "";
+                res.on('data', d => {
+                    // Concatenate data that can reach us in several pieces.
+                    wholeData += d;
+                })
+                res.on("end", () => {
+                    if (wholeData !== null && wholeData.length > 0) {
+                        let responseJSON = JSON.parse(wholeData);
+                        resolve(responseJSON);
+                    } else {
+                        resolve({})
+                    }
+                })
+            });
+            req.on('error', error => {
+                reject(new Exceptions.ResolveException("HTTP error", error));
+            });
+            if (body)
+                req.write(body);
+            req.end();
+
+        });
+    }
 
     // NOTE: synchronous HTTP calls are deprecated and wrong practice. Though, as JAVA SDK currently
     // mainly uses synchronous calls, we don't want to diverge our code from that. We then wait for the
@@ -89,7 +132,7 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
                 })
             });
             req.on('error', error => {
-                reject(new ResolveException("HTTP error", error));
+                reject(new Exceptions.ResolveException("HTTP error", error));
             });
             req.end();
         });
@@ -97,7 +140,7 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 
 	public async createIdTransaction(payload: string, memo: string) {
 		if (payload == null || payload == "")
-			throw new IllegalArgumentException("Invalid payload parameter");
+			throw new Exceptions.IllegalArgumentException("Invalid payload parameter");
 
         let headers = new Object();
 		headers["Authorization"] = AssistDIDAdapter.API_KEY;
@@ -106,20 +149,20 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 		try {
 			request = new AssistDIDAdapter.AssistDIDRequest(payload, memo);
 		} catch (e) {
-			 throw new IllegalArgumentException("Invalid transaction payload", e);
+			 throw new Exceptions.IllegalArgumentException("Invalid transaction payload", e);
 		}
 
 		let response: AssistDIDAdapter.AssistDIDResponse = null;
 		try {
 			let createDid = new URL(this.assistRpcEndpoint + "/didtx/create");
-			let is = await this.performRequest(createDid, request.toString(), headers);
+			let is = await this.performRequest(createDid, request.toString());
 			response = new AssistDIDAdapter.AssistDIDResponse(is);
 		} catch (e) {
-			throw new DIDTransactionException("Access the Assist API error.", e);
+			throw new Exceptions.DIDTransactionException("Access the Assist API error.", e);
 		}
 
 		if (response.meta.code != 200 || response.data.confirmationId == null)
-			throw new DIDTransactionException("Asssit API error: " + response.meta.code
+			throw new Exceptions.DIDTransactionException("Asssit API error: " + response.meta.code
 						+ ", message: " + response.meta.message);
 
 		try {
@@ -130,7 +173,7 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 				let is = await this.getRequest(txStatus, headers);
 				let statusResponse = new AssistDIDAdapter.AssistTxStatus(is);
 				if (statusResponse.meta.code != 200 || statusResponse.data.status == null)
-					throw new DIDTransactionException("Asssit API error: " + response.meta.code
+					throw new Exceptions.DIDTransactionException("Asssit API error: " + response.meta.code
 							+ ", message: " + response.meta.message);
 
                 log.info("DID transaction %s is %s\n",
@@ -145,7 +188,7 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 
 				case "quarantined":
 				case "error":
-					throw new DIDTransactionException("DID transaction " +
+					throw new Exceptions.DIDTransactionException("DID transaction " +
 							statusResponse.data.blockchainTxId + " is " +
 							statusResponse.data.status);
 
@@ -154,13 +197,13 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 				}
 			}
 		} catch (e) {
-			throw new DIDTransactionException("Access the Assist API error.", e);
+			throw new Exceptions.DIDTransactionException("Access the Assist API error.", e);
 		}
 	}
 }
 
 export namespace AssistDIDAdapter {
-	export class AssistDIDRequest extends DIDEntity<AssistDIDRequest> {
+	export class AssistDIDRequest extends Entity<AssistDIDRequest> {
         private did: DID; //"did"
         private memo: string; //"memo"
         private agent: string; // "requestFrom"
@@ -192,7 +235,7 @@ export namespace AssistDIDAdapter {
         }
     }
 
-	export class AssistDIDResponseMeta extends DIDEntity<AssistDIDResponseMeta> {
+	export class AssistDIDResponseMeta extends Entity<AssistDIDResponseMeta> {
         public code: number;  //"code"
         public message: string;     // "message"
 
@@ -209,10 +252,11 @@ export namespace AssistDIDAdapter {
             }
         }
 
-        public fromJSON(json: JSONObject, context: DID = null): void {}
+        public fromJSON(json: JSONObject, context: DID = null): void {
+        }
 	}
 
-	export class AssistDIDResponseData extends DIDEntity<AssistDIDResponseMeta> {
+	export class AssistDIDResponseData extends Entity<AssistDIDResponseMeta> {
         public confirmationId: string; // "confirmation_id"
         public serviceCount: string;   // "service_count"
         public duplicate: boolean;     // "duplicate"
@@ -235,7 +279,7 @@ export namespace AssistDIDAdapter {
         public fromJSON(json: JSONObject, context: DID = null): void {}
 	}
 
-	export class AssistDIDResponse extends DIDEntity<AssistDIDResponse> {
+	export class AssistDIDResponse extends Entity<AssistDIDResponse> {
         public meta: AssistDIDResponseMeta; //"meta"
         public data: AssistDIDResponseData; //"data"
 
@@ -259,7 +303,7 @@ export namespace AssistDIDAdapter {
         }
 	}
 
-	export class AssistTxStatusData extends DIDEntity<AssistTxStatusData>  {
+	export class AssistTxStatusData extends Entity<AssistTxStatusData>  {
         public id: string; //"id"
         public did: string; //"did"
         public agent: string; //"requestFrom"
@@ -288,7 +332,7 @@ export namespace AssistDIDAdapter {
         public fromJSON(json: JSONObject, context: DID = null): void {}
 	}
 
-	export class AssistTxStatus extends DIDEntity<AssistTxStatus> {
+	export class AssistTxStatus extends Entity<AssistTxStatus> {
         public meta: AssistDIDResponseMeta; //"meta"
         public data: AssistTxStatusData;    //"data"
 

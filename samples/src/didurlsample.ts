@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DID, DIDURL, Logger } from "../../typings/internals";
+import { DID, DIDURL, Logger } from "@elastosfoundation/did-js-sdk";
 
 const log = new Logger("DIDURLSample");
 export class DIDURLSample {
@@ -77,12 +77,10 @@ export class DIDURLSample {
 	}
 }
 
-let didurlSample = async () => {
+export function initDidurl(argv) {
 	let sample = new DIDURLSample();
 
 	sample.createFromString();
 	sample.createFromParts();
 	sample.createWithBuilder();
 }
-
-didurlSample();

@@ -21,9 +21,10 @@
  */
 
 import dayjs from "dayjs";
-import { JSONObject } from "../../typings";
-import { DID, DIDBackend, DIDDocument, DIDStore, Issuer, Logger, Mnemonic, RootIdentity, VerifiableCredential, VerifiablePresentation } from "../../typings/internals";
-import { AssistDIDAdapter } from "./assistadapter"
+import { JSONObject, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
+import { DID, DIDBackend, DIDDocument, DIDStore, Issuer, Logger, Mnemonic, RootIdentity, VerifiableCredential, VerifiablePresentation } from "@elastosfoundation/did-js-sdk";
+import { uint8Array2Buffer } from "browserfs/dist/node/core/util";
+//import { AssistDIDAdapter } from "./assistadapter"
 
 const log = new Logger("IssueCredential");
 export namespace IssueCredential {
@@ -38,9 +39,13 @@ export namespace IssueCredential {
 
 		protected constructor(name: string) {
 			this.name = name;
+		}
 
-			this.initRootIdentity();
-			this.initDid();
+		protected static async init(name: string): Promise<Entity> {
+			let entity = new Entity(name);
+			await entity.initRootIdentity();
+			await entity.initDid();
+			return entity;
 		}
 
 		protected async initRootIdentity(): Promise<void> {
@@ -70,7 +75,7 @@ export namespace IssueCredential {
 			let dids = await this.store.selectDids(new class implements DIDStore.DIDFilter {
 				public select(d: DID): boolean {
 					let contains = store.containsPrivateKeys(d);
-					let equals: boolean;
+					let equals: boolean = false;
 					store.loadDid(d).then(async (content) => {
 						equals = (content.getMetadata().getAlias() == "me") ? true : false;
 					});
@@ -110,8 +115,13 @@ export namespace IssueCredential {
 	export class University extends Entity {
 		private issuer: Issuer;
 
-		public constructor(name: string) {
+		private constructor(name: string) {
 			super(name);
+		}
+
+		public static async init(name: string): Promise<University> {
+			let entity = await Entity.init(name);
+			return entity as University;
 		}
 
 		public async issueDiplomaFor(student: Student): Promise<VerifiableCredential> {
@@ -126,7 +136,7 @@ export namespace IssueCredential {
             this.issuer = new Issuer(await this.getDocument());
 			let cb = this.issuer.issueFor(student.getDid());
 			return await cb.id("diploma")
-				.typeWithContext("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
+				// .typeWithContext("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
 				.properties(subject)
 				.expirationDate(exp)
 				.seal(this.getStorePassword());
@@ -134,19 +144,24 @@ export namespace IssueCredential {
 	}
 
 	export class Student extends Entity {
-		public constructor(name: string) {
+		private constructor(name: string) {
 			super(name);
+		}
+
+		public static async init(name: string): Promise<Student> {
+			let entity = await Entity.init(name);
+			return entity as Student;
 		}
 	}
 }
 
-let issueCredential = async () => {
+export async function issueCredential(argv) {
     try {
         // Initializa the DID backend globally.
-        DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
+        DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
 
-        let university = new IssueCredential.University("Elastos");
-        let student = new IssueCredential.Student("John Smith");
+        let university = await IssueCredential.University.init("Elastos");
+        let student = await IssueCredential.Student.init("John Smith");
 
         let vc = await university.issueDiplomaFor(student);
         log.info("The diploma credential:");
@@ -158,5 +173,3 @@ let issueCredential = async () => {
         log.error(e);
     }
 }
-
-issueCredential();

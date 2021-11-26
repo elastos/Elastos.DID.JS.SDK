@@ -20,11 +20,11 @@
  * SOFTWARE.
  */
 
-import { DID, DIDBackend, DIDStore, Logger, Mnemonic, RootIdentity } from "../../typings/internals";
-import { AssistDIDAdapter } from "./assistadapter"
+import { DID, DIDBackend, DIDStore, Logger, Mnemonic, RootIdentity } from "@elastosfoundation/did-js-sdk";
+import { SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
 
 const log = new Logger("InitializeDID");
-export class InitializeDID {
+class InitializeDID {
 	// Mnemonic passphrase and the store password should set by the end user.
 	private static passphrase = "mypassphrase";
 	private static storepass = "mypassword";
@@ -33,7 +33,7 @@ export class InitializeDID {
 
 	public initDIDBackend(): void {
 		// Initialize the DID backend globally.
-		DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
+		DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
 	}
 
 	public async initRootIdentity(): Promise<void> {
@@ -86,7 +86,7 @@ export class InitializeDID {
 	}
 }
 
-let initializeDID = async () => {
+export async function initDid(argv) {
 	let example = new InitializeDID();
 
 	try {
@@ -97,5 +97,3 @@ let initializeDID = async () => {
 		log.error(e);
 	}
 }
-
-initializeDID();

@@ -2,10 +2,10 @@
   "include": ["src/*"],
   "exclude": ["node_modules", "data", "dist", "dist.esm"],
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "ES2020",
     "lib": ["es2017", "es7", "es6", "dom"],
     "moduleResolution": "node",
+    "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "emitDeclarationOnly": false,
