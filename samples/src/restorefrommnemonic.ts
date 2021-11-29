@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DIDBackend, DIDStore, Logger, RootIdentity, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
+import { DIDBackend, DIDStore, Logger, RootIdentity } from "@elastosfoundation/did-js-sdk";
 import { AssistDIDAdapter } from "./assistadapter";
 import { File } from "./file"
 
@@ -34,10 +34,11 @@ export class RestoreFromMnemonic {
 		let storepass = "passwd";
 
 		// Initializa the DID backend globally.
-		DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
+		DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
 
 		let storePath = "/tmp/RestoreFromMnemonic.store";
-		this.deleteFile(new File(storePath));
+		let file = new File(storePath);
+		file.delete();
 
 		let store = await DIDStore.open(storePath);
 
@@ -47,23 +48,12 @@ export class RestoreFromMnemonic {
 		let dids = await store.listDids();
 		if (dids.length > 0) {
 			for (let did of dids) {
-				log.info(did);
-				log.info(store.loadDid(did));
+				log.trace(did);
+				log.trace(store.loadDid(did));
 			}
-
 		} else {
-			log.info("No dids restored.");
+			log.trace("No dids restored.");
 		}
-	}
-
-	private deleteFile(file: File): void {
-		if (file.isDirectory()) {
-			let children = file.listFiles();
-			for (let child of children)
-				this.deleteFile(child);
-		}
-
-		file.delete();
 	}
 }
 

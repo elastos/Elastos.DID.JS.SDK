@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { DID, DIDBackend, DIDStore, Logger, Mnemonic, RootIdentity, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
+import { DIDBackend, DIDStore, Logger, Mnemonic, RootIdentity } from "@elastosfoundation/did-js-sdk";
 import { AssistDIDAdapter } from "./assistadapter"
 
 const log = new Logger("RootIdentitySample");
@@ -37,7 +37,6 @@ export class RootIdentitySample {
 		if (this.store == null) {
 			// Location to your DIDStore
 			let storePath = "/tmp/RootIdentitySample.store";
-
 			this.store = await DIDStore.open(storePath);
 		}
 
@@ -54,7 +53,7 @@ export class RootIdentitySample {
 		let mg = Mnemonic.getInstance();
 		this.mnemonic = mg.generate();
 
-		log.info("Please write down your mnemonic:\n  " + this.mnemonic);
+		log.trace("Please write down your mnemonic:\n  " + this.mnemonic);
 
 		// Initialize the root identity.
 		this.identity = RootIdentity.createFromMnemonic(this.mnemonic, null, this.store, RootIdentitySample.STORE_PASS);
@@ -65,27 +64,27 @@ export class RootIdentitySample {
 		let ids = await this.store.listRootIdentities();
 
 		for (let id of ids)
-			log.info("RootIdentity: " + id.getId());
+			log.trace("RootIdentity: " + id.getId());
 	}
 
 	public async createDid(): Promise<void> {
 		let doc = await this.identity.newDid(RootIdentitySample.STORE_PASS);
 		let did = doc.getSubject();
 
-		log.info("Created DID: " + did);
+		log.trace("Created DID: " + did);
 
 		await doc.publish(RootIdentitySample.STORE_PASS);
-		log.info("Published DID: " + did);
+		log.trace("Published DID: " + did);
 	}
 
 	public async createDidByIndex(index: number): Promise<void> {
 		let doc = await this.identity.newDid(RootIdentitySample.STORE_PASS, index);
 		let did = doc.getSubject();
 
-		log.info("Created DID: " + did);
+		log.trace("Created DID: " + did);
 
 		await doc.publish(RootIdentitySample.STORE_PASS);
-		log.info("Published DID: " + did);
+		log.trace("Published DID: " + did);
 	}
 
 	public async createAnotherStoreAndSyncRootIdentity(): Promise<void> {
@@ -104,7 +103,7 @@ export class RootIdentitySample {
 }
 
 export async function initRootIdentity(argv) {
-	DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
+	DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
 
 	let sample = new RootIdentitySample();
 

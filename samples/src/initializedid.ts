@@ -21,25 +21,26 @@
  */
 
 import { DID, DIDBackend, DIDStore, Logger, Mnemonic, RootIdentity } from "@elastosfoundation/did-js-sdk";
-import { SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
+import { AssistDIDAdapter } from "./assistadapter";
 
 const log = new Logger("InitializeDID");
-class InitializeDID {
+export class InitializeDID {
 	// Mnemonic passphrase and the store password should set by the end user.
 	private static passphrase = "mypassphrase";
 	private static storepass = "mypassword";
 
 	private store: DIDStore;
 
+	constructor() {}
+
 	public initDIDBackend(): void {
 		// Initialize the DID backend globally.
-		DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
+		DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
 	}
 
 	public async initRootIdentity(): Promise<void> {
 		// Location to your DIDStore
 		let storePath = "/tmp/InitializeDID.store";
-
 		this.store = await DIDStore.open(storePath);
 
 		// Check the store whether contains the root private identity.
@@ -50,10 +51,10 @@ class InitializeDID {
 		let mg = Mnemonic.getInstance();
 		let mnemonic = mg.generate();
 
-		log.info("Please write down your mnemonic and passwords:");
-		log.info("  Mnemonic: " + mnemonic);
-		log.info("  Mnemonic passphrase: " + InitializeDID.passphrase);
-		log.info("  Store password: " + InitializeDID.storepass);
+		log.trace("Please write down your mnemonic and passwords:");
+		log.trace("  Mnemonic: " + mnemonic);
+		log.trace("  Mnemonic passphrase: " + InitializeDID.passphrase);
+		log.trace("  Store password: " + InitializeDID.storepass);
 
 		// Initialize the root identity.
 		RootIdentity.createFromMnemonic(mnemonic, InitializeDID.passphrase, this.store, InitializeDID.storepass);
@@ -81,7 +82,7 @@ class InitializeDID {
 		let id = await store.loadRootIdentity();
 		let doc = await id.newDid(InitializeDID.storepass);
 		doc.getMetadata().setAlias("me");
-		log.info("My new DID created: " + doc.getSubject());
+		log.trace("My new DID created: " + doc.getSubject());
 		await doc.publish(InitializeDID.storepass);
 	}
 }
@@ -91,7 +92,7 @@ export async function initDid(argv) {
 
 	try {
 		example.initDIDBackend();
-		await example.initRootIdentity();
+		example.initRootIdentity();
 		example.initDid();
 	} catch (e) {
 		log.error(e);

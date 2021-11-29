@@ -21,9 +21,9 @@
  */
 
 import dayjs from "dayjs";
-import { JSONObject, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
+import { JSONObject } from "@elastosfoundation/did-js-sdk";
 import { DID, DIDBackend, DIDDocument, DIDStore, Issuer, Logger, Mnemonic, RootIdentity, VerifiableCredential, VerifiablePresentation } from "@elastosfoundation/did-js-sdk";
-//import { AssistDIDAdapter } from "./assistadapter"
+import { AssistDIDAdapter } from "./assistadapter"
 
 const log = new Logger("CreatePresentation");
 export namespace CreatePresentation {
@@ -59,10 +59,10 @@ export namespace CreatePresentation {
 			let mg = Mnemonic.getInstance();
 			let mnemonic = mg.generate();
 
-			log.info("[%s] Please write down your mnemonic and passwords:%n", name);
-			log.info("  Mnemonic: " + mnemonic);
-			log.info("  Mnemonic passphrase: " + Entity.passphrase);
-			log.info("  Store password: " + Entity.storepass);
+			log.trace(this.name + " Please write down your mnemonic and passwords");
+			log.trace("  Mnemonic: " + mnemonic);
+			log.trace("  Mnemonic passphrase: " + Entity.passphrase);
+			log.trace("  Store password: " + Entity.storepass);
 
 			// Initialize the root identity.
 			RootIdentity.createFromMnemonic(mnemonic, Entity.passphrase, this.store, Entity.storepass);
@@ -90,7 +90,7 @@ export namespace CreatePresentation {
 			let id = await store.loadRootIdentity();
 			let doc = await id.newDid(Entity.storepass);
 			doc.getMetadata().setAlias("me");
-			log.info("My new DID created: " + doc.getSubject());
+			log.trace("My new DID created: " + doc.getSubject());
 			await doc.publish(Entity.storepass);
 		}
 
@@ -201,32 +201,32 @@ export namespace CreatePresentation {
 export async function createPresentation(argv) {
     try {
         // Initializa the DID backend globally.
-        DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
+        DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
 
         let university = await CreatePresentation.University.initialize("Elastos");
         let student = await CreatePresentation.Student.initialize("John Smith", "Male", "johnsmith@example.org");
 
         let vc = await university.issueDiplomaFor(student);
-        log.info("The diploma credential:");
-        log.info("  " + vc);
-        log.info("  Genuine: " + await vc.isGenuine());
-        log.info("  Expired: " + await vc.isExpired());
-        log.info("  Valid: " + await vc.isValid());
+        log.trace("The diploma credential:");
+        log.trace("  " + vc);
+        log.trace("  Genuine: " + await vc.isGenuine());
+        log.trace("  Expired: " + await vc.isExpired());
+        log.trace("  Valid: " + await vc.isValid());
         student.addCredential(vc);
 
         vc = await student.createSelfProclaimedCredential();
-        log.info("The profile credential:");
-        log.info("  " + vc);
-        log.info("  Genuine: " + await vc.isGenuine());
-        log.info("  Expired: " + await vc.isExpired());
-        log.info("  Valid: " + await vc.isValid());
+        log.trace("The profile credential:");
+        log.trace("  " + vc);
+        log.trace("  Genuine: " + await vc.isGenuine());
+        log.trace("  Expired: " + await vc.isExpired());
+        log.trace("  Valid: " + await vc.isValid());
         student.addCredential(vc);
 
         let vp = await student.createPresentation("test", "873172f58701a9ee686f0630204fee59");
-        log.info("The verifiable presentation:");
-        log.info("  " + vp);
-        log.info("  Genuine: " + await vp.isGenuine());
-        log.info("  Valid: " + await vp.isValid());
+        log.trace("The verifiable presentation:");
+        log.trace("  " + vp);
+        log.trace("  Genuine: " + await vp.isGenuine());
+        log.trace("  Valid: " + await vp.isValid());
     } catch (e) {
         log.error(e);
     }

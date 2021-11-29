@@ -155,7 +155,7 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 		let response: AssistDIDAdapter.AssistDIDResponse = null;
 		try {
 			let createDid = new URL(this.assistRpcEndpoint + "/didtx/create");
-			let is = await this.performRequest(createDid, request.toString());
+			let is = await this.postHttp(createDid, request.toString(), Headers);
 			response = new AssistDIDAdapter.AssistDIDResponse(is);
 		} catch (e) {
 			throw new Exceptions.DIDTransactionException("Access the Assist API error.", e);
@@ -176,7 +176,7 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 					throw new Exceptions.DIDTransactionException("Asssit API error: " + response.meta.code
 							+ ", message: " + response.meta.message);
 
-                log.info("DID transaction %s is %s\n",
+                log.trace("DID transaction %s is %s\n",
 						statusResponse.data.blockchainTxId != null ? statusResponse.data.blockchainTxId : "n/a",
 						statusResponse.data.status);
 

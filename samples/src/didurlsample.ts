@@ -29,9 +29,9 @@ export class DIDURLSample {
 		let url = new DIDURL(urlString);
 
 		// output: did:elastos:iXyYFboFAd2d9VmfqSvppqg1XQxBtX9ea2
-		log.info(url.getDid());
+		log.trace(url.getDid());
 		// output: test
-		log.info(url.getFragment());
+		log.trace(url.getFragment());
 	}
 
 	public createFromParts(): void {
@@ -41,16 +41,16 @@ export class DIDURLSample {
 		let url = new DIDURL("/vcs/abc?opt=false&value=1#test", did);
 
 		// output: did:elastos:iXyYFboFAd2d9VmfqSvppqg1XQxBtX9ea2/vcs/abc?opt=false&value=1#test
-		log.info(url.toString());
+		log.trace(url.toString());
 
 		// output: did:elastos:iXyYFboFAd2d9VmfqSvppqg1XQxBtX9ea2
-		log.info(url.getDid());
+		log.trace(url.getDid());
 		// output: /vcs/abc
-		log.info(url.getPath());
+		log.trace(url.getPath());
 		// output: opt=false&value=1
-		log.info(url.getQueryString());
+		log.trace(url.getQueryString());
 		// output: test
-		log.info(url.getFragment());
+		log.trace(url.getFragment());
 	}
 
 	public createWithBuilder(): void {
@@ -64,16 +64,16 @@ export class DIDURLSample {
 				.build();
 
 		// output: did:elastos:iXyYFboFAd2d9VmfqSvppqg1XQxBtX9ea2/vcs/abc?opt=false&value=1#test
-		log.info(url.toString());
+		log.trace(url.toString());
 
 		// output: did:elastos:iXyYFboFAd2d9VmfqSvppqg1XQxBtX9ea2
-		log.info(url.getDid());
+		log.trace(url.getDid());
 		// output: /vcs/abc
-		log.info(url.getPath());
+		log.trace(url.getPath());
 		// output: opt=false&value=1
-		log.info(url.getQueryString());
+		log.trace(url.getQueryString());
 		// output: test
-		log.info(url.getFragment());
+		log.trace(url.getFragment());
 	}
 }
 

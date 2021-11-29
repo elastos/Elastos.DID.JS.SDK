@@ -20,16 +20,16 @@
  * SOFTWARE.
  */
 
-import { DIDBackend, Logger, JWTParserBuilder, JWTBuilder, BASE64, SimulatedIDChainAdapter } from "@elastosfoundation/did-js-sdk";
-//import { AssistDIDAdapter } from "./assistadapter"
+import { DIDBackend, Logger, JWTParserBuilder, BASE64 } from "@elastosfoundation/did-js-sdk";
+import { AssistDIDAdapter } from "./assistadapter";
 
 const log = new Logger("ParseJWT");
 export class ParseJWT {
 	public static printJwt(token: string): void {
-		let toks = token.split("\\.");
+		let toks = token.split(".");
 
 		if (toks.length != 2 && toks.length != 3) {
-			log.info("Invalid token: " + token);
+			log.trace("Invalid token: " + token);
 			return;
 		}
 
@@ -37,20 +37,23 @@ export class ParseJWT {
         if (toks[2] != "")
             sb += toks[2];
 
-        log.info("Token: " + token);
-        log.info("Plain: " + sb.toString());
+        log.trace("Token: " + token);
+        log.trace("Plain: " + sb.toString());
 	}
 }
 
 export async function parseJWT(argv) {
 		// Initializa the DID backend globally.
-		DIDBackend.initialize(new SimulatedIDChainAdapter("http://127.0.0.1:9123"));
+	DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
 
-		let token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTU5MDM1MjUsImV4cCI6MTU5NTk4OTkyNSwiaXNzIjoiZGlkOmVsYXN0b3M6aVlwUU13aGVEeHlTcWl2b2NTSmFvcHJjb0RUcVFzRFlBdSIsImNvbW1hbmQiOiJ2b3RlZm9ycHJvcG9zYWwiLCJkYXRhIjp7InByb3Bvc2FsSGFzaCI6ImY0MTRkMjUzODY0NDQ2NDNiYTE2NzZlYmZjZjU0ODJjNmZlYjNkMDI1OTlmNjE0NTJlYTYwMDg5OWQ4ZDdiZWUifX0.AsKlYyG3RyMBXBiDWkjZ4etbhCNjEp9MKIy8ySW2rBvCD9xFUiKUrjbsB4V0YI7eV47aqso4y8OdSXxc9yfoCw";
-		ParseJWT.printJwt(token);
+	let token = "eyJhbGciOiAiRVMyNTYiLCAiY3R5cCI6ICJqc29uIiwgImxpYnJhcnkiOiAiRWxhc3RvcyBESUQiLCAidHlwIjogIkpXVCIsICJ2ZXJzaW9uIjogIjEuMCIsICJraWQiOiAiZGlkOmVsYXN0b3M6aVdGQVVZaFRhMzVjMWZQZTNpQ0p2aWhaSHg2cXV1bW55bSNrZXkyIn0.eyJpc3MiOiJkaWQ6ZWxhc3RvczppV0ZBVVloVGEzNWMxZlBlM2lDSnZpaFpIeDZxdXVtbnltIiwic3ViIjoiSnd0VGVzdCIsImp0aSI6IjAiLCJhdWQiOiJUZXN0IGNhc2VzIiwiaWF0IjoxNjM4MTY3NjM5LCJleHAiOjE3MDEyMTA4MzksIm5iZiI6MTYwNjYwMjgzOSwiZm9vIjoiYmFyIiwib2JqZWN0Ijp7ImhlbGxvIjoid29ybGQiLCJ0ZXN0IjoidHJ1ZSJ9LCJmaW5pc2hlZCI6ZmFsc2V9.h0hLrePTLkekxDTv6fqg6NqlDTEcatcIa-LMZD0GEXMWnX3dmzv6XRmfwEX8u_dCFGjFQlUUlYhEgmvtt2cscA";
+	ParseJWT.printJwt(token);
 
+	try {
 		let jp = new JWTParserBuilder().build();
 		let jwt = await jp.parse(token);
-
-		log.info(jwt.toString());
+		log.trace(jwt.toString());
+	} catch (e) {
+        log.error(e);
+    }
 }
