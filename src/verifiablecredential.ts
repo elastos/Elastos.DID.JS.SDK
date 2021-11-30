@@ -797,7 +797,7 @@ export namespace VerifiableCredential {
 
         protected fromJSON(json: JSONObject, context: DID = null): void {
             this.id = this.getDid("subject.id", json.id,
-                { mandatory: false, defaultValue: context });
+                { mandatory: true, defaultValue: context });
             let props = JSON.parse(JSON.stringify(json));
             delete props.id; // or props['id']?
             this.properties = sortJSONObject(props);

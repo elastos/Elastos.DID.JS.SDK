@@ -45,7 +45,6 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
     private static REVOKED = "revoked";
     private static log = new Logger("CredentialMetadata");
 
-
     private id: DIDURL;
 
     /**
