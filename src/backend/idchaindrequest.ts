@@ -378,7 +378,7 @@ export namespace IDChainRequest {
         }
 
         protected fromJSON(json: JSONObject, context = null): void {
-            this.type = this.getString("type", json.type, { mandatory: true, nullable: false });
+            this.type = this.getString("type", json.type, { mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE, nullable: false });
             this.verificationMethod = this.getDidUrl("verificationMethod", json.verificationMethod, { mandatory: true, nullable: false });
             this.signature = this.getString("signature", json.signature, { mandatory: true, nullable: false });
         }

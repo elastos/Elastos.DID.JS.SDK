@@ -51,7 +51,6 @@ export class RestoreFromMnemonic {
 		if (dids.length > 0) {
 			for (let did of dids) {
 				log.trace(did);
-				log.trace(store.loadDid(did));
 			}
 		} else {
 			log.trace("No dids restored.");

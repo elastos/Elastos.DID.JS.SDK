@@ -52,7 +52,6 @@ export async function parseJWT(argv) {
 	try {
 		let jp = new JWTParserBuilder().build();
 		let jwt = await jp.parse(token);
-		log.trace(jwt.toString());
 	} catch (e) {
         log.error(e);
     }
