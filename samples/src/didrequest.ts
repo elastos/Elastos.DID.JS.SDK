@@ -321,7 +321,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
 
     public static parse(content: string | JSONObject, context = null): DIDRequest {
         try {
-            return super.deserialize(content, DIDRequest, context);
+            return IDChainRequest.deserialize(content, DIDRequest, context);
         } catch (e) {
             // DIDSyntaxException
             if (e instanceof Exceptions.MalformedIDChainRequestException)

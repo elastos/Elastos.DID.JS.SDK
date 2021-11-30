@@ -92,8 +92,8 @@ export async function initDid(argv) {
 
 	try {
 		example.initDIDBackend();
-		example.initRootIdentity();
-		example.initDid();
+		await example.initRootIdentity();
+		await example.initDid();
 	} catch (e) {
 		log.error(e);
 	}

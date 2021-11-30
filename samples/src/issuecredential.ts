@@ -40,11 +40,9 @@ export namespace IssueCredential {
 			this.name = name;
 		}
 
-		protected static async init(name: string): Promise<Entity> {
-			let entity = new Entity(name);
-			await entity.initRootIdentity();
-			await entity.initDid();
-			return entity;
+		protected async init(): Promise<void> {
+			await this.initRootIdentity();
+			await this.initDid();
 		}
 
 		protected async initRootIdentity(): Promise<void> {
@@ -84,6 +82,7 @@ export namespace IssueCredential {
 			});
 
 			if (dids.length > 0) {
+				this.did = dids[0];
 				return; // Already create my DID.
 			}
 
@@ -92,6 +91,7 @@ export namespace IssueCredential {
 			doc.getMetadata().setAlias("me");
 			log.trace("My new DID created: " + doc.getSubject());
 			await doc.publish(Entity.storepass);
+			this.did = doc.getSubject();
 		}
 
 		public getDid(): DID {
@@ -119,11 +119,14 @@ export namespace IssueCredential {
 		}
 
 		public static async init(name: string): Promise<University> {
-			let entity = await Entity.init(name);
-			return entity as University;
+			let university = new University(name);
+			await university.init();
+			let doc = await university.getDocument();
+			university.issuer = new Issuer(doc, null);
+			return university;
 		}
 
-		public async issueDiplomaFor(student: Student): Promise<VerifiableCredential> {
+		public async issueDiplomaFor(student: IssueCredential.Student): Promise<VerifiableCredential> {
 			let subject: JSONObject = {};
 			subject.name = student.getName();
 			subject.degree = "bachelor";
@@ -134,8 +137,9 @@ export namespace IssueCredential {
 
             this.issuer = new Issuer(await this.getDocument());
 			let cb = this.issuer.issueFor(student.getDid());
+
 			return await cb.id("diploma")
-				// .typeWithContext("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
+				.typeWithContext("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
 				.properties(subject)
 				.expirationDate(exp)
 				.seal(this.getStorePassword());
@@ -148,8 +152,9 @@ export namespace IssueCredential {
 		}
 
 		public static async init(name: string): Promise<Student> {
-			let entity = await Entity.init(name);
-			return entity as Student;
+			let student = new Student(name);
+			await student.init();
+			return student;
 		}
 	}
 }
@@ -160,9 +165,10 @@ export async function issueCredential(argv) {
         DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
 
         let university = await IssueCredential.University.init("Elastos");
-        let student = await IssueCredential.Student.init("John Smith");
+		let student = await IssueCredential.Student.init("John Smith");
 
         let vc = await university.issueDiplomaFor(student);
+
         log.trace("The diploma credential:");
         log.trace("  " + vc);
         log.trace("  Genuine: " + await vc.isGenuine());

@@ -92,7 +92,6 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
             if (body)
                 req.write(body);
             req.end();
-
         });
     }
 
@@ -142,6 +141,7 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 		if (payload == null || payload == "")
 			throw new Exceptions.IllegalArgumentException("Invalid payload parameter");
 
+
         let headers = new Object();
 		headers["Authorization"] = AssistDIDAdapter.API_KEY;
 
@@ -155,7 +155,7 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 		let response: AssistDIDAdapter.AssistDIDResponse = null;
 		try {
 			let createDid = new URL(this.assistRpcEndpoint + "/didtx/create");
-			let is = await this.postHttp(createDid, request.toString(), Headers);
+			let is = await this.postHttp(createDid, request.toString(), headers);
 			response = new AssistDIDAdapter.AssistDIDResponse(is);
 		} catch (e) {
 			throw new Exceptions.DIDTransactionException("Access the Assist API error.", e);
@@ -167,33 +167,30 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 
 		try {
 			let txStatus = new URL(this.assistRpcEndpoint + "/didtx/confirmation_id/" + response.data.confirmationId);
-
-			retry:
-			while (true) {
+            let completed = false;
+			while (completed == false) {
 				let is = await this.getRequest(txStatus, headers);
 				let statusResponse = new AssistDIDAdapter.AssistTxStatus(is);
 				if (statusResponse.meta.code != 200 || statusResponse.data.status == null)
 					throw new Exceptions.DIDTransactionException("Asssit API error: " + response.meta.code
 							+ ", message: " + response.meta.message);
 
-                log.trace("DID transaction %s is %s\n",
-						statusResponse.data.blockchainTxId != null ? statusResponse.data.blockchainTxId : "n/a",
-						statusResponse.data.status);
+                log.trace("DID transaction ---- status: " + statusResponse.data.status);
 
 				switch (statusResponse.data.status) {
-				case "pending":
-				case "processing":
+				case "Pending":
+				case "Processing":
 					await sleep(3000);
 					continue;
 
-				case "quarantined":
-				case "error":
+				case "Quarantined":
+				case "Error":
 					throw new Exceptions.DIDTransactionException("DID transaction " +
 							statusResponse.data.blockchainTxId + " is " +
 							statusResponse.data.status);
 
-				case "completed":
-					break retry;
+				case "Completed":
+                    completed = true;
 				}
 			}
 		} catch (e) {
@@ -222,7 +219,7 @@ export namespace AssistDIDAdapter {
             json.did = this.did.toString();
             json.memo = this.memo;
             json.requestFrom = this.agent;
-            json.didRequest = this.request.serialize(true);
+            json.didRequest = this.request.toJSON();
 
             return json;
         }
@@ -258,13 +255,13 @@ export namespace AssistDIDAdapter {
 
 	export class AssistDIDResponseData extends Entity<AssistDIDResponseMeta> {
         public confirmationId: string; // "confirmation_id"
-        public serviceCount: string;   // "service_count"
+        public serviceCount: number;   // "service_count"
         public duplicate: boolean;     // "duplicate"
 
         constructor(json: JSONObject) {
             super();
             this.confirmationId = this.getString("confirmation_id", json.confirmation_id, { mandatory: true, nullable: false });
-            this.serviceCount = this.getString("service_count", json.service_count, { mandatory: true, nullable: false });
+            this.serviceCount = this.getNumber("service_count", json.service_count, { mandatory: true, nullable: false });
             this.duplicate = this.getBoolean("duplicate", json.duplicate, { mandatory: true, nullable: false });
         }
 
@@ -314,9 +311,9 @@ export namespace AssistDIDAdapter {
             super();
             this.id = this.getString("id", json.id, { mandatory: true, nullable: false });
             this.did = this.getString("did", json.did, { mandatory: true, nullable: false });
-            this.agent = this.getString("requestFrom", json.agent, { mandatory: true, nullable: false });
+            this.agent = this.getString("requestFrom", json.requestFrom, { mandatory: true, nullable: false });
             this.status = this.getString("status", json.status, { mandatory: true, nullable: false });
-            this.blockchainTxId = this.getString("blockchainTxId", json.blockchainTxId, { mandatory: true, nullable: false });
+            this.blockchainTxId = this.getString("blockchainTxId", json.blockchainTxId, { mandatory: false, nullable: true });
         }
 
         public toJSON(key: string = null): JSONObject {

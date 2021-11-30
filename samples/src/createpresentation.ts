@@ -40,11 +40,9 @@ export namespace CreatePresentation {
 			this.name = name;
 		}
 
-		protected static async init(name: string): Promise<Entity> {
-			let entity = new Entity(name);
-			await entity.initRootIdentity();
-			await entity.initDid();
-			return entity;
+		protected async init(): Promise<void> {
+			await this.initRootIdentity();
+			await this.initDid();
 		}
 
 		protected async initRootIdentity(): Promise<void> {
@@ -84,6 +82,7 @@ export namespace CreatePresentation {
 			});
 
 			if (dids.length > 0) {
+				this.did = dids[0];
 				return; // Already create my DID.
 			}
 
@@ -92,6 +91,7 @@ export namespace CreatePresentation {
 			doc.getMetadata().setAlias("me");
 			log.trace("My new DID created: " + doc.getSubject());
 			await doc.publish(Entity.storepass);
+			this.did = doc.getSubject();
 		}
 
 		protected getDIDStore(): DIDStore {
@@ -123,8 +123,11 @@ export namespace CreatePresentation {
 		}
 
 		public static async initialize(name: string): Promise<University> {
-			let entity = await Entity.init(name);
-			return entity as University;
+			let university = new University(name);
+			await university.init();
+			let doc = await university.getDocument();
+			university.issuer = new Issuer(doc, null);
+			return university;
 		}
 
 		public async issueDiplomaFor(student: Student): Promise<VerifiableCredential> {
@@ -139,7 +142,7 @@ export namespace CreatePresentation {
             this.issuer = new Issuer(await this.getDocument());
 			let cb = this.issuer.issueFor(student.getDid());
 			return await cb.id("diploma")
-				// ("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
+				.typeWithContext("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
 				.properties(subject)
 				.expirationDate(exp)
 				.seal(this.getStorePassword());
@@ -157,11 +160,10 @@ export namespace CreatePresentation {
 
 		public static async initialize(name: string, gender: string, email: string): Promise<Student> {
 			let student = new Student(name);
-			await student.initRootIdentity();
-			await student.initDid();
+			await student.init();
 			student.gender = gender;
 			student.email = email;
-			student.vcs = new Array<VerifiableCredential>(4);
+			student.vcs = [];
 			return student;
 		}
 
@@ -175,9 +177,9 @@ export namespace CreatePresentation {
 
 			let cb = new Issuer(await this.getDocument()).issueFor(this.getDid());
 			return await cb.id("profile")
-				// .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-				// .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-				// .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+				.typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
 				.properties(subject)
 				.expirationDate(exp)
 				.seal(this.getStorePassword());
@@ -204,7 +206,7 @@ export async function createPresentation(argv) {
         DIDBackend.initialize(new AssistDIDAdapter("mainnet"));
 
         let university = await CreatePresentation.University.initialize("Elastos");
-        let student = await CreatePresentation.Student.initialize("John Smith", "Male", "johnsmith@example.org");
+		let student = await CreatePresentation.Student.initialize("John Smith", "Male", "johnsmith@example.org");
 
         let vc = await university.issueDiplomaFor(student);
         log.trace("The diploma credential:");

@@ -28,9 +28,6 @@ import { AssistDIDAdapter } from "./assistadapter"
 const log = new Logger("PresentationInJWT");
 export namespace PresentationInJWT {
 	export class Entity {
-		static getStorePassword(): string {
-			throw new Error("Method not implemented.");
-		}
 		// Mnemonic passphrase and the store password should set by the end user.
 		private static passphrase = "mypassphrase";
 		private static storepass = "mypassword";
@@ -43,11 +40,9 @@ export namespace PresentationInJWT {
 			this.name = name;
 		}
 
-		protected static async init(name: string): Promise<Entity> {
-			let entity = new Entity(name);
-			await entity.initRootIdentity();
-			await entity.initDid();
-			return entity;
+		protected async init(): Promise<void> {
+			await this.initRootIdentity();
+			await this.initDid();
 		}
 
 		protected async initRootIdentity(): Promise<void> {
@@ -87,6 +82,7 @@ export namespace PresentationInJWT {
 			});
 
 			if (dids.length > 0) {
+				this.did = dids[0];
 				return; // Already create my DID.
 			}
 
@@ -95,6 +91,7 @@ export namespace PresentationInJWT {
 			doc.getMetadata().setAlias("me");
 			log.trace("My new DID created: " + doc.getSubject());
 			await doc.publish(Entity.storepass);
+			this.did = doc.getSubject();
 		}
 
 		protected getDIDStore(): DIDStore {
@@ -113,7 +110,7 @@ export namespace PresentationInJWT {
 			return this.name;
 		}
 
-		protected getStorePassword(): string {
+		public getStorePassword(): string {
 			return Entity.storepass;
 		}
 	}
@@ -126,8 +123,11 @@ export namespace PresentationInJWT {
 		}
 
 		public static async initialize(name: string): Promise<University> {
-			let entity = await Entity.init(name);
-			return entity as University;
+			let university = new University(name);
+			await university.init();
+			let doc = await university.getDocument();
+			university.issuer = new Issuer(doc, null);
+			return university;
 		}
 
 		public async issueDiplomaFor(student: Student): Promise<VerifiableCredential> {
@@ -142,7 +142,7 @@ export namespace PresentationInJWT {
             this.issuer = new Issuer(await this.getDocument());
 			let cb = this.issuer.issueFor(student.getDid());
 			return await cb.id("diploma")
-				// .typeWithContext("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
+				.typeWithContext("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
 				.properties(subject)
 				.expirationDate(exp)
 				.seal(this.getStorePassword());
@@ -160,11 +160,11 @@ export namespace PresentationInJWT {
 
 		public static async initialize(name: string, gender: string, email: string): Promise<Student> {
 			let student = new Student(name);
-			await student.initRootIdentity();
-			await student.initDid();
+			await student.init();
+
 			student.gender = gender;
 			student.email = email;
-			student.vcs = new Array<VerifiableCredential>(4);
+			student.vcs = [];
 			return student;
 		}
 
@@ -178,9 +178,9 @@ export namespace PresentationInJWT {
 
 			let cb = new Issuer(await this.getDocument()).issueFor(this.getDid());
 			return await cb.id("profile")
-				// .typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
-				// .typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
-				// .typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
+				.typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
+				.typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")
+				.typeWithContext("EmailCredential", "https://elastos.org/credentials/email/v1")
 				.properties(subject)
 				.expirationDate(exp)
 				.seal(this.getStorePassword());
@@ -246,7 +246,7 @@ export async function presentationInJWT(argv) {
 				.setNotBefore(nbf)
 				.setExpiration(exp)
 				.claimsWithJson("presentation", vp.toString())
-				.sign(PresentationInJWT.Entity.getStorePassword());
+				.sign(student.getStorePassword());
 
 		log.trace("JWT Token:");
 		log.trace("  " + token);
@@ -260,8 +260,8 @@ export async function presentationInJWT(argv) {
 		vp = VerifiablePresentation.parse(preJson);
 		log.trace("Presentation from JWT:");
 		log.trace("  " + vp);
-		log.trace("  Genuine: " + vp.isGenuine());
-		log.trace("  Valid: " + vp.isValid());
+		log.trace("  Genuine: " + await vp.isGenuine());
+		log.trace("  Valid: " + await vp.isValid());
 
 		// Verify the token based on a DID
 		// This will success, because the JWT was signed by the student
