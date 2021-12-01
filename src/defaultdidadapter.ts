@@ -23,7 +23,6 @@
  */
 
 import axios from "axios";
-import { OutgoingHttpHeaders } from "http2";
 import { Comparable } from "./comparable";
 import { IllegalArgumentException, IOException, NetworkException, ResolveException, UnsupportedOperationException } from "./exceptions/exceptions";
 import { request as httpRequest } from "./http";
@@ -138,17 +137,17 @@ export class DefaultDIDAdapter implements DIDAdapter {
     // NOTE: synchronous HTTP calls are deprecated and wrong practice. Though, as JAVA SDK currently
     // mainly uses synchronous calls, we don't want to diverge our code from that. We then wait for the
     // "main" java implementation to rework synchronous calls and we will also migrate to Promises/Async.
-    protected performRequest(url: URL, body?: string, header?: Object): Promise<JSONObject> {
+    protected performRequest(url: URL, body?: string): Promise<JSONObject> {
         return new Promise((resolve, reject) => {
             if (runningInBrowser()) {
                 void axios({
                     method: "post",
                     url: url.toString(),
-                    headers: Object.assign({}, header, {
+                    headers: {
                         // Don't set user-agent in browser environment, this is forbidden by modern browsers.
                         "Content-Type": "application/json",
                         "Accept": "application/json"
-                    }),
+                    },
                     data: body
                 }).then((response) => {
                     if (response.status >= 200 && response.status < 400) {
@@ -164,19 +163,17 @@ export class DefaultDIDAdapter implements DIDAdapter {
 
                 // Use a different module if we call http or https
                 let requestMethod = (url.protocol.indexOf("https") === 0 ? httpsRequest : httpRequest);
-                let h: Object = Object.assign({}, header,
-                    {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                });
                 let req = requestMethod({
                     protocol: url.protocol,
                     hostname: url.hostname,
                     port: url.port,
                     path: url.pathname,
                     method: 'POST',
-                    headers: h as OutgoingHttpHeaders
+                    headers: {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    }
                 }, (res) => {
                     let wholeData = "";
                     res.on('data', d => {
