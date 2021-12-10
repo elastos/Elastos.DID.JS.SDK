@@ -39,7 +39,6 @@ import { checkArgument, checkEmpty, Collections, DID, DIDEntity, DIDURL, Verifia
 import { JSONObject } from "./json";
 import { VerificationEventListener } from "./verificationEventListener";
 
-
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
  * Proof that includes a nonce and realm.
@@ -126,7 +125,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
      * @return the time created
      */
     public getCreated(): Date {
-        return this.created;
+        return this.proof.getCreated() != null ? this.proof.getCreated() : this.created;
     }
 
     /**
@@ -351,7 +350,8 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         json.type = this.type.length == 1 ? this.type[0] : this.type;
         if (this.holder)
             json.holder = this.holder.toString();
-        json.created = this.dateToString(this.created);
+        if (this.created)
+            json.created = this.dateToString(this.created);
 
         json.verifiableCredential = Array.from(this.credentials.valuesAsSortedArray(),
             (vc) => vc.toJSON());
@@ -368,7 +368,15 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         this.id = this.getDidUrl("id", json.id, { mandatory: false, nullable: false, context: this.holder, defaultValue: null });
         this.type = this.getStrings("type", json.type,
             { mandatory: true, nullable: false, defaultValue: [VerifiablePresentation.DEFAULT_PRESENTATION_TYPE] });
-        this.created = this.getDate("created", json.created, { mandatory: true, nullable: false });
+        this.created = this.getDate("created", json.created, { mandatory: false, nullable: true });
+
+        if (!json.proof)
+            throw new MalformedPresentationException("Missing property: proof");
+
+        let proof = json.proof as JSONObject;
+        this.proof = VerifiablePresentation.Proof.deserialize(proof, VerifiablePresentation.Proof, this.holder);
+        if (this.created == null && this.proof.getCreated() == null)
+            throw new MalformedPresentationException("Missing presentation create timestamp");
 
         this.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
 
@@ -393,12 +401,6 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 this.credentials.set(vc.getId(), vc);
             }
         }
-
-        if (!json.proof)
-            throw new MalformedPresentationException("Missing property: proof");
-
-        let proof = json.proof as JSONObject;
-        this.proof = VerifiablePresentation.Proof.deserialize(proof, VerifiablePresentation.Proof, this.holder);
     }
 
     /**
@@ -672,7 +674,7 @@ export namespace VerifiablePresentation {
             let json = this.presentation.serialize(true);
             let sig = await this.holder.signWithId(this.signKey, storepass, Buffer.from(json),
                 Buffer.from(this._realm), Buffer.from(this._nonce));
-            let proof = new Proof(this.signKey, this._realm, this._nonce, sig);
+            let proof = new Proof(this.presentation.created, this.signKey, this._realm, this._nonce, sig);
             this.presentation.proof = proof;
 
             // Invalidate builder
@@ -690,6 +692,7 @@ export namespace VerifiablePresentation {
      */
     export class Proof extends DIDEntity<Proof> {
         private type: string;
+        private created: Date;
         private verificationMethod: DIDURL;
         private realm: string;
         private nonce: string;
@@ -704,10 +707,17 @@ export namespace VerifiablePresentation {
          * @param nonce the nonce string
          * @param signature the signature string
          */
-        constructor(method: DIDURL = null, realm: string = null, nonce: string = null,
+        constructor(created: Date = null, method: DIDURL = null, realm: string = null, nonce: string = null,
             signature: string = null, type: string = Constants.DEFAULT_PUBLICKEY_TYPE) {
             super();
             this.type = type != null ? type : Constants.DEFAULT_PUBLICKEY_TYPE;
+            if (created == null) {
+                this.created = new Date();
+                if (this.created)
+                    this.created.setMilliseconds(0);
+            } else {
+                this.created = created;
+            }
             this.verificationMethod = method;
             this.realm = realm;
             this.nonce = nonce;
@@ -721,6 +731,10 @@ export namespace VerifiablePresentation {
          */
         public getType(): string {
             return this.type;
+        }
+
+        public getCreated(): Date {
+            return this.created;
         }
 
         /**
@@ -764,6 +778,7 @@ export namespace VerifiablePresentation {
 
             return {
                 type: this.type,
+                created: this.dateToString(this.created),
                 verificationMethod: this.verificationMethod.toString(),
                 realm: this.realm,
                 nonce: this.nonce,
@@ -774,6 +789,8 @@ export namespace VerifiablePresentation {
         protected fromJSON(json: JSONObject, context: DID = null): void {
             this.type = this.getString("proof.type", json.type,
                 { mandatory: false, defaultValue: Constants.DEFAULT_PUBLICKEY_TYPE });
+            this.created = this.getDate("created", json.created,
+                { mandatory: false, nullable: true });
             this.verificationMethod = this.getDidUrl("proof.verificationMethod", json.verificationMethod,
                 { mandatory: true, nullable: false, context: context });
             this.realm = this.getString("proof.realm", json.realm,
