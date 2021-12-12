@@ -129,14 +129,13 @@ export class Mnemonic {
      */
     public isValid(mnemonic: string): boolean {
         checkArgument(mnemonic != null && mnemonic !== "", "Invalid mnemonic");
+        mnemonic = mnemonic.normalize("NFKD");
         return validateMnemonic(mnemonic, Mnemonic.WORDLISTS[this.language]);
     }
 
-
     public static getLanguage(mnemonic: string): string {
         checkArgument(mnemonic != null && mnemonic !== "", "Invalid menmonic");
-
-        // TODO CONVERT FROM JAVA - mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
+        mnemonic = mnemonic.normalize("NFKD");
         for (let lang of Object.keys(Mnemonic.WORDLISTS)) {
             let m = new Mnemonic(lang);
             if (m.isValid(mnemonic))
@@ -166,9 +165,7 @@ export class Mnemonic {
         if (passphrase == null)
             passphrase = "";
 
-        // TODO - CONVERT FROM JAVA NEEDED? - mnemonic = Normalizer.normalize(mnemonic, Normalizer.Form.NFD);
-        // TODO - CONVERT FROM JAVA NEEDED? - passphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFD);
-
+        mnemonic = mnemonic.normalize("NFKD");
         return mnemonicToSeedSync(mnemonic, passphrase)
     }
 }
