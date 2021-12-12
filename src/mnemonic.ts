@@ -166,6 +166,7 @@ export class Mnemonic {
             passphrase = "";
 
         mnemonic = mnemonic.normalize("NFKD");
+        passphrase = passphrase.normalize("NFKD");
         return mnemonicToSeedSync(mnemonic, passphrase)
     }
 }
