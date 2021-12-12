@@ -775,15 +775,17 @@ export namespace VerifiablePresentation {
 
         public toJSON(key: string = null): JSONObject {
             let context: DID = key ? new DID(key) : null;
+            let json: JSONObject = {};
 
-            return {
-                type: this.type,
-                created: this.dateToString(this.created),
-                verificationMethod: this.verificationMethod.toString(),
-                realm: this.realm,
-                nonce: this.nonce,
-                signature: this.signature
-            };
+            json.type = this.type;
+            if (this.created)
+                json.created = this.dateToString(this.created);
+
+            json.verificationMethod = this.verificationMethod.toString();
+            json.realm = this.realm;
+            json.nonce = this.nonce;
+            json.signature = this.signature;
+            return json;
         }
 
         protected fromJSON(json: JSONObject, context: DID = null): void {
