@@ -35,42 +35,42 @@ import { runningInBrowser } from "./utils";
 const log = new Logger("DefaultDIDAdapter");
 
 export class DefaultDIDAdapter implements DIDAdapter {
-    private static MAINNET_RESOLVERS: string[] = [
+    private static MAINNET_RPC_ENDPOINTS: string[] = [
         "https://api.elastos.io/eid",
-        "https://api.trinity-tech.cn/eid"
+        "https://api.trinity-tech.io/eid"
     ];
 
-    private static TESTNET_RESOLVERS: string[] = [
+    private static TESTNET_RPC_ENDPOINTS: string[] = [
         "https://api-testnet.elastos.io/eid",
-        "https://api-testnet.trinity-tech.cn/eid",
+        "https://api-testnet.trinity-tech.io/eid",
     ];
 
-    protected resolver: URL;
+    protected rpcEndpoint: URL;
 
     /**
      * Set default resolver according to specified url.
      *
-     * @param resolver the resolver url string
+     * @param rpcEndpoint the resolver RPC endpoint
      * @throws IllegalArgumentException throw this exception if setting resolver url failed.
      */
-    public constructor(resolver: "mainnet" | "testnet" | string) {
-        checkArgument(resolver && resolver != null, "Invalid resolver URL");
+    public constructor(rpcEndpoint: "mainnet" | "testnet" | string) {
+        checkArgument(rpcEndpoint && rpcEndpoint != null, "Invalid resolver URL");
         let endpoints: string[] = null;
 
-        switch (resolver.toLowerCase()) {
+        switch (rpcEndpoint.toLowerCase()) {
             case "mainnet":
-                resolver = DefaultDIDAdapter.MAINNET_RESOLVERS[0];
-                endpoints = DefaultDIDAdapter.MAINNET_RESOLVERS;
+                rpcEndpoint = DefaultDIDAdapter.MAINNET_RPC_ENDPOINTS[0];
+                endpoints = DefaultDIDAdapter.MAINNET_RPC_ENDPOINTS;
                 break;
 
             case "testnet":
-                resolver = DefaultDIDAdapter.TESTNET_RESOLVERS[0];
-                endpoints = DefaultDIDAdapter.TESTNET_RESOLVERS;
+                rpcEndpoint = DefaultDIDAdapter.TESTNET_RPC_ENDPOINTS[0];
+                endpoints = DefaultDIDAdapter.TESTNET_RPC_ENDPOINTS;
                 break;
         }
 
         try {
-            this.resolver = new URL(resolver);
+            this.rpcEndpoint = new URL(rpcEndpoint);
         } catch (e) {
             throw new IllegalArgumentException("Invalid resolver URL", e);
         }
@@ -131,7 +131,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
 
         let best = results[0];
         if (best.available())
-            this.resolver = best.endpoint;
+            this.rpcEndpoint = best.endpoint;
     }
 
     // NOTE: synchronous HTTP calls are deprecated and wrong practice. Though, as JAVA SDK currently
@@ -203,7 +203,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
         checkArgument(request && request != null, "Invalid request");
 
         try {
-            return this.performRequest(this.resolver, request);
+            return this.performRequest(this.rpcEndpoint, request);
         } catch (e) {
             // IOException
             throw new NetworkException("Network error.", e);
