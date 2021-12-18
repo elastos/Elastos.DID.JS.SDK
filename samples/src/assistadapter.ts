@@ -141,7 +141,6 @@ export class AssistDIDAdapter extends DefaultDIDAdapter {
 		if (payload == null || payload == "")
 			throw new Exceptions.IllegalArgumentException("Invalid payload parameter");
 
-
         let headers = new Object();
 		headers["Authorization"] = AssistDIDAdapter.API_KEY;
 
