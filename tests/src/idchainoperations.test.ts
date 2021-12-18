@@ -32,20 +32,45 @@ import {
     IDChainRequest,
     VerifiableCredential,
     Issuer,
-    File } from "@elastosfoundation/did-js-sdk";
+    File,
+    Features,
+    Exceptions} from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
 import { Utils } from "./utils/utils";
 import { DIDTestExtension } from "./utils/didtestextension";
+import { abort } from "process";
+import { resolve } from "path";
 
 const log = new Logger("IDChainOperationsTest");
 
 let testData: TestData;
 let store: DIDStore;
 let dids: DID[];
+let customizeDid: DID;
+let multiCustomizeDid: DID;
 
 let mnemonic: string;
 let identity: RootIdentity;
 
+const _charStr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+function randomIndex(min, max, i): number {
+    let index = Math.floor(Math.random()*(max-min+1)+min);
+    let numStart = _charStr.length - 10;
+    if (i==0 && index >= numStart)
+        index = randomIndex(min, max, i);
+
+    return index;
+}
+
+function genRandomString(len): string {
+    let min = 0, max = _charStr.length -1, _str = "";
+    len = len || 15;
+    for (let i = 0, index; i < len; i++) {
+        index = randomIndex(min, max, i);
+        _str += _charStr[index];
+    }
+    return _str;
+}
 // We use several describe() to force jest running test in a sequential order, as the below
 // tests depend on each other.
 describe('IDChainOperations Tests', () => {
@@ -66,7 +91,7 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 1', () => {
-        test('testCreateAndResolve', async () => {
+        test('testCreateController1', async () => {
             // Create new DID and publish to ID sidechain.
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
@@ -89,14 +114,23 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 2', () => {
-        test('testCreateAndresolve', async () => {
+        test('testCreateController2', async () => {
             // Create new DID and publish to ID sidechain.
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
 
+            //Add one key
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
+            let key = TestData.generateKeypair();
+            db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+            doc = await db.seal(TestConfig.storePass);
+            expect(doc.getPublicKeyCount()).toEqual(2);
+            expect(doc.getAuthenticationKeyCount()).toEqual(2);
+            await store.storeDid(doc);
+
             log.debug("Publishing new DID {}...", did);
             let start = Date.now();
-            await doc.publish(TestConfig.storePass);
+            await doc.publish(TestConfig.storePass, DIDURL.from("#key1"));
             await DIDTestExtension.awaitStandardPublishingDelay();
             let duration = (Date.now() - start + 500) / 1000;
             log.debug("Publish new DID {}...OK({}s)", did, duration);
@@ -112,10 +146,21 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 3', () => {
-        test('testCreateAndresolve2', async () => {
+        test('testCreateController3', async () => {
             // Create new DID and publish to ID sidechain.
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
+
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
+            // Add two services
+            db.addService("#test-svc-1", "Service.Testing",
+                "https://www.elastos.org/testing1");
+            db.addService(DIDURL.from("#test-svc-2", doc.getSubject()),
+                "Service.Testing", "https://www.elastos.org/testing2");
+            doc = await db.seal(TestConfig.storePass);
+            expect(doc).not.toBeNull();
+            expect(doc.isValid()).toBeTruthy();
+            await store.storeDid(doc);
 
             log.debug("Publishing new DID and resolve {}...", did);
 
@@ -136,7 +181,7 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 4', () => {
-        test('testUpdateAndResolve', async () => {
+        test('testUpdateController1', async () => {
             // User the DID that created in previous case(1)
             let doc = await store.loadDid(dids[0]);
             expect(doc).not.toBeNull();
@@ -149,13 +194,19 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
-            // Update
+            // Update: add one key and self-claimed credential.
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
             let key = TestData.generateKeypair();
             db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+
+            let subject = {
+                "passport": "S653258Z07"
+            };
+            await db.createAndAddCredential(TestConfig.storePass, "#passport", subject);
+
             doc = await db.seal(TestConfig.storePass);
-            expect(doc.getPublicKeyCount()).toEqual(2);
-            expect(doc.getAuthenticationKeyCount()).toEqual(2);
+            expect(doc.getPublicKeyCount()).toEqual(3);
+            expect(doc.getAuthenticationKeyCount()).toEqual(3);
             await store.storeDid(doc);
 
             log.debug("Updating DID {}...", did);
@@ -196,7 +247,7 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 5', () => {
-        test('testUpdateAndResolveAgain', async () => {
+        test('testUpdateAgainController1', async () => {
             // User the DID that created in previous case(1)
             let doc = await store.loadDid(dids[0]);
             expect(doc).not.toBeNull();
@@ -209,13 +260,20 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
-            // Update again
+            // Update again: add key2, remove key1 and add service
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
             let key = TestData.generateKeypair();
             db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+            db.removeAuthenticationKey("#key1");
+
+            db.addService(DIDURL.from("#test-svc-1", doc.getSubject()),
+                "Service.Testing", "https://www.elastos.org/testing1");
+
             doc = await db.seal(TestConfig.storePass);
             expect(doc.getPublicKeyCount()).toBe(3);
-            expect(doc.getAuthenticationKeyCount()).toBe(3);
+            expect(doc.getAuthenticationKeyCount()).toBe(2);
+            expect(doc.getControllerCount()).toBe(1);
+            expect(doc.getServiceCount()).toBe(1);
             await store.storeDid(doc);
 
             log.debug("Updating DID {}...", did);
@@ -261,8 +319,10 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 6', () => {
-        test('testUpdateAndresolve', async () => {
+        test('testUpdateController2', async () => {
             // User the DID that created in previous case(2)
+            Features.enableJsonLdContext(true);
+
             let doc = await store.loadDid(dids[1]);
             expect(doc).not.toBeNull();
             let did = doc.getSubject();
@@ -274,13 +334,16 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
-            // Update
+            // Update: add one authentication key and one service
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
             let key = TestData.generateKeypair();
-            db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+            db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+            db.addService(DIDURL.from("#test-svc-1", doc.getSubject()),
+                    "Service.Testing", "https://www.elastos.org/testing1");
             doc = await db.seal(TestConfig.storePass);
-            expect(doc.getPublicKeyCount()).toBe(2);
-            expect(doc.getAuthenticationKeyCount()).toBe(2);
+            expect(doc.getPublicKeyCount()).toBe(3);
+            expect(doc.getAuthenticationKeyCount()).toBe(3);
+            expect(doc.getServiceCount()).toBe(1);
             await store.storeDid(doc);
 
             log.debug("Updating DID {}...", did);
@@ -316,11 +379,13 @@ describe('IDChainOperations Tests', () => {
             expect(did.equals(tx.getDid())).toBeTruthy();
             expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
             await expect(await tx.getRequest().isValid()).toBeTruthy();
+
+            Features.enableJsonLdContext(false);
         });
     });
 
     describe('Order 7', () => {
-        test('testUpdateAndresolveAgain', async () => {
+        test('testUpdateAgainController2', async () => {
             // User the DID that created in previous case(2)
             let doc = await store.loadDid(dids[1]);
             expect(doc).not.toBeNull();
@@ -333,18 +398,11 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
-            // Update again
-            let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            let key = TestData.generateKeypair();
-            db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
-            doc = await db.seal(TestConfig.storePass);
-            expect(doc.getPublicKeyCount()).toBe(3);
-            expect(doc.getAuthenticationKeyCount()).toEqual(3);
-            await store.storeDid(doc);
-
+            // Update by the same document
             log.debug("Updating DID {}...", did);
             let start = Date.now();
-            await doc.publish(TestConfig.storePass);
+            await store.storeDid(resolved);
+            await resolved.publish(TestConfig.storePass);
             await DIDTestExtension.awaitStandardPublishingDelay();
             let duration = (Date.now() - start + 500) / 1000;
             log.debug("Update DID {}...OK({}s)", did, duration);
@@ -381,12 +439,15 @@ describe('IDChainOperations Tests', () => {
             expect(did.equals(tx.getDid())).toBeTruthy();
             expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
             await expect(await tx.getRequest().isValid()).toBeTruthy();
+
         });
     });
 
     describe('Order 8', () => {
-        test('testCreateAndResolveWithCredentials', async () => {
+        test('testCreateController4', async () => {
             // Create new DID and publish to ID sidechain.
+            Features.enableJsonLdContext(true);
+
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
 
@@ -432,13 +493,18 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
+            Features.enableJsonLdContext(false);
             dids.push(did); // 3
         });
     });
 
     describe('Order 9', () => {
-        test('testUpdateAndResolveWithCredentials', async () => {
+        test('testUpdateController4', async () => {
             // User the DID that created in previous case(8)
+            let issuerDoc = await store.loadDid(dids[1]);
+            expect(issuerDoc).not.toBeNull();
+            let issuerId = issuerDoc.getSubject();
+
             let doc = await store.loadDid(dids[3]);
             expect(doc).not.toBeNull();
             let did = doc.getSubject();
@@ -450,8 +516,9 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
-            let selfIssuer = new Issuer(doc);
-            let cb = selfIssuer.issueFor(did);
+            //Update: add kyc credential and one authentication key
+            let issuer = new Issuer(issuerDoc);
+            let cb = issuer.issueFor(did);
 
             let props = {
                 nationality: "Singapore",
@@ -466,9 +533,12 @@ describe('IDChainOperations Tests', () => {
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
+            let key = TestData.generateKeypair();
+            db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
             expect(doc.getCredentialCount()).toBe(2);
+            expect(doc.getAuthenticationKeyCount()).toBe(2);
             await store.storeDid(doc);
 
             log.debug("Updating DID {}...", did);
@@ -509,7 +579,7 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 10', () => {
-        test('testUpdateAndResolveWithCredentialsAgain', async () => {
+        test('testUpdateAgainController4', async () => {
             // User the DID that created in previous case(8)
             let doc = await store.loadDid(dids[3]);
             expect(doc).not.toBeNull();
@@ -522,7 +592,7 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
-            // Update again
+            // Update again: add self-claimed credential and remove passport credential
             let selfIssuer = new Issuer(doc);
             let cb = selfIssuer.issueFor(did);
 
@@ -543,9 +613,10 @@ describe('IDChainOperations Tests', () => {
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
+            db.removeCredential("#passport");
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.getCredentialCount()).toEqual(3);
+            expect(doc.getCredentialCount()).toEqual(2);
             await store.storeDid(doc);
 
             log.debug("Updating DID {}...", did);
@@ -591,8 +662,10 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 11', () => {
-        test('testCreateAndResolveWithCredentialsAsync', async () => {
+        test('testCreateController5', async () => {
             // Create new DID and publish to ID sidechain.
+            Features.enableJsonLdContext(true);
+
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
 
@@ -638,12 +711,13 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
+            Features.enableJsonLdContext(false);
             dids.push(did); // 4
         });
     });
 
     describe('Order 12', () => {
-        test('testUpdateAndResolveWithCredentialsAsync', async () => {
+        test('testUpdateController5', async () => {
             // User the DID that created in previous case(11)
             let doc = await store.loadDid(dids[4]);
             expect(doc).not.toBeNull();
@@ -656,7 +730,7 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
-            // Update
+            // Update: add a self-claimed credential and an authorization key
             let selfIssuer = new Issuer(doc);
             let cb = selfIssuer.issueFor(did);
 
@@ -673,6 +747,14 @@ describe('IDChainOperations Tests', () => {
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
             db.addCredential(vc);
+
+            //add controller2's key2 to be authorization key.
+            let authorizationDoc = await store.loadDid(dids[1]);
+            let key = authorizationDoc.getAuthenticationKey("#key2");
+
+            db.addAuthorizationKey("#recovery", authorizationDoc.getSubject().toString(),
+                    key.getPublicKeyBase58());
+
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
             expect(doc.getCredentialCount()).toBe(2);
@@ -697,7 +779,7 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 13', () => {
-        test('testUpdateAndResolveWithCredentialsAsyncAgain', async () => {
+        test('testUpdateAgainController5', async () => {
             // User the DID that created in previous case(11)
             let doc = await store.loadDid(dids[4]);
             expect(doc).not.toBeNull();
@@ -710,75 +792,493 @@ describe('IDChainOperations Tests', () => {
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
 
-            // Update again
-            let selfIssuer = new Issuer(doc);
-            let cb = selfIssuer.issueFor(did);
+            // Update three times with the same document.
+            for (let times = 0; times < 3; times++) {
+                log.debug("Updating{} DID {}...", times + 1, did);
+                let start = Date.now();
+                await store.storeDid(resolved);
+                await resolved.publish(TestConfig.storePass);
+                await DIDTestExtension.awaitStandardPublishingDelay();
+                let duration = (Date.now() - start + 500) / 1000;
+                log.debug("Update DID {}...OK({}s)", did, duration);
 
-            let props = {
-                Abc: "Abc",
-                abc: "abc",
-                Foobar: "Foobar",
-                foobar: "foobar",
-                zoo: "zoo",
-                Zoo: "Zoo"
-            };
+                resolved = await did.resolve(true);
+                expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
+                expect(did.equals(resolved.getSubject())).toBeTruthy();
+                expect(resolved.isValid()).toBeTruthy();
+                expect(doc.toString(true)).toEqual(resolved.toString(true));
 
-            let vc = await cb.id("#test")
-                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
-                    .properties(props)
-                    .seal(TestConfig.storePass);
-            expect(vc).not.toBeNull();
-
-            let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
-            doc = await db.seal(TestConfig.storePass);
-            expect(doc).not.toBeNull();
-            expect(doc.getCredentialCount()).toBe(3);
-            await store.storeDid(doc);
-
-            log.debug("Updating DID {}...", did);
-            let start = Date.now();
-            await doc.publish(TestConfig.storePass);
-            await DIDTestExtension.awaitStandardPublishingDelay();
-            let duration = (Date.now() - start + 500) / 1000;
-            log.debug("Update DID {}...OK({}s)", did, duration);
-
-            resolved = await did.resolve(true);
-            expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
-            expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
-            expect(doc.toString(true)).toEqual(resolved.toString(true));
-
-            lastTxid = resolved.getMetadata().getTransactionId();
-            log.debug("Last transaction id {}", lastTxid);
+                lastTxid = resolved.getMetadata().getTransactionId();
+                log.debug("Last transaction id {}", lastTxid);
+            }
 
             let rr = await did.resolveBiography();
             expect(rr).not.toBeNull();
             expect(did.equals(rr.getDid())).toBeTruthy();
+            expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
+            expect(rr.getTransactionCount()).toBe(5);
+            let txs = rr.getAllTransactions();
+            expect(txs).not.toBeNull();
+            expect(txs.length).toBe(5);
+
+            for (let i = 0; i < txs.length; i++) {
+                let tx = txs[i];
+                expect(did.equals(tx.getDid())).toBeTruthy();
+                await expect(await tx.getRequest().isValid()).toBeTruthy();
+
+                if (i == txs.length - 1)
+                    expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else
+                    expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+            }
+        });
+    });
+
+    describe('Order 14', () => {
+        test("testCreateCustomizedDid", async () => {
+            let controllerDoc = await store.loadDid(dids[0]);
+            expect(controllerDoc).not.toBeNull();
+            expect(controllerDoc.isValid()).toBeTruthy();
+
+            // Create customized DID
+            let customizedStr = genRandomString(20);
+            customizeDid = new DID(DID.METHOD, customizedStr);
+            log.trace("Begin to create a new customized DID: " + customizedStr);
+
+            let doc = await controllerDoc.newCustomized(customizeDid, TestConfig.storePass, false);
+            expect(doc.isValid()).toBeTruthy();
+
+            expect(doc.getSubject()).toEqual(customizeDid);
+            expect(doc.getController()).toEqual(controllerDoc.getSubject());
+
+            let resolved = await customizeDid.resolve();
+            expect(resolved).toBeNull();
+
+            await doc.publish(TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await customizeDid.resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.getSubject().equals(customizeDid)).toBeTruthy();
+            expect(resolved.getController().equals(controllerDoc.getSubject())).toBeTruthy();
+            expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+            expect(resolved.isValid()).toBeTruthy();
+
+            // Update: add two authentication keys
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
+            let key = TestData.generateKeypair();
+            db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+            key = TestData.generateKeypair();
+            db.addAuthenticationKey(DIDURL.from("#key2", doc.getSubject()),
+                    key.getPublicKeyBase58());
+            doc = await db.seal(TestConfig.storePass);
+            expect(doc.getPublicKeyCount()).toBe(5);
+            expect(doc.getAuthenticationKeyCount()).toBe(5);
+            expect(doc.getCredentialCount()).toBe(0);
+            expect(doc.getServiceCount()).toBe(0);
+            await store.storeDid(doc);
+
+            await doc.publish(TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await doc.getSubject().resolve();
+            expect(resolved).not.toBeNull()
+            expect(resolved.toString()).toEqual(doc.toString());
+
+            // Update again: add a self-claimed credential and a kyc credential by controller3
+            db = DIDDocument.Builder.newFromDocument(doc).edit();
+            let json = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\"}";
+            await db.createAndAddCredential(TestConfig.storePass, "#name", json);
+
+            let issuerDoc = await store.loadDid(dids[2]);
+            expect(issuerDoc).not.toBeNull();
+            let issuerId = issuerDoc.getSubject();
+
+            let issuer = new Issuer(issuerDoc);
+            let cb = issuer.issueFor(customizeDid);
+
+            let props = {
+                nationality: "Singapore",
+                passport: "S653258Z07"
+            };
+
+            let vc = await cb.id("#passport")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                    .properties(props)
+                    .seal(TestConfig.storePass);
+            expect(vc).not.toBeNull();
+            db.addCredential(vc);
+
+            doc = await db.seal(TestConfig.storePass);
+            expect(doc.getPublicKeyCount()).toBe(5);
+            expect(doc.getAuthenticationKeyCount()).toBe(5);
+            expect(doc.getCredentialCount()).toBe(2);
+            expect(doc.getServiceCount()).toBe(0);
+            await store.storeDid(doc);
+
+            await doc.publish(TestConfig.storePass, DIDURL.from("#key1"));
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await doc.getSubject().resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.toString()).toEqual(doc.toString());
+
+            let rr = await customizeDid.resolveBiography();
+            expect(rr).not.toBeNull();
+            expect(customizeDid.equals(rr.getDid())).toBeTruthy();
             expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
             expect(rr.getTransactionCount()).toBe(3);
             let txs = rr.getAllTransactions();
             expect(txs).not.toBeNull();
             expect(txs.length).toBe(3);
 
-            let tx = txs[0];
-            expect(did.equals(tx.getDid())).toBeTruthy();
-            expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-            await expect(await tx.getRequest().isValid()).toBeTruthy();
+            for (let i = 0; i < txs.length; i++) {
+                let tx = txs[i];
+                expect(customizeDid.equals(tx.getDid())).toBeTruthy();
+                await expect(await tx.getRequest().isValid()).toBeTruthy();
 
-            tx = txs[1];
-            expect(did.equals(tx.getDid())).toBeTruthy();
-            expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-            await expect(await tx.getRequest().isValid()).toBeTruthy();
-
-            tx = txs[2];
-            expect(did.equals(tx.getDid())).toBeTruthy();
-            expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
-            await expect(await tx.getRequest().isValid()).toBeTruthy();
+                if (i == txs.length - 1)
+                    expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else
+                    expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+            }
         });
     });
 
-    describe('Order 14', () => {
+    //multisig customized did: ctrl1, ctrl2, ctrl3, 2:3, key1, key2
+    describe('Order 15', () => {
+        test("testCreateMultisigCustomizedDid", async () => {
+            let ctrl1 = await store.loadDid(dids[0]);
+            expect(ctrl1).not.toBeNull();
+            expect(ctrl1.isValid()).toBeTruthy();
+
+            let ctrl2 = await store.loadDid(dids[1]);
+            expect(ctrl2).not.toBeNull();
+            expect(ctrl2.isValid()).toBeTruthy();
+
+            let ctrl3 = await store.loadDid(dids[2]);
+            expect(ctrl3).not.toBeNull();
+            expect(ctrl3.isValid()).toBeTruthy();
+
+            // Create customized DID
+            let customizedStr = genRandomString(20);
+            multiCustomizeDid = new DID(DID.METHOD, customizedStr);
+            log.trace("Begin to create a new multi-customized DID: " + customizedStr);
+
+            let doc = await ctrl1.newCustomizedDidWithController(multiCustomizeDid, [ctrl2.getSubject(), ctrl3.getSubject()],
+                2, TestConfig.storePass);
+            expect(doc.isValid()).toBeFalsy();
+
+            const d = doc;
+            expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
+
+            doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
+            expect(doc.isValid()).toBeTruthy();
+            expect(doc.getSubject().equals(multiCustomizeDid)).toBeTruthy();
+            expect(doc.getControllerCount()).toBe(3);
+            expect(doc.getPublicKeyCount()).toBe(7);
+            expect(doc.getAuthenticationKeyCount()).toBe(6);
+            expect(doc.getCredentialCount()).toBe(0);
+
+            let ctrls = new Array<DID>();
+            ctrls.push(ctrl1.getSubject());
+            ctrls.push(ctrl2.getSubject());
+            ctrls.push(ctrl3.getSubject());
+            ctrls.sort();
+
+            let docctrls = doc.getControllers();
+            docctrls.sort();
+
+            expect(ctrls.length).toBe(docctrls.length);
+
+            for (let i =0; i < 3; i++)
+                expect(ctrls[i].equals(docctrls[i])).toBeTruthy();
+
+            let resolved = await multiCustomizeDid.resolve();
+            expect(resolved).toBeNull();
+
+            doc.setEffectiveController(ctrl1.getSubject());
+            await doc.publish(TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await multiCustomizeDid.resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.getSubject().equals(multiCustomizeDid)).toBeTruthy();
+            expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
+            expect(resolved.isValid()).toBeTruthy();
+
+            // Update: add an authentication key and self-claimed credential signed by controller2
+            let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
+            let key = TestData.generateKeypair();
+            db.addAuthenticationKey("#key1", key.getPublicKeyBase58());
+            let json = "{\"twitter\":\"@john\"}";
+            await db.createAndAddCredential(TestConfig.storePass, "#twitter", json);
+            doc = await db.seal(TestConfig.storePass);
+            doc = await ctrl1.signWithDocument(doc, TestConfig.storePass);
+            await store.storeDid(doc);
+
+            await doc.publish(TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await doc.getSubject().resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.toString()).toEqual(doc.toString());
+            expect(doc.getPublicKeyCount()).toBe(8);
+            expect(doc.getAuthenticationKeyCount()).toBe(7);
+            expect(doc.getCredentialCount()).toBe(1);
+
+            // Update again: add an authentication key, an kyc credential by customized did and
+            // an service.
+            db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl3);
+            key = TestData.generateKeypair();
+            db.addAuthenticationKey("#key2", key.getPublicKeyBase58());
+
+            let issuerDoc = await store.loadDid(customizeDid);
+            expect(issuerDoc).not.toBeNull();
+
+            let issuer = new Issuer(issuerDoc, DIDURL.from("#key1", issuerDoc.getSubject()));
+            expect(issuer).not.toBeNull();
+            let cb = issuer.issueFor(multiCustomizeDid);
+
+            let props = {
+                nationality: "Singapore",
+                passport: "S653258Z07"
+            };
+
+            let vc = await cb.id("#passport")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                    .properties(props)
+                    .seal(TestConfig.storePass);
+            expect(vc).not.toBeNull();
+            db.addCredential(vc);
+
+            db.addService("#test-svc-1", "Service.Testing",
+                    "https://www.elastos.org/testing1");
+
+            doc = await db.seal(TestConfig.storePass);
+            doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
+            await store.storeDid(doc);
+
+            await doc.publish(TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await doc.getSubject().resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.toString()).toEqual(doc.toString());
+            expect(doc.getPublicKeyCount()).toBe(9);
+            expect(doc.getAuthenticationKeyCount()).toBe(8);
+            expect(doc.getCredentialCount()).toBe(2);
+            expect(doc.getServiceCount()).toBe(1);
+        });
+    });
+
+    describe('Order 16', () => {
+        test("testTransferCustomizedDid", async () => {
+            let doc = await store.loadDid(customizeDid);
+            expect(doc).not.toBeNull();
+
+            //new controller: controller3
+            let newController = await store.loadDid(dids[4]);
+            expect(newController).not.toBeNull();
+            expect(newController.isValid()).toBeTruthy();
+
+            let ticket = await doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
+            await expect(async() => {await ticket.isValid(); }).toBeTruthy();
+
+            // create new document for customized DID
+            let newDoc = await newController.newCustomized(customizeDid, TestConfig.storePass, true);
+            expect(newDoc.isValid()).toBeTruthy();
+
+            let db = DIDDocument.Builder.newFromDocument(newDoc).edit();
+            db.addCredential(doc.getCredential("#name"));
+            db.addCredential(doc.getCredential("#passport"));
+            db.addAuthenticationKey("#key1", doc.getAuthenticationKey("#key1").getPublicKeyBase58());
+            db.addAuthenticationKey("#key2", doc.getAuthenticationKey("#key2").getPublicKeyBase58());
+            newDoc = await db.seal(TestConfig.storePass);
+
+            expect(newDoc.getSubject().equals(customizeDid)).toBeTruthy();
+            expect(newDoc.getController().equals(newController.getSubject())).toBeTruthy();
+            await store.storeDid(newDoc);
+
+            // transfer
+            await newDoc.publishWithTicket(ticket, newController.getDefaultPublicKeyId(), TestConfig.storePass);
+
+            let resolved = await customizeDid.resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.getSubject().equals(customizeDid)).toBeTruthy();
+            expect(resolved.getController().equals(newController.getSubject())).toBeTruthy();
+            expect(resolved.isValid()).toBeTruthy();
+
+            //transfer again: add controller1
+            await store.storeDid(resolved);
+
+            db = DIDDocument.Builder.newFromDocument(resolved).edit();
+            db.addController(dids[0]);
+            db.setMultiSignature(2);
+            newDoc = await db.seal(TestConfig.storePass);
+            expect(newDoc).not.toBeNull();
+            expect(newDoc.isValid()).toBeFalsy();
+
+            let ctrl1 = await store.loadDid(dids[0]);
+            expect(ctrl1).not.toBeNull();
+            newDoc = await ctrl1.signWithDocument(newDoc, TestConfig.storePass);
+            expect(newDoc).not.toBeNull();
+            expect(newDoc.isValid()).toBeTruthy();
+            expect(newDoc.getControllerCount()).toBe(2);
+            expect(newDoc.hasController(dids[0])).toBeTruthy();
+            expect(newDoc.hasController(dids[2])).toBeTruthy();
+
+            ticket = await newController.createTransferTicket(ctrl1.getSubject(), TestConfig.storePass, customizeDid);
+            await expect(async() => {await ticket.isValid(); }).toBeTruthy();
+
+            await newDoc.publishWithTicket(ticket, ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
+
+            resolved = await customizeDid.resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.getSubject().equals(customizeDid)).toBeTruthy();
+            expect(resolved.getController().equals(newController.getSubject())).toBeTruthy();
+            expect(resolved.isValid()).toBeTruthy();
+
+            //update afer tranfer
+            await store.storeDid(resolved);
+            await resolved.publish(TestConfig.storePass, DIDURL.from("#key1"));
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await customizeDid.resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.toString()).toEqual(newDoc.toString());
+
+            let rr = await customizeDid.resolveBiography();
+            expect(rr).not.toBeNull();
+            expect(customizeDid.equals(rr.getDid())).toBeTruthy();
+            expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
+            expect(rr.getTransactionCount()).toBe(6);
+            let txs = rr.getAllTransactions();
+            expect(txs).not.toBeNull();
+            expect(txs.length).toBe(6);
+
+            for (let i = 0; i < txs.length; i++) {
+                let tx = txs[i];
+                expect(customizeDid.equals(tx.getDid())).toBeTruthy();
+                await expect(await tx.getRequest().isValid()).toBeTruthy();
+
+                if (i == txs.length - 1)
+                    expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else if (i == 1 || i == 2)
+                    expect(IDChainRequest.Operation.TRANSFER.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else
+                    expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+            }
+        });
+    });
+
+    //2:3 -> 2:2
+    describe('Order 17', () => {
+        test("testTransferMultisigCustomizedDid", async () => {
+            let doc = await store.loadDid(multiCustomizeDid);
+            expect(doc).not.toBeNull();
+            expect(doc.isValid()).toBeTruthy();
+
+            let ctrl1 = await store.loadDid(dids[0]);
+            let ctrl2 = await store.loadDid(dids[1]);
+
+            //new controller
+            let u = await store.loadDid(dids[4]);
+
+            // transfer ticket
+            let ticket = await ctrl1.createTransferTicket(u.getSubject(), TestConfig.storePass, multiCustomizeDid);
+            ticket = await ctrl2.signWithTicket(ticket, TestConfig.storePass);
+            await expect(async() => {await ticket.isValid(); }).toBeTruthy();
+
+            let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl1);
+            db.removeController(ctrl2.getSubject());  //remove controller2
+            db.removeController(dids[2]);             //remove contoller3
+            db.addController(u.getSubject());
+            db.setMultiSignature(2);
+            doc = await db.seal(TestConfig.storePass);
+            expect(doc).not.toBeNull();
+            expect(doc.isValid()).toBeFalsy();
+
+            doc = await u.signWithDocument(doc, TestConfig.storePass);
+            expect(doc.isValid()).toBeTruthy();
+
+            expect(doc.getSubject().equals(multiCustomizeDid)).toBeTruthy();
+            expect(doc.getControllerCount()).toBe(2);
+            expect(doc.getMultiSignature().toString()).toEqual("2:2");
+            expect(doc.getAuthenticationKeyCount()).toBe(2);
+            expect(doc.getCredentialCount()).toBe(2);
+
+            // transfer
+            await doc.publishWithTicket(ticket, u.getDefaultPublicKeyId(), TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            let resolved = await multiCustomizeDid.resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.getSubject().equals(multiCustomizeDid)).toBeTruthy();
+            expect(resolved.isValid()).toBeTruthy();
+            expect(resolved.toString()).toEqual(doc.toString());
+            await store.storeDid(resolved);
+
+            //update the same doc
+            await resolved.publish(TestConfig.storePass, new DIDURL("key2", ctrl1.getSubject()));
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await multiCustomizeDid.resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.getSubject().equals(multiCustomizeDid)).toBeTruthy();
+            expect(resolved.isValid()).toBeTruthy();
+            expect(resolved.toString()).toEqual(doc.toString());
+            await store.storeDid(resolved);
+
+            //transfer again: set multisig = 1:1
+            db = DIDDocument.Builder.newFromDocument(doc).edit(u);
+            db.removeController(ctrl1.getSubject());
+            doc = await db.seal(TestConfig.storePass);
+            expect(doc).not.toBeNull();
+            expect(doc.isValid()).toBeTruthy();
+            expect(doc.getControllerCount()).toBe(1);
+            expect(doc.getMultiSignature()).toEqual("1:1");
+
+            ticket = await u.createTransferTicket(u.getSubject(), TestConfig.storePass, multiCustomizeDid);
+            await expect(async() => {await ticket.isValid(); }).toBeFalsy();
+
+            ticket = await ctrl1.signWithTicket(ticket, TestConfig.storePass);
+            await expect(async() => {await ticket.isValid(); }).toBeTruthy();
+
+            await doc.publishWithTicket(ticket, u.getDefaultPublicKeyId(), TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            resolved = await multiCustomizeDid.resolve();
+            expect(resolved).not.toBeNull();
+            expect(resolved.getSubject().equals(multiCustomizeDid)).toBeTruthy();
+            expect(resolved.isValid()).toBeTruthy();
+            expect(resolved.toString()).toEqual(doc.toString());
+
+            let rr = await multiCustomizeDid.resolveBiography();
+            expect(rr).not.toBeNull();
+            expect(multiCustomizeDid.equals(rr.getDid())).toBeTruthy();
+            expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
+            expect(rr.getTransactionCount()).toBe(6);
+            let txs = rr.getAllTransactions();
+            expect(txs).not.toBeNull();
+            expect(txs.length).toBe(6);
+
+            for (let i = 0; i < txs.length; i++) {
+                let tx = txs[i];
+                expect(multiCustomizeDid.equals(tx.getDid())).toBeTruthy();
+                await expect(await tx.getRequest().isValid()).toBeTruthy();
+
+                if (i == txs.length - 1)
+                    expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else if (i == 0 || i == 2)
+                    expect(IDChainRequest.Operation.TRANSFER.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else
+                    expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+            }
+        });
+    });
+
+    describe('Order 18', () => {
         test('testSyncRootIdentityClean', async () => {
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
@@ -823,7 +1323,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 15', () => {
+    describe('Order 19', () => {
         test('testSyncRootIdentityCleanAsync', async () => {
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
@@ -851,7 +1351,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 16', () => {
+    describe('Order 20', () => {
         test('testSyncRootIdentityWithoutModification', async () => {
             log.debug("Synchronizing from IDChain...");
             let start = Date.now();
@@ -870,18 +1370,20 @@ describe('IDChainOperations Tests', () => {
             log.debug("Synchronize from IDChain...OK({}s)", duration);
 
             let restoredDids: DID[] = Array.from(await store.listDids());
-            expect(restoredDids.length).toBe(5);
+            expect(restoredDids.length).toBe(7);
             restoredDids.sort((a,b) => a.compareTo(b));
 
             let originalDids: DID[] = Array.from(dids);
+            originalDids.push(customizeDid);
+            originalDids.push(multiCustomizeDid);
             originalDids.sort((a,b) => a.compareTo(b));
 
-            for (let i = 0; i < 5; i++)
+            for (let i = 0; i < 7; i++)
                 expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
         });
     });
 
-    describe('Order 17', () => {
+    describe('Order 21', () => {
         test('testSyncRootIdentityWithoutModificationAsync', async () => {
             log.debug("Synchronizing from IDChain...");
             let start = Date.now();
@@ -902,18 +1404,20 @@ describe('IDChainOperations Tests', () => {
             log.debug("Synchronize from IDChain...OK({}s)", duration);
 
             let restoredDids: DID[] = Array.from(await store.listDids());
-            expect(restoredDids.length).toBe(5);
+            expect(restoredDids.length).toBe(7);
             restoredDids.sort((a,b) => a.compareTo(b));
 
             let originalDids: DID[] = Array.from(dids);
+            originalDids.push(customizeDid);
+            originalDids.push(multiCustomizeDid);
             originalDids.sort((a,b) => a.compareTo(b));
 
-            for (let i = 0; i < 5; i++)
+            for (let i = 0; i < 7; i++)
                 expect(originalDids[i].equals(restoredDids[i])).toBeTruthy();
         });
     });
 
-    describe('Order 18', () => {
+    describe('Order 22', () => {
         test('testSyncRootIdentityWithLocalModification1', async () => {
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
@@ -971,7 +1475,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 19', () => {
+    describe('Order 23', () => {
         test('testSyncRootIdentityWithLocalModification2', async () => {
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
@@ -1032,7 +1536,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 20', () => {
+    describe('Order 24', () => {
         test('testSyncRootIdentityWithLocalModificationAsync', async () => {
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
@@ -1093,7 +1597,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 30', () => {
+    describe('Order 25', () => {
         test('testResolveVC', async () => {
             let id = new DIDURL("did:elastos:iZrzd9TFbVhRBgcnjoGYQhqkHf7emhxdYu#1234");
             let vc = await VerifiableCredential.resolve(id);
@@ -1101,11 +1605,11 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 40', () => {
+    describe('Order 26', () => {
         test('testSynchronizeStore', async () => {
-            let dids: DID[] = Array.from(await store.listDids());
-            dids.sort((a,b) => a.compareTo(b));
-            for (let did of dids) {
+            let listdids: DID[] = Array.from(await store.listDids());
+            listdids.sort((a,b) => a.compareTo(b));
+            for (let did of listdids) {
                 expect(store.deleteDid(did)).toBeTruthy();
             }
 
@@ -1115,9 +1619,481 @@ describe('IDChainOperations Tests', () => {
             await store.synchronize();
             let syncedDids: DID[] =  Array.from(await store.listDids());
             syncedDids.sort((a,b) => a.compareTo(b));
+            let originalDids: DID[] = Array.from(dids);
+            originalDids.sort((a,b) => a.compareTo(b));
 
             for (let i = 0; i < dids.length; i++)
-                expect(dids[i].equals(syncedDids[i])).toBeTruthy();
+                expect(originalDids[i].equals(syncedDids[i])).toBeTruthy();
+        });
+    });
+
+    describe('Order 27', () => {
+        test('testDeclareAndRevokeCredentialByOwner', async () => {
+            let doc = await store.loadDid(dids[4]);
+            expect(doc).not.toBeNull();
+
+            let vcs = doc.getCredentials();
+            expect(vcs.length).toBe(2);
+
+            let declared: boolean;
+            for (let i = 0; i < vcs.length; i++) {
+                vcs[i].getMetadata().attachStore(doc.getStore());
+                declared = await vcs[i].wasDeclared();
+                expect(declared).toBeFalsy();
+            }
+
+            //declare one credential
+            let declareVc = vcs[0];
+            await declareVc.declare(null, TestConfig.storePass);
+            declared = await declareVc.wasDeclared();
+            expect(declared).toBeTruthy();
+
+            let revoked: boolean;
+            for (let i = 0; i < vcs.length; i++) {
+                revoked = await vcs[i].isRevoked();
+                expect(revoked).toBeFalsy();
+
+                let vc = await VerifiableCredential.resolve(vcs[i].getId());
+                if (i != 0)
+                    expect(vc).toBeNull();
+                else
+                    expect(vc).not.toBeNull();
+
+                await vcs[i].revoke(null, null, TestConfig.storePass);
+
+                revoked = await vcs[i].isRevoked();
+                expect(revoked).toBeTruthy();
+
+                let bio = await VerifiableCredential.resolveBiography(vcs[i].getId(), null);
+                expect(bio).not.toBeNull();
+                if (i != 0) {
+                    expect(bio.getAllTransactions().length).toBe(1);
+                    expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+                } else {
+                    expect(bio.getAllTransactions().length).toBe(2);
+                    expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+                }
+            }
+        });
+    });
+
+    describe('Order 28', () => {
+        test('testDeclareAndRevokeCredentialByOwner2', async () => {
+            let doc = await store.loadDid(customizeDid);
+            expect(doc).not.toBeNull();
+
+            let vcs = doc.getCredentials();
+            expect(vcs.length).toBe(2);
+
+            let declared: boolean;
+            for (let i = 0; i < vcs.length; i++) {
+                vcs[i].getMetadata().attachStore(doc.getStore());
+                declared = await vcs[i].wasDeclared();
+                expect(declared).toBeFalsy();
+            }
+
+            //declare one credential
+            let declareVc = vcs[0];
+            await declareVc.declare(DIDURL.from("#key2"), TestConfig.storePass);
+            declared = await declareVc.wasDeclared();
+            expect(declared).toBeTruthy();
+
+            let revoked: boolean;
+            for (let i = 0; i < vcs.length; i++) {
+                revoked = await vcs[i].isRevoked();
+                expect(revoked).toBeFalsy();
+
+                let vc = await VerifiableCredential.resolve(vcs[i].getId());
+                if (i != 2)
+                    expect(vc).toBeNull();
+                else
+                    expect(vc).not.toBeNull();
+
+                let signer = await store.loadDid(dids[0]);
+                await vcs[i].revoke(new DIDURL("#key2", dids[0]), signer, TestConfig.storePass);
+
+                revoked = await vcs[i].isRevoked();
+                expect(revoked).toBeTruthy();
+
+                let bio = await VerifiableCredential.resolveBiography(vcs[i].getId(), null);
+                expect(bio).not.toBeNull();
+                if (i != 0) {
+                    expect(bio.getAllTransactions().length).toBe(1);
+                    expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+                } else {
+                    expect(bio.getAllTransactions().length).toBe(2);
+                    expect(bio.getTransaction(1).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+                }
+            }
+        });
+    });
+
+    describe('Order 29', () => {
+        test('testDeclareAndRevokeCredentialByIssuer', async () => {
+            let doc = await store.loadDid(dids[3]);
+            expect(doc).not.toBeNull();
+
+            //get kyc credential
+            let vc = doc.getCredential("#passport");
+            expect(vc).not.toBeNull();
+            vc.getMetadata().attachStore(doc.getStore());
+
+            let declared = await vc.wasDeclared();
+            expect(declared).toBeFalsy();
+
+            let issuer = vc.getIssuer();
+            let isssuerDoc = await store.loadDid(issuer);
+
+            //revoke by random
+            let randomDoc = await store.loadDid(dids[0]);
+            await VerifiableCredential.revoke(vc.getId(), randomDoc, null, TestConfig.storePass);
+            await expect(async() => {await vc.isRevoked(); }).toBeFalsy();
+
+            //revoke by issuer
+            await VerifiableCredential.revoke(vc.getId(), isssuerDoc, null, TestConfig.storePass);
+            await expect(async() => {await vc.isRevoked(); }).toBeTruthy();
+            let resolved = await VerifiableCredential.resolve(vc.getId());
+            expect(resolved).toBeNull();
+
+            //revoke by owner, fail.
+            await expect(async () => {
+                await VerifiableCredential.revoke(vc.getId(), doc, null, TestConfig.storePass);
+            }).rejects.toThrowError(Exceptions.CredentialRevokedException);
+
+            //declare by owner, fail.
+            await expect(async () => {
+                await vc.declare(null, TestConfig.storePass);
+            }).rejects.toThrowError(Exceptions.CredentialRevokedException);
+
+            let bio = await VerifiableCredential.resolveBiography(vc.getId(), null);
+            expect(bio).not.toBeNull();
+            expect(bio.getTransactionCount()).toBe(0);
+
+            bio = await VerifiableCredential.resolveBiography(vc.getId(), issuer);
+            expect(bio).not.toBeNull();
+            expect(bio.getTransactionCount()).toBe(1);
+            expect(bio.getAllTransactions().length).toBe(1);
+            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+        });
+    });
+
+    describe('Order 30', () => {
+        test('testDeclareAndRevokeCredentialByIssuer2', async () => {
+            let doc = await store.loadDid(multiCustomizeDid);
+            expect(doc).not.toBeNull();
+
+            //get kyc credential in customized document
+            let vc = doc.getCredential("#twitter");
+            expect(vc).not.toBeNull();
+            vc.getMetadata().attachStore(doc.getStore());
+
+            let declared = await vc.wasDeclared();
+            expect(declared).toBeFalsy();
+
+            let issuer = vc.getIssuer();
+            let isssuerDoc = await store.loadDid(issuer);
+
+            //revoke by random
+            let randomDoc = await store.loadDid(dids[0]);
+            await VerifiableCredential.revoke(vc.getId(), randomDoc, null, TestConfig.storePass);
+            await expect(async() => {await vc.isRevoked(); }).toBeFalsy();
+
+            //revoke by issuer
+            await VerifiableCredential.revoke(vc.getId(), isssuerDoc, null, TestConfig.storePass);
+            await expect(async() => {await vc.isRevoked(); }).toBeTruthy();
+            let resolved = await VerifiableCredential.resolve(vc.getId());
+            expect(resolved).toBeNull();
+
+            //revoke by owner, fail.
+            await expect(async () => {
+                await VerifiableCredential.revoke(vc.getId(), doc, null, TestConfig.storePass);
+            }).rejects.toThrowError(Exceptions.CredentialRevokedException);
+
+            //declare by owner, fail.
+            await expect(async () => {
+                await vc.declare(null, TestConfig.storePass);
+            }).rejects.toThrowError(Exceptions.CredentialRevokedException);
+
+            let bio = await VerifiableCredential.resolveBiography(vc.getId(), null);
+            expect(bio).not.toBeNull();
+            expect(bio.getTransactionCount()).toBe(0);
+
+            bio = await VerifiableCredential.resolveBiography(vc.getId(), issuer);
+            expect(bio).not.toBeNull();
+            expect(bio.getTransactionCount()).toBe(1);
+            expect(bio.getAllTransactions().length).toBe(1);
+            expect(bio.getTransaction(0).getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE));
+        });
+    });
+
+    describe('Order 31', () => {
+        test('testListPagination', async () => {
+            let doc = await store.loadDid(dids[0]);
+            let did = doc.getSubject();
+
+            let selfIssuer = new Issuer(doc);
+
+            for (let i = 0; i < 36; i++) {
+                console.log("Creating test credential {}...", i);
+
+                let vc = await selfIssuer.issueFor(did)
+                        .id("#test" + i)
+                        .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                        .properties({"index": i})
+                        .seal(TestConfig.storePass);
+
+                vc.getMetadata().attachStore(doc.getStore());
+                await vc.declare(null, TestConfig.storePass);
+
+                expect(await vc.wasDeclared()).toBeTruthy();
+            }
+
+            let index = 35;
+            let ids = await VerifiableCredential.list(did);
+            expect(ids).not.toBeNull();
+            expect(ids.length).toBe(36);
+
+            for (let id of ids) {
+                console.log("Resolving credential {}...", id.getFragment());
+
+                let ref = new DIDURL("#test" + index--, did);
+                expect(ref.equals(id)).toBeTruthy();
+
+                let vc = await VerifiableCredential.resolve(id);
+                expect(vc).not.toBeNull();
+                expect(ref.equals(vc.getId())).toBeTruthy();
+                expect(await vc.wasDeclared()).toBeTruthy();
+            }
+
+            index = 35;
+            ids = await VerifiableCredential.list(did, 0, 560);
+            expect(ids).not.toBeNull();
+            expect(ids.length).toBe(36);
+            for (let id of ids) {
+                let ref = new DIDURL("#test" + index--, did);
+                expect(ref.equals(id)).toBeTruthy();
+            }
+
+            ids = await VerifiableCredential.list(did, 36, 100);
+            expect(ids).toBeNull();
+
+            let skip = 0;
+            let limit = 16;
+            index = 36;
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                let resultSize = index >= limit ? limit : index;
+                ids = await VerifiableCredential.list(did, skip, limit);
+                if (ids == null)
+                    break;
+
+                expect(ids.length).toEqual(resultSize);
+                for (let id of ids) {
+                    let ref = new DIDURL("#test" + --index, did);
+                    expect(ref.equals(id)).toBeTruthy();
+
+                    //let vc = await VerifiableCredential.resolve(id);
+                    //expect(vc).not.toBeNull();
+                    //expect(ref.equals(vc.getId())).toBeTruthy();
+                    //expect(await vc.wasDeclared()).toBeTruthy();
+                }
+
+                skip += ids.length;
+            }
+            expect(index).toEqual(0);
+
+            skip = 20;
+            limit = 10;
+            index = 16;
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                let resultSize = index >= limit ? limit : index;
+                ids = await VerifiableCredential.list(did, skip, limit);
+                if (ids == null)
+                    break;
+
+                expect(ids.length).toEqual(resultSize);
+                for (let id of ids) {
+                    let ref = new DIDURL("#test" + --index, did);
+                    expect(ref.equals(id)).toBeTruthy();
+
+                    //let vc = await VerifiableCredential.resolve(id);
+                    //expect(vc).not.toBeNull();
+                    //expect(ref.equals(vc.getId())).toBeTruthy();
+                    //expect(await vc.wasDeclared()).toBeTruthy();
+                }
+
+                skip += ids.length;
+            }
+            expect(index).toBe(0);
+        });
+    });
+
+    describe('Order 31', () => {
+        test("testDeactivate", async () => {
+            let doc = await dids[0].resolve(true);
+            let did = doc.getSubject();
+            expect(doc).not.toBeNull();
+            await store.storeDid(doc);
+
+            await doc.deactivate(null, TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            let resolved = await did.resolve(true);
+            expect(resolved.toString()).toEqual(doc.toString());
+            expect(resolved.isDeactivated()).toBeTruthy();
+
+            let rr = await did.resolveBiography();
+            expect(rr).not.toBeNull();
+            expect(did.equals(rr.getDid())).toBeTruthy();
+            expect(DIDBiographyStatus.DEACTIVATED.equals(rr.getStatus())).toBeTruthy();
+            expect(rr.getTransactionCount()).toBe(4);
+            let txs = rr.getAllTransactions();
+            expect(txs).not.toBeNull();
+            expect(txs.length).toBe(4);
+
+            for (let i = 0; i < txs.length; i++) {
+                let tx = txs[i];
+                expect(did.equals(tx.getDid())).toBeTruthy();
+                await expect(await tx.getRequest().isValid()).toBeTruthy();
+
+                if (i == 0)
+                    expect(IDChainRequest.Operation.DEACTIVATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else if (i == txs.length - 1)
+                    expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else
+                    expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+            }
+        });
+    });
+
+    describe('Order 32', () => {
+        test("testDeactivate2", async () => {
+            let doc = await dids[1].resolve(true);
+            let did = doc.getSubject();
+            expect(doc).not.toBeNull();
+            await store.storeDid(doc);
+
+            await doc.deactivate(DIDURL.from("#key2"), TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            let resolved = await did.resolve(true);
+            expect(resolved.toString()).toEqual(doc.toString());
+            expect(resolved.isDeactivated()).toBeTruthy();
+
+            let rr = await did.resolveBiography();
+            expect(rr).not.toBeNull();
+            expect(did.equals(rr.getDid())).toBeTruthy();
+            expect(DIDBiographyStatus.DEACTIVATED.equals(rr.getStatus())).toBeTruthy();
+            expect(rr.getTransactionCount()).toBe(4);
+            let txs = rr.getAllTransactions();
+            expect(txs).not.toBeNull();
+            expect(txs.length).toBe(4);
+
+            for (let i = 0; i < txs.length; i++) {
+                let tx = txs[i];
+                expect(did.equals(tx.getDid())).toBeTruthy();
+                await expect(await tx.getRequest().isValid()).toBeTruthy();
+
+                if (i == 0)
+                    expect(IDChainRequest.Operation.DEACTIVATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else if (i == txs.length - 1)
+                    expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else
+                    expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+            }
+        });
+    });
+
+    describe('Order 33', () => {
+        test("testDeactivateByAuthorizationKey", async () => {
+            let target = await dids[4].resolve(true);
+            let did = target.getSubject();
+            expect(target).not.toBeNull();
+            await store.storeDid(target);
+
+            expect(target.getAuthorizationKeyCount()).toBe(1);
+
+            let pks = target.getAuthenticationKeys();
+            expect(pks.length).toBe(1);
+
+            let authorizationKey = pks[0];
+            let authorizationDoc = await store.loadDid(authorizationKey.getController());
+            await authorizationDoc.deactivateTargetDID(target.getSubject(), new DIDURL("#key2", authorizationDoc.getSubject()), TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            let resolved = await did.resolve(true);
+            expect(resolved.toString()).toEqual(target.toString());
+            expect(resolved.isDeactivated()).toBeTruthy();
+
+            let rr = await did.resolveBiography();
+            expect(rr).not.toBeNull();
+            expect(did.equals(rr.getDid())).toBeTruthy();
+            expect(DIDBiographyStatus.VALID.equals(rr.getStatus())).toBeTruthy();
+            expect(rr.getTransactionCount()).toBe(4);
+            let txs = rr.getAllTransactions();
+            expect(txs).not.toBeNull();
+            expect(txs.length).toBe(4);
+
+            for (let i = 0; i < txs.length; i++) {
+                let tx = txs[i];
+                expect(did.equals(tx.getDid())).toBeTruthy();
+                await expect(await tx.getRequest().isValid()).toBeTruthy();
+
+                if (i == 0)
+                    expect(IDChainRequest.Operation.DEACTIVATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else if (i == txs.length - 1)
+                    expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else
+                    expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+            }
+        });
+    });
+
+    describe('Order 33', () => {
+        test("testDeactivateCustomizedDid", async () => {
+            let target = await multiCustomizeDid.resolve(true);
+            expect(target).not.toBeNull();
+            await store.storeDid(target);
+
+            let ctrls = target.getControllers();
+            expect(ctrls.length).toBe(1);
+
+            let ctrl = ctrls[0];
+            let ctrlDoc = await store.loadDid(ctrl);
+            expect(ctrlDoc).not.toBeNull();
+            expect(ctrlDoc.isValid()).toBeTruthy();
+
+            await ctrlDoc.deactivateTargetDID(target.getSubject(), null, TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            let resolved = await multiCustomizeDid.resolve(true);
+            expect(resolved.toString()).toEqual(target.toString());
+            expect(resolved.isDeactivated()).toBeTruthy();
+
+            let rr = await multiCustomizeDid.resolveBiography();
+            expect(rr).not.toBeNull();
+            expect(multiCustomizeDid.equals(rr.getDid())).toBeTruthy();
+            expect(DIDBiographyStatus.DEACTIVATED.equals(rr.getStatus())).toBeTruthy();
+            expect(rr.getTransactionCount()).toBe(7);
+            let txs = rr.getAllTransactions();
+            expect(txs).not.toBeNull();
+            expect(txs.length).toBe(7);
+
+            for (let i = 0; i < txs.length; i++) {
+                let tx = txs[i];
+                expect(multiCustomizeDid.equals(tx.getDid())).toBeTruthy();
+                await expect(await tx.getRequest().isValid()).toBeTruthy();
+
+                if (i == 0)
+                    expect(IDChainRequest.Operation.DEACTIVATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else if (i == 1 || i == 3)
+                    expect(IDChainRequest.Operation.TRANSFER.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else if (i == txs.length - 1)
+                    expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+                else
+                    expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
+            }
         });
     });
 });
