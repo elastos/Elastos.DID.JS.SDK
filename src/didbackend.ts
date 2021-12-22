@@ -181,6 +181,10 @@ export class DIDBackend {
 
         let requestJson = request.serialize(true);
         let resolvedJson = await this.getAdapter().resolve(requestJson);
+
+        console.log("&&&&&&&&&&&&&&&& resolve request: " + requestJson);
+        console.log("&&&&&&&&&&&&&&&& resolve response: " + JSON.stringify(resolvedJson));
+
         if (resolvedJson == null)
             throw new DIDResolveException("Unknown error, got null result.");
 
@@ -404,15 +408,13 @@ export class DIDBackend {
         let tx: CredentialTransaction = null;
         if (bio.getStatus().equals(CredentialBiographyStatus.VALID)) {
             tx = bio.getTransaction(0);
-        }
-        else if (bio.getStatus().equals(CredentialBiographyStatus.REVOKED)) {
+        } else if (bio.getStatus().equals(CredentialBiographyStatus.REVOKED)) {
             tx = bio.getTransaction(0);
             if (!tx.getRequest().getOperation().equals(IDChainRequest.Operation.REVOKE))
                 throw new DIDResolveException("Invalid credential biography, wrong status.");
 
             if (bio.getTransactionCount() < 1 || bio.getTransactionCount() > 2)
                 throw new DIDResolveException("Invalid credential biography, transaction signature mismatch.");
-
 
             if (bio.getTransactionCount() == 1) {
                 if (!await tx.getRequest().isValid())

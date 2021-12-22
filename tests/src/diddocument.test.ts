@@ -31,7 +31,8 @@ import {
     Base58,
     Exceptions,
     VerificationEventListener,
-    DIDBackend
+    DIDBackend,
+    DIDBiographyStatus
 } from "@elastosfoundation/did-js-sdk";
 import {
     TestData,
@@ -2758,11 +2759,23 @@ describe('DIDDocument Tests', () => {
         await expect(async() => {await ticket.isValid(); }).toBeTruthy();
 
         // create new document for customized DID
-        doc = await newController.newCustomized(did, TestConfig.storePass, true);
-        expect(doc.isValid()).toBeTruthy();
+        let db = DIDDocument.Builder.newFromDocument(doc).edit(controller);
+        await db.addController(newController.getSubject());
+        db.setMultiSignature(1);
+        doc = await db.seal(TestConfig.storePass);
 
+        expect(doc.isValid()).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
-        expect(doc.getController().equals(newController.getSubject())).toBeTruthy();
+        expect(doc.getControllerCount()).toBe(2);
+
+        db = DIDDocument.Builder.newFromDocument(doc).edit(newController);
+        db.removeController(controller.getSubject());
+        doc = await db.seal(TestConfig.storePass);
+
+        expect(doc.isValid()).toBeTruthy();
+        expect(doc.getSubject().equals(did)).toBeTruthy();
+        expect(doc.getControllerCount()).toBe(1);
+        await store.storeDid(doc);
 
         // transfer
         await doc.publishWithTicket(ticket, newController.getDefaultPublicKeyId(), TestConfig.storePass);
@@ -3433,6 +3446,7 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
+        let did = doc.getSubject();
         expect(doc.isValid()).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
@@ -3446,6 +3460,15 @@ describe('DIDDocument Tests', () => {
 
         doc = await doc.getSubject().resolve();
         expect(doc.isDeactivated()).toBeTruthy();
+
+        let rr = await did.resolveBiography();
+        expect(rr).not.toBeNull();
+        expect(did.equals(rr.getDid())).toBeTruthy();
+        expect(DIDBiographyStatus.DEACTIVATED.equals(rr.getStatus())).toBeTruthy();
+        expect(rr.getTransactionCount()).toBe(2);
+        let txs = rr.getAllTransactions();
+        expect(txs).not.toBeNull();
+        expect(txs.length).toBe(2);
     })
 
     test("testDeactivateSelfAfterUpdate", async () => {

@@ -867,20 +867,24 @@ export class DIDStore {
         checkArgument(id != null, "Invalid private key id");
         checkArgument(storepass && storepass != null, "Invalid storepass");
 
-        let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
-            let key = this.storage.loadPrivateKey(id);
-            return {
-                value: key != null ? key : DIDStore.NULL
-            };
-        });
+        try {
+            let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
+                let key = this.storage.loadPrivateKey(id);
+                return {
+                    value: key != null ? key : DIDStore.NULL
+                };
+            });
 
-        if (value === DIDStore.NULL || !value) {
-            return null;
-        } else {
-            if (value === DIDStore.DID_LAZY_PRIVATEKEY)
-                return await RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
-            else
-                return this.decrypt(value, storepass);
+            if (value === DIDStore.NULL || !value) {
+                return null;
+            } else {
+                if (value === DIDStore.DID_LAZY_PRIVATEKEY)
+                    return await RootIdentity.lazyCreateDidPrivateKey(id, this, storepass);
+                else
+                    return this.decrypt(value, storepass);
+            }
+        } catch(e) {
+            throw new DIDStoreException("Load did private key failed.");
         }
     }
 
@@ -953,7 +957,11 @@ export class DIDStore {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
-        let key = HDKey.deserialize(await this.loadPrivateKey(id, storepass));
+        let binKey = await this.loadPrivateKey(id, storepass);
+        if (binKey == null)
+            throw new DIDStoreException("Private key not exists: " + id.toString());
+
+        let key = HDKey.deserialize(binKey);
         let sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
         key = null;
 

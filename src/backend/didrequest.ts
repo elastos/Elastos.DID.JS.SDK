@@ -175,7 +175,6 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
             await request.sealTarget(targetSignKey, doc, signKey, storepass);
         } catch (ignore) {
             // MalformedIDChainRequestException
-            throw new UnknownInternalException(ignore);
         }
 
         return request;
