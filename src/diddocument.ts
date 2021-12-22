@@ -147,12 +147,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 
     private canonicalId(id: DIDURL | string): DIDURL {
-        if (id instanceof DIDURL) {
+        if (typeof id === "string") {
+            return DIDURL.from(id, this.getSubject());
+        } else {
             if (id == null || id.getDid() != null)
                 return id;
 
-            return DIDURL.from(id, this.getSubject());
-        } else {
             return DIDURL.from(id, this.getSubject());
         }
     }
@@ -2673,9 +2673,11 @@ export namespace DIDDocument {
             if (controller.equals(this.controllerDoc.getSubject()))
                 throw new CanNotRemoveEffectiveController(controller.toString());
 
-            if (this.document.controllers.includes(controller)) {
-                this.document.controllers.splice(this.document.controllers.indexOf(controller), 1);
+            let pos = this.document.controllers.findIndex(element => element.equals(controller));
+            if (pos != -1) {
+                this.document.controllers.splice(pos, 1);
                 this.document.controllerDocs.delete(controller);
+                this.document.multisig = null; // invalidate multisig
                 this.invalidateProof();
             }
 
