@@ -1037,6 +1037,7 @@ export class DIDStore {
                 metadata.setSignature(resolvedDoc.getProof().getSignature());
                 if (resolvedDoc.getMetadata().isDeactivated())
                     metadata.setDeactivated(true);
+
                 metadata.attachStore(this);
 
                 this.storage.storeDid(finalDoc);

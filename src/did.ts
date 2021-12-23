@@ -230,8 +230,8 @@ export class DID {
      * @return the DIDBiography object
      * @throws DIDResolveException throw this exception if resolving all did transactions failed.
      */
-    public resolveBiography(): Promise<DIDBiography> {
-        return DIDBackend.getInstance().resolveDidBiography(this);
+    public async resolveBiography(): Promise<DIDBiography> {
+        return await DIDBackend.getInstance().resolveDidBiography(this);
     }
 
     public toString(): string {
