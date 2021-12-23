@@ -1898,7 +1898,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         } else {
             if (!doc.isCustomizedDid()) {
                 if (!signKey.equals(doc.getDefaultPublicKeyId()) &&
-                    doc.getAuthenticationKey(signKey) == null)
+                    doc.getAuthorizationKey(signKey) == null)
                     throw new InvalidKeyException(signKey.toString());
             } else {
                 let controllerdoc = this.getControllerDocument(signKey.getDid());
@@ -2513,7 +2513,9 @@ export namespace DIDDocument {
                 if (!this.document.getMetadata().attachedStore() && !controller.getMetadata().attachedStore())
                     throw new NotAttachedWithStoreException();
 
-                if (!controller.getMetadata().attachedStore())
+                if (controller.getMetadata().attachedStore())
+                    this.document.getMetadata().attachStore(controller.getMetadata().getStore());
+                else
                     controller.getMetadata().attachStore(this.document.getMetadata().getStore());
 
                 if (!this.sourceDocument.hasController(controller.getSubject()))

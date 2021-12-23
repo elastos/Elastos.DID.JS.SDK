@@ -963,7 +963,8 @@ export class DIDStore {
 
         let key = HDKey.deserialize(binKey);
         let sig = EcdsaSigner.sign(key.getPrivateKeyBytes(), digest);
-        key = null;
+        binKey.fill(0);
+        key.wipe();
 
         return BASE64.fromHex(sig.toString("hex"));
     }

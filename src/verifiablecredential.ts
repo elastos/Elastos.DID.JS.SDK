@@ -515,6 +515,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
         this.checkAttachedStore();
 
+        if (signer != null && signer.getMetadata().attachedStore())
+            this.getMetadata().attachStore(signer.getStore());
+
         let owner = await this.getSubject().getId().resolve();
         if (owner == null) {
             log.error("Publish failed because the credential owner is not published.");
@@ -589,7 +592,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         if (bio.getStatus().equals(CredentialBiographyStatus.VALID)) {
             let vc = bio.getTransaction(0).getRequest().getCredential();
-            if (!signer.getSubject().equals(vc.getSubject().getId()) && signer.getSubject().equals(vc.getIssuer())) {
+            if (!signer.getSubject().equals(vc.getSubject().getId()) && !signer.getSubject().equals(vc.getIssuer())) {
                 log.error("Publish failed because the invalid signer or signkey.");
                 throw new InvalidKeyException("Not owner or issuer: " + signer.getSubject());
             }
