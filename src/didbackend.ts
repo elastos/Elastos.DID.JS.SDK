@@ -228,7 +228,7 @@ export class DIDBackend {
                     + "): " + response.getErrorMessage());
     }
 
-    public resolveDidBiography(did: DID, all = true, force = false): Promise<DIDBiography> {
+    public async resolveDidBiography(did: DID, all = true, force = false): Promise<DIDBiography> {
         log.info("Resolving DID {}, all={}...", did.toString(), all);
 
         let request = new DIDResolveRequest(this.generateRequestId());
@@ -238,7 +238,7 @@ export class DIDBackend {
             this.cache.invalidate(request);
 
         try {
-            return this.cache.getAsync(request) as Promise<DIDBiography>;
+            return await this.cache.getAsync(request) as DIDBiography;
         } catch (e) {
             // ExecutionException
             throw new DIDResolveException(e);

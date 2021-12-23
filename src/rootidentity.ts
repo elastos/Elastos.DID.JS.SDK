@@ -416,6 +416,7 @@ export class RootIdentity {
         metadata.setSignature(resolvedDoc.getProof().getSignature());
         if (resolvedDoc.getMetadata().isDeactivated())
             metadata.setDeactivated(true);
+
         metadata.setRootIdentityId(this.getId());
         metadata.setIndex(index);
         if (localDoc != null)
