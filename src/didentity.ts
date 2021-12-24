@@ -131,7 +131,7 @@ export abstract class DIDEntity<T> {
      * @return a JSON string representation of the object
      */
     public toString(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
-        return this.serialize(normalized);
+        return this.serialize(normalized).normalize("NFC");
     }
 
     protected dateToString(dateObj: Date): string {
