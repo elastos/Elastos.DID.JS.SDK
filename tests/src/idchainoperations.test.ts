@@ -34,10 +34,12 @@ import {
     Issuer,
     File,
     Features,
-    Exceptions} from "@elastosfoundation/did-js-sdk";
+    Exceptions,
+    JSONObject} from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./utils/testconfig";
 import { Utils } from "./utils/utils";
 import { DIDTestExtension } from "./utils/didtestextension";
+import { join } from "path";
 
 const log = new Logger("IDChainOperationsTest");
 
@@ -73,7 +75,7 @@ function genRandomString(len): string {
 // tests depend on each other.
 describe('IDChainOperations Tests', () => {
     beforeAll(async ()=> {
-        testData = new TestData(false);
+        testData = new TestData(true);
         await testData.cleanup();
         await testData.getRootIdentity();
         dids = [];
@@ -1158,7 +1160,8 @@ describe('IDChainOperations Tests', () => {
             expect(resolved).toBeNull();
 
             //revoke by owner, success.
-            await VerifiableCredential.revoke(vc.getId(), doc, null, TestConfig.storePass);
+            keys = doc.getAuthenticationKeys();
+            await VerifiableCredential.revoke(vc.getId(), doc, keys[0].getId(), TestConfig.storePass);
 
             //declare by owner, fail.
             await expect(async () => {
@@ -1763,6 +1766,55 @@ describe('IDChainOperations Tests', () => {
     });
 
     describe('Order 28', () => {
+        test('testDeclareMultilangCredential', async () => {
+            let doc = await store.loadDid(multiCustomizeDid);
+            expect(doc).not.toBeNull();
+
+            let selfIssuer = new Issuer(doc);
+            let cb = selfIssuer.issueFor(doc.getSubject());
+            let props: JSONObject = {};
+
+            let dirPath = join(__dirname, "data/i18n");
+            let i18nDir = new File(dirPath);
+            let i18nRes = i18nDir.listFiles();
+
+            for (let res of i18nRes) {
+                props[res.getName()] = res.readText();
+            }
+
+            let vc = await cb.id("#i18n")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                    .typeWithContext("TestCredential", "https://trinity-tech.io/credentials/i18n/v1")
+                    .properties(props)
+                    .seal(TestConfig.storePass);
+            expect(vc).not.toBeNull();
+            await store.storeCredential(vc);
+
+            let keys = doc.getAuthenticationKeys();
+            await vc.declare(keys[0].getId(), TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+
+            log.trace(vc.toJSON());
+
+            let id = vc.getId();
+            let resolvedVc = await VerifiableCredential.resolve(id);
+            expect(resolvedVc).not.toBeNull();
+            expect(id.equals(resolvedVc.getId())).toBeTruthy();
+		    expect(resolvedVc.getType().includes("SelfProclaimedCredential")).toBeTruthy();
+		    expect(doc.getSubject().equals(resolvedVc.getSubject().getId())).toBeTruthy();
+            expect(doc.getSubject().equals(resolvedVc.getIssuer())).toBeTruthy();
+            expect(vc.getProof().getSignature()).toEqual(resolvedVc.getProof().getSignature());
+
+            expect(resolvedVc.isValid()).toBeTruthy();
+
+            let bio = await VerifiableCredential.resolveBiography(id, null);
+            expect(bio).not.toBeNull();
+            expect(bio.getTransactionCount()).toBe(1);
+            expect(vc.getProof().getSignature()).toEqual(bio.getTransaction(0).getRequest().getCredential().getProof().getSignature());
+        });
+    });
+
+    describe('Order 35', () => {
         test('testDeclareAndRevokeCredentialByOwner', async () => {
             log.trace("Begin 'testDeclareAndRevokeCredentialByOwner'...");
 
@@ -1814,7 +1866,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 29', () => {
+    describe('Order 40', () => {
         test('testDeclareAndRevokeCredentialByOwner2', async () => {
             log.trace("Begin 'testDeclareAndRevokeCredentialByOwner2'...");
 
@@ -1873,7 +1925,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 30', () => {
+    describe('Order 50', () => {
         test('testDeclareAndRevokeCredentialByIssuer', async () => {
             log.trace("Begin 'testDeclareAndRevokeCredentialByIssuer'...");
 
@@ -1932,7 +1984,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 31', () => {
+    describe('Order 60', () => {
         test('testListPagination', async () => {
             log.trace("Begin 'testListPagination'...");
 
@@ -2037,7 +2089,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 32', () => {
+    describe('Order 80', () => {
         test("testDeactivateCustomizedDid", async () => {
             log.trace("Begin 'testDeactivateCustomizedDid'...");
 
@@ -2085,7 +2137,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 33', () => {
+    describe('Order 100', () => {
         test("testDeactivateByAuthorizationKey", async () => {
             log.trace("Begin 'testDeactivateByAuthorizationKey'...");
 
@@ -2141,7 +2193,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 34', () => {
+    describe('Order 120', () => {
         test("testDeactivate", async () => {
             log.trace("Begin 'testDeactivate'...");
 
@@ -2179,7 +2231,7 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 35', () => {
+    describe('Order 135', () => {
         test("testDeactivate2", async () => {
             log.trace("Begin 'testDeactivate2'...");
 
@@ -2217,6 +2269,55 @@ describe('IDChainOperations Tests', () => {
                 else
                     expect(IDChainRequest.Operation.UPDATE.equals(tx.getRequest().getOperation())).toBeTruthy();
             }
+        });
+    });
+
+    describe('Order 236', () => {
+        test("testCreateAndResolveWithMultilangCredential", async () => {
+		    let doc = await identity.newDid(TestConfig.storePass);
+		    let did = doc.getSubject();
+
+		    let selfIssuer = new Issuer(doc);
+		    let cb = selfIssuer.issueFor(did);
+
+            let props: JSONObject = {};
+
+            let dirPath = join(__dirname, "data/i18n");
+            let i18nDir = new File(dirPath);
+            let i18nRes = i18nDir.listFiles();
+
+            for (let res of i18nRes) {
+                props[res.getName()] = res.readText();
+            }
+
+            let vc = await cb.id("#profile")
+                    .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                    .typeWithContext("TestCredential", "https://trinity-tech.io/credentials/i18n/v1")
+                    .properties(props)
+                    .seal(TestConfig.storePass);
+            expect(vc).not.toBeNull();
+
+            let db = DIDDocument.Builder.newFromDocument(doc).edit();
+            db.addCredential(vc);
+            doc = await db.seal(TestConfig.storePass);
+            expect(doc).not.toBeNull();
+            expect(doc.getCredentialCount()).toBe(1);
+            await store.storeDid(doc);
+
+            log.debug("Publishing new DID {}...", did);
+            let start = Date.now();
+            await doc.publish(TestConfig.storePass);
+            await DIDTestExtension.awaitStandardPublishingDelay();
+            let duration = (Date.now() - start + 500) / 1000;
+            log.debug("Update DID {}...OK({}s)", did, duration);
+
+            let resolved = await did.resolve();
+            expect(did.equals(resolved.getSubject())).toBeTruthy();
+            expect(resolved.isValid()).toBeTruthy();
+            expect(doc.toString(true)).toEqual(resolved.toString(true));
+
+            let lastTxid = resolved.getMetadata().getTransactionId();
+            log.debug("Last transaction id {}", lastTxid);
         });
     });
 });
