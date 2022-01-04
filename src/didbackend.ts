@@ -177,13 +177,11 @@ export class DIDBackend {
     }
 
     private async resolve(request: ResolveRequest<any, any>): Promise<ResolveResponse.Result<any>> {
-        log.debug("Resolving request {}...", request);
-
         let requestJson = request.serialize(true);
-        let resolvedJson = await this.getAdapter().resolve(requestJson);
+        log.trace("Resolving request: " + requestJson);
 
-        console.log("&&&&&&&&&&&&&&&& resolve request: " + requestJson);
-        console.log("&&&&&&&&&&&&&&&& resolve response: " + JSON.stringify(resolvedJson));
+        let resolvedJson = await this.getAdapter().resolve(requestJson);
+        log.trace("Resolving response: " + JSON.stringify(resolvedJson));
 
         if (resolvedJson == null)
             throw new DIDResolveException("Unknown error, got null result.");

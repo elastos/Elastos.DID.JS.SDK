@@ -90,6 +90,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 1', () => {
         test('testCreateController1', async () => {
+            log.trace("Begin 'testCreateController1'...");
+
             // Create new DID and publish to ID sidechain.
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
@@ -113,6 +115,7 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 2', () => {
         test('testCreateController2', async () => {
+            log.trace("Begin 'testCreateController2'...");
             // Create new DID and publish to ID sidechain.
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
@@ -149,6 +152,7 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 3', () => {
         test('testCreateController3', async () => {
+            log.trace("Begin 'testCreateController3'...");
             // Create new DID and publish to ID sidechain.
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
@@ -184,6 +188,7 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 4', () => {
         test('testUpdateController1', async () => {
+            log.trace("Begin 'testUpdateController1'...");
             // User the DID that created in previous case(1)
             let doc = await store.loadDid(dids[0]);
             expect(doc).not.toBeNull();
@@ -253,6 +258,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 5', () => {
         test('testUpdateAgainController1', async () => {
+            log.trace("Begin 'testUpdateAgainController1'...");
+
             // User the DID that created in previous case(1)
             let doc = await store.loadDid(dids[0]);
             expect(doc).not.toBeNull();
@@ -326,6 +333,7 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 6', () => {
         test('testUpdateController2', async () => {
+            log.trace("Begin 'testUpdateController2'...");
             // User the DID that created in previous case(2)
             Features.enableJsonLdContext(true);
 
@@ -395,6 +403,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 7', () => {
         test('testUpdateAgainController2', async () => {
+            log.trace("Begin 'testUpdateAgainController2'...");
+
             // User the DID that created in previous case(2)
             let doc = await store.loadDid(dids[1]);
             expect(doc).not.toBeNull();
@@ -453,6 +463,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 8', () => {
         test('testCreateController4', async () => {
+            log.trace("Begin 'testCreateController4'...");
+
             // Create new DID and publish to ID sidechain.
             Features.enableJsonLdContext(true);
 
@@ -508,6 +520,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 9', () => {
         test('testUpdateController4', async () => {
+            log.trace("Begin 'testUpdateController4'...");
+
             // User the DID that created in previous case(8)
             let issuerDoc = await store.loadDid(dids[1]);
             expect(issuerDoc).not.toBeNull();
@@ -591,6 +605,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 10', () => {
         test('testUpdateAgainController4', async () => {
+            log.trace("Begin 'testUpdateAgainController4'...");
+
             // User the DID that created in previous case(8)
             let doc = await store.loadDid(dids[3]);
             expect(doc).not.toBeNull();
@@ -674,6 +690,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 11', () => {
         test('testCreateController5', async () => {
+            log.trace("Begin 'testCreateController5'...");
+
             // Create new DID and publish to ID sidechain.
             Features.enableJsonLdContext(true);
 
@@ -729,6 +747,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 12', () => {
         test('testUpdateController5', async () => {
+            log.trace("Begin 'testUpdateController5'...");
+
             // User the DID that created in previous case(11)
             let doc = await store.loadDid(dids[4]);
             expect(doc).not.toBeNull();
@@ -791,6 +811,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 13', () => {
         test('testUpdateAgainController5', async () => {
+            log.trace("Begin 'testUpdateAgainController5'...");
+
             // User the DID that created in previous case(11)
             let doc = await store.loadDid(dids[4]);
             expect(doc).not.toBeNull();
@@ -847,6 +869,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 14', () => {
         test("testCreateCustomizedDid", async () => {
+            log.trace("Begin 'testCreateCustomizedDid'...");
+
             let controllerDoc = await store.loadDid(dids[0]);
             expect(controllerDoc).not.toBeNull();
             expect(controllerDoc.isValid()).toBeTruthy();
@@ -965,6 +989,8 @@ describe('IDChainOperations Tests', () => {
     //multisig customized did: ctrl1, ctrl2, ctrl3, 2:3, key1, key2
     describe('Order 15', () => {
         test("testCreateMultisigCustomizedDid", async () => {
+            log.trace("Begin 'testCreateMultisigCustomizedDid'...");
+
             let ctrl1 = await store.loadDid(dids[0]);
             expect(ctrl1).not.toBeNull();
             expect(ctrl1.isValid()).toBeTruthy();
@@ -1100,6 +1126,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 16', () => {
         test('testDeclareAndRevokeCredentialByIssuer2', async () => {
+            log.trace("Begin 'testDeclareAndRevokeCredentialByIssuer2'...");
+
             let doc = await store.loadDid(multiCustomizeDid);
             expect(doc).not.toBeNull();
 
@@ -1151,6 +1179,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 17', () => {
         test("testTransferCustomizedDid", async () => {
+            log.trace("Begin 'testTransferCustomizedDid'...");
+
             let doc = await store.loadDid(customizeDid);
             expect(doc).not.toBeNull();
 
@@ -1259,6 +1289,8 @@ describe('IDChainOperations Tests', () => {
     //2:3 -> 2:2
     describe('Order 18', () => {
         test("testTransferMultisigCustomizedDid", async () => {
+            log.trace("Begin 'testTransferMultisigCustomizedDid'...");
+
             let doc = await store.loadDid(multiCustomizeDid);
             expect(doc).not.toBeNull();
             expect(doc.isValid()).toBeTruthy();
@@ -1371,6 +1403,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 19', () => {
         test('testSyncRootIdentityClean', async () => {
+            log.trace("Begin 'testSyncRootIdentityClean'...");
+
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
             Utils.deleteFile(path);
@@ -1416,6 +1450,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 20', () => {
         test('testSyncRootIdentityCleanAsync', async () => {
+            log.trace("Begin 'testSyncRootIdentityCleanAsync'...");
+
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
             Utils.deleteFile(path);
@@ -1444,6 +1480,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 21', () => {
         test('testSyncRootIdentityWithoutModification', async () => {
+            log.trace("Begin 'testSyncRootIdentityWithoutModification'...");
+
             log.debug("Synchronizing from IDChain...");
             let start = Date.now();
             await identity.synchronize({
@@ -1476,6 +1514,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 22', () => {
         test('testSyncRootIdentityWithoutModificationAsync', async () => {
+            log.trace("Begin 'testSyncRootIdentityWithoutModificationAsync'...");
+
             log.debug("Synchronizing from IDChain...");
             let start = Date.now();
 
@@ -1510,6 +1550,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 23', () => {
         test('testSyncRootIdentityWithLocalModification1', async () => {
+            log.trace("Begin 'testSyncRootIdentityWithLocalModification1'...");
+
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
@@ -1568,6 +1610,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 24', () => {
         test('testSyncRootIdentityWithLocalModification2', async () => {
+            log.trace("Begin 'testSyncRootIdentityWithLocalModification2'...");
+
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
@@ -1629,6 +1673,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 25', () => {
         test('testSyncRootIdentityWithLocalModificationAsync', async () => {
+            log.trace("Begin 'testSyncRootIdentityWithLocalModificationAsync'...");
+
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
@@ -1688,16 +1734,10 @@ describe('IDChainOperations Tests', () => {
         });
     });
 
-    describe('Order 26', () => {
-        test('testResolveVC', async () => {
-            let id = new DIDURL("did:elastos:iZrzd9TFbVhRBgcnjoGYQhqkHf7emhxdYu#1234");
-            let vc = await VerifiableCredential.resolve(id);
-            expect(vc).toBeNull();
-        });
-    });
-
     describe('Order 27', () => {
         test('testSynchronizeStore', async () => {
+            log.trace("Begin 'testSynchronizeStore'...");
+
             let listdids: DID[] = Array.from(await store.listDids());
             listdids.sort((a,b) => a.compareTo(b));
             for (let did of listdids) {
@@ -1724,6 +1764,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 28', () => {
         test('testDeclareAndRevokeCredentialByOwner', async () => {
+            log.trace("Begin 'testDeclareAndRevokeCredentialByOwner'...");
+
             let doc = await store.loadDid(dids[4]);
             expect(doc).not.toBeNull();
 
@@ -1774,6 +1816,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 29', () => {
         test('testDeclareAndRevokeCredentialByOwner2', async () => {
+            log.trace("Begin 'testDeclareAndRevokeCredentialByOwner2'...");
+
             let doc = await store.loadDid(customizeDid);
             expect(doc).not.toBeNull();
 
@@ -1831,6 +1875,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 30', () => {
         test('testDeclareAndRevokeCredentialByIssuer', async () => {
+            log.trace("Begin 'testDeclareAndRevokeCredentialByIssuer'...");
+
             let doc = await store.loadDid(dids[3]);
             expect(doc).not.toBeNull();
 
@@ -1888,13 +1934,15 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 31', () => {
         test('testListPagination', async () => {
+            log.trace("Begin 'testListPagination'...");
+
             let doc = await store.loadDid(dids[0]);
             let did = doc.getSubject();
 
             let selfIssuer = new Issuer(doc);
 
             for (let i = 0; i < 36; i++) {
-                console.log("Creating test credential {}...", i);
+                log.trace("Creating test credential {}...", i);
 
                 let vc = await selfIssuer.issueFor(did)
                         .id("#test" + i)
@@ -1914,7 +1962,7 @@ describe('IDChainOperations Tests', () => {
             expect(ids.length).toBe(36);
 
             for (let id of ids) {
-                console.log("Resolving credential {}...", id.getFragment());
+                log.trace("Resolving credential {}...", id.getFragment());
 
                 let ref = new DIDURL("#test" + index--, did);
                 expect(ref.equals(id)).toBeTruthy();
@@ -1991,6 +2039,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 32', () => {
         test("testDeactivateCustomizedDid", async () => {
+            log.trace("Begin 'testDeactivateCustomizedDid'...");
+
             let target = await multiCustomizeDid.resolve(true);
             expect(target).not.toBeNull();
             await store.storeDid(target);
@@ -2022,8 +2072,6 @@ describe('IDChainOperations Tests', () => {
             for (let i = 0; i < txs.length; i++) {
                 let tx = txs[i];
                 expect(multiCustomizeDid.equals(tx.getDid())).toBeTruthy();
-                let valid = await tx.getRequest().isValid();
-                expect(valid).toBeTruthy();
 
                 if (i == 0)
                     expect(IDChainRequest.Operation.DEACTIVATE.equals(tx.getRequest().getOperation())).toBeTruthy();
@@ -2039,6 +2087,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 33', () => {
         test("testDeactivateByAuthorizationKey", async () => {
+            log.trace("Begin 'testDeactivateByAuthorizationKey'...");
+
             let target = await store.loadDid(dids[4]);
             let did = target.getSubject();
             expect(target).not.toBeNull();
@@ -2080,7 +2130,6 @@ describe('IDChainOperations Tests', () => {
             for (let i = 0; i < txs.length; i++) {
                 let tx = txs[i];
                 expect(did.equals(tx.getDid())).toBeTruthy();
-                await expect(await tx.getRequest().isValid()).toBeTruthy();
 
                 if (i == 0)
                     expect(IDChainRequest.Operation.DEACTIVATE.equals(tx.getRequest().getOperation())).toBeTruthy();
@@ -2094,6 +2143,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 34', () => {
         test("testDeactivate", async () => {
+            log.trace("Begin 'testDeactivate'...");
+
             let doc = await store.loadDid(dids[0]);
             let did = doc.getSubject();
             expect(doc).not.toBeNull();
@@ -2117,8 +2168,6 @@ describe('IDChainOperations Tests', () => {
             for (let i = 0; i < txs.length; i++) {
                 let tx = txs[i];
                 expect(did.equals(tx.getDid())).toBeTruthy();
-                let valid = await tx.getRequest().isValid();
-                expect(valid).toBeTruthy();
 
                 if (i == 0)
                     expect(IDChainRequest.Operation.DEACTIVATE.equals(tx.getRequest().getOperation())).toBeTruthy();
@@ -2132,6 +2181,8 @@ describe('IDChainOperations Tests', () => {
 
     describe('Order 35', () => {
         test("testDeactivate2", async () => {
+            log.trace("Begin 'testDeactivate2'...");
+
             let doc = await store.loadDid(dids[1]);
             let did = doc.getSubject();
             expect(doc).not.toBeNull();
@@ -2139,8 +2190,7 @@ describe('IDChainOperations Tests', () => {
             expect(resolved).not.toBeNull();
             expect(resolved.toString()).toEqual(doc.toString());
 
-            let keys = doc.getAuthenticationKeys();
-            await doc.deactivate(keys[0].getId(), TestConfig.storePass);
+            await doc.deactivate(null, TestConfig.storePass);
             await DIDTestExtension.awaitStandardPublishingDelay();
 
             resolved = await did.resolve(true);
@@ -2159,7 +2209,6 @@ describe('IDChainOperations Tests', () => {
             for (let i = 0; i < txs.length; i++) {
                 let tx = txs[i];
                 expect(did.equals(tx.getDid())).toBeTruthy();
-                await expect(await tx.getRequest().isValid()).toBeTruthy();
 
                 if (i == 0)
                     expect(IDChainRequest.Operation.DEACTIVATE.equals(tx.getRequest().getOperation())).toBeTruthy();
