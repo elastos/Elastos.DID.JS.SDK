@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import { JWSHeaderParameters } from "jose";
+import { JWSHeaderParameters, JWTHeaderParameters } from "jose";
 
 export class JWTHeader {
     public static JWT_TYPE = "JWT";
@@ -37,6 +37,7 @@ export class JWTHeader {
     }
 
     public setAlgorithm(algorithm : string) : JWTHeader {
+        delete this.header.alg;
         this.header.alg = algorithm;
         return this;
     }
@@ -92,5 +93,12 @@ export class JWTHeader {
 
     public getJWSHeaderParameters() : JWSHeaderParameters {
         return this.header;
+    }
+
+    public getJWTHeaderParameters() : JWTHeaderParameters {
+        if (this.header.alg != null && this.header.alg !== "none")
+            return this.header as JWTHeaderParameters;
+
+        return null;
     }
 }

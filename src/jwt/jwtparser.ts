@@ -23,7 +23,7 @@
 import { BASE64, DID, JWT } from "../internals"
 import { KeyProvider } from "../crypto/keyprovider";
 import { DIDResolveException, JWTException } from "../exceptions/exceptions";
-import { decodeProtectedHeader, jwtVerify, JWTVerifyOptions, UnsecuredJWT } from "jose";
+import { decodeProtectedHeader, JWSHeaderParameters, jwtVerify, JWTVerifyOptions, UnsecuredJWT } from "jose";
 
 export class JWTParser {
     private keyprovider : KeyProvider;
@@ -84,7 +84,7 @@ export class JWTParser {
                 throw new JWTException(e);
             }
 
-            return new JWT(result.protectedHeader, result.payload);
+            return new JWT(result.protectedHeader as JWSHeaderParameters, result.payload);
         }
     }
 }
