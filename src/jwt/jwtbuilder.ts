@@ -160,7 +160,7 @@ export class JWTBuilder {
             this.header.setKeyId(keyid);
 
         const signjwt = new SignJWT(this.payload.getJWTPayload())
-                .setProtectedHeader(this.header.getJWSHeaderParameters());
+                .setProtectedHeader(this.header.getJWTHeaderParameters());
 
         let sk = await this.keyprovider.getPrivateKey(keyid, password);
         return await signjwt.sign(sk);
