@@ -117,11 +117,10 @@ export abstract class DIDEntity<T> {
     public serialize(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
         try {
             let key = (normalized) ? null : this.getSerializeContextDid()?.toString();
-            return JSON.stringify(this.toJSON(key));
+            return JSON.stringify(this.toJSON(key)).normalize("NFC");
         } catch (e) {
             throw new UnknownInternalException(e);
         }
-        return null;
     }
 
     /**
@@ -131,7 +130,7 @@ export abstract class DIDEntity<T> {
      * @return a JSON string representation of the object
      */
     public toString(normalized: boolean = DIDEntity.NORMALIZED_DEFAULT): string {
-        return this.serialize(normalized).normalize("NFC");
+        return this.serialize(normalized);
     }
 
     protected dateToString(dateObj: Date): string {
