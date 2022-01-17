@@ -14,7 +14,7 @@
     "test:browser": "npm run clean && rollup -c rollup.browsertests.config.js",
     "test:node:profile": "JEST_CIRCUS=1 node --prof --no-logfile-per-isolate ./node_modules/.bin/jest --silent=false --verbose --runInBand --config jest.node.config.ts -- crypto/hdkey.test && node --prof-process v8.log > processed.log && echo '' && echo 'Please open processed.log'. && echo ''",
     "simchain": "java -jar tools/didutils.jar simchain --loglevel=trace",
-    "updatedidjar": "wget -O tools/didutils.jar https://github.com/elastos/Elastos.DID.Java.SDK/releases/download/release-v2.1.3/didutils.jar"
+    "updatedidjar": "wget -O tools/didutils.jar https://github.com/elastos/Elastos.DID.Java.SDK/releases/download/release-v2.2.2/didutils.jar"
   },
   "dependencies": {
     "@elastosfoundation/did-js-sdk": "^2.0.0",
