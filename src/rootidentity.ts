@@ -195,7 +195,11 @@ export class RootIdentity {
     }
 
     public getDefaultDid(): DID {
-        return this.metadata.getDefaultDid();
+        let did = this.metadata.getDefaultDid();
+        if (did == null)
+            return this.getDid(0);
+
+        return did;
     }
 
     public setDefaultDid(did: DID | string) {
