@@ -141,7 +141,8 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
         if (doc == null)
             return false;
 
-        if (!doc.isValid())
+        // Here should not check the expiration and deactivated
+        if (!doc.isGenuine())
             return false;
 
         if (!this.getOperation().equals(IDChainRequest.Operation.DEACTIVATE)) {
