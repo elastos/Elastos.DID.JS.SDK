@@ -26,13 +26,13 @@ import {
     DIDDocument, DIDStore, Mnemonic, RootIdentity,
     VerifiableCredential, VerifiablePresentation,
     TransferTicket, Issuer, DIDURL, DID, Exceptions,
-    File, HDKey, JSONObject, JSONValue, runningInBrowser,
-    DIDBackend
+    File, HDKey, JSONObject, JSONValue, DIDBackend
 } from "@elastosfoundation/did-js-sdk";
 import { TestConfig } from "./testconfig";
 import { importBundledBrowserData } from "./browserdataimport";
 import { DIDTestExtension } from "./didtestextension";
 import { Web3Adapter } from "../backend/web3adapter";
+import { runningInBrowser } from "./utils";
 
 export class TestData {
     // HDKey for temporary key generation

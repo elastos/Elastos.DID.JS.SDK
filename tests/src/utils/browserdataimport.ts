@@ -22,7 +22,7 @@
 
 import browserBundledData from "../../generated/browserdata.json";
 import { File } from "@elastosfoundation/did-js-sdk";
-import { runningInBrowser } from "@elastosfoundation/did-js-sdk";
+import { runningInBrowser } from "./utils";
 
 /**
  * Converts a bundle entry into a real folder or file in browserfs file system.

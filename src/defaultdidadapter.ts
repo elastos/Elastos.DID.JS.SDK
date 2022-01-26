@@ -30,7 +30,6 @@ import { request as httpsRequest } from "./https";
 import { checkArgument, Collections, DIDAdapter } from "./internals";
 import type { JSONObject } from "./json";
 import { Logger } from "./logger";
-import { runningInBrowser } from "./utils";
 
 const log = new Logger("DefaultDIDAdapter");
 
@@ -139,63 +138,23 @@ export class DefaultDIDAdapter implements DIDAdapter {
     // "main" java implementation to rework synchronous calls and we will also migrate to Promises/Async.
     protected performRequest(url: URL, body?: string): Promise<JSONObject> {
         return new Promise((resolve, reject) => {
-            if (runningInBrowser()) {
-                void axios({
-                    method: "post",
-                    url: url.toString(),
-                    headers: {
-                        // Don't set user-agent in browser environment, this is forbidden by modern browsers.
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    data: body
-                }).then((response) => {
-                    if (response.status >= 200 && response.status < 400) {
-                        resolve(response.data);
-                    }
-                    else {
-                        reject(new ResolveException("HTTP error: " + response.statusText));
-                    }
-                })
-            }
-            else {
-                // NODEJS
-
-                // Use a different module if we call http or https
-                let requestMethod = (url.protocol.indexOf("https") === 0 ? httpsRequest : httpRequest);
-                let req = requestMethod({
-                    protocol: url.protocol,
-                    hostname: url.hostname,
-                    port: url.port,
-                    path: url.pathname,
-                    method: 'POST',
-                    headers: {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    }
-                }, (res) => {
-                    let wholeData = "";
-                    res.on('data', d => {
-                        // Concatenate data that can reach us in several pieces.
-                        wholeData += d;
-                    })
-                    res.on("end", () => {
-                        if (wholeData !== null && wholeData.length > 0) {
-                            let responseJSON = JSON.parse(wholeData);
-                            resolve(responseJSON);
-                        } else {
-                            resolve({})
-                        }
-                    })
-                });
-                req.on('error', error => {
-                    reject(new ResolveException("HTTP error", error));
-                });
-                if (body)
-                    req.write(body);
-                req.end();
-            }
+            void axios({
+                method: "post",
+                url: url.toString(),
+                headers: {
+                    // Don't set user-agent in browser environment, this is forbidden by modern browsers.
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                data: body
+            }).then((response) => {
+                if (response.status >= 200 && response.status < 400) {
+                    resolve(response.data);
+                }
+                else {
+                    reject(new ResolveException("HTTP error: " + response.statusText));
+                }
+            })
         });
     }
 
