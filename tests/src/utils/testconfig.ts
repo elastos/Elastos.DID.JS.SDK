@@ -23,11 +23,9 @@
 //import testConfig from "../assets/test.config.json";
 
 import { join } from "path";
-import {
-    runningInBrowser,
-    Logger
-} from "@elastosfoundation/did-js-sdk";
+import { Logger } from "@elastosfoundation/did-js-sdk";
 import testConfigFile from "../assets/test.config.json";
+import { runningInBrowser } from "./utils";
 
 export class TestConfig {
     public static DID_INDEX_LOOPS = 10;

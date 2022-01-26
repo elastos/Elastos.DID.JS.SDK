@@ -48,7 +48,6 @@ import { EcdsaSigner } from "./crypto/ecdsasigner";
 import type { JSONObject, JSONValue } from "./json";
 import { DefaultDIDAdapter } from "./internals";
 import { SimulatedIDChainAdapter } from "./internals";
-import { runningInBrowser } from "./utils";
 import { JWT, JWTBuilder, JWTHeader, JWTParserBuilder, JWTParser, Claims} from "./internals";
 
 Logger.setLevel(Logger.TRACE);
@@ -118,10 +117,6 @@ export {
     JWTBuilder,
     JWTParser,
     JWTParserBuilder,
-
-
-    // Utilities
-    runningInBrowser,
 
     // Internal - for tests only
     File,
