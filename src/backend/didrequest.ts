@@ -33,7 +33,6 @@ import { BASE64, DID, DIDDocument, DIDEntity } from "../internals";
 import { JSONObject } from "../json";
 import { IDChainRequest } from "./idchaindrequest";
 
-
 /**
  * The DID request class.
  */
@@ -194,7 +193,7 @@ export class DIDRequest extends IDChainRequest<DIDRequest> {
      *
      * @return the TransferTicket object
      */
-    public async getTransferTicket(): Promise<TransferTicket> {
+    public getTransferTicket(): TransferTicket {
         return this.getHeader().getTransferTicket();
     }
 

@@ -456,6 +456,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace DIDURL {
     export class Builder {
         private url: DIDURL;

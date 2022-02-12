@@ -1,5 +1,3 @@
-/* eslint-disable import/export */
-
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -465,6 +463,7 @@ export class RootIdentity {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace RootIdentity {
     export class Metadata extends AbstractMetadata {
         public static DEFAULT_DID = "defaultDid";

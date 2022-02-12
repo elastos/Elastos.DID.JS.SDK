@@ -56,7 +56,7 @@ export class Web3Adapter extends DefaultDIDAdapter {
     }
 
     public async createIdTransaction(payload: string, memo: string) {
-        let web3 = new Web3(this.resolver.toString());
+        let web3 = new Web3(this.rpcEndpoint.toString());
         let contract = new web3.eth.Contract(PUBLISH_CONTRACT_ABI, this.contractAddress);
 
         // PRIVNET WALLET WITH FUNDS TO PUBLISH - TODO: MAKE THIS BE A ENV DATA, NOT PUSHED.

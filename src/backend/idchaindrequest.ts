@@ -183,6 +183,7 @@ export abstract class IDChainRequest<T> extends DIDEntity<T> {
     protected abstract sanitize(): void;
 }
 
+/* eslint-disable no-class-assign */
 export namespace IDChainRequest {
     /**
      * The IDChain Request Operation

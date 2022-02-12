@@ -98,6 +98,7 @@ export abstract class ResolveRequest<T, P extends ResolveRequest.Parameters<P>> 
     protected abstract paramsFromJson(json: JSONObject): P;
 }
 
+/* eslint-disable no-class-assign */
 export namespace ResolveRequest {
     export abstract class Parameters<T> extends DIDEntity<T> implements Hashable {
         public abstract hashCode(): number;

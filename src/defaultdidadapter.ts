@@ -1,5 +1,3 @@
-/* eslint-disable import/export */
-
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -174,6 +172,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace DefaultDIDAdapter {
     export class CheckResult implements Comparable<CheckResult> {
         private static MAX_DIFF = 10;

@@ -1,5 +1,3 @@
-/* eslint-disable import/export */
-
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -931,12 +929,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
                     pk = this.publicKeys.get(id);
                 } else {
-                    obj = obj as JSONObject;
+                    let o = obj as JSONObject;
 
                     try {
-                        pk = DIDDocument.PublicKey.deserialize(obj, DIDDocument.PublicKey, context);
+                        pk = DIDDocument.PublicKey.deserialize(o, DIDDocument.PublicKey, context);
                     } catch (e) {
-                        throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
+                        throw new MalformedDocumentException("Invalid publicKey: " + o.id, e);
                     }
 
                     if (this.publicKeys.has(pk.getId()))
@@ -967,12 +965,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
                     pk = this.publicKeys.get(id);
                 } else {
-                    obj = obj as JSONObject;
+                    let o = obj as JSONObject;
 
                     try {
-                        pk = DIDDocument.PublicKey.deserialize(obj, DIDDocument.PublicKey, context);
+                        pk = DIDDocument.PublicKey.deserialize(o, DIDDocument.PublicKey, context);
                     } catch (e) {
-                        throw new MalformedDocumentException("Invalid publicKey: " + obj.id, e);
+                        throw new MalformedDocumentException("Invalid publicKey: " + o.id, e);
                     }
 
                     if (this.publicKeys.has(pk.getId()))
@@ -2050,6 +2048,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace DIDDocument {
     /**
      * Publickey is used for digital signatures, encryption and

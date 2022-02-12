@@ -208,12 +208,6 @@ export class DIDBackend {
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDResolveException(e);
-        } finally {
-            try {
-                // Java: is.close();
-            } catch (ignore) {
-                // IOException
-            }
         }
 
         if (response.getResponseId() == null || response.getResponseId() !== request.getRequestId())
@@ -337,12 +331,12 @@ export class DIDBackend {
         let bio = await this.resolveDidBiography(did, false, force);
 
         let tx : DIDTransaction = null;
-        switch (bio.getStatus()) {
-        case DIDBiographyStatus.VALID:
+        switch (bio.getStatus().getValue()) {
+        case DIDBiographyStatus.VALID.getValue():
             tx = bio.getTransaction(0);
             break;
 
-        case DIDBiographyStatus.DEACTIVATED:
+        case DIDBiographyStatus.DEACTIVATED.getValue(): { // protecte the global variable scope
             if (bio.getTransactionCount() != 2)
                 throw new DIDResolveException("Invalid DID biography, wrong transaction count.");
 
@@ -356,8 +350,9 @@ export class DIDBackend {
 
             tx = bio.getTransaction(1);
             break;
+        }
 
-        case DIDBiographyStatus.NOT_FOUND:
+        case DIDBiographyStatus.NOT_FOUND.getValue():
             return null;
         }
 

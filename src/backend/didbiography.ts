@@ -62,6 +62,7 @@ export class DIDBiographyStatus {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace DIDBiographyStatus {
     /**
      * The credential is valid.
@@ -76,6 +77,7 @@ export namespace DIDBiographyStatus {
       */
     export const NOT_FOUND = new DIDBiographyStatus(3, "not_found");
 }
+/* eslint-enable no-class-assign */
 
 /**
  * The class records the resolved content.

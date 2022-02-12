@@ -1,5 +1,3 @@
-/* eslint-disable import/export */
-
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -716,6 +714,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace VerifiableCredential {
     /**
      * The object keeps the credential subject contents.

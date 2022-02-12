@@ -1,5 +1,3 @@
-/* eslint-disable import/export */
-
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -406,6 +404,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace TransferTicket {
     /**
      * The proof information for DID transfer ticket.
