@@ -26,7 +26,7 @@
 // Buf haven't found a way to make this work for typescript files at the rollup build level.
 import { Buffer } from "buffer";
 import dayjs from "dayjs";
-import { importPKCS8, importSPKI, KeyLike } from "jose";
+import { importJWK, JWK, KeyLike } from "jose";
 import keyutil from "js-crypto-key-utils";
 import { Comparable } from "./comparable";
 import { ComparableMap } from "./comparablemap";
@@ -1530,9 +1530,16 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
                 let pk = doc.getPublicKey(key).getPublicKeyBytes();
                 const keyObj = new keyutil.Key('oct', pk, { namedCurve: "P-256" });
+                /*
                 let pemObj = await keyObj.export('pem');
                 let pemStr = pemObj.toString();
                 return await importSPKI(pemStr, "ES256");
+                */
+                // Because the compatible issue in Safari browser,
+                // now we use JWK format to convert the DID PK to JWT KeyLike
+                let jsonWebKey = await keyObj.export('jwk');
+                let jwk = Object.assign( {} as JWK, jsonWebKey);
+                return await importJWK(jwk, 'ES256', true) as KeyLike;
             }
 
             public async getPrivateKey(keyid: string = null, password: string): Promise<KeyLike> {
@@ -1549,9 +1556,16 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
                 let hk = HDKey.deserialize(await store.loadPrivateKey(key, password));
                 const keyObj = new keyutil.Key('oct', hk.getPrivateKeyBytes(), { namedCurve: "P-256" });
+                /*
                 let pemObj = await keyObj.export('pem');
                 let pemStr = pemObj.toString();
                 return await importPKCS8(pemStr, "ES256");
+                */
+                // Because the compatible issue in Safari browser,
+                // now we use JWK format to convert the DID SK to JWT KeyLike
+                let jsonWebKey = await keyObj.export('jwk');
+                let jwk = Object.assign( {} as JWK, jsonWebKey);
+                return await importJWK(jwk, 'ES256', true) as KeyLike;
             }
         }();
     }
