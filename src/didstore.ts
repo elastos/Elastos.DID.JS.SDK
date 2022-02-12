@@ -1,5 +1,3 @@
-/* eslint-disable import/export */
-
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -1250,6 +1248,7 @@ export class DIDStore {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace DIDStore {
     export interface KeyObject extends Hashable, Comparable<KeyObject> { }
 
@@ -1555,7 +1554,7 @@ export namespace DIDStore {
                 return json;
             }
 
-            protected async fromJSON(json: JSONObject, context: DID = null): Promise<void> {
+            protected fromJSON(json: JSONObject, context: DID = null): void {
                 if (!json.content)
                     throw new MalformedExportDataException("Invalid export data, missing credential content");
                 this.content = VerifiableCredential.parse(json.content as JSONObject);

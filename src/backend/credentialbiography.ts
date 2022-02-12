@@ -62,6 +62,7 @@ export class CredentialBiographyStatus {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace CredentialBiographyStatus {
     /**
      * The credential is valid.

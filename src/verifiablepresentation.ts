@@ -1,5 +1,3 @@
-/* eslint-disable import/export */
-
 /*
  * Copyright (c) 2021 Elastos Foundation
  *
@@ -460,6 +458,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
     }
 }
 
+/* eslint-disable no-class-assign */
 export namespace VerifiablePresentation {
     /**
      * Presentation Builder object to create presentation.

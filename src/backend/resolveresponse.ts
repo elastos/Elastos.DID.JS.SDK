@@ -95,6 +95,7 @@ export abstract class ResolveResponse<T, R extends ResolveResponse.Result<R>> ex
     protected abstract resultFromJson(json: JSONObject): R;
 }
 
+/* eslint-disable no-class-assign */
 export namespace ResolveResponse {
     export class JsonRpcError extends DIDEntity<JsonRpcError> {
         private code: number;

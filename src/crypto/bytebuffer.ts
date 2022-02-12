@@ -166,7 +166,7 @@ export class ByteBuffer {
         if (index == null) {
             index = this.position;
         }
-        // eslint-disable-next-line no-constant-condition
+        /* eslint-disable-next-line no-constant-condition */
         while (true) {
             if (this.buffer.length < index + 1) {
                 break;

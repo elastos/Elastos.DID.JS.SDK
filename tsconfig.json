@@ -28,7 +28,7 @@
     "noImplicitAny": false,
     "strictNullChecks": false,
     "emitDecoratorMetadata": true,
-    "removeComments": true,
+    "removeComments": false,
     "isolatedModules": false,
     "preserveConstEnums": true,
     "experimentalDecorators": true,

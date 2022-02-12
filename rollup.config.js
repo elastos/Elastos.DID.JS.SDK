@@ -6,22 +6,19 @@ import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import fs from 'fs';
-//import { terser } from 'rollup-plugin-terser';
+import { terser } from 'rollup-plugin-terser';
 import typescript from "@rollup/plugin-typescript";
 import emitModulePackageFile from './build-plugins/emit-module-package-file.js';
-//import replaceBrowserModules from './build-plugins/replace-browser-modules.js';
 import pkg from './package.json';
-//import serve from 'rollup-plugin-serve';
-//import nodePolyfills from 'rollup-plugin-node-polyfills';
 //import nodePolyfills from 'rollup-plugin-polyfill-node'; // Latest maintained version with fixes for the FS polyfills and others, from snowpackjs team.
 import replace from '@rollup/plugin-replace';
 import globals from 'rollup-plugin-node-globals';
 import alias from "@rollup/plugin-alias";
 import inject from "@rollup/plugin-inject";
-import size from 'rollup-plugin-size';
 import { visualizer } from 'rollup-plugin-visualizer';
 import replaceFiles from 'rollup-plugin-file-content-replace';
 import eslint from '@rollup/plugin-eslint';
+// import { resolve as pathResolve } from "path";
 
 import { writeFileSync } from "fs";
 
@@ -63,7 +60,10 @@ const banner = `/*
 
 const onwarn = warning => {
     // eslint-disable-next-line no-console
-    if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && warning.importer.indexOf('node_modules') < 0 && warning.importer.indexOf("internals.ts") >= 0)
+    if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && 
+            (warning.importer.indexOf("node_modules") > -1 ||
+             warning.importer.indexOf("internals.ts") > -1 ||
+             warning.importer.indexOf("src/browser/readable-stream") > -1))
         return; // TMP: don't get flooded by our "internals" circular dependencies for now
 
     if (warning.code && warning.code === "THIS_IS_UNDEFINED")
@@ -71,6 +71,11 @@ const onwarn = warning => {
 
     if (warning.code && warning.code === "EVAL")
         return; // TMP: don't get flooded by this for now
+
+    if (prodBuild && warning.code && warning.code === "PLUGIN_WARNING" && 
+            warning.plugin && warning.plugin === "typescript" &&
+            warning.message.indexOf("Rollup 'sourcemap' option") > -1)
+        return; // TMP: ignore sourcemap option warning in prodbuild
 
     console.warn("Rollup build warning:", warning);
 };
@@ -111,7 +116,9 @@ const nodePlugins = [
     typescript({
         exclude: "*.browser.ts"
     }),
-    size()
+    ...prodBuild? [
+        terser()
+    ] : []
 ];
 
 export default command => {
@@ -202,10 +209,11 @@ export default command => {
             // Ex: fs.browser.ts -> fs.ts
             replaceFiles({
                 fileReplacements: [
-                    { replace: "fs.ts", with: "fs.browser.ts" },
-                    { replace: "http.ts", with: "http.browser.ts" },
-                    { replace: "https.ts", with: "https.browser.ts" }
-                ]
+                    { replace: 'fs.ts', with: 'fs.browser.ts' },
+                    { replace: 'http.ts', with: 'http.browser.ts' },
+                    { replace: 'https.ts', with: 'https.browser.ts' }
+                ]//,
+                //root: pathResolve(__dirname, 'src')
             }),
             // Dirty circular dependency removal atttempt
             replace({
@@ -289,7 +297,9 @@ export default command => {
             inject({
                 "BrowserFS": "browserfs"
             }),
-            size(),
+            ...prodBuild? [
+                terser()
+            ] : [],
             visualizer({
                 filename: "./browser-bundle-stats.html"
             }) // To visualize bundle dependencies sizes on a UI.

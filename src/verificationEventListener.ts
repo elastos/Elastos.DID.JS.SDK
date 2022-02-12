@@ -78,7 +78,7 @@ class DefaultVerificationEventListener extends VerificationEventListener {
         this.succeededPrefix = succeededPrefix == null ? DefaultVerificationEventListener.EMPTY : succeededPrefix;
         this.failedPrefix = failedPrefix == null ? DefaultVerificationEventListener.EMPTY : failedPrefix;
 
-        this.records = new Array<Record>();
+        this.records = [];
     }
 
     public done(context : Object, succeeded : boolean, message : string) : void {

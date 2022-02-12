@@ -11,6 +11,7 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:node/recommended',
+    'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:import/recommended',
     'plugin:import/typescript'
@@ -34,6 +35,7 @@ module.exports = {
     "no-mixed-spaces-and-tabs": "off",
     "no-constant-condition": "warn",
     "no-class-assign": "warn",
+    "require-yield": "warn",
     "require-await": "error",
     "no-async-promise-executor": "error",
     "no-promise-executor-return": "error",
