@@ -23,8 +23,6 @@
 import axios from "axios";
 import { Comparable } from "./comparable";
 import { IllegalArgumentException, IOException, NetworkException, ResolveException, UnsupportedOperationException } from "./exceptions/exceptions";
-import { request as httpRequest } from "./http";
-import { request as httpsRequest } from "./https";
 import { checkArgument, Collections, DIDAdapter } from "./internals";
 import type { JSONObject } from "./json";
 import { Logger } from "./logger";

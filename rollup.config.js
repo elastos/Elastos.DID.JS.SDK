@@ -18,7 +18,7 @@ import inject from "@rollup/plugin-inject";
 import { visualizer } from 'rollup-plugin-visualizer';
 import replaceFiles from 'rollup-plugin-file-content-replace';
 import eslint from '@rollup/plugin-eslint';
-// import { resolve as pathResolve } from "path";
+import { resolve as pathResolve } from "path";
 
 import { writeFileSync } from "fs";
 
@@ -209,11 +209,9 @@ export default command => {
             // Ex: fs.browser.ts -> fs.ts
             replaceFiles({
                 fileReplacements: [
-                    { replace: 'fs.ts', with: 'fs.browser.ts' },
-                    { replace: 'http.ts', with: 'http.browser.ts' },
-                    { replace: 'https.ts', with: 'https.browser.ts' }
-                ]//,
-                //root: pathResolve(__dirname, 'src')
+                    { replace: 'fs.ts', with: 'fs.browser.ts' }
+                ],
+                root: pathResolve(__dirname, 'src')
             }),
             // Dirty circular dependency removal atttempt
             replace({
