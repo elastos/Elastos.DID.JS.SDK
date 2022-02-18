@@ -55,6 +55,9 @@ export class DIDStore {
 
     private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
+    /**
+     * @Internal (tag for docs)
+    */
     public storage: DIDStorage;
     private metadata: DIDStoreMetadata;
 
@@ -335,6 +338,9 @@ export class DIDStore {
         }
     }
 
+    /**
+     * @Internal (tag for docs)
+    */
     public derive(id: string, path: string, storepass: string): HDKey {
         checkArgument(id != null && id !== "", "Invalid identity");
         checkArgument(path != null && path !== "", "Invalid path");

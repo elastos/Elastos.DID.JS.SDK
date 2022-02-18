@@ -29,6 +29,10 @@ class LogLevel {
         this.name = name;
     }
 }
+
+/**
+ * @Internal (tag for docs)
+ */
 export class Logger {
 
     public static TRACE = new LogLevel(0, "TRACE");

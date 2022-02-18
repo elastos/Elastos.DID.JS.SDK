@@ -28,7 +28,9 @@ import { Mnemonic } from "../internals";
 import { Base58 } from './base58';
 import { SHA256 } from "./sha256";
 
-
+/**
+ * @Internal
+ */
 export class HDKey {
     public static PUBLICKEY_BYTES = 33;
     public static PRIVATEKEY_BYTES = 32;

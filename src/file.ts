@@ -32,6 +32,9 @@ import * as fs from "./fs";
  * implementation as we can until this SDK is totally stable.
  */
 
+/**
+ * @Internal (tag for docs)
+*/
  export class File { // Exported, for test cases only
     public static SEPARATOR = "/";
 

@@ -22,7 +22,22 @@
 
 'use strict';
 
-import { DIDBackend, Features } from "./internals";
+import { ConflictHandle } from "./internals";
+import { Cloneable } from "./internals";
+import { Hashable } from "./internals";
+import { DIDObject } from "./internals";
+import { Comparable } from "./internals";
+import { ComparableMap } from "./internals";
+import { DIDEntity } from "./internals";
+import { CredentialTransaction } from "./internals";
+import { CredentialBiography } from "./internals";
+import { CredentialBiographyStatus } from "./internals";
+import { CredentialMetadata } from "./internals";
+import { DIDBackend } from "./internals";
+import { AbstractMetadata } from "./internals";
+import { DIDMetadata } from "./internals";
+import { Features } from "./internals";
+import { LocalResolveHandle } from "./internals";
 import { DID } from "./internals";
 import { VerificationEventListener } from "./internals";
 import { DIDDocument } from "./internals";
@@ -33,8 +48,12 @@ import { VerifiablePresentation } from "./internals";
 import { Mnemonic } from "./internals";
 import { TransferTicket } from "./internals";
 import { Issuer } from "./internals";
-import { DIDURL,  } from "./internals";
+import { DIDURL } from "./internals";
+import { DIDTransaction } from "./internals";
 import { DIDBiography, DIDBiographyStatus } from "./internals";
+import { IDTransaction } from "./internals";
+import { CredentialRequest } from "./internals";
+import { DIDRequest } from "./internals";
 import { IDChainRequest } from "./internals";
 import * as Exceptions from "./exceptions/exceptions";
 import { File } from "./internals";
@@ -45,10 +64,16 @@ import { BASE64 } from "./crypto/base64";
 import { HDKey } from "./crypto/hdkey";
 import { Base58 } from "./crypto/base58";
 import { EcdsaSigner } from "./crypto/ecdsasigner";
-import type { JSONObject, JSONValue } from "./json";
+import type { JSONArray, JSONObject, JSONValue } from "./json";
 import { DefaultDIDAdapter } from "./internals";
 import { SimulatedIDChainAdapter } from "./internals";
-import { JWT, JWTBuilder, JWTHeader, JWTParserBuilder, JWTParser, Claims} from "./internals";
+import { DIDTransactionAdapter } from "./internals";
+import { JWT } from "./internals";
+import { JWTBuilder } from "./internals";
+import { JWTHeader } from "./internals";
+import { JWTParserBuilder } from "./internals";
+import { JWTParser } from "./internals";
+import { Claims } from "./internals";
 
 Logger.setLevel(Logger.TRACE);
 
@@ -83,18 +108,31 @@ Logger.setLevel(Logger.TRACE);
 } */
 
 export type {
+    DIDObject,
     DIDAdapter,
+    JSONValue,
+    JSONArray,
     JSONObject,
-    JSONValue
+    Cloneable,
+    Hashable,
+    Comparable,
+    ComparableMap,
+    DIDTransactionAdapter,
+    LocalResolveHandle,
+    ConflictHandle
 }
 
 export {
     //initialize,
     Features,
     DID,
+    AbstractMetadata,
+    DIDMetadata,
+    CredentialMetadata,
     DIDDocument,
     DIDStore,
     DIDBackend,
+    DIDEntity,
     RootIdentity,
     VerifiableCredential,
     VerifiablePresentation,
@@ -102,8 +140,15 @@ export {
     TransferTicket,
     Issuer,
     DIDURL,
+    CredentialBiography,
+    CredentialRequest,
+    CredentialTransaction,
+    CredentialBiographyStatus,
     DIDBiography,
+    DIDTransaction,
+    DIDRequest,
     DIDBiographyStatus,
+    IDTransaction,
     IDChainRequest,
     DefaultDIDAdapter,
     SimulatedIDChainAdapter,

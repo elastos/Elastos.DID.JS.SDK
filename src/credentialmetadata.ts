@@ -36,6 +36,7 @@ import { MalformedMetadataException } from "./exceptions/exceptions";
  * The interface for Credential's meta data(include alias name, last modified time for Credential
  * and user's extra element).
  */
+
 /**
  * The class defines the implement of Credential Meta data.
  */

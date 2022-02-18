@@ -11,7 +11,8 @@
     "clean": "rm -rf dist/ typings/ generated/",
     "types": "npm run clean && tsc --emitDeclarationOnly --outDir typings/ --project tsconfig.types.json",
     "tsc:build": "rollup -c",
-    "tsc:w": "tsc -w"
+    "tsc:w": "tsc -w",
+    "docs" : "typedoc src/index.ts --excludePrivate --excludeProtected --excludeInternal && mv docs/modules.html docs/did-docs.html"
   },
   "exports": {
     "node" : "./dist/did.js",
@@ -44,7 +45,7 @@
     "js-crypto-key-utils": "1.0.4",
     "create-hash": "1.2.0",
     "jose": "4.5.0",
-    
+
     "bs58": "4.0.1",
     "bs58check": "2.1.2",
 
@@ -52,7 +53,9 @@
 
     "crypto-browserify": "3.12.0",
     "stream-browserify": "3.0.0",
-    "browserfs": "1.4.3"
+    "browserfs": "1.4.3",
+
+    "typedoc": "0.22.11"
   },
   "devDependencies": {
     "typescript": "4.5.5",

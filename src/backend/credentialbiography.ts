@@ -172,6 +172,9 @@ export class CredentialBiography extends ResolveResponse.Result<CredentialBiogra
         }
     }
 
+    /**
+     * @Internal (tag for docs)
+    */
     public static parse(content: string | JSONObject, context = null): CredentialBiography {
         try {
             return DIDEntity.deserialize(content, CredentialBiography, context);

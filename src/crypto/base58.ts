@@ -24,7 +24,9 @@
 // Buf haven't found a way to make this work for typescript files at the rollup build level.
 import * as bs58check from 'bs58';
 
-
+/**
+ * @Internal (tag for docs)
+*/
 export class Base58 {
     public static decode(base58: string): Buffer {
         return bs58check.decode(base58);

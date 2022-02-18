@@ -1511,6 +1511,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return EcdsaSigner.verify(binkey, sig, digest);
     }
 
+    /**
+     * @Internal (tag for docs)
+    */
     public getKeyProvider(): KeyProvider {
         let doc = this;
         return new class implements KeyProvider {
@@ -2182,10 +2185,10 @@ export namespace DIDDocument {
     }
 
     /**
- * A Service may represent any type of service the subject
- * wishes to advertise, including decentralized identity management services
- * for further discovery, authentication, authorization, or interaction.
- */
+     * A Service may represent any type of service the subject
+     * wishes to advertise, including decentralized identity management services
+     * for further discovery, authentication, authorization, or interaction.
+    */
     export class Service extends DIDEntity<Service> implements DIDObject<string>, Comparable<Service> {
         public id: DIDURL;
         public type: string;

@@ -33,6 +33,9 @@ export class JWTBuilder {
 
     private issuer : DID;
 
+    /**
+     * @Internal (tag for docs)
+    */
     public constructor(issuer : DID, keyProvider : KeyProvider) {
         checkArgument(issuer != null, "Invalid issuer");
 
