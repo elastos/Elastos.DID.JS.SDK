@@ -29,6 +29,9 @@ export class JWTParser {
     private keyprovider : KeyProvider;
     private options : JWTVerifyOptions;
 
+    /**
+     * @Internal (tag for docs)
+    */
     constructor(keyprovider : KeyProvider, options : JWTVerifyOptions) {
         this.keyprovider = keyprovider;
         this.options = options;

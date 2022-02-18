@@ -24,8 +24,10 @@
 // Buf haven't found a way to make this work for typescript files at the rollup build level.
 import { Buffer } from "buffer";
 
+/**
+ * @Internal (tag for docs)
+*/
 export class BASE64 {
-
     public static fromString(value: string): string {
         let base64string = Buffer.from(value, "utf-8").toString("base64");
         return this.convertToURI(base64string)

@@ -43,6 +43,7 @@ export interface ReEncryptor {
 }
 
 /**
+ * @internal (tag for docs)
  * The interface for DIDStorage to support different file system.
  */
 export interface DIDStorage {

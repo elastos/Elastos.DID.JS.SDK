@@ -26,7 +26,9 @@ import { Buffer } from "buffer";
 import crypto from "crypto";
 import { BASE64 } from "./base64";
 
-
+/**
+ * @Internal (tag for docs)
+*/
 export class Aes256cbc {
     private static generateKeyAndIv(passwd: string): { key: Buffer, iv: Buffer } {
 

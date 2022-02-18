@@ -33,6 +33,9 @@ export class JWTParserBuilder {
         return this;
     }
 
+    /**
+     * @Internal (tag for docs)
+    */
     public static newWithKeyProvider(keyprovider : KeyProvider) : JWTParserBuilder {
         let builder = new JWTParserBuilder();
         builder.keyProvider = keyprovider;

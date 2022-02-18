@@ -22,7 +22,6 @@
 
 import { DID } from "../internals";
 import { DIDURL } from "../internals";
-import type { Hashable } from "../hashable";
 import { ResolveRequest } from "./resolverequest";
 import { DIDEntity  } from "../internals";
 import { JSONObject } from "../json"

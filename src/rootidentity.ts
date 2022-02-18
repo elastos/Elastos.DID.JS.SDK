@@ -217,10 +217,16 @@ export class RootIdentity {
         return this.mnemonic;
     }
 
+    /**
+     * @Internal (tag for docs)
+    */
     public getRootPrivateKey(): HDKey {
         return this.rootPrivateKey;
     }
 
+    /**
+     * @Internal (tag for docs)
+    */
     public getPreDerivedPublicKey(): HDKey {
         return this.preDerivedPublicKey;
     }

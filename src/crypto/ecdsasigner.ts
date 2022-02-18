@@ -26,7 +26,9 @@ import { Buffer } from "buffer";
 import { ec as EC } from "elliptic";
 import { SHA256 } from "./sha256";
 
-
+/**
+ * @Internal (tag for docs)
+*/
 export class EcdsaSigner {
 
     public static sign(privateKey: Buffer | string, digest: Buffer): Buffer {
