@@ -346,6 +346,11 @@ export class RootIdentity {
             let db = DIDDocument.Builder.newFromDID(did, this.getStore());
             db.addAuthenticationKey(id, key.getPublicKeyBase58());
             doc = await db.seal(storepass);
+
+            doc.getMetadata().setRootIdentityId(this.getId());
+			doc.getMetadata().setIndex(index);
+			doc.getMetadata().attachStore(this.getStore());
+
             await this.getStore().storeDid(doc);
 
             if (shouldIncrementIndexAfterCompletion)
