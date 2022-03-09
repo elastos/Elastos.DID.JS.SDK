@@ -113,7 +113,7 @@
     "dist.esm",
     "typings"
   ],
-  "author": "Tuum Tech",
+  "author": "Trinity Tech",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/elastos/Elastos.DID.JS.SDK/issues"
