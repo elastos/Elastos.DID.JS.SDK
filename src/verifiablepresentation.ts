@@ -270,9 +270,17 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         }
 
         // Check the validity of holder' document.
-        if (!holderDoc.isValid(listener)) {
+        if (holderDoc.isDeactivated()) {
             if (listener != null) {
-                listener.failed(this, "VP {}: holder's document is invalid", this.getId());
+                listener.failed(this, "VP {}: holder's document is deactivate", this.getId());
+                listener.failed(this, "VP {}: is invalid", this.getId());
+            }
+            return false;
+        }
+
+        if (!holderDoc.isGenuine(listener)) {
+            if (listener != null) {
+                listener.failed(this, "VP {}: holder's document is genuine", this.getId());
                 listener.failed(this, "VP {}: is invalid", this.getId());
             }
             return false;
@@ -293,6 +301,19 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             if (listener != null) {
                 listener.failed(this, "VP {}: Key '{}' for proof is not an authencation key of '{}'",
                     this.getId(), this.proof.getVerificationMethod(), this.proof.getVerificationMethod().getDid());
+                listener.failed(this, "VP {}: is invalid", this.getId());
+            }
+            return false;
+        }
+
+        let vp = VerifiablePresentation.newFromPresentation(this, false);
+        let json = vp.serialize(true);
+
+        if (!holderDoc.verify(this.proof.getVerificationMethod(),
+                this.proof.getSignature(), Buffer.from(json),
+                Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()))) {
+            if (listener != null) {
+                listener.failed(this, "VP {}: proof is invalid, signature mismatch", this.getId());
                 listener.failed(this, "VP {}: is invalid", this.getId());
             }
             return false;
@@ -319,22 +340,10 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
             }
         }
 
-        let vp = VerifiablePresentation.newFromPresentation(this, false);
-        let json = vp.serialize(true);
+        if (listener != null)
+            listener.succeeded(this, "VP %s: is valid", this.getId());
 
-        let result = holderDoc.verify(this.proof.getVerificationMethod(),
-            this.proof.getSignature(), Buffer.from(json),
-            Buffer.from(this.proof.getRealm()), Buffer.from(this.proof.getNonce()));
-        if (listener != null) {
-            if (result) {
-                listener.succeeded(this, "VP {}: is valid", this.getId());
-            } else {
-                listener.failed(this, "VP {}: proof is invalid, signature mismatch", this.getId());
-                listener.failed(this, "VP {}: is invalid", this.getId());
-            }
-        }
-
-        return result;
+        return true;
     }
 
     public toJSON(key: string = null): JSONObject {
