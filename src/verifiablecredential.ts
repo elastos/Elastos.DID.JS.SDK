@@ -253,20 +253,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      * @throws DIDResolveException if error occurs when resolve the DID documents
      */
     public async isExpired(): Promise<boolean> {
-        if (this.expirationDate != null) {
+        if (this.expirationDate != null)
             if (dayjs().isAfter(dayjs(this.expirationDate)))
                 return true;
-        }
-
-        let controllerDoc = await this.subject.getId().resolve();
-        if (controllerDoc != null && controllerDoc.isExpired())
-            return true;
-
-        if (!this.isSelfProclaimed()) {
-            let issuerDoc = await this.issuer.resolve();
-            if (issuerDoc != null && issuerDoc.isExpired())
-                return true;
-        }
 
         return false;
     }
@@ -358,6 +347,9 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         let bio = await DIDBackend.getInstance().resolveCredentialBiography(
             this.getId(), this.getIssuer());
+        if (bio == null)
+            return false;
+
         let revoked = bio.getStatus().equals(CredentialBiographyStatus.REVOKED);
 
         if (revoked)
@@ -373,14 +365,20 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      * @throws DIDResolveException if error occurs when resolve the DID documents
      */
     public async isValid(listener: VerificationEventListener = null): Promise<boolean> {
-        if (this.expirationDate != null) {
-            if (dayjs().isAfter(dayjs(this.expirationDate))) {
-                if (listener != null) {
-                    listener.failed(this, "VC {}: is expired", this.getId());
-                    listener.failed(this, "VC {}: is invalid", this.getId());
-                }
-                return false;
+        if (this.isRevoked()) {
+            if (listener != null) {
+                listener.failed(this, "VC {}: is revoked", this.getId());
+                listener.failed(this, "VC {}: is invalid", this.getId());
             }
+            return false;
+        }
+
+        if (this.isExpired()) {
+            if (listener != null) {
+                listener.failed(this, "VC {}: is expired", this.getId());
+                listener.failed(this, "VC {}: is invalid", this.getId());
+            }
+            return false;
         }
 
         let issuerDoc = await this.issuer.resolve();
@@ -393,10 +391,17 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             return false;
         }
 
-        if (!issuerDoc.isValid(listener)) {
+        if (issuerDoc.isDeactivated()) {
             if (listener != null) {
-                listener.failed(this, "VC {}: issuer '{}' is invalid",
-                    this.getId(), this.getIssuer());
+                listener.failed(this, "VC {}: issuer '{}' is deactivated", this.getId(), this.getIssuer());
+                listener.failed(this, "VC {}: is invalid", this.getId());
+            }
+            return false;
+        }
+
+        if (!issuerDoc.isGenuine()) {
+            if (listener != null) {
+                listener.failed(this, "VC {}: issuer '{}' is not genuine", this.getId(), this.getIssuer());
                 listener.failed(this, "VC {}: is invalid", this.getId());
             }
             return false;
@@ -430,17 +435,6 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                 listener.failed(this, "VC {}: is invalid", this.getId());
             }
             return false;
-        }
-
-        if (!this.isSelfProclaimed()) {
-            let controllerDoc = await this.subject.getId().resolve();
-            if (controllerDoc != null && !controllerDoc.isValid(listener)) {
-                if (listener != null) {
-                    listener.failed(this, "VC {}: holder's document is invalid", this.getId());
-                    listener.failed(this, "VC {}: is invalid", this.getId());
-                }
-                return false;
-            }
         }
 
         if (listener != null)
@@ -1158,7 +1152,7 @@ export namespace VerifiableCredential {
                 this.credential.issuanceDate.setMilliseconds(0);
 
             if (!this.credential.hasExpirationDate())
-                this.defaultExpirationDate();
+                throw new MalformedCredentialException("Missing expiration date");
 
             this.subjectProperties = sortJSONObject(this.subjectProperties);
 

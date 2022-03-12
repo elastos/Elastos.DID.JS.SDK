@@ -46,7 +46,7 @@ import {
     NotPrimitiveDIDException,
     UnknownInternalException
 } from "./exceptions/exceptions";
-import { checkState, DIDStore, Features } from "./internals";
+import { checkState, DIDBiography, DIDBiographyStatus, DIDStore, Features } from "./internals";
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
@@ -1245,8 +1245,21 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the returned value is true if the did document is genuine;
      *         the returned value is false if the did document is not genuine.
      */
-    public isDeactivated(): boolean {
-        return this.getMetadata().isDeactivated();
+    public async isDeactivated(): Promise<boolean> {
+        //return this.getMetadata().isDeactivated();
+        if (this.getMetadata().isDeactivated())
+ 			return true;
+
+ 		let bio = await DIDBackend.getInstance().resolveDidBiography(this.getSubject());
+ 		if (bio == null)
+ 			return false;
+
+ 		let deactivated = bio.getStatus() == DIDBiographyStatus.DEACTIVATED;
+
+ 		if (deactivated)
+ 			this.getMetadata().setDeactivated(deactivated);
+
+ 		return deactivated;
     }
 
     /**
@@ -1923,9 +1936,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         }
 
         await DIDBackend.getInstance().deactivateDid(doc, signKey, storepass, adapter);
-
-        if (this.getSignature() !== doc.getSignature())
-            await this.getStore().storeDid(doc);
     }
 
     /**
@@ -2003,9 +2013,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             }
 
             await DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, adapter);
-
-            if (this.getStore().containsDid(target))
-                await this.getStore().storeDid(targetDoc);
         }
     }
 
