@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-import type { DIDDocument, DIDBiography } from "./internals";
+import { DIDDocument, DIDBiography, DIDBiographyStatus } from "./internals";
 import { DIDMetadata } from "./internals";
 import { DIDBackend } from "./internals";
 import { hashCode } from "./internals";
@@ -205,7 +205,19 @@ export class DID {
     }
 
     public async isDeactivated(): Promise<boolean> {
-        return (await this.getMetadata()).isDeactivated();
+        if ((await this.getMetadata()).isDeactivated())
+            return true;
+
+        let bio = await DIDBackend.getInstance().resolveDidBiography(this);
+        if (bio == null)
+            return false;
+
+        let deactivated = bio.getStatus() == DIDBiographyStatus.DEACTIVATED;
+
+        if (deactivated)
+            (await this.getMetadata()).setDeactivated(deactivated);
+
+        return deactivated;
     }
 
     /**
