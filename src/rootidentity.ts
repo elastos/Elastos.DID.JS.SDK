@@ -315,7 +315,7 @@ export class RootIdentity {
         let did = this.getDid(index);
         let doc = await this.getStore().loadDid(did);
         if (doc != null) {
-            if (doc.isDeactivated())
+            if (await doc.isDeactivated())
                 throw new DIDDeactivatedException(did.toString());
 
             if (!overwrite)
@@ -325,7 +325,7 @@ export class RootIdentity {
         try {
             doc = await did.resolve();
             if (doc != null) {
-                if (doc.isDeactivated())
+                if (await doc.isDeactivated())
                     throw new DIDDeactivatedException(did.toString());
 
                 if (!overwrite)
