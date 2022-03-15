@@ -391,7 +391,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             return false;
         }
 
-        if (issuerDoc.isDeactivated()) {
+        if (await issuerDoc.isDeactivated()) {
             if (listener != null) {
                 listener.failed(this, "VC {}: issuer '{}' is deactivated", this.getId(), this.getIssuer());
                 listener.failed(this, "VC {}: is invalid", this.getId());
@@ -1152,7 +1152,7 @@ export namespace VerifiableCredential {
                 this.credential.issuanceDate.setMilliseconds(0);
 
             if (!this.credential.hasExpirationDate())
-                throw new MalformedCredentialException("Missing expiration date");
+                this.defaultExpirationDate();
 
             this.subjectProperties = sortJSONObject(this.subjectProperties);
 

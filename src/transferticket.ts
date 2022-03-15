@@ -205,7 +205,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
                 return false;
             }
 
-            if (!controllerDoc.isValid(listener)) {
+            if (!await controllerDoc.isValid(listener)) {
                 if (listener != null) {
                     listener.failed(this, "Ticket {}: controller '{}' is invalid, failed to verify the proof",
                         this.getSubject(), proof.getVerificationMethod().getDid());
@@ -254,7 +254,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             return false;
         }
 
-        if (!doc.isValid(listener)) {
+        if (!await doc.isValid(listener)) {
             if (listener != null) {
                 listener.failed(this, "Ticket {}: the owners document is not valid", this.getSubject());
                 listener.failed(this, "Ticket {}: is not valid", this.getSubject());

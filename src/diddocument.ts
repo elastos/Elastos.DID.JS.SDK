@@ -1246,20 +1246,19 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      *         the returned value is false if the did document is not genuine.
      */
     public async isDeactivated(): Promise<boolean> {
-        //return this.getMetadata().isDeactivated();
         if (this.getMetadata().isDeactivated())
- 			return true;
+            return true;
 
- 		let bio = await DIDBackend.getInstance().resolveDidBiography(this.getSubject());
- 		if (bio == null)
- 			return false;
+        let bio = await DIDBackend.getInstance().resolveDidBiography(this.getSubject());
+        if (bio == null)
+            return false;
 
- 		let deactivated = bio.getStatus() == DIDBiographyStatus.DEACTIVATED;
+        let deactivated = bio.getStatus() == DIDBiographyStatus.DEACTIVATED;
 
- 		if (deactivated)
- 			this.getMetadata().setDeactivated(deactivated);
+        if (deactivated)
+            this.getMetadata().setDeactivated(deactivated);
 
- 		return deactivated;
+        return deactivated;
     }
 
     /**
@@ -1282,8 +1281,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the returned value is true if the did document is valid;
      *         the returned value is false if the did document is not valid.
      */
-    public isValid(listener: VerificationEventListener = null): boolean {
-        if (this.isDeactivated()) {
+    public async isValid(listener: VerificationEventListener = null): Promise<boolean> {
+        if (await this.isDeactivated()) {
             if (listener != null) {
                 listener.failed(this, "{}: is deactivated", this.getSubject());
                 listener.failed(this, "{}: is invalid", this.getSubject());
@@ -1307,7 +1306,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         if (this.hasController()) {
             for (let doc of this.controllerDocs.values()) {
-                if (doc.isDeactivated()) {
+                if (await doc.isDeactivated()) {
                     if (listener != null) {
                         listener.failed(this, "{}: controller '{}' is deactivated",
                             this.getSubject(), doc.getSubject());
@@ -1656,7 +1655,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             this.checkAttachedStore();
             if (!source)
                 throw new DIDNotFoundException("DID not found: " + from.toString());
-            if (source.isDeactivated())
+            if (await source.isDeactivated())
                 throw new DIDDeactivatedException(from.toString());
 
             if (!source.isCustomizedDid())
@@ -1695,7 +1694,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (targetDoc == null)
             throw new DIDNotFoundException("DID not found: " + did.toString());
 
-        if (targetDoc.isDeactivated())
+        if (await targetDoc.isDeactivated())
             throw new DIDDeactivatedException(did.toString());
 
         if (signKey == null) {
@@ -1739,7 +1738,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             throw new DIDNotGenuineException(this.getSubject().toString());
         }
 
-        if (this.isDeactivated()) {
+        if (await this.isDeactivated()) {
             DIDDocument.log.error("Publish failed because DID is deactivated.");
             throw new DIDDeactivatedException(this.getSubject().toString());
         }
@@ -1754,7 +1753,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let resolvedSignature: string = null;
         let resolvedDoc = await this.getSubject().resolve(true);
         if (resolvedDoc != null) {
-            if (resolvedDoc.isDeactivated()) {
+            if (await resolvedDoc.isDeactivated()) {
                 this.getMetadata().setDeactivated(true);
 
                 DIDDocument.log.error("Publish failed because DID is deactivated.");
@@ -1848,7 +1847,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             throw new DIDNotGenuineException(this.getSubject().toString());
         }
 
-        if (this.isDeactivated()) {
+        if (await this.isDeactivated()) {
             DIDDocument.log.error("Publish failed because DID is deactivated.");
             throw new DIDDeactivatedException(this.getSubject().toString());
         }
@@ -1862,7 +1861,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let resolvedSignature: string = null;
         let resolvedDoc = await DIDBackend.getInstance().resolveUntrustedDid(this.getSubject(), true);
         if (resolvedDoc != null) {
-            if (resolvedDoc.isDeactivated()) {
+            if (await resolvedDoc.isDeactivated()) {
                 this.getMetadata().setDeactivated(true);
 
                 DIDDocument.log.error("Publish failed because DID is deactivated.");
@@ -1914,7 +1913,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let doc = await this.getSubject().resolve(true);
         if (doc == null)
             throw new DIDNotFoundException("DID not found: " + this.getSubject().toString());
-        else if (doc.isDeactivated())
+        else if (await doc.isDeactivated())
             throw new DIDDeactivatedException(this.getSubject().toString());
         else
             doc.getMetadata().attachStore(this.getStore());
@@ -1960,7 +1959,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let targetDoc = await target.resolve(true);
         if (targetDoc == null)
             throw new DIDNotFoundException("DID not found: " + target.toString());
-        else if (targetDoc.isDeactivated())
+        else if (await targetDoc.isDeactivated())
             throw new DIDDeactivatedException(target.toString());
 
         targetDoc.getMetadata().attachStore(this.getStore());
@@ -2659,7 +2658,7 @@ export namespace DIDDocument {
             if (controllerDoc == null)
                 throw new DIDNotFoundException("DID not found: " + controller.toString());
 
-            if (controllerDoc.isDeactivated())
+            if (await controllerDoc.isDeactivated())
                 throw new DIDDeactivatedException(controller.toString());
 
             if (controllerDoc.isExpired())
@@ -3026,7 +3025,7 @@ export namespace DIDDocument {
             if (controllerDoc == null)
                 throw new DIDNotFoundException("DID not found: " + id.toString());
 
-            if (controllerDoc.isDeactivated())
+            if (await controllerDoc.isDeactivated())
                 throw new DIDDeactivatedException(controller.toString());
 
             if (controllerDoc.isExpired())

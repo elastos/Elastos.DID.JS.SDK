@@ -213,7 +213,6 @@ export class DID {
             return false;
 
         let deactivated = bio.getStatus() == DIDBiographyStatus.DEACTIVATED;
-
         if (deactivated)
             (await this.getMetadata()).setDeactivated(deactivated);
 

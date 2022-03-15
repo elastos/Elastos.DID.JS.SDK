@@ -270,7 +270,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
         }
 
         // Check the validity of holder' document.
-        if (holderDoc.isDeactivated()) {
+        if (await holderDoc.isDeactivated()) {
             if (listener != null) {
                 listener.failed(this, "VP {}: holder's document is deactivate", this.getId());
                 listener.failed(this, "VP {}: is invalid", this.getId());
