@@ -38,7 +38,7 @@ import {
     MalformedCredentialException,
     NotAttachedWithStoreException
 } from "./exceptions/exceptions";
-import type { DIDDocument, DIDObject, DIDStore, Issuer } from "./internals";
+import { checkState, DIDDocument, DIDObject, DIDStore, Issuer } from "./internals";
 import { checkArgument, checkEmpty, Collections, Features, CredentialBiography, CredentialBiographyStatus, CredentialMetadata, DID, DIDBackend, DIDEntity, DIDURL, IDChainRequest } from "./internals";
 import type { JSONObject, JSONValue } from "./json";
 import { sortJSONObject } from "./json";
@@ -336,6 +336,32 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         }
         if (listener != null)
             listener.succeeded(this, "VC {}: is genuine", this.getId());
+
+        return true;
+    }
+
+    	// internal method for DIDDocument.Builder.addCredential,
+ 	// check the self-proclaimed credential that it's owner still not published
+ 	public isGenuineInternal(owner : DIDDocument) : boolean {
+        checkState(this.isSelfProclaimed(), "The credential should be self-proclaimed");
+        checkArgument(this.getSubject().getId().equals(owner.getSubject()), "Invalid owner document");
+
+        if (!this.getId().getDid().equals(this.getSubject().getId()))
+            return false;
+
+        // Credential should signed by any authentication key.
+        if (!owner.isAuthenticationKey(this.proof.getVerificationMethod()))
+            return false;
+
+        // Unsupported public key type;
+        if (this.proof.getType() !== Constants.DEFAULT_PUBLICKEY_TYPE)
+            return false;
+
+        let vc = VerifiableCredential.newWithVerifiableCredential(this, false);
+        let json = vc.serialize(true);
+        if (!owner.verify(this.proof.getVerificationMethod(),
+                this.proof.getSignature(), Buffer.from(json)))
+            return false;
 
         return true;
     }

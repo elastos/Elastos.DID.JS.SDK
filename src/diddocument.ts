@@ -38,6 +38,7 @@ import {
     DIDNotGenuineException,
     DIDNotUpToDateException, DIDObjectAlreadyExistException,
     DIDObjectHasReference, DIDObjectNotExistException, IllegalArgumentException, IllegalUsage, InvalidKeyException,
+    MalformedCredentialException,
     MalformedDocumentException,
     NoEffectiveControllerException,
     NotAttachedWithStoreException,
@@ -3101,6 +3102,16 @@ export namespace DIDDocument {
             if (!vc.getSubject().getId().equals(this.getSubject()))
                 throw new IllegalUsage(vc.getSubject().getId().toString());
 
+			// The credential should be genuine
+            let genuine = vc.isSelfProclaimed() ?
+                 vc.isGenuineInternal(this.document) : vc.isGenuine();
+            if (!genuine)
+                throw new MalformedCredentialException(vc.getId().toString());
+
+            return this.addCredentialUncheck(vc);
+        }
+
+        private addCredentialUncheck(vc: VerifiableCredential) : Builder {
             if (this.document.credentials == null) {
                 this.document.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
             } else {
@@ -3152,13 +3163,11 @@ export namespace DIDDocument {
                     .expirationDate(expirationDate)
                     .seal(storepass);
 
-                this.addCredential(vc);
+                return this.addCredentialUncheck(vc);
             } catch (ignore) {
                 // MalformedCredentialException
                 throw new UnknownInternalException(ignore);
             }
-
-            return this;
         }
 
         /**
