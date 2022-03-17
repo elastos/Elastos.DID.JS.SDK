@@ -51,7 +51,7 @@ import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDB
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
 
-
+const log = new Logger("DIDDocument");
 /**
  * The DIDDocument represents the DID information.
  *
@@ -2593,19 +2593,21 @@ export namespace DIDDocument {
          * @return the Builder instance for method chaining
          */
         public addDefaultContexts(): Builder {
-            checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+            if (Features.isEnabledJsonLdContext()) {
+                if (this.document.context == null)
+                    this.document.context = [];
 
-            if (this.document.context == null)
-                this.document.context = [];
+                if (!this.document.context.includes(DIDDocument.W3C_DID_CONTEXT))
+                    this.document.context.push(DIDDocument.W3C_DID_CONTEXT);
 
-            if (!this.document.context.includes(DIDDocument.W3C_DID_CONTEXT))
-                this.document.context.push(DIDDocument.W3C_DID_CONTEXT);
+                if (!this.document.context.includes(DIDDocument.ELASTOS_DID_CONTEXT))
+                    this.document.context.push(DIDDocument.ELASTOS_DID_CONTEXT);
 
-            if (!this.document.context.includes(DIDDocument.ELASTOS_DID_CONTEXT))
-                this.document.context.push(DIDDocument.ELASTOS_DID_CONTEXT);
-
-            if (!this.document.context.includes(DIDDocument.W3ID_SECURITY_CONTEXT))
-                this.document.context.push(DIDDocument.W3ID_SECURITY_CONTEXT);
+                if (!this.document.context.includes(DIDDocument.W3ID_SECURITY_CONTEXT))
+                    this.document.context.push(DIDDocument.W3ID_SECURITY_CONTEXT);
+            } else {
+                log.warn("JSON-LD context support not enabled");
+            }
 
             return this;
         }
@@ -2617,13 +2619,15 @@ export namespace DIDDocument {
          * @return the Builder instance for method chaining
          */
         public addContext(uri: string): Builder {
-            checkState(Features.isEnabledJsonLdContext(), "JSON-LD context support not enabled");
+            if (Features.isEnabledJsonLdContext()) {
+                if (this.document.context == null)
+                    this.document.context = [];
 
-            if (this.document.context == null)
-                this.document.context = [];
-
-            if (!this.document.context.includes(uri))
-                this.document.context.push(uri);
+                if (!this.document.context.includes(uri))
+                    this.document.context.push(uri);
+            } else {
+                log.warn("JSON-LD context support not enabled");
+            }
 
             return this;
         }
