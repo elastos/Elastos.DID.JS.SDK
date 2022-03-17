@@ -13,6 +13,7 @@ src/**/*.map
 src/**/*.js
 tests/**/*.map
 tests/**/*.js
+docs/
 log.txt
 *.sublime-project
 *.sublime-workspace
