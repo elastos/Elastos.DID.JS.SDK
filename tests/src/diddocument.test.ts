@@ -1412,6 +1412,7 @@ describe('DIDDocument Tests', () => {
     ["1", "2", "2.2"].forEach((version) => {
         test("testAddCredential", async () => {
             let cd = testData.getCompatibleData(version);
+            cd.getDocument("issuer");
 
             await testData.getRootIdentity();
 
@@ -1610,6 +1611,7 @@ describe('DIDDocument Tests', () => {
         test("testRemoveCredential", async () => {
             await testData.getRootIdentity();
             let cd = testData.getCompatibleData(version);
+            cd.getDocument("issuer");
 
             let doc = await cd.getDocument("user1");
             expect(doc).not.toBeNull();
