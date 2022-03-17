@@ -34,8 +34,6 @@ import { AbstractMetadata, checkArgument, DefaultConflictHandle, DID, DIDDocumen
 import { JSONObject } from "./json";
 import { Logger } from "./logger";
 
-
-
 const log = new Logger("RootIdentity");
 
 export class RootIdentity {

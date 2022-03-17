@@ -32,11 +32,12 @@ import {
     IllegalUsage, InvalidKeyException,
     MalformedPresentationException
 } from "./exceptions/exceptions";
-import { DIDDocument, DIDStore, Features } from "./internals";
+import { DIDDocument, DIDStore, Features, Logger } from "./internals";
 import { checkArgument, checkEmpty, Collections, DID, DIDEntity, DIDURL, VerifiableCredential } from "./internals";
 import { JSONObject } from "./json";
 import { VerificationEventListener } from "./verificationEventListener";
 
+const log = new Logger("VerifiableCredential");
 /**
  * A Presentation can be targeted to a specific verifier by using a Linked Data
  * Proof that includes a nonce and realm.
@@ -551,6 +552,8 @@ export namespace VerifiablePresentation {
 
                 if (!this.presentation.context.includes(context))
                     this.presentation.context.push(context);
+            } else {
+               log.warn("JSON-LD context support not enabled");
             }
 
             if (this.presentation.type == null)

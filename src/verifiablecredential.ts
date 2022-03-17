@@ -45,7 +45,6 @@ import { sortJSONObject } from "./json";
 import { Logger } from "./logger";
 import { VerificationEventListener } from "./verificationEventListener";
 
-
 const log = new Logger("VerifiableCredential");
 
 /**
@@ -989,6 +988,8 @@ export namespace VerifiableCredential {
 
                 if (!this.credential.context.includes(context))
                     this.credential.context.push(context);
+            } else {
+                log.warn("JSON-LD context support not enabled");
             }
 
             if (this.credential.type == null)
