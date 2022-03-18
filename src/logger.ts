@@ -20,9 +20,7 @@
  * SOFTWARE.
  */
 
-import { LogLevel } from "./internals";
-
-class LoggerLevel {
+export class LoggerLevel {
     private LevelType : string[] = [
         "ERROR",
         "WARN",
@@ -55,16 +53,7 @@ export class Logger {
     public static ERROR = new LoggerLevel(0);
 
     private context: string;
-    private static logLevel = Logger.TRACE;
-
-    public static setLogLevel(l : number) {
-        if (l <= LogLevel.TRACE && l >= LogLevel.ERROR)
-            Logger.logLevel = new LoggerLevel(l);
-    }
-
-    public static getLogLevel() : number {
-        return Logger.logLevel.getLevel();
-    }
+    private static logLevel = Logger.WARNING;
 
     public static setLevel(level: LoggerLevel) {
         if (level <= Logger.TRACE && level >= Logger.INFO) {
@@ -85,37 +74,37 @@ export class Logger {
     }
 
     log(...data: any) {
-        if (Logger.logLevel.id <= Logger.INFO.id) {
+        if (Logger.logLevel.id >= Logger.INFO.id) {
             console.log(this.format(Logger.INFO, data));
         }
     }
 
     info(...data: any) {
-        if (Logger.logLevel.id <= Logger.INFO.id) {
+        if (Logger.logLevel.id >= Logger.INFO.id) {
             console.log(this.format(Logger.INFO, data));
         }
     }
 
     debug(...data: any) {
-        if (Logger.logLevel.id <= Logger.DEBUG.id) {
+        if (Logger.logLevel.id >= Logger.DEBUG.id) {
             console.log(this.format(Logger.DEBUG, data));
         }
     }
 
     trace(...data: any) {
-        if (Logger.logLevel.id <= Logger.TRACE.id) {
+        if (Logger.logLevel.id >= Logger.TRACE.id) {
             console.log(this.format(Logger.TRACE, data));
         }
     }
 
     warn(...data: any) {
-        if (Logger.logLevel.id <= Logger.WARNING.id) {
+        if (Logger.logLevel.id >= Logger.WARNING.id) {
             console.log(this.format(Logger.WARNING, data));
         }
     }
 
     error(...data: any) {
-        if (Logger.logLevel.id <= Logger.ERROR.id) {
+        if (Logger.logLevel.id >= Logger.ERROR.id) {
             console.log(this.format(Logger.ERROR, data));
         }
     }

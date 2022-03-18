@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-import { Logger } from "./internals";
+import { Logger, LoggerLevel } from "./internals";
 
 export enum LogLevel {
     ERROR = 0,
     WARNING = 1,
 	INFO = 2,
-	DEBUG = 3,
-	TRACE = 4
+    DEBUG = 3,
+    TRACE = 4
 }
 
 export class Features {
@@ -41,11 +41,11 @@ export class Features {
 		return this.enabledJsonLdContext;
 	}
 
-	public static setLogLevel(level : LogLevel): void {
-		Logger.setLogLevel(level);
-	}
+	public static setLogLevel(level : LogLevel) : void {
+        Logger.setLevel(new LoggerLevel(level));
+    }
 
-	public static getLogLevel() : LogLevel {
-		return Logger.getLogLevel();
-	}
+    public static getLogLevel() : LogLevel {
+        return Logger.getLevel().getLevel();
+    }
 }

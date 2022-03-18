@@ -75,8 +75,6 @@ import { JWTParserBuilder } from "./internals";
 import { JWTParser } from "./internals";
 import { Claims } from "./internals";
 
-Logger.setLevel(Logger.WARNING);
-
 /**
  * Global initializer. For now, needed by the browser to initialize BrowserFS before running anything else.
  * TODO: Make sure this can't be called twice - possibly replace with a "promisifiable" subscriber event.
