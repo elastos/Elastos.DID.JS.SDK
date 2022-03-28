@@ -388,7 +388,11 @@ export class FileSystemStorage implements DIDStorage {
             return [];
 
         let children = dir.listFiles().filter((file) => {
-            return file.isDirectory();
+            if (!file.isDirectory())
+                return false;
+
+            let sk = new File(file, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE);
+            return (sk.exists() && sk.isFile());
         });
 
         if (children == null || children.length == 0)
@@ -504,7 +508,11 @@ export class FileSystemStorage implements DIDStorage {
             return [];
 
         let children = dir.listFiles().filter((file) => {
-            return file.isDirectory();
+            if (!file.isDirectory())
+                return false;
+
+            let doc = new File(file, FileSystemStorage.DOCUMENT_FILE);
+            return (doc.exists() && doc.isFile());
         });
 
         if (children == null || children.length == 0)
@@ -644,7 +652,11 @@ export class FileSystemStorage implements DIDStorage {
             return [];
 
         let children = dir.listFiles().filter((file) => {
-            return file.isDirectory();
+            if(!file.isDirectory())
+                return false;
+
+            let vc = new File(file, FileSystemStorage.CREDENTIAL_FILE);
+            return (vc.exists() && vc.isFile());
         });
 
         if (children == null || children.length == 0)
