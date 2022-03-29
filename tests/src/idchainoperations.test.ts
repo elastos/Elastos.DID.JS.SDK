@@ -995,15 +995,18 @@ describe('IDChainOperations Tests', () => {
 
             let ctrl1 = await store.loadDid(dids[0]);
             expect(ctrl1).not.toBeNull();
-            expect(ctrl1.isValid()).toBeTruthy();
+            let valid = await ctrl1.isValid();
+            expect(valid).toBeTruthy();
 
             let ctrl2 = await store.loadDid(dids[1]);
             expect(ctrl2).not.toBeNull();
-            expect(ctrl2.isValid()).toBeTruthy();
+            valid = await ctrl2.isValid();
+            expect(valid).toBeTruthy();
 
             let ctrl3 = await store.loadDid(dids[2]);
             expect(ctrl3).not.toBeNull();
-            expect(ctrl3.isValid()).toBeTruthy();
+            valid = await ctrl3.isValid();
+            expect(valid).toBeTruthy();
 
             // Create customized DID
             let customizedStr = genRandomString(20);
@@ -1012,13 +1015,16 @@ describe('IDChainOperations Tests', () => {
 
             let doc = await ctrl1.newCustomizedDidWithController(multiCustomizeDid, [ctrl2.getSubject(), ctrl3.getSubject()],
                 2, TestConfig.storePass);
-            expect(doc.isValid()).toBeFalsy();
+            valid = await doc.isValid();
+            expect(valid).toBeFalsy();
 
             const d = doc;
             expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
             doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
+
             expect(doc.getSubject().equals(multiCustomizeDid)).toBeTruthy();
             expect(doc.getControllerCount()).toBe(3);
             expect(doc.getPublicKeyCount()).toBe(6);
@@ -1050,7 +1056,8 @@ describe('IDChainOperations Tests', () => {
             expect(resolved).not.toBeNull();
             expect(resolved.getSubject().equals(multiCustomizeDid)).toBeTruthy();
             expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
 
             // Update: add an authentication key and self-claimed credential signed by controller2
             let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
@@ -1190,14 +1197,16 @@ describe('IDChainOperations Tests', () => {
             //new controller: controller3
             let newController = await store.loadDid(dids[2]);
             expect(newController).not.toBeNull();
-            expect(newController.isValid()).toBeTruthy();
+            let valid = await newController.isValid();
+            expect(valid).toBeTruthy();
 
             let ticket = await doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
             await expect(async() => {await ticket.isValid(); }).toBeTruthy();
 
             // create new document for customized DID
             let newDoc = await newController.newCustomized(customizeDid, TestConfig.storePass, true);
-            expect(newDoc.isValid()).toBeTruthy();
+            valid = await newDoc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(newDoc).edit(newController);
             db.addCredential(doc.getCredential("#name"));
@@ -1219,7 +1228,8 @@ describe('IDChainOperations Tests', () => {
             expect(resolved).not.toBeNull();
             expect(resolved.getSubject().equals(customizeDid)).toBeTruthy();
             expect(resolved.getController().equals(newController.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
 
             //transfer again: add controller1
             await store.storeDid(resolved);
@@ -1229,13 +1239,16 @@ describe('IDChainOperations Tests', () => {
             db.setMultiSignature(2);
             newDoc = await db.seal(TestConfig.storePass);
             expect(newDoc).not.toBeNull();
-            expect(newDoc.isValid()).toBeFalsy();
+            valid = await newDoc.isValid();
+            expect(valid).toBeFalsy();
 
             let ctrl1 = await store.loadDid(dids[0]);
             expect(ctrl1).not.toBeNull();
             newDoc = await ctrl1.signWithDocument(newDoc, TestConfig.storePass);
             expect(newDoc).not.toBeNull();
-            expect(newDoc.isValid()).toBeTruthy();
+            valid = await newDoc.isValid();
+            expect(valid).toBeTruthy();
+
             expect(newDoc.getControllerCount()).toBe(2);
             expect(newDoc.hasController(dids[0])).toBeTruthy();
             expect(newDoc.hasController(dids[2])).toBeTruthy();
@@ -1253,7 +1266,8 @@ describe('IDChainOperations Tests', () => {
             expect(resolved.getSubject().equals(customizeDid)).toBeTruthy();
             expect(resolved.hasController(dids[0])).toBeTruthy();
             expect(resolved.hasController(dids[2])).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
 
             //update afer tranfer
             await store.storeDid(resolved);
@@ -1277,7 +1291,8 @@ describe('IDChainOperations Tests', () => {
             for (let i = 0; i < txs.length; i++) {
                 let tx = txs[i];
                 expect(customizeDid.equals(tx.getDid())).toBeTruthy();
-                await expect(await tx.getRequest().isValid()).toBeTruthy();
+                valid = await tx.getRequest().isValid();
+                expect(valid).toBeTruthy();
 
                 if (i == txs.length - 1)
                     expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
@@ -1296,7 +1311,8 @@ describe('IDChainOperations Tests', () => {
 
             let doc = await store.loadDid(multiCustomizeDid);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let ctrl1 = await store.loadDid(dids[0]);
             let ctrl2 = await store.loadDid(dids[1]);
@@ -1308,7 +1324,7 @@ describe('IDChainOperations Tests', () => {
             // transfer ticket
             let ticket = await ctrl1.createTransferTicket(u.getSubject(), TestConfig.storePass, multiCustomizeDid);
             ticket = await ctrl2.signWithTicket(ticket, TestConfig.storePass);
-            let valid = await ticket.isValid();
+            valid = await ticket.isValid();
             expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl1);
@@ -1318,10 +1334,12 @@ describe('IDChainOperations Tests', () => {
             db.setMultiSignature(2);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeFalsy();
+            valid = await doc.isValid();
+            expect(valid).toBeFalsy();
 
             doc = await u.signWithDocument(doc, TestConfig.storePass);
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             expect(doc.getSubject().equals(multiCustomizeDid)).toBeTruthy();
             expect(doc.getControllerCount()).toBe(2);
@@ -1336,7 +1354,9 @@ describe('IDChainOperations Tests', () => {
             let resolved = await multiCustomizeDid.resolve();
             expect(resolved).not.toBeNull();
             expect(resolved.getSubject().equals(multiCustomizeDid)).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
+
             expect(resolved.toString()).toEqual(doc.toString());
             await store.storeDid(resolved);
 
@@ -1349,7 +1369,9 @@ describe('IDChainOperations Tests', () => {
             resolved = await multiCustomizeDid.resolve();
             expect(resolved).not.toBeNull();
             expect(resolved.getSubject().equals(multiCustomizeDid)).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
+
             expect(resolved.toString()).toEqual(doc.toString());
             await store.storeDid(resolved);
 
@@ -1358,7 +1380,9 @@ describe('IDChainOperations Tests', () => {
             db.removeController(ctrl1.getSubject());
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
+
             expect(doc.getControllerCount()).toBe(1);
             expect(doc.getMultiSignature()).toBeNull();
             await store.storeDid(doc);
@@ -1377,7 +1401,9 @@ describe('IDChainOperations Tests', () => {
             resolved = await multiCustomizeDid.resolve();
             expect(resolved).not.toBeNull();
             expect(resolved.getSubject().equals(multiCustomizeDid)).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
+
             expect(resolved.toString()).toEqual(doc.toString());
 
             let rr = await multiCustomizeDid.resolveBiography();
@@ -1392,7 +1418,8 @@ describe('IDChainOperations Tests', () => {
             for (let i = 0; i < txs.length; i++) {
                 let tx = txs[i];
                 expect(multiCustomizeDid.equals(tx.getDid())).toBeTruthy();
-                await expect(await tx.getRequest().isValid()).toBeTruthy();
+                valid = await tx.getRequest().isValid();
+                expect(valid).toBeTruthy();
 
                 if (i == txs.length - 1)
                     expect(IDChainRequest.Operation.CREATE.equals(tx.getRequest().getOperation())).toBeTruthy();
@@ -1805,7 +1832,8 @@ describe('IDChainOperations Tests', () => {
             expect(doc.getSubject().equals(resolvedVc.getIssuer())).toBeTruthy();
             expect(vc.getProof().getSignature()).toEqual(resolvedVc.getProof().getSignature());
 
-            expect(resolvedVc.isValid()).toBeTruthy();
+            let valid = await resolvedVc.isValid();
+            expect(valid).toBeTruthy();
 
             let bio = await VerifiableCredential.resolveBiography(id, null);
             expect(bio).not.toBeNull();
@@ -2103,7 +2131,9 @@ describe('IDChainOperations Tests', () => {
             let ctrl = ctrls[0];
             let ctrlDoc = await store.loadDid(ctrl);
             expect(ctrlDoc).not.toBeNull();
-            expect(ctrlDoc.isValid()).toBeTruthy();
+
+            let valid = await ctrlDoc.isValid();
+            expect(valid).toBeTruthy();
 
             await ctrlDoc.deactivateTargetDID(target.getSubject(), null, TestConfig.storePass);
             await DIDTestExtension.awaitStandardPublishingDelay();
@@ -2313,7 +2343,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve();
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             let lastTxid = resolved.getMetadata().getTransactionId();
