@@ -48,7 +48,8 @@ import { LocalResolveHandle } from "../../typings/didbackend";
 async function testGetPublicKey(version: string, testData: TestData) {
     let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
     expect(doc).not.toBeNull();
-    expect(doc.isValid()).toBeTruthy();
+    let valid = await doc.isValid();
+    expect(valid).toBeTruthy();
 
     // Count and list.
     expect(doc.getPublicKeyCount()).toBe(4);
@@ -141,7 +142,8 @@ describe('DIDDocument Tests', () => {
             let user3: DIDDocument = await cd.getDocument("user3");
             let doc: DIDDocument = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getPublicKeyCount()).toBe(7);
@@ -243,7 +245,8 @@ describe('DIDDocument Tests', () => {
             let doc = await cd.getDocument("baz");
 
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             expect(doc.getPublicKeyCount()).toEqual(5);
 
@@ -330,7 +333,8 @@ describe('DIDDocument Tests', () => {
 
             let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull()
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -344,7 +348,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getPublicKey("#test1");
@@ -375,7 +380,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
@@ -391,7 +397,8 @@ describe('DIDDocument Tests', () => {
             doc = await user2.signWithDocument(doc, TestConfig.storePass);
 
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getPublicKey("#test1");
@@ -415,7 +422,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -436,7 +444,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getPublicKey("#recovery");
@@ -465,7 +474,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user2);
 
@@ -487,7 +497,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user1.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getPublicKey("#key2");
@@ -509,7 +520,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getAuthenticationKeyCount()).toEqual(3);
@@ -574,7 +586,9 @@ describe('DIDDocument Tests', () => {
             let issuer = await cd.getDocument("issuer");
             let doc = await cd.getDocument("examplecorp");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getAuthenticationKeyCount()).toBe(1);
@@ -623,7 +637,8 @@ describe('DIDDocument Tests', () => {
             let user3 = await cd.getDocument("user3");
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getAuthenticationKeyCount()).toBe(7);
@@ -719,7 +734,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("baz");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getAuthenticationKeyCount()).toEqual(5);
@@ -799,7 +815,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -831,7 +848,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getAuthenticationKey("#test1");
@@ -866,7 +884,8 @@ describe('DIDDocument Tests', () => {
             let user3 = await cd.getDocument("user3");
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
@@ -904,7 +923,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user3.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getAuthenticationKey("#test1");
@@ -936,7 +956,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -963,7 +984,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getAuthenticationKey("#test1");
@@ -995,7 +1017,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             expect(doc.getPublicKeyCount()).toBe(7);
             expect(doc.getAuthenticationKeyCount()).toBe(7);
@@ -1019,7 +1042,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user2.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getAuthenticationKey("#key2");
@@ -1041,7 +1065,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getAuthorizationKeyCount()).toBe(1);
@@ -1102,7 +1127,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getAuthorizationKeyCount()).toBe(0);
@@ -1118,7 +1144,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -1157,7 +1184,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let pk = doc.getAuthorizationKey("#test1");
             expect(pk).not.toBeNull();
@@ -1195,7 +1223,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let did = doc.getSubject();
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
@@ -1225,7 +1254,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user2.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let pk = doc.getAuthorizationKey("#test1");
             expect(pk).toBeNull();
@@ -1252,7 +1282,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -1277,7 +1308,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let pk = doc.getAuthorizationKey("#test1");
@@ -1302,7 +1334,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getCredentialCount()).toBe(2);
@@ -1363,7 +1396,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list.
             expect(doc.getCredentialCount()).toBe(2);
@@ -1418,7 +1452,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -1435,7 +1470,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check new added credential.
             vc = doc.getCredential("#passport");
@@ -1465,7 +1501,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy()
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy()
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
@@ -1487,7 +1524,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user2.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check new added credential.
             vc = doc.getCredential("#license");
@@ -1510,7 +1548,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -1528,7 +1567,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check new added credential.
             let vc = doc.getCredential("#passport");
@@ -1564,7 +1604,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user2);
 
@@ -1583,7 +1624,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user1.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check new added credential.
             let vc = doc.getCredential("#testvc");
@@ -1615,7 +1657,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -1638,7 +1681,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             vc = doc.getCredential("#profile");
@@ -1665,7 +1709,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
@@ -1682,7 +1727,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user2.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check existence
             let vc = doc.getCredential("#profile");
@@ -1702,7 +1748,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list
             expect(doc.getServiceCount()).toBe(3);
@@ -1783,7 +1830,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Count and list
             expect(doc.getServiceCount()).toBe(2);
@@ -1842,7 +1890,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -1857,7 +1906,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check the final count
             expect(doc.getServiceCount()).toBe(5);
@@ -1904,7 +1954,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -1921,7 +1972,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check the final count
             expect(doc.getServiceCount()).toBe(6);
@@ -1959,7 +2011,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user3);
 
@@ -1975,7 +2028,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user1.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check the final count
             expect(doc.getServiceCount()).toBe(4);
@@ -2001,7 +2055,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user3);
 
@@ -2047,7 +2102,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user1.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             // Check the final count
             expect(doc.getServiceCount()).toBe(5);
@@ -2077,7 +2133,9 @@ describe('DIDDocument Tests', () => {
 
             let doc = await testData.getCompatibleData(version).getDocument("user1");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -2090,7 +2148,8 @@ describe('DIDDocument Tests', () => {
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let svc = doc.getService("#openid");
             expect(svc).toBeNull();
@@ -2116,7 +2175,8 @@ describe('DIDDocument Tests', () => {
 
             let doc = await cd.getDocument("foobar");
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit(user1);
 
@@ -2130,7 +2190,8 @@ describe('DIDDocument Tests', () => {
             doc = await db.seal(TestConfig.storePass);
             doc = await user3.signWithDocument(doc, TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let svc = doc.getService("#openid");
             expect(svc).toBeNull();
@@ -2178,16 +2239,19 @@ describe('DIDDocument Tests', () => {
             let compactJson = cd.getDocumentJson(source.did, "compact");
             let compact = await DIDDocument.parseAsync(compactJson);
             expect(compact).not.toBeNull();
-            expect(compact.isValid()).toBeTruthy();
+            let valid = await compact.isValid();
+            expect(valid).toBeTruthy();
 
             let normalizedJson = cd.getDocumentJson(source.did, "normalized");
             let normalized = await DIDDocument.parseAsync(normalizedJson);
             expect(normalized).not.toBeNull();
-            expect(normalized.isValid()).toBeTruthy();
+            valid = await normalized.isValid();
+            expect(valid).toBeTruthy();
 
             let doc = await cd.getDocument(source.did);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             expect(compact.toString(true)).toEqual(normalizedJson);
             expect(normalized.toString(true)).toEqual(normalizedJson);
@@ -2237,38 +2301,44 @@ describe('DIDDocument Tests', () => {
             let compactJson = cd.getDocumentJson(source.did, "compact");
             let compact = await DIDDocument.parseAsync(compactJson);
             expect(compact).not.toBeNull();
-            expect(compact.isValid()).toBeTruthy();
+            let valid = await compact.isValid();
+            expect(valid).toBeTruthy();
 
             expect(compact.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
 
-            expect(compact.isValid(listener)).toBeTruthy();
+            valid = await compact.isValid(listener);
+            expect(valid).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
 
             let normalizedJson = cd.getDocumentJson(source.did, "normalized");
             let normalized = await DIDDocument.parseAsync(normalizedJson);
             expect(normalized).not.toBeNull();
-            expect(normalized.isValid()).toBeTruthy();
+            valid = await normalized.isValid();
+            expect(valid).toBeTruthy();
 
             expect(normalized.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
 
-            expect(normalized.isValid(listener)).toBeTruthy();
+            valid = await normalized.isValid(listener);
+            expect(valid).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
 
             let doc = await cd.getDocument(source.did);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             expect(doc.isGenuine(listener)).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
 
-            expect(doc.isValid(listener)).toBeTruthy();
+            valid = await doc.isValid(listener);
+            expect(valid).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
         }
@@ -2278,7 +2348,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
         let doc = await identity.newDid(TestConfig.storePass);
         expect(doc).not.toBeNull();
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         let data = Buffer.alloc(1024);
         let pkid = DIDURL.from("#primary", doc.getSubject());
@@ -2308,7 +2379,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
         let doc = await identity.newDid(TestConfig.storePass);
         expect(doc).not.toBeNull();
-        expect(doc.isValid()).toBeTruthy()
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         for (let i = 0; i < 10; i++) {
             let strKey = await doc.derive(i, TestConfig.storePass);
@@ -2327,7 +2399,9 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
         let doc = await identity.newDid(TestConfig.storePass);
         expect(doc).not.toBeNull();
-        expect(doc.isValid()).toBeTruthy();
+
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         //todo: compare to java derive result
         for (let i = -10; i < 10; i++) {
@@ -2347,7 +2421,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let controller = await identity.newDid(TestConfig.storePass);
-        expect(controller.isValid()).toBeTruthy();
+        let valid = await controller.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await controller.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -2361,12 +2436,14 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
         let doc = await controller.newCustomized(did, TestConfig.storePass, false);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject()).toEqual(did);
         expect(doc.getController()).toEqual(controller.getSubject());
@@ -2382,7 +2459,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getController().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
     })
 
     test("testCreateMultisigCustomizedDid", async () => {
@@ -2390,7 +2468,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let ctrl1 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl1.isValid()).toBeTruthy();
+        let valid = await ctrl1.isValid();
+        expect(valid).toBeTruthy();
         await ctrl1.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2400,10 +2479,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature());
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl2 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl2.isValid()).toBeTruthy();
+        valid = await ctrl2.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl2.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2411,11 +2493,12 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl2.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature());
-
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl3 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl3.isValid()).toBeTruthy();
+        valid = await ctrl3.isValid();
+        expect(valid).toBeTruthy();
         await ctrl3.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2423,19 +2506,21 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl3.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature());
-
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld3");
         let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()], 2, TestConfig.storePass);
-        expect(doc.isValid()).toBeFalsy();
+        valid = await doc.isValid();
+        expect(valid).toBeFalsy();
 
         const d = doc;
         expect(async() => {await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
         doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(3);
 
@@ -2463,14 +2548,16 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
     })
 
     test("testUpdateDid", async () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -2517,7 +2604,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let controller = await identity.newDid(TestConfig.storePass);
-        expect(controller.isValid()).toBeTruthy();
+        let valid = await controller.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await controller.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -2529,13 +2617,15 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy()
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
 
         let doc = await controller.newCustomized(did, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
 
@@ -2550,8 +2640,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getController().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -2591,7 +2681,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let ctrl1 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl1.isValid()).toBeTruthy();
+        let valid = await ctrl1.isValid();
+        expect(valid).toBeTruthy();
         await ctrl1.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2599,10 +2690,12 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl1.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl2 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl2.isValid()).toBeTruthy();
+        valid = await ctrl2.isValid();
+        expect(valid).toBeTruthy();
         await ctrl2.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2610,10 +2703,12 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl2.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl3 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl3.isValid()).toBeTruthy();
+        valid = await ctrl3.isValid();
+        expect(valid).toBeTruthy();
         await ctrl3.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2621,20 +2716,23 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl3.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld3");
 
         let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
             2, TestConfig.storePass);
-        expect(doc.isValid()).toBeFalsy();
+        valid = await doc.isValid();
+        expect(valid).toBeFalsy();
 
         const d = doc;
         expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
         doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(3);
 
@@ -2663,7 +2761,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
@@ -2705,7 +2804,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let controller = await identity.newDid(TestConfig.storePass);
-        expect(controller.isValid()).toBeTruthy();
+        let valid = await controller.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await controller.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -2717,12 +2817,14 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
         let doc = await controller.newCustomized(did, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
 
@@ -2737,11 +2839,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getController().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // create new controller
         let newController = await identity.newDid(TestConfig.storePass);
-        expect(newController.isValid()).toBeTruthy();
+        valid = await newController.isValid();
+        expect(valid).toBeTruthy();
 
         resolved = await newController.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -2753,7 +2857,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(newController.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(newController.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // create the transfer ticket
         doc.setEffectiveController(controller.getSubject());
@@ -2766,7 +2871,8 @@ describe('DIDDocument Tests', () => {
         db.setMultiSignature(1);
         doc = await db.seal(TestConfig.storePass);
 
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(2);
 
@@ -2774,7 +2880,8 @@ describe('DIDDocument Tests', () => {
         db.removeController(controller.getSubject());
         doc = await db.seal(TestConfig.storePass);
 
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(1);
         await store.storeDid(doc);
@@ -2787,7 +2894,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getController().equals(newController.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
     })
 
     test("testTransferCustomizedDidAfterUpdate", async () => {
@@ -2795,7 +2903,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let controller = await identity.newDid(TestConfig.storePass);
-        expect(controller.isValid()).toBeTruthy();
+        let valid = await controller.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await controller.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -2807,12 +2916,14 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
         let doc = await controller.newCustomized(did, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
 
@@ -2827,7 +2938,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getController().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -2847,7 +2959,8 @@ describe('DIDDocument Tests', () => {
 
         // create new controller
         let newController = await identity.newDid(TestConfig.storePass);
-        expect(newController.isValid()).toBeTruthy();
+        valid = await newController.isValid();
+        expect(valid).toBeTruthy();
 
         resolved = await newController.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -2860,15 +2973,18 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(newController.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(newController.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // create the transfer ticket
         let ticket = await controller.createTransferTicket(newController.getSubject(), TestConfig.storePass, did);
-        expect(ticket.isValid()).toBeTruthy();
+        valid = await ticket.isValid();
+        expect(valid).toBeTruthy();
 
         // create new document for customized DID
         doc = await newController.newCustomized(did, TestConfig.storePass, true);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(newController.getSubject())).toBeTruthy();
 
@@ -2880,7 +2996,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getController().equals(newController.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
     })
 
     test("testTransferMultisigCustomizedDidAfterCreate", async () => {
@@ -2888,7 +3005,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let ctrl1 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl1.isValid()).toBeTruthy();
+        let valid = await ctrl1.isValid();
+        expect(valid).toBeTruthy();
         await ctrl1.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2896,10 +3014,12 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl1.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl2 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl2.isValid()).toBeTruthy();
+        valid = await ctrl2.isValid();
+        expect(valid).toBeTruthy();
         await ctrl2.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2907,10 +3027,12 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl2.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl3 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl3.isValid()).toBeTruthy();
+        valid = await ctrl3.isValid();
+        expect(valid).toBeTruthy();
         await ctrl3.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -2918,19 +3040,22 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl3.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld3");
         let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
             2, TestConfig.storePass);
-        expect(doc.isValid()).toBeFalsy();
+        valid = await doc.isValid();
+        expect(valid).toBeFalsy();
 
         const d = doc;
         expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
         doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(3);
@@ -2960,7 +3085,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // new controllers for the did
         let td = testData.getInstantData();
@@ -2973,13 +3099,15 @@ describe('DIDDocument Tests', () => {
         // transfer ticket
         let ticket = await ctrl1.createTransferTicket(u1.getSubject(), TestConfig.storePass, did);
         ticket = await ctrl2.signWithTicket(ticket, TestConfig.storePass);
-        expect(ticket.isValid()).toBeTruthy();
+        valid = await ticket.isValid();
+        expect(valid).toBeTruthy();
 
         doc = await u1.newCustomizedDidWithController(did, [u2.getSubject(), u3.getSubject(), u4.getSubject()],
             3, TestConfig.storePass, true);
         doc = await u2.signWithDocument(doc, TestConfig.storePass);
         doc = await u3.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(4);
@@ -2992,7 +3120,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
     })
 
     test("testTransferMultisigCustomizedDidAfterUpdate", async () => {
@@ -3000,7 +3129,9 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let ctrl1 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl1.isValid()).toBeTruthy();
+        let valid = await ctrl1.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl1.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3008,10 +3139,12 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl1.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature())
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl2 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl2.isValid()).toBeTruthy();
+        valid = await ctrl2.isValid();
+        expect(valid).toBeTruthy();
         await ctrl2.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3019,10 +3152,12 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl2.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl3 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl3.isValid()).toBeTruthy();
+        valid = await ctrl3.isValid();
+        expect(valid).toBeTruthy();
         await ctrl3.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3030,19 +3165,22 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl3.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld3");
         let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
             2, TestConfig.storePass);
-        expect(doc.isValid()).toBeFalsy();
+        valid = await doc.isValid();
+        expect(valid).toBeFalsy();
 
         const d = doc;
         await expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
         doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(3);
@@ -3072,7 +3210,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
@@ -3104,13 +3243,16 @@ describe('DIDDocument Tests', () => {
 
         let ticket = await doc.createTransferTicket(u1.getSubject(), TestConfig.storePass);
         ticket = await ctrl2.signWithTicket(ticket, TestConfig.storePass);
-        expect(ticket.isValid()).toBeTruthy();
+        valid = await ticket.isValid();
+        expect(valid).toBeTruthy();
+
 
         doc = await u1.newCustomizedDidWithController(did, [u2.getSubject(), u3.getSubject(), u4.getSubject()],
             3, TestConfig.storePass, true);
         doc = await u2.signWithDocument(doc, TestConfig.storePass);
         doc = await u3.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(4);
@@ -3123,14 +3265,16 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
     })
 
     test("testUpdateDidWithoutPrevSignature", async () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3178,7 +3322,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3225,7 +3370,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3257,7 +3403,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3290,7 +3437,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3338,7 +3486,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3385,7 +3534,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3416,7 +3566,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3449,7 +3600,8 @@ describe('DIDDocument Tests', () => {
 
         let doc = await identity.newDid(TestConfig.storePass);
         let did = doc.getSubject();
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3477,7 +3629,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -3512,7 +3665,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let controller = await identity.newDid(TestConfig.storePass);
-        expect(controller.isValid()).toBeTruthy();
+        let valid = await controller.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await controller.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -3524,12 +3678,14 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
         let doc = await controller.newCustomized(did, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
 
@@ -3544,7 +3700,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getController().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Deactivate
         await doc.deactivate(null, TestConfig.storePass, null);
@@ -3557,7 +3714,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let controller = await identity.newDid(TestConfig.storePass);
-        expect(controller.isValid()).toBeTruthy();
+        let valid = await controller.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await controller.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -3569,12 +3727,14 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
         let doc = await controller.newCustomized(did, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
 
@@ -3589,7 +3749,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getController().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -3618,7 +3779,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let controller = await identity.newDid(TestConfig.storePass);
-        expect(controller.isValid()).toBeTruthy();
+        let valid = await controller.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await controller.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -3631,12 +3793,14 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
         let doc = await controller.newCustomized(did, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
@@ -3653,7 +3817,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getController().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Deactivate
         await doc.deactivate(controller.getDefaultPublicKeyId(), TestConfig.storePass, null);
@@ -3666,7 +3831,8 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let controller = await identity.newDid(TestConfig.storePass);
-        expect(controller.isValid()).toBeTruthy();
+        let valid = await controller.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await controller.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -3679,12 +3845,14 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getSubject().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(controller.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld");
         let doc = await controller.newCustomized(did, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getController().equals(controller.getSubject())).toBeTruthy();
@@ -3701,7 +3869,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved.getController().equals(controller.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -3730,7 +3899,9 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let ctrl1 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl1.isValid()).toBeTruthy();
+        let valid = await ctrl1.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl1.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3738,10 +3909,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl1.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl2 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl2.isValid()).toBeTruthy();
+        valid = await ctrl2.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl2.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3749,10 +3923,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl2.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl3 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl3.isValid()).toBeTruthy();
+        valid = await ctrl3.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl3.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3760,19 +3937,22 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl3.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld3");
         let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
             2, TestConfig.storePass);
-        expect(doc.isValid()).toBeFalsy();
+        valid = await doc.isValid();
+        expect(valid).toBeFalsy();
 
         const d = doc;
         expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
         doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(3);
 
@@ -3800,7 +3980,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Deactivate
         await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass, null);
@@ -3813,7 +3994,9 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let ctrl1 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl1.isValid()).toBeTruthy();
+        let valid = await ctrl1.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl1.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3821,10 +4004,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl1.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl2 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl2.isValid()).toBeTruthy();
+        valid = await ctrl2.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl2.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3832,10 +4018,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl2.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl3 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl3.isValid()).toBeTruthy();
+        valid = await ctrl3.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl3.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3843,19 +4032,22 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl3.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld3");
         let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
             2, TestConfig.storePass);
-        expect(doc.isValid()).toBeFalsy();
+        valid = await doc.isValid();
+        expect(valid).toBeFalsy();
 
         const d = doc;
         expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
         doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(3);
@@ -3884,7 +4076,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
@@ -3914,7 +4107,9 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let ctrl1 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl1.isValid()).toBeTruthy();
+        let valid = await ctrl1.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl1.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3922,10 +4117,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl1.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl2 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl2.isValid()).toBeTruthy();
+        valid = await ctrl2.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl2.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3933,10 +4131,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl2.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl3 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl3.isValid()).toBeTruthy();
+        valid = await ctrl3.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl3.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3944,19 +4145,22 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl3.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld3");
         let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
             2, TestConfig.storePass);
-        expect(doc.isValid()).toBeFalsy();
+        valid = await doc.isValid();
+        expect(valid).toBeFalsy();
 
         const d = doc;
         expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
         doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(3);
@@ -3978,7 +4182,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Deactivate
         await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass, null);
@@ -3991,7 +4196,9 @@ describe('DIDDocument Tests', () => {
 
         // Create normal DID first
         let ctrl1 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl1.isValid()).toBeTruthy();
+        let valid = await ctrl1.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl1.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -3999,10 +4206,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl1.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl1.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl2 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl2.isValid()).toBeTruthy();
+        valid = await ctrl2.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl2.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -4010,10 +4220,13 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl2.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl2.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         let ctrl3 = await identity.newDid(TestConfig.storePass);
-        expect(ctrl3.isValid()).toBeTruthy();
+        valid = await ctrl3.isValid();
+        expect(valid).toBeTruthy();
+
         await ctrl3.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -4021,19 +4234,22 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(ctrl3.getSubject())).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(ctrl3.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Create customized DID
         let did = new DID("did:elastos:helloworld3");
         let doc = await ctrl1.newCustomizedDidWithController(did, [ctrl2.getSubject(), ctrl3.getSubject()],
             2, TestConfig.storePass);
-        expect(doc.isValid()).toBeFalsy();
+        valid = await doc.isValid();
+        expect(valid).toBeFalsy();
 
         const d = doc;
         expect(async() => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
 
         doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         expect(doc.getSubject().equals(did)).toBeTruthy();
         expect(doc.getControllerCount()).toBe(3);
@@ -4062,7 +4278,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.getSubject().equals(did)).toBeTruthy();
         expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit(ctrl2);
@@ -4091,7 +4308,8 @@ describe('DIDDocument Tests', () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         await doc.publish(TestConfig.storePass);
         await DIDTestExtension.awaitStandardPublishingDelay();
@@ -4136,7 +4354,9 @@ describe('DIDDocument Tests', () => {
         expect(store.containsPrivateKey(id)).toBeTruthy();
 
         doc = await db.seal(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
+
         expect(doc.getAuthenticationKeyCount()).toBe(2);
         await store.storeDid(doc);
 
@@ -4180,7 +4400,9 @@ describe('DIDDocument Tests', () => {
         db.addAuthenticationKey(id, key.getPublicKeyBase58());
         store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
         doc = await db.seal(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
+
         expect(doc.getAuthenticationKeyCount()).toBe(2);
         await store.storeDid(doc);
 
