@@ -17,7 +17,7 @@
     "updatedidjar": "wget -O tools/didutils.jar https://github.com/elastos/Elastos.DID.Java.SDK/releases/download/release-v2.2.2/didutils.jar"
   },
   "dependencies": {
-    "@elastosfoundation/did-js-sdk": "^2.2.0",
+    "@elastosfoundation/did-js-sdk": "file:..",
     "buffer": "5.7.1",
     "cd": "0.3.3",
     "url": "0.11.0",
@@ -35,7 +35,7 @@
     "@types/jest": "27.4.0",
     "@types/node": "14.17.34",
 
-    "@babel/core": "7.16.0",
+    "@babel/core": "7.17.8",
     "@babel/plugin-proposal-class-properties": "7.16.0",
     "@babel/plugin-proposal-decorators": "7.16.4",
     "@babel/preset-env": "7.16.4",
