@@ -108,7 +108,9 @@ describe('IDChainOperations Tests', () => {
             let resolved = await did.resolve();
             expect(resolved).not.toBeNull();
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
+
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             dids.push(did); // 0
@@ -145,7 +147,8 @@ describe('IDChainOperations Tests', () => {
             testData.waitForWalletAvailable();
             let resolved = await did.resolve(true);
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             dids.push(did); // 1
@@ -167,7 +170,8 @@ describe('IDChainOperations Tests', () => {
                 "Service.Testing", "https://www.elastos.org/testing2");
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
             await store.storeDid(doc);
 
             log.debug("Publishing new DID and resolve {}...", did);
@@ -181,7 +185,8 @@ describe('IDChainOperations Tests', () => {
             log.debug("Publish new DID and resolve {}...OK({}s)", did, duration);
 
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             dids.push(did); // 2
@@ -198,7 +203,9 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve();
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
+
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -231,7 +238,8 @@ describe('IDChainOperations Tests', () => {
             resolved = await did.resolve();
             expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             lastTxid = resolved.getMetadata().getTransactionId();
@@ -269,7 +277,9 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve();
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
+
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -301,7 +311,9 @@ describe('IDChainOperations Tests', () => {
             resolved = await did.resolve();
             expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
+
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             lastTxid = resolved.getMetadata().getTransactionId();
@@ -345,7 +357,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve(true);
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -375,7 +388,8 @@ describe('IDChainOperations Tests', () => {
             resolved = await did.resolve(true);
             expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
             lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -414,7 +428,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve(true);
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -431,7 +446,8 @@ describe('IDChainOperations Tests', () => {
             resolved = await did.resolve(true);
             expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
             expect(did.equals(resolved.getSubject())).toReturn;
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             lastTxid = resolved.getMetadata().getTransactionId();
@@ -494,7 +510,7 @@ describe('IDChainOperations Tests', () => {
             expect(vc).not.toBeNull();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
+            await db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
             expect(doc.getCredentialCount()).toBe(1);
@@ -509,7 +525,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve();
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             let lastTxid = resolved.getMetadata().getTransactionId();
@@ -535,7 +552,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve();
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -556,7 +574,7 @@ describe('IDChainOperations Tests', () => {
             expect(vc).not.toBeNull();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
+            await db.addCredential(vc);
             let keyid1 = DIDURL.from("#key1", doc.getSubject());
             let key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid1, key.getPublicKeyBase58());
@@ -578,7 +596,8 @@ describe('IDChainOperations Tests', () => {
             resolved = await did.resolve();
             expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             lastTxid = resolved.getMetadata().getTransactionId();
@@ -616,7 +635,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve();
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -641,7 +661,7 @@ describe('IDChainOperations Tests', () => {
             expect(vc).not.toBeNull();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
+            await db.addCredential(vc);
             db.removeCredential("#profile");
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -658,7 +678,8 @@ describe('IDChainOperations Tests', () => {
             resolved = await did.resolve();
             expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             lastTxid = resolved.getMetadata().getTransactionId();
@@ -721,7 +742,7 @@ describe('IDChainOperations Tests', () => {
             expect(vc).not.toBeNull();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
+            await db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
             expect(doc.getCredentialCount()).toBe(1);
@@ -736,7 +757,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve(true);
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             let lastTxid = resolved.getMetadata().getTransactionId();
@@ -758,7 +780,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve(true);
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -779,7 +802,7 @@ describe('IDChainOperations Tests', () => {
             expect(vc).not.toBeNull();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             //add controller2's key2 to be authorization key.
             let authorizationDoc = await store.loadDid(dids[1]);
@@ -803,7 +826,8 @@ describe('IDChainOperations Tests', () => {
             resolved = await did.resolve(true);
             expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.toString(true)).toEqual(resolved.toString(true));
 
             lastTxid = resolved.getMetadata().getTransactionId();
@@ -822,7 +846,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve(true);
             expect(did.equals(resolved.getSubject())).toBeTruthy();
-            expect(resolved.isValid()).toBeTruthy();
+            let valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
             let lastTxid = resolved.getMetadata().getTransactionId();
             log.debug("Last transaction id {}", lastTxid);
@@ -840,7 +865,8 @@ describe('IDChainOperations Tests', () => {
                 resolved = await did.resolve(true);
                 expect(lastTxid).not.toEqual(resolved.getMetadata().getTransactionId());
                 expect(did.equals(resolved.getSubject())).toBeTruthy();
-                expect(resolved.isValid()).toBeTruthy();
+                valid = await resolved.isValid();
+                expect(valid).toBeTruthy();
                 expect(doc.toString(true)).toEqual(resolved.toString(true));
 
                 lastTxid = resolved.getMetadata().getTransactionId();
@@ -875,7 +901,8 @@ describe('IDChainOperations Tests', () => {
 
             let controllerDoc = await store.loadDid(dids[0]);
             expect(controllerDoc).not.toBeNull();
-            expect(controllerDoc.isValid()).toBeTruthy();
+            let valid = await controllerDoc.isValid();
+            expect(valid).toBeTruthy();
 
             // Create customized DID
             let customizedStr = genRandomString(20);
@@ -883,7 +910,8 @@ describe('IDChainOperations Tests', () => {
             log.trace("Begin to create a new customized DID: " + customizedStr);
 
             let doc = await controllerDoc.newCustomized(customizeDid, TestConfig.storePass, false);
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             expect(doc.getSubject()).toEqual(customizeDid);
             expect(doc.getController()).toEqual(controllerDoc.getSubject());
@@ -899,7 +927,8 @@ describe('IDChainOperations Tests', () => {
             expect(resolved.getSubject().equals(customizeDid)).toBeTruthy();
             expect(resolved.getController().equals(controllerDoc.getSubject())).toBeTruthy();
             expect(resolved.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
 
             // Update: add two authentication keys
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -950,7 +979,7 @@ describe('IDChainOperations Tests', () => {
                     .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc.getPublicKeyCount()).toBe(4);
@@ -1109,7 +1138,7 @@ describe('IDChainOperations Tests', () => {
                     .properties(props)
                     .seal(TestConfig.storePass);
             expect(vc).not.toBeNull();
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             db.addService("#test-svc-1", "Service.Testing",
                     "https://www.elastos.org/testing1");
@@ -1201,7 +1230,8 @@ describe('IDChainOperations Tests', () => {
             expect(valid).toBeTruthy();
 
             let ticket = await doc.createTransferTicket(newController.getSubject(), TestConfig.storePass);
-            await expect(async() => {await ticket.isValid(); }).toBeTruthy();
+            valid = await ticket.isValid();
+            expect(valid).toBeTruthy();
 
             // create new document for customized DID
             let newDoc = await newController.newCustomized(customizeDid, TestConfig.storePass, true);
@@ -1209,8 +1239,8 @@ describe('IDChainOperations Tests', () => {
             expect(valid).toBeTruthy();
 
             let db = DIDDocument.Builder.newFromDocument(newDoc).edit(newController);
-            db.addCredential(doc.getCredential("#name"));
-            db.addCredential(doc.getCredential("#passport"));
+            let vc = doc.getCredential("#passport");
+            await db.addCredential(vc);
 
             db.addAuthenticationKey("#key1", doc.getAuthenticationKey("#key1").getPublicKeyBase58());
             db.addAuthenticationKey("#key2", doc.getAuthenticationKey("#key2").getPublicKeyBase58());
@@ -1256,7 +1286,8 @@ describe('IDChainOperations Tests', () => {
 
             //ticket: 1:1
             ticket = await newController.createTransferTicket(ctrl1.getSubject(), TestConfig.storePass, customizeDid);
-            await expect(async() => {await ticket.isValid(); }).toBeTruthy();
+            valid = await ticket.isValid();
+            expect(valid).toBeTruthy();
 
             await newDoc.publishWithTicket(ticket, ctrl1.getDefaultPublicKeyId(), TestConfig.storePass);
             await DIDTestExtension.awaitStandardPublishingDelay();
@@ -1673,7 +1704,7 @@ describe('IDChainOperations Tests', () => {
             let originalSignature = doc.getSignature();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addService("#Stest1", "TestType", "http://test.com/");
+            db.addService("#test1", "TestType", "http://test.com/");
             doc = await db.seal(TestConfig.storePass);
             await cleanStore.storeDid(doc);
 
@@ -1902,7 +1933,7 @@ describe('IDChainOperations Tests', () => {
             expect(doc).not.toBeNull();
 
             let vcs = doc.getCredentials();
-            expect(vcs.length).toBe(2);
+            expect(vcs.length).toBe(1);
 
             let declared: boolean;
             for (let i = 0; i < vcs.length; i++) {
@@ -2140,7 +2171,7 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await multiCustomizeDid.resolve(true);
             expect(resolved.toString()).toEqual(target.toString());
-            expect(resolved.isDeactivated()).toBeTruthy();
+            await expect(async() => { await resolved.isDeactivated();}).toBeTruthy();
 
             let rr = await multiCustomizeDid.resolveBiography();
             expect(rr).not.toBeNull();
@@ -2198,7 +2229,7 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve(true);
             expect(resolved.toString()).toEqual(target.toString());
-            expect(resolved.isDeactivated()).toBeTruthy();
+            await expect(async() => { await resolved.isDeactivated();}).toBeTruthy();
 
             let rr = await did.resolveBiography();
             expect(rr).not.toBeNull();
@@ -2236,7 +2267,8 @@ describe('IDChainOperations Tests', () => {
 
             let resolved = await did.resolve(true);
             expect(resolved.toString()).toEqual(doc.toString());
-            expect(resolved.isDeactivated()).toBeTruthy();
+            let deactivated = await resolved.isDeactivated();
+            expect(deactivated).toBeTruthy();
 
             let rr = await did.resolveBiography();
             expect(rr).not.toBeNull();
@@ -2277,7 +2309,8 @@ describe('IDChainOperations Tests', () => {
 
             resolved = await did.resolve(true);
             expect(resolved.toString()).toEqual(doc.toString());
-            expect(resolved.isDeactivated()).toBeTruthy();
+            let deactivated = await resolved.isDeactivated();
+            expect(deactivated).toBeTruthy();
 
             let rr = await did.resolveBiography();
             expect(rr).not.toBeNull();
@@ -2328,7 +2361,7 @@ describe('IDChainOperations Tests', () => {
             expect(vc).not.toBeNull();
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
+            await db.addCredential(vc);
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
             expect(doc.getCredentialCount()).toBe(1);

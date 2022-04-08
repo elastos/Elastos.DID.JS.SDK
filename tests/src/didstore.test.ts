@@ -98,11 +98,13 @@ describe("DIDStore Tests", ()=>{
         expect(file.exists()).toBeTruthy();
         expect(file.isFile()).toBeTruthy();
 
+        let valid : boolean;
         for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
             doc.getMetadata().setAlias(alias);
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let resolved = await doc.getSubject().resolve();
             expect(resolved).toBeNull();
@@ -125,7 +127,8 @@ describe("DIDStore Tests", ()=>{
             expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
             expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
 
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
         }
 
         let dids = await store.listDids();
@@ -192,12 +195,14 @@ describe("DIDStore Tests", ()=>{
         let doc = await store.loadDid(issuer.getSubject());
         expect(issuer.getSubject().equals(doc.getSubject())).toBeTruthy();
         expect(issuer.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         doc = await store.loadDid(test.getSubject().toString());
         expect(test.getSubject().equals(doc.getSubject())).toBeTruthy();
         expect(test.getProof().getSignature()).toEqual(doc.getProof().getSignature());
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         let dids = await store.listDids();
         expect(dids.length).toBe(2);
@@ -383,11 +388,13 @@ describe("DIDStore Tests", ()=>{
 
     test("testSynchronizeStore", async ()=> {
         let identity = await testData.getRootIdentity();
+        let valid : boolean;
         for (let i = 0; i < 5; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
             doc.getMetadata().setAlias(alias);
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let resolved = await doc.getSubject().resolve();
             expect(resolved).toBeNull();
@@ -420,11 +427,13 @@ describe("DIDStore Tests", ()=>{
         let identity = await testData.getRootIdentity();
 
         let LOOP_COUNT = 1; // TODO: restore to 4
+        let valid : boolean;
         for (let i = 0; i < LOOP_COUNT; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
             doc.getMetadata().setAlias(alias);
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let resolved = await doc.getSubject().resolve();
             expect(resolved).toBeNull();
@@ -452,7 +461,8 @@ describe("DIDStore Tests", ()=>{
             expect(doc.getProof().getSignature()).toEqual(
                     resolved.getProof().getSignature());
 
-            expect(resolved.isValid()).toBeTruthy();
+            valid = await resolved.isValid();
+            expect(valid).toBeTruthy();
         }
 
         let dids: DID[] = Array.from(await store.listDids());
@@ -468,7 +478,8 @@ describe("DIDStore Tests", ()=>{
             let did = identity.getDid(i);
             let doc = await store.loadDid(did);
             expect(doc).not.toBeNull();
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let file = getFile("ids", did.getMethodSpecificId(), "document");
             expect(file.exists()).toBeTruthy();
@@ -492,11 +503,13 @@ describe("DIDStore Tests", ()=>{
     test("testChangePasswordWithWrongPassword", async ()=>{
         let identity = await testData.getRootIdentity();
 
+        let valid : boolean;
         for (let i = 0; i < 4; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
             doc.getMetadata().setAlias(alias);
-            expect(doc.isValid()).toBeTruthy();
+            valid = await doc.isValid();
+            expect(valid).toBeTruthy();
         }
 
         let dids = await store.listDids();

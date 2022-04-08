@@ -3094,7 +3094,7 @@ export namespace DIDDocument {
          * @param vc the Verifiable Credential object
          * @return the DID Document Builder
          */
-        public addCredential(vc: VerifiableCredential): Builder {
+        public async addCredential(vc: VerifiableCredential): Promise<Builder> {
             this.checkNotSealed();
             checkArgument(vc != null, "Invalid credential");
 
@@ -3103,8 +3103,14 @@ export namespace DIDDocument {
                 throw new IllegalUsage(vc.getSubject().getId().toString());
 
 			// The credential should be genuine
+            let checkGenuine = async () => {
+                return new Promise((resolve, reject) => {
+                    resolve(vc.isGenuineInternal(this.document));
+                });
+            };
+
             let genuine = vc.isSelfProclaimed() ?
-                 vc.isGenuineInternal(this.document) : vc.isGenuine();
+                    await checkGenuine() : await vc.isGenuine();
             if (!genuine)
                 throw new MalformedCredentialException(vc.getId().toString());
 
