@@ -109,7 +109,8 @@ describe("RootIdentity Tests", ()=>{
 
         let doc = await identity.newDid(TestConfig.storePass);
         doc.getMetadata().setAlias(alias);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await doc.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -126,14 +127,16 @@ describe("RootIdentity Tests", ()=>{
         expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
         expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
     });
 
     test("testCreateDIDWithoutAlias", async () => {
         let identity = await testData.getRootIdentity();
 
         let doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
 
         let resolved = await doc.getSubject().resolve();
         expect(resolved).toBeNull();
@@ -146,7 +149,8 @@ describe("RootIdentity Tests", ()=>{
         expect(doc.getSubject().equals(resolved.getSubject())).toBeTruthy();
         expect(doc.getProof().getSignature()).toEqual(resolved.getProof().getSignature());
 
-        expect(resolved.isValid()).toBeTruthy();
+        valid = await resolved.isValid();
+        expect(valid).toBeTruthy();
     });
 
     test("testCreateDIDByIndex", async () => {
@@ -154,7 +158,8 @@ describe("RootIdentity Tests", ()=>{
 
         let did = identity.getDid(0);
         let doc = await identity.newDid(TestConfig.storePass, 0);
-        expect(doc.isValid()).toBeTruthy();
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(did.equals(doc.getSubject())).toBeTruthy();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -163,7 +168,8 @@ describe("RootIdentity Tests", ()=>{
         let success = store.deleteDid(did);
         expect(success).toBeTruthy();
         doc = await identity.newDid(TestConfig.storePass);
-        expect(doc.isValid()).toBeTruthy();
+        valid = await doc.isValid();
+        expect(valid).toBeTruthy();
         expect(did.equals(doc.getSubject())).toBeTruthy();
     });
 
@@ -173,7 +179,8 @@ describe("RootIdentity Tests", ()=>{
         for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
             let doc = await identity.newDid(TestConfig.storePass, i);
 
-            expect(doc.isValid()).toBeTruthy();
+            let valid = await doc.isValid();
+            expect(valid).toBeTruthy();
 
             let did = identity.getDid(i);
 

@@ -80,8 +80,10 @@ describe('VerifiablePresentation Tests', () => {
             expect(vp.getCredential(new DIDURL("#passport", vp.getHolder()))).not.toBeNull();
             expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
-            await expect(await vp.isGenuine()).toBeTruthy();
-            await expect(await vp.isValid()).toBeTruthy();
+            let check = await vp.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vp.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -106,8 +108,10 @@ describe('VerifiablePresentation Tests', () => {
             expect(vp.getCredentialCount()).toBe(0);
             expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
-            await expect(await vp.isGenuine()).toBeTruthy();
-            await expect(await vp.isValid()).toBeTruthy();
+            let check = await vp.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vp.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -138,7 +142,8 @@ describe('VerifiablePresentation Tests', () => {
         expect(listener.toString().startsWith("  - "));
         listener.reset();
 
-        await expect(await vp.isValid(listener)).toBeTruthy();
+        let check = await vp.isValid(listener);
+        expect(check).toBeTruthy();
         expect(listener.toString().startsWith("  - "));
         listener.reset();
     });
@@ -166,15 +171,19 @@ describe('VerifiablePresentation Tests', () => {
         let vp = await cd.getPresentation(did, presentation);
 
         expect(vp).not.toBeNull();
-        await expect(await vp.isGenuine()).toBeTruthy();
-        await expect(await vp.isValid()).toBeTruthy();
+        let check = await vp.isGenuine();
+        expect(check).toBeTruthy();
+        check = await vp.isValid();
+        expect(check).toBeTruthy();
 
         let normalizedJson = cd.getPresentationJson(did, presentation, "normalized");
 
         let normalized = VerifiablePresentation.parse(normalizedJson);
         expect(normalized).not.toBeNull();
-        await expect(await normalized.isGenuine()).toBeTruthy();
-        await expect(await normalized.isValid()).toBeTruthy();
+        check = await normalized.isGenuine();
+        expect(check).toBeTruthy();
+        check = await normalized.isValid();
+        expect(check).toBeTruthy();
 
         expect(normalizedJson).toEqual(normalized.toString(true));
         expect(normalizedJson).toEqual(vp.toString(true));
@@ -222,8 +231,10 @@ describe('VerifiablePresentation Tests', () => {
             expect(vp.getCredential(new DIDURL("#passport", vp.getHolder()))).not.toBeNull();
             expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
-            await expect(await vp.isGenuine()).toBeTruthy();
-            await expect(await vp.isValid()).toBeTruthy();
+            let check = await vp.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vp.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -271,8 +282,10 @@ describe('VerifiablePresentation Tests', () => {
             expect(vp.getCredential(new DIDURL("#passport", vp.getHolder()))).not.toBeNull();
             expect(vp.getCredential(new DIDURL("#notExist", vp.getHolder()))).toBeNull();
 
-            await expect(await vp.isGenuine()).toBeTruthy();
-            await expect(await vp.isValid()).toBeTruthy();
+            let check = await vp.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vp.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -300,8 +313,10 @@ describe('VerifiablePresentation Tests', () => {
             let resolved = await vp.getHolder().resolve();
             expect(resolved).not.toBeNull();
 
-            await expect(await vp.isGenuine()).toBeTruthy();
-            await expect(await vp.isValid()).toBeTruthy();
+            let check = await vp.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vp.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -334,8 +349,10 @@ describe('VerifiablePresentation Tests', () => {
             let resolved = await vp.getHolder().resolve();
             expect(resolved).not.toBeNull();
 
-            await expect(await vp.isGenuine()).toBeTruthy();
-            await expect(await vp.isValid()).toBeTruthy();
+            let check = await vp.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vp.isValid();
+            expect(check).toBeTruthy();
         });
     });
 });

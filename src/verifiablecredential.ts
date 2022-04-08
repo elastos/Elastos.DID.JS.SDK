@@ -251,7 +251,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      * @return whether the Credential object is expired
      * @throws DIDResolveException if error occurs when resolve the DID documents
      */
-    public async isExpired(): Promise<boolean> {
+    public isExpired(): boolean {
         if (this.expirationDate != null)
             if (dayjs().isAfter(dayjs(this.expirationDate)))
                 return true;
@@ -390,7 +390,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      * @throws DIDResolveException if error occurs when resolve the DID documents
      */
     public async isValid(listener: VerificationEventListener = null): Promise<boolean> {
-        if (this.isRevoked()) {
+        if (await this.isRevoked()) {
             if (listener != null) {
                 listener.failed(this, "VC {}: is revoked", this.getId());
                 listener.failed(this, "VC {}: is invalid", this.getId());

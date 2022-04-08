@@ -82,9 +82,12 @@ describe('let Tests', () => {
             await expect(await vc.getExpirationDate()).not.toBeNull();
 
             expect(vc.isSelfProclaimed()).toBeFalsy();
-            await expect(await vc.isExpired()).toBeFalsy();
-            await expect(await vc.isGenuine()).toBeTruthy();
-            await expect(await vc.isValid()).toBeTruthy();
+            let check = await vc.isExpired();
+            expect(check).toBeFalsy();
+            check = await vc.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vc.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -120,9 +123,12 @@ describe('let Tests', () => {
             expect(await vc.getExpirationDate()).not.toBeNull();
 
             expect(vc.isSelfProclaimed()).toBeTruthy();
-            expect(await vc.isExpired()).toBeFalsy();
-            expect(await vc.isGenuine()).toBeTruthy();
-            expect(await vc.isValid()).toBeTruthy();
+            let check = await vc.isExpired();
+            expect(check).toBeFalsy();
+            check = await vc.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vc.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -155,9 +161,12 @@ describe('let Tests', () => {
             await expect(await vc.getExpirationDate()).not.toBeNull();
 
             expect(vc.isSelfProclaimed()).toBeFalsy();
-            await expect(await vc.isExpired()).toBeFalsy();
-            await expect(await vc.isGenuine()).toBeTruthy();
-            await expect(await vc.isValid()).toBeTruthy();
+            let check = await vc.isExpired();
+            expect(check).toBeFalsy();
+            check = await vc.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vc.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -185,9 +194,12 @@ describe('let Tests', () => {
             await expect(await vc.getExpirationDate()).not.toBeNull();
 
             expect(vc.isSelfProclaimed()).toBeFalsy();
-            await expect(await vc.isExpired()).toBeFalsy();
-            await expect(await vc.isGenuine()).toBeTruthy();
-            await expect(await vc.isValid()).toBeTruthy();
+            let check = await vc.isExpired();
+            expect(check).toBeFalsy();
+            check = await vc.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vc.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -216,9 +228,12 @@ describe('let Tests', () => {
             await expect(await vc.getExpirationDate()).not.toBeNull();
 
             expect(vc.isSelfProclaimed()).toBeFalsy();
-            await expect(await vc.isExpired()).toBeFalsy();
-            await expect(await vc.isGenuine()).toBeTruthy();
-            await expect(await vc.isValid()).toBeTruthy();
+            let check = await vc.isExpired();
+            expect(check).toBeFalsy();
+            check = await vc.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vc.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -246,9 +261,12 @@ describe('let Tests', () => {
             await expect(await vc.getExpirationDate()).not.toBeNull();
 
             expect(vc.isSelfProclaimed()).toBeTruthy();
-            await expect(await vc.isExpired()).toBeFalsy();
-            await expect(await vc.isGenuine()).toBeTruthy();
-            await expect(await vc.isValid()).toBeTruthy();
+            let check = await vc.isExpired();
+            expect(check).toBeFalsy();
+            check = await vc.isGenuine();
+            expect(check).toBeTruthy();
+            check = await vc.isValid();
+            expect(check).toBeTruthy();
         });
     });
 
@@ -283,9 +301,12 @@ describe('let Tests', () => {
 
             let credential = await cd.getCredential(csv.did, csv.vc);
 
-            await expect(await credential.isExpired()).toBeFalsy();
-            await expect(await credential.isGenuine()).toBeTruthy();
-            await expect(await credential.isValid()).toBeTruthy();
+            let check = await credential.isExpired();
+            expect(check).toBeFalsy();
+            check = await credential.isGenuine();
+            expect(check).toBeTruthy();
+            check = await credential.isValid();
+            expect(check).toBeTruthy();
 
             expect(normalizedJson).toEqual(normalized.toString(true));
             expect(normalizedJson).toEqual(compact.toString(true));
@@ -330,7 +351,8 @@ describe('let Tests', () => {
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
 
-            await expect(await credential.isValid(listener)).toBeTruthy();
+            let valid = await credential.isValid(listener);
+            expect(valid).toBeTruthy();
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
         }

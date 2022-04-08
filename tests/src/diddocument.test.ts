@@ -32,7 +32,8 @@ import {
     Exceptions,
     VerificationEventListener,
     DIDBackend,
-    DIDBiographyStatus
+    DIDBiographyStatus,
+    Logger
 } from "@elastosfoundation/did-js-sdk";
 import {
     TestData,
@@ -44,6 +45,8 @@ import {
 import { TestConfig } from "./utils/testconfig";
 import { DIDTestExtension } from "./utils/didtestextension";
 import { LocalResolveHandle } from "../../typings/didbackend";
+
+const log = new Logger("DIDDocumentTest");
 
 async function testGetPublicKey(version: string, testData: TestData) {
     let doc: DIDDocument = await testData.getCompatibleData(version).getDocument("user1");
@@ -1457,16 +1460,14 @@ describe('DIDDocument Tests', () => {
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
-            // Add credentials.
             let vc = await cd.getCredential("user1", "passport");
-            db.addCredential(vc);
-
+            await db.addCredential(vc);
             vc = await cd.getCredential("user1", "twitter");
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             let fvc = vc;
-            // Credential already exist, should fail.
-            expect(() => { db.addCredential(fvc); }).toThrowError();
+            //Credential already exist, should fail.
+            await expect(async() => { await db.addCredential(fvc); }).rejects.toThrowError();
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -1508,18 +1509,18 @@ describe('DIDDocument Tests', () => {
 
             // Add credentials.
             let vc = await cd.getCredential("foobar", "license");
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             vc = await cd.getCredential("foobar", "services");
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             let fvc = vc;
             // Credential already exist, should fail.
-            expect(() => { db.addCredential(fvc); }).toThrowError();
+            await expect( async() => { await db.addCredential(fvc); }).rejects.toThrowError();
 
             // Credential not belongs to current did, should fail.
             fvc = await cd.getCredential("user1", "passport");
-            expect(() => { db.addCredential(fvc); }).toThrowError();
+            await expect( async() => { await db.addCredential(fvc); }).rejects.toThrowError();
 
             doc = await db.seal(TestConfig.storePass);
             doc = await user2.signWithDocument(doc, TestConfig.storePass);
@@ -1664,10 +1665,10 @@ describe('DIDDocument Tests', () => {
 
             // Add test credentials.
             let vc = await cd.getCredential("user1", "passport");
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             vc = await cd.getCredential("user1", "twitter");
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             // Remove credentials
             db.removeCredential("#profile");
@@ -3613,7 +3614,7 @@ describe('DIDDocument Tests', () => {
         await doc.deactivate(null, TestConfig.storePass, null);
 
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
 
         let rr = await did.resolveBiography();
         expect(rr).not.toBeNull();
@@ -3657,7 +3658,7 @@ describe('DIDDocument Tests', () => {
 
         await doc.deactivate(null, TestConfig.storePass, null);
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateCustomizedDidAfterCreate", async () => {
@@ -3706,7 +3707,7 @@ describe('DIDDocument Tests', () => {
         // Deactivate
         await doc.deactivate(null, TestConfig.storePass, null);
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateCustomizedDidAfterUpdate", async () => {
@@ -3771,7 +3772,7 @@ describe('DIDDocument Tests', () => {
         // Deactivate
         await doc.deactivate(null, TestConfig.storePass, null);
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateCidAfterCreateByController", async () => {
@@ -3823,7 +3824,7 @@ describe('DIDDocument Tests', () => {
         // Deactivate
         await doc.deactivate(controller.getDefaultPublicKeyId(), TestConfig.storePass, null);
         doc = await did.resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateCidAfterUpdateByController", async () => {
@@ -3891,7 +3892,7 @@ describe('DIDDocument Tests', () => {
         // Deactivate
         await doc.deactivate(controller.getDefaultPublicKeyId(),TestConfig.storePass, null);
         doc = await did.resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateMultisigCustomizedDidAfterCreate", async () => {
@@ -3986,7 +3987,7 @@ describe('DIDDocument Tests', () => {
         // Deactivate
         await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass, null);
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateMultisigCustomizedDidAfterUpdate", async () => {
@@ -4099,7 +4100,7 @@ describe('DIDDocument Tests', () => {
         // Deactivate
         await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass, null);
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateMultisigCidAfterCreateByController", async () => {
@@ -4188,7 +4189,7 @@ describe('DIDDocument Tests', () => {
         // Deactivate
         await doc.deactivate(ctrl1.getDefaultPublicKeyId(), TestConfig.storePass, null);
         doc = await did.resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateMultisigCidAfterUpdateByController", async () => {
@@ -4301,7 +4302,7 @@ describe('DIDDocument Tests', () => {
         // Deactivate
         await doc.deactivate(ctrl2.getDefaultPublicKeyId(), TestConfig.storePass, null);
         doc = await did.resolve();
-        expect(doc.isDeactivated()).toBeTruthy();
+        await expect(async() => { await doc.isDeactivated();}).toBeTruthy();
     })
 
     test("testDeactivateWithAuthorization1", async () => {
@@ -4334,12 +4335,16 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.toString()).toEqual(target.toString());
 
+        let deactivated = await doc.isDeactivated();
+        expect(deactivated).toBeFalsy();
+
         await doc.deactivateTargetDID(target.getSubject(), null, TestConfig.storePass, null);
         target = await target.getSubject().resolve();
-        expect(target.isDeactivated()).toBeTruthy();
+        await expect(async() => { await target.isDeactivated();}).toBeTruthy();
 
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeFalsy();
+        deactivated = await doc.isDeactivated();
+        expect(deactivated).toBeFalsy();
     })
 
     test("testDeactivateWithAuthorization2", async () => {
@@ -4385,10 +4390,11 @@ describe('DIDDocument Tests', () => {
 
         await doc.deactivateTargetDID(target.getSubject(), null, TestConfig.storePass, null);
         target = await target.getSubject().resolve();
-        expect(target.isDeactivated()).toBeTruthy();
+        await expect(async() => { await target.isDeactivated();}).toBeTruthy();
 
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeFalsy();
+        let deactivated = await doc.isDeactivated();
+        expect(deactivated).toBeFalsy();
     })
 
     test("testDeactivateWithAuthorization3", async () => {
@@ -4432,10 +4438,11 @@ describe('DIDDocument Tests', () => {
 
         await doc.deactivateTargetDID(target.getSubject(), null, TestConfig.storePass, null);
         target = await target.getSubject().resolve();
-        expect(target.isDeactivated()).toBeTruthy();
+        await expect(async() => { await target.isDeactivated();}).toBeTruthy();
 
         doc = await doc.getSubject().resolve();
-        expect(doc.isDeactivated()).toBeFalsy();
+        let deactivated = await doc.isDeactivated();
+        expect(deactivated).toBeFalsy();
     });
 
     test("testResolveLocal", async () => {

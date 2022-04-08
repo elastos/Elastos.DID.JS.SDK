@@ -450,7 +450,7 @@ export class InstantData {
                     .seal(TestConfig.storePass);
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             let key = TestData.generateKeypair();
             let id = DIDURL.from("#key2", doc.getSubject());
@@ -568,8 +568,8 @@ export class InstantData {
                     .properties(props)
                     .seal(TestConfig.storePass);
 
-            db.addCredential(vcProfile);
-            db.addCredential(vcEmail);
+            await db.addCredential(vcProfile);
+            await db.addCredential(vcEmail);
             doc = await db.seal(TestConfig.storePass);
             await this.testData.store.storeDid(doc);
             await doc.publish(TestConfig.storePass);
@@ -805,7 +805,7 @@ export class InstantData {
                     .seal(TestConfig.storePass);
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
-            db.addCredential(vc);
+            await db.addCredential(vc);
 
             let key = TestData.generateKeypair();
             let id = new DIDURL("#key2", doc.getSubject());
@@ -917,8 +917,8 @@ export class InstantData {
                     .properties(props)
                     .seal(TestConfig.storePass);
 
-            db.addCredential(vcProfile);
-            db.addCredential(vcEmail);
+            await db.addCredential(vcProfile);
+            await db.addCredential(vcEmail);
             doc = await db.seal(TestConfig.storePass);
             doc = await this.idUser3.signWithDocument(doc, TestConfig.storePass);
             await this.testData.store.storeDid(doc);
