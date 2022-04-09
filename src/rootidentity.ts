@@ -29,7 +29,7 @@ import {
     IllegalArgumentException, MalformedMetadataException, RootIdentityAlreadyExistException,
     UnknownInternalException
 } from "./exceptions/exceptions";
-import type { ConflictHandle, DIDStore } from "./internals";
+import { ByteBuffer, ConflictHandle, DIDStore, SHA256 } from "./internals";
 import { AbstractMetadata, checkArgument, DefaultConflictHandle, DID, DIDDocument, DIDEntity, DIDURL, HDKey, Mnemonic } from "./internals";
 import { JSONObject } from "./json";
 import { Logger } from "./logger";
@@ -250,10 +250,15 @@ export class RootIdentity {
      * @param index the index
      * @return the DID object
      */
-    public getDid(index: number): DID {
-        checkArgument(index >= 0, "Invalid index");
+    public getDid(index: number, identifier: string = null): DID {
+        let key: HDKey;
+        if (identifier) {
+            key = this.preDerivedPublicKey.deriveWithPath(this.mapToDerivePath(identifier, index, true));
+        } else {
+            checkArgument(index >= 0, "Invalid index");
+            key = this.preDerivedPublicKey.deriveWithIndex(0).deriveWithIndex(index);
+        }
 
-        let key = this.preDerivedPublicKey.deriveWithIndex(0).deriveWithIndex(index);
         let did = new DID(DID.METHOD, key.getAddress());
         return did;
     }
@@ -290,6 +295,25 @@ export class RootIdentity {
         return sk;
     }
 
+    private mapToDerivePath(identifier: string, securityCode: number, m: boolean = false): string {
+        let digest = SHA256.encodeToBuffer(Buffer.from(identifier, "utf-8"));
+        let bb = ByteBuffer.wrap(digest);
+
+        let path: string;
+        if (m)
+            path = "m/";
+        else
+            path = "";
+
+        while (bb.hasRemaining()) {
+            let idx = bb.readInt();
+            path = path.concat((idx & 0x7FFFFFFF).toString()).concat("/");
+        }
+
+        path = path.concat((securityCode & 0x7FFFFFFF).toString());
+        return path;
+    }
+
     /**
      * Create a new DID with specified index and get this DID's Document content.
      *
@@ -299,18 +323,28 @@ export class RootIdentity {
      * @return the DIDDocument content related to the new DID
      * @throws DIDStoreException there is no private identity in DIDStore.
      */
-    public async newDid(storepass: string, index: number = undefined, overwrite = false): Promise<DIDDocument> {
+    public async newDid(storepass: string, index: number = undefined, identifier: string = null, overwrite = false): Promise<DIDDocument> {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
         let shouldIncrementIndexAfterCompletion = false;
+
         if (index === undefined) {
             index = this.getIndex();
             shouldIncrementIndexAfterCompletion = true;
         }
 
-        checkArgument(index >= 0, "Invalid index");
+        let did: DID;
+        let key: HDKey;
+        if (identifier) {
+            let path = HDKey.PRE_DERIVED_PUBLICKEY_PATH + "/" + this.mapToDerivePath(identifier, index);
+            key = this.getStore().derive(this.getId(), path, storepass);
+            did = new DID(DID.METHOD, key.getAddress());
+        } else {
+            checkArgument(index >= 0, "Invalid index");
+            key = this.getStore().derive(this.getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
+            did = this.getDid(index);
+        }
 
-        let did = this.getDid(index);
         let doc = await this.getStore().loadDid(did);
         if (doc != null) {
             if (await doc.isDeactivated())
@@ -336,7 +370,6 @@ export class RootIdentity {
 
         log.debug("Creating new DID {} at index {}...", did.toString(), index);
 
-        let key = this.getStore().derive(this.getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
         try {
             let id = DIDURL.from("#primary", did);
             this.getStore().storePrivateKey(id, key.serialize(), storepass);
@@ -346,7 +379,12 @@ export class RootIdentity {
             doc = await db.seal(storepass);
 
             doc.getMetadata().setRootIdentityId(this.getId());
-			doc.getMetadata().setIndex(index);
+            if (identifier) {
+                doc.getMetadata().setExtra("application", identifier);
+                doc.getMetadata().setExtra("securityCode", index);
+            } else {
+                doc.getMetadata().setIndex(index);
+            }
 			doc.getMetadata().attachStore(this.getStore());
 
             await this.getStore().storeDid(doc);
