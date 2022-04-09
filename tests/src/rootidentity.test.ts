@@ -194,17 +194,17 @@ describe("RootIdentity Tests", ()=>{
         let appId = "io.trinity-tech.did.testcase";
         let appCode = 619;
 
-        let did = identity.getDid(appCode, appId);
-        let doc = await identity.newDid(TestConfig.storePass, appCode, appId);
+        let did = identity.getDidFromIdentifier(appId, appCode);
+        let doc = await identity.newDidFromIdentifier(TestConfig.storePass, appId, appCode);
         let valid = await doc.isValid();
         expect(valid).toBeTruthy();
         expect(did.equals(doc.getSubject())).toBeTruthy();
 
-        await expect(async () => { await identity.newDid(TestConfig.storePass, appCode, appId); }).rejects.toThrowError();
+        await expect(async () => { await identity.newDidFromIdentifier(TestConfig.storePass, appId, appCode); }).rejects.toThrowError();
 
         let success = store.deleteDid(did);
         expect(success).toBeTruthy();
-        doc = await identity.newDid(TestConfig.storePass, appCode, appId);
+        doc = await identity.newDidFromIdentifier(TestConfig.storePass, appId, appCode);
         valid = await doc.isValid();
         expect(valid).toBeTruthy();
         expect(did.equals(doc.getSubject())).toBeTruthy();
