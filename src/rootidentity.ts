@@ -250,17 +250,21 @@ export class RootIdentity {
      * @param index the index
      * @return the DID object
      */
-    public getDid(index: number, identifier: string = null): DID {
-        let key: HDKey;
-        if (identifier) {
-            key = this.preDerivedPublicKey.deriveWithPath(this.mapToDerivePath(identifier, index, true));
-        } else {
-            checkArgument(index >= 0, "Invalid index");
-            key = this.preDerivedPublicKey.deriveWithIndex(0).deriveWithIndex(index);
-        }
+    public getDid(index: number): DID {
+        checkArgument(index >= 0, "Invalid index");
+        let key = this.preDerivedPublicKey.deriveWithIndex(0).deriveWithIndex(index);
+        return new DID(DID.METHOD, key.getAddress());
+    }
 
-        let did = new DID(DID.METHOD, key.getAddress());
-        return did;
+    /**
+     * Get DID with specified index.
+     *
+     * @param index the index
+     * @return the DID object
+     */
+     public getDidFromIdentifier(identifier: string, securityCode: number = 0): DID {
+        let key = this.preDerivedPublicKey.deriveWithPath(this.mapToDerivePath(identifier, securityCode, true));
+        return new DID(DID.METHOD, key.getAddress());
     }
 
     public static async lazyCreateDidPrivateKey(id: DIDURL, store: DIDStore, storepass: string): Promise<Buffer> {
@@ -323,28 +327,18 @@ export class RootIdentity {
      * @return the DIDDocument content related to the new DID
      * @throws DIDStoreException there is no private identity in DIDStore.
      */
-    public async newDid(storepass: string, index: number = undefined, identifier: string = null, overwrite = false): Promise<DIDDocument> {
+     public async newDid(storepass: string, index: number = undefined, overwrite = false): Promise<DIDDocument> {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
         let shouldIncrementIndexAfterCompletion = false;
-
         if (index === undefined) {
             index = this.getIndex();
             shouldIncrementIndexAfterCompletion = true;
         }
 
-        let did: DID;
-        let key: HDKey;
-        if (identifier) {
-            let path = HDKey.PRE_DERIVED_PUBLICKEY_PATH + "/" + this.mapToDerivePath(identifier, index);
-            key = this.getStore().derive(this.getId(), path, storepass);
-            did = new DID(DID.METHOD, key.getAddress());
-        } else {
-            checkArgument(index >= 0, "Invalid index");
-            key = this.getStore().derive(this.getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
-            did = this.getDid(index);
-        }
+        checkArgument(index >= 0, "Invalid index");
 
+        let did = this.getDid(index);
         let doc = await this.getStore().loadDid(did);
         if (doc != null) {
             if (await doc.isDeactivated())
@@ -370,6 +364,7 @@ export class RootIdentity {
 
         log.debug("Creating new DID {} at index {}...", did.toString(), index);
 
+        let key = this.getStore().derive(this.getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
         try {
             let id = DIDURL.from("#primary", did);
             this.getStore().storePrivateKey(id, key.serialize(), storepass);
@@ -379,12 +374,7 @@ export class RootIdentity {
             doc = await db.seal(storepass);
 
             doc.getMetadata().setRootIdentityId(this.getId());
-            if (identifier) {
-                doc.getMetadata().setExtra("application", identifier);
-                doc.getMetadata().setExtra("securityCode", index);
-            } else {
-                doc.getMetadata().setIndex(index);
-            }
+			doc.getMetadata().setIndex(index);
 			doc.getMetadata().attachStore(this.getStore());
 
             await this.getStore().storeDid(doc);
@@ -392,6 +382,72 @@ export class RootIdentity {
             if (shouldIncrementIndexAfterCompletion)
                 this.incrementIndex();
 
+            return doc;
+        } catch (e) {
+            // MalformedDocumentException
+            throw new UnknownInternalException(e);
+        } finally {
+            key.wipe();
+        }
+    }
+
+    /**
+         * Create a new DID with specified identifier and security code.
+         *
+         * @param securityCode user specified security code.
+         * @param identifier application secified identifier.
+         * @param alias the alias string
+         * @param storepass the password for DIDStore
+         * @return the DIDDocument content related to the new DID
+         * @throws DIDStoreException there is no private identity in DIDStore.
+         */
+    public async newDidFromIdentifier(storepass: string, identifier: string, securityCode: number = 0, overwrite = false): Promise<DIDDocument> {
+        checkArgument(storepass != null && storepass !== "", "Invalid storepass");
+        checkArgument(identifier != null && identifier!== "", "Invalid identifier");
+
+        let path = HDKey.PRE_DERIVED_PUBLICKEY_PATH + "/" + this.mapToDerivePath(identifier, securityCode);
+        let key = this.getStore().derive(this.getId(), path, storepass);
+        let did = new DID(DID.METHOD, key.getAddress());
+
+        let doc = await this.getStore().loadDid(did);
+        if (doc != null) {
+            if (await doc.isDeactivated())
+                throw new DIDDeactivatedException(did.toString());
+
+            if (!overwrite)
+                throw new DIDAlreadyExistException("DID already exists in the store.");
+        }
+
+        try {
+            doc = await did.resolve();
+            if (doc != null) {
+                if (await doc.isDeactivated())
+                    throw new DIDDeactivatedException(did.toString());
+
+                if (!overwrite)
+                    throw new DIDAlreadyExistException("DID already published.");
+            }
+        } catch (e) {
+            if (e instanceof DIDResolveException && !overwrite)
+                throw e;
+        }
+
+        log.debug("Creating new DID {} with iden {}...", did.toString(), securityCode);
+
+        try {
+            let id = DIDURL.from("#primary", did);
+            this.getStore().storePrivateKey(id, key.serialize(), storepass);
+
+            let db = DIDDocument.Builder.newFromDID(did, this.getStore());
+            db.addAuthenticationKey(id, key.getPublicKeyBase58());
+            doc = await db.seal(storepass);
+
+            doc.getMetadata().setRootIdentityId(this.getId());
+            doc.getMetadata().setExtra("application", identifier);
+            doc.getMetadata().setExtra("securityCode", securityCode);
+            doc.getMetadata().attachStore(this.getStore());
+
+            await this.getStore().storeDid(doc);
             return doc;
         } catch (e) {
             // MalformedDocumentException
