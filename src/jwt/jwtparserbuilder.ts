@@ -72,7 +72,7 @@ export class JWTParserBuilder {
         return this;
     }
 
-    public setAllowedClockSkewSeconds(clockTolerance : string | number): JWTParserBuilder {
+    public setAllowedClockSkewSeconds(clockTolerance : number): JWTParserBuilder {
         this.options.clockTolerance = clockTolerance;
         return this;
     }
