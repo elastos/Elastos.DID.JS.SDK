@@ -142,7 +142,8 @@ export class DefaultDIDAdapter implements DIDAdapter {
                     "Content-Type": "application/json",
                     "Accept": "application/json"
                 },
-                data: body
+                data: body,
+                timeout: 6000, // only wait for 6s
             }).then((response) => {
                 if (response.status >= 200 && response.status < 400) {
                     resolve(response.data);
@@ -150,18 +151,19 @@ export class DefaultDIDAdapter implements DIDAdapter {
                 else {
                     reject(new ResolveException("HTTP error: " + response.statusText));
                 }
-            })
+            }).catch(error => {
+                reject(new ResolveException("HTTP timeout"));
+            });
         });
     }
 
-    public resolve(request: string): Promise<JSONObject> {
+    public async resolve(request: string): Promise<JSONObject> {
         checkArgument(request && request != null, "Invalid request");
 
         try {
-            return this.performRequest(this.rpcEndpoint, request);
+            return await this.performRequest(this.rpcEndpoint, request);
         } catch (e) {
-            // IOException
-            throw new NetworkException("Network error.", e);
+            throw new NetworkException("Network error.");
         }
     }
 
