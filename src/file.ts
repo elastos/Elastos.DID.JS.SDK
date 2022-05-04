@@ -47,6 +47,9 @@ import * as fs from "./fs";
         if (subpath)
             fullPath += (File.SEPARATOR + subpath);
 
+        if (!fullPath.startsWith("/") && !fullPath.startsWith("./") && fullPath[1] !== ':')
+            fullPath = "./" + fullPath;
+
         this.fullPath = fullPath;
     }
 

@@ -93,7 +93,7 @@ export class DIDStore {
      * DID Stores, as we don't have a concept of "folder" isolation.
      */
     public static async open(context: string, initialCacheCapacity: number = DIDStore.CACHE_INITIAL_CAPACITY, maxCacheCapacity: number = DIDStore.CACHE_MAX_CAPACITY): Promise<DIDStore> {
-        checkArgument(context != null, "Invalid store context");
+        checkArgument(context != null && context != "", "Invalid store context");
         checkArgument(maxCacheCapacity >= initialCacheCapacity, "Invalid cache capacity spec");
 
         let storage = new FileSystemStorage(context);
