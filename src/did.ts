@@ -55,7 +55,7 @@ export class DID {
                 return (ch  == '.' || ch == '_' || ch == '-');
         }
 
-        public scanNextPart(did : String, start : number, limit : number, delimiter : string | string[]) : number {
+        public scanNextPart(did : string, start : number, limit : number, delimiter : string | string[]) : number {
             let nextPart = limit;
             let tokenStart = true;
 
@@ -86,7 +86,7 @@ export class DID {
             return nextPart;
         }
 
-        public parse(did : String, start : number = 0, limit ?: number) : void {
+        public parse(did : string, start : number = 0, limit ?: number) : void {
             if (did == null)
                 throw new MalformedDIDException("null DID string");
 
@@ -169,10 +169,7 @@ export class DID {
         if (!did)
             return null;
 
-        if (did instanceof DID)
-            return did;
-
-        return did.length == 0 ? null : new DID(did);
+        return typeof did === "string" ? new DID(did) : did;
     }
 
     public getMethod(): string | null {
@@ -187,7 +184,7 @@ export class DID {
         this.metadata = metadata;
     }
 
-    public toJSON(key: String = null): string {
+    public toJSON(key: string = null): string {
         return this.toString();
     }
 
