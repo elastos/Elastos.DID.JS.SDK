@@ -70,8 +70,8 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
                 return (ch  == '.' || ch == '_' || ch == '-');
         }
 
-        public scanNextPart(url : String, start : number, limit : number,
-                partSeps : string, tokenSeps : String) : number {
+        public scanNextPart(url : string, start : number, limit : number,
+                partSeps : string, tokenSeps : string) : number {
             let nextPart = limit;
             let tokenStart = true;
 
@@ -118,7 +118,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
             return nextPart;
         }
 
-        public parse(context : DID, url : String) : void {
+        public parse(context : DID, url : string) : void {
             if (context == undefined)
                 context = null;
 
@@ -144,7 +144,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
             let pos = start;
 
             // DID
-            if (pos < limit && url.substr(pos, 4) == "did:") {
+            if (pos < limit && url.substring(pos, pos + 4) == "did:") {
                 nextPart = this.scanNextPart(url, pos, limit, "/?#", ":");
                 try {
                     this.superThis.did = DID.createFrom(url.toString(), pos, nextPart);
@@ -235,20 +235,14 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         if (!url)
              return null;
 
-         let base : DID;
-         if (context == null) {
-             base = null;
-         } else {
-             if (context instanceof DID)
-                 base = context;
-             else
-                 base = DID.from(context);
-         }
+        let base : DID;
+        if (context == null) {
+            base = null;
+        } else {
+            base = typeof context === "string" ? DID.from(context) : context;
+        }
 
-         if (url instanceof DIDURL)
-             return base ? new DIDURL(url, base) : url;
-        else
-            return new DIDURL(url, base);
+        return typeof url === "string" ? new DIDURL(url, base) : (base ? new DIDURL(url, base) : url);
     }
 
     // Deep-copy constructor
@@ -472,10 +466,11 @@ export namespace DIDURL {
         public setDid(didOrString: DID | string): Builder {
             checkArgument(didOrString != null, "Invalid did");
 
-            if (didOrString instanceof DID)
-                this.url.setDid(didOrString);
-            else
+            if (typeof didOrString === "string")
                 this.url.setDid(DID.from(didOrString));
+            else
+                this.url.setDid(didOrString);
+
             return this;
         }
 
