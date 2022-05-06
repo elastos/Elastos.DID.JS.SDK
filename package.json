@@ -1,6 +1,6 @@
 {
   "name": "@elastosfoundation/did-js-sdk",
-  "version": "2.2.5",
+  "version": "2.2.8",
   "description": "Elastos DID Typescript SDK",
   "scripts": {
     "prepublishOnly": "npm run build",
