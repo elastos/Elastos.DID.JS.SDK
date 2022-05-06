@@ -359,6 +359,21 @@ describe('DIDURL Tests', () => {
 
         expect(() => {
             new DIDURL("		   ");
-        }).toThrowError("empty DIDURL string");
+        }).toThrowError("Empty DIDURL string");
+    });
+
+    test('testIsQualified', () => {
+        let id = new DIDURL("did:elastos:foobar#test");
+        expect(id.isQualified()).toBeTruthy();
+
+        id = new DIDURL("did:elastos:foobar");
+        expect(id.isQualified()).toBeFalsy();
+
+        id = new DIDURL("did:elastos:foobar/path/to/res");
+        expect(id.isQualified()).toBeFalsy();
+
+        id = new DIDURL("#test");
+        expect(id.isQualified()).toBeFalsy();
+
     });
 });

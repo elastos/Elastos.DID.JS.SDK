@@ -385,6 +385,15 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
         return this.metadata;
     }
 
+    /**
+     * Check if the DIDURL object is full qualified.
+     *
+     * @return true if the DIDURL is qualified, false otherwise
+     */
+    public isQualified() : boolean {
+        return (this.did != null && this.fragment != null);
+    }
+
     public toJSON(key: string = null): string {
         let base: DID = null;
         if (key)
