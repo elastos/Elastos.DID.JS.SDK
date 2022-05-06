@@ -142,6 +142,6 @@ describe('DID Tests', () => {
 
         expect(() => {
             new DID("		   ");
-        }).toThrowError("empty DID string");
+        }).toThrowError("Empty DID string");
     });
 });

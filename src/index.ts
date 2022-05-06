@@ -105,6 +105,15 @@ import { Claims } from "./internals";
     });
 } */
 
+let __VERSION__ = "2.2.8";
+
+if (typeof window != 'undefined') {
+    if ("elastos_did_ver" in window)
+        throw new Error("Elastos DID sdk(" + window["elastos_did_ver"] + ") alread loaded.");
+    else
+        window["elastos_did_ver"] = __VERSION__ ;
+}
+
 export type {
     DIDObject,
     DIDAdapter,
