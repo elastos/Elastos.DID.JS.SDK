@@ -74,7 +74,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
         checkArgument(to != null, "Invalid to DID");
 
         if (!target.isCustomizedDid())
-            throw new NotCustomizedDIDException(target.getSubject().toString());
+            throw new NotCustomizedDIDException(target.getSubject().toString() + "isn't a customized did");
 
         let doc = await target.getSubject().resolve();
         target.getMetadata().setTransactionId(doc.getMetadata().getTransactionId());
@@ -353,11 +353,11 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
 
             if (controller.isCustomizedDid()) {
                 if (controller.getEffectiveController() == null)
-                    throw new NoEffectiveControllerException(controller.getSubject().toString());
+                    throw new NoEffectiveControllerException("No effective controller of " + this.getSubject().toString());
             } else {
                 try {
                     if (!(await this.getDocument()).hasController(controller.getSubject()))
-                        throw new NotControllerException(controller.getSubject().toString());
+                        throw new NotControllerException(controller.getSubject().toString() + " isn't the controller");
                 } catch (e) {
                     // DIDResolveException
                     // Should never happen
@@ -374,7 +374,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             this.proofs = new ComparableMap<DID, TransferTicket.Proof>();
         } else {
             if (this.proofs.has(signKey.getDid()))
-                throw new AlreadySignedException(signKey.getDid().toString());
+                throw new AlreadySignedException(signKey.getDid().toString() + " already signed");
         }
 
         let tt = TransferTicket.newWithTicket(this, false);

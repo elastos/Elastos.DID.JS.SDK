@@ -158,22 +158,22 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
     public checkAttachedStore() {
         if (!this.getMetadata().attachedStore())
-            throw new NotAttachedWithStoreException();
+            throw new NotAttachedWithStoreException("Not attach with did store");
     }
 
     private checkIsPrimitive() {
         if (this.isCustomizedDid())
-            throw new NotPrimitiveDIDException(this.getSubject().toString());
+            throw new NotPrimitiveDIDException(this.getSubject().toString() + "is a customized did");
     }
 
     public checkIsCustomized() {
         if (!this.isCustomizedDid())
-            throw new NotCustomizedDIDException(this.getSubject().toString());
+            throw new NotCustomizedDIDException(this.getSubject().toString() + "isn't a customized did");
     }
 
     private checkHasEffectiveController() {
         if (this.getEffectiveController() == null)
-            throw new NoEffectiveControllerException(this.getSubject().toString());
+            throw new NoEffectiveControllerException("No effective controller of " + this.getSubject().toString());
     }
 
     public isCustomizedDid(): boolean {
@@ -1423,21 +1423,21 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this.checkAttachedStore();
 
         if (!doc.isCustomizedDid())
-            throw new NotCustomizedDIDException(doc.getSubject().toString());
+            throw new NotCustomizedDIDException(doc.getSubject().toString() + "isn't a customized did");
 
         if (!doc.hasController(this.getSubject()))
-            throw new NotControllerException();
+            throw new NotControllerException(this.getSubject() + " isn't the controller of " + doc.getSubject().toString());
 
         if (this.isCustomizedDid()) {
             if (this.getEffectiveController() == null)
-                throw new NoEffectiveControllerException(this.getSubject().toString());
+                throw new NoEffectiveControllerException("no effective controller of " + this.getSubject().toString());
         } else {
             if (!doc.hasController(this.getSubject()))
-                throw new NotControllerException(this.getSubject().toString());
+                throw new NotControllerException(this.getSubject().toString() + " isn't the controller of " + doc.getSubject().toString());
         }
 
         if (doc.proofs.has(this.getSubject()))
-            throw new AlreadySignedException(this.getSubject().toString());
+            throw new AlreadySignedException(this.getSubject().toString() + " already signed");
 
         let builder = DIDDocument.Builder.newFromDocument(doc).edit(this);
         try {
@@ -1469,9 +1469,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let pk = id != null ? this.getPublicKey(id) : this.getDefaultPublicKey();
         if (pk == null) {
             if (id != null)
-                throw new InvalidKeyException(id.toString());
+                throw new InvalidKeyException(id.toString() + " is a invalid key");
             else
-                throw new NoEffectiveControllerException(this.getSubject().toString());
+                throw new NoEffectiveControllerException("No effective controller of " + this.getSubject().toString());
         }
 
         return this.getMetadata().getStore().sign(pk.getId(), storepass, digest);
@@ -1513,7 +1513,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let pk = id != null ? this.getPublicKey(id) : this.getDefaultPublicKey();
         if (pk == null) {
             if (id != null)
-                throw new InvalidKeyException(id.toString());
+                throw new InvalidKeyException(id.toString() + "is a invalide key");
             else
                 throw new InvalidKeyException("No explicit publicKey");
         }
@@ -1624,7 +1624,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         if (!force) {
             doc = await did.resolve(true);
             if (doc)
-                throw new DIDAlreadyExistException(did.toString());
+                throw new DIDAlreadyExistException(did.toString() + " already exist");
         }
 
         DIDDocument.log.info("Creating new DID {} with controller {}...", did, this.getSubject());
@@ -1655,15 +1655,15 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             this.checkIsPrimitive();
             this.checkAttachedStore();
             if (!source)
-                throw new DIDNotFoundException("DID not found: " + from.toString());
+                throw new DIDNotFoundException(from.toString() + " isn't found in the chain");
             if (await source.isDeactivated())
-                throw new DIDDeactivatedException(from.toString());
+                throw new DIDDeactivatedException(from.toString() + " is deactived");
 
             if (!source.isCustomizedDid())
-                throw new NotCustomizedDIDException(from.toString());
+                throw new NotCustomizedDIDException(from.toString() + " isn't a customized did");
 
             if (!source.hasController(this.getSubject()))
-                throw new NotControllerException(this.getSubject().toString());
+                throw new NotControllerException(this.getSubject().toString() + " isn't the controller of did");
 
         } else {
             this.checkIsCustomized();
@@ -1688,15 +1688,15 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let signKey: DIDURL = typeof inputSignKey === "string" ? this.canonicalId(inputSignKey) : inputSignKey;
 
         if (signKey == null && this.getDefaultPublicKeyId() == null)
-            throw new NoEffectiveControllerException(this.getSubject().toString());
+            throw new NoEffectiveControllerException("no effective controller of " + this.getSubject().toString());
 
         let did = this.getSubject();
         let targetDoc = await did.resolve(true);
         if (targetDoc == null)
-            throw new DIDNotFoundException("DID not found: " + did.toString());
+            throw new DIDNotFoundException(did.toString()  + " isn't found in the chain");
 
         if (await targetDoc.isDeactivated())
-            throw new DIDDeactivatedException(did.toString());
+            throw new DIDDeactivatedException(did.toString() + " is deactivated");
 
         if (signKey == null) {
             signKey = this.getDefaultPublicKeyId();
@@ -1704,7 +1704,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 throw new InvalidKeyException("No sign key.");
         } else {
             if (this.getAuthenticationKey(signKey) == null)
-                throw new InvalidKeyException(signKey.toString());
+                throw new InvalidKeyException(signKey.toString() + " is a invalid key");
         }
 
         await DIDBackend.getInstance().transferDid(this, ticket, signKey, storepass, adapter);
@@ -1730,24 +1730,24 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let signKey: DIDURL = typeof inputSignKey === "string" ? this.canonicalId(inputSignKey) : inputSignKey;
 
         if (signKey == null && this.getDefaultPublicKeyId() == null)
-            throw new NoEffectiveControllerException(this.getSubject().toString());
+            throw new NoEffectiveControllerException("No effective controller of " + this.getSubject().toString());
 
         DIDDocument.log.info("Publishing DID {}, force={}...", this.getSubject(), force);
 
         if (!this.isGenuine()) {
             DIDDocument.log.error("Publish failed because document is not genuine.");
-            throw new DIDNotGenuineException(this.getSubject().toString());
+            throw new DIDNotGenuineException(this.getSubject().toString() + " isn't genuine");
         }
 
         if (await this.isDeactivated()) {
             DIDDocument.log.error("Publish failed because DID is deactivated.");
-            throw new DIDDeactivatedException(this.getSubject().toString());
+            throw new DIDDeactivatedException(this.getSubject().toString() + " is deactivated");
         }
 
         if (this.isExpired() && !force) {
             DIDDocument.log.error("Publish failed because document is expired.");
             DIDDocument.log.info("You can publish the expired document using force mode.");
-            throw new DIDExpiredException(this.getSubject().toString());
+            throw new DIDExpiredException(this.getSubject().toString() + " is expired");
         }
 
         let lastTxid: string = null;
@@ -1758,7 +1758,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 this.getMetadata().setDeactivated(true);
 
                 DIDDocument.log.error("Publish failed because DID is deactivated.");
-                throw new DIDDeactivatedException(this.getSubject().toString());
+                throw new DIDDeactivatedException(this.getSubject().toString() + " is deactivated");
             }
 
             if (this.isCustomizedDid()) {
@@ -1768,19 +1768,19 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     DIDDocument.MultiSignature.ONE_OF_ONE : resolvedDoc.getMultiSignature();
 
                 if (!curMultisig.equals(orgMultisig))
-                    throw new DIDControllersChangedException();
+                    throw new DIDControllersChangedException("Multisig is changed");
 
                 let orgControllers = resolvedDoc.getControllers();
                 let curControllers = this.getControllers();
                 if (orgControllers.length != curControllers.length)
-                    throw new DIDControllersChangedException();
+                    throw new DIDControllersChangedException("Controllrs count is changed");
 
                 orgControllers.sort();
                 curControllers.sort();
 
                 for (let i = 0; i < orgControllers.length; i++)
                     if (!orgControllers[i].equals(curControllers[i]))
-                        throw new DIDControllersChangedException();
+                        throw new DIDControllersChangedException("Controllers are changed");
             }
 
             resolvedSignature = resolvedDoc.getProof().getSignature();
@@ -1793,18 +1793,18 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     DIDDocument.log.error("Trying to publish over an existing document, but signatures information is missing. " +
                         "DID SDK doesn't know how to handle it, " +
                         "use force mode to ignore checks.");
-                    throw new DIDNotUpToDateException(this.getSubject().toString());
+                    throw new DIDNotUpToDateException(this.getSubject().toString() + " signatures information is missing");
                 } else if (localPrevSignature == null || localSignature == null) {
                     let ls = localPrevSignature != null ? localPrevSignature : localSignature;
                     if (ls !== resolvedSignature) {
                         DIDDocument.log.error("Current copy not based on the latest on-chain copy, signature mismatch.");
-                        throw new DIDNotUpToDateException(this.getSubject().toString());
+                        throw new DIDNotUpToDateException(this.getSubject().toString() + " signature mismatch");
                     }
                 } else {
                     if (localSignature !== resolvedSignature &&
                         localPrevSignature !== resolvedSignature) {
                         DIDDocument.log.error("Current copy not based on the latest on-chain copy, signature mismatch.");
-                        throw new DIDNotUpToDateException(this.getSubject().toString());
+                        throw new DIDNotUpToDateException(this.getSubject().toString() + " signature mismatch");
                     }
                 }
             }
@@ -1816,7 +1816,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             signKey = this.getDefaultPublicKeyId();
         } else {
             if (this.getAuthenticationKey(signKey) == null)
-                throw new InvalidKeyException(signKey.toString());
+                throw new InvalidKeyException(signKey.toString() + " is a invalid key");
         }
 
         if (!lastTxid || lastTxid == null) {
@@ -1839,23 +1839,23 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this.checkAttachedStore();
 
         if (signKey == null && this.getDefaultPublicKeyId() == null)
-            throw new NoEffectiveControllerException(this.getSubject().toString());
+            throw new NoEffectiveControllerException("No effective controller of " + this.getSubject().toString());
 
         DIDDocument.log.info("Publishing untrusted DID {}...", this.getSubject());
 
         if (!this.isGenuine()) {
             DIDDocument.log.error("Publish failed because document is not genuine.");
-            throw new DIDNotGenuineException(this.getSubject().toString());
+            throw new DIDNotGenuineException(this.getSubject().toString() + " isn't genuine");
         }
 
         if (await this.isDeactivated()) {
             DIDDocument.log.error("Publish failed because DID is deactivated.");
-            throw new DIDDeactivatedException(this.getSubject().toString());
+            throw new DIDDeactivatedException(this.getSubject().toString() + " is deactivated");
         }
 
         if (this.isExpired()) {
             DIDDocument.log.error("Publish failed because document is expired.");
-            throw new DIDExpiredException(this.getSubject().toString());
+            throw new DIDExpiredException(this.getSubject().toString() + " is expired");
         }
 
         let lastTxid: string = null;
@@ -1866,7 +1866,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 this.getMetadata().setDeactivated(true);
 
                 DIDDocument.log.error("Publish failed because DID is deactivated.");
-                throw new DIDDeactivatedException(this.getSubject().toString());
+                throw new DIDDeactivatedException(this.getSubject().toString()  + " is deactivated");
             }
 
             resolvedSignature = resolvedDoc.getProof().getSignature();
@@ -1877,7 +1877,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             signKey = this.getDefaultPublicKeyId();
         } else {
             if (this.getAuthenticationKey(signKey) == null)
-                throw new InvalidKeyException(signKey.toString());
+                throw new InvalidKeyException(signKey.toString()+ " is a invalid key");
         }
 
         if (!lastTxid || lastTxid == null) {
@@ -1908,14 +1908,14 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this.checkAttachedStore();
 
         if (signKey == null && this.getDefaultPublicKeyId() == null)
-            throw new NoEffectiveControllerException(this.getSubject().toString());
+            throw new NoEffectiveControllerException("No effective controller of " + this.getSubject().toString());
 
         // Document should use the IDChain's copy
         let doc = await this.getSubject().resolve(true);
         if (doc == null)
-            throw new DIDNotFoundException("DID not found: " + this.getSubject().toString());
+            throw new DIDNotFoundException(this.getSubject().toString() + " isn't found in the chain");
         else if (await doc.isDeactivated())
-            throw new DIDDeactivatedException(this.getSubject().toString());
+            throw new DIDDeactivatedException(this.getSubject().toString() + " is deactivated");
         else
             doc.getMetadata().attachStore(this.getStore());
 
@@ -1927,11 +1927,11 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             if (!doc.isCustomizedDid()) {
                 if (!signKey.equals(doc.getDefaultPublicKeyId()) &&
                     doc.getAuthorizationKey(signKey) == null)
-                    throw new InvalidKeyException(signKey.toString());
+                    throw new InvalidKeyException(signKey.toString() + " is a invalid key");
             } else {
                 let controllerdoc = this.getControllerDocument(signKey.getDid());
                 if (controllerdoc == null || !signKey.equals(controllerdoc.getDefaultPublicKeyId()))
-                    throw new InvalidKeyException(signKey.toString());
+                    throw new InvalidKeyException(signKey.toString() + " is a invalid key");
             }
         }
 
@@ -1955,13 +1955,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         this.checkAttachedStore();
 
         if (signKey == null && this.getDefaultPublicKeyId() == null)
-            throw new NoEffectiveControllerException(this.getSubject().toString());
+            throw new NoEffectiveControllerException("No effective controller of " + this.getSubject().toString());
 
         let targetDoc = await target.resolve(true);
         if (targetDoc == null)
-            throw new DIDNotFoundException("DID not found: " + target.toString());
+            throw new DIDNotFoundException(target.toString() + " isn't found in the chain");
         else if (await targetDoc.isDeactivated())
-            throw new DIDDeactivatedException(target.toString());
+            throw new DIDDeactivatedException(target.toString() + " is deactivated");
 
         targetDoc.getMetadata().attachStore(this.getStore());
 
@@ -1975,7 +1975,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             } else {
                 let pk = this.getAuthenticationKey(signKey);
                 if (pk == null)
-                    throw new InvalidKeyException(signKey.toString());
+                    throw new InvalidKeyException(signKey.toString() + " isn't an authentication key");
                 candidatePks = [];
                 candidatePks.push(pk);
             }
@@ -2003,13 +2003,13 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                 this, realSignKey, storepass, adapter);
         } else {
             if (!targetDoc.hasController(this.getSubject()))
-                throw new NotControllerException(this.getSubject().toString());
+                throw new NotControllerException(this.getSubject().toString() + " isn't the controller of " + targetDoc.getSubject().toString());
 
             if (signKey == null) {
                 signKey = this.getDefaultPublicKeyId();
             } else {
                 if (!signKey.equals(this.getDefaultPublicKeyId()))
-                    throw new InvalidKeyException(signKey.toString());
+                    throw new InvalidKeyException(signKey.toString() + " isn't the default key");
             }
 
             await DIDBackend.getInstance().deactivateDid(targetDoc, signKey, storepass, adapter);
@@ -2534,7 +2534,7 @@ export namespace DIDDocument {
                 this.document.checkIsCustomized();
 
                 if (!this.document.getMetadata().attachedStore() && !controller.getMetadata().attachedStore())
-                    throw new NotAttachedWithStoreException();
+                    throw new NotAttachedWithStoreException("Not attach with did store");
 
                 if (controller.getMetadata().attachedStore())
                     this.document.getMetadata().attachStore(controller.getMetadata().getStore());
@@ -2542,7 +2542,7 @@ export namespace DIDDocument {
                     controller.getMetadata().attachStore(this.document.getMetadata().getStore());
 
                 if (!this.sourceDocument.hasController(controller.getSubject()))
-                    throw new NotControllerException(controller.getSubject().toString());
+                    throw new NotControllerException(controller.getSubject().toString() + " isn't the controller of " + this.sourceDocument.getSubject().toString());
 
                 this.document.effectiveController = controller.getSubject();
                 this.controllerDoc = controller;
@@ -2580,12 +2580,12 @@ export namespace DIDDocument {
 
         private checkNotSealed() {
             if (this.document == null)
-                throw new AlreadySealedException();
+                throw new AlreadySealedException(this.getSubject().toString() + " is already sealed");
         }
 
         private checkIsCustomized() {
             if (!this.document.isCustomizedDid())
-                throw new NotCustomizedDIDException(this.document.getSubject().toString());
+                throw new NotCustomizedDIDException(this.document.getSubject().toString() + "isn't a customized did");
         }
 
         /**
@@ -2661,19 +2661,19 @@ export namespace DIDDocument {
             checkArgument(!this.document.controllers.includes(controller), "Controller already exists");
             let controllerDoc = await controller.resolve(true);
             if (controllerDoc == null)
-                throw new DIDNotFoundException("DID not found: " + controller.toString());
+                throw new DIDNotFoundException(controller.toString() + " isn't found in the chain");
 
             if (await controllerDoc.isDeactivated())
-                throw new DIDDeactivatedException(controller.toString());
+                throw new DIDDeactivatedException(controller.toString() + " is deactivated");
 
             if (controllerDoc.isExpired())
-                throw new DIDExpiredException(controller.toString());
+                throw new DIDExpiredException(controller.toString() + " is expired");
 
             if (!controllerDoc.isGenuine())
-                throw new DIDNotGenuineException(controller.toString());
+                throw new DIDNotGenuineException(controller.toString() + " isn't genuine");
 
             if (controllerDoc.isCustomizedDid())
-                throw new NotPrimitiveDIDException(controller.toString());
+                throw new NotPrimitiveDIDException(controller.toString() + "is a customized did");
 
             this.document.controllers.push(controller);
             this.document.controllerDocs.set(controller, controllerDoc);
@@ -2816,12 +2816,12 @@ export namespace DIDDocument {
             checkArgument(id != null, "Invalid publicKey id");
 
             if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException(this.getSubject().toString() + " has no any publickey");
 
             id = this.canonicalId(id);
             let pk = this.document.publicKeys.get(id);
             if (pk == null)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No key " + id.toString());
 
             // Can not remove default public key
             if (this.document.defaultPublicKey != null && this.document.defaultPublicKey.getId().equals(id))
@@ -2856,16 +2856,16 @@ export namespace DIDDocument {
             checkArgument(id != null, "Invalid publicKey id");
 
             if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException(this.getSubject().toString() + " has no any publickey");
 
             id = this.canonicalId(id);
             let key: PublicKey = this.document.publicKeys.get(id);
             if (key == null)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No key " + id.toString());
 
             // Check the controller is current DID subject
             if (!key.getController().equals(this.getSubject()))
-                throw new IllegalUsage(id.toString());
+                throw new IllegalUsage(id.toString() + " isn't the self key, so it can't to be authentaication key");
 
             if (!this.document.authenticationKeys.has(id)) {
                 this.document.authenticationKeys.set(id, key);
@@ -2910,12 +2910,12 @@ export namespace DIDDocument {
             checkArgument(id != null, "Invalid publicKey id");
 
             if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException(this.getSubject().toString()+ " has no any publickey");
 
             id = this.canonicalId(id);
             let key = this.document.publicKeys.get(id);
             if (key == null || !this.document.authenticationKeys.has(key.getId()))
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No key " + id.toString());
 
             // Can not remove default public key
             if (this.document.defaultPublicKey != null && this.document.defaultPublicKey.getId().equals(id))
@@ -2926,7 +2926,7 @@ export namespace DIDDocument {
                 this.document.authenticationKeys.delete(id);
                 this.invalidateProof();
             } else {
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No key " + id.toString());
             }
 
             return this;
@@ -2944,19 +2944,19 @@ export namespace DIDDocument {
             checkArgument(id != null, "Invalid publicKey id");
 
             if (this.document.isCustomizedDid())
-                throw new NotPrimitiveDIDException(this.getSubject().toString());
+                throw new NotPrimitiveDIDException(this.getSubject().toString() + "is a customized did");
 
             if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException(this.getSubject().toString() + " has no any publickey");
 
             id = this.canonicalId(id);
             let key: PublicKey = this.document.publicKeys.get(id);
             if (key == null)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No key " + id.toString());
 
             // Can not authorize to self
             if (key.getController().equals(this.getSubject()))
-                throw new IllegalUsage(id.toString());
+                throw new IllegalUsage("Self key can't be authorization key");
 
             if (!this.document.authorizationKeys.has(id)) {
                 this.document.authorizationKeys.set(id, key);
@@ -2990,7 +2990,7 @@ export namespace DIDDocument {
             checkArgument(pk && pk != null, "Invalid publicKey");
 
             if (this.document.isCustomizedDid())
-                throw new NotPrimitiveDIDException(this.getSubject().toString());
+                throw new NotPrimitiveDIDException(this.getSubject().toString() + "is a customized did");
 
             // Can not authorize to self
             if (controller.equals(this.getSubject()))
@@ -3024,23 +3024,23 @@ export namespace DIDDocument {
             checkArgument(controller != null && !controller.equals(this.getSubject()), "Invalid controller");
 
             if (this.document.isCustomizedDid())
-                throw new NotPrimitiveDIDException(this.getSubject().toString());
+                throw new NotPrimitiveDIDException(this.getSubject().toString() + "is a customized did");
 
             let controllerDoc = await controller.resolve();
             if (controllerDoc == null)
-                throw new DIDNotFoundException("DID not found: " + id.toString());
+                throw new DIDNotFoundException(id.toString() + " isn't found in the chain");
 
             if (await controllerDoc.isDeactivated())
-                throw new DIDDeactivatedException(controller.toString());
+                throw new DIDDeactivatedException(controller.toString() + " is deactivated");
 
             if (controllerDoc.isExpired())
-                throw new DIDExpiredException(controller.toString());
+                throw new DIDExpiredException(controller.toString() + " is expired");
 
             if (!controllerDoc.isGenuine())
-                throw new DIDNotGenuineException(controller.toString());
+                throw new DIDNotGenuineException(controller.toString() + " isn't genuine");
 
             if (controllerDoc.isCustomizedDid())
-                throw new NotPrimitiveDIDException(controller.toString());
+                throw new NotPrimitiveDIDException(controller.toString() + "is a customized did");
 
             if (key == null)
                 key = controllerDoc.getDefaultPublicKeyId();
@@ -3048,7 +3048,7 @@ export namespace DIDDocument {
             // Check the key should be a authentication key.
             let targetPk = controllerDoc.getAuthenticationKey(key);
             if (targetPk == null)
-                throw new DIDObjectNotExistException(key.toString());
+                throw new DIDObjectNotExistException("No authentication key " + key.toString());
 
             let pk = new PublicKey(this.canonicalId(id),
                 controller, targetPk.getPublicKeyBase58(), targetPk.getType());
@@ -3071,18 +3071,18 @@ export namespace DIDDocument {
             let id = typeof inputId === "string" ? this.canonicalId(inputId) : inputId;
 
             if (this.document.publicKeys == null || this.document.publicKeys.size == 0)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException(this.getSubject().toString() + " has no any publickey");
 
             id = this.canonicalId(id);
             let key: PublicKey = this.document.publicKeys.get(id);
             if (key == null)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No key " + id.toString());
 
             if (this.document.authorizationKeys.has(id)) {
                 this.document.authorizationKeys.delete(id);
                 this.invalidateProof();
             } else {
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No authorization key " + id.toString());
             }
 
             return this;
@@ -3100,7 +3100,7 @@ export namespace DIDDocument {
 
             // Check the credential belongs to current DID.
             if (!vc.getSubject().getId().equals(this.getSubject()))
-                throw new IllegalUsage(vc.getSubject().getId().toString());
+                throw new IllegalUsage("Credential " + vc.getSubject().getId().toString() + " doesn't belong to DID" + this.getSubject().toString());
 
 			// The credential should be genuine
             let checkGenuine = async () => {
@@ -3122,7 +3122,7 @@ export namespace DIDDocument {
                 this.document.credentials = new ComparableMap<DIDURL, VerifiableCredential>();
             } else {
                 if (this.document.credentials.has(vc.getId()))
-                    throw new DIDObjectAlreadyExistException(vc.getId().toString());
+                    throw new DIDObjectAlreadyExistException("Credential " + vc.getId().toString() + "already exists in the document");
             }
 
             this.document.credentials.set(vc.getId(), vc);
@@ -3187,12 +3187,12 @@ export namespace DIDDocument {
             checkArgument(id != null, "Invalid credential id");
 
             if (this.document.credentials == null || this.document.credentials.size == 0)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException(this.getSubject().toString() + " has no any credential");
 
             if (this.document.credentials.delete(this.canonicalId(id)))
                 this.invalidateProof();
             else
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No credential " + id.toString());
 
             return this;
         }
@@ -3246,12 +3246,12 @@ export namespace DIDDocument {
                 id = this.canonicalId(id);
 
             if (this.document.services == null || this.document.services.size == 0)
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException(id.toString()+ " has no any service");
 
             if (this.document.services.delete(this.canonicalId(id)))
                 this.invalidateProof();
             else
-                throw new DIDObjectNotExistException(id.toString());
+                throw new DIDObjectNotExistException("No service " + id.toString());
 
             return this;
         }
@@ -3337,7 +3337,7 @@ export namespace DIDDocument {
 
             let sigs = this.document.multisig == null ? 1 : this.document.multisig.m();
             if (this.document.proofs != null && this.document.proofs.size == sigs)
-                throw new AlreadySealedException(this.getSubject().toString());
+                throw new AlreadySealedException(this.getSubject().toString() + " is already sealed");
 
             if (this.document.controllers == null || this.document.controllers.length == 0) {
                 this.document.controllers = [];
@@ -3389,7 +3389,7 @@ export namespace DIDDocument {
             let signKey = signerDoc.getDefaultPublicKeyId();
 
             if (this.document.proofs.has(signerDoc.getSubject()))
-                throw new AlreadySignedException(signerDoc.getSubject().toString());
+                throw new AlreadySignedException(signerDoc.getSubject().toString() + " already signed");
 
             let proofs = this.document.proofs;
             this.document.proofs = null;

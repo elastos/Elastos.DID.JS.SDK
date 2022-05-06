@@ -101,7 +101,7 @@ export class DID {
                 start++;		// eliminate leading whitespace
 
             if (start == limit) // empty did string
-                throw new MalformedDIDException("empty DID string");
+                throw new MalformedDIDException("Empty DID string");
 
             let pos = start;
 

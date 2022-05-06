@@ -125,7 +125,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
             this.superThis.did = context;
 
             if (url == null)
-                throw new MalformedDIDURLException("null DIDURL string");
+                throw new MalformedDIDURLException("Null DIDURL string");
 
             let start = 0;
             let limit = url.length;
@@ -139,7 +139,7 @@ export class DIDURL implements Hashable, Comparable<DIDURL> {
                 start++;		// eliminate leading whitespace
 
             if (start == limit) // empty url string
-                throw new MalformedDIDURLException("empty DIDURL string");
+                throw new MalformedDIDURLException("Empty DIDURL string");
 
             let pos = start;
 
