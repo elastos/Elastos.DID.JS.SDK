@@ -646,6 +646,8 @@ export class DIDStore {
         if (typeof id === "string")
             id = DIDURL.from(id);
 
+        checkArgument(id.isQualified(), "Unqualified credential id");
+
         try {
             let value = await this.cache.getAsync(DIDStore.Key.forCredential(id), async () => {
                 let vc = await this.storage.loadCredential(id as DIDURL);
@@ -676,6 +678,8 @@ export class DIDStore {
         checkArgument(idOrString != null, "Invalid credential id");
 
         let id = DIDURL.from(idOrString);
+        checkArgument(id.isQualified(), "Unqualified credential id");
+
         return this.storage.containsCredential(id);
     }
 
@@ -700,6 +704,7 @@ export class DIDStore {
      */
     public storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
         checkArgument(id != null, "Invalid credential id");
+        checkArgument(id.isQualified(), "Unqualified credential id");
         checkArgument(metadata != null, "Invalid credential metadata");
 
         this.storage.storeCredentialMetadata(id, metadata);
@@ -717,6 +722,7 @@ export class DIDStore {
      */
     protected async loadCredentialMetadata(id: DIDURL): Promise<CredentialMetadata> {
         checkArgument(id != null, "Invalid credential id");
+        checkArgument(id.isQualified(), "Unqualified credential id");
 
         try {
             let value = await this.cache.getAsync(DIDStore.Key.forCredentialMetadata(id), async () => {
@@ -750,6 +756,7 @@ export class DIDStore {
         checkArgument(idOrString != null, "Invalid credential id");
 
         let id = DIDURL.from(idOrString);
+        checkArgument(id.isQualified(), "Unqualified credential id");
 
         let success = this.storage.deleteCredential(id);
         if (success) {
@@ -836,6 +843,7 @@ export class DIDStore {
         checkArgument(idOrString != null, "Invalid private key id");
 
         let id = DIDURL.from(idOrString);
+        checkArgument(id.isQualified(), "Unqualified private key id");
 
         checkArgument(privateKey != null && privateKey.length != 0, "Invalid private key");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -854,6 +862,7 @@ export class DIDStore {
      */
     public storeLazyPrivateKey(id: DIDURL) {
         checkArgument(id != null, "Invalid private key id");
+        checkArgument(id.isQualified(), "Unqualified private key id");
 
         this.storage.storePrivateKey(id, DIDStore.DID_LAZY_PRIVATEKEY);
         this.cache.put(DIDStore.Key.forDidPrivateKey(id), DIDStore.DID_LAZY_PRIVATEKEY);
@@ -869,6 +878,7 @@ export class DIDStore {
      */
     public async loadPrivateKey(id: DIDURL, storepass: string): Promise<Buffer> {
         checkArgument(id != null, "Invalid private key id");
+        checkArgument(id.isQualified(), "Unqualified private key id");
         checkArgument(storepass && storepass != null, "Invalid storepass");
 
         try {
@@ -904,6 +914,8 @@ export class DIDStore {
         checkArgument(idOrString != null, "Invalid private key id");
 
         let id = DIDURL.from(idOrString);
+        checkArgument(id.isQualified(), "Unqualified private key id");
+
         return this.storage.containsPrivateKey(id);
     }
 
@@ -958,6 +970,7 @@ export class DIDStore {
      */
     public async sign(id: DIDURL, storepass: string, digest: Buffer): Promise<string> {
         checkArgument(id != null, "Invalid private key id");
+        checkArgument(id.isQualified(), "Unqualified private key id");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
         checkArgument(digest != null && digest.length > 0, "Invalid digest");
 
