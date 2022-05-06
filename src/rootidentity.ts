@@ -108,7 +108,7 @@ export class RootIdentity {
         let identity = RootIdentity.newFromMnemonic(mnemonic, passphrase);
 
         if (store.containsRootIdentity(identity.getId()) && !overwrite)
-            throw new RootIdentityAlreadyExistException(identity.getId());
+            throw new RootIdentityAlreadyExistException(identity.getId() + " already exist");
 
         identity.setMetadata(new RootIdentity.Metadata(identity.getId(), store));
         store.storeRootIdentity(identity, storepass);
@@ -136,7 +136,7 @@ export class RootIdentity {
         let identity = RootIdentity.newFromPrivateKey(rootPrivateKey);
 
         if (store.containsRootIdentity(identity.getId()) && !overwrite)
-            throw new RootIdentityAlreadyExistException(identity.getId());
+            throw new RootIdentityAlreadyExistException(identity.getId() + " already exist");
 
         identity.setMetadata(new RootIdentity.Metadata(identity.getId(), store));
         store.storeRootIdentity(identity, storepass);
@@ -342,7 +342,7 @@ export class RootIdentity {
         let doc = await this.getStore().loadDid(did);
         if (doc != null) {
             if (await doc.isDeactivated())
-                throw new DIDDeactivatedException(did.toString());
+                throw new DIDDeactivatedException(did.toString() + " is deactivated");
 
             if (!overwrite)
                 throw new DIDAlreadyExistException("DID already exists in the store.");
@@ -352,7 +352,7 @@ export class RootIdentity {
             doc = await did.resolve();
             if (doc != null) {
                 if (await doc.isDeactivated())
-                    throw new DIDDeactivatedException(did.toString());
+                    throw new DIDDeactivatedException(did.toString() + " is deactivated");
 
                 if (!overwrite)
                     throw new DIDAlreadyExistException("DID already published.");
@@ -412,7 +412,7 @@ export class RootIdentity {
         let doc = await this.getStore().loadDid(did);
         if (doc != null) {
             if (await doc.isDeactivated())
-                throw new DIDDeactivatedException(did.toString());
+                throw new DIDDeactivatedException(did.toString() + " is deactivated");
 
             if (!overwrite)
                 throw new DIDAlreadyExistException("DID already exists in the store.");
@@ -422,7 +422,7 @@ export class RootIdentity {
             doc = await did.resolve();
             if (doc != null) {
                 if (await doc.isDeactivated())
-                    throw new DIDDeactivatedException(did.toString());
+                    throw new DIDDeactivatedException(did.toString() + " is deactivated");
 
                 if (!overwrite)
                     throw new DIDAlreadyExistException("DID already published.");

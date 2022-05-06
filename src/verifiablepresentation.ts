@@ -452,13 +452,13 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
 
         let holder = await store.loadDid(did);
         if (holder == null)
-            throw new DIDNotFoundException(did.toString());
+            throw new DIDNotFoundException(did.toString() + " isn't found in the chain");
 
         if (signKey == null) {
             signKey = holder.getDefaultPublicKeyId();
         } else {
             if (!holder.isAuthenticationKey(signKey))
-                throw new InvalidKeyException(signKey.toString());
+                throw new InvalidKeyException(signKey.toString()+ " isn't the authencation key");
         }
 
         if (!holder.hasPrivateKey(signKey))
@@ -495,7 +495,7 @@ export namespace VerifiablePresentation {
 
         private checkNotSealed() {
             if (this.presentation == null)
-                throw new AlreadySealedException();
+                throw new AlreadySealedException("Presentation " + this.id.toString() + " is already sealed");
         }
 
         public id(id: DIDURL | string): Builder {
@@ -616,10 +616,10 @@ export namespace VerifiablePresentation {
 
             for (let vc of credentials) {
                 if (!vc.getSubject().getId().equals(this.holder.getSubject()))
-                    throw new IllegalUsage(vc.getId().toString());
+                    throw new IllegalUsage("Credential " + vc.getId().toString() + " doesn't belong to the holder of presentation");
 
                 if (this.presentation.credentials.has(vc.getId()))
-                    throw new DIDObjectAlreadyExistException(vc.getId().toString());
+                    throw new DIDObjectAlreadyExistException(vc.getId().toString() + " already exist in the presentation");
 
                 // TODO: integrity check?
                 // if (!vc.isValid())

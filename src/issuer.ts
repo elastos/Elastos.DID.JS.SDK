@@ -40,7 +40,7 @@ export class Issuer {
 
         if (signKey) {
             if (!this.self.isAuthenticationKey(signKey))
-                throw new InvalidKeyException(signKey.toString());
+                throw new InvalidKeyException(signKey.toString() + " isn't the authentication key");
         } else {
             signKey = this.self.getDefaultPublicKeyId();
             if (signKey == null)

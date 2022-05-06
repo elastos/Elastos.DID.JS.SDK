@@ -94,7 +94,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
     private checkAttachedStore() {
         if (!this.getMetadata().attachedStore())
-            throw new NotAttachedWithStoreException();
+            throw new NotAttachedWithStoreException("Not attach with did store");
     }
 
     /**
@@ -487,22 +487,22 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         if (!await this.isGenuine()) {
             log.error("Publish failed because the credential is not genuine.");
-            throw new CredentialNotGenuineException(this.getId().toString());
+            throw new CredentialNotGenuineException(this.getId().toString() + " isn't genuine");
         }
 
         if (await this.isExpired()) {
             log.error("Publish failed because the credential is expired.");
-            throw new CredentialExpiredException(this.getId().toString());
+            throw new CredentialExpiredException(this.getId().toString() + " is expired");
         }
 
         if (await this.isRevoked()) {
             log.error("Publish failed because the credential is revoked.");
-            throw new CredentialRevokedException(this.getId().toString());
+            throw new CredentialRevokedException(this.getId().toString() + " is revoked");
         }
 
         if (await this.wasDeclared()) {
             log.error("Publish failed because the credential already declared.");
-            throw new CredentialAlreadyExistException(this.getId().toString());
+            throw new CredentialAlreadyExistException(this.getId().toString() + " is already declared");
         }
 
         let owner = await this.getStore().loadDid(this.getSubject().getId());
@@ -510,7 +510,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
             // Fail-back: resolve the owner's document
             owner = await this.getSubject().getId().resolve();
             if (owner == null)
-                throw new DIDNotFoundException(this.getSubject().getId().toString());
+                throw new DIDNotFoundException(this.getSubject().getId().toString() + " isn't found in the chain");
 
             owner.getMetadata().attachStore(this.getStore());
         }
@@ -520,7 +520,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         if (signKey != null) {
             if (!owner.isAuthenticationKey(signKey))
-                throw new InvalidKeyException(signKey.toString());
+                throw new InvalidKeyException(signKey.toString() + " isn't the authentication key");
         } else {
             signKey = owner.getDefaultPublicKeyId();
         }
@@ -538,20 +538,20 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         let owner = await this.getSubject().getId().resolve();
         if (owner == null) {
             log.error("Publish failed because the credential owner is not published.");
-            throw new DIDNotFoundException(this.getSubject().getId().toString());
+            throw new DIDNotFoundException(this.getSubject().getId().toString()+ " isn't found in the chain");
         }
         owner.getMetadata().attachStore(this.getStore());
 
         let issuer = await this.getIssuer().resolve();
         if (issuer == null) {
             log.error("Publish failed because the credential issuer is not published.");
-            throw new DIDNotFoundException(this.getIssuer().toString());
+            throw new DIDNotFoundException(this.getIssuer().toString() + " isn't found in the chain");
         }
         issuer.getMetadata().attachStore(this.getStore());
 
         if (await this.isRevoked()) {
             log.error("Publish failed because the credential is revoked.");
-            throw new CredentialRevokedException(this.getId().toString());
+            throw new CredentialRevokedException(this.getId().toString()+ " is revoked");
         }
 
         if (typeof signKey === "string")
@@ -566,7 +566,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
                 // Fail-back: resolve the owner's document
                 signer = await this.getSubject().getId().resolve();
                 if (signer == null)
-                    throw new DIDNotFoundException(this.getSubject().getId().toString());
+                    throw new DIDNotFoundException(this.getSubject().getId().toString() + " isn't found in the chain");
 
                 signer.getMetadata().attachStore(this.getStore());
             }
@@ -585,7 +585,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         if (signKey != null) {
             if (!signer.isAuthenticationKey(signKey))
-                throw new InvalidKeyException(signKey.toString());
+                throw new InvalidKeyException(signKey.toString() + " isn't the authencation key");
         } else {
             signKey = signer.getDefaultPublicKeyId();
         }
@@ -599,12 +599,12 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
         checkArgument(storepass && storepass != null, "Invalid storepass");
 
         if (!signer.getMetadata().attachedStore())
-            throw new NotAttachedWithStoreException(signer.getSubject().toString());
+            throw new NotAttachedWithStoreException(signer.getSubject().toString() + " not attach with did store");
 
         let bio = await DIDBackend.getInstance().resolveCredentialBiography(id, signer.getSubject());
         if (bio.getStatus().equals(CredentialBiographyStatus.REVOKED)) {
             log.error("Publish failed because the credential is revoked.");
-            throw new CredentialRevokedException(id.toString());
+            throw new CredentialRevokedException(id.toString()+ " is revoked");
         }
 
         if (bio.getStatus().equals(CredentialBiographyStatus.VALID)) {
@@ -620,7 +620,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
 
         if (signKey != null) {
             if (!signer.isAuthenticationKey(signKey))
-                throw new InvalidKeyException(signKey.toString());
+                throw new InvalidKeyException(signKey.toString()+ " isn't the authencation key");
         } else {
             signKey = signer.getDefaultPublicKeyId();
         }
@@ -638,7 +638,7 @@ export class VerifiableCredential extends DIDEntity<VerifiableCredential> implem
      */
     public static async resolve(id: DIDURL | string, issuer: DID | string = null, force = false): Promise<VerifiableCredential> {
         if (id == null)
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("No credential id");
 
         if (typeof id === "string")
             id = DIDURL.from(id);
@@ -947,7 +947,7 @@ export namespace VerifiableCredential {
 
         private checkNotSealed() {
             if (this.credential == null)
-                throw new AlreadySealedException();
+                throw new AlreadySealedException(this.id.toString() + " is already sealed");
         }
 
         /**
