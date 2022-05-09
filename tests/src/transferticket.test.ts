@@ -83,7 +83,9 @@ describe('TransferTicket Tests', () => {
             expect(tt.getSubject().equals(new DID("did:elastos:foobar"))).toBeTruthy();
             expect(tt.getTo().equals(new DID("did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d"))).toBeTruthy();
             expect(tt.getProofs().length).toBe(2);
-            expect(tt.isGenuine()).toBeTruthy();
+
+            let genuine = await tt.isGenuine();
+            expect(genuine).toBeTruthy();
         });
     });
 
@@ -97,7 +99,9 @@ describe('TransferTicket Tests', () => {
             expect(tt.getSubject().equals(new DID("did:elastos:baz"))).toBeTruthy();
             expect(tt.getTo().equals(new DID("did:elastos:igHbSCez6H3gTuVPzwNZRrdj92GCJ6hD5d"))).toBeTruthy();
             expect(tt.getProofs().length).toBe(1);
-            expect(tt.isGenuine()).toBeTruthy();
+
+            let genuine = await tt.isGenuine();
+            expect(genuine).toBeTruthy();
         });
     });
 });
