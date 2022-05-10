@@ -137,6 +137,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
             void axios({
                 method: "post",
                 url: url.toString(),
+                maxRedirects: 5,
                 headers: {
                     // Don't set user-agent in browser environment, this is forbidden by modern browsers.
                     "Content-Type": "application/json",
