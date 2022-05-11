@@ -105,7 +105,7 @@ import { Claims } from "./internals";
     });
 } */
 
-let __VERSION__ = "2.2.8";
+let __VERSION__ = "2.2.9";
 
 if (typeof window != 'undefined') {
     if ("elastos_did_ver" in window)
