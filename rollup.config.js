@@ -60,10 +60,10 @@ const banner = `/*
 
 const onwarn = warning => {
     // eslint-disable-next-line no-console
-    if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" && 
-            (warning.importer.indexOf("node_modules") > -1 ||
-             warning.importer.indexOf("internals.ts") > -1 ||
-             warning.importer.indexOf("src/browser/readable-stream") > -1))
+    if (warning.code && warning.code === "CIRCULAR_DEPENDENCY" &&
+        (warning.importer.indexOf("node_modules") > -1 ||
+            warning.importer.indexOf("internals.ts") > -1 ||
+            warning.importer.indexOf("src/browser/readable-stream") > -1))
         return; // TMP: don't get flooded by our "internals" circular dependencies for now
 
     if (warning.code && warning.code === "THIS_IS_UNDEFINED")
@@ -72,9 +72,9 @@ const onwarn = warning => {
     if (warning.code && warning.code === "EVAL")
         return; // TMP: don't get flooded by this for now
 
-    if (prodBuild && warning.code && warning.code === "PLUGIN_WARNING" && 
-            warning.plugin && warning.plugin === "typescript" &&
-            warning.message.indexOf("Rollup 'sourcemap' option") > -1)
+    if (prodBuild && warning.code && warning.code === "PLUGIN_WARNING" &&
+        warning.plugin && warning.plugin === "typescript" &&
+        warning.message.indexOf("Rollup 'sourcemap' option") > -1)
         return; // TMP: ignore sourcemap option warning in prodbuild
 
     console.warn("Rollup build warning:", warning);
@@ -116,7 +116,7 @@ const nodePlugins = [
     typescript({
         exclude: "*.browser.ts"
     }),
-    ...prodBuild? [
+    ...prodBuild ? [
         terser()
     ] : []
 ];
@@ -198,6 +198,33 @@ export default command => {
             //'browserfs'
             /* 'readable-stream',
             'readable-stream/transform' */
+            'axios',
+            'fs',
+            'fsevents',
+            'module',
+            'os',
+            'url',
+            'util',
+            'crypto-browserify',
+            'path-browserify',
+            'stream-browserify',
+            'elliptic',
+            'buffer',
+            'process-es6',
+            "lodash",
+            "util",
+            "dayjs",
+            "string_decoder",
+            "bip32",
+            "bip39",
+            "bn.js",
+            "secp256r1",
+            "js-crypto-key-utils",
+            "create-hash",
+            "jose",
+            "bs58",
+            "bs58check",
+            "jszip"
         ],
         plugins: [
             // IMPORTANT: DON'T CHANGE THE ORDER OF THINGS BELOW TOO MUCH! OTHERWISE YOU'LL GET
@@ -295,7 +322,7 @@ export default command => {
             inject({
                 "BrowserFS": "browserfs"
             }),
-            ...prodBuild? [
+            ...prodBuild ? [
                 terser()
             ] : [],
             visualizer({
@@ -318,5 +345,5 @@ export default command => {
         ]
     };
 
-    return [commonJSBuild, esmBuild, browserBuilds];
+    return [/* commonJSBuild, esmBuild, */ browserBuilds];
 };
