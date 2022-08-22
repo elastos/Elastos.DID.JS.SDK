@@ -2417,6 +2417,21 @@ describe('DIDDocument Tests', () => {
         }
     })
 
+    test("testEncryptDecryptData", async () => {
+        let identity = await testData.getRootIdentity();
+        let doc = await identity.newDid(TestConfig.storePass);
+        expect(doc).not.toBeNull();
+
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
+
+        const sourceStr = 'This is the string for encrypting.'.repeat(50);
+        const encryptedData = await doc.encryptData(Buffer.from(sourceStr), TestConfig.storePass);
+        // console.log(`encryptedData: ${encryptedData.toString('hex')}`);
+        const decryptedData = await doc.decryptData(encryptedData, TestConfig.storePass);
+        expect(decryptedData.toString('utf8')).toEqual(sourceStr);
+    })
+
     test("testCreateCustomizedDid", async () => {
         let identity = await testData.getRootIdentity();
 

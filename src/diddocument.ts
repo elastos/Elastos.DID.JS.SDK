@@ -51,7 +51,7 @@ import { checkState, DIDBiography, DIDBiographyStatus, DIDStore, Features } from
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
-const _sodium = require('libsodium-wrappers');
+import * as sodium from 'libsodium-wrappers';
 
 const log = new Logger("DIDDocument");
 /**
@@ -1540,7 +1540,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let key = HDKey.deserialize(await this.getMetadata().getStore().loadPrivateKey(
             this.getDefaultPublicKeyId(), storepass));
 
-        return Uint8Array.from(key.getPrivateKeyBytes().slice(1));
+        return Uint8Array.from(key.getPrivateKeyBytes());
     }
 
     private static concatUint8Arrays(arr1: Uint8Array, arr2: Uint8Array) {
@@ -1557,9 +1557,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param storepass the password for DIDStore
      */
     public async encryptData(data: Buffer, storepass: string): Promise<Buffer> {
-        await _sodium.ready;
-        const sodium = _sodium;
-
         checkArgument(!!data, "Invalid data");
 
         const key = await this.getPrivateKeyForEncryption(storepass);
@@ -1595,17 +1592,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param storepass the password for DIDStore
      */
     public async decryptData(data: Buffer, storepass: string): Promise<Buffer> {
-        await _sodium.ready;
-        const sodium = _sodium;
-
-        checkArgument(!!data && data.length > sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES, "Invalid data");
+        checkArgument(data && data.length > sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES, "Invalid data");
 
         const key = await this.getPrivateKeyForEncryption(storepass);
 
         /* Decrypt the stream: initializes the state, using the key and a header */
         const header = new Uint8Array(data.slice(0, sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES));
-        console.log(`key, ${Buffer.from(key).toString('hex')}`)
-        console.log(`header, ${header}`);
         const state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, key);
 
         // decrypt data
