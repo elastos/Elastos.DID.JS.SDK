@@ -1561,6 +1561,10 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         const key = await this.getPrivateKeyForEncryption(storepass);
 
+        return this.encryptDataByKey(data, key);
+    }
+
+    private encryptDataByKey(data: Buffer, key: Uint8Array): Buffer {
         /* Set up a new stream: initialize the state and create the header */
         const result = sodium.crypto_secretstream_xchacha20poly1305_init_push(key);
         const [header, state] = [result.header, result.state];
@@ -1596,6 +1600,10 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 
         const key = await this.getPrivateKeyForEncryption(storepass);
 
+        return this.decryptDataByKey(data, key);
+    }
+
+    private decryptDataByKey(data: Buffer, key: Uint8Array): Buffer {
         /* Decrypt the stream: initializes the state, using the key and a header */
         const header = new Uint8Array(data.slice(0, sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES));
         const state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, key);
@@ -1619,12 +1627,39 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return Buffer.from(result_array);
     }
 
-    public encryptWithCurve25519() {
+    private async getCurve25519SharedKey(storepass: string, serverPublicKey: Uint8Array): Promise<sodium.CryptoKX> {
+        const key = await this.getPrivateKeyForEncryption(storepass);
 
+        // get ed25519 key pair.
+        const keyPair = sodium.crypto_sign_seed_keypair(key);
+
+        // get curve25519 key pair.
+        const privateKey = sodium.crypto_sign_ed25519_sk_to_curve25519(keyPair.privateKey);
+        const publicKey = sodium.crypto_sign_ed25519_pk_to_curve25519(keyPair.publicKey);
+        console.log(`curve25519 key pair: privateKey, ${Buffer.from(privateKey).toString('hex')}, publicKey, ${Buffer.from(publicKey).toString('hex')}`);
+
+        // get shared keys.
+        return sodium.crypto_kx_client_session_keys(publicKey, privateKey, serverPublicKey);
     }
 
-    public decryptWithCurve25519() {
+    public async encryptDataByCurve25519(data: Buffer, storepass: string, serverPublicKey: Uint8Array): Promise<Buffer> {
+        checkArgument(!!data, "Invalid data");
+        checkArgument(!!serverPublicKey, "Invalid server publicKey");
 
+        const sharedKey: sodium.CryptoKX = await this.getCurve25519SharedKey(storepass, serverPublicKey);
+
+        // encrypt data with any shared keys.
+        return this.encryptDataByKey(data, sharedKey.sharedRx);
+    }
+
+    public async decryptDataByCurve25519(data: Buffer, storepass: string, serverPublicKey: Uint8Array): Promise<Buffer> {
+        checkArgument(!!data, "Invalid data");
+        checkArgument(!!serverPublicKey, "Invalid server publicKey");
+
+        const sharedKey: sodium.CryptoKX = await this.getCurve25519SharedKey(storepass, serverPublicKey);
+
+        // encrypt data with any shared keys.
+        return this.decryptDataByKey(data, sharedKey.sharedRx);
     }
 
     /**

@@ -2432,6 +2432,25 @@ describe('DIDDocument Tests', () => {
         expect(decryptedData.toString('utf8')).toEqual(sourceStr);
     })
 
+    test("testEncryptDecryptDataByCurve25519", async () => {
+        let identity = await testData.getRootIdentity();
+        let doc = await identity.newDid(TestConfig.storePass);
+        expect(doc).not.toBeNull();
+
+        let valid = await doc.isValid();
+        expect(valid).toBeTruthy();
+
+        // pre-generated key pair.
+        const serverPublicKey = new Uint8Array(Buffer.from('2af8f0d8858d1e683bfa70e584b5e514ec6104cb209b8e265bb38b94f80bdd6a', 'hex'));
+        const serverPrivateKey = new Uint8Array(Buffer.from('a3f91c378f27b504d393d6cfce9027b255802f43fee6a1334fe25260fe062510', 'hex'));
+
+        const sourceStr = 'This is the string for encrypting.'.repeat(50);
+        const encryptedData = await doc.encryptDataByCurve25519(Buffer.from(sourceStr), TestConfig.storePass, serverPublicKey);
+        // console.log(`encryptedData: ${encryptedData.toString('hex')}`);
+        const decryptedData = await doc.decryptDataByCurve25519(encryptedData, TestConfig.storePass, serverPublicKey);
+        expect(decryptedData.toString('utf8')).toEqual(sourceStr);
+    })
+
     test("testCreateCustomizedDid", async () => {
         let identity = await testData.getRootIdentity();
 
