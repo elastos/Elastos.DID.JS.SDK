@@ -1527,6 +1527,50 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return EcdsaSigner.verify(binkey, sig, digest);
     }
 
+    private async getDerivedEncryptionKey(identifier: string, securityCode: number, storepass: string): Promise<Uint8Array> {
+        checkArgument(!!identifier, "Invalid identifier");
+        this.checkAttachedStore();
+        this.checkIsPrimitive();
+
+        let key = HDKey.deserialize(await this.getMetadata().getStore().loadPrivateKey(
+            this.getDefaultPublicKeyId(), storepass));
+
+        let path = this.mapToDerivePath(identifier, securityCode);
+        return new Uint8Array(key.deriveWithPath(path).getPrivateKeyBytes());
+
+    }
+
+    /**
+     * Create DIDDocument.EncryptionStream for encryption.
+     *
+     * @param identifier the identifier string
+     * @param securityCode the security code
+     * @param storepass the password for DIDStore
+     * @return a EncryptionStream object.
+     */
+    public async createEncryptionStream(identifier: string, securityCode: number, storepass: string)
+            : Promise<DIDDocument.EncryptionStream> {
+        const key: Uint8Array = await this.getDerivedEncryptionKey(identifier, securityCode, storepass);
+        console.log(`decryption key: ${Buffer.from(key).toString('hex')}`);
+        return DIDDocument.XChaCha20Poly1305.openEncryptionStream(key);
+    }
+
+    /**
+     * Create DIDDocument.DecryptionStream for decryption.
+     *
+     * @param identifier the identifier string
+     * @param securityCode the security code
+     * @param storepass the password for DIDStore
+     * @param header the header used to decrypt the data. Comes from EncryptionStream.header().
+     * @return a DIDDocument.DecryptionStream object.
+     */
+    public async createDecryptionStream(identifier: string, securityCode: number, storepass: string, header: Uint8Array)
+            : Promise<DIDDocument.DecryptionStream> {
+        const key: Uint8Array = await this.getDerivedEncryptionKey(identifier, securityCode, storepass);
+        console.log(`encryption key: ${Buffer.from(key).toString('hex')}`);
+        return DIDDocument.XChaCha20Poly1305.openDecryptionStream(key, header);
+    }
+
     /**
      * Get private key bytes (32bit)
      *
@@ -1548,20 +1592,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         result.set(arr1, 0);
         result.set(arr2, arr1.length);
         return result;
-    }
-
-    /**
-     * Encrypt data by private key.
-     *
-     * @param data the data to be encrypted
-     * @param storepass the password for DIDStore
-     */
-    public async encryptData(data: Buffer, storepass: string): Promise<Buffer> {
-        checkArgument(!!data, "Invalid data");
-
-        const key = await this.getPrivateKeyForEncryption(storepass);
-
-        return this.encryptDataByKey(data, key);
     }
 
     private encryptDataByKey(data: Buffer, key: Uint8Array): Buffer {
@@ -1587,20 +1617,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         }
 
         return Buffer.from(result_array);
-    }
-
-    /**
-     * Decrypt the data by private key.
-     *
-     * @param data the data encrypted by DIDDocument.encryptData()
-     * @param storepass the password for DIDStore
-     */
-    public async decryptData(data: Buffer, storepass: string): Promise<Buffer> {
-        checkArgument(data && data.length > sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES, "Invalid data");
-
-        const key = await this.getPrivateKeyForEncryption(storepass);
-
-        return this.decryptDataByKey(data, key);
     }
 
     private decryptDataByKey(data: Buffer, key: Uint8Array): Buffer {
@@ -3545,5 +3561,117 @@ export namespace DIDDocument {
             return doc;
         }
     }
-}
 
+    /**
+     * Stream class to encrypt data.
+     */
+    export abstract class EncryptionStream {
+        header(): Uint8Array {
+            throw new Error('Not implemented.');
+        }
+
+        push(clearText: Uint8Array | Buffer) {
+            return this.pushAny(clearText, true);
+        }
+
+        pushLast(clearText: Uint8Array | Buffer) {
+            return this.pushAny(clearText, true);
+        }
+
+        pushAny(clearText: Uint8Array | Buffer, isFinal): Uint8Array {
+            throw new Error('Not implemented.');
+        }
+    }
+
+    /**
+     * Stream class to decrypt data.
+     */
+    export abstract class DecryptionStream {
+        pull(cipherText: Uint8Array | Buffer): Uint8Array {
+            throw new Error('Not implemented.');
+        }
+
+        isComplete(): boolean {
+            throw new Error('Not implemented.');
+        }
+    }
+
+    class SSEncrypt extends EncryptionStream {
+        private readonly header_: Uint8Array;
+        private readonly state: sodium.StateAddress;
+
+        constructor(key: Uint8Array) {
+            super();
+
+            const result = sodium.crypto_secretstream_xchacha20poly1305_init_push(key);
+            if (!result) {
+                throw new Error('Failed to init encryption.');
+            }
+            this.header_ = result.header;
+            this.state = result.state;
+        }
+
+        header(): Uint8Array {
+            return this.header_;
+        }
+
+        pushAny(clearText: Uint8Array | Buffer, isFinal): Uint8Array {
+            checkArgument(!!clearText, 'Invalid clearText');
+
+            const text = clearText instanceof Uint8Array ? clearText : new Uint8Array(clearText);
+            const tag = isFinal ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL
+                : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
+
+            return sodium.crypto_secretstream_xchacha20poly1305_push(this.state, text, null, tag);
+        }
+    }
+
+    class SSDecrypt extends DecryptionStream {
+        private readonly state: sodium.StateAddress;
+        private complete: boolean;
+
+        constructor(key, header) {
+            super();
+
+            this.state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, key);
+            if (!this.state) {
+                throw new Error('Failed to init decryption.');
+            }
+            this.complete = false;
+        }
+
+        pull(cipherText: Uint8Array | Buffer): Uint8Array {
+            checkArgument(!!cipherText, 'Invalid clearText');
+
+            const text = cipherText instanceof Uint8Array ? cipherText : new Uint8Array(cipherText);
+
+            const msgTag = sodium.crypto_secretstream_xchacha20poly1305_pull(this.state, text);
+            if (!msgTag) {
+                throw new Error('Failed to decrypt the cipherText.')
+            }
+
+            if (msgTag.tag == sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL) {
+                this.complete = true;
+            }
+
+            return msgTag.message;
+        }
+
+        isComplete(): boolean {
+            return this.complete;
+        }
+    }
+
+    /**
+     * Builder class to create EncryptionStream and DecryptionStream.
+     */
+    export class XChaCha20Poly1305 {
+        public static openEncryptionStream(key: Uint8Array): EncryptionStream {
+            return new SSEncrypt(key);
+        }
+
+        public static openDecryptionStream(key: Uint8Array, header: Uint8Array): DecryptionStream {
+            return new SSDecrypt(key, header);
+        }
+    }
+}
