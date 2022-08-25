@@ -102,6 +102,12 @@ export class TestData {
         return this.identity;
     }
 
+    public async getSpecificRootIdentity(): Promise<RootIdentity> {
+        return RootIdentity.createFromMnemonic(
+            'clever bless future fuel obvious black subject cake art pyramid member clump',
+            TestConfig.passphrase, await this.getStore(), TestConfig.storePass, true);
+    }
+
     public getMnemonic(): string {
         return this.mnemonic;
     }

@@ -83,7 +83,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     public static ELASTOS_DID_CONTEXT = "https://ns.elastos.org/did/v1";
     public static W3ID_SECURITY_CONTEXT = "https://w3id.org/security/v1";
 
-    private static ENCRYPTION_TRUNK_SIZE = 1024;
+    private static ENCRYPTION_TRUNK_SIZE = 4096;
 
     public context?: string[];
     private subject: DID;
@@ -1571,111 +1571,60 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return DIDDocument.XChaCha20Poly1305.openDecryptionStream(key, header);
     }
 
-    /**
-     * Get private key bytes (32bit)
-     *
-     * @param storepass the password for DIDStore
-     * @private
-     */
-    private async getPrivateKeyForEncryption(storepass: string): Promise<Uint8Array> {
-        this.checkAttachedStore();
-        this.checkIsPrimitive();
+    private async getDerivedEncryptionSharedKey(identifier: string, securityCode: number, storepass: string,
+                                      serverPublicKey: Uint8Array): Promise<sodium.CryptoKX> {
+        checkArgument(!!serverPublicKey, 'Invalid serverPublicKey');
 
-        let key = HDKey.deserialize(await this.getMetadata().getStore().loadPrivateKey(
-            this.getDefaultPublicKeyId(), storepass));
-
-        return Uint8Array.from(key.getPrivateKeyBytes());
-    }
-
-    private static concatUint8Arrays(arr1: Uint8Array, arr2: Uint8Array) {
-        let result = new Uint8Array(arr1.length + arr2.length);
-        result.set(arr1, 0);
-        result.set(arr2, arr1.length);
-        return result;
-    }
-
-    private encryptDataByKey(data: Buffer, key: Uint8Array): Buffer {
-        /* Set up a new stream: initialize the state and create the header */
-        const result = sodium.crypto_secretstream_xchacha20poly1305_init_push(key);
-        const [header, state] = [result.header, result.state];
-
-        /* encrypt the data */
-        const blockSize = DIDDocument.ENCRYPTION_TRUNK_SIZE;
-        const [length] = [data.length];
-        let [start, result_array] = [0, header];
-        while (start < length - 1) {
-            const isLastPart = start + blockSize >= length - 1;
-            const tag = isLastPart ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL
-                : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
-            const len = isLastPart ? length - start : blockSize;
-
-            const encrypt_data = sodium.crypto_secretstream_xchacha20poly1305_push(
-                state, Uint8Array.from(data.slice(start, start + len)), null, tag);
-            result_array = result_array === null ? encrypt_data : DIDDocument.concatUint8Arrays(result_array, encrypt_data);
-
-            start += len;
-        }
-
-        return Buffer.from(result_array);
-    }
-
-    private decryptDataByKey(data: Buffer, key: Uint8Array): Buffer {
-        /* Decrypt the stream: initializes the state, using the key and a header */
-        const header = new Uint8Array(data.slice(0, sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES));
-        const state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, key);
-
-        // decrypt data
-        const blockSize = DIDDocument.ENCRYPTION_TRUNK_SIZE + sodium.crypto_secretstream_xchacha20poly1305_ABYTES;
-        const [length] = [data.length];
-        let [start, result_array] = [sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES, null];
-        while (start < length - 1) {
-            const isLastPart = start + blockSize >= length - 1;
-            const len = isLastPart ? length - start : blockSize;
-
-            const msgTag = sodium.crypto_secretstream_xchacha20poly1305_pull(state,
-                Uint8Array.from(data.slice(start, start + len)));
-
-            result_array = result_array === null ? msgTag.message : DIDDocument.concatUint8Arrays(result_array, msgTag.message);
-
-            start += len;
-        }
-
-        return Buffer.from(result_array);
-    }
-
-    private async getCurve25519SharedKey(storepass: string, serverPublicKey: Uint8Array): Promise<sodium.CryptoKX> {
-        const key = await this.getPrivateKeyForEncryption(storepass);
+        const key = await this.getDerivedEncryptionKey(identifier, securityCode, storepass);
 
         // get ed25519 key pair.
         const keyPair = sodium.crypto_sign_seed_keypair(key);
+        if (!keyPair) {
+            throw new Error('Failed to generate ED25519 key pair');
+        }
 
         // get curve25519 key pair.
         const privateKey = sodium.crypto_sign_ed25519_sk_to_curve25519(keyPair.privateKey);
         const publicKey = sodium.crypto_sign_ed25519_pk_to_curve25519(keyPair.publicKey);
+        if (!privateKey || !publicKey) {
+            throw new Error('Failed to generate Curve25519 key pair');
+        }
+
         console.log(`curve25519 key pair: privateKey, ${Buffer.from(privateKey).toString('hex')}, publicKey, ${Buffer.from(publicKey).toString('hex')}`);
 
         // get shared keys.
         return sodium.crypto_kx_client_session_keys(publicKey, privateKey, serverPublicKey);
     }
 
-    public async encryptDataByCurve25519(data: Buffer, storepass: string, serverPublicKey: Uint8Array): Promise<Buffer> {
-        checkArgument(!!data, "Invalid data");
-        checkArgument(!!serverPublicKey, "Invalid server publicKey");
-
-        const sharedKey: sodium.CryptoKX = await this.getCurve25519SharedKey(storepass, serverPublicKey);
-
-        // encrypt data with any shared keys.
-        return this.encryptDataByKey(data, sharedKey.sharedRx);
+    /**
+     * Create DIDDocument.EncryptionStream for encryption by Curve25519.
+     *
+     * @param identifier the identifier string
+     * @param securityCode the security code
+     * @param storepass the password for DIDStore
+     * @param serverPublicKey the public key from other side.
+     */
+    public async createEncryptionStreamByCurve25519(identifier: string, securityCode: number, storepass: string,
+                                                    serverPublicKey: Uint8Array)
+            : Promise<DIDDocument.EncryptionStream> {
+        const key = await this.getDerivedEncryptionSharedKey(identifier, securityCode, storepass, serverPublicKey);
+        return DIDDocument.XChaCha20Poly1305.openEncryptionStream(key.sharedRx);
     }
 
-    public async decryptDataByCurve25519(data: Buffer, storepass: string, serverPublicKey: Uint8Array): Promise<Buffer> {
-        checkArgument(!!data, "Invalid data");
-        checkArgument(!!serverPublicKey, "Invalid server publicKey");
-
-        const sharedKey: sodium.CryptoKX = await this.getCurve25519SharedKey(storepass, serverPublicKey);
-
-        // encrypt data with any shared keys.
-        return this.decryptDataByKey(data, sharedKey.sharedRx);
+    /**
+     * Create DIDDocument.DecryptionStream for decryption.
+     *
+     * @param identifier the identifier string
+     * @param securityCode the security code
+     * @param storepass the password for DIDStore
+     * @param header the header used to decrypt the data. Comes from EncryptionStream.header().
+     * @param serverPublicKey the public key from other side.
+     */
+    public async createDecryptionStreamByCurve25519(identifier: string, securityCode: number, storepass: string,
+                                                    header: Uint8Array, serverPublicKey: Uint8Array)
+            : Promise<DIDDocument.DecryptionStream> {
+        const key = await this.getDerivedEncryptionSharedKey(identifier, securityCode, storepass, serverPublicKey);
+        return DIDDocument.XChaCha20Poly1305.openDecryptionStream(key.sharedRx, header);
     }
 
     /**
@@ -3667,10 +3616,15 @@ export namespace DIDDocument {
      */
     export class XChaCha20Poly1305 {
         public static openEncryptionStream(key: Uint8Array): EncryptionStream {
+            checkArgument(!!key, 'Invalid key');
+
             return new SSEncrypt(key);
         }
 
         public static openDecryptionStream(key: Uint8Array, header: Uint8Array): DecryptionStream {
+            checkArgument(!!key, 'Invalid key');
+            checkArgument(!!header, 'Invalid header');
+
             return new SSDecrypt(key, header);
         }
     }

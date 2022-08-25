@@ -2418,8 +2418,9 @@ describe('DIDDocument Tests', () => {
     })
 
     test("testEncryptDecryptData", async () => {
-        let identity = await testData.getRootIdentity();
-        let doc: DIDDocument = await identity.newDid(TestConfig.storePass);
+        // Get specific DIDDocument.
+        let identity = await testData.getSpecificRootIdentity();
+        let doc: DIDDocument = await identity.newDid(TestConfig.storePass, 0, true);
         expect(doc).not.toBeNull();
 
         let valid = await doc.isValid();
@@ -2450,8 +2451,9 @@ describe('DIDDocument Tests', () => {
     })
 
     test("testEncryptDecryptDataByCurve25519", async () => {
-        let identity = await testData.getRootIdentity();
-        let doc = await identity.newDid(TestConfig.storePass);
+        // Get specific DIDDocument.
+        let identity = await testData.getSpecificRootIdentity();
+        let doc: DIDDocument = await identity.newDid(TestConfig.storePass, 0, true);
         expect(doc).not.toBeNull();
 
         let valid = await doc.isValid();
@@ -2461,11 +2463,42 @@ describe('DIDDocument Tests', () => {
         const serverPublicKey = new Uint8Array(Buffer.from('2af8f0d8858d1e683bfa70e584b5e514ec6104cb209b8e265bb38b94f80bdd6a', 'hex'));
         const serverPrivateKey = new Uint8Array(Buffer.from('a3f91c378f27b504d393d6cfce9027b255802f43fee6a1334fe25260fe062510', 'hex'));
 
-        const sourceStr = 'This is the string for encrypting.'.repeat(50);
-        const encryptedData = await doc.encryptDataByCurve25519(Buffer.from(sourceStr), TestConfig.storePass, serverPublicKey);
-        // console.log(`encryptedData: ${encryptedData.toString('hex')}`);
-        const decryptedData = await doc.decryptDataByCurve25519(encryptedData, TestConfig.storePass, serverPublicKey);
-        expect(decryptedData.toString('utf8')).toEqual(sourceStr);
+        // get from the log of DIDDocument
+        const docPublicKey = new Uint8Array(Buffer.from('01c854b146301afe45c51ce6dcce53558131bc4150072a237278226549ea4f53', 'hex'));
+
+        // get server key
+        // const serverKey = sodium.crypto_kx_client_session_keys(serverPublicKey, serverPrivateKey, docPublicKey).sharedRx;
+        const serverKey = new Uint8Array(Buffer.from('609f8a56daa9c241ff7e936f764ef66519b7b55767d1e4feebb3403f816187ab', 'hex'));
+
+        // original data.
+        const [identifier, securityCode] = ['identifier1', 1];
+        const sourceStr1 = 'This is the string 1 for encrypting.';
+        const sourceStr2 = 'This is the string 2 for encrypting.';
+        const sourceStr3 = 'This is the string 3 for encrypting.';
+
+        // encrypt by doc.
+        let encryptStream = await doc.createEncryptionStreamByCurve25519(identifier, securityCode, TestConfig.storePass, serverPublicKey);
+        const header = encryptStream.header();
+
+        const cipherStr1 = encryptStream.push(Buffer.from(sourceStr1, 'utf8'));
+        const cipherStr2 = encryptStream.push(Buffer.from(sourceStr2, 'utf8'));
+        const cipherStr3 = encryptStream.pushLast(Buffer.from(sourceStr3, 'utf8'));
+
+        // decrypt by server private key.
+        let decryptStream = DIDDocument.XChaCha20Poly1305.openDecryptionStream(serverKey, header);
+
+        const clearStr1 = decryptStream.pull(cipherStr1);
+        const clearStr2 = decryptStream.pull(cipherStr2);
+        const clearStr3 = decryptStream.pull(cipherStr3);
+
+        expect(Buffer.from(clearStr1).toString('utf8')).toEqual(sourceStr1);
+        expect(Buffer.from(clearStr2).toString('utf8')).toEqual(sourceStr2);
+        expect(Buffer.from(clearStr3).toString('utf8')).toEqual(sourceStr3);
+        expect(decryptStream.isComplete()).toBe(true);
+
+        // encrypt by server private key.
+
+        // decrypt by doc.
     })
 
     test("testCreateCustomizedDid", async () => {
