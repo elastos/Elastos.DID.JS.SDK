@@ -74,6 +74,7 @@ import { JWTHeader } from "./internals";
 import { JWTParserBuilder } from "./internals";
 import { JWTParser } from "./internals";
 import { Claims } from "./internals";
+import { Cipher, EncryptionStream, DecryptionStream } from "./xchacha20poly1305";
 
 /**
  * Global initializer. For now, needed by the browser to initialize BrowserFS before running anything else.
@@ -126,7 +127,8 @@ export type {
     ComparableMap,
     DIDTransactionAdapter,
     LocalResolveHandle,
-    ConflictHandle
+    ConflictHandle,
+    Cipher
 }
 
 export {
@@ -177,5 +179,9 @@ export {
     BASE64,
     HDKey,
     Base58,
-    EcdsaSigner
+    EcdsaSigner,
+
+    // encrypt & decrypt
+    EncryptionStream,
+    DecryptionStream
 }

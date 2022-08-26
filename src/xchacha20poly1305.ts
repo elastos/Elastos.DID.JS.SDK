@@ -36,6 +36,34 @@ export abstract class DecryptionStream {
     }
 }
 
+class XChaCha20Poly1305Utils {
+    static encrypt(key: Uint8Array, data: Buffer, nonce: Buffer): Buffer {
+        checkArgument(!!data, 'Invalid data');
+        checkArgument(!!nonce, 'Invalid nonce');
+
+        const result = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+            new Uint8Array(data), null, null, new Uint8Array(nonce), key);
+        if (!result) {
+            throw new Error('Failed to encrypt data.');
+        }
+
+        return Buffer.from(result);
+    }
+
+    static decrypt(key: Uint8Array, data: Buffer, nonce: Buffer): Buffer {
+        checkArgument(!!data, 'Invalid data');
+        checkArgument(!!nonce, 'Invalid nonce');
+
+        const result = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+            null, new Uint8Array(data), null, new Uint8Array(nonce), key);
+        if (!result) {
+            throw new Error('Failed to decrypt data.');
+        }
+
+        return Buffer.from(result);
+    }
+}
+
 class SSEncrypt extends EncryptionStream {
     private readonly header_: Uint8Array;
     private readonly state: sodium.StateAddress;
@@ -107,29 +135,16 @@ class SSDecrypt extends DecryptionStream {
 }
 
 /**
- * Builder class to create EncryptionStream and DecryptionStream.
+ * Class to encrypt & decrypt message or stream data.
  */
-export class XChaCha20Poly1305Cipher {
-    constructor(private key: Uint8Array) {}
-
+export interface Cipher {
     /**
      * Encrypt the message with small size.
      *
      * @param data the data to be encrypted.
      * @param nonce the nonce for encryption.
      */
-    public encrypt(data: Buffer, nonce: Buffer): Buffer {
-        checkArgument(!!data, 'Invalid data');
-        checkArgument(!!nonce, 'Invalid nonce');
-
-        const result = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
-            new Uint8Array(data), null, null, new Uint8Array(nonce), this.key);
-        if (!result) {
-            throw new Error('Failed to encrypt data.');
-        }
-
-        return Buffer.from(result);
-    }
+    encrypt(data: Buffer, nonce: Buffer): Buffer;
 
     /**
      * Decrypt the message with small size.
@@ -137,32 +152,57 @@ export class XChaCha20Poly1305Cipher {
      * @param data the data to be decrypted.
      * @param nonce the nonce for decryption, same as the nonce on encrypt().
      */
-    public decrypt(data: Buffer, nonce: Buffer): Buffer {
-        checkArgument(!!data, 'Invalid data');
-        checkArgument(!!nonce, 'Invalid nonce');
-
-        const result = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
-            null, new Uint8Array(data), null, new Uint8Array(nonce), this.key);
-        if (!result) {
-            throw new Error('Failed to decrypt data.');
-        }
-
-        return Buffer.from(result);
-    }
+    decrypt(data: Buffer, nonce: Buffer): Buffer;
 
     /**
      * Get a encrypt stream for large size.
      */
-    createEncryptionStream(): EncryptionStream {
-        return new SSEncrypt(this.key);
-    }
+    createEncryptionStream(): EncryptionStream;
 
     /**
      * Get a decrypt stream for large size.
      *
      * @param header the header from EncryptionStream.
      */
+    createDecryptionStream(header: Buffer): DecryptionStream;
+}
+
+export class XChaCha20Poly1305Cipher implements Cipher {
+    constructor(private key: Uint8Array) {}
+
+    encrypt(data: Buffer, nonce: Buffer): Buffer {
+        return XChaCha20Poly1305Utils.encrypt(this.key, data, nonce);
+    }
+
+    decrypt(data: Buffer, nonce: Buffer): Buffer {
+        return XChaCha20Poly1305Utils.decrypt(this.key, data, nonce);
+    }
+
+    createEncryptionStream(): EncryptionStream {
+        return new SSEncrypt(this.key);
+    }
+
     createDecryptionStream(header: Buffer): DecryptionStream {
         return new SSDecrypt(this.key, new Uint8Array(header));
+    }
+}
+
+export class Curve25519Cipher implements Cipher {
+    constructor(private encryptKey, private decryptKey) {}
+
+    encrypt(data: Buffer, nonce: Buffer): Buffer {
+        return XChaCha20Poly1305Utils.encrypt(this.encryptKey, data, nonce);
+    }
+
+    decrypt(data: Buffer, nonce: Buffer): Buffer {
+        return XChaCha20Poly1305Utils.decrypt(this.decryptKey, data, nonce);
+    }
+
+    createEncryptionStream(): EncryptionStream {
+        return new SSEncrypt(this.encryptKey);
+    }
+
+    createDecryptionStream(header: Buffer): DecryptionStream {
+        return new SSDecrypt(this.decryptKey, new Uint8Array(header));
     }
 }
