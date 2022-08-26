@@ -51,7 +51,7 @@ import { checkState, DIDBiography, DIDBiographyStatus, DIDStore, Features } from
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
-import * as sodium from 'libsodium-wrappers';
+import { XChaCha20Poly1305Cipher } from "./xchacha20poly1305";
 
 const log = new Logger("DIDDocument");
 /**
@@ -82,8 +82,6 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     public static W3C_DID_CONTEXT = "https://www.w3.org/ns/did/v1";
     public static ELASTOS_DID_CONTEXT = "https://ns.elastos.org/did/v1";
     public static W3ID_SECURITY_CONTEXT = "https://w3id.org/security/v1";
-
-    private static ENCRYPTION_TRUNK_SIZE = 4096;
 
     public context?: string[];
     private subject: DID;
@@ -1527,7 +1525,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return EcdsaSigner.verify(binkey, sig, digest);
     }
 
-    private async getDerivedEncryptionKey(identifier: string, securityCode: number, storepass: string): Promise<Uint8Array> {
+    public async createCipher(identifier: string, securityCode: number, storepass: string): Promise<XChaCha20Poly1305Cipher> {
         checkArgument(!!identifier, "Invalid identifier");
         this.checkAttachedStore();
         this.checkIsPrimitive();
@@ -1536,95 +1534,9 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             this.getDefaultPublicKeyId(), storepass));
 
         let path = this.mapToDerivePath(identifier, securityCode);
-        return new Uint8Array(key.deriveWithPath(path).getPrivateKeyBytes());
+        const derivedPrivateKey = new Uint8Array(key.deriveWithPath(path).getPrivateKeyBytes());
 
-    }
-
-    /**
-     * Create DIDDocument.EncryptionStream for encryption.
-     *
-     * @param identifier the identifier string
-     * @param securityCode the security code
-     * @param storepass the password for DIDStore
-     * @return a EncryptionStream object.
-     */
-    public async createEncryptionStream(identifier: string, securityCode: number, storepass: string)
-            : Promise<DIDDocument.EncryptionStream> {
-        const key: Uint8Array = await this.getDerivedEncryptionKey(identifier, securityCode, storepass);
-        console.log(`decryption key: ${Buffer.from(key).toString('hex')}`);
-        return DIDDocument.XChaCha20Poly1305.openEncryptionStream(key);
-    }
-
-    /**
-     * Create DIDDocument.DecryptionStream for decryption.
-     *
-     * @param identifier the identifier string
-     * @param securityCode the security code
-     * @param storepass the password for DIDStore
-     * @param header the header used to decrypt the data. Comes from EncryptionStream.header().
-     * @return a DIDDocument.DecryptionStream object.
-     */
-    public async createDecryptionStream(identifier: string, securityCode: number, storepass: string, header: Uint8Array)
-            : Promise<DIDDocument.DecryptionStream> {
-        const key: Uint8Array = await this.getDerivedEncryptionKey(identifier, securityCode, storepass);
-        console.log(`encryption key: ${Buffer.from(key).toString('hex')}`);
-        return DIDDocument.XChaCha20Poly1305.openDecryptionStream(key, header);
-    }
-
-    private async getDerivedEncryptionSharedKey(identifier: string, securityCode: number, storepass: string,
-                                      serverPublicKey: Uint8Array): Promise<sodium.CryptoKX> {
-        checkArgument(!!serverPublicKey, 'Invalid serverPublicKey');
-
-        const key = await this.getDerivedEncryptionKey(identifier, securityCode, storepass);
-
-        // get ed25519 key pair.
-        const keyPair = sodium.crypto_sign_seed_keypair(key);
-        if (!keyPair) {
-            throw new Error('Failed to generate ED25519 key pair');
-        }
-
-        // get curve25519 key pair.
-        const privateKey = sodium.crypto_sign_ed25519_sk_to_curve25519(keyPair.privateKey);
-        const publicKey = sodium.crypto_sign_ed25519_pk_to_curve25519(keyPair.publicKey);
-        if (!privateKey || !publicKey) {
-            throw new Error('Failed to generate Curve25519 key pair');
-        }
-
-        console.log(`curve25519 key pair: privateKey, ${Buffer.from(privateKey).toString('hex')}, publicKey, ${Buffer.from(publicKey).toString('hex')}`);
-
-        // get shared keys.
-        return sodium.crypto_kx_client_session_keys(publicKey, privateKey, serverPublicKey);
-    }
-
-    /**
-     * Create DIDDocument.EncryptionStream for encryption by Curve25519.
-     *
-     * @param identifier the identifier string
-     * @param securityCode the security code
-     * @param storepass the password for DIDStore
-     * @param serverPublicKey the public key from other side.
-     */
-    public async createEncryptionStreamByCurve25519(identifier: string, securityCode: number, storepass: string,
-                                                    serverPublicKey: Uint8Array)
-            : Promise<DIDDocument.EncryptionStream> {
-        const key = await this.getDerivedEncryptionSharedKey(identifier, securityCode, storepass, serverPublicKey);
-        return DIDDocument.XChaCha20Poly1305.openEncryptionStream(key.sharedRx);
-    }
-
-    /**
-     * Create DIDDocument.DecryptionStream for decryption.
-     *
-     * @param identifier the identifier string
-     * @param securityCode the security code
-     * @param storepass the password for DIDStore
-     * @param header the header used to decrypt the data. Comes from EncryptionStream.header().
-     * @param serverPublicKey the public key from other side.
-     */
-    public async createDecryptionStreamByCurve25519(identifier: string, securityCode: number, storepass: string,
-                                                    header: Uint8Array, serverPublicKey: Uint8Array)
-            : Promise<DIDDocument.DecryptionStream> {
-        const key = await this.getDerivedEncryptionSharedKey(identifier, securityCode, storepass, serverPublicKey);
-        return DIDDocument.XChaCha20Poly1305.openDecryptionStream(key.sharedRx, header);
+        return new XChaCha20Poly1305Cipher(derivedPrivateKey);
     }
 
     /**
@@ -3508,124 +3420,6 @@ export namespace DIDDocument {
             this.document = null;
 
             return doc;
-        }
-    }
-
-    /**
-     * Stream class to encrypt data.
-     */
-    export abstract class EncryptionStream {
-        header(): Uint8Array {
-            throw new Error('Not implemented.');
-        }
-
-        push(clearText: Uint8Array | Buffer) {
-            return this.pushAny(clearText, true);
-        }
-
-        pushLast(clearText: Uint8Array | Buffer) {
-            return this.pushAny(clearText, true);
-        }
-
-        pushAny(clearText: Uint8Array | Buffer, isFinal): Uint8Array {
-            throw new Error('Not implemented.');
-        }
-    }
-
-    /**
-     * Stream class to decrypt data.
-     */
-    export abstract class DecryptionStream {
-        pull(cipherText: Uint8Array | Buffer): Uint8Array {
-            throw new Error('Not implemented.');
-        }
-
-        isComplete(): boolean {
-            throw new Error('Not implemented.');
-        }
-    }
-
-    class SSEncrypt extends EncryptionStream {
-        private readonly header_: Uint8Array;
-        private readonly state: sodium.StateAddress;
-
-        constructor(key: Uint8Array) {
-            super();
-
-            const result = sodium.crypto_secretstream_xchacha20poly1305_init_push(key);
-            if (!result) {
-                throw new Error('Failed to init encryption.');
-            }
-            this.header_ = result.header;
-            this.state = result.state;
-        }
-
-        header(): Uint8Array {
-            return this.header_;
-        }
-
-        pushAny(clearText: Uint8Array | Buffer, isFinal): Uint8Array {
-            checkArgument(!!clearText, 'Invalid clearText');
-
-            const text = clearText instanceof Uint8Array ? clearText : new Uint8Array(clearText);
-            const tag = isFinal ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL
-                : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
-
-            return sodium.crypto_secretstream_xchacha20poly1305_push(this.state, text, null, tag);
-        }
-    }
-
-    class SSDecrypt extends DecryptionStream {
-        private readonly state: sodium.StateAddress;
-        private complete: boolean;
-
-        constructor(key, header) {
-            super();
-
-            this.state = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, key);
-            if (!this.state) {
-                throw new Error('Failed to init decryption.');
-            }
-            this.complete = false;
-        }
-
-        pull(cipherText: Uint8Array | Buffer): Uint8Array {
-            checkArgument(!!cipherText, 'Invalid clearText');
-
-            const text = cipherText instanceof Uint8Array ? cipherText : new Uint8Array(cipherText);
-
-            const msgTag = sodium.crypto_secretstream_xchacha20poly1305_pull(this.state, text);
-            if (!msgTag) {
-                throw new Error('Failed to decrypt the cipherText.')
-            }
-
-            if (msgTag.tag == sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL) {
-                this.complete = true;
-            }
-
-            return msgTag.message;
-        }
-
-        isComplete(): boolean {
-            return this.complete;
-        }
-    }
-
-    /**
-     * Builder class to create EncryptionStream and DecryptionStream.
-     */
-    export class XChaCha20Poly1305 {
-        public static openEncryptionStream(key: Uint8Array): EncryptionStream {
-            checkArgument(!!key, 'Invalid key');
-
-            return new SSEncrypt(key);
-        }
-
-        public static openDecryptionStream(key: Uint8Array, header: Uint8Array): DecryptionStream {
-            checkArgument(!!key, 'Invalid key');
-            checkArgument(!!header, 'Invalid header');
-
-            return new SSDecrypt(key, header);
         }
     }
 }
