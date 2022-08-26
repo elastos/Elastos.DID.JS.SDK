@@ -2417,75 +2417,50 @@ describe('DIDDocument Tests', () => {
         }
     })
 
-    test("testEncryptDecryptData", async () => {
-        // Get specific DIDDocument.
-        let identity = await testData.getSpecificRootIdentity();
+    test("testEncryptDecryptMessage", async () => {
+        // Get random DIDDocument.
+        let identity = await testData.getRootIdentity();
         let doc: DIDDocument = await identity.newDid(TestConfig.storePass, 0, true);
         expect(doc).not.toBeNull();
 
         let valid = await doc.isValid();
         expect(valid).toBeTruthy();
 
+        // encrypt & decrypt
         const [identifier, securityCode] = ['identifier1', 1];
         const sourceStr1 = 'This is the string 1 for encrypting.';
-        const sourceStr2 = 'This is the string 2 for encrypting.';
-        const sourceStr3 = 'This is the string 3 for encrypting.';
+        const nonce = Buffer.from('404142434445464748494a4b4c4d4e4f5051525354555657', 'hex');
 
-        let encryptStream = await doc.createEncryptionStream(identifier, securityCode, TestConfig.storePass);
-        const header = encryptStream.header();
-
-        const cipherStr1 = encryptStream.push(Buffer.from(sourceStr1, 'utf8'));
-        const cipherStr2 = encryptStream.push(Buffer.from(sourceStr2, 'utf8'));
-        const cipherStr3 = encryptStream.pushLast(Buffer.from(sourceStr3, 'utf8'));
-
-        let decryptStream = await doc.createDecryptionStream(identifier, securityCode, TestConfig.storePass, header);
-
-        const clearStr1 = decryptStream.pull(cipherStr1);
-        const clearStr2 = decryptStream.pull(cipherStr2);
-        const clearStr3 = decryptStream.pull(cipherStr3);
-
-        expect(Buffer.from(clearStr1).toString('utf8')).toEqual(sourceStr1);
-        expect(Buffer.from(clearStr2).toString('utf8')).toEqual(sourceStr2);
-        expect(Buffer.from(clearStr3).toString('utf8')).toEqual(sourceStr3);
-        expect(decryptStream.isComplete()).toBe(true);
+        const cipher = await doc.createCipher(identifier, securityCode, TestConfig.storePass);
+        const cipherStr1 = cipher.encrypt(Buffer.from(sourceStr1), nonce);
+        const clearText1 = cipher.decrypt(Buffer.from(cipherStr1), nonce);
+        expect(clearText1.toString('utf8')).toEqual(sourceStr1);
     })
 
-    test("testEncryptDecryptDataByCurve25519", async () => {
-        // Get specific DIDDocument.
-        let identity = await testData.getSpecificRootIdentity();
+    test("testEncryptDecryptStream", async () => {
+        // Get random DIDDocument.
+        let identity = await testData.getRootIdentity();
         let doc: DIDDocument = await identity.newDid(TestConfig.storePass, 0, true);
         expect(doc).not.toBeNull();
 
         let valid = await doc.isValid();
         expect(valid).toBeTruthy();
 
-        // pre-generated key pair.
-        const serverPublicKey = new Uint8Array(Buffer.from('2af8f0d8858d1e683bfa70e584b5e514ec6104cb209b8e265bb38b94f80bdd6a', 'hex'));
-        const serverPrivateKey = new Uint8Array(Buffer.from('a3f91c378f27b504d393d6cfce9027b255802f43fee6a1334fe25260fe062510', 'hex'));
-
-        // get from the log of DIDDocument
-        const docPublicKey = new Uint8Array(Buffer.from('01c854b146301afe45c51ce6dcce53558131bc4150072a237278226549ea4f53', 'hex'));
-
-        // get server key
-        // const serverKey = sodium.crypto_kx_client_session_keys(serverPublicKey, serverPrivateKey, docPublicKey).sharedRx;
-        const serverKey = new Uint8Array(Buffer.from('609f8a56daa9c241ff7e936f764ef66519b7b55767d1e4feebb3403f816187ab', 'hex'));
-
-        // original data.
+        // encrypt & decrypt
         const [identifier, securityCode] = ['identifier1', 1];
         const sourceStr1 = 'This is the string 1 for encrypting.';
         const sourceStr2 = 'This is the string 2 for encrypting.';
         const sourceStr3 = 'This is the string 3 for encrypting.';
 
-        // encrypt by doc.
-        let encryptStream = await doc.createEncryptionStreamByCurve25519(identifier, securityCode, TestConfig.storePass, serverPublicKey);
+        const cipher = await doc.createCipher(identifier, securityCode, TestConfig.storePass);
+        let encryptStream = await cipher.createEncryptionStream();
         const header = encryptStream.header();
 
         const cipherStr1 = encryptStream.push(Buffer.from(sourceStr1, 'utf8'));
         const cipherStr2 = encryptStream.push(Buffer.from(sourceStr2, 'utf8'));
         const cipherStr3 = encryptStream.pushLast(Buffer.from(sourceStr3, 'utf8'));
 
-        // decrypt by server private key.
-        let decryptStream = DIDDocument.XChaCha20Poly1305.openDecryptionStream(serverKey, header);
+        let decryptStream = await cipher.createDecryptionStream(Buffer.from(header));
 
         const clearStr1 = decryptStream.pull(cipherStr1);
         const clearStr2 = decryptStream.pull(cipherStr2);
@@ -2495,10 +2470,6 @@ describe('DIDDocument Tests', () => {
         expect(Buffer.from(clearStr2).toString('utf8')).toEqual(sourceStr2);
         expect(Buffer.from(clearStr3).toString('utf8')).toEqual(sourceStr3);
         expect(decryptStream.isComplete()).toBe(true);
-
-        // encrypt by server private key.
-
-        // decrypt by doc.
     })
 
     test("testCreateCustomizedDid", async () => {
