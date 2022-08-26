@@ -51,6 +51,7 @@ import { checkState, DIDBiography, DIDBiographyStatus, DIDStore, Features } from
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
+import { XChaCha20Poly1305Cipher } from "./xchacha20poly1305";
 
 const log = new Logger("DIDDocument");
 /**
@@ -1522,6 +1523,20 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let sig = Buffer.from(base64Decode(signature), "hex");
 
         return EcdsaSigner.verify(binkey, sig, digest);
+    }
+
+    public async createCipher(identifier: string, securityCode: number, storepass: string): Promise<XChaCha20Poly1305Cipher> {
+        checkArgument(!!identifier, "Invalid identifier");
+        this.checkAttachedStore();
+        this.checkIsPrimitive();
+
+        let key = HDKey.deserialize(await this.getMetadata().getStore().loadPrivateKey(
+            this.getDefaultPublicKeyId(), storepass));
+
+        let path = this.mapToDerivePath(identifier, securityCode);
+        const derivedPrivateKey = new Uint8Array(key.deriveWithPath(path).getPrivateKeyBytes());
+
+        return new XChaCha20Poly1305Cipher(derivedPrivateKey);
     }
 
     /**
@@ -3408,4 +3423,3 @@ export namespace DIDDocument {
         }
     }
 }
-
