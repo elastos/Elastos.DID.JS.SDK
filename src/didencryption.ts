@@ -36,31 +36,28 @@ export abstract class DecryptionStream {
     }
 }
 
-class XChaCha20Poly1305Utils {
-    static encrypt(key: Uint8Array, data: Buffer, nonce: Buffer): Buffer {
-        checkArgument(!!data, 'Invalid data');
-        checkArgument(!!nonce, 'Invalid nonce');
-
-        const result = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
-            new Uint8Array(data), null, null, new Uint8Array(nonce), key);
-        if (!result) {
-            throw new Error('Failed to encrypt data.');
+export class CryptoUtils {
+    static getCurve25519KeyPair(key: Uint8Array): sodium.KeyPair {
+        const edKeyPair = sodium.crypto_sign_seed_keypair(key);
+        if (!edKeyPair) {
+            throw new Error('Failed to generate ed25519 key pair.');
         }
 
-        return Buffer.from(result);
-    }
-
-    static decrypt(key: Uint8Array, data: Buffer, nonce: Buffer): Buffer {
-        checkArgument(!!data, 'Invalid data');
-        checkArgument(!!nonce, 'Invalid nonce');
-
-        const result = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
-            null, new Uint8Array(data), null, new Uint8Array(nonce), key);
-        if (!result) {
-            throw new Error('Failed to decrypt data.');
+        const curvePrivateKey = sodium.crypto_sign_ed25519_sk_to_curve25519(edKeyPair.privateKey);
+        if (!curvePrivateKey) {
+            throw new Error('Failed to generate curve25519 private key.');
         }
+        const curvePublicKey = sodium.crypto_sign_ed25519_pk_to_curve25519(edKeyPair.publicKey);
+        if (!curvePublicKey) {
+            throw new Error('Failed to generate curve25519 public key.');
+        }
+        // console.log(`curve25519 public key: ${Buffer.from(curvePublicKey).toString('hex')}`);
 
-        return Buffer.from(result);
+        return {
+            keyType: 'curve25519',
+            privateKey: curvePrivateKey,
+            publicKey: curvePublicKey
+        }
     }
 }
 
@@ -171,11 +168,29 @@ export class XChaCha20Poly1305Cipher implements Cipher {
     constructor(private key: Uint8Array) {}
 
     encrypt(data: Buffer, nonce: Buffer): Buffer {
-        return XChaCha20Poly1305Utils.encrypt(this.key, data, nonce);
+        checkArgument(!!data, 'Invalid data');
+        checkArgument(!!nonce, 'Invalid nonce');
+
+        const result = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+            new Uint8Array(data), null, null, new Uint8Array(nonce), this.key);
+        if (!result) {
+            throw new Error('Failed to encrypt data.');
+        }
+
+        return Buffer.from(result);
     }
 
     decrypt(data: Buffer, nonce: Buffer): Buffer {
-        return XChaCha20Poly1305Utils.decrypt(this.key, data, nonce);
+        checkArgument(!!data, 'Invalid data');
+        checkArgument(!!nonce, 'Invalid nonce');
+
+        const result = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+            null, new Uint8Array(data), null, new Uint8Array(nonce), this.key);
+        if (!result) {
+            throw new Error('Failed to decrypt data.');
+        }
+
+        return Buffer.from(result);
     }
 
     createEncryptionStream(): EncryptionStream {
@@ -188,21 +203,46 @@ export class XChaCha20Poly1305Cipher implements Cipher {
 }
 
 export class Curve25519Cipher implements Cipher {
-    constructor(private encryptKey, private decryptKey) {}
+    private readonly sharedKeys: sodium.CryptoKX;
+
+    constructor(private keyPair: sodium.KeyPair, private isServer: boolean, private otherSidePublicKey: Uint8Array) {
+        this.sharedKeys = isServer
+            ? sodium.crypto_kx_server_session_keys(keyPair.publicKey, keyPair.privateKey, otherSidePublicKey)
+            : sodium.crypto_kx_client_session_keys(keyPair.publicKey, keyPair.privateKey, otherSidePublicKey);
+        if (!this.sharedKeys) {
+            throw new Error('Failed to generate shared keys.');
+        }
+    }
 
     encrypt(data: Buffer, nonce: Buffer): Buffer {
-        return XChaCha20Poly1305Utils.encrypt(this.encryptKey, data, nonce);
+        checkArgument(!!data, 'Invalid data');
+        checkArgument(!!nonce, 'Invalid nonce');
+
+        const result = sodium.crypto_box_easy(new Uint8Array(data), new Uint8Array(nonce), this.otherSidePublicKey, this.keyPair.privateKey);
+        if (!result) {
+            throw new Error('Failed to encrypt data.');
+        }
+
+        return Buffer.from(result);
     }
 
     decrypt(data: Buffer, nonce: Buffer): Buffer {
-        return XChaCha20Poly1305Utils.decrypt(this.decryptKey, data, nonce);
+        checkArgument(!!data, 'Invalid data');
+        checkArgument(!!nonce, 'Invalid nonce');
+
+        const result = sodium.crypto_box_open_easy(new Uint8Array(data), new Uint8Array(nonce), this.otherSidePublicKey, this.keyPair.privateKey);
+        if (!result) {
+            throw new Error('Failed to decrypt data.');
+        }
+
+        return Buffer.from(result);
     }
 
     createEncryptionStream(): EncryptionStream {
-        return new SSEncrypt(this.encryptKey);
+        return new SSEncrypt(this.sharedKeys.sharedTx);
     }
 
     createDecryptionStream(header: Buffer): DecryptionStream {
-        return new SSDecrypt(this.decryptKey, new Uint8Array(header));
+        return new SSDecrypt(this.sharedKeys.sharedRx, new Uint8Array(header));
     }
 }

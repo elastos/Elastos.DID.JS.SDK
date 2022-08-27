@@ -51,8 +51,7 @@ import { checkState, DIDBiography, DIDBiographyStatus, DIDStore, Features } from
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
-import * as sodium from "libsodium-wrappers";
-import {Cipher, Curve25519Cipher, XChaCha20Poly1305Cipher} from "./xchacha20poly1305";
+import { Cipher, CryptoUtils, Curve25519Cipher, XChaCha20Poly1305Cipher } from "./didencryption";
 
 const log = new Logger("DIDDocument");
 /**
@@ -1562,30 +1561,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
     public async createCurve25519Cipher(identifier: string, securityCode: number, storepass: string,
                                         isServer: boolean, otherSidePublicKey: Buffer): Promise<Cipher> {
         const derivedPrivateKey = await this.getDerivedPrivateKeyForCipher(identifier, securityCode, storepass);
-
-        const edKeyPair = sodium.crypto_sign_seed_keypair(derivedPrivateKey);
-        if (!edKeyPair) {
-            throw new Error('Failed to generate ed25519 key pair.');
-        }
-
-        const curvePrivateKey = sodium.crypto_sign_ed25519_sk_to_curve25519(edKeyPair.privateKey);
-        if (!curvePrivateKey) {
-            throw new Error('Failed to generate curve25519 private key.');
-        }
-        const curvePublicKey = sodium.crypto_sign_ed25519_pk_to_curve25519(edKeyPair.publicKey);
-        if (!curvePublicKey) {
-            throw new Error('Failed to generate curve25519 public key.');
-        }
-        console.log(`curve25519 public key: ${Buffer.from(curvePublicKey).toString('hex')}`);
-
-        const sharedKeys = isServer
-            ? sodium.crypto_kx_server_session_keys(curvePublicKey, curvePrivateKey, new Uint8Array(otherSidePublicKey))
-            : sodium.crypto_kx_client_session_keys(curvePublicKey, curvePrivateKey, new Uint8Array(otherSidePublicKey));
-        if (!sharedKeys) {
-            throw new Error('Failed to generate shared keys.');
-        }
-
-        return new Curve25519Cipher(sharedKeys.sharedTx, sharedKeys.sharedRx);
+        const curveKeyPair = CryptoUtils.getCurve25519KeyPair(derivedPrivateKey);
+        return new Curve25519Cipher(curveKeyPair, isServer, new Uint8Array(otherSidePublicKey));
     }
 
     /**
