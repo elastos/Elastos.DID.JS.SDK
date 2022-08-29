@@ -203,9 +203,14 @@ export class XChaCha20Poly1305Cipher implements Cipher {
 }
 
 export class Curve25519Cipher implements Cipher {
+    private readonly encryptKey: Uint8Array;
     private readonly sharedKeys: sodium.CryptoKX;
 
     constructor(private keyPair: sodium.KeyPair, private isServer: boolean, private otherSidePublicKey: Uint8Array) {
+        this.encryptKey = sodium.crypto_box_beforenm(otherSidePublicKey, keyPair.privateKey);
+        if (!this.encryptKey) {
+            throw new Error('Failed to generate encrypt keys.');
+        }
         this.sharedKeys = isServer
             ? sodium.crypto_kx_server_session_keys(keyPair.publicKey, keyPair.privateKey, otherSidePublicKey)
             : sodium.crypto_kx_client_session_keys(keyPair.publicKey, keyPair.privateKey, otherSidePublicKey);
@@ -218,7 +223,7 @@ export class Curve25519Cipher implements Cipher {
         checkArgument(!!data, 'Invalid data');
         checkArgument(!!nonce, 'Invalid nonce');
 
-        const result = sodium.crypto_box_easy(new Uint8Array(data), new Uint8Array(nonce), this.otherSidePublicKey, this.keyPair.privateKey);
+        const result = sodium.crypto_box_easy_afternm(new Uint8Array(data), new Uint8Array(nonce), this.encryptKey);
         if (!result) {
             throw new Error('Failed to encrypt data.');
         }
@@ -230,7 +235,7 @@ export class Curve25519Cipher implements Cipher {
         checkArgument(!!data, 'Invalid data');
         checkArgument(!!nonce, 'Invalid nonce');
 
-        const result = sodium.crypto_box_open_easy(new Uint8Array(data), new Uint8Array(nonce), this.otherSidePublicKey, this.keyPair.privateKey);
+        const result = sodium.crypto_box_open_easy_afternm(new Uint8Array(data), new Uint8Array(nonce), this.encryptKey);
         if (!result) {
             throw new Error('Failed to decrypt data.');
         }
