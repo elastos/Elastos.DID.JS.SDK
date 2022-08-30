@@ -33,7 +33,8 @@ import {
     VerificationEventListener,
     DIDBackend,
     DIDBiographyStatus,
-    Logger
+    Logger,
+    Cipher
 } from "@elastosfoundation/did-js-sdk";
 import {
     TestData,
@@ -2417,59 +2418,69 @@ describe('DIDDocument Tests', () => {
         }
     })
 
-    test("testEncryptDecryptMessage", async () => {
+    test("testEncryptDecryptData", async () => {
         // Get random DIDDocument.
-        let identity = await testData.getRootIdentity();
-        let doc: DIDDocument = await identity.newDid(TestConfig.storePass, 0, true);
+        const identity = await testData.getRootIdentity();
+        const doc: DIDDocument = await identity.newDid(TestConfig.storePass, 0, true);
         expect(doc).not.toBeNull();
 
-        let valid = await doc.isValid();
-        expect(valid).toBeTruthy();
+        expect(await doc.isValid()).toBeTruthy();
 
-        // encrypt & decrypt
+        const testEncryptDecrypt = (cipher: Cipher, cipher2: Cipher) => {
+            const sourceStr1 = 'This is the string 1 for encrypting.';
+            const sourceStr2 = 'This is the string 2 for encrypting.';
+            const sourceStr3 = 'This is the string 3 for encrypting.';
+            const nonce = Buffer.from('404142434445464748494a4b4c4d4e4f5051525354555657', 'hex');
+
+            // message
+            const cipherStr = cipher.encrypt(Buffer.from(sourceStr1), nonce);
+            const clearText = cipher2.decrypt(Buffer.from(cipherStr), nonce);
+            expect(clearText.toString('utf8')).toEqual(sourceStr1);
+
+            // stream
+            let encryptStream = cipher.createEncryptionStream();
+            const header = encryptStream.header();
+
+            const cipherStr1 = encryptStream.push(Buffer.from(sourceStr1, 'utf8'));
+            const cipherStr2 = encryptStream.push(Buffer.from(sourceStr2, 'utf8'));
+            const cipherStr3 = encryptStream.pushLast(Buffer.from(sourceStr3, 'utf8'));
+
+            let decryptStream = cipher2.createDecryptionStream(Buffer.from(header));
+
+            const clearStr1 = decryptStream.pull(cipherStr1);
+            const clearStr2 = decryptStream.pull(cipherStr2);
+            const clearStr3 = decryptStream.pull(cipherStr3);
+
+            expect(Buffer.from(clearStr1).toString('utf8')).toEqual(sourceStr1);
+            expect(Buffer.from(clearStr2).toString('utf8')).toEqual(sourceStr2);
+            expect(Buffer.from(clearStr3).toString('utf8')).toEqual(sourceStr3);
+            expect(decryptStream.isComplete()).toBe(true);
+        }
+
+        // symmetric encryption
         const [identifier, securityCode] = ['identifier1', 1];
-        const sourceStr1 = 'This is the string 1 for encrypting.';
-        const nonce = Buffer.from('404142434445464748494a4b4c4d4e4f5051525354555657', 'hex');
+        let cipher = await doc.createCipher(identifier, securityCode, TestConfig.storePass);
+        testEncryptDecrypt(cipher, cipher);
 
-        const cipher = await doc.createCipher(identifier, securityCode, TestConfig.storePass);
-        const cipherStr1 = cipher.encrypt(Buffer.from(sourceStr1), nonce);
-        const clearText1 = cipher.decrypt(Buffer.from(cipherStr1), nonce);
-        expect(clearText1.toString('utf8')).toEqual(sourceStr1);
-    })
+        // asymmetric encryption
+        const identity2 = await testData.getSpecificRootIdentity();
+        const doc2: DIDDocument = await identity2.newDid(TestConfig.storePass, 0, true);
+        expect(doc2).not.toBeNull();
+        expect(await doc2.isValid()).toBeTruthy();
 
-    test("testEncryptDecryptStream", async () => {
-        // Get random DIDDocument.
-        let identity = await testData.getRootIdentity();
-        let doc: DIDDocument = await identity.newDid(TestConfig.storePass, 0, true);
-        expect(doc).not.toBeNull();
+        const identity3 = await testData.getSpecificRootIdentity2();
+        const doc3: DIDDocument = await identity3.newDid(TestConfig.storePass, 0, true);
+        expect(doc3).not.toBeNull();
+        expect(await doc3.isValid()).toBeTruthy();
 
-        let valid = await doc.isValid();
-        expect(valid).toBeTruthy();
+        // manually exchange the public keys.
+        const publicKey2 = Buffer.from('01c854b146301afe45c51ce6dcce53558131bc4150072a237278226549ea4f53', 'hex'); // copied from doc2
+        const publicKey3 = Buffer.from('fa7fc84363c9a1088be2b706598ca3f2ffe7b2552c05cdce1f3545f88e41313f', 'hex'); // copied from doc3
+        const cipher2 = await doc2.createCurve25519Cipher(identifier, securityCode, TestConfig.storePass, false, publicKey3);
+        const cipher3 = await doc3.createCurve25519Cipher(identifier, securityCode, TestConfig.storePass, true, publicKey2);
 
-        // encrypt & decrypt
-        const [identifier, securityCode] = ['identifier1', 1];
-        const sourceStr1 = 'This is the string 1 for encrypting.';
-        const sourceStr2 = 'This is the string 2 for encrypting.';
-        const sourceStr3 = 'This is the string 3 for encrypting.';
-
-        const cipher = await doc.createCipher(identifier, securityCode, TestConfig.storePass);
-        let encryptStream = await cipher.createEncryptionStream();
-        const header = encryptStream.header();
-
-        const cipherStr1 = encryptStream.push(Buffer.from(sourceStr1, 'utf8'));
-        const cipherStr2 = encryptStream.push(Buffer.from(sourceStr2, 'utf8'));
-        const cipherStr3 = encryptStream.pushLast(Buffer.from(sourceStr3, 'utf8'));
-
-        let decryptStream = await cipher.createDecryptionStream(Buffer.from(header));
-
-        const clearStr1 = decryptStream.pull(cipherStr1);
-        const clearStr2 = decryptStream.pull(cipherStr2);
-        const clearStr3 = decryptStream.pull(cipherStr3);
-
-        expect(Buffer.from(clearStr1).toString('utf8')).toEqual(sourceStr1);
-        expect(Buffer.from(clearStr2).toString('utf8')).toEqual(sourceStr2);
-        expect(Buffer.from(clearStr3).toString('utf8')).toEqual(sourceStr3);
-        expect(decryptStream.isComplete()).toBe(true);
+        testEncryptDecrypt(cipher2, cipher3);
+        testEncryptDecrypt(cipher3, cipher2);
     })
 
     test("testCreateCustomizedDid", async () => {

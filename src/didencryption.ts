@@ -36,6 +36,31 @@ export abstract class DecryptionStream {
     }
 }
 
+export class CryptoUtils {
+    static getCurve25519KeyPair(key: Uint8Array): sodium.KeyPair {
+        const edKeyPair = sodium.crypto_sign_seed_keypair(key);
+        if (!edKeyPair) {
+            throw new Error('Failed to generate ed25519 key pair.');
+        }
+
+        const curvePrivateKey = sodium.crypto_sign_ed25519_sk_to_curve25519(edKeyPair.privateKey);
+        if (!curvePrivateKey) {
+            throw new Error('Failed to generate curve25519 private key.');
+        }
+        const curvePublicKey = sodium.crypto_sign_ed25519_pk_to_curve25519(edKeyPair.publicKey);
+        if (!curvePublicKey) {
+            throw new Error('Failed to generate curve25519 public key.');
+        }
+        // console.log(`curve25519 public key: ${Buffer.from(curvePublicKey).toString('hex')}`);
+
+        return {
+            keyType: 'curve25519',
+            privateKey: curvePrivateKey,
+            publicKey: curvePublicKey
+        }
+    }
+}
+
 class SSEncrypt extends EncryptionStream {
     private readonly header_: Uint8Array;
     private readonly state: sodium.StateAddress;
@@ -107,18 +132,42 @@ class SSDecrypt extends DecryptionStream {
 }
 
 /**
- * Builder class to create EncryptionStream and DecryptionStream.
+ * Class to encrypt & decrypt message or stream data.
  */
-export class XChaCha20Poly1305Cipher {
-    constructor(private key: Uint8Array) {}
-
+export interface Cipher {
     /**
      * Encrypt the message with small size.
      *
      * @param data the data to be encrypted.
      * @param nonce the nonce for encryption.
      */
-    public encrypt(data: Buffer, nonce: Buffer): Buffer {
+    encrypt(data: Buffer, nonce: Buffer): Buffer;
+
+    /**
+     * Decrypt the message with small size.
+     *
+     * @param data the data to be decrypted.
+     * @param nonce the nonce for decryption, same as the nonce on encrypt().
+     */
+    decrypt(data: Buffer, nonce: Buffer): Buffer;
+
+    /**
+     * Get a encrypt stream for large size.
+     */
+    createEncryptionStream(): EncryptionStream;
+
+    /**
+     * Get a decrypt stream for large size.
+     *
+     * @param header the header from EncryptionStream.
+     */
+    createDecryptionStream(header: Buffer): DecryptionStream;
+}
+
+export class XChaCha20Poly1305Cipher implements Cipher {
+    constructor(private key: Uint8Array) {}
+
+    encrypt(data: Buffer, nonce: Buffer): Buffer {
         checkArgument(!!data, 'Invalid data');
         checkArgument(!!nonce, 'Invalid nonce');
 
@@ -131,13 +180,7 @@ export class XChaCha20Poly1305Cipher {
         return Buffer.from(result);
     }
 
-    /**
-     * Decrypt the message with small size.
-     *
-     * @param data the data to be decrypted.
-     * @param nonce the nonce for decryption, same as the nonce on encrypt().
-     */
-    public decrypt(data: Buffer, nonce: Buffer): Buffer {
+    decrypt(data: Buffer, nonce: Buffer): Buffer {
         checkArgument(!!data, 'Invalid data');
         checkArgument(!!nonce, 'Invalid nonce');
 
@@ -150,19 +193,61 @@ export class XChaCha20Poly1305Cipher {
         return Buffer.from(result);
     }
 
-    /**
-     * Get a encrypt stream for large size.
-     */
     createEncryptionStream(): EncryptionStream {
         return new SSEncrypt(this.key);
     }
 
-    /**
-     * Get a decrypt stream for large size.
-     *
-     * @param header the header from EncryptionStream.
-     */
     createDecryptionStream(header: Buffer): DecryptionStream {
         return new SSDecrypt(this.key, new Uint8Array(header));
+    }
+}
+
+export class Curve25519Cipher implements Cipher {
+    private readonly encryptKey: Uint8Array;
+    private readonly sharedKeys: sodium.CryptoKX;
+
+    constructor(private keyPair: sodium.KeyPair, private isServer: boolean, private otherSidePublicKey: Uint8Array) {
+        this.encryptKey = sodium.crypto_box_beforenm(otherSidePublicKey, keyPair.privateKey);
+        if (!this.encryptKey) {
+            throw new Error('Failed to generate encrypt keys.');
+        }
+        this.sharedKeys = isServer
+            ? sodium.crypto_kx_server_session_keys(keyPair.publicKey, keyPair.privateKey, otherSidePublicKey)
+            : sodium.crypto_kx_client_session_keys(keyPair.publicKey, keyPair.privateKey, otherSidePublicKey);
+        if (!this.sharedKeys) {
+            throw new Error('Failed to generate shared keys.');
+        }
+    }
+
+    encrypt(data: Buffer, nonce: Buffer): Buffer {
+        checkArgument(!!data, 'Invalid data');
+        checkArgument(!!nonce, 'Invalid nonce');
+
+        const result = sodium.crypto_box_easy_afternm(new Uint8Array(data), new Uint8Array(nonce), this.encryptKey);
+        if (!result) {
+            throw new Error('Failed to encrypt data.');
+        }
+
+        return Buffer.from(result);
+    }
+
+    decrypt(data: Buffer, nonce: Buffer): Buffer {
+        checkArgument(!!data, 'Invalid data');
+        checkArgument(!!nonce, 'Invalid nonce');
+
+        const result = sodium.crypto_box_open_easy_afternm(new Uint8Array(data), new Uint8Array(nonce), this.encryptKey);
+        if (!result) {
+            throw new Error('Failed to decrypt data.');
+        }
+
+        return Buffer.from(result);
+    }
+
+    createEncryptionStream(): EncryptionStream {
+        return new SSEncrypt(this.sharedKeys.sharedTx);
+    }
+
+    createDecryptionStream(header: Buffer): DecryptionStream {
+        return new SSDecrypt(this.sharedKeys.sharedRx, new Uint8Array(header));
     }
 }

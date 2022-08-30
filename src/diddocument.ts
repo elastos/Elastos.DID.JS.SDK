@@ -51,7 +51,7 @@ import { checkState, DIDBiography, DIDBiographyStatus, DIDStore, Features } from
 import { Base58, base64Decode, ByteBuffer, checkArgument, Collections, DID, DIDBackend, DIDEntity, DIDMetadata, DIDObject, DIDURL, EcdsaSigner, HDKey, Issuer, JWTBuilder, JWTParserBuilder, SHA256, TransferTicket, VerifiableCredential, VerificationEventListener } from "./internals";
 import { JSONObject, sortJSONObject } from "./json";
 import { Logger } from "./logger";
-import { XChaCha20Poly1305Cipher } from "./xchacha20poly1305";
+import { Cipher, CryptoUtils, Curve25519Cipher, XChaCha20Poly1305Cipher } from "./didencryption";
 
 const log = new Logger("DIDDocument");
 /**
@@ -1525,7 +1525,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         return EcdsaSigner.verify(binkey, sig, digest);
     }
 
-    public async createCipher(identifier: string, securityCode: number, storepass: string): Promise<XChaCha20Poly1305Cipher> {
+    private async getDerivedPrivateKeyForCipher(identifier: string, securityCode: number, storepass: string): Promise<Uint8Array> {
         checkArgument(!!identifier, "Invalid identifier");
         this.checkAttachedStore();
         this.checkIsPrimitive();
@@ -1534,9 +1534,35 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
             this.getDefaultPublicKeyId(), storepass));
 
         let path = this.mapToDerivePath(identifier, securityCode);
-        const derivedPrivateKey = new Uint8Array(key.deriveWithPath(path).getPrivateKeyBytes());
+        return new Uint8Array(key.deriveWithPath(path).getPrivateKeyBytes());
+    }
 
+    /**
+     * Create cipher for symmetric encryption
+     *
+     * @param identifier the identifier string
+     * @param securityCode the security code
+     * @param storepass the password for DID store
+     */
+    public async createCipher(identifier: string, securityCode: number, storepass: string): Promise<Cipher> {
+        const derivedPrivateKey = await this.getDerivedPrivateKeyForCipher(identifier, securityCode, storepass);
         return new XChaCha20Poly1305Cipher(derivedPrivateKey);
+    }
+
+    /**
+     * Create cipher for asymmetric encryption
+     *
+     * @param identifier the identifier string
+     * @param securityCode the security code
+     * @param storepass the password for DID store
+     * @param isServer current side is server or not, the data exchange must occur between client and server sides.
+     * @param otherSidePublicKey the public key of the other service side.
+     */
+    public async createCurve25519Cipher(identifier: string, securityCode: number, storepass: string,
+                                        isServer: boolean, otherSidePublicKey: Buffer): Promise<Cipher> {
+        const derivedPrivateKey = await this.getDerivedPrivateKeyForCipher(identifier, securityCode, storepass);
+        const curveKeyPair = CryptoUtils.getCurve25519KeyPair(derivedPrivateKey);
+        return new Curve25519Cipher(curveKeyPair, isServer, new Uint8Array(otherSidePublicKey));
     }
 
     /**
