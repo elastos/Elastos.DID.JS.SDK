@@ -27,6 +27,14 @@ export abstract class EncryptionStream {
  * Stream class to decrypt data.
  */
 export abstract class DecryptionStream {
+    static getHeaderLen() {
+        return sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES;
+    }
+
+    static getEncryptExtraSize() {
+        return sodium.crypto_secretstream_xchacha20poly1305_ABYTES;
+    }
+
     pull(cipherText: Uint8Array | Buffer): Uint8Array {
         throw new Error('Not implemented.');
     }
