@@ -1556,13 +1556,12 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @param securityCode the security code
      * @param storepass the password for DID store
      * @param isServer current side is server or not, the data exchange must occur between client and server sides.
-     * @param otherSidePublicKey the public key of the other service side.
      */
     public async createCurve25519Cipher(identifier: string, securityCode: number, storepass: string,
-                                        isServer: boolean, otherSidePublicKey: Buffer): Promise<Cipher> {
+                                        isServer: boolean): Promise<Cipher> {
         const derivedPrivateKey = await this.getDerivedPrivateKeyForCipher(identifier, securityCode, storepass);
         const curveKeyPair = CryptoUtils.getCurve25519KeyPair(derivedPrivateKey);
-        return new Curve25519Cipher(curveKeyPair, isServer, new Uint8Array(otherSidePublicKey));
+        return new Curve25519Cipher(curveKeyPair, isServer);
     }
 
     /**

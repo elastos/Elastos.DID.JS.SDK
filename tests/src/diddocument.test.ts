@@ -2473,11 +2473,10 @@ describe('DIDDocument Tests', () => {
         expect(doc3).not.toBeNull();
         expect(await doc3.isValid()).toBeTruthy();
 
-        // manually exchange the public keys.
-        const publicKey2 = Buffer.from('01c854b146301afe45c51ce6dcce53558131bc4150072a237278226549ea4f53', 'hex'); // copied from doc2
-        const publicKey3 = Buffer.from('fa7fc84363c9a1088be2b706598ca3f2ffe7b2552c05cdce1f3545f88e41313f', 'hex'); // copied from doc3
-        const cipher2 = await doc2.createCurve25519Cipher(identifier, securityCode, TestConfig.storePass, false, publicKey3);
-        const cipher3 = await doc3.createCurve25519Cipher(identifier, securityCode, TestConfig.storePass, true, publicKey2);
+        const cipher2 = await doc2.createCurve25519Cipher(identifier, securityCode, TestConfig.storePass, false);
+        const cipher3 = await doc3.createCurve25519Cipher(identifier, securityCode, TestConfig.storePass, true);
+        cipher2.setOtherSideCurve25519PublicKey(cipher3.getCurve25519PublicKey());
+        cipher3.setOtherSideCurve25519PublicKey(cipher2.getCurve25519PublicKey());
 
         testEncryptDecrypt(cipher2, cipher3);
         testEncryptDecrypt(cipher3, cipher2);

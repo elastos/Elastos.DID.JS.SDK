@@ -2,6 +2,13 @@ import { Buffer } from "buffer";
 import * as sodium from "libsodium-wrappers";
 import { checkArgument } from "./utils";
 
+export interface Curve25519KeyPair {
+    ed25519Sk: Uint8Array;
+    ed25519Pk: Uint8Array;
+    privateKey: Uint8Array;
+    publicKey: Uint8Array;
+}
+
 /**
  * Stream class to encrypt data.
  */
@@ -45,7 +52,7 @@ export abstract class DecryptionStream {
 }
 
 export class CryptoUtils {
-    static getCurve25519KeyPair(key: Uint8Array): sodium.KeyPair {
+    static getCurve25519KeyPair(key: Uint8Array): Curve25519KeyPair {
         const edKeyPair = sodium.crypto_sign_seed_keypair(key);
         if (!edKeyPair) {
             throw new Error('Failed to generate ed25519 key pair.');
@@ -62,7 +69,8 @@ export class CryptoUtils {
         // console.log(`curve25519 public key: ${Buffer.from(curvePublicKey).toString('hex')}`);
 
         return {
-            keyType: 'curve25519',
+            ed25519Sk: edKeyPair.privateKey,
+            ed25519Pk: edKeyPair.publicKey,
             privateKey: curvePrivateKey,
             publicKey: curvePublicKey
         }
@@ -144,6 +152,11 @@ class SSDecrypt extends DecryptionStream {
  */
 export interface Cipher {
     /**
+     * Set the other side public key for curve25519
+     */
+    setOtherSideCurve25519PublicKey(key: Buffer);
+
+    /**
      * Encrypt the message with small size.
      *
      * @param data the data to be encrypted.
@@ -170,10 +183,24 @@ export interface Cipher {
      * @param header the header from EncryptionStream.
      */
     createDecryptionStream(header: Buffer): DecryptionStream;
+
+    /**
+     * Get the public key for ed25519
+     */
+    getEd25519PublicKey(): Buffer;
+
+    /**
+     * Get the public key for curve25519
+     */
+    getCurve25519PublicKey(): Buffer;
 }
 
 export class XChaCha20Poly1305Cipher implements Cipher {
     constructor(private key: Uint8Array) {}
+
+    setOtherSideCurve25519PublicKey(key: Buffer) {
+        throw new Error('Not support yet.');
+    }
 
     encrypt(data: Buffer, nonce: Buffer): Buffer {
         checkArgument(!!data, 'Invalid data');
@@ -208,20 +235,39 @@ export class XChaCha20Poly1305Cipher implements Cipher {
     createDecryptionStream(header: Buffer): DecryptionStream {
         return new SSDecrypt(this.key, new Uint8Array(header));
     }
+
+    getEd25519PublicKey(): Buffer {
+        throw new Error('Not support yet.');
+    }
+
+    getCurve25519PublicKey(): Buffer {
+        throw new Error('Not support yet.');
+    }
 }
 
 export class Curve25519Cipher implements Cipher {
-    private readonly encryptKey: Uint8Array;
-    private readonly sharedKeys: sodium.CryptoKX;
+    private encryptKey: Uint8Array;
+    private sharedKeys: sodium.CryptoKX;
 
-    constructor(private keyPair: sodium.KeyPair, private isServer: boolean, private otherSidePublicKey: Uint8Array) {
-        this.encryptKey = sodium.crypto_box_beforenm(otherSidePublicKey, keyPair.privateKey);
+    constructor(private keyPair: Curve25519KeyPair, private isServer: boolean) {
+        this.encryptKey = null;
+        this.sharedKeys = null;
+    }
+
+    private checkEncryptionKeys() {
+        if (!this.encryptKey || !this.sharedKeys) {
+            throw new Error('Please set an other side public key first.');
+        }
+    }
+
+    setOtherSideCurve25519PublicKey(key: Buffer) {
+        this.encryptKey = sodium.crypto_box_beforenm(new Uint8Array(key), this.keyPair.privateKey);
         if (!this.encryptKey) {
             throw new Error('Failed to generate encrypt keys.');
         }
-        this.sharedKeys = isServer
-            ? sodium.crypto_kx_server_session_keys(keyPair.publicKey, keyPair.privateKey, otherSidePublicKey)
-            : sodium.crypto_kx_client_session_keys(keyPair.publicKey, keyPair.privateKey, otherSidePublicKey);
+        this.sharedKeys = this.isServer
+            ? sodium.crypto_kx_server_session_keys(this.keyPair.publicKey, this.keyPair.privateKey, new Uint8Array(key))
+            : sodium.crypto_kx_client_session_keys(this.keyPair.publicKey, this.keyPair.privateKey, new Uint8Array(key));
         if (!this.sharedKeys) {
             throw new Error('Failed to generate shared keys.');
         }
@@ -230,6 +276,7 @@ export class Curve25519Cipher implements Cipher {
     encrypt(data: Buffer, nonce: Buffer): Buffer {
         checkArgument(!!data, 'Invalid data');
         checkArgument(!!nonce, 'Invalid nonce');
+        this.checkEncryptionKeys();
 
         const result = sodium.crypto_box_easy_afternm(new Uint8Array(data), new Uint8Array(nonce), this.encryptKey);
         if (!result) {
@@ -242,6 +289,7 @@ export class Curve25519Cipher implements Cipher {
     decrypt(data: Buffer, nonce: Buffer): Buffer {
         checkArgument(!!data, 'Invalid data');
         checkArgument(!!nonce, 'Invalid nonce');
+        this.checkEncryptionKeys();
 
         const result = sodium.crypto_box_open_easy_afternm(new Uint8Array(data), new Uint8Array(nonce), this.encryptKey);
         if (!result) {
@@ -252,10 +300,20 @@ export class Curve25519Cipher implements Cipher {
     }
 
     createEncryptionStream(): EncryptionStream {
+        this.checkEncryptionKeys();
         return new SSEncrypt(this.sharedKeys.sharedTx);
     }
 
     createDecryptionStream(header: Buffer): DecryptionStream {
+        this.checkEncryptionKeys();
         return new SSDecrypt(this.sharedKeys.sharedRx, new Uint8Array(header));
+    }
+
+    getEd25519PublicKey(): Buffer {
+        return Buffer.from(this.keyPair.ed25519Pk);
+    }
+
+    getCurve25519PublicKey(): Buffer {
+        return Buffer.from(this.keyPair.publicKey);
     }
 }
