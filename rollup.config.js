@@ -224,7 +224,8 @@ export default command => {
             "jose",
             "bs58",
             "bs58check",
-            "jszip"
+            "jszip",
+            "libsodium-wrappers"
         ],
         plugins: [
             // IMPORTANT: DON'T CHANGE THE ORDER OF THINGS BELOW TOO MUCH! OTHERWISE YOU'LL GET
