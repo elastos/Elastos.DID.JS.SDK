@@ -73,7 +73,7 @@ export class Utils {
         return list;
     }
 
-    public static equals(file1: File, file2: File): boolean {
+    public static async equals(file1: File, file2: File): Promise<boolean> {
         if (file1 == null && file2 == null)
             return true;
 
@@ -83,19 +83,19 @@ export class Utils {
         /* if (file1.compareTo(file2) == 0) // TODO TS: IF THE FILES HAVE THE SAME NAME WE RETURN TRUE?
             return true; */
 
-        if (file1.exists() !== file2.exists())
+        if (await file1.exists() !== await file2.exists())
             return false;
 
-        if (!file1.exists())
+        if (!await file1.exists())
             return true;
 
-        if (file1.isDirectory() !== file2.isDirectory())
+        if (await file1.isDirectory() !== await file2.isDirectory())
             return false;
 
-        if (file1.isDirectory()) {
+        if (await file1.isDirectory()) {
 
-            let files1 = this.removeIgnoredFiles(file1.list());
-            let files2 = this.removeIgnoredFiles(file2.list());
+            let files1 = this.removeIgnoredFiles(await file1.list());
+            let files2 = this.removeIgnoredFiles(await file2.list());
 
             if (files1.length != files2.length)
                 return false;
@@ -110,21 +110,21 @@ export class Utils {
                 let f1 = new File(file1, files[i]);
                 let f2 = new File(file2, files[i]);
 
-                if (!this.equals(f1, f2))
+                if (!await this.equals(f1, f2))
                     return false;
             }
 
             return true;
         } else {
-            if (file1.length() != file2.length())
+            if (await file1.length() != await file2.length())
                 return false;
 
-            return file1.readText() === file2.readText(); // BAD PERF
+            return await file1.readText() === await file2.readText(); // BAD PERF
         }
     }
 
-    public static deleteFile(file: File) {
-        file.delete();
+    public static deleteFile(file: File): Promise<void> {
+        return file.delete();
     }
 
     /*public static void dumpHex(String prompt, byte[] bytes) {

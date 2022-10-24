@@ -47,7 +47,7 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
      *
      * @param store the DIDStore
      */
-    constructor(store?: DIDStore) {
+    protected constructor(store?: DIDStore) {
         super();
         this.store = store;
         this.props = {};
@@ -89,13 +89,13 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         return this.props[name];
     }
 
-    protected put(name: string, value: JSONValue | Date ) {
+    protected put(name: string, value: JSONValue | Date ): Promise<void> {
         if  (value === null || value === undefined)
             delete this.props[name];
         else
             this.props[name] = value instanceof Date ? value.toISOString() : value;
 
-        this.save();
+        return this.save();
     }
 
     protected getBoolean(name: string, defaultValue: boolean = false): boolean {
@@ -127,10 +127,10 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         return value;
     }
 
-    protected remove(name: string): any {
+    protected async remove(name: string): Promise<any> {
         let value = this.props[name];
         delete this.props[name];
-        this.save();
+        await this.save();
         return value;
     }
 
@@ -143,8 +143,8 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
      *
      * @param alias alias string
      */
-    public setAlias(alias: string) {
-        this.put(AbstractMetadata.ALIAS, alias);
+    public setAlias(alias: string): Promise<void> {
+        return this.put(AbstractMetadata.ALIAS, alias);
     }
 
     /**
@@ -162,9 +162,9 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
      * @param key the key string
      * @param value the value
      */
-    public setExtra(key: string, value: any) {
+    public setExtra(key: string, value: any): Promise<void> {
         checkArgument(key != null && key != "", "Invalid key");
-        this.put(AbstractMetadata.USER_EXTRA_PREFIX + key, value);
+        return this.put(AbstractMetadata.USER_EXTRA_PREFIX + key, value);
     }
 
     /**
@@ -193,9 +193,9 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         return this.getDate(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
     }
 
-    public removeExtra(key: string): string {
+    public async removeExtra(key: string): Promise<string> {
         checkArgument(key && key != null, "Invalid key");
-        return this.remove(AbstractMetadata.USER_EXTRA_PREFIX + key);
+        return await this.remove(AbstractMetadata.USER_EXTRA_PREFIX + key);
     }
 
     /**
@@ -233,5 +233,5 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         this.props = JSON.parse(JSON.stringify(json));
     }
 
-    protected abstract save();
+    protected abstract save(): Promise<void>;
 }

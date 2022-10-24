@@ -32,10 +32,10 @@ import { checkArgument, DID, DIDURL, VerifiableCredential } from "./internals";
  * issuer's sign key.
  */
 export class Issuer {
-    private self: DIDDocument;
-    private signKey: DIDURL;
+    private readonly self: DIDDocument;
+    private readonly signKey: DIDURL;
 
-    constructor(doc: DIDDocument, signKey?: DIDURL) {
+    private constructor(doc: DIDDocument, signKey?: DIDURL) {
         this.self = doc;
 
         if (signKey) {
@@ -47,10 +47,16 @@ export class Issuer {
                 throw new InvalidKeyException("Need explict sign key or effective controller");
         }
 
-        if (!doc.hasPrivateKey(signKey))
+        this.signKey = signKey;
+    }
+
+    public static async create(doc: DIDDocument, signKey?: DIDURL): Promise<Issuer> {
+        const issuer = new Issuer(doc, signKey);
+
+        if (!(await doc.hasPrivateKey(issuer.signKey)))
             throw new InvalidKeyException("No private key: " + signKey);
 
-        this.signKey = signKey;
+        return issuer;
     }
 
     /**
@@ -61,17 +67,17 @@ export class Issuer {
      * @throws DIDStoreException there is no store to attatch
      * @throws InvalidKeyException the sign key is not an authenication key.
      */
-    public static newWithDocument(doc: DIDDocument, signKey?: DIDURL | string): Issuer {
+    public static async newWithDocument(doc: DIDDocument, signKey?: DIDURL | string): Promise<Issuer> {
         checkArgument(doc != null, "Invalid document");
 
         if (signKey) {
             if (signKey instanceof DIDURL) {
-                return new Issuer(doc, signKey);
+                return await Issuer.create(doc, signKey);
             } else {
-                return new Issuer(doc, DIDURL.from(signKey, doc.getSubject()));
+                return await Issuer.create(doc, DIDURL.from(signKey, doc.getSubject()));
             }
         } else {
-            return new Issuer(doc);
+            return await Issuer.create(doc);
         }
     }
 
@@ -83,12 +89,12 @@ export class Issuer {
 
         if (signKey) {
             if (signKey instanceof DIDURL) {
-                return new Issuer(didDoc, signKey);
+                return await Issuer.create(didDoc, signKey);
             } else {
-                return new Issuer(didDoc, DIDURL.from(signKey, did));
+                return await Issuer.create(didDoc, DIDURL.from(signKey, did));
             }
         } else {
-            return new Issuer(didDoc);
+            return await Issuer.create(didDoc);
         }
     }
 

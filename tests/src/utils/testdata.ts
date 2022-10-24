@@ -48,12 +48,15 @@ export class TestData {
     private v2_2: CompatibleData;
     private instantData: InstantData;
 
-    public constructor(dummy ?: boolean) {
+    private constructor(dummy ?: boolean) {}
+
+    public static async create(dummy ?: boolean): Promise<TestData> {
+        const testData = new TestData(dummy);
         try {
             TestConfig.initialize();
-            if (File.exists(TestConfig.storeRoot))
-                (new File(TestConfig.storeRoot)).delete();
-            importBundledBrowserData();
+            if (await File.exists(TestConfig.storeRoot))
+                await new File(TestConfig.storeRoot).delete();
+            await importBundledBrowserData();
 
             DIDTestExtension.setup(dummy);
         }
@@ -62,6 +65,7 @@ export class TestData {
             console.error("Catched exception in TestData constructor", e);
             throw e;
         }
+        return testData;
     }
 
     public async cleanup(): Promise<void> {
@@ -95,7 +99,7 @@ export class TestData {
     public async getRootIdentity(): Promise<RootIdentity> {
         if (this.identity == null) {
             this.mnemonic = Mnemonic.getInstance().generate();
-            this.identity = RootIdentity.createFromMnemonic(this.mnemonic, TestConfig.passphrase,
+            this.identity = await RootIdentity.createFromMnemonic(this.mnemonic, TestConfig.passphrase,
                     await this.getStore(), TestConfig.storePass, true);
         }
 
@@ -200,19 +204,19 @@ export class CompatibleData {
         return parseFloat(this.version) >= 2.0;
     }
 
-    private fileContent(path: string): string {
+    private async fileContent(path: string): Promise<string> {
         let file = new File(path);
-        if (!file.exists())
+        if (!(await file.exists()))
             throw new Error("No file exists at "+path);
 
-        return file.readText();
+        return await file.readText();
     }
 
-    private dirContent(path: string): string[] {
+    private dirContent(path: string): Promise<string[]> {
         return (new File(path)).list();
     }
 
-    private getDidFile(name: string, type: string): string {
+    private getDidFile(name: string, type: string): Promise<string> {
         let fileName = name + ".id";
         if (type != null)
             fileName += "." + type;
@@ -221,7 +225,7 @@ export class CompatibleData {
         return this.fileContent(this.dataPath + "/" + fileName);
     }
 
-    private getCredentialFile(did: string, vc: string, type: string): string {
+    private getCredentialFile(did: string, vc: string, type: string): Promise<string> {
         let fileName = did + ".vc." + vc;
         if (type != null)
             fileName += "." + type;
@@ -230,7 +234,7 @@ export class CompatibleData {
         return this.fileContent(this.dataPath + "/" + fileName);
     }
 
-    private getPresentationFile(did: string, vp: string, type: string): string {
+    private getPresentationFile(did: string, vp: string, type: string): Promise<string> {
         let fileName = did + ".vp." + vp;
         if (type != null)
             fileName += "." + type;
@@ -239,7 +243,7 @@ export class CompatibleData {
         return this.fileContent(this.dataPath + "/" + fileName);
     }
 
-    private getTransferTicketFile(name : string) : string {
+    private getTransferTicketFile(name : string) : Promise<string> {
         if (parseFloat(this.version) < 2.0)
             return null;
 
@@ -253,12 +257,12 @@ export class CompatibleData {
             return this.data[key];
 
         // load the document
-        let doc = await DIDDocument.parseAsync(this.getDidFile(did, type));
+        let doc = await DIDDocument.parseAsync(await this.getDidFile(did, type));
 
         if (!(baseKey in this.data)) {
             // If not stored before, store it and load private keys
             await this.testData.store.storeDid(doc);
-            let kfs = this.dirContent(this.dataPath).filter((fileName: string, index: number, array: string []) => {
+            let kfs = (await this.dirContent(this.dataPath)).filter((fileName: string, index: number, array: string []) => {
                 return fileName.startsWith(did + ".id.") && fileName.endsWith(".sk");
             });
 
@@ -268,8 +272,8 @@ export class CompatibleData {
                 let fragment = kf.substring(start, end);
                 let id = new DIDURL("#" + fragment, doc.getSubject());
 
-                let sk = HDKey.deserializeBase58(this.fileContent(this.dataPath + "/" + kf)).serialize();
-                this.testData.store.storePrivateKey(id, sk, TestConfig.storePass);
+                let sk = HDKey.deserializeBase58(await this.fileContent(this.dataPath + "/" + kf)).serialize();
+                await this.testData.store.storePrivateKey(id, sk, TestConfig.storePass);
             }
 
             switch (did) {
@@ -291,8 +295,8 @@ export class CompatibleData {
         return doc;
     }
 
-    public getDocumentJson(did: string, type: string) : string {
-        let file = this.getDidFile(did, type)
+    public async getDocumentJson(did: string, type: string) : Promise<string> {
+        let file = await this.getDidFile(did, type)
         let fileName = did + ".id";
         if (type != null)
             fileName += "." + type;
@@ -311,7 +315,7 @@ export class CompatibleData {
         if (this.data[key] !== null && this.data[key] !== undefined)
             return this.data[key];
 
-        let credential = VerifiableCredential.parse(this.getCredentialFile(did, vc, type));
+        let credential = VerifiableCredential.parse(await this.getCredentialFile(did, vc, type));
 
         await this.testData.store.storeCredential(credential);
 
@@ -319,8 +323,8 @@ export class CompatibleData {
         return credential
     }
 
-    public getCredentialJson(did: string, vc: string, type: string): string{
-        let file = this.getCredentialFile(did, vc, type);
+    public async getCredentialJson(did: string, vc: string, type: string): Promise<string>{
+        let file = await this.getCredentialFile(did, vc, type);
         let fileName = did + ".vc." + vc;
         if (type != null)
             fileName += "." + type;
@@ -346,13 +350,13 @@ export class CompatibleData {
             return  this.data[key];
 
         // load the presentation
-        let presentation = VerifiablePresentation.parse(this.getPresentationFile(did, vp, type));
+        let presentation = VerifiablePresentation.parse(await this.getPresentationFile(did, vp, type));
         this.data[key] = presentation;
         return presentation;
     }
 
-    public getPresentationJson(did: string,  vp: string,  type: string): string{
-        let file = this.getPresentationFile(did, vp, type);
+    public async getPresentationJson(did: string,  vp: string,  type: string): Promise<string>{
+        let file = await this.getPresentationFile(did, vp, type);
         let fileName = did + ".vp." + vp;
         if (type != null)
             fileName += "." + type;
@@ -379,7 +383,7 @@ export class CompatibleData {
                 return this.data[key] as TransferTicket;
 
         // load the ticket
-        let tt = TransferTicket.parse(this.getTransferTicketFile(did));
+        let tt = TransferTicket.parse(await this.getTransferTicketFile(did));
 
         this.data[key] = tt;
         return tt;
@@ -444,9 +448,9 @@ export class InstantData {
             await this.testData.getRootIdentity();
 
             let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias("Issuer");
+            await doc.getMetadata().setAlias("Issuer");
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -467,7 +471,7 @@ export class InstantData {
             let key = TestData.generateKeypair();
             let id = DIDURL.from("#key2", doc.getSubject());
             db.addAuthenticationKey(id, key.getPublicKeyBase58());
-            this.testData.store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+            await this.testData.store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 
             // No private key for testKey
             key = TestData.generateKeypair();
@@ -496,19 +500,19 @@ export class InstantData {
             await this.getIssuerDocument();
 
             let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias("User1");
+            await doc.getMetadata().setAlias("User1");
 
             // Test document with two embedded credentials
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
-            let temp = TestData.generateKeypair();
+            let temp = await TestData.generateKeypair();
             db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
-            this.testData.store.storePrivateKey(DIDURL.from("#key2", doc.getSubject()),
+            await this.testData.store.storePrivateKey(DIDURL.from("#key2", doc.getSubject()),
                     temp.serialize(), TestConfig.storePass);
 
             temp = TestData.generateKeypair();
             db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
-            this.testData.store.storePrivateKey(DIDURL.from("#key3", doc.getSubject()),
+            await this.testData.store.storePrivateKey(DIDURL.from("#key3", doc.getSubject()),
                     temp.serialize(), TestConfig.storePass);
 
             temp = TestData.generateKeypair();
@@ -549,7 +553,7 @@ export class InstantData {
             db.addService("#carrier", "CarrierAddress",
                     "carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d", map);
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             props = {
@@ -568,7 +572,7 @@ export class InstantData {
                     .properties(props)
                     .seal(TestConfig.storePass);
 
-            let kycIssuer = new Issuer(this.idIssuer);
+            let kycIssuer = await Issuer.create(this.idIssuer);
             cb = kycIssuer.issueFor(doc.getSubject());
 
             props = {
@@ -599,7 +603,7 @@ export class InstantData {
 
             let id = new DIDURL("#passport", doc.getSubject());
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -611,7 +615,7 @@ export class InstantData {
                     .type("https://ns.elastos.org/credentials/v1#SelfProclaimedCredential")
                     .properties(props)
                     .seal(TestConfig.storePass);
-            vcPassport.getMetadata().setAlias("Passport");
+            await vcPassport.getMetadata().setAlias("Passport");
             await this.testData.store.storeCredential(vcPassport);
 
             this.vcUser1Passport = vcPassport;
@@ -626,7 +630,7 @@ export class InstantData {
 
             let id = new DIDURL("#twitter", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idIssuer);
+            let kycIssuer = await Issuer.create(this.idIssuer);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -637,7 +641,7 @@ export class InstantData {
                     .typeWithContext("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
                     .properties(props)
                     .seal(TestConfig.storePass);
-            vcTwitter.getMetadata().setAlias("Twitter");
+            await vcTwitter.getMetadata().setAlias("Twitter");
             await this.testData.store.storeCredential(vcTwitter);
 
             this.vcUser1Twitter = vcTwitter;
@@ -653,7 +657,7 @@ export class InstantData {
 
             let id = new DIDURL("#json", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idIssuer);
+            let kycIssuer = await Issuer.create(this.idIssuer);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
@@ -661,7 +665,7 @@ export class InstantData {
             let vcJson = await cb.id(id)
                     .properties(jsonProps)
                     .seal(TestConfig.storePass);
-            vcJson.getMetadata().setAlias("json");
+            await vcJson.getMetadata().setAlias("json");
             await this.testData.store.storeCredential(vcJson);
             this.vcUser1Json = vcJson;
         }
@@ -677,7 +681,7 @@ export class InstantData {
 
             let id = new DIDURL("#email", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idExampleCorp);
+            let kycIssuer = await Issuer.create(this.idExampleCorp);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -735,7 +739,7 @@ export class InstantData {
     public async getUser2Document() : Promise<DIDDocument> {
         if (this.idUser2 == null) {
             let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias("User2");
+            await doc.getMetadata().setAlias("User2");
 
             let db = DIDDocument.Builder.newFromDocument(doc).edit();
 
@@ -770,7 +774,7 @@ export class InstantData {
     public async getUser3Document() : Promise<DIDDocument> {
         if (this.idUser3 == null) {
             let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias("User3");
+            await doc.getMetadata().setAlias("User3");
             await doc.publish(TestConfig.storePass);
             await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -783,7 +787,7 @@ export class InstantData {
     public async getUser4Document() : Promise<DIDDocument> {
         if (this.idUser4 == null) {
             let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias("User4");
+            await doc.getMetadata().setAlias("User4");
             await doc.publish(TestConfig.storePass);
             await DIDTestExtension.awaitStandardPublishingDelay();
 
@@ -800,7 +804,7 @@ export class InstantData {
             let did = new DID("did:elastos:example");
             let doc = await this.idIssuer.newCustomized(did, TestConfig.storePass);
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -822,7 +826,7 @@ export class InstantData {
             let key = TestData.generateKeypair();
             let id = new DIDURL("#key2", doc.getSubject());
             db.addAuthenticationKey(id, key.getPublicKeyBase58());
-            this.testData.store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+            await this.testData.store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
 
             // No private key for testKey
             key = TestData.generateKeypair();
@@ -859,12 +863,12 @@ export class InstantData {
 
             let temp = TestData.generateKeypair();
             db.addAuthenticationKey("#key2", temp.getPublicKeyBase58());
-            this.testData.store.storePrivateKey(DIDURL.from("#key2", doc.getSubject()),
+            await this.testData.store.storePrivateKey(DIDURL.from("#key2", doc.getSubject()),
                     temp.serialize(), TestConfig.storePass);
 
             temp = TestData.generateKeypair();
             db.addAuthenticationKey("#key3", temp.getPublicKeyBase58());
-            this.testData.store.storePrivateKey(DIDURL.from("#key3", doc.getSubject()),
+            await this.testData.store.storePrivateKey(DIDURL.from("#key3", doc.getSubject()),
                     temp.serialize(), TestConfig.storePass);
 
             db.addService("#vault", "Hive.Vault.Service",
@@ -901,7 +905,7 @@ export class InstantData {
             db.addService("#vcr", "CredentialRepositoryService",
                     "https://foobar.com/credentials", props);
 
-            let selfIssuer = new Issuer(doc, signKey);
+            let selfIssuer = await Issuer.create(doc, signKey);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             props = {
@@ -917,7 +921,7 @@ export class InstantData {
                     .properties(props)
                     .seal(TestConfig.storePass);
 
-            let kycIssuer = new Issuer(this.idExampleCorp);
+            let kycIssuer = await Issuer.create(this.idExampleCorp);
             cb = kycIssuer.issueFor(doc.getSubject());
 
             props = {
@@ -949,7 +953,7 @@ export class InstantData {
 
             let id = new DIDURL("#services", doc.getSubject());
 
-            let selfIssuer = new Issuer(doc, this.idUser1.getDefaultPublicKeyId());
+            let selfIssuer = await Issuer.create(doc, this.idUser1.getDefaultPublicKeyId());
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -980,7 +984,7 @@ export class InstantData {
 
             let id = new DIDURL("#license", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idExampleCorp);
+            let kycIssuer = await Issuer.create(this.idExampleCorp);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -1083,7 +1087,7 @@ export class InstantData {
 
             let id = new DIDURL("#email", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idIssuer);
+            let kycIssuer = await Issuer.create(this.idIssuer);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let props = {

@@ -461,7 +461,7 @@ export class VerifiablePresentation extends DIDEntity<VerifiablePresentation> {
                 throw new InvalidKeyException(signKey.toString()+ " isn't the authencation key");
         }
 
-        if (!holder.hasPrivateKey(signKey))
+        if (!await holder.hasPrivateKey(signKey))
             throw new InvalidKeyException("No private key: " + signKey);
 
         return new VerifiablePresentation.Builder(holder, signKey);

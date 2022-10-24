@@ -75,7 +75,7 @@ function genRandomString(len): string {
 // tests depend on each other.
 describe('IDChainOperations Tests', () => {
     beforeAll(async ()=> {
-        testData = new TestData(true);
+        testData = await TestData.create(true);
         await testData.cleanup();
         await testData.getRootIdentity();
         dids = [];
@@ -130,7 +130,7 @@ describe('IDChainOperations Tests', () => {
             let keyid = DIDURL.from("#key1", did);
             let key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid, key.serialize(), TestConfig.storePass);
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc.getPublicKeyCount()).toEqual(2);
@@ -216,7 +216,7 @@ describe('IDChainOperations Tests', () => {
             let keyid1 = DIDURL.from("#key1", doc.getSubject());
             let key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid1, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid1, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid1, key.serialize(), TestConfig.storePass);
 
             let subject = {
                 "passport": "S653258Z07"
@@ -289,7 +289,7 @@ describe('IDChainOperations Tests', () => {
             let keyid2 = DIDURL.from("#key2", doc.getSubject());
             let key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid2, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid2, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid2, key.serialize(), TestConfig.storePass);
 
             db.removeAuthenticationKey("#key1");
             db.addService("#test-svc-1",
@@ -368,7 +368,7 @@ describe('IDChainOperations Tests', () => {
             let keyid2 = DIDURL.from("#key2", doc.getSubject());
             let key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid2, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid2, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid2, key.serialize(), TestConfig.storePass);
 
             db.addService("#test-svc-1",
                     "Service.Testing", "https://www.elastos.org/testing1");
@@ -489,7 +489,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(did);
 
             let props= {
@@ -559,7 +559,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             //Update: add kyc credential and one authentication key
-            let issuer = new Issuer(issuerDoc);
+            let issuer = await Issuer.create(issuerDoc);
             let cb = issuer.issueFor(did);
 
             let props = {
@@ -578,7 +578,7 @@ describe('IDChainOperations Tests', () => {
             let keyid1 = DIDURL.from("#key1", doc.getSubject());
             let key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid1, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid1, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid1, key.serialize(), TestConfig.storePass);
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -642,7 +642,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             // Update again: add self-claimed credential and remove passport credential
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(did);
 
             let props = {
@@ -721,7 +721,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(did);
 
             let props = {
@@ -787,7 +787,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             // Update: add a self-claimed credential and an authorization key
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(did);
 
             let props = {
@@ -936,12 +936,12 @@ describe('IDChainOperations Tests', () => {
             let keyid1 = DIDURL.from("#key1", customizeDid);
             let key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid1, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid1, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid1, key.serialize(), TestConfig.storePass);
 
             let keyid2 = DIDURL.from("#key2", customizeDid);
             key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid2, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid2, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid2, key.serialize(), TestConfig.storePass);
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc.getPublicKeyCount()).toBe(4);
@@ -966,7 +966,7 @@ describe('IDChainOperations Tests', () => {
             expect(issuerDoc).not.toBeNull();
             let issuerId = issuerDoc.getSubject();
 
-            let issuer = new Issuer(issuerDoc);
+            let issuer = await Issuer.create(issuerDoc);
             let cb = issuer.issueFor(customizeDid);
 
             let props = {
@@ -1048,7 +1048,7 @@ describe('IDChainOperations Tests', () => {
             expect(valid).toBeFalsy();
 
             const d = doc;
-            expect(async () => { await ctrl1.signWithDocument(d, TestConfig.storePass); }).rejects.toThrowError();
+            await expect(async () => await ctrl1.signWithDocument(d, TestConfig.storePass)).rejects.toThrowError();
 
             doc = await ctrl2.signWithDocument(doc, TestConfig.storePass);
             valid = await doc.isValid();
@@ -1094,7 +1094,7 @@ describe('IDChainOperations Tests', () => {
             let keyid1 = DIDURL.from("#key1", multiCustomizeDid);
             let key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid1, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid1, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid1, key.serialize(), TestConfig.storePass);
 
             let json = "{\"twitter\":\"@john\"}";
             await db.createAndAddCredential(TestConfig.storePass, "#twitter", json);
@@ -1119,12 +1119,12 @@ describe('IDChainOperations Tests', () => {
             let keyid2 = DIDURL.from("#key2", multiCustomizeDid);
             key = TestData.generateKeypair();
             db.addAuthenticationKey(keyid2, key.getPublicKeyBase58());
-            store.storePrivateKey(keyid2, key.serialize(), TestConfig.storePass);
+            await store.storePrivateKey(keyid2, key.serialize(), TestConfig.storePass);
 
             let issuerDoc = await store.loadDid(customizeDid);
             expect(issuerDoc).not.toBeNull();
 
-            let issuer = new Issuer(issuerDoc, DIDURL.from("#key1", issuerDoc.getSubject()));
+            let issuer = await Issuer.create(issuerDoc, DIDURL.from("#key1", issuerDoc.getSubject()));
             expect(issuer).not.toBeNull();
             let cb = issuer.issueFor(multiCustomizeDid);
 
@@ -1468,10 +1468,10 @@ describe('IDChainOperations Tests', () => {
 
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
-            Utils.deleteFile(path);
+            await Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1515,10 +1515,10 @@ describe('IDChainOperations Tests', () => {
 
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
-            Utils.deleteFile(path);
+            await Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1546,12 +1546,12 @@ describe('IDChainOperations Tests', () => {
             log.debug("Synchronizing from IDChain...");
             let start = Date.now();
             await identity.synchronize({
-                merge(c, l): DIDDocument {
+                async merge(c, l): Promise<DIDDocument> {
                     expect(l.getProof().getSignature()).toEqual(c.getProof().getSignature());
                     expect(l.getLastModified().getTime()).toEqual(c.getLastModified().getTime());
 
-                    l.getMetadata().setPublished(c.getMetadata().getPublished());
-                    l.getMetadata().setSignature(c.getMetadata().getSignature());
+                    await l.getMetadata().setPublished(c.getMetadata().getPublished());
+                    await l.getMetadata().setSignature(c.getMetadata().getSignature());
                     return l;
                 }
             })
@@ -1581,12 +1581,12 @@ describe('IDChainOperations Tests', () => {
             let start = Date.now();
 
             let ch = {
-                merge(c: DIDDocument, l: DIDDocument) {
+                async merge(c: DIDDocument, l: DIDDocument) {
                     expect(l.getProof().getSignature()).toEqual(c.getProof().getSignature());
                     expect(l.getLastModified().getTime()).toEqual(c.getLastModified().getTime());
 
-                    l.getMetadata().setPublished(c.getMetadata().getPublished());
-                    l.getMetadata().setSignature(c.getMetadata().getSignature());
+                    await l.getMetadata().setPublished(c.getMetadata().getPublished());
+                    await l.getMetadata().setSignature(c.getMetadata().getSignature());
                     return l;
                 }
             }
@@ -1616,10 +1616,10 @@ describe('IDChainOperations Tests', () => {
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
-            Utils.deleteFile(path);
+            await Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1676,10 +1676,10 @@ describe('IDChainOperations Tests', () => {
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
-            Utils.deleteFile(path);
+            await Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1711,7 +1711,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Synchronizing again from IDChain...");
             start = Date.now();
             await rootIdentity.synchronize({
-                merge(c, l) { return c; }
+                merge(c, l) { return Promise.resolve(c); }
             });
             duration = (Date.now() - start + 500) / 1000;
             log.debug("Synchronize again from IDChain...OK({}s)", duration);
@@ -1739,10 +1739,10 @@ describe('IDChainOperations Tests', () => {
             // Sync to a clean store first
             let filePath = TestConfig.tempDir + "/cleanstore";
             let path = new File(filePath);
-            Utils.deleteFile(path);
+            await Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1774,7 +1774,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Synchronizing again from IDChain...");
             let start2 = Date.now();
             await rootIdentity.synchronize({
-                merge(c, l) { return c; }
+                merge(c, l) { return Promise.resolve(c); }
             });
             duration = (Date.now() - start2 + 500) / 1000;
             log.debug("Synchronize again from IDChain...OK({}s)", duration);
@@ -1804,7 +1804,7 @@ describe('IDChainOperations Tests', () => {
             for (let did of listdids) {
                 let doc = await store.loadDid(did);
                 if (!doc.isCustomizedDid())
-                    expect(store.deleteDid(did)).toBeTruthy();
+                    expect(await store.deleteDid(did)).toBeTruthy();
             }
 
             let empty: DID[] = Array.from(await store.listDids());
@@ -1828,16 +1828,16 @@ describe('IDChainOperations Tests', () => {
             let doc = await store.loadDid(multiCustomizeDid);
             expect(doc).not.toBeNull();
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
             let props: JSONObject = {};
 
             let dirPath = join(__dirname, "data/i18n");
             let i18nDir = new File(dirPath);
-            let i18nRes = i18nDir.listFiles();
+            let i18nRes = await i18nDir.listFiles();
 
             for (let res of i18nRes) {
-                props[res.getName()] = res.readText();
+                props[res.getName()] = await res.readText();
             }
 
             let vc = await cb.id("#i18n")
@@ -2050,7 +2050,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await store.loadDid(dids[0]);
             let did = doc.getSubject();
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
 
             for (let i = 0; i < 36; i++) {
                 log.trace("Creating test credential {}...", i);
@@ -2340,17 +2340,17 @@ describe('IDChainOperations Tests', () => {
 		    let doc = await identity.newDid(TestConfig.storePass);
 		    let did = doc.getSubject();
 
-		    let selfIssuer = new Issuer(doc);
+		    let selfIssuer = await Issuer.create(doc);
 		    let cb = selfIssuer.issueFor(did);
 
             let props: JSONObject = {};
 
             let dirPath = join(__dirname, "data/i18n");
             let i18nDir = new File(dirPath);
-            let i18nRes = i18nDir.listFiles();
+            let i18nRes = await i18nDir.listFiles();
 
             for (let res of i18nRes) {
-                props[res.getName()] = res.readText();
+                props[res.getName()] = await res.readText();
             }
 
             let vc = await cb.id("#profile")

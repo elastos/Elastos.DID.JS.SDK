@@ -364,14 +364,14 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the key exists or not
      * @throws DIDStoreException there is no store
      */
-    public hasPrivateKey(idOrString: DIDURL | string): boolean {
+    public async hasPrivateKey(idOrString: DIDURL | string): Promise<boolean> {
         if (typeof idOrString === "string")
             idOrString = this.canonicalId(idOrString);
 
         checkArgument(idOrString != null, "Invalid publicKey id");
 
         if (this.hasPublicKey(idOrString) && this.getMetadata().attachedStore())
-            return this.getMetadata().getStore().containsPrivateKey(idOrString);
+            return await this.getMetadata().getStore().containsPrivateKey(idOrString);
         else
             return false;
     }
@@ -1258,7 +1258,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let deactivated = bio.getStatus() == DIDBiographyStatus.DEACTIVATED;
 
         if (deactivated)
-            this.getMetadata().setDeactivated(deactivated);
+            await this.getMetadata().setDeactivated(deactivated);
 
         return deactivated;
     }
@@ -1605,7 +1605,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     key = doc.canonicalId(keyid);
 
                 let store = doc.getMetadata().getStore();
-                if (!store.containsPrivateKey(key))
+                if (!await store.containsPrivateKey(key))
                     return null;
 
                 let hk = HDKey.deserialize(await store.loadPrivateKey(key, password));
@@ -1795,7 +1795,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let resolvedDoc = await this.getSubject().resolve(true);
         if (resolvedDoc != null) {
             if (await resolvedDoc.isDeactivated()) {
-                this.getMetadata().setDeactivated(true);
+                await this.getMetadata().setDeactivated(true);
 
                 DIDDocument.log.error("Publish failed because DID is deactivated.");
                 throw new DIDDeactivatedException(this.getSubject().toString() + " is deactivated");
@@ -1868,8 +1868,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         }
 
         if (resolvedSignature != null)
-            this.getMetadata().setPreviousSignature(resolvedSignature);
-        this.getMetadata().setSignature(this.getProof().getSignature());
+            await this.getMetadata().setPreviousSignature(resolvedSignature);
+        await this.getMetadata().setSignature(this.getProof().getSignature());
     }
 
     // TODO: to be remove in the future
@@ -1903,7 +1903,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         let resolvedDoc = await DIDBackend.getInstance().resolveUntrustedDid(this.getSubject(), true);
         if (resolvedDoc != null) {
             if (await resolvedDoc.isDeactivated()) {
-                this.getMetadata().setDeactivated(true);
+                await this.getMetadata().setDeactivated(true);
 
                 DIDDocument.log.error("Publish failed because DID is deactivated.");
                 throw new DIDDeactivatedException(this.getSubject().toString()  + " is deactivated");
@@ -1929,8 +1929,8 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
         }
 
         if (resolvedSignature != null)
-            this.getMetadata().setPreviousSignature(resolvedSignature);
-        this.getMetadata().setSignature(this.getProof().getSignature());
+            await this.getMetadata().setPreviousSignature(resolvedSignature);
+        await this.getMetadata().setSignature(this.getProof().getSignature());
     }
 
 
@@ -2851,7 +2851,7 @@ export namespace DIDDocument {
          * @param force the owner of public key
          * @return the DID Document Builder object
          */
-        public removePublicKey(id: DIDURL | string, force = false): Builder {
+        public async removePublicKey(id: DIDURL | string, force = false): Promise<Builder> {
             this.checkNotSealed();
             checkArgument(id != null, "Invalid publicKey id");
 
@@ -2879,7 +2879,7 @@ export namespace DIDDocument {
                 try {
                     // TODO: should delete the loosed private key when store the document
                     if (this.document.getMetadata().attachedStore())
-                        this.document.getMetadata().getStore().deletePrivateKey(id);
+                        await this.document.getMetadata().getStore().deletePrivateKey(id);
                 } catch (ignore) {
                     // DIDStoreException
                     Builder.log.error("INTERNAL - Remove private key", ignore);
@@ -3196,7 +3196,7 @@ export namespace DIDDocument {
                 "Invalid publicKey id");
             checkArgument(storepass && storepass != null, "Invalid storepass");
 
-            let issuer = new Issuer(this.document);
+            let issuer = await Issuer.create(this.document);
             let cb = issuer.issueFor(this.document.getSubject());
 
             if (expirationDate == null)

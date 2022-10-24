@@ -36,7 +36,7 @@ let store: DIDStore;
 
 describe("RootIdentity Tests", ()=>{
     beforeEach(async () => {
-        testData = new TestData();
+        testData = await TestData.create();
         await testData.cleanup();
         store = await testData.getStore();
     });
@@ -45,21 +45,21 @@ describe("RootIdentity Tests", ()=>{
     });
 
     test("testInitPrivateIdentity", async () => {
-        expect(store.containsRootIdentities()).toBeFalsy();
+        expect(await store.containsRootIdentities()).toBeFalsy();
 
         let identity = await testData.getRootIdentity();
-        expect(store.containsRootIdentities()).toBeTruthy();
+        expect(await store.containsRootIdentities()).toBeTruthy();
 
         let store2 = await DIDStore.open(TestConfig.storeRoot);
-        expect(store2.containsRootIdentities()).toBeTruthy();
+        expect(await store2.containsRootIdentities()).toBeTruthy();
         let identity2 = await store2.loadRootIdentity();
         expect(identity2).not.toBeNull();
-        expect(store2.containsRootIdentity(identity2.getId())).toBeTruthy();
+        expect(await store2.containsRootIdentity(identity2.getId())).toBeTruthy();
 
         expect(identity.getPreDerivedPublicKey().serializePublicKeyBase58()).toEqual(
                 identity2.getPreDerivedPublicKey().serializePublicKeyBase58());
 
-        let exportedMnemonic = identity2.exportMnemonic(TestConfig.storePass);
+        let exportedMnemonic = await identity2.exportMnemonic(TestConfig.storePass);
         expect(testData.getMnemonic()).toEqual(exportedMnemonic);
     });
 
@@ -67,14 +67,14 @@ describe("RootIdentity Tests", ()=>{
         let expectedIDString = "iY4Ghz9tCuWvB5rNwvn4ngWvthZMNzEA7U";
         let mnemonic = "cloth always junk crash fun exist stumble shift over benefit fun toe";
 
-        expect(store.containsRootIdentities()).toBeFalsy();
+        expect(await store.containsRootIdentities()).toBeFalsy();
 
-        let identity = RootIdentity.createFromMnemonic(mnemonic, "", store, TestConfig.storePass);
-        expect(store.containsRootIdentities()).toBeTruthy();
+        let identity = await RootIdentity.createFromMnemonic(mnemonic, "", store, TestConfig.storePass);
+        expect(await store.containsRootIdentities()).toBeTruthy();
         expect(identity.getId()).toEqual(RootIdentity.getIdFromMnemonic(mnemonic, ""));
 
         let store2 = await DIDStore.open(TestConfig.storeRoot);
-        expect(store2.containsRootIdentities()).toBeTruthy();
+        expect(await store2.containsRootIdentities()).toBeTruthy();
 
         let identity2 = await store2.loadRootIdentity();
 
@@ -87,13 +87,13 @@ describe("RootIdentity Tests", ()=>{
         let expectedIDString = "iYbPqEA98rwvDyA5YT6a3mu8UZy87DLEMR";
         let rootKey = "xprv9s21ZrQH143K4biiQbUq8369meTb1R8KnstYFAKtfwk3vF8uvFd1EC2s49bMQsbdbmdJxUWRkuC48CXPutFfynYFVGnoeq8LJZhfd9QjvUt";
 
-        expect(store.containsRootIdentities()).toBeFalsy();
+        expect(await store.containsRootIdentities()).toBeFalsy();
 
-        RootIdentity.createFromPrivateKey(rootKey, store, TestConfig.storePass);
-        expect(store.containsRootIdentities()).toBeTruthy();
+        await RootIdentity.createFromPrivateKey(rootKey, store, TestConfig.storePass);
+        expect(await store.containsRootIdentities()).toBeTruthy();
 
         let store2 = await DIDStore.open(TestConfig.storeRoot);
-        expect(store2.containsRootIdentities()).toBeTruthy();
+        expect(await store2.containsRootIdentities()).toBeTruthy();
 
         let identity2 = await store2.loadRootIdentity();
 
@@ -108,7 +108,7 @@ describe("RootIdentity Tests", ()=>{
         let alias = "my first did";
 
         let doc = await identity.newDid(TestConfig.storePass);
-        doc.getMetadata().setAlias(alias);
+        await doc.getMetadata().setAlias(alias);
         let valid = await doc.isValid();
         expect(valid).toBeTruthy();
 
@@ -163,9 +163,9 @@ describe("RootIdentity Tests", ()=>{
         expect(did.equals(doc.getSubject())).toBeTruthy();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        expect(() => identity.newDid(TestConfig.storePass)).rejects.toThrowError("DID already exists in the store.");
+        await expect(() => identity.newDid(TestConfig.storePass)).rejects.toThrowError("DID already exists in the store.");
 
-        let success = store.deleteDid(did);
+        let success = await store.deleteDid(did);
         expect(success).toBeTruthy();
         doc = await identity.newDid(TestConfig.storePass);
         valid = await doc.isValid();
@@ -202,7 +202,7 @@ describe("RootIdentity Tests", ()=>{
 
         await expect(async () => { await identity.newDidFromIdentifier(TestConfig.storePass, appId, appCode); }).rejects.toThrowError();
 
-        let success = store.deleteDid(did);
+        let success = await store.deleteDid(did);
         expect(success).toBeTruthy();
         doc = await identity.newDidFromIdentifier(TestConfig.storePass, appId, appCode);
         valid = await doc.isValid();

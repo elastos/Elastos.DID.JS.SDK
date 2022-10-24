@@ -67,8 +67,8 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
      *
      * @param txid the transaction id string
      */
-    public setTransactionId(txid: string) {
-        this.put(CredentialMetadata.TXID, txid);
+    public setTransactionId(txid: string): Promise<void> {
+        return this.put(CredentialMetadata.TXID, txid);
     }
 
     /**
@@ -85,10 +85,10 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
      *
      * @param timestamp the time published
      */
-    public setPublished(timestamp: Date) {
+    public setPublished(timestamp: Date): Promise<void> {
         checkArgument(timestamp != null, "Invalid timestamp");
 
-        this.put(CredentialMetadata.PUBLISHED, timestamp);
+        return this.put(CredentialMetadata.PUBLISHED, timestamp);
     }
 
     /**
@@ -105,8 +105,8 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
      *
      * @param revoked the revocation status
      */
-    public setRevoked(revoked: boolean) {
-        this.put(CredentialMetadata.REVOKED, revoked);
+    public setRevoked(revoked: boolean): Promise<void> {
+        return this.put(CredentialMetadata.REVOKED, revoked);
     }
 
     /**
@@ -135,10 +135,10 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
         }
     }
 
-    protected save() {
+    protected async save(): Promise<void> {
         if (this.attachedStore()) {
             try {
-                this.getStore().storeCredentialMetadata(this.id, this);
+                await this.getStore().storeCredentialMetadata(this.id, this);
             } catch (e) {
                 // DIDStoreException
                 CredentialMetadata.log.error("INTERNAL - error store metadata for credential {}", this.id);

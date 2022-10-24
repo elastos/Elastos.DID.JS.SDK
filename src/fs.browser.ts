@@ -21,41 +21,95 @@
  */
 
 import BrowserFS, { BFSRequire } from "browserfs";
+import Stats from "browserfs/dist/node/core/node_fs_stats";
 const fs = BFSRequire("fs");
-const {
-    existsSync,
-    mkdirSync,
-    readdirSync,
-    readFileSync,
-    renameSync,
-    rmdirSync,
-    statSync,
-    lstatSync,
-    writeFileSync,
-    unlinkSync
-} = fs;
+
+export function existsSync(path: string): Promise<boolean> {
+    return new Promise<boolean>(resolve => fs.exists(path, exists => {
+        resolve(exists);
+    }));
+}
+
+export function mkdirSync(path: string, mode?: number | string): Promise<void> {
+    return new Promise<void>((resolve, reject) => fs.mkdir(path, mode, e => {
+        e ? reject(e) : resolve();
+    }));
+}
+
+export function readdirSync(path: string): Promise<string[]> {
+    return new Promise<string[]>((resolve, reject) => fs.readdir(path, (e, rv) => {
+        e ? reject(e) : resolve(rv);
+    }));
+}
+
+export function readFileSync(filename: string, options?: { encoding: string; flag?: string; }): Promise<string> {
+    return new Promise<string>((resolve, reject) => fs.readFile(filename, options, (e, rv: string) => {
+        e ? reject(e) : resolve(rv);
+    }));
+}
+
+export function renameSync(oldPath: string, newPath: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => fs.rename(oldPath, newPath, e => {
+        e ? reject(e) : resolve();
+    }));
+}
+
+export function rmdirSync(path: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => fs.rmdir(path, e => {
+        e ? reject(e) : resolve();
+    }));
+}
+
+export function statSync(path: string): Promise<Stats> {
+    return new Promise<Stats>((resolve, reject) => fs.stat(path, (e, rv) => {
+        e ? reject(e) : resolve(rv);
+    }));
+}
+
+export function lstatSync(path: string): Promise<Stats> {
+    return new Promise<Stats>((resolve, reject) => fs.lstat(path, (e, rv) => {
+        e ? reject(e) : resolve(rv);
+    }));
+}
+
+export function writeFileSync(filename: string, data: any, options?): Promise<void> {
+    return new Promise<void>((resolve, reject) => fs.writeFile(filename, data, options, e => {
+        e ? reject(e) : resolve();
+    }));
+}
+
+export function unlinkSync(path: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => fs.unlink(path, e => {
+        e ? reject(e) : resolve();
+    }));
+}
+
+// BrowserFS.configure({
+//     fs: "LocalStorage",
+//     options: {}
+// }, function(e) {
+//     if (e) {
+//         throw e;
+//     }
+//     else {
+//         //console.log("BrowserFS initialization complete");
+//     }
+// });
 
 BrowserFS.configure({
-    fs: "LocalStorage",
-    options: {}
+    fs: "MountableFileSystem",
+    options: {
+        "/": {
+            fs: "IndexedDB",
+            options: {
+                storeName: "DIDDatabase"
+            }
+        }
+    }
 }, function(e) {
     if (e) {
+        // An error occurred.
         throw e;
     }
-    else {
-        //console.log("BrowserFS initialization complete");
-    }
+    // Otherwise, BrowserFS is ready to use!
 });
-
-export {
-    existsSync,
-    mkdirSync,
-    readdirSync,
-    readFileSync,
-    renameSync,
-    rmdirSync,
-    statSync,
-    lstatSync,
-    writeFileSync,
-    unlinkSync
-};
