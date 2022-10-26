@@ -112,19 +112,19 @@ export class FileSystemStorage implements DIDStorage {
     }
 
     public async init(): Promise<void> {
-        if (this.storeRoot.exists())
+        if (await this.storeRoot.exists())
             await this.checkStore();
         else
-            this.initializeStore();
+            await this.initializeStore();
     }
 
-    private initializeStore() {
+    private async initializeStore(): Promise<void> {
         try {
             log.debug("Initializing DID store at {}", this.storeRoot.getAbsolutePath());
-            this.storeRoot.createDirectory();
-            let metadata = new DIDStoreMetadata();
-            let file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
-            file.writeText(metadata.serialize());
+            await this.storeRoot.createDirectory();
+            let metadata = await DIDStoreMetadata.create();
+            let file = await this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
+            await file.writeText(metadata.serialize());
         } catch (e) {
             // IOException
             log.error("Initialize DID store error", e);
@@ -132,23 +132,23 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    private checkStore(): void {
+    private async checkStore(): Promise<void> {
         log.debug("Checking DID store at {}", this.storeRoot.getAbsolutePath());
 
-        if (this.storeRoot.isFile()) {
+        if (await this.storeRoot.isFile()) {
             log.error("Path {} not a directory", this.storeRoot.getAbsolutePath());
             throw new DIDStorageException("Invalid DIDStore \""
                 + this.storeRoot.getAbsolutePath() + "\".");
         }
 
-        this.postOperations();
+        await this.postOperations();
 
         let file: File = this.getDir(this.currentDataDir);
-        if (!file.exists()) {
-            let storeRootFiles = this.storeRoot.list();
+        if (!(await file.exists())) {
+            let storeRootFiles = await this.storeRoot.list();
             if (storeRootFiles == null || storeRootFiles.length == 0) {
                 // if an empty folder
-                this.initializeStore();
+                await this.initializeStore();
                 return;
             } else {
                 log.error("Path {} cannot be initialized as DID Store because it's not empty", this.storeRoot.getAbsolutePath());
@@ -157,21 +157,21 @@ export class FileSystemStorage implements DIDStorage {
             }
         }
 
-        if (!file.isDirectory()) {
+        if (!(await file.isDirectory())) {
             log.error("Path {} is not a DID store, missing data directory", this.storeRoot.getAbsolutePath());
             throw new DIDStorageException("Invalid DIDStore \""
                 + this.storeRoot.getAbsolutePath() + "\".");
         }
 
-        let metadataFile = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
-        if (!metadataFile.exists() || !metadataFile.isFile()) {
+        let metadataFile = await this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
+        if (!(await metadataFile.exists()) || !(await metadataFile.isFile())) {
             log.error("Path {} not a DID store, missing store metadata", this.storeRoot.getAbsolutePath());
             throw new DIDStorageException("Invalid DIDStore \"" + this.storeRoot.getAbsolutePath() + "\".");
         }
 
         try {
-            let metadataContent = metadataFile.readText();
-            let metadata = DIDStoreMetadata.parse(metadataContent);
+            let metadataContent = await metadataFile.readText();
+            let metadata = await DIDStoreMetadata.parse(metadataContent);
 
             if (metadata.getType() !== DIDStoreMetadata.DID_STORE_TYPE)
                 throw new DIDStorageException("Unknown DIDStore type");
@@ -195,9 +195,9 @@ export class FileSystemStorage implements DIDStorage {
         return DIDURL.from(path, did);
     }
 
-    private static copyFile(src: File, dest: File) {
+    private static async copyFile(src: File, dest: File): Promise<void> {
         // Copy content
-        dest.writeText(src.readText());
+        await dest.writeText(await src.readText());
     }
 
     /**
@@ -206,7 +206,7 @@ export class FileSystemStorage implements DIDStorage {
      * - If the file already exists, it is overwritten (deleted)
      * - Intermediate folders are created if missing
      */
-    private getFile(create: boolean, ...path: string[]): File {
+    private async getFile(create: boolean, ...path: string[]): Promise<File> {
         let file: File = null;
 
         let relPath = this.storeRoot.getAbsolutePath();
@@ -215,7 +215,7 @@ export class FileSystemStorage implements DIDStorage {
         }
         file = new File(relPath);
         if (create)
-            file.getParentDirectory().createDirectory();
+            await file.getParentDirectory().createDirectory();
 
         return file;
     }
@@ -233,26 +233,26 @@ export class FileSystemStorage implements DIDStorage {
         return this.storeRoot;
     }
 
-    public storeMetadata(metadata: DIDStoreMetadata) {
+    public async storeMetadata(metadata: DIDStoreMetadata): Promise<void> {
         try {
-            let file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
+            let file = await this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
 
             if (metadata == null || metadata.isEmpty())
-                file.delete();
+                await file.delete();
             else
-                file.writeText(metadata.serialize());
+                await file.writeText(metadata.serialize());
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store DIDStore metadata error", e);
         }
     }
 
-    public loadMetadata(): DIDStoreMetadata {
+    public async loadMetadata(): Promise<DIDStoreMetadata> {
         try {
-            let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
+            let file = await this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
             let metadata: DIDStoreMetadata = null;
-            if (file.exists())
-                metadata = DIDStoreMetadata.parse(file.readText());
+            if (await file.exists())
+                metadata = await DIDStoreMetadata.parse(await file.readText());
 
             return metadata;
         } catch (e) {
@@ -261,34 +261,34 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    private getRootIdentityFile(id: string, file: string, create: boolean): File {
-        return this.getFile(create, this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR, id, file);
+    private async getRootIdentityFile(id: string, file: string, create: boolean): Promise<File> {
+        return await this.getFile(create, this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR, id, file);
     }
 
     private getRootIdentityDir(id: string): File {
         return this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR, id);
     }
 
-    public storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata) {
+    public async storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata): Promise<void> {
         try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, true);
+            let file = await this.getRootIdentityFile(id, FileSystemStorage.METADATA, true);
 
             if (metadata == null || metadata.isEmpty())
-                file.delete();
+                await file.delete();
             else
-                file.writeText(metadata.serialize());
+                await file.writeText(metadata.serialize());
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store root identity metadata error: " + id, e);
         }
     }
 
-    public loadRootIdentityMetadata(id: string): RootIdentity.Metadata {
+    public async loadRootIdentityMetadata(id: string): Promise<RootIdentity.Metadata> {
         try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
+            let file = await this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
             let metadata: RootIdentity.Metadata = null;
-            if (file.exists())
-                metadata = RootIdentity.Metadata.parse(file.readText());
+            if (await file.exists())
+                metadata = RootIdentity.Metadata.parse(await file.readText());
 
             return metadata;
         } catch (e) {
@@ -297,43 +297,43 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public storeRootIdentity(id: string, mnemonic: string, privateKey: string,
-        publicKey: string, index: number) {
+    public async storeRootIdentity(id: string, mnemonic: string, privateKey: string,
+        publicKey: string, index: number): Promise<void> {
         try {
             let file: File;
 
             if (mnemonic != null) {
-                file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, true);
-                file.writeText(mnemonic);
+                file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, true);
+                await file.writeText(mnemonic);
             }
 
             if (privateKey != null) {
-                file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, true);
-                file.writeText(privateKey);
+                file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, true);
+                await file.writeText(privateKey);
             }
 
             if (publicKey != null) {
-                file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, true);
-                file.writeText(publicKey);
+                file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, true);
+                await file.writeText(publicKey);
             }
 
-            file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, true);
-            file.writeText(index.toFixed());
+            file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, true);
+            await file.writeText(index.toFixed());
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store root identity error: " + id, e);
         }
     }
 
-    public loadRootIdentity(id: string): RootIdentity {
+    public async loadRootIdentity(id: string): Promise<RootIdentity> {
         try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, false);
-            if (!file.exists())
+            let file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, false);
+            if (!(await file.exists()))
                 return null;
 
-            let publicKey = file.readText();
-            file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
-            let index = Number.parseInt(file.readText());
+            let publicKey = await file.readText();
+            file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
+            let index = Number.parseInt(await file.readText());
 
             return RootIdentity.createFromPreDerivedPublicKey(publicKey, index);
         } catch (e) {
@@ -342,125 +342,125 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public containsRootIdentity(id: string): boolean {
+    public containsRootIdentity(id: string): Promise<boolean> {
         let dir = this.getRootIdentityDir(id);
         return dir.exists();
     }
 
-    public updateRootIdentityIndex(id: string, index: number) {
+    public async updateRootIdentityIndex(id: string, index: number): Promise<void> {
         try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
-            file.writeText("" + index);
+            let file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
+            await file.writeText("" + index);
         } catch (e) {
             // IOException
             throw new DIDStorageException("Update index for indentiy error: " + id, e);
         }
     }
 
-    public loadRootIdentityPrivateKey(id: string): string {
+    public async loadRootIdentityPrivateKey(id: string): Promise<string> {
         // TODO: support multiple named identity
         try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, false);
-            if (!file.exists())
+            let file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, false);
+            if (!(await file.exists()))
                 return null;
 
-            return file.readText();
+            return await file.readText();
         } catch (e) {
             // IOException
             throw new DIDStorageException("Load private key for identity error: " + id, e);
         }
     }
 
-    public deleteRootIdentity(id: string): boolean {
+    public async deleteRootIdentity(id: string): Promise<boolean> {
         let dir = this.getRootIdentityDir(id);
-        if (dir.exists()) {
-            dir.delete();
+        if (await dir.exists()) {
+            await dir.delete();
             return true;
         } else {
             return false;
         }
     }
 
-    public listRootIdentities(): RootIdentity[] {
+    public async listRootIdentities(): Promise<RootIdentity[]> {
         let dir = this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
 
-        if (!dir.exists())
-            return [];
-
-        let children = dir.listFiles().filter((file) => {
-            if (!file.isDirectory())
-                return false;
-
-            let sk = new File(file, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE);
-            return (sk.exists() && sk.isFile());
-        });
-
-        if (children == null || children.length == 0)
+        if (!(await dir.exists()))
             return [];
 
         let ids: RootIdentity[] = [];
-        for (let id of children) {
-            let identity = this.loadRootIdentity(id.getName());
-            ids.push(identity);
-        }
+        const files = await dir.listFiles();
+        if (files) {
+            for (const file of files) {
+                if (!(await file.isDirectory()))
+                    continue;
 
+                let sk = new File(file, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE);
+                if (await sk.exists() && await sk.isFile())
+                    ids.push(await this.loadRootIdentity(file.getName()));
+            }
+        }
         return ids;
     }
 
-    public containsRootIdenities(): boolean {
+    public async containsRootIdenities(): Promise<boolean> {
         let dir = this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
-        if (!dir.exists())
+        if (!(await dir.exists()))
             return false;
 
-        let children = dir.listFiles().filter((file) => {
-            return file.isDirectory();
-        });
+        const files = await dir.listFiles();
+        if (!files)
+            return false;
 
-        return (children != null && children.length > 0);
+        for (const file of files) {
+            if (await file.isDirectory())
+                return true;
+        }
+
+        return false;
     }
 
-    public loadRootIdentityMnemonic(id: string): string {
+    public async loadRootIdentityMnemonic(id: string): Promise<string> {
         try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, false);
-            return file.readText();
+            let file = await this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, false);
+            return await file.readText();
         } catch (e) {
             // IOException
             throw new DIDStorageException("Load mnemonic for identity error: " + id, e);
         }
     }
 
-    private getDidFile(did: DID, create: boolean): File {
-        return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.DOCUMENT_FILE);
+    private async getDidFile(did: DID, create: boolean): Promise<File> {
+        return await this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.DOCUMENT_FILE);
     }
 
-    private getDidMetadataFile(did: DID, create: boolean): File {
-        return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.METADATA);
+    private async getDidMetadataFile(did: DID, create: boolean): Promise<File> {
+        return await this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.METADATA);
     }
 
     private getDidDir(did: DID): File {
         return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId());
     }
 
-    public storeDidMetadata(did: DID, metadata: DIDMetadata) {
+    public async storeDidMetadata(did: DID, metadata: DIDMetadata): Promise<void> {
         try {
-            let file = this.getDidMetadataFile(did, true);
+            let file = await this.getDidMetadataFile(did, true);
 
             if (metadata == null || metadata.isEmpty())
-                file.delete();
+                await file.delete();
             else
-                file.writeText(metadata.serialize());
+                await file.writeText(metadata.serialize());
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store DID metadata error: " + did, e);
         }
     }
 
-    public loadDidMetadata(did: DID): DIDMetadata {
+    public async loadDidMetadata(did: DID): Promise<DIDMetadata> {
         try {
-            let file = this.getDidMetadataFile(did, false);
+            let file = await this.getDidMetadataFile(did, false);
             let metadata: DIDMetadata = null;
-            if (file.exists())
-                metadata = DIDMetadata.parse(file.readText());
+            if (await file.exists())
+                metadata = DIDMetadata.parse(await file.readText());
 
             return metadata;
         } catch (e) {
@@ -469,10 +469,10 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public storeDid(doc: DIDDocument) {
+    public async storeDid(doc: DIDDocument): Promise<void> {
         try {
-            let file = this.getDidFile(doc.getSubject(), true);
-            file.writeText(doc.serialize(true));
+            let file = await this.getDidFile(doc.getSubject(), true);
+            await file.writeText(doc.serialize(true));
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store DID document error: " + doc.getSubject(), e);
@@ -481,75 +481,74 @@ export class FileSystemStorage implements DIDStorage {
 
     public async loadDid(did: DID): Promise<DIDDocument> {
         try {
-            let file = this.getDidFile(did, false);
-            if (!file.exists())
+            let file = await this.getDidFile(did, false);
+            if (!(await file.exists()))
                 return null;
 
-            return await DIDDocument.parseAsync(file.readText());
+            return await DIDDocument.parseAsync(await file.readText());
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load DID document error: " + did, e);
         }
     }
 
-    public deleteDid(did: DID): boolean {
+    public async deleteDid(did: DID): Promise<boolean> {
         let dir = this.getDidDir(did);
-        if (dir.exists()) {
-            dir.delete();
+        if (await dir.exists()) {
+            await dir.delete();
             return true;
         } else {
             return false;
         }
     }
 
-    public listDids(): DID[] {
+    public async listDids(): Promise<DID[]> {
         let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
-        if (!dir.exists())
-            return [];
-
-        let children = dir.listFiles().filter((file) => {
-            if (!file.isDirectory())
-                return false;
-
-            let doc = new File(file, FileSystemStorage.DOCUMENT_FILE);
-            return (doc.exists() && doc.isFile());
-        });
-
-        if (children == null || children.length == 0)
+        if (!(await dir.exists()))
             return [];
 
         let dids: DID[] = [];
-        for (let didRoot of children) {
-            let did = new DID(DID.METHOD, didRoot.getName());
-            dids.push(did);
-        }
+        const files = await dir.listFiles();
+        if (files) {
+            for (const file of files) {
+                if (!(await file.isDirectory()))
+                    continue;
 
+                const didRoot = new File(file, FileSystemStorage.DOCUMENT_FILE);
+                if (await didRoot.exists() && await didRoot.isFile())
+                    dids.push(new DID(DID.METHOD, file.getName()));
+            }
+        }
         return dids;
     }
 
-    public containsDid(did: DID): boolean {
+    public containsDid(did: DID): Promise<boolean> {
         let dir = this.getDidDir(did);
         return dir.exists();
     }
 
-    public containsDids(): boolean {
+    public async containsDids(): Promise<boolean> {
         let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
-        if (!dir.exists())
+        if (!(await dir.exists()))
             return false;
 
-        let children = dir.listFiles().filter((file) => {
-            return file.isDirectory();
-        });
+        const files = await dir.listFiles();
+        if (!files)
+            return false;
 
-        return children == null ? false : children.length > 0;
+        for (const file of files) {
+            if (await file.isDirectory())
+                return true;
+        }
+        return false;
     }
 
-    private getCredentialFile(id: DIDURL, create: boolean): File {
+    private getCredentialFile(id: DIDURL, create: boolean): Promise<File> {
         return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
             FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.CREDENTIAL_FILE);
     }
 
-    private getCredentialMetadataFile(id: DIDURL, create: boolean): File {
+    private getCredentialMetadataFile(id: DIDURL, create: boolean): Promise<File> {
         return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
             FileSystemStorage.CREDENTIALS_DIR, FileSystemStorage.toPath(id), FileSystemStorage.METADATA);
     }
@@ -563,82 +562,87 @@ export class FileSystemStorage implements DIDStorage {
         return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.CREDENTIALS_DIR);
     }
 
-    public storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
+    public async storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata): Promise<void> {
         try {
-            let file = this.getCredentialMetadataFile(id, true);
+            let file = await this.getCredentialMetadataFile(id, true);
 
             if (metadata == null || metadata.isEmpty())
-                file.delete();
+                await file.delete();
             else
-                file.writeText(metadata.serialize());
+                await file.writeText(metadata.serialize());
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store credential metadata error: " + id, e);
         }
     }
 
-    public loadCredentialMetadata(id: DIDURL): CredentialMetadata {
+    public async loadCredentialMetadata(id: DIDURL): Promise<CredentialMetadata> {
         try {
-            let file = this.getCredentialMetadataFile(id, false);
-            if (!file.exists())
+            let file = await this.getCredentialMetadataFile(id, false);
+            if (!(await file.exists()))
                 return null;
 
-            return CredentialMetadata.parse(file.readText());
+            return CredentialMetadata.parse(await file.readText());
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load credential metadata error: " + id, e);
         }
     }
 
-    public storeCredential(credential: VerifiableCredential) {
+    public async storeCredential(credential: VerifiableCredential): Promise<void> {
         try {
-            let file = this.getCredentialFile(credential.getId(), true);
-            file.writeText(credential.serialize(true));
+            let file = await this.getCredentialFile(credential.getId(), true);
+            await file.writeText(credential.serialize(true));
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store credential error: " + credential.getId(), e);
         }
     }
 
-    public loadCredential(id: DIDURL): VerifiableCredential {
+    public async loadCredential(id: DIDURL): Promise<VerifiableCredential> {
         try {
-            let file = this.getCredentialFile(id, false);
-            if (!file.exists())
+            let file = await this.getCredentialFile(id, false);
+            if (!(await file.exists()))
                 return null;
 
-            return VerifiableCredential.parse(file.readText());
+            return VerifiableCredential.parse(await file.readText());
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load credential error: " + id, e);
         }
     }
 
-    public containsCredential(id: DIDURL): boolean {
+    public containsCredential(id: DIDURL): Promise<boolean> {
         let dir = this.getCredentialDir(id);
         return dir.exists();
     }
 
-    public containsCredentials(did: DID): boolean {
+    public async containsCredentials(did: DID): Promise<boolean> {
         let dir = this.getCredentialsDir(did);
-        if (!dir.exists())
+        if (!(await dir.exists()))
             return false;
 
-        let creds = dir.listFiles().filter((file) => {
-            return file.isDirectory();
-        });
+        const files = await dir.listFiles();
+        if (!files)
+            return false;
 
-        return creds == null ? false : creds.length > 0;
+        for (const file of files) {
+            if (await file.isDirectory()) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public deleteCredential(id: DIDURL): boolean {
+    public async deleteCredential(id: DIDURL): Promise<boolean> {
         let dir = this.getCredentialDir(id);
-        if (dir.exists()) {
-            dir.delete();
+        if (await dir.exists()) {
+            await dir.delete();
 
             // Remove the credentials directory is no credential exists.
             dir = this.getCredentialsDir(id.getDid());
-            if (dir.list().length == 0)
-                dir.delete();
+            if ((await dir.list()).length == 0)
+                await dir.delete();
 
             return true;
         } else {
@@ -646,30 +650,28 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public listCredentials(did: DID): DIDURL[] {
+    public async listCredentials(did: DID): Promise<DIDURL[]> {
         let dir = this.getCredentialsDir(did);
-        if (!dir.exists())
-            return [];
-
-        let children = dir.listFiles().filter((file) => {
-            if(!file.isDirectory())
-                return false;
-
-            let vc = new File(file, FileSystemStorage.CREDENTIAL_FILE);
-            return (vc.exists() && vc.isFile());
-        });
-
-        if (children == null || children.length == 0)
+        if (!(await dir.exists()))
             return [];
 
         let credentials: DIDURL[] = [];
-        for (let credential of children)
-            credentials.push(FileSystemStorage.toDIDURL(did, credential.getName()));
+        const files = await dir.listFiles();
+        if (files) {
+            for (const file of files) {
+                if(!(await file.isDirectory()))
+                    continue;
 
+                let vc = new File(file, FileSystemStorage.CREDENTIAL_FILE);
+                if (await vc.exists() && await vc.isFile()) {
+                    credentials.push(FileSystemStorage.toDIDURL(did, file.getName()));
+                }
+            }
+        }
         return credentials;
     }
 
-    private getPrivateKeyFile(id: DIDURL, create: boolean): File {
+    private getPrivateKeyFile(id: DIDURL, create: boolean): Promise<File> {
         return this.getFile(create, this.currentDataDir, FileSystemStorage.DID_DIR, id.getDid().getMethodSpecificId(),
             FileSystemStorage.PRIVATEKEYS_DIR, FileSystemStorage.toPath(id));
     }
@@ -678,25 +680,25 @@ export class FileSystemStorage implements DIDStorage {
         return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.PRIVATEKEYS_DIR);
     }
 
-    public containsPrivateKey(id: DIDURL): boolean {
-        let file = this.getPrivateKeyFile(id, false);
-        return file.exists();
+    public async containsPrivateKey(id: DIDURL): Promise<boolean> {
+        let file = await this.getPrivateKeyFile(id, false);
+        return await file.exists();
     }
 
-    public storePrivateKey(id: DIDURL, privateKey: string) {
+    public async storePrivateKey(id: DIDURL, privateKey: string): Promise<void> {
         try {
-            let file = this.getPrivateKeyFile(id, true);
-            file.writeText(privateKey);
+            let file = await this.getPrivateKeyFile(id, true);
+            await file.writeText(privateKey);
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store private key error: " + id, e);
         }
     }
 
-    public loadPrivateKey(id: DIDURL): string {
+    public async loadPrivateKey(id: DIDURL): Promise<string> {
         try {
-            let file = this.getPrivateKeyFile(id, false);
-            if (!file.exists())
+            let file = await this.getPrivateKeyFile(id, false);
+            if (!(await file.exists()))
                 return null;
 
             return file.readText();
@@ -705,27 +707,32 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public containsPrivateKeys(did: DID): boolean {
+    public async containsPrivateKeys(did: DID): Promise<boolean> {
         let dir = this.getPrivateKeysDir(did);
-        if (!dir.exists())
+        if (!(await dir.exists()))
             return false;
 
-        let keys = dir.listFiles().filter((file) => {
-            return file.isFile();
-        });
+        const files = await dir.listFiles();
+        if (!files)
+            return false;
 
-        return keys == null ? false : keys.length > 0;
+        for (const file of files) {
+            if (await file.isFile()) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public deletePrivateKey(id: DIDURL): boolean {
-        let file = this.getPrivateKeyFile(id, false);
-        if (file.exists()) {
-            file.delete();
+    public async deletePrivateKey(id: DIDURL): Promise<boolean> {
+        let file = await this.getPrivateKeyFile(id, false);
+        if (await file.exists()) {
+            await file.delete();
 
             // Remove the privatekeys directory is no privatekey exists.
             let dir = this.getPrivateKeysDir(id.getDid());
-            if (dir.list().length == 0)
-                dir.delete();
+            if ((await dir.list()).length == 0)
+                await dir.delete();
 
             return true;
         } else {
@@ -733,23 +740,21 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public listPrivateKeys(did: DID): DIDURL[] {
+    public async listPrivateKeys(did: DID): Promise<DIDURL[]> {
         let dir = this.getPrivateKeysDir(did);
-        if (!dir.exists())
+        if (!(await dir.exists()))
             return [];
 
-        let keys = dir.listFiles().filter((file) => {
-            return file.isFile();
-        });
-
-        if (keys == null || keys.length == 0)
-            return [];
-
-        let sks: DIDURL[] = [];
-        for (let key of keys)
-            sks.push(FileSystemStorage.toDIDURL(did, key.getName()));
-
-        return sks;
+        let keys: DIDURL[] = [];
+        const files = await dir.listFiles();
+        if (files) {
+            for (const file of files) {
+                if (await file.isFile()) {
+                    keys.push(FileSystemStorage.toDIDURL(did, file.getName()));
+                }
+            }
+        }
+        return keys;
     }
 
     private needReencrypt(file: File): boolean {
@@ -777,77 +782,75 @@ export class FileSystemStorage implements DIDStorage {
         return false;
     }
 
-    private copy(src: File, dest: File, reEncryptor: ReEncryptor) {
-        if (src.isDirectory()) {
+    private async copy(src: File, dest: File, reEncryptor: ReEncryptor): Promise<void> {
+        if (await src.isDirectory()) {
             let dir = src;
-            if (!dest.exists()) {
-                dest.createDirectory();
+            if (!(await dest.exists())) {
+                await dest.createDirectory();
             }
 
-            let files = dir.list();
+            let files = await dir.list();
             for (let file of files) {
                 let srcFile = new File(dir, file);
                 let destFile = new File(dest, file);
-                this.copy(srcFile, destFile, reEncryptor);
+                await this.copy(srcFile, destFile, reEncryptor);
             }
         } else {
             if (this.needReencrypt(src)) {
-                let text = src.readText();
-                dest.writeText(reEncryptor.reEncrypt(text));
+                let text = await src.readText();
+                await dest.writeText(reEncryptor.reEncrypt(text));
             } else {
-                FileSystemStorage.copyFile(src, dest);
+                await FileSystemStorage.copyFile(src, dest);
             }
         }
     }
 
-    private postChangePassword() {
+    private async postChangePassword(): Promise<void> {
         let dataDir = this.getDir(FileSystemStorage.DATA_DIR);
         let dataJournal = this.getDir(FileSystemStorage.DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
 
         let timestamp = new Date().getTime() / 1000;
         let dataDeprecated = this.getDir(FileSystemStorage.DATA_DIR + "_" + timestamp);
 
-        let stageFile = this.getFile(false, "postChangePassword");
+        let stageFile = await this.getFile(false, "postChangePassword");
 
-        if (stageFile.exists()) {
-            if (dataJournal.exists()) {
-                if (dataDir.exists())
-                    dataDir.rename(dataDeprecated.getAbsolutePath());
+        if (await stageFile.exists()) {
+            if (await dataJournal.exists()) {
+                if (await dataDir.exists())
+                    await dataDir.rename(dataDeprecated.getAbsolutePath());
 
-                dataJournal.rename(dataDir.getAbsolutePath());
+                await dataJournal.rename(dataDir.getAbsolutePath());
             }
 
-            stageFile.delete();
+            await stageFile.delete();
         } else {
-            if (dataJournal.exists())
-                dataJournal.delete();
+            if (await dataJournal.exists())
+                await dataJournal.delete();
         }
     }
 
-    public changePassword(reEncryptor: ReEncryptor) {
+    public async changePassword(reEncryptor: ReEncryptor): Promise<void> {
         try {
             let dataDir = this.getDir(FileSystemStorage.DATA_DIR);
             let dataJournal = this.getDir(FileSystemStorage.DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
 
-            this.copy(dataDir, dataJournal, reEncryptor);
+            await this.copy(dataDir, dataJournal, reEncryptor);
 
-            let stageFile = this.getFile(true, "postChangePassword");
-            stageFile.createFile();
+            let stageFile = await this.getFile(true, "postChangePassword");
+            await stageFile.createFile();
         } catch (e) {
             if (e instanceof WrongPasswordException)
                 throw e;
             // DIDStoreException | IOException
             throw new DIDStorageException("Change store password failed.");
         } finally {
-            this.postChangePassword();
+            await this.postChangePassword();
         }
     }
 
-    private postOperations() {
-        let stageFile = this.getFile(false, "postChangePassword");
-        if (stageFile.exists()) {
-            this.postChangePassword();
-            return;
-        }
+    private async postOperations(): Promise<void> {
+        const stageFile = await this.getFile(false, "postChangePassword");
+        if (await stageFile.exists())
+            await this.postChangePassword();
     }
 }

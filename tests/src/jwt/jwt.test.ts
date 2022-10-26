@@ -60,7 +60,7 @@ let doc: DIDDocument;
 
 describe('JWT Tests', () => {
     beforeAll(async () => {
-        testData = new TestData();
+        testData = await TestData.create();
         await testData.cleanup();
         let identity = await testData.getRootIdentity();
         doc = await identity.newDid(TestConfig.storePass);
@@ -70,7 +70,7 @@ describe('JWT Tests', () => {
         let id = new DIDURL("#key2", doc.getSubject());
         db.addAuthenticationKey(id, key.getPublicKeyBase58());
         let store = await testData.getStore();
-        store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+        await store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
         doc = await db.seal(TestConfig.storePass);
         await store.storeDid(doc);
 
@@ -682,7 +682,7 @@ describe('JWT Tests', () => {
 
     test('jwsTestCompatible', async () => {
         let mnemonic = "have scorpion powder shoulder pretty sentence humble tenant frog march finger title";
-        let identity = RootIdentity.createFromMnemonic(mnemonic, "secret", await testData.getStore(), TestConfig.storePass);
+        let identity = await RootIdentity.createFromMnemonic(mnemonic, "secret", await testData.getStore(), TestConfig.storePass);
         let issuerDoc = await identity.newDid(TestConfig.storePass, 0, true);
         await issuerDoc.publish(TestConfig.storePass);
 

@@ -124,7 +124,7 @@ describe('DIDDocument Tests', () => {
     let testData: TestData;
     let store: DIDStore;
     beforeEach(async () => {
-        testData = new TestData();
+        testData = await TestData.create();
         await testData.cleanup();
         store = await testData.getStore();
     });
@@ -433,18 +433,18 @@ describe('DIDDocument Tests', () => {
 
             // recovery used by authorization, should failed.
             let id = DIDURL.from("#recovery", doc.getSubject());
-            expect(() => { db.removePublicKey(id) }).toThrowError();
+            await expect(async () => { await db.removePublicKey(id) }).rejects.toThrowError();
 
             // force remove public key, should success
-            db.removePublicKey(id, true);
-            db.removePublicKey("#key2", true);
+            await db.removePublicKey(id, true);
+            await db.removePublicKey("#key2", true);
 
             // Key not exist, should fail.
-            expect(() => { db.removePublicKey("#notExistKey", true); }).toThrowError();
+            await expect(async () => { await db.removePublicKey("#notExistKey", true); }).rejects.toThrowError();
 
             // Can not remove default publickey, should fail.
             let d = doc;
-            expect(() => { db.removePublicKey(d.getDefaultPublicKeyId(), true); }).toThrowError();
+            await expect(async () => { await db.removePublicKey(d.getDefaultPublicKeyId(), true); }).rejects.toThrowError();
 
             doc = await db.seal(TestConfig.storePass);
             expect(doc).not.toBeNull();
@@ -485,18 +485,18 @@ describe('DIDDocument Tests', () => {
 
             // Can not remove the controller's key
             let key2 = DIDURL.from("#key2", user1.getSubject());
-            expect(() => { db.removePublicKey(key2); }).toThrowError();
+            await expect(async () => { await db.removePublicKey(key2); }).rejects.toThrowError();
 
             // key2 used by authentication, should failed.
             let id = DIDURL.from("#key2", doc.getSubject());
-            expect(() => { db.removePublicKey(id); }).toThrowError();
+            await expect(async () => { await db.removePublicKey(id); }).rejects.toThrowError();
 
             // force remove public key, should success
-            db.removePublicKey(id, true);
-            db.removePublicKey("#key3", true);
+            await db.removePublicKey(id, true);
+            await db.removePublicKey("#key3", true);
 
             // Key not exist, should fail.
-            expect(() => { db.removePublicKey("#notExistKey", true); }).toThrowError();
+            await expect(async () => { await db.removePublicKey("#notExistKey", true); }).rejects.toThrowError();
 
             doc = await db.seal(TestConfig.storePass);
             doc = await user1.signWithDocument(doc, TestConfig.storePass);
@@ -1034,7 +1034,7 @@ describe('DIDDocument Tests', () => {
             db.removeAuthenticationKey(DIDURL.from("#key2", doc.getSubject()))
                 .removeAuthenticationKey("#key3");
 
-            db.removePublicKey("#key3");
+            await db.removePublicKey("#key3");
 
             // Key not exist, should fail.
             expect(() => { db.removeAuthenticationKey("#notExistKey"); }).toThrowError();
@@ -2238,13 +2238,13 @@ describe('DIDDocument Tests', () => {
             let cd = testData.getCompatibleData(source.version);
             await cd.loadAll();
 
-            let compactJson = cd.getDocumentJson(source.did, "compact");
+            let compactJson = await cd.getDocumentJson(source.did, "compact");
             let compact = await DIDDocument.parseAsync(compactJson);
             expect(compact).not.toBeNull();
             let valid = await compact.isValid();
             expect(valid).toBeTruthy();
 
-            let normalizedJson = cd.getDocumentJson(source.did, "normalized");
+            let normalizedJson = await cd.getDocumentJson(source.did, "normalized");
             let normalized = await DIDDocument.parseAsync(normalizedJson);
             expect(normalized).not.toBeNull();
             valid = await normalized.isValid();
@@ -2300,7 +2300,7 @@ describe('DIDDocument Tests', () => {
         for(let source of csvSource){
             let cd = testData.getCompatibleData(source.version);
             await cd.loadAll();
-            let compactJson = cd.getDocumentJson(source.did, "compact");
+            let compactJson = await cd.getDocumentJson(source.did, "compact");
             let compact = await DIDDocument.parseAsync(compactJson);
             expect(compact).not.toBeNull();
             let valid = await compact.isValid();
@@ -2315,7 +2315,7 @@ describe('DIDDocument Tests', () => {
             expect(listener.toString().startsWith("  - ")).toBeTruthy();
             listener.reset();
 
-            let normalizedJson = cd.getDocumentJson(source.did, "normalized");
+            let normalizedJson = await cd.getDocumentJson(source.did, "normalized");
             let normalized = await DIDDocument.parseAsync(normalizedJson);
             expect(normalized).not.toBeNull();
             valid = await normalized.isValid();
@@ -3365,7 +3365,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.toString()).toEqual(doc.toString())
 
-        doc.getMetadata().setPreviousSignature(null);
+        await doc.getMetadata().setPreviousSignature(null);
 
         // Update again
         db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -3414,7 +3414,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.toString()).toEqual(doc.toString());
 
-        doc.getMetadata().setSignature(null);
+        await doc.getMetadata().setSignature(null);
 
         // Update again
         db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -3446,8 +3446,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull()
         expect(resolved.toString()).toEqual(doc.toString());
 
-        doc.getMetadata().setPreviousSignature(null);
-        doc.getMetadata().setSignature(null);
+        await doc.getMetadata().setPreviousSignature(null);
+        await doc.getMetadata().setSignature(null);
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -3479,8 +3479,8 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.toString()).toEqual(doc.toString())
 
-        doc.getMetadata().setPreviousSignature(null);
-        doc.getMetadata().setSignature(null);
+        await doc.getMetadata().setPreviousSignature(null);
+        await doc.getMetadata().setSignature(null);
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -3529,7 +3529,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.toString()).toEqual(doc.toString());
 
-        doc.getMetadata().setPreviousSignature("1234567890");
+        await doc.getMetadata().setPreviousSignature("1234567890");
 
         // Update
         db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -3578,7 +3578,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.toString()).toEqual(doc.toString());
 
-        doc.getMetadata().setSignature("1234567890");
+        await doc.getMetadata().setSignature("1234567890");
 
         // Update
         db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -3610,7 +3610,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.toString()).toEqual(doc.toString())
 
-        doc.getMetadata().setPreviousSignature("1234567890");
+        await doc.getMetadata().setPreviousSignature("1234567890");
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit();
         let key = TestData.generateKeypair();
@@ -3642,7 +3642,7 @@ describe('DIDDocument Tests', () => {
         expect(resolved).not.toBeNull();
         expect(resolved.toString()).toEqual(doc.toString());
 
-        doc.getMetadata().setSignature("1234567890");
+        await doc.getMetadata().setSignature("1234567890");
 
         // Update
         let db = DIDDocument.Builder.newFromDocument(doc).edit();
@@ -4420,8 +4420,8 @@ describe('DIDDocument Tests', () => {
         let id = DIDURL.from("#key-2", doc.getSubject());
 
         db.addAuthenticationKey(id, key.getPublicKeyBase58());
-        store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
-        expect(store.containsPrivateKey(id)).toBeTruthy();
+        await store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+        expect(await store.containsPrivateKey(id)).toBeTruthy();
 
         doc = await db.seal(TestConfig.storePass);
         let valid = await doc.isValid();
@@ -4469,7 +4469,7 @@ describe('DIDDocument Tests', () => {
         let key = TestData.generateKeypair();
         let id = DIDURL.from("#key-2", doc.getSubject());
         db.addAuthenticationKey(id, key.getPublicKeyBase58());
-        store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
+        await store.storePrivateKey(id, key.serialize(), TestConfig.storePass);
         doc = await db.seal(TestConfig.storePass);
         let valid = await doc.isValid();
         expect(valid).toBeTruthy();

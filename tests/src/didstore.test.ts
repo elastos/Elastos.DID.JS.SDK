@@ -34,13 +34,13 @@ let store: DIDStore;
 
 describe("DIDStore Tests", ()=>{
     beforeEach(async () => {
-        testData = new TestData();
+        testData = await TestData.create();
         await testData.cleanup();
         store = await testData.getStore();
     })
 
     afterEach(async () => {
-        testData.cleanup();
+        await testData.cleanup();
     });
 
     // Java: @ExtendWith(DIDTestExtension.class)
@@ -60,8 +60,8 @@ describe("DIDStore Tests", ()=>{
 
     test("testLoadRootIdentityFromEmptyStore", async () => {
         let file = getFile(".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         let identity = await store.loadRootIdentity();
         expect(identity).toBeNull();
@@ -69,40 +69,40 @@ describe("DIDStore Tests", ()=>{
 
     test("testBulkCreate", async ()=>{
         let file = getFile(".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         let identity = await testData.getRootIdentity();
 
         file = getFile("roots", identity.getId(), "mnemonic");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("roots", identity.getId(), "private");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("roots", identity.getId(), "public");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("roots", identity.getId(), "index");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("roots", identity.getId(), ".metadata");
-        expect(file.exists()).toBeFalsy();
+        expect(await file.exists()).toBeFalsy();
 
-        identity.setAlias("default");
+        await identity.setAlias("default");
         file = getFile("roots", identity.getId(), ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         let valid : boolean;
         for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias(alias);
+            await doc.getMetadata().setAlias(alias);
             valid = await doc.isValid();
             expect(valid).toBeTruthy();
 
@@ -113,12 +113,12 @@ describe("DIDStore Tests", ()=>{
             await DIDTestExtension.awaitStandardPublishingDelay();
 
             file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
-            expect(file.exists()).toBeTruthy();
-            expect(file.isFile()).toBeTruthy();
+            expect(await file.exists()).toBeTruthy();
+            expect(await file.isFile()).toBeTruthy();
 
             file = getFile("ids", doc.getSubject().getMethodSpecificId(), ".metadata");
-            expect(file.exists()).toBeTruthy();
-            expect(file.isFile()).toBeTruthy();
+            expect(await file.exists()).toBeTruthy();
+            expect(await file.isFile()).toBeTruthy();
 
             resolved = await doc.getSubject().resolve();
             expect(resolved).not.toBeNull();
@@ -133,7 +133,7 @@ describe("DIDStore Tests", ()=>{
 
         let dids = await store.listDids();
         expect(dids.length).toBe(TestConfig.DID_INDEX_LOOPS);
-        expect(store.containsDids()).toBeTruthy();
+        expect(await store.containsDids()).toBeTruthy();
     });
 
     test("testDeleteDID", async ()=>{
@@ -144,7 +144,7 @@ describe("DIDStore Tests", ()=>{
         for (let i = 0; i < TestConfig.DID_INDEX_LOOPS; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias(alias);
+            await doc.getMetadata().setAlias(alias);
             await doc.publish(TestConfig.storePass);
             await DIDTestExtension.awaitStandardPublishingDelay();
             dids.push(doc.getSubject());
@@ -156,13 +156,13 @@ describe("DIDStore Tests", ()=>{
 
             let did = dids[i];
 
-            let deleted = store.deleteDid(did);
+            let deleted = await store.deleteDid(did);
             expect(deleted).toBeTruthy();
 
             let file = getFile("ids", did.getMethodSpecificId());
-            expect(file.exists()).toBeFalsy();
+            expect(await file.exists()).toBeFalsy();
 
-            deleted = store.deleteDid(did);
+            deleted = await store.deleteDid(did);
             expect(deleted).toBeFalsy();
         }
 
@@ -175,22 +175,22 @@ describe("DIDStore Tests", ()=>{
         let issuer = await testData.getInstantData().getIssuerDocument();
 
         let file = getFile("ids", issuer.getSubject().getMethodSpecificId(), "document");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", issuer.getSubject().getMethodSpecificId(), ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         let test = await testData.getInstantData().getUser1Document();
 
         file = getFile("ids", test.getSubject().getMethodSpecificId(), "document");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", test.getSubject().getMethodSpecificId(), ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         let doc = await store.loadDid(issuer.getSubject());
         expect(issuer.getSubject().equals(doc.getSubject())).toBeTruthy();
@@ -214,56 +214,56 @@ describe("DIDStore Tests", ()=>{
         let user = await testData.getInstantData().getUser1Document();
 
         let vc = user.getCredential("#profile");
-        vc.getMetadata().setAlias("MyProfile");
+        await vc.getMetadata().setAlias("MyProfile");
 
         let file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
                 "credentials", "#" + vc.getId().getFragment(), "credential");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
                 "credentials", "#" + vc.getId().getFragment(), ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         vc = user.getCredential("#email");
-        vc.getMetadata().setAlias("Email");
+        await vc.getMetadata().setAlias("Email");
 
         file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
                 "credentials", "#" + vc.getId().getFragment(), "credential");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
                 "credentials", "#" + vc.getId().getFragment(), ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         vc = await testData.getInstantData().getUser1TwitterCredential();
-        vc.getMetadata().setAlias("Twitter");
+        await vc.getMetadata().setAlias("Twitter");
 
         file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
                 "credentials", "#" + vc.getId().getFragment(), "credential");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
                 "credentials", "#" + vc.getId().getFragment(), ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         vc = await testData.getInstantData().getUser1PassportCredential();
-        vc.getMetadata().setAlias("Passport");
+        await vc.getMetadata().setAlias("Passport");
 
         file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
                 "credentials", "#" + vc.getId().getFragment(), "credential");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", vc.getId().getDid().getMethodSpecificId(),
                 "credentials", "#" + vc.getId().getFragment(), ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         let id = DIDURL.from("#profile", user.getSubject());
         vc = await store.loadCredential(id);
@@ -292,10 +292,10 @@ describe("DIDStore Tests", ()=>{
         expect(vc).toBeNull();
 
         id = DIDURL.from("#twitter", user.getSubject());
-        expect(store.containsCredential(id)).toBeTruthy();
-        expect(store.containsCredential(id.toString())).toBeTruthy();
-        expect(store.containsCredentials(user.getSubject())).toBeTruthy();
-        expect(store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
+        expect(await store.containsCredential(id)).toBeTruthy();
+        expect(await store.containsCredential(id.toString())).toBeTruthy();
+        expect(await store.containsCredentials(user.getSubject())).toBeTruthy();
+        expect(await store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
     });
 
     test("testListCredentials", async ()=>{
@@ -305,13 +305,13 @@ describe("DIDStore Tests", ()=>{
         await testData.getInstantData().getIssuerDocument();
         let user = await testData.getInstantData().getUser1Document();
         let vc = user.getCredential("#profile");
-        vc.getMetadata().setAlias("MyProfile");
+        await vc.getMetadata().setAlias("MyProfile");
         vc = user.getCredential("#email");
-        vc.getMetadata().setAlias("Email");
+        await vc.getMetadata().setAlias("Email");
         vc = await testData.getInstantData().getUser1TwitterCredential();
-        vc.getMetadata().setAlias("Twitter");
+        await vc.getMetadata().setAlias("Twitter");
         vc = await testData.getInstantData().getUser1PassportCredential();
-        vc.getMetadata().setAlias("Passport");
+        await vc.getMetadata().setAlias("Passport");
 
         let vcs = await store.listCredentials(user.getSubject());
         expect(vcs.length).toBe(4);
@@ -334,56 +334,56 @@ describe("DIDStore Tests", ()=>{
         await testData.getInstantData().getIssuerDocument();
         let user = await testData.getInstantData().getUser1Document();
         let vc = user.getCredential("#profile");
-        vc.getMetadata().setAlias("MyProfile");
+        await vc.getMetadata().setAlias("MyProfile");
         vc = user.getCredential("#email");
-        vc.getMetadata().setAlias("Email");
+        await vc.getMetadata().setAlias("Email");
         vc = await testData.getInstantData().getUser1TwitterCredential();
-        vc.getMetadata().setAlias("Twitter");
+        await vc.getMetadata().setAlias("Twitter");
         vc = await testData.getInstantData().getUser1PassportCredential();
-        vc.getMetadata().setAlias("Passport");
+        await vc.getMetadata().setAlias("Passport");
 
         let file = getFile("ids", user.getSubject().getMethodSpecificId(),
                 "credentials", "#twitter", "credential");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", user.getSubject().getMethodSpecificId(),
                 "credentials", "#twitter", ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", user.getSubject().getMethodSpecificId(),
                 "credentials", "#passport", "credential");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
         file = getFile("ids", user.getSubject().getMethodSpecificId(),
                 "credentials", "#passport", ".metadata");
-        expect(file.exists()).toBeTruthy();
-        expect(file.isFile()).toBeTruthy();
+        expect(await file.exists()).toBeTruthy();
+        expect(await file.isFile()).toBeTruthy();
 
-        let deleted = store.deleteCredential(DIDURL.from("#twitter", user.getSubject()));
+        let deleted = await store.deleteCredential(DIDURL.from("#twitter", user.getSubject()));
         expect(deleted).toBeTruthy();
 
-        deleted = store.deleteCredential(DIDURL.from("#passport", user.getSubject()).toString());
+        deleted = await store.deleteCredential(DIDURL.from("#passport", user.getSubject()).toString());
         expect(deleted).toBeTruthy();
 
-        deleted = store.deleteCredential(user.getSubject().toString() + "#notExist");
+        deleted = await store.deleteCredential(user.getSubject().toString() + "#notExist");
         expect(deleted).toBeFalsy();
 
         file = getFile("ids", user.getSubject().getMethodSpecificId(),
                 "credentials", "#twitter");
-        expect(file.exists()).toBeFalsy();
+        expect(await file.exists()).toBeFalsy();
 
         file = getFile("ids", user.getSubject().getMethodSpecificId(),
                 "credentials", "#passport");
-        expect(file.exists()).toBeFalsy();
+        expect(await file.exists()).toBeFalsy();
 
-        expect(store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
-        expect(store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
+        expect(await store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
+        expect(await store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
 
-        expect(store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
-        expect(store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
+        expect(await store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
+        expect(await store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
     });
 
     test("testSynchronizeStore", async ()=> {
@@ -392,7 +392,7 @@ describe("DIDStore Tests", ()=>{
         for (let i = 0; i < 5; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias(alias);
+            await doc.getMetadata().setAlias(alias);
             valid = await doc.isValid();
             expect(valid).toBeTruthy();
 
@@ -409,7 +409,7 @@ describe("DIDStore Tests", ()=>{
         let dids: DID[] = Array.from(await store.listDids());
         dids.sort((a,b) => a.compareTo(b));
         for (let did of dids) {
-            expect(store.deleteDid(did)).toBeTruthy();
+            expect(await store.deleteDid(did)).toBeTruthy();
         }
 
         let empty: DID[] = Array.from(await store.listDids());
@@ -431,7 +431,7 @@ describe("DIDStore Tests", ()=>{
         for (let i = 0; i < LOOP_COUNT; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias(alias);
+            await doc.getMetadata().setAlias(alias);
             valid = await doc.isValid();
             expect(valid).toBeTruthy();
 
@@ -442,16 +442,16 @@ describe("DIDStore Tests", ()=>{
             await DIDTestExtension.awaitStandardPublishingDelay();
 
             let file = getFile("ids", doc.getSubject().getMethodSpecificId(), "document");
-            expect(file.exists()).toBeTruthy();
-            expect(file.isFile()).toBeTruthy();
+            expect(await file.exists()).toBeTruthy();
+            expect(await file.isFile()).toBeTruthy();
 
             file = getFile("ids", doc.getSubject().getMethodSpecificId(), ".metadata");
-            expect(file.exists()).toBeTruthy();
-            expect(file.isFile()).toBeTruthy();
+            expect(await file.exists()).toBeTruthy();
+            expect(await file.isFile()).toBeTruthy();
 
             file = getFile("ids", doc.getSubject().getMethodSpecificId(), "privatekeys", "#primary");
-            expect(file.exists()).toBeTruthy();
-            expect(file.isFile()).toBeTruthy();
+            expect(await file.exists()).toBeTruthy();
+            expect(await file.isFile()).toBeTruthy();
 
             resolved = await doc.getSubject().resolve();
             expect(resolved).not.toBeNull();
@@ -468,7 +468,7 @@ describe("DIDStore Tests", ()=>{
         let dids: DID[] = Array.from(await store.listDids());
         expect(dids.length).toBe(LOOP_COUNT);
 
-        store.changePassword(TestConfig.storePass, "newpasswd");
+        await store.changePassword(TestConfig.storePass, "newpasswd");
 
         dids = Array.from(await store.listDids());
         expect(dids.length).toBe(LOOP_COUNT);
@@ -482,16 +482,16 @@ describe("DIDStore Tests", ()=>{
             expect(valid).toBeTruthy();
 
             let file = getFile("ids", did.getMethodSpecificId(), "document");
-            expect(file.exists()).toBeTruthy();
-            expect(file.isFile()).toBeTruthy();
+            expect(await file.exists()).toBeTruthy();
+            expect(await file.isFile()).toBeTruthy();
 
             file = getFile("ids", did.getMethodSpecificId(), ".metadata");
-            expect(file.exists()).toBeTruthy();
-            expect(file.isFile()).toBeTruthy();
+            expect(await file.exists()).toBeTruthy();
+            expect(await file.isFile()).toBeTruthy();
 
             file = getFile("ids", did.getMethodSpecificId(), "privatekeys", "#primary");
-            expect(file.exists()).toBeTruthy();
-            expect(file.isFile()).toBeTruthy();
+            expect(await file.exists()).toBeTruthy();
+            expect(await file.isFile()).toBeTruthy();
 
             expect(alias).toEqual(doc.getMetadata().getAlias());
         }
@@ -507,7 +507,7 @@ describe("DIDStore Tests", ()=>{
         for (let i = 0; i < 4; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias(alias);
+            await doc.getMetadata().setAlias(alias);
             valid = await doc.isValid();
             expect(valid).toBeTruthy();
         }
@@ -515,9 +515,9 @@ describe("DIDStore Tests", ()=>{
         let dids = await store.listDids();
         expect(dids.length).toBe(4);
 
-        expect(() => {
-            store.changePassword("wrongpasswd", "newpasswd");
-        }).toThrowError(Exceptions.WrongPasswordException);
+        await expect(async () => {
+            await store.changePassword("wrongpasswd", "newpasswd");
+        }).rejects.toThrowError(Exceptions.WrongPasswordException);
     });
 
     //js can't need to check v1
@@ -541,19 +541,19 @@ describe("DIDStore Tests", ()=>{
                     expect(vcs.length).toBe(1);
 
                     for (let id of vcs)
-                        expect(store.loadCredential(id)).not.toBeNull();
+                        expect(await store.loadCredential(id)).not.toBeNull();
                 } else if (alias === "User1") {
                     let vcs = await store.listCredentials(did);
                     expect(vcs.length).toBe(parseFloat(version) >= 2.0 ? 5 : 4);
 
                     for (let id of vcs)
-                        expect(store.loadCredential(id)).not.toBeNull();
+                        expect(await store.loadCredential(id)).not.toBeNull();
                 } else if (alias === "User2") {
                     let vcs = await store.listCredentials(did);
                     expect(vcs.length).toBe(1);
 
                     for (let id of vcs)
-                        expect(store.loadCredential(id)).not.toBeNull();
+                        expect(await store.loadCredential(id)).not.toBeNull();
                 } else if (alias === "User3") {
                     let vcs = await store.listCredentials(did);
                     expect(vcs.length).toBe(0);
@@ -589,7 +589,7 @@ describe("DIDStore Tests", ()=>{
             let doc = await identity.newDid(TestConfig.storePass);
             expect(doc).not.toBeNull();
 
-            store.deleteDid(doc.getSubject());
+            await store.deleteDid(doc.getSubject());
 
             let did = identity.getDid(1000);
 
@@ -597,7 +597,7 @@ describe("DIDStore Tests", ()=>{
             expect(doc).not.toBeNull();
             expect(doc.getSubject().equals(did)).toBeTruthy();
 
-            store.deleteDid(doc.getSubject());
+            await store.deleteDid(doc.getSubject());
         });
     });
 
@@ -615,8 +615,8 @@ describe("DIDStore Tests", ()=>{
         for (let i = 0; i < 10; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
-            doc.getMetadata().setAlias(alias);
-            let issuer = new Issuer(doc);
+            await doc.getMetadata().setAlias(alias);
+            let issuer = await Issuer.create(doc);
             let cb = issuer.issueFor(doc.getSubject());
             let vc = await cb.id("#cred-1")
                     .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
@@ -632,7 +632,7 @@ describe("DIDStore Tests", ()=>{
 
     [false, true].forEach((cached)=>{
         test("testStoreCachePerformance", async ()=>{
-            Utils.deleteFile(new File(TestConfig.storeRoot));
+            await Utils.deleteFile(new File(TestConfig.storeRoot));
             let store: DIDStore = null;
             if (cached)
                 store = await DIDStore.open(TestConfig.storeRoot);
@@ -640,8 +640,8 @@ describe("DIDStore Tests", ()=>{
                 store = await DIDStore.open(TestConfig.storeRoot, 0, 0);
 
             let mnemonic = Mnemonic.getInstance().generate();
-            RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
-                    store, TestConfig.storePass, true);
+            await RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
+                store, TestConfig.storePass, true);
 
             await createDataForPerformanceTest(store);
 
@@ -672,11 +672,11 @@ describe("DIDStore Tests", ()=>{
         let docs: DIDDocument[] = [];
 
         for (let i = 0; i < stores.length; i++) {
-            Utils.deleteFile(new File(TestConfig.storeRoot + i));
+            await Utils.deleteFile(new File(TestConfig.storeRoot + i));
             stores[i] = await DIDStore.open(TestConfig.storeRoot + i);
             expect(stores[i]).not.toBeNull();
             let mnemonic = Mnemonic.getInstance().generate();
-            RootIdentity.createFromMnemonic(mnemonic, "", stores[i], TestConfig.storePass);
+            await RootIdentity.createFromMnemonic(mnemonic, "", stores[i], TestConfig.storePass);
         }
 
         for (let i = 0; i < stores.length; i++) {
@@ -693,10 +693,10 @@ describe("DIDStore Tests", ()=>{
 
     test("testOpenStoreOnExistEmptyFolder", async ()=>{
         let emptyFolder = new File(TestConfig.tempDir + File.SEPARATOR + "DIDTest-EmptyStore");
-        if (emptyFolder.exists())
-            emptyFolder.delete();
+        if (await emptyFolder.exists())
+            await emptyFolder.delete();
 
-        emptyFolder.createDirectory();
+        await emptyFolder.createDirectory();
 
         let store = await DIDStore.open(emptyFolder.getAbsolutePath());
         expect(store).not.toBeNull();
@@ -715,23 +715,23 @@ describe("DIDStore Tests", ()=>{
         let did = (await store.listDids())[0];
 
         let tempDir = new File(TestConfig.tempDir);
-        tempDir.createDirectory(true);
+        await tempDir.createDirectory(true);
         //let exportFile = new File(tempDir, "didexport.json");
 
         let data = await store.exportDid(did, "password", TestConfig.storePass);
-        //exportFile.writeText(data);
+        //await exportFile.writeText(data);
 
         let restoreDir = new File(tempDir, "restore");
-        Utils.deleteFile(restoreDir);
+        await Utils.deleteFile(restoreDir);
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
         await store2.importDid(data, "password", TestConfig.storePass);
 
         let path = "data" + File.SEPARATOR + "ids" + File.SEPARATOR + did.getMethodSpecificId();
         let didDir = new File(storeDir, path);
         let reDidDir = new File(restoreDir, path);
-        expect(didDir.exists()).toBeTruthy();
-        expect(reDidDir.exists()).toBeTruthy();
-        expect(Utils.equals(reDidDir, didDir)).toBeTruthy();
+        expect(await didDir.exists()).toBeTruthy();
+        expect(await reDidDir.exists()).toBeTruthy();
+        expect(await Utils.equals(reDidDir, didDir)).toBeTruthy();
     });
 
     test("testExportAndImportRootIdentity", async ()=>{
@@ -746,22 +746,22 @@ describe("DIDStore Tests", ()=>{
         let id = rootidentity.getId();
 
         let tempDir = new File(TestConfig.tempDir);
-        tempDir.createDirectory();
+        await tempDir.createDirectory();
         //let exportFile = new File(tempDir, "idexport.json");
 
         let data = await store.exportRootIdentity(id, "password", TestConfig.storePass);
 
         let restoreDir = new File(tempDir, "restore");
-        Utils.deleteFile(restoreDir);
+        await Utils.deleteFile(restoreDir);
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
         await store2.importRootIdentity(data, "password", TestConfig.storePass);
 
         let path = "data" + File.SEPARATOR + "roots" + File.SEPARATOR + id;
         let privateDir = new File(storeDir, path);
         let rePrivateDir = new File(restoreDir, path);
-        expect(privateDir.exists()).toBeTruthy();
-        expect(rePrivateDir.exists()).toBeTruthy();
-        expect(Utils.equals(rePrivateDir, privateDir)).toBeTruthy();
+        expect(await privateDir.exists()).toBeTruthy();
+        expect(await rePrivateDir.exists()).toBeTruthy();
+        expect(await Utils.equals(rePrivateDir, privateDir)).toBeTruthy();
     });
 
     test("testExportAndImportStore", async ()=>{
@@ -772,30 +772,30 @@ describe("DIDStore Tests", ()=>{
         await instance.getIssuerDocument();
         let user = await instance.getUser1Document();
         let vc = user.getCredential("#profile");
-        vc.getMetadata().setAlias("MyProfile");
+        await vc.getMetadata().setAlias("MyProfile");
         vc = user.getCredential("#email");
-        vc.getMetadata().setAlias("Email");
+        await vc.getMetadata().setAlias("Email");
         vc = await instance.getUser1TwitterCredential();
-        vc.getMetadata().setAlias("Twitter");
+        await vc.getMetadata().setAlias("Twitter");
         vc = await instance.getUser1PassportCredential();
-        vc.getMetadata().setAlias("Passport");
+        await vc.getMetadata().setAlias("Passport");
 
         let tempDir = new File(TestConfig.tempDir);
-        tempDir.createDirectory();
+        await tempDir.createDirectory();
         let exportFile = new File(tempDir, "storeexport.zip");
 
         await store.exportStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
 
         let restoreDir = new File(tempDir, "restore");
-        Utils.deleteFile(restoreDir);
+        await Utils.deleteFile(restoreDir);
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
         await store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
 
         let storeDir = new File(TestConfig.storeRoot);
 
-        expect(storeDir.exists()).toBeTruthy();
-        expect(restoreDir.exists()).toBeTruthy();
-        expect(Utils.equals(restoreDir, storeDir)).toBeTruthy();
+        expect(await storeDir.exists()).toBeTruthy();
+        expect(await restoreDir.exists()).toBeTruthy();
+        expect(await Utils.equals(restoreDir, storeDir)).toBeTruthy();
     });
 
     test("testImportCompatible", async ()=>{
@@ -806,9 +806,9 @@ describe("DIDStore Tests", ()=>{
         let exportFile = new File(cb.getDataPath(), "store-export.zip");
 
         let tempDir = new File(TestConfig.tempDir);
-        tempDir.createDirectory();
+        await tempDir.createDirectory();
         let restoreDir = new File(tempDir, "imported-store");
-        Utils.deleteFile(restoreDir);
+        await Utils.deleteFile(restoreDir);
 
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
         await store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);

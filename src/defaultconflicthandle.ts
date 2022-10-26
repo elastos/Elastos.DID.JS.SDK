@@ -35,7 +35,7 @@ export class DefaultConflictHandle implements ConflictHandle {
             return DefaultConflictHandle.instance;
         }
 
-        public merge(chainDoc: DIDDocument, localDoc: DIDDocument): DIDDocument {
-            return localDoc;
+        public merge(chainDoc: DIDDocument, localDoc: DIDDocument): Promise<DIDDocument> {
+            return Promise.resolve(localDoc);
         }
 }

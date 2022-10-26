@@ -29,7 +29,7 @@ describe('Mnemonic Tests', () => {
     let store: DIDStore;
 
     beforeEach(async () => {
-        testData = new TestData();
+        testData = await TestData.create();
         await testData.cleanup();
         store = await testData.getStore();
     })
@@ -37,7 +37,7 @@ describe('Mnemonic Tests', () => {
     afterEach(async () => {
     });
 
-    test('Test builtin wordlist', () => {
+    test('Test builtin wordlist', async () => {
         let languages = [
             Mnemonic.DEFAULT,
             Mnemonic.CHINESE_SIMPLIFIED,
@@ -45,18 +45,18 @@ describe('Mnemonic Tests', () => {
             Mnemonic.FRENCH,
         ];
 
-        languages.forEach(lang => {
+        for (const lang of languages) {
             let mc = Mnemonic.getInstance(lang);
             let mnemonic = mc.generate();
 
             expect(mc.isValid(mnemonic)).toBeTruthy();
             expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy();
 
-            RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
+            await RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
 
             expect(mc.isValid(mnemonic + "z")).toBeFalsy();
             expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy();
-        });
+        }
     });
 
     test('Test french mnemonic', () => {

@@ -38,10 +38,15 @@ export class DIDStoreMetadata extends AbstractMetadata {
     private static DEFAULT_ROOT_IDENTITY = "defaultRootIdentity";
     private static log = new Logger("DIDStoreMetadata");
 
-    constructor(store: DIDStore = null) {
+    protected constructor(store: DIDStore = null) {
         super(store);
-        this.put(DIDStoreMetadata.TYPE, DIDStoreMetadata.DID_STORE_TYPE);
-        this.put(DIDStoreMetadata.VERSION, DIDStoreMetadata.DID_STORE_VERSION);
+    }
+
+    public static async create(store: DIDStore = null): Promise<DIDStoreMetadata> {
+        const metadata = new DIDStoreMetadata(store);
+        await metadata.put(DIDStoreMetadata.TYPE, DIDStoreMetadata.DID_STORE_TYPE);
+        await metadata.put(DIDStoreMetadata.VERSION, DIDStoreMetadata.DID_STORE_VERSION);
+        return metadata;
     }
 
     public getType(): string {
@@ -52,28 +57,28 @@ export class DIDStoreMetadata extends AbstractMetadata {
         return this.getInteger(DIDStoreMetadata.VERSION, -1);
     }
 
-    public setFingerprint(fingerprint: string) {
+    public setFingerprint(fingerprint: string): Promise<void> {
         checkArgument(fingerprint != null && fingerprint != "", "Invalid fingerprint");
 
-        this.put(DIDStoreMetadata.FINGERPRINT, fingerprint);
+        return this.put(DIDStoreMetadata.FINGERPRINT, fingerprint);
     }
 
     public getFingerprint(): string {
         return this.get(DIDStoreMetadata.FINGERPRINT) as string;
     }
 
-    public setDefaultRootIdentity(id: string) {
-        this.put(DIDStoreMetadata.DEFAULT_ROOT_IDENTITY, id);
+    public setDefaultRootIdentity(id: string): Promise<void> {
+        return this.put(DIDStoreMetadata.DEFAULT_ROOT_IDENTITY, id);
     }
 
     public getDefaultRootIdentity(): string {
         return this.get(DIDStoreMetadata.DEFAULT_ROOT_IDENTITY) as string;
     }
 
-    protected save() {
+    protected async save(): Promise<void> {
         if (this.attachedStore()) {
             try {
-                this.getStore().storage.storeMetadata(this);
+                await this.getStore().storage.storeMetadata(this);
             } catch (e) {
                 if (e instanceof DIDStoreException)
                     DIDStoreMetadata.log.error("INTERNAL - error store metadata for DIDStore");
@@ -82,9 +87,10 @@ export class DIDStoreMetadata extends AbstractMetadata {
         }
     }
 
-    public static parse(content: string | JSONObject, context = null): DIDStoreMetadata {
+    public static async parse(content: string | JSONObject, context = null): Promise<DIDStoreMetadata> {
         try {
-            return DIDEntity.deserialize(content, DIDStoreMetadata, context);
+            let metadata = await DIDStoreMetadata.create();
+            return DIDEntity.deserializeWithObj(content, metadata, context);
         } catch (e) {
             // DIDSyntaxException
             if (e instanceof MalformedMetadataException)

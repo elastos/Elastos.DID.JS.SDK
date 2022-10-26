@@ -38,7 +38,7 @@ describe("Issuer Tests", ()=>{
     let testDoc : DIDDocument;
 
     beforeEach(async ()=>{
-        testData = new TestData();
+        testData = await TestData.create();
         await testData.cleanup();
         store = await testData.getStore();
         await testData.getRootIdentity();
@@ -65,17 +65,17 @@ describe("Issuer Tests", ()=>{
         expect(issuer.getSignKey().equals(issuerDoc.getDefaultPublicKeyId())).toBeTruthy();
     })
 
-    test('New Issuer Test With Invalid Key', () => {
+    test('New Issuer Test With Invalid Key', async () => {
         let signKey = new DIDURL("#testKey", issuerDoc.getSubject());
         let doc = issuerDoc;
 
-        expect(() =>{Issuer.newWithDocument(doc, signKey)}).toThrowError();
+        await expect(async () => await Issuer.newWithDocument(doc, signKey)).rejects.toThrowError();
     })
 
-    test('New Issuer Test With Invalid Key 2', () => {
+    test('New Issuer Test With Invalid Key 2', async () => {
         let signKey = new DIDURL("#recovery", issuerDoc.getSubject());
         let doc = issuerDoc;
-        expect(()=>{Issuer.newWithDocument(doc, signKey)}).toThrowError();
+        await expect(async ()=>Issuer.newWithDocument(doc, signKey)).rejects.toThrowError();
     })
 
     test('Issue Kyc Credential Test', async () => {
@@ -87,7 +87,7 @@ describe("Issuer Tests", ()=>{
             twitter: "@john"
         };
 
-        let issuer = new Issuer(issuerDoc);
+        let issuer = await Issuer.create(issuerDoc);
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#testCredential")
@@ -101,10 +101,10 @@ describe("Issuer Tests", ()=>{
 
         expect(vcId.equals(vc.getId())).toBeTruthy();
 
-		expect(vc.getType().includes("ProfileCredential")).toBeTruthy();;
-        expect(vc.getType().includes("EmailCredential")).toBeTruthy();;
-        expect(vc.getType().includes("SocialCredential")).toBeTruthy();;
-        expect(vc.getType().includes("VerifiableCredential")).toBeTruthy();;
+		expect(vc.getType().includes("ProfileCredential")).toBeTruthy();
+        expect(vc.getType().includes("EmailCredential")).toBeTruthy();
+        expect(vc.getType().includes("SocialCredential")).toBeTruthy();
+        expect(vc.getType().includes("VerifiableCredential")).toBeTruthy();
         expect(vc.getType().includes("SelfProclaimedCredential")).toBeFalsy();
 
         expect(issuerDoc.getSubject().equals(vc.getIssuer())).toBeTruthy();
@@ -128,7 +128,7 @@ describe("Issuer Tests", ()=>{
             email: "issuer@example.com"
         };
 
-        let issuer = new Issuer(issuerDoc);
+        let issuer = await Issuer.create(issuerDoc);
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#myCredential")
@@ -169,7 +169,7 @@ describe("Issuer Tests", ()=>{
             twitter: "@john"
         };
 
-        let issuer = new Issuer(issuerDoc);
+        let issuer = await Issuer.create(issuerDoc);
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc  = await cb.id("#testCredential")
@@ -212,7 +212,7 @@ describe("Issuer Tests", ()=>{
             twitter: "@john"
         };
 
-        let issuer = new Issuer(issuerDoc);
+        let issuer = await Issuer.create(issuerDoc);
 
         let cb = issuer.issueFor(testDoc.getSubject());
         let vc = await cb.id("#testCredential")
@@ -253,7 +253,7 @@ describe("Issuer Tests", ()=>{
             email: "issuer@example.com"
         };
 
-        let issuer = new Issuer(issuerDoc);
+        let issuer = await Issuer.create(issuerDoc);
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")
@@ -286,7 +286,7 @@ describe("Issuer Tests", ()=>{
     test('Issue Json Props Credential Test', async () => {
         let props = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
 
-        let issuer = new Issuer(issuerDoc);
+        let issuer = await Issuer.create(issuerDoc);
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")
@@ -319,7 +319,7 @@ describe("Issuer Tests", ()=>{
     })
 
     test('Issue Credential Test', async () => {
-        let issuer = new Issuer(issuerDoc);
+        let issuer = await Issuer.create(issuerDoc);
 
         let cb = issuer.issueFor(issuerDoc.getSubject());
         let vc = await cb.id("#myCredential")

@@ -76,6 +76,10 @@ export abstract class DIDEntity<T> {
      * @throws DIDSyntaxException if a parse error occurs
      */
     protected static deserialize<T extends DIDEntity<T>>(source: JSONObject | string, type: (new () => T), context: DID = null): T {
+        return this.deserializeWithObj<T>(source, new type(), context);
+    }
+
+    protected static deserializeWithObj<T extends DIDEntity<T>>(source: JSONObject | string, obj: T, context: DID = null): T {
         checkArgument(source && source !== "", "Invalid JSON content");
 
         let content: JSONObject;
@@ -85,9 +89,7 @@ export abstract class DIDEntity<T> {
             content = source;
         }
 
-        let obj = new type();
         obj.fromJSON(content, context);
-
         return obj;
     }
 

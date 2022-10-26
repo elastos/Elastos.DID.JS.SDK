@@ -56,16 +56,16 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
         this.did = did;
     }
 
-    public setRootIdentityId(id: string) {
-        this.put(DIDMetadata.ROOT_IDENTITY, id);
+    public setRootIdentityId(id: string): Promise<void> {
+        return this.put(DIDMetadata.ROOT_IDENTITY, id);
     }
 
     public getRootIdentityId(): string {
         return this.get(DIDMetadata.ROOT_IDENTITY) as string;
     }
 
-    public setIndex(index: number) {
-        this.put(DIDMetadata.INDEX, index);
+    public setIndex(index: number): Promise<void> {
+        return this.put(DIDMetadata.INDEX, index);
     }
 
     public getIndex(): number {
@@ -77,8 +77,8 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
      *
      * @param txid the transaction id string
      */
-    public setTransactionId(txid: string) {
-        this.put(DIDMetadata.TXID, txid);
+    public setTransactionId(txid: string): Promise<void> {
+        return this.put(DIDMetadata.TXID, txid);
     }
 
     /**
@@ -95,8 +95,8 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
      *
      * @param signature the signature string
      */
-    public setPreviousSignature(signature: string) {
-        this.put(DIDMetadata.PREV_SIGNATURE, signature);
+    public setPreviousSignature(signature: string): Promise<void> {
+        return this.put(DIDMetadata.PREV_SIGNATURE, signature);
     }
 
     /**
@@ -113,8 +113,8 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
      *
      * @param signature the signature string
      */
-    public setSignature(signature: string) {
-        this.put(DIDMetadata.SIGNATURE, signature);
+    public setSignature(signature: string): Promise<void> {
+        return this.put(DIDMetadata.SIGNATURE, signature);
     }
 
     /**
@@ -131,8 +131,8 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
      *
      * @param timestamp the time published
      */
-     public setPublished(timestamp: Date) {
-        this.put(DIDMetadata.PUBLISHED, timestamp);
+    public setPublished(timestamp: Date): Promise<void> {
+        return this.put(DIDMetadata.PUBLISHED, timestamp);
     }
 
     /**
@@ -153,8 +153,8 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
      *
      * @param deactivated the deactivate status
      */
-     public setDeactivated(deactivated: boolean) {
-        this.put(DIDMetadata.DEACTIVATED, deactivated);
+     public setDeactivated(deactivated: boolean): Promise<void> {
+        return this.put(DIDMetadata.DEACTIVATED, deactivated);
     }
 
     /**
@@ -181,10 +181,10 @@ export class DIDMetadata extends AbstractMetadata implements Cloneable<DIDMetada
         return clonedData;
     }
 
-    protected save() {
+    protected async save(): Promise<void> {
         if (this.attachedStore()) {
             try {
-                this.getStore().storeDidMetadata(this.did, this);
+                await this.getStore().storeDidMetadata(this.did, this);
             } catch (e) {
                 if (e instanceof DIDStoreException)
                     console.log("INTERNAL - error store metadata for DID {}", this.did);

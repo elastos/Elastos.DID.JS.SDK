@@ -77,7 +77,7 @@ export class TransferTicket extends DIDEntity<TransferTicket> {
             throw new NotCustomizedDIDException(target.getSubject().toString() + "isn't a customized did");
 
         let doc = await target.getSubject().resolve();
-        target.getMetadata().setTransactionId(doc.getMetadata().getTransactionId());
+        await target.getMetadata().setTransactionId(doc.getMetadata().getTransactionId());
 
         let newTicket = new TransferTicket(target.getSubject(), to, target.getMetadata().getTransactionId());
         newTicket.doc = target;

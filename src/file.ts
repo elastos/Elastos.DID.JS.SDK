@@ -21,8 +21,6 @@
  */
 
 import path from "path";
-
-//import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync, writeFileSync } from "./fs";
 import * as fs from "./fs";
 
 /**
@@ -38,7 +36,7 @@ import * as fs from "./fs";
  export class File { // Exported, for test cases only
     public static SEPARATOR = "/";
 
-    private fullPath: string;
+    private readonly fullPath: string;
     private fileStats?: fs.Stats;
 
     public constructor(path: File | string, subpath?: string) {
@@ -53,40 +51,40 @@ import * as fs from "./fs";
         this.fullPath = fullPath;
     }
 
-    public static exists(file: File | string): boolean {
+    public static async exists(file: File | string): Promise<boolean> {
         if (typeof file === "string")
             file = new File(file);
 
-        return file.exists();
+        return await file.exists();
     }
 
-    public static isFile(file: File | string): boolean {
+    public static async isFile(file: File | string): Promise<boolean> {
         if (typeof file === "string")
             file = new File(file);
 
-        return file.isFile();
+        return await file.isFile();
     }
 
-    public static isDirectory(file: File | string): boolean {
+    public static async isDirectory(file: File | string): Promise<boolean> {
         if (typeof file === "string")
             file = new File(file);
 
-        return file.isDirectory();
+        return await file.isDirectory();
     }
 
-    private getStats(): fs.Stats {
+    private async getStats(): Promise<fs.Stats> {
         if (this.fileStats)
             return this.fileStats;
-        return this.exists() ? fs.statSync(this.fullPath) : null;
+        return await this.exists() ? await fs.statSync(this.fullPath) : null;
     }
 
-    public exists(): boolean {
-        return fs.existsSync(this.fullPath);
+    public async exists(): Promise<boolean> {
+        return await fs.existsSync(this.fullPath);
     }
 
     // Entry size in bytes
-    public length(): number {
-        return this.exists() ? this.getStats().size : 0;
+    public async length(): Promise<number> {
+        return await this.exists() ? (await this.getStats()).size : 0;
     }
 
     public getAbsolutePath(): string {
@@ -119,67 +117,66 @@ import * as fs from "./fs";
         return "";
     }
 
-    public isDirectory(): boolean {
-        return this.exists() ? this.getStats().isDirectory() : false;
+    public async isDirectory(): Promise<boolean> {
+        return await this.exists() ? (await this.getStats()).isDirectory() : false;
     }
 
-    public isFile(): boolean {
-        return this.exists() ? this.getStats().isFile() : false;
+    public async isFile(): Promise<boolean> {
+        return await this.exists() ? (await this.getStats()).isFile() : false;
     }
 
     /**
      * Lists all file names in this directory.
      */
-    public list(): string[] {
-        return this.exists() && this.getStats().isDirectory() ? fs.readdirSync(this.fullPath) : null;
+    public async list(): Promise<string[]> {
+        return await this.exists() && (await this.getStats()).isDirectory() ? await fs.readdirSync(this.fullPath) : null;
     }
 
     /**
      * Lists all files (as File) in this directory.
      */
-    public listFiles(): File[] {
-        if (!this.exists() || !this.getStats().isDirectory()) {
+    public async listFiles(): Promise<File[]> {
+        if (!(await this.exists()) || !(await this.getStats()).isDirectory()) {
             return null;
         }
         let files: File[] = [];
-        this.list().forEach((fileName)=>{
+        (await this.list()).forEach((fileName)=>{
             files.push(new File(this.getAbsolutePath()+"/"+fileName));
         });
 
         return files;
     }
 
-    public writeText(content: string) {
-        if (!this.exists() || this.getStats().isFile()) {
-            fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
+    public async writeText(content: string): Promise<void> {
+        if (!(await this.exists()) || (await this.getStats()).isFile()) {
+            await fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
         }
     }
 
-    public readText(): string {
-        return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
-        return null;
+    public async readText(): Promise<string> {
+        return await this.exists() ? await fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
     }
 
-    public rename(newName: string) {
-        if (this.exists()) {
+    public async rename(newName: string): Promise<void> {
+        if (await this.exists()) {
             let targetName = this.fullPath.includes(File.SEPARATOR) && !newName.includes(File.SEPARATOR) ? this.getParentDirectoryName + File.SEPARATOR + newName : newName;
-            fs.renameSync(this.fullPath, targetName);
+            await fs.renameSync(this.fullPath, targetName);
         }
     }
 
-    public createFile(overwrite?: boolean) {
+    public async createFile(overwrite?: boolean): Promise<void> {
         let replace = overwrite ? overwrite : false;
-        if (!this.exists() || replace) {
-            fs.writeFileSync(this.fullPath, "", { encoding: "utf-8" });
+        if (!(await this.exists()) || replace) {
+            await fs.writeFileSync(this.fullPath, "", { encoding: "utf-8" });
             this.fileStats = undefined;
         }
     }
 
-    public createDirectory(overwrite?: boolean) {
+    public async createDirectory(overwrite?: boolean): Promise<void> {
         let replace = overwrite ? overwrite : false;
-        if (!this.exists() || replace) {
+        if (!(await this.exists()) || replace) {
             //mkdirSync(this.fullPath, { "recursive": true });
-            this.mkdirpath(this.fullPath);
+            await this.mkdirpath(this.fullPath);
             this.fileStats = undefined;
         }
     }
@@ -188,19 +185,19 @@ import * as fs from "./fs";
      * Internal reimplementation of mkdir because even if nodejs now has a "recursive" option,
      * browserfs localstorage driver doesn't.
      */
-    private mkdirpath(dirPath: string)
+    private async mkdirpath(dirPath: string): Promise<void>
     {
-        if(!fs.existsSync(dirPath)){
+        if(!(await fs.existsSync(dirPath))){
             try
             {
-                fs.mkdirSync(dirPath);
+                await fs.mkdirSync(dirPath);
             }
             catch(e)
             {
                 let dirname = path.dirname(dirPath);
                 if (dirname !== dirPath) {
-                    this.mkdirpath(dirname);
-                    this.mkdirpath(dirPath);
+                    await this.mkdirpath(dirname);
+                    await this.mkdirpath(dirPath);
                 }
                 else {
                     // We reached the root path. Folder creation has failed for some reason, so we
@@ -214,12 +211,12 @@ import * as fs from "./fs";
     /**
      * Deletes this file from storage.
      */
-    public delete() {
-        if (this.exists()) {
-            if (this.isDirectory())
-                this.deleteDirectory(this.fullPath);
+    public async delete(): Promise<void> {
+        if (await this.exists()) {
+            if (await this.isDirectory())
+                await this.deleteDirectory(this.fullPath);
             else
-                fs.unlinkSync(this.fullPath);
+                await fs.unlinkSync(this.fullPath);
             this.fileStats = undefined;
         }
     }
@@ -228,19 +225,19 @@ import * as fs from "./fs";
      * Internal reimplementation of rmdir because even if nodejs now has a "resursive" option,
      * browserfs localstorage driver doesn't.
      */
-    private deleteDirectory(directoryPath: string) {
-        if (fs.existsSync(directoryPath)) {
-            fs.readdirSync(directoryPath).forEach((file, index) => {
-              const curPath = path.join(directoryPath, file);
-              if (fs.lstatSync(curPath).isDirectory()) {
-                // recurse
-                this.deleteDirectory(curPath);
-              } else {
-                // delete file
-                fs.unlinkSync(curPath);
-              }
-            });
-            fs.rmdirSync(directoryPath);
+    private async deleteDirectory(directoryPath: string): Promise<void> {
+        if (await fs.existsSync(directoryPath)) {
+            for (const file of await fs.readdirSync(directoryPath)) {
+                const curPath = path.join(directoryPath, file);
+                if ((await fs.lstatSync(curPath)).isDirectory()) {
+                    // recurse
+                    await this.deleteDirectory(curPath);
+                } else {
+                    // delete file
+                    await fs.unlinkSync(curPath);
+                }
+            }
+            await fs.rmdirSync(directoryPath);
         }
     }
 

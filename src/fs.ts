@@ -20,19 +20,114 @@
  * SOFTWARE.
  */
 
-// eslint-disable-next-line node/no-deprecated-api
-export {
-    readdirSync,
-    readFileSync,
-    writeFileSync,
-    rmdirSync,
-    mkdirSync,
-    unlinkSync,
-    existsSync,
-    statSync,
-    accessSync,
-    renameSync,
-    lstatSync,
+import * as fs from "fs";
 
+export function existsSync(path: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+        try {
+            resolve(fs.existsSync(path));
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function mkdirSync(path: string, mode?): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        try {
+            fs.mkdirSync(path, mode);
+            resolve();
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function readdirSync(path: string): Promise<string[]> {
+    return new Promise<string[]>((resolve, reject) => {
+        try {
+            resolve(fs.readdirSync(path));
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function readFileSync(filename: string, options?: { encoding: BufferEncoding; flag?: string | undefined; } | BufferEncoding): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        try {
+            const result: string = fs.readFileSync(filename, options);
+            resolve(result);
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function renameSync(oldPath: string, newPath: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        try {
+            fs.renameSync(oldPath, newPath);
+            resolve();
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function rmdirSync(path: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        try {
+            fs.rmdirSync(path);
+            resolve();
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function statSync(path: string): Promise<fs.Stats> {
+    return new Promise<fs.Stats>((resolve, reject) => {
+        try {
+            resolve(fs.statSync(path));
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function lstatSync(path: string): Promise<fs.Stats> {
+    return new Promise<fs.Stats>((resolve, reject) => {
+        try {
+            resolve(fs.lstatSync(path));
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function writeFileSync(filename: string, data: any, options?): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        try {
+            fs.writeFileSync(filename, data, options)
+            resolve();
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export function unlinkSync(path: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        try {
+            fs.unlinkSync(path);
+            resolve();
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+export {
     Stats
 } from "fs";

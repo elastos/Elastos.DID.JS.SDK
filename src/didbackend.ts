@@ -309,11 +309,11 @@ export class DIDBackend {
         let doc = tx.getRequest().getDocument().clone();
         await doc.resolveControllers();
         let metadata = doc.getMetadata();
-        metadata.setTransactionId(tx.getTransactionId());
-        metadata.setSignature(doc.getProof().getSignature());
-        metadata.setPublished(tx.getTimestamp());
+        await metadata.setTransactionId(tx.getTransactionId());
+        await metadata.setSignature(doc.getProof().getSignature());
+        await metadata.setPublished(tx.getTimestamp());
         if (bio.getStatus().equals(DIDBiographyStatus.DEACTIVATED))
-            metadata.setDeactivated(true);
+            await metadata.setDeactivated(true);
 
         return doc;
     }
@@ -367,11 +367,11 @@ export class DIDBackend {
         let doc = tx.getRequest().getDocument().clone();
         await doc.resolveControllers();
         let metadata = doc.getMetadata();
-        metadata.setTransactionId(tx.getTransactionId());
-        metadata.setSignature(doc.getProof().getSignature());
-        metadata.setPublished(tx.getTimestamp());
+        await metadata.setTransactionId(tx.getTransactionId());
+        await metadata.setSignature(doc.getProof().getSignature());
+        await metadata.setPublished(tx.getTimestamp());
         if (bio.getStatus() == DIDBiographyStatus.DEACTIVATED)
-            metadata.setDeactivated(true);
+            await metadata.setDeactivated(true);
 
         return doc;
     }
@@ -447,10 +447,10 @@ export class DIDBackend {
 
         let vc = tx.getRequest().getCredential();
         let metadata = new CredentialMetadata(vc.getId());
-        metadata.setTransactionId(tx.getTransactionId());
-        metadata.setPublished(tx.getTimestamp());
+        await metadata.setTransactionId(tx.getTransactionId());
+        await metadata.setPublished(tx.getTimestamp());
         if (bio.getStatus() == CredentialBiographyStatus.REVOKED)
-            metadata.setRevoked(true);
+            await metadata.setRevoked(true);
         vc.setMetadata(metadata);
         return vc;
     }

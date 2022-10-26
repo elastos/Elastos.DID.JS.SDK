@@ -46,7 +46,7 @@ describe('let Tests', () => {
     let store: DIDStore;
 
     beforeEach(async () => {
-        testData = new TestData();
+        testData = await TestData.create();
         await testData.cleanup();
         store = await testData.getStore();
     });
@@ -293,10 +293,10 @@ describe('let Tests', () => {
             let cd = testData.getCompatibleData(csv.version);
             await cd.loadAll();
 
-            let normalizedJson = cd.getCredentialJson(csv.did, csv.vc, "normalized");
+            let normalizedJson = await cd.getCredentialJson(csv.did, csv.vc, "normalized");
             let normalized = VerifiableCredential.parse(normalizedJson);
 
-            let compactJson = cd.getCredentialJson(csv.did, csv.vc, "compact");
+            let compactJson = await cd.getCredentialJson(csv.did, csv.vc, "compact");
             let compact = VerifiableCredential.parse(compactJson);
 
             let credential = await cd.getCredential(csv.did, csv.vc);
@@ -976,7 +976,7 @@ describe('let Tests', () => {
         let doc = await sd.getUser1Document();
         let did = doc.getSubject();
 
-        let selfIssuer = new Issuer(doc);
+        let selfIssuer = await Issuer.create(doc);
 
         for (let i = 0; i < 36; i++) {
             console.log("Creating test credential {}...", i);
