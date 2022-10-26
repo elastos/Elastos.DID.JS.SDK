@@ -176,7 +176,7 @@ describe('VerifiablePresentation Tests', () => {
         check = await vp.isValid();
         expect(check).toBeTruthy();
 
-        let normalizedJson = cd.getPresentationJson(did, presentation, "normalized");
+        let normalizedJson = await cd.getPresentationJson(did, presentation, "normalized");
 
         let normalized = VerifiablePresentation.parse(normalizedJson);
         expect(normalized).not.toBeNull();

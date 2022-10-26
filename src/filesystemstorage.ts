@@ -387,23 +387,18 @@ export class FileSystemStorage implements DIDStorage {
         if (!(await dir.exists()))
             return [];
 
-        let children = (await dir.listFiles()).filter(async (file) => {
-            if (!(await file.isDirectory()))
-                return false;
-
-            let sk = new File(file, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE);
-            return await sk.exists() && await sk.isFile();
-        });
-
-        if (children == null || children.length == 0)
-            return [];
-
         let ids: RootIdentity[] = [];
-        for (let id of children) {
-            let identity = await this.loadRootIdentity(id.getName());
-            ids.push(identity);
-        }
+        const files = await dir.listFiles();
+        if (files) {
+            for (const file of files) {
+                if (!(await file.isDirectory()))
+                    continue;
 
+                let sk = new File(file, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE);
+                if (await sk.exists() && await sk.isFile())
+                    ids.push(await this.loadRootIdentity(file.getName()));
+            }
+        }
         return ids;
     }
 
@@ -521,7 +516,7 @@ export class FileSystemStorage implements DIDStorage {
 
                 const didRoot = new File(file, FileSystemStorage.DOCUMENT_FILE);
                 if (await didRoot.exists() && await didRoot.isFile())
-                    dids.push(new DID(DID.METHOD, didRoot.getName()));
+                    dids.push(new DID(DID.METHOD, file.getName()));
             }
         }
         return dids;
@@ -669,7 +664,7 @@ export class FileSystemStorage implements DIDStorage {
 
                 let vc = new File(file, FileSystemStorage.CREDENTIAL_FILE);
                 if (await vc.exists() && await vc.isFile()) {
-                    credentials.push(FileSystemStorage.toDIDURL(did, vc.getName()));
+                    credentials.push(FileSystemStorage.toDIDURL(did, file.getName()));
                 }
             }
         }

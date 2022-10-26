@@ -51,6 +51,8 @@ export class Issuer {
     }
 
     public static async create(doc: DIDDocument, signKey?: DIDURL): Promise<Issuer> {
+        checkArgument(doc != null, "Invalid document");
+
         const issuer = new Issuer(doc, signKey);
 
         if (!(await doc.hasPrivateKey(issuer.signKey)))

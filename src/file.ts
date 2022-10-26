@@ -22,9 +22,6 @@
 
 import path from "path";
 import * as fs from "./fs";
-import {Logger} from "./logger";
-
-const log = new Logger("File");
 
 /**
  * Internal class mimicing Java File class in order to reduce the divergence with Java implementation

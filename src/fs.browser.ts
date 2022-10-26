@@ -24,6 +24,37 @@ import BrowserFS, { BFSRequire } from "browserfs";
 import Stats from "browserfs/dist/node/core/node_fs_stats";
 const fs = BFSRequire("fs");
 
+if (typeof window != 'undefined' && 'didUseIndexedDb' in window) { //IndexedDB
+    BrowserFS.configure({
+        fs: "MountableFileSystem",
+        options: {
+            "/": {
+                fs: "IndexedDB",
+                options: {
+                    storeName: "DIDDatabase"
+                }
+            }
+        }
+    }, function (e) {
+        if (e) {
+            // An error occurred.
+            throw e;
+        }
+        // Otherwise, BrowserFS is ready to use!
+    });
+} else { //Local Storage
+    BrowserFS.configure({
+        fs: "LocalStorage",
+        options: {}
+    }, function (e) {
+        if (e) {
+            throw e;
+        } else {
+            //console.log("BrowserFS initialization complete");
+        }
+    });
+}
+
 export function existsSync(path: string): Promise<boolean> {
     return new Promise<boolean>(resolve => fs.exists(path, exists => {
         resolve(exists);
@@ -83,33 +114,3 @@ export function unlinkSync(path: string): Promise<void> {
         e ? reject(e) : resolve();
     }));
 }
-
-// BrowserFS.configure({
-//     fs: "LocalStorage",
-//     options: {}
-// }, function(e) {
-//     if (e) {
-//         throw e;
-//     }
-//     else {
-//         //console.log("BrowserFS initialization complete");
-//     }
-// });
-
-BrowserFS.configure({
-    fs: "MountableFileSystem",
-    options: {
-        "/": {
-            fs: "IndexedDB",
-            options: {
-                storeName: "DIDDatabase"
-            }
-        }
-    }
-}, function(e) {
-    if (e) {
-        // An error occurred.
-        throw e;
-    }
-    // Otherwise, BrowserFS is ready to use!
-});

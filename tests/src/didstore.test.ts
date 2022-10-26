@@ -632,7 +632,7 @@ describe("DIDStore Tests", ()=>{
 
     [false, true].forEach((cached)=>{
         test("testStoreCachePerformance", async ()=>{
-            Utils.deleteFile(new File(TestConfig.storeRoot));
+            await Utils.deleteFile(new File(TestConfig.storeRoot));
             let store: DIDStore = null;
             if (cached)
                 store = await DIDStore.open(TestConfig.storeRoot);
@@ -672,7 +672,7 @@ describe("DIDStore Tests", ()=>{
         let docs: DIDDocument[] = [];
 
         for (let i = 0; i < stores.length; i++) {
-            Utils.deleteFile(new File(TestConfig.storeRoot + i));
+            await Utils.deleteFile(new File(TestConfig.storeRoot + i));
             stores[i] = await DIDStore.open(TestConfig.storeRoot + i);
             expect(stores[i]).not.toBeNull();
             let mnemonic = Mnemonic.getInstance().generate();
@@ -752,7 +752,7 @@ describe("DIDStore Tests", ()=>{
         let data = await store.exportRootIdentity(id, "password", TestConfig.storePass);
 
         let restoreDir = new File(tempDir, "restore");
-        Utils.deleteFile(restoreDir);
+        await Utils.deleteFile(restoreDir);
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
         await store2.importRootIdentity(data, "password", TestConfig.storePass);
 
@@ -787,7 +787,7 @@ describe("DIDStore Tests", ()=>{
         await store.exportStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
 
         let restoreDir = new File(tempDir, "restore");
-        Utils.deleteFile(restoreDir);
+        await Utils.deleteFile(restoreDir);
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
         await store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
 
@@ -808,7 +808,7 @@ describe("DIDStore Tests", ()=>{
         let tempDir = new File(TestConfig.tempDir);
         await tempDir.createDirectory();
         let restoreDir = new File(tempDir, "imported-store");
-        Utils.deleteFile(restoreDir);
+        await Utils.deleteFile(restoreDir);
 
         let store2 = await DIDStore.open(restoreDir.getAbsolutePath());
         await store2.importStore(exportFile.getAbsolutePath(), "password", TestConfig.storePass);
