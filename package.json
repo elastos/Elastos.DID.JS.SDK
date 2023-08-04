@@ -15,9 +15,14 @@
     "docs" : "typedoc src/index.ts --excludePrivate --excludeProtected --excludeInternal && mv docs/modules.html docs/did-docs.html"
   },
   "exports": {
-    "node" : "./dist/did.js",
+    "node": "./dist/did.js",
     "browser": {
+      "types": "./typings/index.d.ts",
       "import": "./dist/es/did.browser.js"
+    },
+    "default": {
+      "types": "./typings/index.d.ts",
+      "default": "./dist/es/did.browser.js"
     }
   },
   "main": "./dist/did.js",
@@ -56,7 +61,9 @@
     "stream-browserify": "3.0.0",
     "browserfs": "1.4.3",
 
-    "typedoc": "0.22.11"
+    "typedoc": "0.22.11",
+
+    "path-browserify": "1.0.1"
   },
   "devDependencies": {
     "typescript": "4.5.5",
@@ -99,9 +106,7 @@
     "eslint-plugin-promise": "6.0.0",
     "@typescript-eslint/eslint-plugin": "5.11.0",
     "@typescript-eslint/parser": "5.11.0",
-    "@types/libsodium-wrappers": "^0.7.9",
-
-    "path-browserify": "1.0.1"
+    "@types/libsodium-wrappers": "^0.7.9"
   },
   "engines": {
     "node": ">=14.0.0"
