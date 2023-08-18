@@ -110,7 +110,7 @@ let __VERSION__ = "2.2.13";
 
 if (typeof window != 'undefined') {
     if ("elastos_did_ver" in window)
-        throw new Error("Elastos DID sdk(" + window["elastos_did_ver"] + ") alread loaded.");
+        throw new Error("Elastos DID sdk(" + window["elastos_did_ver"] + ") already loaded.");
     else
         window["elastos_did_ver"] = __VERSION__ ;
 }
