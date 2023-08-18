@@ -60,7 +60,7 @@ export class DIDStore {
 
     private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
-    private static map : Map<String, DIDStorage> = new Map();
+    private static storages = new Map();
 
     /**
      * @Internal (tag for docs)
@@ -108,10 +108,13 @@ export class DIDStore {
             let s = new FileSystemStorage(context);
             await s.init();
             did_storage = s;
-        } else if (storage == DIDSTORAGE_TYPE.DATABASE) {
-            did_storage = this.map.get(context);
         } else {
-            throw new IllegalArgumentException("unsupport invalid storage");
+            try {
+                const clazz = this.storages.get(storage);
+                did_storage = new clazz(context);
+            } catch(e) {
+                throw new DIDStoreException("Unsupport " + storage + " storage");
+            }
         }
 
         let store = new DIDStore(initialCacheCapacity, maxCacheCapacity, did_storage);
@@ -139,8 +142,8 @@ export class DIDStore {
         }
     }
 
-    public static register(name : string, storage : DIDStorage) {
-        this.map.set(name, storage);
+    public static register(name : string, clazz : any) {
+        this.storages.set(name, clazz);
     }
 
     /**
