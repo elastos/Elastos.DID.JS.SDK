@@ -45,6 +45,11 @@ import { Logger } from "./logger";
  */
 const log = new Logger("DIDStore");
 
+export enum DIDSTORAGE_TYPE {
+    FILESYSTEM = 'fs',
+    DATABASE = 'ds'
+}
+
 export class DIDStore {
     private static CACHE_INITIAL_CAPACITY = 16;
     private static CACHE_MAX_CAPACITY = 128;
@@ -55,13 +60,15 @@ export class DIDStore {
 
     private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
+    private static map : Map<String, DIDStorage> = new Map();
+
     /**
      * @Internal (tag for docs)
     */
     public storage: DIDStorage;
     private metadata: DIDStoreMetadata;
 
-    private constructor(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage) {
+    private constructor(initialCacheCapacity: number, maxCacheCapacity: number, storage: DIDStorage ) {
         if (initialCacheCapacity < 0)
             initialCacheCapacity = 0;
 
@@ -92,14 +99,23 @@ export class DIDStore {
      * NOTE: Java uses a root folder but in our case we use a "context" string to separate various
      * DID Stores, as we don't have a concept of "folder" isolation.
      */
-    public static async open(context: string, initialCacheCapacity: number = DIDStore.CACHE_INITIAL_CAPACITY, maxCacheCapacity: number = DIDStore.CACHE_MAX_CAPACITY): Promise<DIDStore> {
+    public static async open(context : string, storage: string = DIDSTORAGE_TYPE.FILESYSTEM, initialCacheCapacity: number = DIDStore.CACHE_INITIAL_CAPACITY, maxCacheCapacity: number = DIDStore.CACHE_MAX_CAPACITY): Promise<DIDStore> {
         checkArgument(context != null && context != "", "Invalid store context");
         checkArgument(maxCacheCapacity >= initialCacheCapacity, "Invalid cache capacity spec");
 
-        let storage = new FileSystemStorage(context);
-        await storage.init();
-        let store = new DIDStore(initialCacheCapacity, maxCacheCapacity, storage);
-        store.metadata = await storage.loadMetadata();
+        let did_storage : DIDStorage;
+        if (storage == DIDSTORAGE_TYPE.FILESYSTEM) {
+            let s = new FileSystemStorage(context);
+            await s.init();
+            did_storage = s;
+        } else if (storage == DIDSTORAGE_TYPE.DATABASE) {
+            did_storage = this.map.get(context);
+        } else {
+            throw new IllegalArgumentException("unsupport invalid storage");
+        }
+
+        let store = new DIDStore(initialCacheCapacity, maxCacheCapacity, did_storage);
+        store.metadata = await did_storage.loadMetadata();
         store.metadata.attachStore(store);
         return store;
     }
@@ -121,6 +137,10 @@ export class DIDStore {
             // CryptoException
             throw new DIDStoreCryptoException("Calculate fingerprint error.", e);
         }
+    }
+
+    public static register(name : string, storage : DIDStorage) {
+        this.map.set(name, storage);
     }
 
     /**
