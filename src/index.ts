@@ -58,7 +58,7 @@ import { IDChainRequest } from "./internals";
 import * as Exceptions from "./exceptions/exceptions";
 import { File } from "./internals";
 import { Logger } from "./logger";
-import type { DIDAdapter } from "./internals";
+import type { DIDAdapter, DIDStorage } from "./internals";
 import { Aes256cbc } from "./crypto/aes256cbc";
 import { BASE64 } from "./crypto/base64";
 import { HDKey } from "./crypto/hdkey";
@@ -110,7 +110,7 @@ let __VERSION__ = "2.2.13";
 
 if (typeof window != 'undefined') {
     if ("elastos_did_ver" in window)
-        throw new Error("Elastos DID sdk(" + window["elastos_did_ver"] + ") alread loaded.");
+        throw new Error("Elastos DID sdk(" + window["elastos_did_ver"] + ") already loaded.");
     else
         window["elastos_did_ver"] = __VERSION__ ;
 }
@@ -118,6 +118,7 @@ if (typeof window != 'undefined') {
 export type {
     DIDObject,
     DIDAdapter,
+    DIDStorage,
     JSONValue,
     JSONArray,
     JSONObject,
