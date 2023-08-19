@@ -47,6 +47,8 @@ export interface ReEncryptor {
  * The interface for DIDStorage to support different file system.
  */
 export interface DIDStorage {
+    init();
+
     getLocation(): string;
 
     storeMetadata(metadata: DIDStoreMetadata);

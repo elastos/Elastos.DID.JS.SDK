@@ -45,11 +45,6 @@ import { Logger } from "./logger";
  */
 const log = new Logger("DIDStore");
 
-export enum DIDSTORAGE_TYPE {
-    FILESYSTEM = 'fs',
-    DATABASE = 'ds'
-}
-
 export class DIDStore {
     private static CACHE_INITIAL_CAPACITY = 16;
     private static CACHE_MAX_CAPACITY = 128;
@@ -61,6 +56,8 @@ export class DIDStore {
     private cache: LRUCache<DIDStore.Key, any>; // TODO: Change any to the right type
 
     private static storages = new Map();
+
+    private static DEFAULT_STORAGE = "fs";
 
     /**
      * @Internal (tag for docs)
@@ -99,15 +96,14 @@ export class DIDStore {
      * NOTE: Java uses a root folder but in our case we use a "context" string to separate various
      * DID Stores, as we don't have a concept of "folder" isolation.
      */
-    public static async open(context : string, storage: string = DIDSTORAGE_TYPE.FILESYSTEM, initialCacheCapacity: number = DIDStore.CACHE_INITIAL_CAPACITY, maxCacheCapacity: number = DIDStore.CACHE_MAX_CAPACITY): Promise<DIDStore> {
+    public static async open(context : string, storage: string = DIDStore.DEFAULT_STORAGE, initialCacheCapacity: number = DIDStore.CACHE_INITIAL_CAPACITY, maxCacheCapacity: number = DIDStore.CACHE_MAX_CAPACITY): Promise<DIDStore> {
         checkArgument(context != null && context != "", "Invalid store context");
+        checkArgument(storage != null && storage != "", "Invalid storage name");
         checkArgument(maxCacheCapacity >= initialCacheCapacity, "Invalid cache capacity spec");
 
         let did_storage : DIDStorage;
-        if (storage == DIDSTORAGE_TYPE.FILESYSTEM) {
-            let s = new FileSystemStorage(context);
-            await s.init();
-            did_storage = s;
+        if (storage == DIDStore.DEFAULT_STORAGE || storage == null) {
+            did_storage = new FileSystemStorage(context);
         } else {
             try {
                 const clazz = this.storages.get(storage);
@@ -116,6 +112,8 @@ export class DIDStore {
                 throw new DIDStoreException("Unsupport " + storage + " storage");
             }
         }
+
+        did_storage.init();
 
         let store = new DIDStore(initialCacheCapacity, maxCacheCapacity, did_storage);
         store.metadata = await did_storage.loadMetadata();
@@ -143,6 +141,9 @@ export class DIDStore {
     }
 
     public static register(name : string, clazz : any) {
+        if (name == DIDStore.DEFAULT_STORAGE)
+            throw new IllegalArgumentException("'fs' is remained for default storage, please change one");
+
         this.storages.set(name, clazz);
     }
 
