@@ -70,10 +70,10 @@ export class DIDStoreMetadata extends AbstractMetadata {
         return this.get(DIDStoreMetadata.DEFAULT_ROOT_IDENTITY) as string;
     }
 
-    protected save() {
+    protected async save(): Promise<void> {
         if (this.attachedStore()) {
             try {
-                this.getStore().storage.storeMetadata(this);
+                await this.getStore().storage.storeMetadata(this);
             } catch (e) {
                 if (e instanceof DIDStoreException)
                     DIDStoreMetadata.log.error("INTERNAL - error store metadata for DIDStore");

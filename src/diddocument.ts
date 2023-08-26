@@ -364,14 +364,14 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
      * @return the key exists or not
      * @throws DIDStoreException there is no store
      */
-    public hasPrivateKey(idOrString: DIDURL | string): boolean {
+    public async hasPrivateKey(idOrString: DIDURL | string): Promise<boolean> {
         if (typeof idOrString === "string")
             idOrString = this.canonicalId(idOrString);
 
         checkArgument(idOrString != null, "Invalid publicKey id");
 
         if (this.hasPublicKey(idOrString) && this.getMetadata().attachedStore())
-            return this.getMetadata().getStore().containsPrivateKey(idOrString);
+            return await this.getMetadata().getStore().containsPrivateKey(idOrString);
         else
             return false;
     }

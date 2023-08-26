@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+import { rejects } from "assert";
 import { DIDStorageException, WrongPasswordException } from "./exceptions/exceptions";
 import type { DIDStorage, ReEncryptor } from "./internals";
 import { CredentialMetadata, DID, DIDDocument, DIDMetadata, DIDStoreMetadata, DIDURL, File, RootIdentity, VerifiableCredential } from "./internals";
@@ -233,32 +234,39 @@ export class FileSystemStorage implements DIDStorage {
         return this.storeRoot;
     }
 
-    public storeMetadata(metadata: DIDStoreMetadata) {
-        try {
-            let file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
+    // eslint-disable-next-line require-await
+    public async storeMetadata(metadata: DIDStoreMetadata) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getFile(true, this.currentDataDir, FileSystemStorage.METADATA);
 
-            if (metadata == null || metadata.isEmpty())
-                file.delete();
-            else
-                file.writeText(metadata.serialize());
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Store DIDStore metadata error", e);
-        }
+                if (metadata == null || metadata.isEmpty())
+                    file.delete();
+                else
+                    file.writeText(metadata.serialize());
+                resolve();
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Store DIDStore metadata error", e));
+            }
+        });
     }
 
-    public loadMetadata(): DIDStoreMetadata {
-        try {
-            let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
-            let metadata: DIDStoreMetadata = null;
-            if (file.exists())
-                metadata = DIDStoreMetadata.parse(file.readText());
+    // eslint-disable-next-line require-await
+    public async loadMetadata(): Promise<DIDStoreMetadata> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
+                let metadata: DIDStoreMetadata = null;
+                if (file.exists())
+                    metadata = DIDStoreMetadata.parse(file.readText());
 
-            return metadata;
-        } catch (e) {
-            // DIDSyntaxException | IOException
-            throw new DIDStorageException("Load DIDStore metadata error", e);
-        }
+                resolve(metadata);
+            } catch (e) {
+                // DIDSyntaxException | IOException
+                reject(new DIDStorageException("Load DIDStore metadata error", e));
+            }
+        });
     }
 
     private getRootIdentityFile(id: string, file: string, create: boolean): File {
@@ -269,119 +277,150 @@ export class FileSystemStorage implements DIDStorage {
         return this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR, id);
     }
 
-    public storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata) {
-        try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, true);
+    // eslint-disable-next-line require-await
+    public async storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, true);
 
-            if (metadata == null || metadata.isEmpty())
-                file.delete();
-            else
-                file.writeText(metadata.serialize());
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Store root identity metadata error: " + id, e);
-        }
-    }
+                if (metadata == null || metadata.isEmpty())
+                    file.delete();
+                else
+                    file.writeText(metadata.serialize());
 
-    public loadRootIdentityMetadata(id: string): RootIdentity.Metadata {
-        try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
-            let metadata: RootIdentity.Metadata = null;
-            if (file.exists())
-                metadata = RootIdentity.Metadata.parse(file.readText());
-
-            return metadata;
-        } catch (e) {
-            // DIDSyntaxException | IOException
-            throw new DIDStorageException("Load root identity metadata error: " + id, e);
-        }
-    }
-
-    public storeRootIdentity(id: string, mnemonic: string, privateKey: string,
-        publicKey: string, index: number) {
-        try {
-            let file: File;
-
-            if (mnemonic != null) {
-                file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, true);
-                file.writeText(mnemonic);
+                resolve();
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Store root identity metadata error: " + id, e));
             }
+        });
+    }
 
-            if (privateKey != null) {
-                file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, true);
-                file.writeText(privateKey);
+    // eslint-disable-next-line require-await
+    public async loadRootIdentityMetadata(id: string): Promise<RootIdentity.Metadata> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
+                let metadata: RootIdentity.Metadata = null;
+                if (file.exists())
+                    metadata = RootIdentity.Metadata.parse(file.readText());
+
+                resolve(metadata);
+            } catch (e) {
+                // DIDSyntaxException | IOException
+                reject(new DIDStorageException("Load root identity metadata error: " + id, e));
             }
+        });
+    }
 
-            if (publicKey != null) {
-                file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, true);
-                file.writeText(publicKey);
+    // eslint-disable-next-line require-await
+    public async storeRootIdentity(id: string, mnemonic: string, privateKey: string,
+        publicKey: string, index: number) : Promise<void> {
+            return new Promise((resolve, reject) => {
+                try {
+                    let file: File;
+
+                    if (mnemonic != null) {
+                        file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, true);
+                        file.writeText(mnemonic);
+                    }
+
+                    if (privateKey != null) {
+                        file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, true);
+                        file.writeText(privateKey);
+                    }
+
+                    if (publicKey != null) {
+                        file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, true);
+                        file.writeText(publicKey);
+                    }
+
+                    file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, true);
+                    file.writeText(index.toFixed());
+
+                    resolve();
+                } catch (e) {
+                    // IOException
+                    reject(new DIDStorageException("Store root identity error: " + id, e));
+                }
+            });
+    }
+
+    // eslint-disable-next-line require-await
+    public async loadRootIdentity(id: string): Promise<RootIdentity> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, false);
+                if (!file.exists())
+                    // eslint-disable-next-line no-promise-executor-return
+                    return null;
+
+                let publicKey = file.readText();
+                file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
+                let index = Number.parseInt(file.readText());
+
+                resolve(RootIdentity.createFromPreDerivedPublicKey(publicKey, index));
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Load public key for identity error: " + id, e));
             }
-
-            file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, true);
-            file.writeText(index.toFixed());
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Store root identity error: " + id, e);
-        }
+        });
     }
 
-    public loadRootIdentity(id: string): RootIdentity {
-        try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PUBLICKEY_FILE, false);
-            if (!file.exists())
-                return null;
-
-            let publicKey = file.readText();
-            file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
-            let index = Number.parseInt(file.readText());
-
-            return RootIdentity.createFromPreDerivedPublicKey(publicKey, index);
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Load public key for identity error: " + id, e);
-        }
+    // eslint-disable-next-line require-await
+    public async containsRootIdentity(id: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getRootIdentityDir(id);
+            resolve(dir.exists());
+        });
     }
 
-    public containsRootIdentity(id: string): boolean {
-        let dir = this.getRootIdentityDir(id);
-        return dir.exists();
+    // eslint-disable-next-line require-await
+    public async updateRootIdentityIndex(id: string, index: number) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
+                file.writeText("" + index);
+                resolve();
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Update index for indentiy error: " + id, e));
+            }
+        });
     }
 
-    public updateRootIdentityIndex(id: string, index: number) {
-        try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
-            file.writeText("" + index);
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Update index for indentiy error: " + id, e);
-        }
-    }
-
-    public loadRootIdentityPrivateKey(id: string): string {
+    // eslint-disable-next-line require-await
+    public async loadRootIdentityPrivateKey(id: string): Promise<string> {
         // TODO: support multiple named identity
-        try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, false);
-            if (!file.exists())
-                return null;
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_PRIVATEKEY_FILE, false);
+                if (!file.exists())
+                    // eslint-disable-next-line no-promise-executor-return
+                    return null;
 
-            return file.readText();
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Load private key for identity error: " + id, e);
-        }
+                resolve(file.readText());
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Load private key for identity error: " + id, e));
+            }
+        });
     }
 
-    public deleteRootIdentity(id: string): boolean {
-        let dir = this.getRootIdentityDir(id);
-        if (dir.exists()) {
-            dir.delete();
-            return true;
-        } else {
-            return false;
-        }
+    // eslint-disable-next-line require-await
+    public async deleteRootIdentity(id: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getRootIdentityDir(id);
+            if (dir.exists()) {
+                dir.delete();
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
     }
 
-    public listRootIdentities(): RootIdentity[] {
+    public async listRootIdentities(): Promise<RootIdentity[]> {
         let dir = this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
 
         if (!dir.exists())
@@ -400,33 +439,39 @@ export class FileSystemStorage implements DIDStorage {
 
         let ids: RootIdentity[] = [];
         for (let id of children) {
-            let identity = this.loadRootIdentity(id.getName());
+            let identity = await this.loadRootIdentity(id.getName());
             ids.push(identity);
         }
 
         return ids;
     }
 
-    public containsRootIdenities(): boolean {
-        let dir = this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
-        if (!dir.exists())
-            return false;
+    // eslint-disable-next-line require-await
+    public async containsRootIdenities(): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
+            if (!dir.exists())
+                resolve(false);
 
-        let children = dir.listFiles().filter((file) => {
-            return file.isDirectory();
+            let children = dir.listFiles().filter((file) => {
+                return file.isDirectory();
+            });
+
+            resolve(children != null && children.length > 0);
         });
-
-        return (children != null && children.length > 0);
     }
 
-    public loadRootIdentityMnemonic(id: string): string {
-        try {
-            let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, false);
-            return file.readText();
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Load mnemonic for identity error: " + id, e);
-        }
+    // eslint-disable-next-line require-await
+    public async loadRootIdentityMnemonic(id: string): Promise<string> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, false);
+                resolve(file.readText());
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Load mnemonic for identity error: " + id, e));
+            }
+        });
     }
 
     private getDidFile(did: DID, create: boolean): File {
@@ -441,42 +486,54 @@ export class FileSystemStorage implements DIDStorage {
         return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId());
     }
 
-    public storeDidMetadata(did: DID, metadata: DIDMetadata) {
-        try {
-            let file = this.getDidMetadataFile(did, true);
+    // eslint-disable-next-line require-await
+    public async storeDidMetadata(did: DID, metadata: DIDMetadata) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getDidMetadataFile(did, true);
 
-            if (metadata == null || metadata.isEmpty())
-                file.delete();
-            else
-                file.writeText(metadata.serialize());
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Store DID metadata error: " + did, e);
-        }
+                if (metadata == null || metadata.isEmpty())
+                    file.delete();
+                else
+                    file.writeText(metadata.serialize());
+
+                resolve();
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Store DID metadata error: " + did, e));
+            }
+        });
     }
 
-    public loadDidMetadata(did: DID): DIDMetadata {
-        try {
-            let file = this.getDidMetadataFile(did, false);
-            let metadata: DIDMetadata = null;
-            if (file.exists())
-                metadata = DIDMetadata.parse(file.readText());
+    // eslint-disable-next-line require-await
+    public async loadDidMetadata(did: DID): Promise<DIDMetadata> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getDidMetadataFile(did, false);
+                let metadata: DIDMetadata = null;
+                if (file.exists())
+                    metadata = DIDMetadata.parse(file.readText());
 
-            return metadata;
-        } catch (e) {
-            // DIDSyntaxException | IOException
-            throw new DIDStorageException("Load DID metadata error: " + did, e);
-        }
+                resolve(metadata);
+            } catch (e) {
+                // DIDSyntaxException | IOException
+                reject(new DIDStorageException("Load DID metadata error: " + did, e));
+            }
+        });
     }
 
-    public storeDid(doc: DIDDocument) {
-        try {
-            let file = this.getDidFile(doc.getSubject(), true);
-            file.writeText(doc.serialize(true));
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Store DID document error: " + doc.getSubject(), e);
-        }
+    // eslint-disable-next-line require-await
+    public async storeDid(doc: DIDDocument) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getDidFile(doc.getSubject(), true);
+                file.writeText(doc.serialize(true));
+                resolve();
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Store DID document error: " + doc.getSubject(), e));
+            }
+        });
     }
 
     public async loadDid(did: DID): Promise<DIDDocument> {
@@ -492,56 +549,68 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public deleteDid(did: DID): boolean {
-        let dir = this.getDidDir(did);
-        if (dir.exists()) {
-            dir.delete();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public listDids(): DID[] {
-        let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
-        if (!dir.exists())
-            return [];
-
-        let children = dir.listFiles().filter((file) => {
-            if (!file.isDirectory())
-                return false;
-
-            let doc = new File(file, FileSystemStorage.DOCUMENT_FILE);
-            return (doc.exists() && doc.isFile());
+    // eslint-disable-next-line require-await
+    public async deleteDid(did: DID): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getDidDir(did);
+            if (dir.exists()) {
+                dir.delete();
+                resolve(true);
+            } else {
+                resolve(false);
+            }
         });
-
-        if (children == null || children.length == 0)
-            return [];
-
-        let dids: DID[] = [];
-        for (let didRoot of children) {
-            let did = new DID(DID.METHOD, didRoot.getName());
-            dids.push(did);
-        }
-
-        return dids;
     }
 
-    public containsDid(did: DID): boolean {
-        let dir = this.getDidDir(did);
-        return dir.exists();
-    }
+    // eslint-disable-next-line require-await
+    public async listDids(): Promise<DID[]> {
+        return new Promise((resolve) => {
+            let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
+            if (!dir.exists())
+                resolve([]);
 
-    public containsDids(): boolean {
-        let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
-        if (!dir.exists())
-            return false;
+            let children = dir.listFiles().filter((file) => {
+                if (!file.isDirectory())
+                    return false;
 
-        let children = dir.listFiles().filter((file) => {
-            return file.isDirectory();
+                let doc = new File(file, FileSystemStorage.DOCUMENT_FILE);
+                return (doc.exists() && doc.isFile());
+            });
+
+            if (children == null || children.length == 0)
+                resolve([]);
+
+            let dids: DID[] = [];
+            for (let didRoot of children) {
+                let did = new DID(DID.METHOD, didRoot.getName());
+                dids.push(did);
+            }
+
+            resolve(dids);
         });
+    }
 
-        return children == null ? false : children.length > 0;
+    // eslint-disable-next-line require-await
+    public async containsDid(did: DID): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getDidDir(did);
+            resolve(dir.exists());
+        });
+    }
+
+    // eslint-disable-next-line require-await
+    public async containsDids(): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR);
+            if (!dir.exists())
+                resolve(false);
+
+            let children = dir.listFiles().filter((file) => {
+                return file.isDirectory();
+            });
+
+            resolve(children == null ? false : children.length > 0);
+        });
     }
 
     private getCredentialFile(id: DIDURL, create: boolean): File {
@@ -563,110 +632,139 @@ export class FileSystemStorage implements DIDStorage {
         return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.CREDENTIALS_DIR);
     }
 
-    public storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
-        try {
-            let file = this.getCredentialMetadataFile(id, true);
+    // eslint-disable-next-line require-await
+    public async storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getCredentialMetadataFile(id, true);
 
-            if (metadata == null || metadata.isEmpty())
-                file.delete();
-            else
-                file.writeText(metadata.serialize());
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Store credential metadata error: " + id, e);
-        }
-    }
+                if (metadata == null || metadata.isEmpty())
+                    file.delete();
+                else
+                    file.writeText(metadata.serialize());
 
-    public loadCredentialMetadata(id: DIDURL): CredentialMetadata {
-        try {
-            let file = this.getCredentialMetadataFile(id, false);
-            if (!file.exists())
-                return null;
-
-            return CredentialMetadata.parse(file.readText());
-        } catch (e) {
-            // DIDSyntaxException | IOException
-            throw new DIDStorageException("Load credential metadata error: " + id, e);
-        }
-    }
-
-    public storeCredential(credential: VerifiableCredential) {
-        try {
-            let file = this.getCredentialFile(credential.getId(), true);
-            file.writeText(credential.serialize(true));
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Store credential error: " + credential.getId(), e);
-        }
-    }
-
-    public loadCredential(id: DIDURL): VerifiableCredential {
-        try {
-            let file = this.getCredentialFile(id, false);
-            if (!file.exists())
-                return null;
-
-            return VerifiableCredential.parse(file.readText());
-        } catch (e) {
-            // DIDSyntaxException | IOException
-            throw new DIDStorageException("Load credential error: " + id, e);
-        }
-    }
-
-    public containsCredential(id: DIDURL): boolean {
-        let dir = this.getCredentialDir(id);
-        return dir.exists();
-    }
-
-    public containsCredentials(did: DID): boolean {
-        let dir = this.getCredentialsDir(did);
-        if (!dir.exists())
-            return false;
-
-        let creds = dir.listFiles().filter((file) => {
-            return file.isDirectory();
+                resolve();
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Store credential metadata error: " + id, e));
+            }
         });
-
-        return creds == null ? false : creds.length > 0;
     }
 
-    public deleteCredential(id: DIDURL): boolean {
-        let dir = this.getCredentialDir(id);
-        if (dir.exists()) {
-            dir.delete();
+    // eslint-disable-next-line require-await
+    public async loadCredentialMetadata(id: DIDURL): Promise<CredentialMetadata> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getCredentialMetadataFile(id, false);
+                if (!file.exists())
+                    // eslint-disable-next-line no-promise-executor-return
+                    return null;
 
-            // Remove the credentials directory is no credential exists.
-            dir = this.getCredentialsDir(id.getDid());
-            if (dir.list().length == 0)
+                resolve(CredentialMetadata.parse(file.readText()));
+            } catch (e) {
+                // DIDSyntaxException | IOException
+                reject(new DIDStorageException("Load credential metadata error: " + id, e));
+            }
+        });
+    }
+
+    // eslint-disable-next-line require-await
+    public async storeCredential(credential: VerifiableCredential) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getCredentialFile(credential.getId(), true);
+                file.writeText(credential.serialize(true));
+                resolve();
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Store credential error: " + credential.getId(), e));
+            }
+        });
+    }
+
+    // eslint-disable-next-line require-await
+    public async loadCredential(id: DIDURL): Promise<VerifiableCredential> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getCredentialFile(id, false);
+                if (!file.exists())
+                    // eslint-disable-next-line no-promise-executor-return
+                    return null;
+
+                resolve(VerifiableCredential.parse(file.readText()));
+            } catch (e) {
+                // DIDSyntaxException | IOException
+                reject(new DIDStorageException("Load credential error: " + id, e));
+            }
+        });
+    }
+
+    // eslint-disable-next-line require-await
+    public async containsCredential(id: DIDURL): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getCredentialDir(id);
+            resolve(dir.exists());
+        });
+    }
+
+    // eslint-disable-next-line require-await
+    public async containsCredentials(did: DID): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getCredentialsDir(did);
+            if (!dir.exists())
+                resolve(false);
+
+            let creds = dir.listFiles().filter((file) => {
+                return file.isDirectory();
+            });
+
+            resolve(creds == null ? false : creds.length > 0);
+        });
+    }
+
+    // eslint-disable-next-line require-await
+    public async deleteCredential(id: DIDURL): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getCredentialDir(id);
+            if (dir.exists()) {
                 dir.delete();
 
-            return true;
-        } else {
-            return false;
-        }
+                // Remove the credentials directory is no credential exists.
+                dir = this.getCredentialsDir(id.getDid());
+                if (dir.list().length == 0)
+                    dir.delete();
+
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
     }
 
-    public listCredentials(did: DID): DIDURL[] {
-        let dir = this.getCredentialsDir(did);
-        if (!dir.exists())
-            return [];
+    // eslint-disable-next-line require-await
+    public async listCredentials(did: DID): Promise<DIDURL[]> {
+        return new Promise((resolve) => {
+            let dir = this.getCredentialsDir(did);
+            if (!dir.exists())
+                resolve([]);
 
-        let children = dir.listFiles().filter((file) => {
-            if(!file.isDirectory())
-                return false;
+            let children = dir.listFiles().filter((file) => {
+                if(!file.isDirectory())
+                    return false;
 
-            let vc = new File(file, FileSystemStorage.CREDENTIAL_FILE);
-            return (vc.exists() && vc.isFile());
+                let vc = new File(file, FileSystemStorage.CREDENTIAL_FILE);
+                return (vc.exists() && vc.isFile());
+            });
+
+            if (children == null || children.length == 0)
+                resolve([]);
+
+            let credentials: DIDURL[] = [];
+            for (let credential of children)
+                credentials.push(FileSystemStorage.toDIDURL(did, credential.getName()));
+
+            resolve(credentials);
         });
-
-        if (children == null || children.length == 0)
-            return [];
-
-        let credentials: DIDURL[] = [];
-        for (let credential of children)
-            credentials.push(FileSystemStorage.toDIDURL(did, credential.getName()));
-
-        return credentials;
     }
 
     private getPrivateKeyFile(id: DIDURL, create: boolean): File {
@@ -678,78 +776,98 @@ export class FileSystemStorage implements DIDStorage {
         return this.getDir(this.currentDataDir, FileSystemStorage.DID_DIR, did.getMethodSpecificId(), FileSystemStorage.PRIVATEKEYS_DIR);
     }
 
-    public containsPrivateKey(id: DIDURL): boolean {
-        let file = this.getPrivateKeyFile(id, false);
-        return file.exists();
-    }
-
-    public storePrivateKey(id: DIDURL, privateKey: string) {
-        try {
-            let file = this.getPrivateKeyFile(id, true);
-            file.writeText(privateKey);
-        } catch (e) {
-            // IOException
-            throw new DIDStorageException("Store private key error: " + id, e);
-        }
-    }
-
-    public loadPrivateKey(id: DIDURL): string {
-        try {
+    // eslint-disable-next-line require-await
+    public async containsPrivateKey(id: DIDURL): Promise<boolean> {
+        return new Promise((resolve) => {
             let file = this.getPrivateKeyFile(id, false);
-            if (!file.exists())
-                return null;
-
-            return file.readText();
-        } catch (e) {
-            throw new DIDStorageException("Load private key error: " + id, e);
-        }
-    }
-
-    public containsPrivateKeys(did: DID): boolean {
-        let dir = this.getPrivateKeysDir(did);
-        if (!dir.exists())
-            return false;
-
-        let keys = dir.listFiles().filter((file) => {
-            return file.isFile();
+            resolve(file.exists());
         });
-
-        return keys == null ? false : keys.length > 0;
     }
 
-    public deletePrivateKey(id: DIDURL): boolean {
-        let file = this.getPrivateKeyFile(id, false);
-        if (file.exists()) {
-            file.delete();
-
-            // Remove the privatekeys directory is no privatekey exists.
-            let dir = this.getPrivateKeysDir(id.getDid());
-            if (dir.list().length == 0)
-                dir.delete();
-
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public listPrivateKeys(did: DID): DIDURL[] {
-        let dir = this.getPrivateKeysDir(did);
-        if (!dir.exists())
-            return [];
-
-        let keys = dir.listFiles().filter((file) => {
-            return file.isFile();
+    // eslint-disable-next-line require-await
+    public async storePrivateKey(id: DIDURL, privateKey: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getPrivateKeyFile(id, true);
+                file.writeText(privateKey);
+                resolve();
+            } catch (e) {
+                // IOException
+                reject(new DIDStorageException("Store private key error: " + id, e));
+            }
         });
+    }
 
-        if (keys == null || keys.length == 0)
-            return [];
+    // eslint-disable-next-line require-await
+    public async loadPrivateKey(id: DIDURL): Promise<string> {
+        return new Promise((resolve, reject) => {
+            try {
+                let file = this.getPrivateKeyFile(id, false);
+                if (!file.exists())
+                    // eslint-disable-next-line no-promise-executor-return
+                    return null;
 
-        let sks: DIDURL[] = [];
-        for (let key of keys)
-            sks.push(FileSystemStorage.toDIDURL(did, key.getName()));
+                resolve(file.readText());
+            } catch (e) {
+                reject(new DIDStorageException("Load private key error: " + id, e));
+            }
+        });
+    }
 
-        return sks;
+    // eslint-disable-next-line require-await
+    public async containsPrivateKeys(did: DID): Promise<boolean> {
+        return new Promise((resolve) => {
+            let dir = this.getPrivateKeysDir(did);
+            if (!dir.exists())
+                resolve(false);
+
+            let keys = dir.listFiles().filter((file) => {
+                return file.isFile();
+            });
+
+            resolve(keys == null ? false : keys.length > 0);
+        });
+    }
+
+    // eslint-disable-next-line require-await
+    public async deletePrivateKey(id: DIDURL): Promise<boolean> {
+        return new Promise((resolve) => {
+            let file = this.getPrivateKeyFile(id, false);
+            if (file.exists()) {
+                file.delete();
+
+                // Remove the privatekeys directory is no privatekey exists.
+                let dir = this.getPrivateKeysDir(id.getDid());
+                if (dir.list().length == 0)
+                    dir.delete();
+
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+    }
+
+    // eslint-disable-next-line require-await
+    public async listPrivateKeys(did: DID): Promise<DIDURL[]> {
+        return new Promise((resolve) => {
+            let dir = this.getPrivateKeysDir(did);
+            if (!dir.exists())
+                resolve([]);
+
+            let keys = dir.listFiles().filter((file) => {
+                return file.isFile();
+            });
+
+            if (keys == null || keys.length == 0)
+                resolve([]);
+
+            let sks: DIDURL[] = [];
+            for (let key of keys)
+                sks.push(FileSystemStorage.toDIDURL(did, key.getName()));
+
+            resolve(sks);
+        });
     }
 
     private needReencrypt(file: File): boolean {
@@ -824,23 +942,27 @@ export class FileSystemStorage implements DIDStorage {
         }
     }
 
-    public changePassword(reEncryptor: ReEncryptor) {
-        try {
-            let dataDir = this.getDir(FileSystemStorage.DATA_DIR);
-            let dataJournal = this.getDir(FileSystemStorage.DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
+    // eslint-disable-next-line require-await
+    public async changePassword(reEncryptor: ReEncryptor) : Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                let dataDir = this.getDir(FileSystemStorage.DATA_DIR);
+                let dataJournal = this.getDir(FileSystemStorage.DATA_DIR + FileSystemStorage.JOURNAL_SUFFIX);
 
-            this.copy(dataDir, dataJournal, reEncryptor);
+                this.copy(dataDir, dataJournal, reEncryptor);
 
-            let stageFile = this.getFile(true, "postChangePassword");
-            stageFile.createFile();
-        } catch (e) {
-            if (e instanceof WrongPasswordException)
-                throw e;
-            // DIDStoreException | IOException
-            throw new DIDStorageException("Change store password failed.");
-        } finally {
-            this.postChangePassword();
-        }
+                let stageFile = this.getFile(true, "postChangePassword");
+                stageFile.createFile();
+            } catch (e) {
+                if (e instanceof WrongPasswordException)
+                    reject(e);
+                // DIDStoreException | IOException
+                reject(new DIDStorageException("Change store password failed."));
+            } finally {
+                this.postChangePassword();
+                resolve();
+            }
+        });
     }
 
     private postOperations() {

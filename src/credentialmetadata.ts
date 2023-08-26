@@ -135,10 +135,10 @@ export class CredentialMetadata extends AbstractMetadata implements Cloneable<Cr
         }
     }
 
-    protected save() {
+    protected async save(): Promise<void> {
         if (this.attachedStore()) {
             try {
-                this.getStore().storeCredentialMetadata(this.id, this);
+                await this.getStore().storeCredentialMetadata(this.id, this);
             } catch (e) {
                 // DIDStoreException
                 CredentialMetadata.log.error("INTERNAL - error store metadata for credential {}", this.id);

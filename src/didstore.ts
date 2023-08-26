@@ -215,7 +215,7 @@ export class DIDStore {
         return result;
     }
 
-    public storeRootIdentity(identity: RootIdentity, storepass: string = undefined) {
+    public async storeRootIdentity(identity: RootIdentity, storepass: string = undefined) : Promise<void> {
         checkArgument(identity != null, "Invalid identity");
 
         if (storepass !== undefined) {
@@ -229,7 +229,7 @@ export class DIDStore {
 
             let publicKey = identity.getPreDerivedPublicKey().serializePublicKeyBase58();
 
-            this.storage.storeRootIdentity(identity.getId(), encryptedMnemonic,
+            await this.storage.storeRootIdentity(identity.getId(), encryptedMnemonic,
                 encryptedPrivateKey, publicKey, identity.getIndex());
 
             if (this.metadata.getDefaultRootIdentity() == null)
@@ -239,7 +239,7 @@ export class DIDStore {
             this.cache.invalidate(DIDStore.Key.forRootIdentityPrivateKey(identity.getId()));
         }
         else {
-            this.storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
+            await this.storage.updateRootIdentityIndex(identity.getId(), identity.getIndex());
         }
     }
 
@@ -263,7 +263,7 @@ export class DIDStore {
         if (id === undefined) {
             id = this.metadata.getDefaultRootIdentity();
             if (id == null || id === "") {
-                let ids = this.storage.listRootIdentities();
+                let ids = await this.storage.listRootIdentities();
                 if (ids.length != 1) {
                     return null;
                 } else {
@@ -280,7 +280,7 @@ export class DIDStore {
 
         try {
             let value = await this.cache.getAsync(DIDStore.Key.forRootIdentity(id), async () => {
-                let identity = this.storage.loadRootIdentity(id);
+                let identity = await this.storage.loadRootIdentity(id);
                 if (identity != null) {
                     identity.setMetadata(await this.loadRootIdentityMetadata(id));
                     return { value: identity };
@@ -303,9 +303,9 @@ export class DIDStore {
      *         the returned value if false if private identity doesnot exist.
      * @throws DIDStoreException Unsupport the specified store type.
      */
-    public containsRootIdentity(id: string): boolean {
+    public async containsRootIdentity(id: string): Promise<boolean> {
         checkArgument(id != null && id !== "", "Invalid id");
-        return this.storage.containsRootIdentity(id);
+        return await this.storage.containsRootIdentity(id);
     }
 
     /**
@@ -315,21 +315,21 @@ export class DIDStore {
      * @return the mnemonic string
      * @throws DIDStoreException there is no mnemonic in DID Store.
      */
-    public exportRootIdentityMnemonic(id: string, storepass: string): string | null {
+    public async exportRootIdentityMnemonic(id: string, storepass: string): Promise<string | null> {
         checkArgument(id != null && id !== "", "Invalid id");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-        let encryptedMnemonic = this.storage.loadRootIdentityMnemonic(id);
+        let encryptedMnemonic = await this.storage.loadRootIdentityMnemonic(id);
         if (encryptedMnemonic != null)
             return new String(this.decrypt(encryptedMnemonic, storepass)).valueOf();
         else
             return null;
     }
 
-    public containsRootIdentityMnemonic(id: string): boolean {
+    public async containsRootIdentityMnemonic(id: string): Promise<boolean> {
         checkArgument(id != null && id !== "", "Invalid id");
 
-        let encryptedMnemonic = this.storage.loadRootIdentityMnemonic(id);
+        let encryptedMnemonic = await this.storage.loadRootIdentityMnemonic(id);
         return encryptedMnemonic != null;
     }
 
@@ -340,10 +340,10 @@ export class DIDStore {
      * @return the HDKey object(private identity)
      * @throws DIDStoreException there is invalid private identity in DIDStore.
      */
-    private loadRootIdentityPrivateKey(id: string, storepass: string): HDKey {
+    private async loadRootIdentityPrivateKey(id: string, storepass: string): Promise<HDKey> {
         try {
-            let value = this.cache.get(DIDStore.Key.forRootIdentityPrivateKey(id), () => {
-                let encryptedKey = this.storage.loadRootIdentityPrivateKey(id);
+            let value = await this.cache.getAsync(DIDStore.Key.forRootIdentityPrivateKey(id), async () => {
+                let encryptedKey = await this.storage.loadRootIdentityPrivateKey(id);
                 return { value: encryptedKey != null ? encryptedKey : DIDStore.NULL };
             });
 
@@ -365,24 +365,23 @@ export class DIDStore {
     /**
      * @Internal (tag for docs)
     */
-    public derive(id: string, path: string, storepass: string): HDKey {
+    public async derive(id: string, path: string, storepass: string): Promise<HDKey> {
         checkArgument(id != null && id !== "", "Invalid identity");
         checkArgument(path != null && path !== "", "Invalid path");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-        let rootPrivateKey = this.loadRootIdentityPrivateKey(id, storepass);
+        let rootPrivateKey = await this.loadRootIdentityPrivateKey(id, storepass);
         if (!rootPrivateKey)
             throw new DIDStoreCryptoException("Unable to load root private key for id " + id + ". Null private key returned.");
 
         let key = rootPrivateKey.deriveWithPath(path);
-
         return key;
     }
 
-    public deleteRootIdentity(id: string): boolean {
+    public async deleteRootIdentity(id: string): Promise<boolean> {
         checkArgument(id != null && id !== "", "Invalid id");
 
-        let success = this.storage.deleteRootIdentity(id);
+        let success = await this.storage.deleteRootIdentity(id);
         if (success) {
             if (this.metadata.getDefaultRootIdentity() != null && this.metadata.getDefaultRootIdentity() === id)
                 this.metadata.setDefaultRootIdentity(null);
@@ -395,7 +394,7 @@ export class DIDStore {
     }
 
     public async listRootIdentities(): Promise<RootIdentity[]> {
-        let ids = this.storage.listRootIdentities();
+        let ids = await this.storage.listRootIdentities();
 
         for (let id of ids) {
             let identityMetadata = await this.loadRootIdentityMetadata(id.getId());
@@ -405,15 +404,15 @@ export class DIDStore {
         return ids;
     }
 
-    public containsRootIdentities(): boolean {
-        return this.storage.containsRootIdenities();
+    public async containsRootIdentities(): Promise<boolean> {
+        return await this.storage.containsRootIdenities();
     }
 
-    public storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata) {
+    public async storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata) {
         checkArgument(id != null && id !== "", "Invalid id");
         checkArgument(metadata != null, "Invalid metadata");
 
-        this.storage.storeRootIdentityMetadata(id, metadata);
+        await this.storage.storeRootIdentityMetadata(id, metadata);
     }
 
     protected async loadRootIdentityMetadata(id: string): Promise<RootIdentity.Metadata> {
@@ -439,7 +438,7 @@ export class DIDStore {
     public async storeDid(doc: DIDDocument): Promise<void> {
         checkArgument(doc != null, "Invalid doc");
 
-        this.storage.storeDid(doc);
+        await this.storage.storeDid(doc);
         if (doc.getStore() != this) {
             let metadata = await this.loadDidMetadata(doc.getSubject());
             doc.getMetadata().merge(metadata);
@@ -495,7 +494,7 @@ export class DIDStore {
      *         the returned value is false if the specified DID is not in the DIDStore.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsDid(didOrString: DID | string): boolean {
+    public async containsDid(didOrString: DID | string): Promise<boolean> {
         checkArgument(didOrString != null, "Invalid did");
 
         let did: DID;
@@ -504,7 +503,7 @@ export class DIDStore {
         else
             did = DID.from(didOrString);
 
-        return this.storage.containsDid(did);
+        return await this.storage.containsDid(did);
     }
 
     /**
@@ -514,8 +513,8 @@ export class DIDStore {
      *         the returned value is false if there is no DID in the DIDStore.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsDids(): boolean {
-        return this.storage.containsDids();
+    public async containsDids(): Promise<boolean> {
+        return await this.storage.containsDids();
     }
 
     /**
@@ -525,11 +524,11 @@ export class DIDStore {
      * @param metadata the meta data
      * @throws DIDStoreException DIDStore error.
      */
-    public storeDidMetadata(did: DID, metadata: DIDMetadata) {
+    public async storeDidMetadata(did: DID, metadata: DIDMetadata) {
         checkArgument(did != null, "Invalid did");
         checkArgument(metadata != null, "Invalid metadata");
 
-        this.storage.storeDidMetadata(did, metadata);
+        await this.storage.storeDidMetadata(did, metadata);
         metadata.attachStore(this);
 
         this.cache.put(DIDStore.Key.forDidMetadata(did), metadata);
@@ -573,7 +572,7 @@ export class DIDStore {
      *         the returned value is false if deleting is failed.
      * @throws DIDStoreException DIDStore error.
      */
-    public deleteDid(didOrString: DID | string): boolean {
+    public async deleteDid(didOrString: DID | string): Promise<boolean> {
         checkArgument(didOrString != null, "Invalid did");
 
         let did: DID;
@@ -582,7 +581,7 @@ export class DIDStore {
         else
             did = DID.from(didOrString);
 
-        let success = this.storage.deleteDid(did);
+        let success = await this.storage.deleteDid(did);
 
         if (success) {
             this.cache.invalidate(DIDStore.Key.forDidDocument(did));
@@ -604,7 +603,7 @@ export class DIDStore {
      * @throws DIDStoreException DIDStore error.
      */
     public async listDids(): Promise<DID[]> {
-        let dids = this.storage.listDids();
+        let dids = await this.storage.listDids();
         for (let did of dids) {
             let metadata = await this.loadDidMetadata(did);
             if (metadata == null) {
@@ -646,7 +645,7 @@ export class DIDStore {
     public async storeCredential(credential: VerifiableCredential): Promise<void> {
         checkArgument(credential != null, "Invalid credential");
 
-        this.storage.storeCredential(credential);
+        await this.storage.storeCredential(credential);
         if (credential.getMetadata().getStore() != this) {
             let metadata = await this.loadCredentialMetadata(credential.getId());
             credential.getMetadata().merge(metadata);
@@ -698,13 +697,13 @@ export class DIDStore {
      *         the returned value is false if there is credentials owned the specific DID.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsCredential(idOrString: DIDURL | string): boolean {
+    public async containsCredential(idOrString: DIDURL | string): Promise<boolean> {
         checkArgument(idOrString != null, "Invalid credential id");
 
         let id = DIDURL.from(idOrString);
         checkArgument(id.isQualified(), "Unqualified credential id");
 
-        return this.storage.containsCredential(id);
+        return await this.storage.containsCredential(id);
     }
 
     /**
@@ -714,9 +713,9 @@ export class DIDStore {
      * @return the returned value is true if there is no credential owned the specific DID.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsCredentials(did: DID): boolean {
+    public async containsCredentials(did: DID): Promise<boolean> {
         checkArgument(did != null, "Invalid did");
-        return this.storage.containsCredentials(did);
+        return await this.storage.containsCredentials(did);
     }
 
     /**
@@ -726,12 +725,12 @@ export class DIDStore {
      * @param metadata the meta data for Credential
      * @throws DIDStoreException DIDStore error.
      */
-    public storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
+    public async storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata) {
         checkArgument(id != null, "Invalid credential id");
         checkArgument(id.isQualified(), "Unqualified credential id");
         checkArgument(metadata != null, "Invalid credential metadata");
 
-        this.storage.storeCredentialMetadata(id, metadata);
+        await this.storage.storeCredentialMetadata(id, metadata);
         metadata.attachStore(this);
 
         this.cache.put(DIDStore.Key.forCredentialMetadata(id), metadata);
@@ -776,13 +775,13 @@ export class DIDStore {
      *         the returned value is false if there is credentials owned the specific DID.
      * @throws DIDStoreException DIDStore error.
      */
-    public deleteCredential(idOrString: DIDURL | string): boolean {
+    public async deleteCredential(idOrString: DIDURL | string): Promise<boolean> {
         checkArgument(idOrString != null, "Invalid credential id");
 
         let id = DIDURL.from(idOrString);
         checkArgument(id.isQualified(), "Unqualified credential id");
 
-        let success = this.storage.deleteCredential(id);
+        let success = await this.storage.deleteCredential(id);
         if (success) {
             this.cache.invalidate(DIDStore.Key.forCredential(id));
             this.cache.invalidate(DIDStore.Key.forCredentialMetadata(id));
@@ -807,7 +806,7 @@ export class DIDStore {
         else
             did = DID.from(didOrString);
 
-        let ids = this.storage.listCredentials(did);
+        let ids = await this.storage.listCredentials(did);
         for (let id of ids) {
             let metadata = await this.loadCredentialMetadata(id);
             if (metadata == null) {
@@ -863,7 +862,7 @@ export class DIDStore {
      * @param storepass the password for DIDStore
      * @throws DIDStoreException DIDStore error.
      */
-    public storePrivateKey(idOrString: DIDURL | string, privateKey: Buffer, storepass: string) {
+    public async storePrivateKey(idOrString: DIDURL | string, privateKey: Buffer, storepass: string) {
         checkArgument(idOrString != null, "Invalid private key id");
 
         let id = DIDURL.from(idOrString);
@@ -873,7 +872,7 @@ export class DIDStore {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
         let encryptedKey = this.encrypt(privateKey, storepass);
-        this.storage.storePrivateKey(id, encryptedKey);
+        await this.storage.storePrivateKey(id, encryptedKey);
 
         this.cache.put(DIDStore.Key.forDidPrivateKey(id), encryptedKey);
     }
@@ -884,11 +883,11 @@ export class DIDStore {
      * @param id the identifier of key
      * @throws DIDStoreException DIDStore error.
      */
-    public storeLazyPrivateKey(id: DIDURL) {
+    public async storeLazyPrivateKey(id: DIDURL) {
         checkArgument(id != null, "Invalid private key id");
         checkArgument(id.isQualified(), "Unqualified private key id");
 
-        this.storage.storePrivateKey(id, DIDStore.DID_LAZY_PRIVATEKEY);
+        await this.storage.storePrivateKey(id, DIDStore.DID_LAZY_PRIVATEKEY);
         this.cache.put(DIDStore.Key.forDidPrivateKey(id), DIDStore.DID_LAZY_PRIVATEKEY);
     }
 
@@ -906,8 +905,8 @@ export class DIDStore {
         checkArgument(storepass && storepass != null, "Invalid storepass");
 
         try {
-            let value = this.cache.get(DIDStore.Key.forDidPrivateKey(id), () => {
-                let key = this.storage.loadPrivateKey(id);
+            let value = await this.cache.getAsync(DIDStore.Key.forDidPrivateKey(id), async () => {
+                let key = await this.storage.loadPrivateKey(id);
                 return {
                     value: key != null ? key : DIDStore.NULL
                 };
@@ -934,13 +933,13 @@ export class DIDStore {
      *         the returned value is false if there is no private keys owned the specified key.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsPrivateKey(idOrString: DIDURL | string): boolean {
+    public async containsPrivateKey(idOrString: DIDURL | string): Promise<boolean> {
         checkArgument(idOrString != null, "Invalid private key id");
 
         let id = DIDURL.from(idOrString);
         checkArgument(id.isQualified(), "Unqualified private key id");
 
-        return this.storage.containsPrivateKey(id);
+        return await this.storage.containsPrivateKey(id);
     }
 
     /**
@@ -951,7 +950,7 @@ export class DIDStore {
      *         the returned value is false if there is no private keys owned the specified DID.
      * @throws DIDStoreException DIDStore error.
      */
-    public containsPrivateKeys(didOrString: DID | string): boolean {
+    public async containsPrivateKeys(didOrString: DID | string): Promise<boolean> {
         checkArgument(didOrString != null, "Invalid did");
 
         let did : DID;
@@ -960,7 +959,7 @@ export class DIDStore {
         else
             did = DID.from(didOrString);
 
-        return this.storage.containsPrivateKeys(did);
+        return await this.storage.containsPrivateKeys(did);
     }
 
     /**
@@ -971,12 +970,12 @@ export class DIDStore {
      *         the returned value is false if deleting private keys failed.
      * @throws DIDStoreException DIDStore error.
      */
-    public deletePrivateKey(idOrString: DIDURL | string): boolean {
+    public async deletePrivateKey(idOrString: DIDURL | string): Promise<boolean> {
         checkArgument(idOrString != null, "Invalid private key id");
 
         let id = DIDURL.from(idOrString);
 
-        let success = this.storage.deletePrivateKey(id);
+        let success = await this.storage.deletePrivateKey(id);
         if (success)
             this.cache.invalidate(DIDStore.Key.forDidPrivateKey(id));
 
@@ -1017,11 +1016,11 @@ export class DIDStore {
      * @param newPassword the new password
      * @throws DIDStoreException DIDStore error.
      */
-    public changePassword(oldPassword: string, newPassword: string) {
+    public async changePassword(oldPassword: string, newPassword: string) : Promise<void> {
         checkArgument(oldPassword != null && oldPassword !== "", "Invalid old password");
         checkArgument(newPassword != null && newPassword !== "", "Invalid new password");
 
-        this.storage.changePassword({
+        await this.storage.changePassword({
             reEncrypt: (data) => {
                 return DIDStore.reEncrypt(data, oldPassword, newPassword);
             }
@@ -1040,7 +1039,7 @@ export class DIDStore {
             await identity.synchronize(handle);
         }
 
-        let dids = this.storage.listDids();
+        let dids = await this.storage.listDids();
         for (let did of dids) {
             let localDoc = await this.storage.loadDid(did);
             if (localDoc.isCustomizedDid()) {
@@ -1081,10 +1080,10 @@ export class DIDStore {
 
                 metadata.attachStore(this);
 
-                this.storage.storeDid(finalDoc);
+                await this.storage.storeDid(finalDoc);
             }
 
-            let vcIds = this.storage.listCredentials(did);
+            let vcIds = await this.storage.listCredentials(did);
             for (let vcId of vcIds) {
                 let localVc = await this.storage.loadCredential(vcId);
 
@@ -1093,7 +1092,7 @@ export class DIDStore {
                     continue;
 
                 resolvedVc.getMetadata().merge(localVc.getMetadata());
-                this.storage.storeCredential(resolvedVc);
+                await this.storage.storeCredential(resolvedVc);
             }
         }
     }
@@ -1119,7 +1118,7 @@ export class DIDStore {
         let de = new DIDStore.DIDExport(did);
         de.setDocument(doc);
 
-        if (this.storage.containsCredentials(did)) {
+        if (await this.storage.containsCredentials(did)) {
             let ids = Array.from(await this.listCredentials(did));
             ids.sort();
             for (let id of ids) {
@@ -1131,14 +1130,14 @@ export class DIDStore {
             }
         }
 
-        if (this.storage.containsPrivateKeys(did)) {
+        if (await this.storage.containsPrivateKeys(did)) {
             let pks = doc.getPublicKeys();
             for (let pk of pks) {
                 if (!pk.getController().equals(did))
                     continue;
 
                 let id = pk.getId();
-                let key = this.storage.loadPrivateKey(id);
+                let key = await this.storage.loadPrivateKey(id);
                 if (key != null) {
                     log.debug("Exporting private key {}...", id.toString());
                     de.addPrivatekey(id, key, storepass, password);
@@ -1150,7 +1149,7 @@ export class DIDStore {
         return de.serialize(true);
     }
 
-    public importDid(data: string, password: string, storepass: string): void {
+    public async importDid(data: string, password: string, storepass: string): Promise<void> {
         checkArgument(data != null && data !== "", "Invalid import data");
         checkArgument(password != null && password !== "", "Invalid password");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -1159,36 +1158,36 @@ export class DIDStore {
         de.verify(password);
 
         let doc = de.getDocument();
-        this.storage.storeDid(doc);
-        this.storage.storeDidMetadata(doc.getSubject(), doc.getMetadata());
+        await this.storage.storeDid(doc);
+        await this.storage.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
         let vcs = de.getCredentials();
         for (let vc of vcs) {
-            this.storage.storeCredential(vc);
-            this.storage.storeCredentialMetadata(vc.getId(), vc.getMetadata());
+            await this.storage.storeCredential(vc);
+            await this.storage.storeCredentialMetadata(vc.getId(), vc.getMetadata());
         }
 
         let sks = de.getPrivateKeys();
         for (let sk of sks)
-            this.storage.storePrivateKey(sk.getId(), sk.getKey(password, storepass));
+            await this.storage.storePrivateKey(sk.getId(), sk.getKey(password, storepass));
 
         return null;
     }
 
-    public exportRootIdentity(id: string, password: string, storepass: string): string {
+    public async exportRootIdentity(id: string, password: string, storepass: string): Promise<string> {
         checkArgument(id != null && id !== "", "Invalid id");
         checkArgument(password != null && password !== "", "Invalid password");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
         let rie = new DIDStore.RootIdentityExport();
 
-        let mnemonic = this.storage.loadRootIdentityMnemonic(id);
+        let mnemonic = await this.storage.loadRootIdentityMnemonic(id);
         if (mnemonic !== null)
             rie.setMnemonic(mnemonic, storepass, password);
 
-        rie.setPirvateKey(this.storage.loadRootIdentityPrivateKey(id), storepass, password);
+        rie.setPirvateKey(await this.storage.loadRootIdentityPrivateKey(id), storepass, password);
 
-        let rootidentity = this.storage.loadRootIdentity(id);
+        let rootidentity = await this.storage.loadRootIdentity(id);
         rie.setPublicKey(rootidentity.getPreDerivedPublicKey().serializePublicKeyBase58());
         rie.setIndex(rootidentity.getIndex());
 
@@ -1199,7 +1198,7 @@ export class DIDStore {
         return rie.serialize(true);
     }
 
-    public importRootIdentity(data: string, password: string, storepass: string): void {
+    public async importRootIdentity(data: string, password: string, storepass: string): Promise<void> {
         checkArgument(data != null && data !== "", "Invalid import data");
         checkArgument(password != null && password !== "", "Invalid password");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -1213,7 +1212,7 @@ export class DIDStore {
         let hk = HDKey.deserializeBase58(publicKey);
         let id = RootIdentity.getId(hk.serializePublicKey());
 
-        this.storage.storeRootIdentity(id, encryptedMnemonic, encryptedPrivateKey,
+        await this.storage.storeRootIdentity(id, encryptedMnemonic, encryptedPrivateKey,
             publicKey, rie.getIndex());
 
         if (rie.isDefault() && this.metadata.getDefaultRootIdentity() == null)
