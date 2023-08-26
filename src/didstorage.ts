@@ -47,15 +47,15 @@ export interface ReEncryptor {
  * The interface for DIDStorage to support different file system.
  */
 export interface DIDStorage {
-    init();
+    init: () => Promise<void>;
 
     getLocation(): string;
 
-    storeMetadata(metadata: DIDStoreMetadata);
+    storeMetadata: (metadata: DIDStoreMetadata) => Promise<void>;
 
-    loadMetadata(): DIDStoreMetadata;
+    loadMetadata: () => Promise<DIDStoreMetadata>;
 
-    storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata);
+    storeRootIdentityMetadata: (id: string, metadata: RootIdentity.Metadata) => Promise<void>;
 
     /**
      * Load DID Metadata.
@@ -64,7 +64,7 @@ export interface DIDStorage {
      * @return the meta data
      * @throws DIDStorageException DIDStorage error.
      */
-    loadRootIdentityMetadata(id: string): RootIdentity.Metadata;
+    loadRootIdentityMetadata: (id: string) => Promise<RootIdentity.Metadata>;
 
     /**
      * Save the raw root identity to the storage.
@@ -76,7 +76,7 @@ export interface DIDStorage {
      * @param index the index hint for DID deriving
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    storeRootIdentity(id: string, mnemonic: string, privateKey: string, publicKey: string, index: number);
+    storeRootIdentity: (id: string, mnemonic: string, privateKey: string, publicKey: string, index: number) => Promise<void>;
 
     /**
      * Read the RootIdentity object from the storage.
@@ -85,13 +85,13 @@ export interface DIDStorage {
      * @return the RootIdentity object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadRootIdentity(id: string): RootIdentity;
+    loadRootIdentity: (id: string) => Promise<RootIdentity>;
 
-    containsRootIdentity(id: string): boolean;
+    containsRootIdentity: (id: string) => Promise<boolean>;
 
-    updateRootIdentityIndex(id: string, index: number);
+    updateRootIdentityIndex: (id: string, index: number) => Promise<void>;
 
-    loadRootIdentityPrivateKey(id: string): string;
+    loadRootIdentityPrivateKey: (id: string) => Promise<string>;
 
     /**
      * Read the mnemonic that generate the RootIdentity.
@@ -100,13 +100,13 @@ export interface DIDStorage {
      * @return the mnemonic string or null if not exists
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadRootIdentityMnemonic(id: string): string;
+    loadRootIdentityMnemonic: (id: string) => Promise<string>;
 
-    deleteRootIdentity(id: string): boolean;
+    deleteRootIdentity: (id: string) => Promise<boolean>;
 
-    listRootIdentities(): RootIdentity[];
+    listRootIdentities: () => Promise<RootIdentity[]>;
 
-    containsRootIdenities(): boolean;
+    containsRootIdenities: () => Promise<boolean>;
 
     /**
      * Save the DID metadata object to this storage.
@@ -115,7 +115,7 @@ export interface DIDStorage {
      * @param metadata a DIDMetadata object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    storeDidMetadata(did: DID, metadata: DIDMetadata);
+    storeDidMetadata: (did: DID, metadata: DIDMetadata) => Promise<void>;
 
     /**
      * Read the DID metadata object from this storage.
@@ -124,7 +124,7 @@ export interface DIDStorage {
      * @return the DIDMetadata object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadDidMetadata(did: DID): DIDMetadata;
+    loadDidMetadata: (did: DID) => Promise<DIDMetadata>;
 
     /**
      * Save the DID document to this storage.
@@ -132,7 +132,7 @@ export interface DIDStorage {
      * @param doc a DIDDocument object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    storeDid(doc: DIDDocument);
+    storeDid: (doc: DIDDocument) => Promise<void>;
 
     /**
      * Read the DID document from this storage.
@@ -141,7 +141,7 @@ export interface DIDStorage {
      * @return the DIDDocument object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadDid(did: DID): Promise<DIDDocument>;
+    loadDid: (did: DID) => Promise<DIDDocument>;
 
     /**
      * Delete the specified DID.
@@ -151,7 +151,7 @@ export interface DIDStorage {
      *         the returned value is false if deleting is failed.
      * @throws DIDStorageException DIDStorage error.
      */
-    deleteDid(did: DID): boolean;
+    deleteDid: (did: DID) => Promise<boolean>;
 
     /**
      * List all DIDs according to the specified condition.
@@ -159,7 +159,7 @@ export interface DIDStorage {
      * @return the DID array.
      * @throws DIDStorageException DIDStorage error.
      */
-    listDids(): DID[];
+    listDids: () => Promise<DID[]>;
 
     /**
      * Check whether this storage contains the specificed did.
@@ -167,7 +167,7 @@ export interface DIDStorage {
      * @return true if contains the specificed did, false otherwise
      * @throws DIDStorageException DIDStorage error.
      */
-    containsDid(did: DID): boolean;
+    containsDid: (did: DID) => Promise<boolean>;
 
     /**
      * Check whether this storage contains the dids.
@@ -175,7 +175,7 @@ export interface DIDStorage {
      * @return true if contains did object, false otherwise
      * @throws DIDStorageException DIDStorage error.
      */
-    containsDids(): boolean;
+    containsDids: () => Promise<boolean>;
 
     /**
      * Save the credential's metadata to this storage.
@@ -184,7 +184,7 @@ export interface DIDStorage {
      * @param metadata the credential's metadata object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    storeCredentialMetadata(id: DIDURL, metadata: CredentialMetadata);
+    storeCredentialMetadata: (id: DIDURL, metadata: CredentialMetadata) => Promise<void>;
 
     /**
      * Read the credential's metadata object from this storage.
@@ -193,7 +193,7 @@ export interface DIDStorage {
      * @return the credential's metadata object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadCredentialMetadata(id: DIDURL): CredentialMetadata;
+    loadCredentialMetadata: (id: DIDURL) => Promise<CredentialMetadata>;
 
     /**
      * Save the credential object to this storage.
@@ -201,7 +201,7 @@ export interface DIDStorage {
      * @param credential a VerifiableCredential object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    storeCredential(credential: VerifiableCredential);
+    storeCredential: (credential: VerifiableCredential) => Promise<void>;
 
     /**
      * Read the specified credential object from this storage.
@@ -210,7 +210,7 @@ export interface DIDStorage {
      * @return the VerifiableCredential object
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadCredential(id: DIDURL): VerifiableCredential;
+    loadCredential: (id: DIDURL) => Promise<VerifiableCredential>;
 
     /**
      * Check whether this storage contains the specified credential.
@@ -219,7 +219,7 @@ export interface DIDStorage {
      * @return true if contains credential object, false otherwise
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    containsCredential(id: DIDURL): boolean;
+    containsCredential: (id: DIDURL) => Promise<boolean>;
 
     /**
      * Check whether this storage contains the credentials that owned by the
@@ -230,7 +230,7 @@ export interface DIDStorage {
      * 		   false otherwise
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    containsCredentials(did: DID): boolean;
+    containsCredentials: (did: DID) => Promise<boolean>;
 
     /**
      * Delete the specified credential from this storage.
@@ -239,7 +239,7 @@ export interface DIDStorage {
      * @return true if the credential exists and deleted successful, false otherwise
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    deleteCredential(id: DIDURL): boolean;
+    deleteCredential: (id: DIDURL) => Promise<boolean>;
 
     /**
      * List the Credentials owned the specified DID.
@@ -248,9 +248,9 @@ export interface DIDStorage {
      * @return the Credential array owned the specified DID.
      * @throws DIDStorageException DIDStorage error.
      */
-    listCredentials(did: DID): DIDURL[];
+    listCredentials: (did: DID) => Promise<DIDURL[]>;
 
-    containsPrivateKey(id: DIDURL): boolean;
+    containsPrivateKey: (id: DIDURL) => Promise<boolean>;
     /**
      * Save the encrypted private key to this storage.
      *
@@ -258,7 +258,7 @@ export interface DIDStorage {
      * @param privateKey the encrypted private key
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    storePrivateKey(id: DIDURL, privateKey: string);
+    storePrivateKey: (id: DIDURL, privateKey: string) => Promise<void>;
 
     /**
      * Read the encrypted private key from this storage
@@ -267,7 +267,7 @@ export interface DIDStorage {
      * @return the encrypted private key
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadPrivateKey(id: DIDURL): string;
+    loadPrivateKey: (id: DIDURL) => Promise<string>;
 
     /**
      * Check whether this storage contains the private key that owned by the
@@ -278,7 +278,7 @@ export interface DIDStorage {
      * 		   false otherwise
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    containsPrivateKeys(did: DID): boolean;
+    containsPrivateKeys: (did: DID) => Promise<boolean>;
 
     /**
      * Delete the specific private key from this storage.
@@ -287,7 +287,7 @@ export interface DIDStorage {
      * @return true if the key exists and deleted successful, false otherwise
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    deletePrivateKey(id: DIDURL): boolean;
+    deletePrivateKey: (id: DIDURL) => Promise<boolean>;
 
     /**
      * List the private keys owned the specified DID.
@@ -296,7 +296,7 @@ export interface DIDStorage {
      * @return the private key array owned the specified DID.
      * @throws DIDStorageException DIDStorage error.
      */
-    listPrivateKeys(did: DID): DIDURL[];
+    listPrivateKeys: (did: DID) => Promise<DIDURL[]>;
 
     /**
      * Change password for DIDStore.
@@ -304,5 +304,5 @@ export interface DIDStorage {
      * @param reEncryptor the ReEncryptor handle
      * @throws DIDStorageException DIDStorage error.
      */
-    changePassword(reEncryptor: ReEncryptor);
+    changePassword: (reEncryptor: ReEncryptor) => Promise<void>;
 }

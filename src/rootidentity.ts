@@ -36,6 +36,8 @@ import { Logger } from "./logger";
 
 const log = new Logger("RootIdentity");
 
+
+// eslint-disable-next-line import/export
 export class RootIdentity {
     private mnemonic: string;
 
@@ -91,7 +93,7 @@ export class RootIdentity {
      *              force = false, must not create new private identity if there is private identity.
      * @throws DIDStoreException there is private identity if user need unforce mode.
      */
-    public static createFromMnemonic(mnemonic: string, passphrase: string, store: DIDStore, storepass: string, overwrite = false): RootIdentity {
+    public static async createFromMnemonic(mnemonic: string, passphrase: string, store: DIDStore, storepass: string, overwrite = false): Promise<RootIdentity> {
         checkArgument(mnemonic != null && mnemonic !== "", "Invalid mnemonic");
         checkArgument(store != null, "Invalid DID store");
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
@@ -107,11 +109,11 @@ export class RootIdentity {
 
         let identity = RootIdentity.newFromMnemonic(mnemonic, passphrase);
 
-        if (store.containsRootIdentity(identity.getId()) && !overwrite)
+        if (await store.containsRootIdentity(identity.getId()) && !overwrite)
             throw new RootIdentityAlreadyExistException(identity.getId() + " already exist");
 
         identity.setMetadata(new RootIdentity.Metadata(identity.getId(), store));
-        store.storeRootIdentity(identity, storepass);
+        await store.storeRootIdentity(identity, storepass);
         identity.wipe();
 
         return identity;
@@ -126,7 +128,7 @@ export class RootIdentity {
      *              force = false, must not create new private identity if there is private identity.
      * @throws DIDStoreException there is private identity if user need unforce mode.
      */
-    public static createFromPrivateKey(extentedPrivateKey: string, store: DIDStore, storepass: string, overwrite = false): RootIdentity {
+    public static async createFromPrivateKey(extentedPrivateKey: string, store: DIDStore, storepass: string, overwrite = false) : Promise<RootIdentity> {
         checkArgument(extentedPrivateKey != null && extentedPrivateKey !== "",
             "Invalid extended private key");
         checkArgument(store != null, "Invalid DID store");
@@ -135,11 +137,11 @@ export class RootIdentity {
         let rootPrivateKey = HDKey.deserializeBase58(extentedPrivateKey);
         let identity = RootIdentity.newFromPrivateKey(rootPrivateKey);
 
-        if (store.containsRootIdentity(identity.getId()) && !overwrite)
+        if (await store.containsRootIdentity(identity.getId()) && !overwrite)
             throw new RootIdentityAlreadyExistException(identity.getId() + " already exist");
 
         identity.setMetadata(new RootIdentity.Metadata(identity.getId(), store));
-        store.storeRootIdentity(identity, storepass);
+        await store.storeRootIdentity(identity, storepass);
         identity.wipe();
 
         return identity;
@@ -233,14 +235,14 @@ export class RootIdentity {
         return this.index;
     }
 
-    protected setIndex(idx: number) {
+    protected async setIndex(idx: number) : Promise<void> {
         this.index = idx;
-        this.getStore().storeRootIdentity(this);
+        await this.getStore().storeRootIdentity(this);
     }
 
-    protected incrementIndex(): number {
+    protected async incrementIndex(): Promise<number> {
         let idx = ++this.index;
-        this.getStore().storeRootIdentity(this);
+        await this.getStore().storeRootIdentity(this);
         return idx;
     }
 
@@ -278,7 +280,7 @@ export class RootIdentity {
         if (identity == null)
             return null;
 
-        let key = store.derive(identity, HDKey.DERIVE_PATH_PREFIX +
+        let key = await store.derive(identity, HDKey.DERIVE_PATH_PREFIX +
             doc.getMetadata().getIndex(), storepass);
 
         let pk = doc.getPublicKey(id);
@@ -293,7 +295,7 @@ export class RootIdentity {
         }
 
         let sk = key.serialize();
-        store.storePrivateKey(id, sk, storepass);
+        await store.storePrivateKey(id, sk, storepass);
         // JAVA: store.storePrivateKey(id, key.serialize(), storepass);
         // JAVA: let sk = key.serialize();
         return sk;
@@ -364,10 +366,10 @@ export class RootIdentity {
 
         log.debug("Creating new DID {} at index {}...", did.toString(), index);
 
-        let key = this.getStore().derive(this.getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
+        let key = await this.getStore().derive(this.getId(), HDKey.DERIVE_PATH_PREFIX + index, storepass);
         try {
             let id = DIDURL.from("#primary", did);
-            this.getStore().storePrivateKey(id, key.serialize(), storepass);
+            await this.getStore().storePrivateKey(id, key.serialize(), storepass);
 
             let db = DIDDocument.Builder.newFromDID(did, this.getStore());
             db.addAuthenticationKey(id, key.getPublicKeyBase58());
@@ -380,7 +382,7 @@ export class RootIdentity {
             await this.getStore().storeDid(doc);
 
             if (shouldIncrementIndexAfterCompletion)
-                this.incrementIndex();
+                await this.incrementIndex();
 
             return doc;
         } catch (e) {
@@ -406,7 +408,7 @@ export class RootIdentity {
         checkArgument(identifier != null && identifier!== "", "Invalid identifier");
 
         let path = HDKey.PRE_DERIVED_PUBLICKEY_PATH + "/" + this.mapToDerivePath(identifier, securityCode);
-        let key = this.getStore().derive(this.getId(), path, storepass);
+        let key = await this.getStore().derive(this.getId(), path, storepass);
         let did = new DID(DID.METHOD, key.getAddress());
 
         let doc = await this.getStore().loadDid(did);
@@ -436,7 +438,7 @@ export class RootIdentity {
 
         try {
             let id = DIDURL.from("#primary", did);
-            this.getStore().storePrivateKey(id, key.serialize(), storepass);
+            await this.getStore().storePrivateKey(id, key.serialize(), storepass);
 
             let db = DIDDocument.Builder.newFromDID(did, this.getStore());
             db.addAuthenticationKey(id, key.getPublicKeyBase58());
@@ -457,8 +459,8 @@ export class RootIdentity {
         }
     }
 
-    public hasMnemonic(): boolean {
-        return this.getStore().containsRootIdentityMnemonic(this.getId());
+    public async hasMnemonic(): Promise<boolean> {
+        return await this.getStore().containsRootIdentityMnemonic(this.getId());
     }
 
     /**
@@ -468,10 +470,10 @@ export class RootIdentity {
      * @return the mnemonic string
      * @throws DIDStoreException there is no mnemonic in DID Store.
      */
-    public exportMnemonic(storepass: string): string {
+    public async exportMnemonic(storepass: string): Promise<string> {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
 
-        return this.getStore().exportRootIdentityMnemonic(this.getId(), storepass);
+        return await this.getStore().exportRootIdentityMnemonic(this.getId(), storepass);
     }
 
     // Java: synchronize()
@@ -527,7 +529,7 @@ export class RootIdentity {
         if (localDoc != null)
             localDoc.getMetadata().attachStore(this.getStore())
         await this.getStore().storeDid(finalDoc);
-        this.getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
+        await this.getStore().storeLazyPrivateKey(finalDoc.getDefaultPublicKeyId());
 
         return true;
     }
@@ -562,11 +564,12 @@ export class RootIdentity {
         }
 
         if (lastIndex >= this.getIndex())
-            this.setIndex(lastIndex + 1);
+            await this.setIndex(lastIndex + 1);
     }
 }
 
 /* eslint-disable no-class-assign */
+// eslint-disable-next-line import/export
 export namespace RootIdentity {
     export class Metadata extends AbstractMetadata {
         public static DEFAULT_DID = "defaultDid";
@@ -600,10 +603,10 @@ export namespace RootIdentity {
             return DID.from(this.get(Metadata.DEFAULT_DID) as string);
         }
 
-        protected save() {
+        protected async save() : Promise<void> {
             if (this.attachedStore()) {
                 try {
-                    this.getStore().storeRootIdentityMetadata(this.id, this);
+                    await this.getStore().storeRootIdentityMetadata(this.id, this);
                 } catch (e) {
                     if (e instanceof DIDStoreException)
                         log.error("INTERNAL - error store metadata for credential {}", this.id);

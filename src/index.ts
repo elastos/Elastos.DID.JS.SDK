@@ -35,6 +35,7 @@ import { CredentialBiographyStatus } from "./internals";
 import { CredentialMetadata } from "./internals";
 import { DIDBackend } from "./internals";
 import { AbstractMetadata } from "./internals";
+import { DIDStoreMetadata } from "./internals";
 import { DIDMetadata } from "./internals";
 import { Features } from "./internals";
 import { LocalResolveHandle } from "./internals";
@@ -58,7 +59,7 @@ import { IDChainRequest } from "./internals";
 import * as Exceptions from "./exceptions/exceptions";
 import { File } from "./internals";
 import { Logger } from "./logger";
-import type { DIDAdapter, DIDStorage } from "./internals";
+import type { DIDAdapter, DIDStorage, ReEncryptor } from "./internals";
 import { Aes256cbc } from "./crypto/aes256cbc";
 import { BASE64 } from "./crypto/base64";
 import { HDKey } from "./crypto/hdkey";
@@ -119,6 +120,7 @@ export type {
     DIDObject,
     DIDAdapter,
     DIDStorage,
+    ReEncryptor,
     JSONValue,
     JSONArray,
     JSONObject,
@@ -137,6 +139,7 @@ export {
     Features,
     DID,
     AbstractMetadata,
+    DIDStoreMetadata,
     DIDMetadata,
     CredentialMetadata,
     DIDDocument,
