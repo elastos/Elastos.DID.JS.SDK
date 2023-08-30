@@ -264,7 +264,7 @@ export class RootIdentity {
      * @param index the index
      * @return the DID object
      */
-     public getDidFromIdentifier(identifier: string, securityCode: number = 0): DID {
+     public getDidFromIdentifier(identifier: string, securityCode = 0): DID {
         let key = this.preDerivedPublicKey.deriveWithPath(this.mapToDerivePath(identifier, securityCode, true));
         return new DID(DID.METHOD, key.getAddress());
     }
@@ -301,7 +301,7 @@ export class RootIdentity {
         return sk;
     }
 
-    private mapToDerivePath(identifier: string, securityCode: number, m: boolean = false): string {
+    private mapToDerivePath(identifier: string, securityCode: number, m = false): string {
         let digest = SHA256.encodeToBuffer(Buffer.from(identifier, "utf-8"));
         let bb = ByteBuffer.wrap(digest);
 
@@ -403,7 +403,7 @@ export class RootIdentity {
          * @return the DIDDocument content related to the new DID
          * @throws DIDStoreException there is no private identity in DIDStore.
          */
-    public async newDidFromIdentifier(storepass: string, identifier: string, securityCode: number = 0, overwrite = false): Promise<DIDDocument> {
+    public async newDidFromIdentifier(storepass: string, identifier: string, securityCode = 0, overwrite = false): Promise<DIDDocument> {
         checkArgument(storepass != null && storepass !== "", "Invalid storepass");
         checkArgument(identifier != null && identifier!== "", "Invalid identifier");
 
