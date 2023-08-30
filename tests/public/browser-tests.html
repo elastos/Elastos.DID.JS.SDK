@@ -36,7 +36,7 @@
             let alias = "myalias";
             let doc = identity.newDid(storepass);
 		    doc.getMetadata().setAlias(alias);
-		    let issuer = new Issuer(doc);
+		    let issuer = await Issuer.create(doc);
 		    let cb = issuer.issueFor(doc.getSubject());
 		    let vc = cb.id("#cred-1")
 				.type("BasicProfileCredential", "SelfProclaimedCredential")

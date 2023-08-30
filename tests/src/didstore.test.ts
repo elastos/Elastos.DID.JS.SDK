@@ -616,7 +616,7 @@ describe("DIDStore Tests", ()=>{
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
             doc.getMetadata().setAlias(alias);
-            let issuer = new Issuer(doc);
+            let issuer = await Issuer.create(doc);
             let cb = issuer.issueFor(doc.getSubject());
             let vc = await cb.id("#cred-1")
                     .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")

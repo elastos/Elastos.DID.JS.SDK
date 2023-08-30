@@ -489,7 +489,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(did);
 
             let props= {
@@ -559,7 +559,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             //Update: add kyc credential and one authentication key
-            let issuer = new Issuer(issuerDoc);
+            let issuer = await Issuer.create(issuerDoc);
             let cb = issuer.issueFor(did);
 
             let props = {
@@ -642,7 +642,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             // Update again: add self-claimed credential and remove passport credential
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(did);
 
             let props = {
@@ -721,7 +721,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await identity.newDid(TestConfig.storePass);
             let did = doc.getSubject();
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(did);
 
             let props = {
@@ -787,7 +787,7 @@ describe('IDChainOperations Tests', () => {
             log.debug("Last transaction id {}", lastTxid);
 
             // Update: add a self-claimed credential and an authorization key
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(did);
 
             let props = {
@@ -966,7 +966,7 @@ describe('IDChainOperations Tests', () => {
             expect(issuerDoc).not.toBeNull();
             let issuerId = issuerDoc.getSubject();
 
-            let issuer = new Issuer(issuerDoc);
+            let issuer = await Issuer.create(issuerDoc);
             let cb = issuer.issueFor(customizeDid);
 
             let props = {
@@ -1124,7 +1124,7 @@ describe('IDChainOperations Tests', () => {
             let issuerDoc = await store.loadDid(customizeDid);
             expect(issuerDoc).not.toBeNull();
 
-            let issuer = new Issuer(issuerDoc, DIDURL.from("#key1", issuerDoc.getSubject()));
+            let issuer = await Issuer.create(issuerDoc, DIDURL.from("#key1", issuerDoc.getSubject()));
             expect(issuer).not.toBeNull();
             let cb = issuer.issueFor(multiCustomizeDid);
 
@@ -1828,7 +1828,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await store.loadDid(multiCustomizeDid);
             expect(doc).not.toBeNull();
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
             let props: JSONObject = {};
 
@@ -2050,7 +2050,7 @@ describe('IDChainOperations Tests', () => {
             let doc = await store.loadDid(dids[0]);
             let did = doc.getSubject();
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
 
             for (let i = 0; i < 36; i++) {
                 log.trace("Creating test credential {}...", i);
@@ -2340,7 +2340,7 @@ describe('IDChainOperations Tests', () => {
 		    let doc = await identity.newDid(TestConfig.storePass);
 		    let did = doc.getSubject();
 
-		    let selfIssuer = new Issuer(doc);
+		    let selfIssuer = await Issuer.create(doc);
 		    let cb = selfIssuer.issueFor(did);
 
             let props: JSONObject = {};
