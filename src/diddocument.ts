@@ -3143,14 +3143,8 @@ export namespace DIDDocument {
                 throw new IllegalUsage("Credential " + vc.getSubject().getId().toString() + " doesn't belong to DID" + this.getSubject().toString());
 
 			// The credential should be genuine
-            let checkGenuine = async () => {
-                return new Promise((resolve, reject) => {
-                    resolve(vc.isGenuineInternal(this.document));
-                });
-            };
-
             let genuine = vc.isSelfProclaimed() ?
-                    await checkGenuine() : await vc.isGenuine();
+                vc.isGenuineInternal(this.document) : await vc.isGenuine();
             if (!genuine)
                 throw new MalformedCredentialException(vc.getId().toString());
 
