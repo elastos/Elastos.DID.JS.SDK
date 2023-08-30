@@ -122,7 +122,7 @@ export namespace IssueCredential {
 			let university = new University(name);
 			await university.init();
 			let doc = await university.getDocument();
-			university.issuer = new Issuer(doc, null);
+			university.issuer = await Issuer.create(doc, null);
 			return university;
 		}
 
@@ -135,7 +135,7 @@ export namespace IssueCredential {
 
             let exp = dayjs().add(5, 'years').toDate();
 
-            this.issuer = new Issuer(await this.getDocument());
+            this.issuer = await Issuer.create(await this.getDocument());
 			let cb = this.issuer.issueFor(student.getDid());
 
 			return await cb.id("diploma")

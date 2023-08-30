@@ -446,7 +446,7 @@ export class InstantData {
             let doc = await (await this.testData.getRootIdentity()).newDid(TestConfig.storePass);
             doc.getMetadata().setAlias("Issuer");
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -549,7 +549,7 @@ export class InstantData {
             db.addService("#carrier", "CarrierAddress",
                     "carrier://X2tDd1ZTErwnHNot8pTdhp7C7Y9FxMPGD8ppiasUT4UsHH2BpF1d", map);
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             props = {
@@ -568,7 +568,7 @@ export class InstantData {
                     .properties(props)
                     .seal(TestConfig.storePass);
 
-            let kycIssuer = new Issuer(this.idIssuer);
+            let kycIssuer = await Issuer.create(this.idIssuer);
             cb = kycIssuer.issueFor(doc.getSubject());
 
             props = {
@@ -599,7 +599,7 @@ export class InstantData {
 
             let id = new DIDURL("#passport", doc.getSubject());
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -626,7 +626,7 @@ export class InstantData {
 
             let id = new DIDURL("#twitter", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idIssuer);
+            let kycIssuer = await Issuer.create(this.idIssuer);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -653,7 +653,7 @@ export class InstantData {
 
             let id = new DIDURL("#json", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idIssuer);
+            let kycIssuer = await Issuer.create(this.idIssuer);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let jsonProps = "{\"name\":\"Jay Holtslander\",\"alternateName\":\"Jason Holtslander\",\"booleanValue\":true,\"numberValue\":1234,\"doubleValue\":9.5,\"nationality\":\"Canadian\",\"birthPlace\":{\"type\":\"Place\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"}},\"affiliation\":[{\"type\":\"Organization\",\"name\":\"Futurpreneur\",\"sameAs\":[\"https://twitter.com/futurpreneur\",\"https://www.facebook.com/futurpreneur/\",\"https://www.linkedin.com/company-beta/100369/\",\"https://www.youtube.com/user/CYBF\"]}],\"alumniOf\":[{\"type\":\"CollegeOrUniversity\",\"name\":\"Vancouver Film School\",\"sameAs\":\"https://en.wikipedia.org/wiki/Vancouver_Film_School\",\"year\":2000},{\"type\":\"CollegeOrUniversity\",\"name\":\"CodeCore Bootcamp\"}],\"gender\":\"Male\",\"Description\":\"Technologist\",\"disambiguatingDescription\":\"Co-founder of CodeCore Bootcamp\",\"jobTitle\":\"Technical Director\",\"worksFor\":[{\"type\":\"Organization\",\"name\":\"Skunkworks Creative Group Inc.\",\"sameAs\":[\"https://twitter.com/skunkworks_ca\",\"https://www.facebook.com/skunkworks.ca\",\"https://www.linkedin.com/company/skunkworks-creative-group-inc-\",\"https://plus.google.com/+SkunkworksCa\"]}],\"url\":\"https://jay.holtslander.ca\",\"image\":\"https://s.gravatar.com/avatar/961997eb7fd5c22b3e12fb3c8ca14e11?s=512&r=g\",\"address\":{\"type\":\"PostalAddress\",\"addressLocality\":\"Vancouver\",\"addressRegion\":\"BC\",\"addressCountry\":\"Canada\"},\"sameAs\":[\"https://twitter.com/j_holtslander\",\"https://pinterest.com/j_holtslander\",\"https://instagram.com/j_holtslander\",\"https://www.facebook.com/jay.holtslander\",\"https://ca.linkedin.com/in/holtslander/en\",\"https://plus.google.com/+JayHoltslander\",\"https://www.youtube.com/user/jasonh1234\",\"https://github.com/JayHoltslander\",\"https://profiles.wordpress.org/jasonh1234\",\"https://angel.co/j_holtslander\",\"https://www.foursquare.com/user/184843\",\"https://jholtslander.yelp.ca\",\"https://codepen.io/j_holtslander/\",\"https://stackoverflow.com/users/751570/jay\",\"https://dribbble.com/j_holtslander\",\"http://jasonh1234.deviantart.com/\",\"https://www.behance.net/j_holtslander\",\"https://www.flickr.com/people/jasonh1234/\",\"https://medium.com/@j_holtslander\"]}";
@@ -677,7 +677,7 @@ export class InstantData {
 
             let id = new DIDURL("#email", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idExampleCorp);
+            let kycIssuer = await Issuer.create(this.idExampleCorp);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -800,7 +800,7 @@ export class InstantData {
             let did = new DID("did:elastos:example");
             let doc = await this.idIssuer.newCustomized(did, TestConfig.storePass);
 
-            let selfIssuer = new Issuer(doc);
+            let selfIssuer = await Issuer.create(doc);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -901,7 +901,7 @@ export class InstantData {
             db.addService("#vcr", "CredentialRepositoryService",
                     "https://foobar.com/credentials", props);
 
-            let selfIssuer = new Issuer(doc, signKey);
+            let selfIssuer = await Issuer.create(doc, signKey);
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             props = {
@@ -917,7 +917,7 @@ export class InstantData {
                     .properties(props)
                     .seal(TestConfig.storePass);
 
-            let kycIssuer = new Issuer(this.idExampleCorp);
+            let kycIssuer = await Issuer.create(this.idExampleCorp);
             cb = kycIssuer.issueFor(doc.getSubject());
 
             props = {
@@ -949,7 +949,7 @@ export class InstantData {
 
             let id = new DIDURL("#services", doc.getSubject());
 
-            let selfIssuer = new Issuer(doc, this.idUser1.getDefaultPublicKeyId());
+            let selfIssuer = await Issuer.create(doc, this.idUser1.getDefaultPublicKeyId());
             let cb = selfIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -980,7 +980,7 @@ export class InstantData {
 
             let id = new DIDURL("#license", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idExampleCorp);
+            let kycIssuer = await Issuer.create(this.idExampleCorp);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let props = {
@@ -1083,7 +1083,7 @@ export class InstantData {
 
             let id = new DIDURL("#email", doc.getSubject());
 
-            let kycIssuer = new Issuer(this.idIssuer);
+            let kycIssuer = await Issuer.create(this.idIssuer);
             let cb = kycIssuer.issueFor(doc.getSubject());
 
             let props = {

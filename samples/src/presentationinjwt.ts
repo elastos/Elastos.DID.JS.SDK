@@ -126,7 +126,7 @@ export namespace PresentationInJWT {
 			let university = new University(name);
 			await university.init();
 			let doc = await university.getDocument();
-			university.issuer = new Issuer(doc, null);
+			university.issuer = await Issuer.create(doc, null);
 			return university;
 		}
 
@@ -139,7 +139,7 @@ export namespace PresentationInJWT {
 
             let exp = dayjs().add(5, 'years').toDate();
 
-            this.issuer = new Issuer(await this.getDocument());
+            this.issuer = await Issuer.create(await this.getDocument());
 			let cb = this.issuer.issueFor(student.getDid());
 			return await cb.id("diploma")
 				.typeWithContext("DiplomaCredential", "https://ttech.io/credentials/diploma/v1")
@@ -176,7 +176,7 @@ export namespace PresentationInJWT {
 
             let exp = dayjs().add(1, 'years').toDate();
 
-			let cb = new Issuer(await this.getDocument()).issueFor(this.getDid());
+			let cb = await Issuer.create(await this.getDocument()).issueFor(this.getDid());
 			return await cb.id("profile")
 				.typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
 				.typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")

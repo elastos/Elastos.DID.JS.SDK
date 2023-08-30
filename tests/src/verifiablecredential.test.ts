@@ -976,7 +976,7 @@ describe('let Tests', () => {
         let doc = await sd.getUser1Document();
         let did = doc.getSubject();
 
-        let selfIssuer = new Issuer(doc);
+        let selfIssuer = await Issuer.create(doc);
 
         for (let i = 0; i < 36; i++) {
             console.log("Creating test credential {}...", i);

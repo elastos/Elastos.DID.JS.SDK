@@ -65,6 +65,7 @@ const log = new Logger("DIDDocument");
  * services. One document must be have one subject, and at least one public
  * key.
  */
+// eslint-disable-next-line import/export
 export class DIDDocument extends DIDEntity<DIDDocument> {
     private static log = new Logger("DIDDocument");
     /*
@@ -1605,7 +1606,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
                     key = doc.canonicalId(keyid);
 
                 let store = doc.getMetadata().getStore();
-                if (!store.containsPrivateKey(key))
+                if (!await store.containsPrivateKey(key))
                     return null;
 
                 let hk = HDKey.deserialize(await store.loadPrivateKey(key, password));
@@ -2099,6 +2100,7 @@ export class DIDDocument extends DIDEntity<DIDDocument> {
 }
 
 /* eslint-disable no-class-assign */
+// eslint-disable-next-line import/export
 export namespace DIDDocument {
     /**
      * Publickey is used for digital signatures, encryption and
@@ -2851,7 +2853,7 @@ export namespace DIDDocument {
          * @param force the owner of public key
          * @return the DID Document Builder object
          */
-        public removePublicKey(id: DIDURL | string, force = false): Builder {
+        public async removePublicKey(id: DIDURL | string, force = false): Promise<Builder> {
             this.checkNotSealed();
             checkArgument(id != null, "Invalid publicKey id");
 
@@ -2879,7 +2881,7 @@ export namespace DIDDocument {
                 try {
                     // TODO: should delete the loosed private key when store the document
                     if (this.document.getMetadata().attachedStore())
-                        this.document.getMetadata().getStore().deletePrivateKey(id);
+                        await this.document.getMetadata().getStore().deletePrivateKey(id);
                 } catch (ignore) {
                     // DIDStoreException
                     Builder.log.error("INTERNAL - Remove private key", ignore);
@@ -3190,7 +3192,7 @@ export namespace DIDDocument {
                 "Invalid publicKey id");
             checkArgument(storepass && storepass != null, "Invalid storepass");
 
-            let issuer = new Issuer(this.document);
+            let issuer = await Issuer.create(this.document);
             let cb = issuer.issueFor(this.document.getSubject());
 
             if (expirationDate == null)
