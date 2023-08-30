@@ -4,6 +4,12 @@ module.exports = {
   parserOptions: {
     project: "./tsconfig.json"
   },
+  ignorePatterns: [
+    "*.js",
+    "typings/**",
+    "samples/**",
+    "build-plugins/**"
+  ],
   plugins: [
     '@typescript-eslint',
     'import'
@@ -41,6 +47,7 @@ module.exports = {
     "no-promise-executor-return": "error",
     "no-non-null-assertion": "off",
     "import/no-duplicates": "off",
+    "@typescript-eslint/ban-types": "warn",
 
     // Node
     "node/no-unsupported-features/es-syntax": "off",
@@ -59,6 +66,7 @@ module.exports = {
     "@typescript-eslint/no-floating-promises": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-empty-interface": "off",
+    "import/export": "off", // remove Multiple exports of name 'DIDStore'
 
     "import/no-unresolved": "error"
   }

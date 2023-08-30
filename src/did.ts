@@ -86,7 +86,7 @@ export class DID {
             return nextPart;
         }
 
-        public parse(did : string, start : number = 0, limit ?: number) : void {
+        public parse(did : string, start  = 0, limit ?: number) : void {
             if (did == null)
                 throw new MalformedDIDException("null DID string");
 

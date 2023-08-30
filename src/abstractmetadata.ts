@@ -98,12 +98,12 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         this.save();
     }
 
-    protected getBoolean(name: string, defaultValue: boolean = false): boolean {
+    protected getBoolean(name: string, defaultValue = false): boolean {
         let strValue = this.get(name);
         return strValue != null ? new Boolean(strValue).valueOf() : defaultValue;
     }
 
-    protected getInteger(name: string, defaultValue: number = -1): number {
+    protected getInteger(name: string, defaultValue = -1): number {
         let strValue = this.get(name);
         let value = defaultValue;
         if (strValue != null) {
@@ -178,12 +178,12 @@ export abstract class AbstractMetadata extends DIDEntity<AbstractMetadata> imple
         return this.get(AbstractMetadata.USER_EXTRA_PREFIX + key) as string;
     }
 
-    public getExtraBoolean(key: string, defaultValue: boolean = false): boolean {
+    public getExtraBoolean(key: string, defaultValue = false): boolean {
         checkArgument(key && key != null, "Invalid key");
         return this.getBoolean(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
     }
 
-    public getExtraInteger(key: string, defaultValue: number = -1): number {
+    public getExtraInteger(key: string, defaultValue = -1): number {
         checkArgument(key && key != null, "Invalid key");
         return this.getInteger(AbstractMetadata.USER_EXTRA_PREFIX + key, defaultValue);
     }
