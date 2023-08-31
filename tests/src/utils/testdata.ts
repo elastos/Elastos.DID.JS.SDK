@@ -48,20 +48,25 @@ export class TestData {
     private v2_2: CompatibleData;
     private instantData: InstantData;
 
-    public constructor(dummy ?: boolean) {
+    private constructor() {}
+
+    public static async init(dummy ?: boolean): Promise<TestData> {
+        let testdata = new TestData();
         try {
             TestConfig.initialize();
             if (File.exists(TestConfig.storeRoot))
                 (new File(TestConfig.storeRoot)).delete();
             importBundledBrowserData();
 
-            DIDTestExtension.setup(dummy);
+            await DIDTestExtension.setup(dummy);
         }
         catch(e) {
             // Catch errors here because Jest will silence them. So we print them to get more clues.
             console.error("Catched exception in TestData constructor", e);
             throw e;
         }
+
+        return testdata;
     }
 
     public async cleanup(): Promise<void> {
@@ -95,7 +100,7 @@ export class TestData {
     public async getRootIdentity(): Promise<RootIdentity> {
         if (this.identity == null) {
             this.mnemonic = Mnemonic.getInstance().generate();
-            this.identity = RootIdentity.createFromMnemonic(this.mnemonic, TestConfig.passphrase,
+            this.identity = await RootIdentity.createFromMnemonic(this.mnemonic, TestConfig.passphrase,
                     await this.getStore(), TestConfig.storePass, true);
         }
 

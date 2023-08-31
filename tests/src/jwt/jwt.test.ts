@@ -60,7 +60,7 @@ let doc: DIDDocument;
 
 describe('JWT Tests', () => {
     beforeAll(async () => {
-        testData = new TestData();
+        testData = await TestData.init();
         await testData.cleanup();
         let identity = await testData.getRootIdentity();
         doc = await identity.newDid(TestConfig.storePass);

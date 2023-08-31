@@ -46,7 +46,7 @@ describe('let Tests', () => {
     let store: DIDStore;
 
     beforeEach(async () => {
-        testData = new TestData();
+        testData = await TestData.init();
         await testData.cleanup();
         store = await testData.getStore();
     });

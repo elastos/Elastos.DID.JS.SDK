@@ -36,7 +36,7 @@ let store: DIDStore;
 
 describe("RootIdentity Tests", ()=>{
     beforeEach(async () => {
-        testData = new TestData();
+        testData = await TestData.init();
         await testData.cleanup();
         store = await testData.getStore();
     });
@@ -69,7 +69,7 @@ describe("RootIdentity Tests", ()=>{
 
         expect(store.containsRootIdentities()).toBeFalsy();
 
-        let identity = RootIdentity.createFromMnemonic(mnemonic, "", store, TestConfig.storePass);
+        let identity = await RootIdentity.createFromMnemonic(mnemonic, "", store, TestConfig.storePass);
         expect(store.containsRootIdentities()).toBeTruthy();
         expect(identity.getId()).toEqual(RootIdentity.getIdFromMnemonic(mnemonic, ""));
 

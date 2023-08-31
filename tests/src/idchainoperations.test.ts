@@ -75,7 +75,7 @@ function genRandomString(len): string {
 // tests depend on each other.
 describe('IDChainOperations Tests', () => {
     beforeAll(async ()=> {
-        testData = new TestData(true);
+        testData = await TestData.init(true);
         await testData.cleanup();
         await testData.getRootIdentity();
         dids = [];
@@ -1471,7 +1471,7 @@ describe('IDChainOperations Tests', () => {
             Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1518,7 +1518,7 @@ describe('IDChainOperations Tests', () => {
             Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1619,7 +1619,7 @@ describe('IDChainOperations Tests', () => {
             Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1679,7 +1679,7 @@ describe('IDChainOperations Tests', () => {
             Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
@@ -1742,7 +1742,7 @@ describe('IDChainOperations Tests', () => {
             Utils.deleteFile(path);
 
             let cleanStore = await DIDStore.open(filePath);
-            let rootIdentity = RootIdentity.createFromMnemonic(mnemonic,
+            let rootIdentity = await RootIdentity.createFromMnemonic(mnemonic,
                     TestConfig.passphrase, cleanStore, TestConfig.storePass, true);
 
             log.debug("Synchronizing from IDChain...");
