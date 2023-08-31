@@ -50,9 +50,17 @@ const PUBLISH_CONTRACT_ABI: any = [
 export class Web3Adapter extends DefaultDIDAdapter {
     private static MAX_WAIT_BLOCKS = 5;
     private lastTxHash: string;
+    private contractAddress: string;
 
-    public constructor(rpcEndpoint: string, private contractAddress: string, walletFile: string, walletPassword: string) {
-        super(rpcEndpoint);
+    private constructor() {
+        super();
+    }
+
+    public static async initialize(rpcEndpoint: string, contractAddress: string, walletFile: string, walletPassword: string): Promise<Web3Adapter> {
+        let defaultAdapter = await DefaultDIDAdapter.init(new URL("/resolve", new URL(rpcEndpoint)).toString());
+        const adapter = Object.create(defaultAdapter);
+        adapter.contractAddress = contractAddress;
+        return adapter;
     }
 
     public async createIdTransaction(payload: string, memo: string) {

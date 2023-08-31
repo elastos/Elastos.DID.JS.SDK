@@ -97,6 +97,7 @@ class Parameters extends ResolveRequest.Parameters<Parameters> {
         return hash;
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public equals(o: Object): boolean {
         if (!(o instanceof Parameters))
             return false;

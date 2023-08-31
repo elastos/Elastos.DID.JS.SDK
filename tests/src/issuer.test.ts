@@ -38,7 +38,7 @@ describe("Issuer Tests", ()=>{
     let testDoc : DIDDocument;
 
     beforeEach(async ()=>{
-        testData = new TestData();
+        testData = await TestData.init();
         await testData.cleanup();
         store = await testData.getStore();
         await testData.getRootIdentity();

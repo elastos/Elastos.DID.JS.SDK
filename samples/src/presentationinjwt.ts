@@ -176,7 +176,7 @@ export namespace PresentationInJWT {
 
             let exp = dayjs().add(1, 'years').toDate();
 
-			let cb = await Issuer.create(await this.getDocument()).issueFor(this.getDid());
+			let cb = (await Issuer.create(await this.getDocument())).issueFor(this.getDid());
 			return await cb.id("profile")
 				.typeWithContext("SelfProclaimedCredential", "https://elastos.org/credentials/v1")
 				.typeWithContext("ProfileCredential", "https://elastos.org/credentials/profile/v1")

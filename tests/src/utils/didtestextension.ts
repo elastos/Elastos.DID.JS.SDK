@@ -28,14 +28,14 @@ import { TestConfig } from "./testconfig";
 export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource */ {
     private static adapter: DIDAdapter = null;
 
-    public static setup(dummy ?: boolean) {
+    public static async setup(dummy ?: boolean): Promise<void> {
         // Force load TestConfig first!!!
         let rpcEndpoint = TestConfig.rpcEndpoint;
         if (dummy == false) {
-            DIDTestExtension.adapter = new Web3Adapter(
+            DIDTestExtension.adapter = await Web3Adapter.initialize(
               rpcEndpoint, TestConfig.contractAddress, null, null);
         } else {
-            DIDTestExtension.adapter = new SimulatedIDChainAdapter(
+            DIDTestExtension.adapter = await SimulatedIDChainAdapter.init(
                 "http://127.0.0.1:9123");
         }
 

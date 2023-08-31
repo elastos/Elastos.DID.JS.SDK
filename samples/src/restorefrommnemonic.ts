@@ -42,7 +42,7 @@ export class RestoreFromMnemonic {
 
 		let store = await DIDStore.open(storePath);
 
-		let id = RootIdentity.createFromMnemonic(mnemonic, passphrase, store, storepass);
+		let id = await RootIdentity.createFromMnemonic(mnemonic, passphrase, store, storepass);
 		log.trace("Synchronize begin....");
 		await id.synchronize();
 		log.trace("Synchronize finish.");

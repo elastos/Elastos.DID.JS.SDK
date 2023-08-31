@@ -48,7 +48,7 @@ export class RootIdentitySample {
 			this.store.close();
 	}
 
-	public createNewRootIdentity(): RootIdentity {
+	public async createNewRootIdentity(): Promise<RootIdentity> {
 		// Create a mnemonic use default language(English).
 		let mg = Mnemonic.getInstance();
 		this.mnemonic = mg.generate();
@@ -56,7 +56,7 @@ export class RootIdentitySample {
 		log.trace("Please write down your mnemonic:\n  " + this.mnemonic);
 
 		// Initialize the root identity.
-		this.identity = RootIdentity.createFromMnemonic(this.mnemonic, null, this.store, RootIdentitySample.STORE_PASS);
+		this.identity = await RootIdentity.createFromMnemonic(this.mnemonic, null, this.store, RootIdentitySample.STORE_PASS);
 		return this.identity;
 	}
 
@@ -92,7 +92,7 @@ export class RootIdentitySample {
 		let newStore = await DIDStore.open(storePath);
 
 		// Re-create the root identity with user's mnemonic.
-		this.identity = RootIdentity.createFromMnemonic(this.mnemonic, null, newStore, RootIdentitySample.STORE_PASS);
+		this.identity = await RootIdentity.createFromMnemonic(this.mnemonic, null, newStore, RootIdentitySample.STORE_PASS);
 
 		// Synchronize the existing(published) DIDs that created by this identity
 		await this.identity.synchronize();
