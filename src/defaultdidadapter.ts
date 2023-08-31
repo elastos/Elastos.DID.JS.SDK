@@ -42,15 +42,20 @@ export class DefaultDIDAdapter implements DIDAdapter {
 
     protected rpcEndpoint: URL;
 
+    protected constructor() {}
+
     /**
      * Set default resolver according to specified url.
      *
      * @param rpcEndpoint the resolver RPC endpoint
      * @throws IllegalArgumentException throw this exception if setting resolver url failed.
      */
-    public constructor(rpcEndpoint: "mainnet" | "testnet" | string) {
+
+    public static async init(rpcEndpoint: "mainnet" | "testnet" | string): Promise<DefaultDIDAdapter> {
         checkArgument(rpcEndpoint && rpcEndpoint != null, "Invalid resolver URL");
         let endpoints: string[] = null;
+
+        let adapter = new DefaultDIDAdapter();
 
         switch (rpcEndpoint.toLowerCase()) {
             case "mainnet":
@@ -65,13 +70,15 @@ export class DefaultDIDAdapter implements DIDAdapter {
         }
 
         try {
-            this.rpcEndpoint = new URL(rpcEndpoint);
+            adapter.rpcEndpoint = new URL(rpcEndpoint);
         } catch (e) {
             throw new IllegalArgumentException("Invalid resolver URL", e);
         }
 
         if (endpoints)
-            this.checkNetwork(endpoints);
+            await adapter.checkNetwork(endpoints);
+
+        return adapter;
     }
 
     private async checkEndpoint(endpoint: URL): Promise<DefaultDIDAdapter.CheckResult> {

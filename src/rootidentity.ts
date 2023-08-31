@@ -188,8 +188,8 @@ export class RootIdentity {
         this.metadata.setAlias(alias);
     }
 
-    public setAsDefault() {
-        this.getStore().setDefaultRootIdentity(this);
+    public async setAsDefault(): Promise<void> {
+        await this.getStore().setDefaultRootIdentity(this);
     }
 
     public getDefaultDid(): DID {

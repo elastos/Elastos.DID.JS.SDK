@@ -113,7 +113,7 @@ export class DIDStore {
             }
         }
 
-        did_storage.init();
+        await did_storage.init();
 
         let store = new DIDStore(initialCacheCapacity, maxCacheCapacity, did_storage);
         store.metadata = await did_storage.loadMetadata();
@@ -243,10 +243,10 @@ export class DIDStore {
         }
     }
 
-    public setDefaultRootIdentity(identity: RootIdentity) {
+    public async setDefaultRootIdentity(identity: RootIdentity): Promise<void> {
         checkArgument(identity != null, "Invalid identity");
 
-        if (!this.containsRootIdentity(identity.getId()))
+        if (!await this.containsRootIdentity(identity.getId()))
             throw new IllegalArgumentException("Invalid identity, not exists in the store");
 
         this.metadata.setDefaultRootIdentity(identity.getId());
@@ -444,7 +444,7 @@ export class DIDStore {
             doc.getMetadata().merge(metadata);
             doc.getMetadata().attachStore(this);
         }
-        this.storeDidMetadata(doc.getSubject(), doc.getMetadata());
+        await this.storeDidMetadata(doc.getSubject(), doc.getMetadata());
 
         for (let vc of doc.getCredentials())
             await this.storeCredential(vc);
@@ -651,7 +651,7 @@ export class DIDStore {
             credential.getMetadata().merge(metadata);
             credential.getMetadata().attachStore(this);
         }
-        this.storeCredentialMetadata(credential.getId(), credential.getMetadata());
+        await this.storeCredentialMetadata(credential.getId(), credential.getMetadata());
 
         this.cache.put(DIDStore.Key.forCredential(credential.getId()), credential);
     }
