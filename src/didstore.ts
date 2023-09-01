@@ -57,7 +57,7 @@ export class DIDStore {
 
     private static storages = new Map();
 
-    private static DEFAULT_STORAGE = "fs";
+    public static DEFAULT_STORAGE = "fs";
 
     /**
      * @Internal (tag for docs)
@@ -582,7 +582,6 @@ export class DIDStore {
             did = DID.from(didOrString);
 
         let success = await this.storage.deleteDid(did);
-
         if (success) {
             this.cache.invalidate(DIDStore.Key.forDidDocument(did));
             this.cache.invalidate(DIDStore.Key.forDidMetadata(did));

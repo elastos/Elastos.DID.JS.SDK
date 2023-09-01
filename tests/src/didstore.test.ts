@@ -156,13 +156,13 @@ describe("DIDStore Tests", ()=>{
 
             let did = dids[i];
 
-            let deleted = store.deleteDid(did);
+            let deleted = await store.deleteDid(did);
             expect(deleted).toBeTruthy();
 
             let file = getFile("ids", did.getMethodSpecificId());
             expect(file.exists()).toBeFalsy();
 
-            deleted = store.deleteDid(did);
+            deleted = await store.deleteDid(did);
             expect(deleted).toBeFalsy();
         }
 
@@ -409,7 +409,7 @@ describe("DIDStore Tests", ()=>{
         let dids: DID[] = Array.from(await store.listDids());
         dids.sort((a,b) => a.compareTo(b));
         for (let did of dids) {
-            expect(store.deleteDid(did)).toBeTruthy();
+            expect(await store.deleteDid(did)).toBeTruthy();
         }
 
         let empty: DID[] = Array.from(await store.listDids());
@@ -589,7 +589,7 @@ describe("DIDStore Tests", ()=>{
             let doc = await identity.newDid(TestConfig.storePass);
             expect(doc).not.toBeNull();
 
-            store.deleteDid(doc.getSubject());
+            await store.deleteDid(doc.getSubject());
 
             let did = identity.getDid(1000);
 
@@ -597,7 +597,7 @@ describe("DIDStore Tests", ()=>{
             expect(doc).not.toBeNull();
             expect(doc.getSubject().equals(did)).toBeTruthy();
 
-            store.deleteDid(doc.getSubject());
+            await store.deleteDid(doc.getSubject());
         });
     });
 
@@ -637,7 +637,7 @@ describe("DIDStore Tests", ()=>{
             if (cached)
                 store = await DIDStore.open(TestConfig.storeRoot);
             else
-                store = await DIDStore.open(TestConfig.storeRoot, 0, 0);
+                store = await DIDStore.open(TestConfig.storeRoot, DIDStore.DEFAULT_STORAGE, 0, 0);
 
             let mnemonic = Mnemonic.getInstance().generate();
             RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
