@@ -165,7 +165,7 @@ describe("RootIdentity Tests", ()=>{
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         expect(() => identity.newDid(TestConfig.storePass)).rejects.toThrowError("DID already exists in the store.");
 
-        let success = store.deleteDid(did);
+        let success = await store.deleteDid(did);
         expect(success).toBeTruthy();
         doc = await identity.newDid(TestConfig.storePass);
         valid = await doc.isValid();
@@ -202,7 +202,7 @@ describe("RootIdentity Tests", ()=>{
 
         await expect(async () => { await identity.newDidFromIdentifier(TestConfig.storePass, appId, appCode); }).rejects.toThrowError();
 
-        let success = store.deleteDid(did);
+        let success = await store.deleteDid(did);
         expect(success).toBeTruthy();
         doc = await identity.newDidFromIdentifier(TestConfig.storePass, appId, appCode);
         valid = await doc.isValid();

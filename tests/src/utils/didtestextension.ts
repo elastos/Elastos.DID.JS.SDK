@@ -32,10 +32,10 @@ export class DIDTestExtension /* implements BeforeAllCallback, CloseableResource
         // Force load TestConfig first!!!
         let rpcEndpoint = TestConfig.rpcEndpoint;
         if (dummy == false) {
-            DIDTestExtension.adapter = await Web3Adapter.initialize(
+            DIDTestExtension.adapter = new Web3Adapter(
               rpcEndpoint, TestConfig.contractAddress, null, null);
         } else {
-            DIDTestExtension.adapter = await SimulatedIDChainAdapter.init(
+            DIDTestExtension.adapter = new SimulatedIDChainAdapter(
                 "http://127.0.0.1:9123");
         }
 

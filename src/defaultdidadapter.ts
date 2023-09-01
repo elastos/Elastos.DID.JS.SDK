@@ -42,8 +42,6 @@ export class DefaultDIDAdapter implements DIDAdapter {
 
     protected rpcEndpoint: URL;
 
-    protected constructor() {}
-
     /**
      * Set default resolver according to specified url.
      *
@@ -51,11 +49,9 @@ export class DefaultDIDAdapter implements DIDAdapter {
      * @throws IllegalArgumentException throw this exception if setting resolver url failed.
      */
 
-    public static async init(rpcEndpoint: "mainnet" | "testnet" | string): Promise<DefaultDIDAdapter> {
+    public constructor(rpcEndpoint: "mainnet" | "testnet" | string) {
         checkArgument(rpcEndpoint && rpcEndpoint != null, "Invalid resolver URL");
         let endpoints: string[] = null;
-
-        let adapter = new DefaultDIDAdapter();
 
         switch (rpcEndpoint.toLowerCase()) {
             case "mainnet":
@@ -70,15 +66,18 @@ export class DefaultDIDAdapter implements DIDAdapter {
         }
 
         try {
-            adapter.rpcEndpoint = new URL(rpcEndpoint);
+            this.rpcEndpoint = new URL(rpcEndpoint);
         } catch (e) {
             throw new IllegalArgumentException("Invalid resolver URL", e);
         }
 
-        if (endpoints)
-            await adapter.checkNetwork(endpoints);
-
-        return adapter;
+        if (endpoints) {
+            this.checkNetwork(endpoints).then(() => {
+                log.info("finished the network check");
+            }).catch((e) => {
+                log.error("check the network error: " + e);
+            });
+        }
     }
 
     private async checkEndpoint(endpoint: URL): Promise<DefaultDIDAdapter.CheckResult> {
@@ -157,10 +156,10 @@ export class DefaultDIDAdapter implements DIDAdapter {
                     resolve(response.data);
                 }
                 else {
-                    reject(new ResolveException("HTTP error: " + response.statusText));
+                    reject(new ResolveException("HTTP error"));
                 }
             }).catch(error => {
-                reject(new ResolveException("HTTP timeout"));
+                reject(new ResolveException("HTTP timeout."));
             });
         });
     }
@@ -171,7 +170,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
         try {
             return await this.performRequest(this.rpcEndpoint, request);
         } catch (e) {
-            throw new NetworkException("Network error.");
+            throw new NetworkException("Network error: " + e);
         }
     }
 

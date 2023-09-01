@@ -28,16 +28,10 @@ export class SimulatedIDChainAdapter extends DefaultDIDAdapter {
     private serverURL: URL;
     private idtxEndpoint: URL;
 
-    private constructor() {
-        super();
-    }
-
-    public static async init(endpoint: string): Promise<SimulatedIDChainAdapter> {
-        let defaultAdapter = await DefaultDIDAdapter.init(new URL("/resolve", new URL(endpoint)).toString());
-        const adapter = Object.create(defaultAdapter);
-        adapter.serverURL = new URL(endpoint);
-        adapter.idtxEndpoint = new URL("/idtx", adapter.serverURL);
-        return adapter;
+    public constructor(endpoint: string) {
+        super(new URL("/resolve", new URL(endpoint)).toString());
+        this.serverURL = new URL(endpoint);
+        this.idtxEndpoint = new URL("/idtx", this.serverURL);
     }
 
     public async createIdTransaction(payload: string, memo: string) {
