@@ -44,7 +44,7 @@ export class InitializeDID {
 		this.store = await DIDStore.open(storePath);
 
 		// Check the store whether contains the root private identity.
-		if (this.store.containsRootIdentities())
+		if (await this.store.containsRootIdentities())
 			return; // Already exists
 
 		// Create a mnemonic use default language(English).
@@ -57,7 +57,7 @@ export class InitializeDID {
 		log.trace("  Store password: " + InitializeDID.storepass);
 
 		// Initialize the root identity.
-		RootIdentity.createFromMnemonic(mnemonic, InitializeDID.passphrase, this.store, InitializeDID.storepass);
+		await RootIdentity.createFromMnemonic(mnemonic, InitializeDID.passphrase, this.store, InitializeDID.storepass);
 	}
 
 	public async initDid(): Promise<void> {

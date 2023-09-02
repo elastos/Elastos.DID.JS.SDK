@@ -65,17 +65,17 @@ describe("Issuer Tests", ()=>{
         expect(issuer.getSignKey().equals(issuerDoc.getDefaultPublicKeyId())).toBeTruthy();
     })
 
-    test('New Issuer Test With Invalid Key', () => {
+    test('New Issuer Test With Invalid Key', async() => {
         let signKey = new DIDURL("#testKey", issuerDoc.getSubject());
         let doc = issuerDoc;
 
-        expect(() =>{Issuer.newWithDocument(doc, signKey)}).toThrowError();
+        await expect(async() => { await Issuer.newWithDocument(doc, signKey)}).rejects.toThrowError();
     })
 
-    test('New Issuer Test With Invalid Key 2', () => {
+    test('New Issuer Test With Invalid Key 2', async() => {
         let signKey = new DIDURL("#recovery", issuerDoc.getSubject());
         let doc = issuerDoc;
-        expect(()=>{Issuer.newWithDocument(doc, signKey)}).toThrowError();
+        await expect(async()=>{ await Issuer.newWithDocument(doc, signKey)}).rejects.toThrowError();
     })
 
     test('Issue Kyc Credential Test', async () => {

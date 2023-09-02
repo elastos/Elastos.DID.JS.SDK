@@ -50,7 +50,7 @@ export namespace CreatePresentation {
 			this.store = await DIDStore.open(storePath);
 
 			// Check the store whether contains the root private identity.
-			if (this.store.containsRootIdentities())
+			if (await this.store.containsRootIdentities())
 				return; // Already exists
 
 			// Create a mnemonic use default language(English).
@@ -63,7 +63,7 @@ export namespace CreatePresentation {
 			log.trace("  Store password: " + Entity.storepass);
 
 			// Initialize the root identity.
-			RootIdentity.createFromMnemonic(mnemonic, Entity.passphrase, this.store, Entity.storepass);
+			await RootIdentity.createFromMnemonic(mnemonic, Entity.passphrase, this.store, Entity.storepass);
 		}
 
 		protected async initDid(): Promise<void> {

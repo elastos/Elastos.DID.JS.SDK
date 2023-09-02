@@ -108,13 +108,13 @@ export class TestData {
     }
 
     public async getSpecificRootIdentity(): Promise<RootIdentity> {
-        return RootIdentity.createFromMnemonic(
+        return await RootIdentity.createFromMnemonic(
             'clever bless future fuel obvious black subject cake art pyramid member clump',
             TestConfig.passphrase, await this.getStore(), TestConfig.storePass, true);
     }
 
     public async getSpecificRootIdentity2(): Promise<RootIdentity> {
-        return RootIdentity.createFromMnemonic(
+        return await RootIdentity.createFromMnemonic(
             'chimney limit involve fine absent topic catch chalk goat era suit leisure',
             TestConfig.passphrase, await this.getStore(), TestConfig.storePass, true);
     }

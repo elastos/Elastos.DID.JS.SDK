@@ -45,14 +45,14 @@ describe('Mnemonic Tests', () => {
             Mnemonic.FRENCH,
         ];
 
-        languages.forEach(lang => {
+        languages.forEach(async(lang) => {
             let mc = Mnemonic.getInstance(lang);
             let mnemonic = mc.generate();
 
             expect(mc.isValid(mnemonic)).toBeTruthy();
             expect(Mnemonic.checkIsValid(mnemonic)).toBeTruthy();
 
-            RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
+            await RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase, store, TestConfig.storePass, true);
 
             expect(mc.isValid(mnemonic + "z")).toBeFalsy();
             expect(Mnemonic.checkIsValid(mnemonic + "z")).toBeFalsy();

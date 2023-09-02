@@ -292,10 +292,10 @@ describe("DIDStore Tests", ()=>{
         expect(vc).toBeNull();
 
         id = DIDURL.from("#twitter", user.getSubject());
-        expect(store.containsCredential(id)).toBeTruthy();
-        expect(store.containsCredential(id.toString())).toBeTruthy();
-        expect(store.containsCredentials(user.getSubject())).toBeTruthy();
-        expect(store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
+        await expect(await store.containsCredential(id)).toBeTruthy();
+        await expect(await store.containsCredential(id.toString())).toBeTruthy();
+        await expect(await store.containsCredentials(user.getSubject())).toBeTruthy();
+        await expect(await store.containsCredential(DIDURL.from("#notExists", user.getSubject()))).toBeFalsy();
     });
 
     test("testListCredentials", async ()=>{
@@ -362,13 +362,13 @@ describe("DIDStore Tests", ()=>{
         expect(file.exists()).toBeTruthy();
         expect(file.isFile()).toBeTruthy();
 
-        let deleted = store.deleteCredential(DIDURL.from("#twitter", user.getSubject()));
+        let deleted = await store.deleteCredential(DIDURL.from("#twitter", user.getSubject()));
         expect(deleted).toBeTruthy();
 
-        deleted = store.deleteCredential(DIDURL.from("#passport", user.getSubject()).toString());
+        deleted = await store.deleteCredential(DIDURL.from("#passport", user.getSubject()).toString());
         expect(deleted).toBeTruthy();
 
-        deleted = store.deleteCredential(user.getSubject().toString() + "#notExist");
+        deleted = await store.deleteCredential(user.getSubject().toString() + "#notExist");
         expect(deleted).toBeFalsy();
 
         file = getFile("ids", user.getSubject().getMethodSpecificId(),
@@ -379,11 +379,11 @@ describe("DIDStore Tests", ()=>{
                 "credentials", "#passport");
         expect(file.exists()).toBeFalsy();
 
-        expect(store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
-        expect(store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
+        await expect(await store.containsCredential(DIDURL.from("#email", user.getSubject()))).toBeTruthy();
+        await expect(await store.containsCredential(user.getSubject().toString() + "#profile")).toBeTruthy();
 
-        expect(store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
-        expect(store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
+        await expect(await store.containsCredential(DIDURL.from("#twitter", user.getSubject()))).toBeFalsy();
+        await expect(await store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
     });
 
     test("testSynchronizeStore", async ()=> {
@@ -409,7 +409,7 @@ describe("DIDStore Tests", ()=>{
         let dids: DID[] = Array.from(await store.listDids());
         dids.sort((a,b) => a.compareTo(b));
         for (let did of dids) {
-            expect(await store.deleteDid(did)).toBeTruthy();
+            await expect(await store.deleteDid(did)).toBeTruthy();
         }
 
         let empty: DID[] = Array.from(await store.listDids());
@@ -468,7 +468,7 @@ describe("DIDStore Tests", ()=>{
         let dids: DID[] = Array.from(await store.listDids());
         expect(dids.length).toBe(LOOP_COUNT);
 
-        store.changePassword(TestConfig.storePass, "newpasswd");
+        await store.changePassword(TestConfig.storePass, "newpasswd");
 
         dids = Array.from(await store.listDids());
         expect(dids.length).toBe(LOOP_COUNT);
@@ -515,8 +515,8 @@ describe("DIDStore Tests", ()=>{
         let dids = await store.listDids();
         expect(dids.length).toBe(4);
 
-        expect(() => {
-            store.changePassword("wrongpasswd", "newpasswd");
+        await expect(async () => {
+            await store.changePassword("wrongpasswd", "newpasswd");
         }).toThrowError(Exceptions.WrongPasswordException);
     });
 
@@ -541,19 +541,19 @@ describe("DIDStore Tests", ()=>{
                     expect(vcs.length).toBe(1);
 
                     for (let id of vcs)
-                        expect(store.loadCredential(id)).not.toBeNull();
+                        await expect(await store.loadCredential(id)).not.toBeNull();
                 } else if (alias === "User1") {
                     let vcs = await store.listCredentials(did);
                     expect(vcs.length).toBe(parseFloat(version) >= 2.0 ? 5 : 4);
 
                     for (let id of vcs)
-                        expect(store.loadCredential(id)).not.toBeNull();
+                        await expect(await store.loadCredential(id)).not.toBeNull();
                 } else if (alias === "User2") {
                     let vcs = await store.listCredentials(did);
                     expect(vcs.length).toBe(1);
 
                     for (let id of vcs)
-                        expect(store.loadCredential(id)).not.toBeNull();
+                        await expect(await store.loadCredential(id)).not.toBeNull();
                 } else if (alias === "User3") {
                     let vcs = await store.listCredentials(did);
                     expect(vcs.length).toBe(0);
@@ -640,7 +640,7 @@ describe("DIDStore Tests", ()=>{
                 store = await DIDStore.open(TestConfig.storeRoot, DIDStore.DEFAULT_STORAGE, 0, 0);
 
             let mnemonic = Mnemonic.getInstance().generate();
-            RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
+            await RootIdentity.createFromMnemonic(mnemonic, TestConfig.passphrase,
                     store, TestConfig.storePass, true);
 
             await createDataForPerformanceTest(store);
@@ -676,7 +676,7 @@ describe("DIDStore Tests", ()=>{
             stores[i] = await DIDStore.open(TestConfig.storeRoot + i);
             expect(stores[i]).not.toBeNull();
             let mnemonic = Mnemonic.getInstance().generate();
-            RootIdentity.createFromMnemonic(mnemonic, "", stores[i], TestConfig.storePass);
+            await RootIdentity.createFromMnemonic(mnemonic, "", stores[i], TestConfig.storePass);
         }
 
         for (let i = 0; i < stores.length; i++) {
