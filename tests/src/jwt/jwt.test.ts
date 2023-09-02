@@ -682,7 +682,7 @@ describe('JWT Tests', () => {
 
     test('jwsTestCompatible', async () => {
         let mnemonic = "have scorpion powder shoulder pretty sentence humble tenant frog march finger title";
-        let identity = RootIdentity.createFromMnemonic(mnemonic, "secret", await testData.getStore(), TestConfig.storePass);
+        let identity = await RootIdentity.createFromMnemonic(mnemonic, "secret", await testData.getStore(), TestConfig.storePass);
         let issuerDoc = await identity.newDid(TestConfig.storePass, 0, true);
         await issuerDoc.publish(TestConfig.storePass);
 

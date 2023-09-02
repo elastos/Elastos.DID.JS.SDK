@@ -1804,7 +1804,7 @@ describe('IDChainOperations Tests', () => {
             for (let did of listdids) {
                 let doc = await store.loadDid(did);
                 if (!doc.isCustomizedDid())
-                    expect(await store.deleteDid(did)).toBeTruthy();
+                    await expect(await store.deleteDid(did)).toBeTruthy();
             }
 
             let empty: DID[] = Array.from(await store.listDids());
