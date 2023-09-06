@@ -119,7 +119,7 @@ export class Utils {
             if (file1.length() != file2.length())
                 return false;
 
-            return file1.readText() === file2.readText(); // BAD PERF
+            return file1.readText() as string === file2.readText() as string; // BAD PERF
         }
     }
 

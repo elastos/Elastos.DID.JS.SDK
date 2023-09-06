@@ -149,15 +149,23 @@ import * as fs from "./fs";
         return files;
     }
 
-    public writeText(content: string) {
+    public writeText(content: string | Uint8Array) {
         if (!this.exists() || this.getStats().isFile()) {
-            fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
+            if (typeof content === 'string')
+                fs.writeFileSync(this.fullPath, content, { encoding: "utf-8" });
+            else
+                fs.writeFileSync(this.fullPath, content);
         }
     }
 
-    public readText(): string {
-        return this.exists() ? fs.readFileSync(this.fullPath, { encoding: "utf-8" }) : null;
-        return null;
+    public readText(asString = true): string | Uint8Array {
+        if (!this.exists())
+            return null;
+
+        if (asString)
+            return fs.readFileSync(this.fullPath, { encoding: "utf-8" });
+        else
+            return fs.readFileSync(this.fullPath);
     }
 
     public rename(newName: string) {

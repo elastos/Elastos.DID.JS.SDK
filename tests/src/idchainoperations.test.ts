@@ -1837,7 +1837,7 @@ describe('IDChainOperations Tests', () => {
             let i18nRes = i18nDir.listFiles();
 
             for (let res of i18nRes) {
-                props[res.getName()] = res.readText();
+                props[res.getName()] = res.readText() as string;
             }
 
             let vc = await cb.id("#i18n")
@@ -2350,7 +2350,7 @@ describe('IDChainOperations Tests', () => {
             let i18nRes = i18nDir.listFiles();
 
             for (let res of i18nRes) {
-                props[res.getName()] = res.readText();
+                props[res.getName()] = res.readText() as string;
             }
 
             let vc = await cb.id("#profile")

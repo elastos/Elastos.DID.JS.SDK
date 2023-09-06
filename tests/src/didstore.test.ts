@@ -208,6 +208,45 @@ describe("DIDStore Tests", ()=>{
         expect(dids.length).toBe(2);
     });
 
+    test("testStoreAndLoadCredential", async ()=>{
+        let props = {
+            "name": "Jack",
+            "gender": "Male",
+            "nationality": "Chinese",
+            "twitter": "@jack"
+        };
+
+        let identity = await testData.getRootIdentity();
+
+        let doc1 = await identity.newDid(TestConfig.storePass);
+        let issuer1 = await Issuer.create(doc1);
+        let cb = issuer1.issueFor(doc1.getSubject());
+        let vc1 = await cb.id("#cred-1")
+                .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
+                .typeWithContext("SocialCredential", "https://ns.elastos.org/credentials/social/v1")
+                .properties(props)
+                .seal(TestConfig.storePass);
+
+        await store.storeCredential(vc1);
+        let vc = await store.loadCredential(vc1.getId());
+        expect(vc).not.toBeNull();
+        expect(vc.toString()).toEqual(vc1.toString());
+        vc = await store.loadCredential(vc1.getId(), TestConfig.storePass);
+        expect(vc).not.toBeNull();
+        expect(vc.toString()).toEqual(vc1.toString());
+
+        await store.storeCredential(vc1, TestConfig.storePass);
+        await expect(async() => { await store.loadCredential(vc1.getId()); }).rejects.toThrowError("Credential is encrypted, please provide password to get it.");
+        await expect(async() => { await store.loadCredential(vc1.getId(), "12345"); }).rejects.toThrowError("Decrypt private key error.");
+
+        vc = await store.loadCredential(vc1.getId(), TestConfig.storePass);
+        expect(vc.toString()).toEqual(vc1.toString());
+
+        await expect(async() => { await store.storeCredential(vc1, "666666"); }).rejects.toThrowError("Password mismatched with previous password.");
+});
+
     test("testLoadCredentials", async ()=>{
         // Store test data into current store
         await testData.getInstantData().getIssuerDocument();
@@ -517,7 +556,7 @@ describe("DIDStore Tests", ()=>{
 
         await expect(async () => {
             await store.changePassword("wrongpasswd", "newpasswd");
-        }).toThrowError(Exceptions.WrongPasswordException);
+        }).rejects.toThrowError(Exceptions.WrongPasswordException);
     });
 
     //js can't need to check v1

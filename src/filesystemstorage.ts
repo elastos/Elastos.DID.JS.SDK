@@ -173,7 +173,7 @@ export class FileSystemStorage implements DIDStorage {
 
         try {
             let metadataContent = metadataFile.readText();
-            let metadata = DIDStoreMetadata.parse(metadataContent);
+            let metadata = DIDStoreMetadata.parse(metadataContent as string);
 
             if (metadata.getType() !== DIDStoreMetadata.DID_STORE_TYPE)
                 throw new DIDStorageException("Unknown DIDStore type");
@@ -256,7 +256,7 @@ export class FileSystemStorage implements DIDStorage {
             let file = this.getFile(false, this.currentDataDir, FileSystemStorage.METADATA);
             let metadata: DIDStoreMetadata = null;
             if (file.exists())
-                metadata = DIDStoreMetadata.parse(file.readText());
+                metadata = DIDStoreMetadata.parse(file.readText() as string);
 
             return metadata;
         } catch (e) {
@@ -294,7 +294,7 @@ export class FileSystemStorage implements DIDStorage {
             let file = this.getRootIdentityFile(id, FileSystemStorage.METADATA, false);
             let metadata: RootIdentity.Metadata = null;
             if (file.exists())
-                metadata = RootIdentity.Metadata.parse(file.readText());
+                metadata = RootIdentity.Metadata.parse(file.readText() as string);
             return metadata;
         } catch (e) {
             // DIDSyntaxException | IOException
@@ -339,9 +339,9 @@ export class FileSystemStorage implements DIDStorage {
                 // eslint-disable-next-line no-promise-executor-return
                 return null;
 
-            let publicKey = file.readText();
+            let publicKey = file.readText() as string;
             file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_INDEX_FILE, false);
-            let index = Number.parseInt(file.readText());
+            let index = Number.parseInt(file.readText() as string);
 
             return RootIdentity.createFromPreDerivedPublicKey(publicKey, index);
         } catch (e) {
@@ -376,7 +376,7 @@ export class FileSystemStorage implements DIDStorage {
                 // eslint-disable-next-line no-promise-executor-return
                 return null;
 
-            return file.readText();
+            return file.readText() as string;
         } catch (e) {
             // IOException
             throw new DIDStorageException("Load private key for identity error: " + id, e);
@@ -437,7 +437,7 @@ export class FileSystemStorage implements DIDStorage {
     public async loadRootIdentityMnemonic(id: string): Promise<string> {
         try {
             let file = this.getRootIdentityFile(id, FileSystemStorage.ROOT_IDENTITY_MNEMONIC_FILE, false);
-            return file.readText();
+            return file.readText() as string;
         } catch (e) {
             // IOException
             throw new DIDStorageException("Load mnemonic for identity error: " + id, e);
@@ -477,7 +477,7 @@ export class FileSystemStorage implements DIDStorage {
             let file = this.getDidMetadataFile(did, false);
             let metadata: DIDMetadata = null;
             if (file.exists())
-                metadata = DIDMetadata.parse(file.readText());
+                metadata = DIDMetadata.parse(file.readText() as string);
 
             return metadata;
         } catch (e) {
@@ -503,7 +503,7 @@ export class FileSystemStorage implements DIDStorage {
             if (!file.exists())
                 return null;
 
-            return await DIDDocument.parseAsync(file.readText());
+            return await DIDDocument.parseAsync(file.readText() as string);
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load DID document error: " + did, e);
@@ -608,7 +608,7 @@ export class FileSystemStorage implements DIDStorage {
                 // eslint-disable-next-line no-promise-executor-return
                 return null;
 
-            return CredentialMetadata.parse(file.readText());
+            return CredentialMetadata.parse(file.readText() as string);
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load credential metadata error: " + id, e);
@@ -616,25 +616,21 @@ export class FileSystemStorage implements DIDStorage {
     }
 
     // eslint-disable-next-line require-await
-    public async storeCredential(credential: VerifiableCredential) : Promise<void> {
+    public async storeCredential(id: DIDURL, credential: Uint8Array): Promise<void> {
         try {
-            let file = this.getCredentialFile(credential.getId(), true);
-            file.writeText(credential.serialize(true));
+            let file = this.getCredentialFile(id, true);
+            file.writeText(credential);
         } catch (e) {
             // IOException
-            throw new DIDStorageException("Store credential error: " + credential.getId(), e);
+            throw new DIDStorageException("Store credential error: " + id, e);
         }
     }
 
     // eslint-disable-next-line require-await
-    public async loadCredential(id: DIDURL): Promise<VerifiableCredential> {
+    public async loadCredential(id: DIDURL): Promise<Uint8Array> {
         try {
             let file = this.getCredentialFile(id, false);
-            if (!file.exists())
-                // eslint-disable-next-line no-promise-executor-return
-                return null;
-
-            return VerifiableCredential.parse(file.readText());
+            return file.readText(false) as Uint8Array;
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load credential error: " + id, e);
@@ -735,7 +731,7 @@ export class FileSystemStorage implements DIDStorage {
                 // eslint-disable-next-line no-promise-executor-return
                 return null;
 
-            return file.readText();
+            return file.readText() as string;
         } catch (e) {
             throw new DIDStorageException("Load private key error: " + id, e);
         }
@@ -831,7 +827,7 @@ export class FileSystemStorage implements DIDStorage {
             }
         } else {
             if (this.needReencrypt(src)) {
-                let text = src.readText();
+                let text = src.readText() as string;
                 dest.writeText(reEncryptor.reEncrypt(text));
             } else {
                 FileSystemStorage.copyFile(src, dest);

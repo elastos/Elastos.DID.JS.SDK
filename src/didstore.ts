@@ -641,10 +641,24 @@ export class DIDStore {
      * @param credential the Credential object
      * @throws DIDStoreException DIDStore error.
      */
-    public async storeCredential(credential: VerifiableCredential): Promise<void> {
+    public async storeCredential(credential: VerifiableCredential, password?: string): Promise<void> {
         checkArgument(credential != null, "Invalid credential");
 
-        await this.storage.storeCredential(credential);
+        let data = credential.serialize(true);
+        let dataBuffer = Buffer.from(data, "utf-8");
+        if (password) {
+            let encryptedBuffer = Buffer.from(this.encrypt(dataBuffer, password));
+            let prefix = Buffer.alloc(4);
+            prefix[0] = 0x0E;
+            prefix[1] = 0x0C;
+            prefix[2] = 0x56;
+            prefix[3] = 0x43;
+            dataBuffer = Buffer.concat([prefix, encryptedBuffer]);
+            await this.storage.storeCredential(credential.getId(), dataBuffer);
+        } else {
+            await this.storage.storeCredential(credential.getId(), dataBuffer);
+        }
+
         if (credential.getMetadata().getStore() != this) {
             let metadata = await this.loadCredentialMetadata(credential.getId());
             credential.getMetadata().merge(metadata);
@@ -652,7 +666,7 @@ export class DIDStore {
         }
         await this.storeCredentialMetadata(credential.getId(), credential.getMetadata());
 
-        this.cache.put(DIDStore.Key.forCredential(credential.getId()), credential);
+        this.cache.put(DIDStore.Key.forCredential(credential.getId()), dataBuffer);
     }
 
     /**
@@ -662,26 +676,30 @@ export class DIDStore {
      * @return the Credential object
      * @throws DIDStoreException DIDStore error.
      */
-    public async loadCredential(id: DIDURL | string): Promise<VerifiableCredential> {
+    public async loadCredential(id: DIDURL | string, password?: string): Promise<VerifiableCredential> {
         checkArgument(id != null, "Invalid credential id");
 
         if (typeof id === "string")
             id = DIDURL.from(id);
 
         checkArgument(id.isQualified(), "Unqualified credential id");
-
         try {
             let value = await this.cache.getAsync(DIDStore.Key.forCredential(id), async () => {
-                let vc = await this.storage.loadCredential(id as DIDURL);
-                if (vc != null) {
-                    vc.setMetadata(await this.loadCredentialMetadata(id as DIDURL));
-                    return { value: vc };
-                } else {
-                    return { value: DIDStore.NULL };
-                }
+                let data = await this.storage.loadCredential(id as DIDURL);
+                return { value: data };
             });
+            if (value == null)
+                return null;
 
-            return value === DIDStore.NULL ? null : value;
+            if (value[0] == 0x0E && value[1] == 0x0C && value[2] == 0x56 && value[3] == 0x43) {
+                if (!password)
+                    throw new DIDStoreException("Credential is encrypted, please provide password to get it.");
+
+                value = this.decrypt(value.slice(4).toString(), password);
+            }
+            let vc = VerifiableCredential.parse(value.toString());
+            vc.setMetadata(await this.loadCredentialMetadata(id as DIDURL));
+            return vc;
         } catch (e) {
             // ExecutionException
             throw new DIDStoreException("Load credential failed: " + id, e);
@@ -1084,14 +1102,14 @@ export class DIDStore {
 
             let vcIds = await this.storage.listCredentials(did);
             for (let vcId of vcIds) {
-                let localVc = await this.storage.loadCredential(vcId);
+                let localVc = await this.loadCredential(vcId);
 
                 let resolvedVc = await VerifiableCredential.resolve(vcId, localVc.getIssuer());
                 if (resolvedVc == null)
                     continue;
 
                 resolvedVc.getMetadata().merge(localVc.getMetadata());
-                await this.storage.storeCredential(resolvedVc);
+                await this.storeCredential(resolvedVc);
             }
         }
     }
@@ -1123,7 +1141,7 @@ export class DIDStore {
             for (let id of ids) {
                 log.debug("Exporting credential {}...", id.toString());
 
-                let vc = await this.storage.loadCredential(id);
+                let vc = await this.loadCredential(id);
                 vc.setMetadata(await this.storage.loadCredentialMetadata(id));
                 de.addCredential(vc);
             }
@@ -1162,7 +1180,7 @@ export class DIDStore {
 
         let vcs = de.getCredentials();
         for (let vc of vcs) {
-            await this.storage.storeCredential(vc);
+            await this.storeCredential(vc);
             await this.storage.storeCredentialMetadata(vc.getId(), vc.getMetadata());
         }
 
