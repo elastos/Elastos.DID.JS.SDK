@@ -198,19 +198,19 @@ export interface DIDStorage {
     /**
      * Save the credential object to this storage.
      *
-     * @param credential a VerifiableCredential object
+     * @param credential a VerifiableCredential content
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    storeCredential(credential: VerifiableCredential): Promise<void>;
+    storeCredential(id: DIDURL, credential: Uint8Array): Promise<void>;
 
     /**
      * Read the specified credential object from this storage.
      *
      * @param id the id of the target credential
-     * @return the VerifiableCredential object
+     * @return the VerifiableCredential content
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadCredential(id: DIDURL): Promise<VerifiableCredential>;
+    loadCredential(id: DIDURL): Promise<Uint8Array>;
 
     /**
      * Check whether this storage contains the specified credential.

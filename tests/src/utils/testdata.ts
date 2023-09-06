@@ -210,7 +210,7 @@ export class CompatibleData {
         if (!file.exists())
             throw new Error("No file exists at "+path);
 
-        return file.readText();
+        return file.readText() as string;
     }
 
     private dirContent(path: string): string[] {
