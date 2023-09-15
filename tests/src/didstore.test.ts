@@ -238,13 +238,18 @@ describe("DIDStore Tests", ()=>{
         expect(vc.toString()).toEqual(vc1.toString());
 
         await store.storeCredential(vc1, TestConfig.storePass);
-        await expect(async() => { await store.loadCredential(vc1.getId()); }).rejects.toThrowError("Credential is encrypted, please provide password to get it.");
-        await expect(async() => { await store.loadCredential(vc1.getId(), "12345"); }).rejects.toThrowError("Decrypt private key error.");
+        await expect(async() => { await store.loadCredential(vc1.getId(), "12345"); }).rejects.toThrowError("Password mismatched with previous password.");
 
         vc = await store.loadCredential(vc1.getId(), TestConfig.storePass);
         expect(vc.toString()).toEqual(vc1.toString());
 
         await expect(async() => { await store.storeCredential(vc1, "666666"); }).rejects.toThrowError("Password mismatched with previous password.");
+
+        await store.changePassword(TestConfig.storePass, "666666");
+        await expect(async() => { await store.storeCredential(vc1, TestConfig.storePass); }).rejects.toThrowError("Password mismatched with previous password.");
+
+        vc = await store.loadCredential(vc1.getId(), "666666");
+        expect(vc).not.toBeNull();
 });
 
     test("testLoadCredentials", async ()=>{
