@@ -619,6 +619,7 @@ export class FileSystemStorage implements DIDStorage {
     public async storeCredential(id: DIDURL, credential: Uint8Array, encrypted: boolean): Promise<void> {
         try {
             let dataBuffer = credential;
+            //magic header 0x0E0C5643 for the encrypted credentials
             if (encrypted) {
                 let prefix = Buffer.alloc(4);
                 prefix[0] = 0x0E;
@@ -642,6 +643,7 @@ export class FileSystemStorage implements DIDStorage {
             let file = this.getCredentialFile(id, false);
             let content = file.readText(false) as Uint8Array;
 
+            //magic header 0x0E0C5643 for the encrypted credentials
             if (content && content[0] == 0x0E && content[1] == 0x0C && content[2] == 0x56 && content[3] == 0x43)
                 return [content.slice(4), true];
             else
@@ -864,6 +866,7 @@ export class FileSystemStorage implements DIDStorage {
                 dest.writeText(reEncryptor.reEncrypt(text));
             } else if (this.isCredential(src)) {
                 let text = src.readText(false) as Uint8Array;
+                //magic header 0x0E0C5643 for the encrypted credentials
                 if (text[0] == 0x0E && text[1] == 0x0C && text[2] == 0x56 && text[3] == 0x43) {
                     let d = reEncryptor.reEncrypt(Buffer.from(text.slice(4)).toString());
                     let dataBuffer = Buffer.from(d, "utf-8");
