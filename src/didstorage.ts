@@ -201,7 +201,7 @@ export interface DIDStorage {
      * @param credential a VerifiableCredential content
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    storeCredential(id: DIDURL, credential: Uint8Array): Promise<void>;
+    storeCredential(id: DIDURL, credential: Uint8Array, encypted: boolean): Promise<void>;
 
     /**
      * Read the specified credential object from this storage.
@@ -210,7 +210,7 @@ export interface DIDStorage {
      * @return the VerifiableCredential content
      * @throws DIDStorageException if an error occurred when accessing the DID storage
      */
-    loadCredential(id: DIDURL): Promise<Uint8Array>;
+    loadCredential(id: DIDURL): Promise<[Uint8Array, boolean]>;
 
     /**
      * Check whether this storage contains the specified credential.

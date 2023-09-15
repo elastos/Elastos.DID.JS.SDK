@@ -646,18 +646,14 @@ export class DIDStore {
 
         let data = credential.serialize(true);
         let dataBuffer = Buffer.from(data, "utf-8");
+
+        let e = false;
         if (password) {
-            let encryptedBuffer = Buffer.from(this.encrypt(dataBuffer, password));
-            let prefix = Buffer.alloc(4);
-            prefix[0] = 0x0E;
-            prefix[1] = 0x0C;
-            prefix[2] = 0x56;
-            prefix[3] = 0x43;
-            dataBuffer = Buffer.concat([prefix, encryptedBuffer]);
-            await this.storage.storeCredential(credential.getId(), dataBuffer);
-        } else {
-            await this.storage.storeCredential(credential.getId(), dataBuffer);
+            dataBuffer = Buffer.from(this.encrypt(dataBuffer, password), "utf-8");
+            e = true;
         }
+
+        await this.storage.storeCredential(credential.getId(), dataBuffer, e);
 
         if (credential.getMetadata().getStore() != this) {
             let metadata = await this.loadCredentialMetadata(credential.getId());
@@ -666,7 +662,7 @@ export class DIDStore {
         }
         await this.storeCredentialMetadata(credential.getId(), credential.getMetadata());
 
-        this.cache.put(DIDStore.Key.forCredential(credential.getId()), dataBuffer);
+        this.cache.put(DIDStore.Key.forCredential(credential.getId()), credential);
     }
 
     /**
@@ -682,24 +678,35 @@ export class DIDStore {
         if (typeof id === "string")
             id = DIDURL.from(id);
 
+        if (password) {
+            let fingerprint = this.metadata.getFingerprint();
+            let currentFingerprint = DIDStore.calcFingerprint(password);
+
+            if (fingerprint != null && currentFingerprint !== fingerprint)
+                throw new WrongPasswordException("Password mismatched with previous password.");
+        }
+
         checkArgument(id.isQualified(), "Unqualified credential id");
         try {
             let value = await this.cache.getAsync(DIDStore.Key.forCredential(id), async () => {
-                let data = await this.storage.loadCredential(id as DIDURL);
-                return { value: data };
-            });
-            if (value == null)
-                return null;
+                let [content, encrypted] = await this.storage.loadCredential(id as DIDURL);
+                if (!content)
+                    return { value: DIDStore.NULL };
 
-            if (value[0] == 0x0E && value[1] == 0x0C && value[2] == 0x56 && value[3] == 0x43) {
-                if (!password)
+                if (encrypted && !password)
                     throw new DIDStoreException("Credential is encrypted, please provide password to get it.");
 
-                value = this.decrypt(value.slice(4).toString(), password);
-            }
-            let vc = VerifiableCredential.parse(value.toString());
-            vc.setMetadata(await this.loadCredentialMetadata(id as DIDURL));
-            return vc;
+                let vc: VerifiableCredential;
+                if (encrypted) {
+                    vc = VerifiableCredential.parse(this.decrypt(content.toString(), password).toString());
+                } else
+                    vc = VerifiableCredential.parse(content.toString());
+
+                vc.setMetadata(await this.loadCredentialMetadata(id as DIDURL));
+                return { value: vc};
+            });
+
+            return value === DIDStore.NULL ? null : value;
         } catch (e) {
             // ExecutionException
             throw new DIDStoreException("Load credential failed: " + id, e);
@@ -1042,7 +1049,6 @@ export class DIDStore {
                 return DIDStore.reEncrypt(data, oldPassword, newPassword);
             }
         });
-
         this.metadata.setFingerprint(DIDStore.calcFingerprint(newPassword));
         this.cache.invalidateAll();
     }

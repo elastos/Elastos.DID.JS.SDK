@@ -616,10 +616,21 @@ export class FileSystemStorage implements DIDStorage {
     }
 
     // eslint-disable-next-line require-await
-    public async storeCredential(id: DIDURL, credential: Uint8Array): Promise<void> {
+    public async storeCredential(id: DIDURL, credential: Uint8Array, encrypted: boolean): Promise<void> {
         try {
+            let dataBuffer = credential;
+            //magic header 0x0E0C5643 for the encrypted credentials
+            if (encrypted) {
+                let prefix = Buffer.alloc(4);
+                prefix[0] = 0x0E;
+                prefix[1] = 0x0C;
+                prefix[2] = 0x56;
+                prefix[3] = 0x43;
+                dataBuffer = Buffer.concat([prefix, credential]);
+            }
+
             let file = this.getCredentialFile(id, true);
-            file.writeText(credential);
+            file.writeText(dataBuffer);
         } catch (e) {
             // IOException
             throw new DIDStorageException("Store credential error: " + id, e);
@@ -627,10 +638,16 @@ export class FileSystemStorage implements DIDStorage {
     }
 
     // eslint-disable-next-line require-await
-    public async loadCredential(id: DIDURL): Promise<Uint8Array> {
+    public async loadCredential(id: DIDURL): Promise<[Uint8Array, boolean]> {
         try {
             let file = this.getCredentialFile(id, false);
-            return file.readText(false) as Uint8Array;
+            let content = file.readText(false) as Uint8Array;
+
+            //magic header 0x0E0C5643 for the encrypted credentials
+            if (content && content[0] == 0x0E && content[1] == 0x0C && content[2] == 0x56 && content[3] == 0x43)
+                return [content.slice(4), true];
+            else
+                return [content, false];
         } catch (e) {
             // DIDSyntaxException | IOException
             throw new DIDStorageException("Load credential error: " + id, e);
@@ -812,6 +829,24 @@ export class FileSystemStorage implements DIDStorage {
         return false;
     }
 
+    private isCredential(file: File): boolean {
+        let patterns: string[] = [
+            // DID's credentials
+            "(.+)\\" + File.SEPARATOR + FileSystemStorage.DATA_DIR + "\\" + File.SEPARATOR +
+            FileSystemStorage.DID_DIR + "\\" + File.SEPARATOR + "(.+)\\" + File.SEPARATOR +
+            FileSystemStorage.CREDENTIALS_DIR + "\\" + File.SEPARATOR + "(.+)\\" + File.SEPARATOR +
+            FileSystemStorage.CREDENTIAL_FILE
+        ];
+
+        let path = file.getAbsolutePath();
+        for (let pattern of patterns) {
+            if (path.match(pattern))
+                return true;
+        }
+
+        return false;
+    }
+
     private copy(src: File, dest: File, reEncryptor: ReEncryptor) {
         if (src.isDirectory()) {
             let dir = src;
@@ -829,6 +864,22 @@ export class FileSystemStorage implements DIDStorage {
             if (this.needReencrypt(src)) {
                 let text = src.readText() as string;
                 dest.writeText(reEncryptor.reEncrypt(text));
+            } else if (this.isCredential(src)) {
+                let text = src.readText(false) as Uint8Array;
+                //magic header 0x0E0C5643 for the encrypted credentials
+                if (text[0] == 0x0E && text[1] == 0x0C && text[2] == 0x56 && text[3] == 0x43) {
+                    let d = reEncryptor.reEncrypt(Buffer.from(text.slice(4)).toString());
+                    let dataBuffer = Buffer.from(d, "utf-8");
+                    let prefix = Buffer.alloc(4);
+                    prefix[0] = 0x0E;
+                    prefix[1] = 0x0C;
+                    prefix[2] = 0x56;
+                    prefix[3] = 0x43;
+                    dataBuffer = Buffer.concat([prefix, dataBuffer]);
+                    dest.writeText(dataBuffer);
+                } else {
+                    FileSystemStorage.copyFile(src, dest);
+                }
             } else {
                 FileSystemStorage.copyFile(src, dest);
             }

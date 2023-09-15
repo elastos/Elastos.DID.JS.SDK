@@ -107,7 +107,7 @@ import { Cipher, EncryptionStream, DecryptionStream } from "./didencryption";
     });
 } */
 
-let __VERSION__ = "2.3.0";
+let __VERSION__ = "2.3.1";
 
 if (typeof window != 'undefined') {
     if ("elastos_did_ver" in window)
