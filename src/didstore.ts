@@ -1053,7 +1053,13 @@ export class DIDStore {
         this.cache.invalidateAll();
     }
 
-    public async synchronize(handle: ConflictHandle = null) {
+    /**
+     * Synchronize did and credentials with chain.
+     * @param handle Conflict handler.
+     * @param password Store password for all credentials.
+     *                 MUST contain password or not for all credentials at the same time.
+     */
+    public async synchronize(handle: ConflictHandle = null, password?: string) {
         if (handle == null)
             handle = DefaultConflictHandle.getInstance();
 
@@ -1108,7 +1114,7 @@ export class DIDStore {
 
             let vcIds = await this.storage.listCredentials(did);
             for (let vcId of vcIds) {
-                let localVc = await this.loadCredential(vcId);
+                let localVc = await this.loadCredential(vcId, password);
 
                 let resolvedVc = await VerifiableCredential.resolve(vcId, localVc.getIssuer());
                 if (resolvedVc == null)

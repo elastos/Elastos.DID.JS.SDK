@@ -430,9 +430,34 @@ describe("DIDStore Tests", ()=>{
         await expect(await store.containsCredential(user.getSubject().toString() + "#passport")).toBeFalsy();
     });
 
-    test("testSynchronizeStore", async ()=> {
+    test("testDIDStoreSynchronize", async ()=> {
         let identity = await testData.getRootIdentity();
         let valid : boolean;
+
+        const createCredential = async (doc) => {
+            let issuer = await Issuer.create(doc);
+
+            let props = {
+                name: "Testing Issuer",
+                nationality: "Singapore",
+                email: "issuer@example.com"
+            };
+
+            let cb = issuer.issueFor(doc.getSubject());
+            let vc  = await cb.id("#myCredential")
+                .typeWithContext("SelfProclaimedCredential", "https://ns.elastos.org/credentials/v1")
+                .typeWithContext("ProfileCredential", "https://ns.elastos.org/credentials/profile/v1")
+                .typeWithContext("EmailCredential", "https://ns.elastos.org/credentials/email/v1")
+                .properties(props)
+                .seal(TestConfig.storePass);
+
+            const vcId = new DIDURL("#myCredential", doc.getSubject());
+
+            const store = await testData.getStore();
+            await store.storeCredential(vc, TestConfig.storePass);
+            await store.loadCredential(vcId, TestConfig.storePass);
+        }
+
         for (let i = 0; i < 5; i++) {
             let alias = "my did " + i;
             let doc = await identity.newDid(TestConfig.storePass);
@@ -444,6 +469,8 @@ describe("DIDStore Tests", ()=>{
             expect(resolved).toBeNull();
 
             await doc.publish(TestConfig.storePass);
+
+            await createCredential(doc);
 
             resolved = await doc.getSubject().resolve();
             expect(resolved).not.toBeNull();
@@ -459,7 +486,7 @@ describe("DIDStore Tests", ()=>{
         let empty: DID[] = Array.from(await store.listDids());
         expect(empty.length).toBe(0);
 
-        await store.synchronize();
+        await store.synchronize(null, TestConfig.storePass);
         let syncedDids: DID[] =  Array.from(await store.listDids());
         syncedDids.sort((a,b) => a.compareTo(b));
 
