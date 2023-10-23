@@ -625,7 +625,7 @@ export class DIDStore {
             let dest: DID[] = []
 
             for (let did of dids) {
-                if (filter.select(did))
+                if (await filter.select(did))
                     dest.push(did);
             }
 
@@ -868,7 +868,7 @@ export class DIDStore {
         if (filter != null) {
             let dest: DIDURL[] = [];
             for (let id of vcs) {
-                if (filter.select(id))
+                if (await filter.select(id))
                     dest.push(id);
             }
 
@@ -1393,11 +1393,11 @@ export namespace DIDStore {
     }
 
     export interface DIDFilter {
-        select(did: DID): boolean;
+        select(did: DID): Promise<boolean>;
     }
 
     export interface CredentialFilter {
-        select(id: DIDURL): boolean;
+        select(id: DIDURL): Promise<boolean>;
     }
 
     export class DIDExport extends DIDEntity<DIDExport> {
