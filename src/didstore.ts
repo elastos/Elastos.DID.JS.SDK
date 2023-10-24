@@ -1121,7 +1121,7 @@ export class DIDStore {
                     continue;
 
                 resolvedVc.getMetadata().merge(localVc.getMetadata());
-                await this.storeCredential(resolvedVc);
+                await this.storeCredential(resolvedVc, password);
             }
         }
     }
