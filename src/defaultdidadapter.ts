@@ -150,7 +150,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
                     "Accept": "application/json"
                 },
                 data: body,
-                timeout: 6000, // only wait for 6s
+                timeout: 30000, // only wait for 30s
             }).then((response) => {
                 if (response.status >= 200 && response.status < 400) {
                     resolve(response.data);
@@ -159,7 +159,7 @@ export class DefaultDIDAdapter implements DIDAdapter {
                     reject(new ResolveException("HTTP error"));
                 }
             }).catch(error => {
-                reject(new ResolveException("HTTP timeout."));
+                reject(new ResolveException(`HTTP error: status: ${error.status}, message: ${error.message}.`));
             });
         });
     }
