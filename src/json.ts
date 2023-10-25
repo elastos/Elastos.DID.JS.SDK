@@ -36,9 +36,9 @@ function sortJSONArray(value: JSONArray): JSONArray {
         return value;
 
     return Array.from(value, (v) => {
-        if (typeof v === "object" && Object.keys(v).length > 0 && !Array.isArray(v))
+        if (value && typeof v === "object" && Object.keys(v).length > 0 && !Array.isArray(v))
             return sortJSONObject(v);
-        else if (Array.isArray(v) && value.length > 0)
+        else if (value && Array.isArray(v) && value.length > 0)
             return sortJSONArray(v);
         else
             return v;
@@ -59,9 +59,9 @@ export function sortJSONObject(obj: JSONObject): JSONObject {
     for(var index in keys){
         let key = keys[index];
         let value = obj[key];
-        if (typeof value === "object" && Object.keys(value).length > 0 && !Array.isArray(value)) { // Objects with properties only.
+        if (value && typeof value === "object" && Object.keys(value).length > 0 && !Array.isArray(value)) { // Objects with properties only.
             sortedObj[key] = sortJSONObject(value as JSONObject);
-        } else if (Array.isArray(value) && value.length > 0) {
+        } else if (value && Array.isArray(value) && value.length > 0) {
             sortedObj[key] = sortJSONArray(value);
         }else {
             sortedObj[key] = value;
