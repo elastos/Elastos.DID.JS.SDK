@@ -41,6 +41,8 @@ export class DefaultDIDAdapter implements DIDAdapter {
     ];
 
     protected rpcEndpoint: URL;
+    private httpAgent: any;
+    private httpsAgent: any;
 
     /**
      * Set default resolver according to specified url.
@@ -78,6 +80,12 @@ export class DefaultDIDAdapter implements DIDAdapter {
                 log.error("check the network error: " + e);
             });
         }
+    }
+
+    public setAgent(httpAgent: any, httpsAgent: any) {
+        this.httpAgent = httpAgent;
+        this.httpsAgent = httpsAgent;
+        return this;
     }
 
     private async checkEndpoint(endpoint: URL): Promise<DefaultDIDAdapter.CheckResult> {
@@ -151,6 +159,8 @@ export class DefaultDIDAdapter implements DIDAdapter {
                 },
                 data: body,
                 timeout: 30000, // only wait for 30s
+                httpAgent: this.httpAgent,
+                httpsAgent: this.httpsAgent,
             }).then((response) => {
                 if (response.status >= 200 && response.status < 400) {
                     resolve(response.data);
