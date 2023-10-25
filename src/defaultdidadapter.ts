@@ -159,8 +159,8 @@ export class DefaultDIDAdapter implements DIDAdapter {
                 },
                 data: body,
                 timeout: 30000, // only wait for 30s
-                httpAgent: this.httpAgent,
-                httpsAgent: this.httpsAgent,
+                ...(this.httpAgent && { httpAgent: this.httpAgent }),
+                ...(this.httpsAgent && { httpsAgent: this.httpsAgent }),
             }).then((response) => {
                 if (response.status >= 200 && response.status < 400) {
                     resolve(response.data);

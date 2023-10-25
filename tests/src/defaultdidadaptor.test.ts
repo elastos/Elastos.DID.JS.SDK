@@ -28,9 +28,12 @@ describe('DefaultDIDAdapter Tests', () => {
         // do nothing.
     });
 
-    test.skip('testDefaultDIDAdapterAgent', () => {
+    test('testDefaultDIDAdapterAgent', async () => {
+        let adaptor = new DefaultDIDAdapter('mainnet');
+        await adaptor.resolve('abc');
+
         const agent = new SocksProxyAgent('socks5://127.0.0.1:7891');
-        const adaptor = new DefaultDIDAdapter('mainnet').setAgent(agent, agent);
-        adaptor.resolve('abc');
+        adaptor = new DefaultDIDAdapter('mainnet').setAgent(agent, agent);
+        await adaptor.resolve('abc');
     });
 });
