@@ -421,7 +421,7 @@ export class FileSystemStorage implements DIDStorage {
     }
 
     // eslint-disable-next-line require-await
-    public async containsRootIdenities(): Promise<boolean> {
+    public async containsRootIdentities(): Promise<boolean> {
         let dir = this.getDir(this.currentDataDir, FileSystemStorage.ROOT_IDENTITIES_DIR);
         if (!dir.exists())
             return false;
