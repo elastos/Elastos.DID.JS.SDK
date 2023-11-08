@@ -106,7 +106,7 @@ export interface DIDStorage {
 
     listRootIdentities(): Promise<RootIdentity[]>;
 
-    containsRootIdenities(): Promise<boolean>;
+    containsRootIdentities(): Promise<boolean>;
 
     /**
      * Save the DID metadata object to this storage.

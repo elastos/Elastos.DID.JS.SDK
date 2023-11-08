@@ -405,7 +405,7 @@ export class DIDStore {
     }
 
     public async containsRootIdentities(): Promise<boolean> {
-        return await this.storage.containsRootIdenities();
+        return await this.storage.containsRootIdentities();
     }
 
     public async storeRootIdentityMetadata(id: string, metadata: RootIdentity.Metadata) {
@@ -1046,6 +1046,7 @@ export class DIDStore {
 
         await this.storage.changePassword({
             reEncrypt: (data) => {
+                console.log(`didstore changePassword reEncrypt callback: ${data}, ${oldPassword}, ${newPassword}`);
                 return DIDStore.reEncrypt(data, oldPassword, newPassword);
             }
         });
